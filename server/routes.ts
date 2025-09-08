@@ -252,17 +252,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Event creation endpoint (creates course schedules)
   app.post("/api/instructor/events", isAuthenticated, async (req: any, res) => {
     try {
+      console.log("Event creation request received:", JSON.stringify(req.body, null, 2));
+      
       const userId = req.user?.claims?.sub;
       const eventData = req.body;
       
       // Validate required fields
       if (!eventData.courseId || !eventData.startDate || !eventData.endDate) {
+        console.log("Missing required fields:", { courseId: eventData.courseId, startDate: eventData.startDate, endDate: eventData.endDate });
         return res.status(400).json({ error: "Missing required fields: courseId, startDate, endDate" });
       }
 
       // Verify the course belongs to the instructor
+      console.log("Fetching course:", eventData.courseId, "for instructor:", userId);
       const course = await storage.getCourse(eventData.courseId);
       if (!course || course.instructorId !== userId) {
+        console.log("Course validation failed:", { course: course?.id, instructorId: course?.instructorId, userId });
         return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
       }
 
@@ -280,15 +285,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         daysOfWeek: eventData.daysOfWeek || null,
         notes: eventData.notes || null,
         registrationDeadline: eventData.registrationDeadline ? new Date(eventData.registrationDeadline) : null,
-        waitlistEnabled: eventData.waitlistEnabled || false,
-        autoConfirmRegistration: eventData.autoConfirmRegistration || false,
+        waitlistEnabled: eventData.waitlistEnabled !== undefined ? eventData.waitlistEnabled : true,
+        autoConfirmRegistration: eventData.autoConfirmRegistration !== undefined ? eventData.autoConfirmRegistration : true,
       };
 
+      console.log("Creating schedule with data:", JSON.stringify(scheduleData, null, 2));
       const schedule = await storage.createCourseSchedule(scheduleData);
+      console.log("Schedule created successfully:", schedule.id);
+      
       res.status(201).json(schedule);
     } catch (error: any) {
       console.error("Error creating event:", error);
-      res.status(500).json({ error: "Failed to create event: " + error.message });
+      console.error("Error stack:", error.stack);
+      return res.status(500).json({ error: "Failed to create event: " + error.message });
     }
   });
 

@@ -105,8 +105,20 @@ export function EventCreationForm({ onClose, onEventCreated }: EventCreationForm
   // Create event mutation
   const createEventMutation = useMutation({
     mutationFn: async (data: EventFormData) => {
+      console.log("Sending event data:", data);
       const response = await apiRequest("POST", "/api/instructor/events", data);
-      return response.json();
+      console.log("Response status:", response.status);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log("Error response text:", errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log("Parsed response:", result);
+      return result;
     },
     onSuccess: () => {
       toast({
