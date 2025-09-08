@@ -22,29 +22,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <header className="bg-primary shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex-shrink-0">
-                <Link href="/">
-                  <h1 className="text-xl font-bold text-primary-foreground cursor-pointer" data-testid="link-home">
-                    Practical Defense Training
-                  </h1>
-                </Link>
-              </div>
+            {/* Company name aligned to the left */}
+            <div className="flex-shrink-0">
+              <Link href="/">
+                <h1 className="text-xl font-bold text-primary-foreground cursor-pointer" data-testid="link-home">
+                  Practical Defense Training
+                </h1>
+              </Link>
+            </div>
+            
+            {/* Navigation and login aligned to the right */}
+            <div className="flex items-center space-x-8">
               <nav className="hidden md:flex space-x-8">
                 <a href="#schedule" className="text-primary-foreground hover:text-accent transition-colors">Schedule</a>
-                <Link href="/#courses">
-                  <a className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-courses">
-                    Courses
-                  </a>
+                <Link href="/#courses" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-courses">
+                  Courses
                 </Link>
                 <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors">About Us</a>
                 <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors">Resources</a>
                 <a href="#our-store" className="text-primary-foreground hover:text-accent transition-colors">Our Store</a>
                 <a href="#contact-us" className="text-primary-foreground hover:text-accent transition-colors">Contact Us</a>
               </nav>
-            </div>
-            
-            <div className="flex items-center space-x-4">
+              
+              <div className="flex items-center space-x-4">
               
               {!isAuthenticated ? (
                 <Button 
@@ -88,6 +88,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
+              </div>
             </div>
           </div>
 
