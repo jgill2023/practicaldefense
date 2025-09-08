@@ -27,6 +27,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import type { CourseWithSchedules, CourseScheduleWithSessions, User } from "@shared/schema";
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { EventCreationForm } from "@/components/EventCreationForm";
+import { CourseCreationForm } from "@/components/CourseCreationForm";
 
 const localizer = momentLocalizer(moment);
 
@@ -118,9 +119,15 @@ export default function CourseManagement() {
             </p>
           </div>
           <div className="flex items-center space-x-4 mt-4 sm:mt-0">
+            <CourseCreationForm 
+              onCourseCreated={() => {
+                queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+              }}
+            />
             <Dialog open={showCreateEventModal} onOpenChange={setShowCreateEventModal}>
               <DialogTrigger asChild>
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-create-event">
+                <Button className="bg-accent text-accent-foreground hover:bg-accent/90" data-testid="button-create-event">
                   <Plus className="mr-2 h-4 w-4" />
                   Create Event
                 </Button>

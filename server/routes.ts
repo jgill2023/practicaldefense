@@ -191,6 +191,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ uploadURL });
   });
 
+  // Course creation endpoint
+  app.post("/api/instructor/courses", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const courseData = { ...req.body, instructorId: userId };
+      
+      // Validate required fields
+      if (!courseData.title || !courseData.description || !courseData.price || !courseData.category) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const course = await storage.createCourse(courseData);
+      res.status(201).json(course);
+    } catch (error: any) {
+      console.error("Error creating course:", error);
+      res.status(500).json({ error: "Failed to create course: " + error.message });
+    }
+  });
+
+  // Course image upload endpoint
+  app.put("/api/course-images", isAuthenticated, async (req: any, res) => {
+    if (!req.body.courseImageURL) {
+      return res.status(400).json({ error: "courseImageURL is required" });
+    }
+
+    const userId = req.user?.claims?.sub;
+
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        req.body.courseImageURL,
+        {
+          owner: userId,
+          visibility: "public", // Course images should be publicly viewable
+        },
+      );
+
+      res.status(200).json({
+        objectPath: objectPath,
+      });
+    } catch (error) {
+      console.error("Error setting course image:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Dashboard statistics endpoint
+  app.get("/api/instructor/dashboard-stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const stats = await storage.getInstructorDashboardStats(userId);
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard stats: " + error.message });
+    }
+  });
+
   app.put("/api/waivers", isAuthenticated, async (req: any, res) => {
     if (!req.body.waiverURL) {
       return res.status(400).json({ error: "waiverURL is required" });

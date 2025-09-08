@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { Plus, GraduationCap, Clock, Target, FileText, ImageIcon } from "lucide-react";
-import type { UploadResult } from '@uppy/core';
+// Remove unused import
 
 const courseSchema = z.object({
   title: z.string().min(1, "Course title is required"),
@@ -108,8 +108,8 @@ export function CourseCreationForm({ onCourseCreated }: CourseCreationFormProps)
     };
   };
 
-  const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    if (result.successful.length > 0) {
+  const handleUploadComplete = async (result: { successful: any[] }) => {
+    if (result.successful && result.successful.length > 0) {
       const uploadURL = result.successful[0].uploadURL;
       if (uploadURL) {
         try {
