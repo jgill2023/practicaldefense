@@ -39,23 +39,13 @@ export default function Landing() {
     <Layout>
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image Collage */}
-        <div className="absolute inset-0 bg-black">
-          <div className="grid grid-cols-4 grid-rows-3 h-full opacity-70">
-            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
-            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
-            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
-            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
-            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
-            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
-            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
-            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
-            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
-            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
-            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
-            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
-          </div>
-          <div className="absolute inset-0 bg-black/60"></div>
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <div 
+            className="w-full h-full bg-cover bg-center"
+            style={{backgroundImage: "url('/hero-bg.jpg')"}}
+          ></div>
+          <div className="absolute inset-0" style={{backgroundColor: 'rgba(0, 0, 0, 0.68)'}}></div>
         </div>
 
         {/* Content */}
