@@ -44,10 +44,10 @@ export default function Landing() {
             <div className="space-y-8">
               <div className="space-y-4">
                 <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-                  Professional Firearms Training Management Platform
+                  Elite Tactical Training Academy
                 </h1>
                 <p className="text-xl text-primary-foreground/80 leading-relaxed">
-                  Streamline your training business with our comprehensive platform for course management, student registration, and secure documentation.
+                  Professional firearms instruction by certified experts. From basic safety to advanced tactical training - building confidence through comprehensive education in a safe, controlled environment.
                 </p>
               </div>
               
@@ -59,31 +59,31 @@ export default function Landing() {
                   data-testid="button-browse-courses"
                 >
                   <GraduationCap className="mr-2 h-5 w-5" />
-                  Browse Courses
+                  View Training Courses
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline" 
                   className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
-                  onClick={() => window.location.href = '/api/login'}
-                  data-testid="button-instructor-signup"
+                  onClick={() => window.location.href = 'tel:+15551234567'}
+                  data-testid="button-contact-instructor"
                 >
-                  Become an Instructor
+                  Contact Instructor
                 </Button>
               </div>
               
               <div className="flex items-center space-x-6 pt-4">
                 <div className="flex items-center space-x-2">
                   <Tag className="h-5 w-5 text-accent" />
-                  <span className="text-sm">NRA Certified</span>
+                  <span className="text-sm">NRA Certified Instructor</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Shield className="h-5 w-5 text-accent" />
-                  <span className="text-sm">Secure Platform</span>
+                  <span className="text-sm">15+ Years Experience</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Users className="h-5 w-5 text-accent" />
-                  <span className="text-sm">Mobile Friendly</span>
+                  <span className="text-sm">Small Class Sizes</span>
                 </div>
               </div>
             </div>
@@ -119,13 +119,13 @@ export default function Landing() {
               <div className="bg-success/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Users className="text-success h-8 w-8" />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">1000+ Students</p>
+              <p className="text-sm font-medium text-muted-foreground">500+ Trained Students</p>
             </div>
             <div className="text-center" data-testid="trust-rating">
               <div className="bg-success/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Star className="text-success h-8 w-8" />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">5-Star Rated</p>
+              <p className="text-sm font-medium text-muted-foreground">Local Expert</p>
             </div>
           </div>
         </div>
@@ -136,10 +136,10 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-              Available Training Courses
+              Training Programs Offered
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Choose from our comprehensive selection of professional firearms training courses designed for all skill levels.
+              Personalized instruction tailored to your experience level. Whether you're a first-time shooter or looking to enhance your skills, we provide safe, professional training in a supportive environment.
             </p>
           </div>
           

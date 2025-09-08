@@ -30,7 +30,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="flex-shrink-0">
                 <Link href="/">
                   <h1 className="text-xl font-bold text-primary-foreground cursor-pointer" data-testid="link-home">
-                    ProTrain Academy
+                    Elite Tactical Training
                   </h1>
                 </Link>
               </div>
@@ -126,9 +126,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div className="space-y-4">
-              <h3 className="text-xl font-bold">ProTrain Academy</h3>
+              <h3 className="text-xl font-bold">Elite Tactical Training</h3>
               <p className="text-primary-foreground/80">
-                Professional firearms training platform for instructors and students.
+                Professional firearms instruction by certified NRA instructors. Serving the local community with safe, comprehensive training programs.
               </p>
             </div>
             
@@ -161,18 +161,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="flex items-center space-x-2">
                   <span>✉️</span>
-                  <span>info@protrainacademy.com</span>
+                  <span>info@elitetacticaltraining.com</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span>📍</span>
-                  <span>123 Training St, City, ST 12345</span>
+                  <span>Local Range Facility - Call for Location</span>
                 </div>
               </div>
             </div>
           </div>
           
           <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-primary-foreground/80">
-            <p>&copy; 2024 ProTrain Academy. All rights reserved. NRA Certified Training Provider.</p>
+            <p>&copy; 2024 Elite Tactical Training Academy. All rights reserved. NRA Certified Instructor.</p>
           </div>
         </div>
       </footer>
