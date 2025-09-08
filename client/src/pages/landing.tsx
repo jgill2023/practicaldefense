@@ -38,63 +38,70 @@ export default function Landing() {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <div className="space-y-4">
-                <h1 className="text-4xl lg:text-5xl font-bold leading-tight">
-                  Elite Tactical Training Academy
-                </h1>
-                <p className="text-xl text-primary-foreground/80 leading-relaxed">
-                  Professional firearms instruction by certified experts. From basic safety to advanced tactical training - building confidence through comprehensive education in a safe, controlled environment.
-                </p>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  size="lg" 
-                  className="bg-accent text-accent-foreground hover:bg-accent/90"
-                  onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
-                  data-testid="button-browse-courses"
-                >
-                  <GraduationCap className="mr-2 h-5 w-5" />
-                  View Training Courses
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
-                  onClick={() => window.location.href = '/api/login'}
-                  data-testid="button-login"
-                >
-                  Login
-                </Button>
-              </div>
-              
-              <div className="flex items-center space-x-6 pt-4">
-                <div className="flex items-center space-x-2">
-                  <Tag className="h-5 w-5 text-accent" />
-                  <span className="text-sm">NRA Certified Instructor</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Shield className="h-5 w-5 text-accent" />
-                  <span className="text-sm">15+ Years Experience</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Users className="h-5 w-5 text-accent" />
-                  <span className="text-sm">Small Class Sizes</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="lg:pl-8">
-              <img 
-                src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
-                alt="Professional firearms training facility with instructor and students" 
-                className="rounded-xl shadow-2xl w-full h-auto"
-              />
-            </div>
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Image Collage */}
+        <div className="absolute inset-0 bg-black">
+          <div className="grid grid-cols-4 grid-rows-3 h-full opacity-70">
+            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
+            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
+            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
+            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
+            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
+            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
+            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
+            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
+            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
+            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
+            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
+            <div className="bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1544027993-37dbfe43562a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')"}}></div>
+          </div>
+          <div className="absolute inset-0 bg-black/60"></div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 text-center text-white px-4 sm:px-6 lg:px-8">
+          <h1 className="text-5xl lg:text-7xl font-bold mb-4 tracking-tight">
+            Practical Defense Training
+          </h1>
+          <p className="text-2xl lg:text-3xl font-light mb-12 tracking-wide">
+            You Don't Have To Be Defenseless.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+            <Button 
+              size="lg" 
+              className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-3 text-lg"
+              onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
+              data-testid="button-browse-courses"
+            >
+              <GraduationCap className="mr-2 h-5 w-5" />
+              View Training Courses
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-white text-white hover:bg-white hover:text-black px-8 py-3 text-lg"
+              onClick={() => window.location.href = '/api/login'}
+              data-testid="button-login"
+            >
+              Login
+            </Button>
+          </div>
+        </div>
+
+        {/* Bottom Banner */}
+        <div className="absolute bottom-0 left-0 right-0 bg-accent/90 text-white py-4 z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p className="text-lg lg:text-xl font-medium">
+              It's <span className="italic font-bold">your</span> life. It's <span className="italic font-bold">your</span> safety and protection. It's <span className="italic font-bold">YOUR</span> responsibility.
+            </p>
+          </div>
+        </div>
+        
+        {/* Scroll indicator */}
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
+            <div className="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
           </div>
         </div>
       </section>
