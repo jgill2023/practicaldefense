@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -7,6 +7,8 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CourseManagementActions } from "@/components/CourseManagementActions";
+import { EditCourseForm } from "@/components/EditCourseForm";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
@@ -15,6 +17,7 @@ export default function InstructorDashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/courses"],
@@ -215,9 +218,10 @@ export default function InstructorDashboard() {
                         <Badge variant={course.isActive ? "default" : "secondary"}>
                           {course.isActive ? "Active" : "Inactive"}
                         </Badge>
-                        <Button variant="ghost" size="sm" data-testid={`button-manage-course-${course.id}`}>
-                          Manage
-                        </Button>
+                        <CourseManagementActions 
+                          course={course}
+                          onEditCourse={(course) => setEditingCourse(course)}
+                        />
                       </div>
                     </div>
                   );
@@ -247,6 +251,18 @@ export default function InstructorDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Course Form */}
+      {editingCourse && (
+        <EditCourseForm
+          course={editingCourse}
+          isOpen={!!editingCourse}
+          onClose={() => setEditingCourse(null)}
+          onCourseUpdated={() => {
+            // Course list will automatically refresh via query invalidation
+          }}
+        />
+      )}
     </Layout>
   );
 }
