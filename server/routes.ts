@@ -280,8 +280,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         daysOfWeek: eventData.daysOfWeek || null,
         notes: eventData.notes || null,
         registrationDeadline: eventData.registrationDeadline ? new Date(eventData.registrationDeadline) : null,
-        enableWaitlist: eventData.enableWaitlist || false,
-        autoConfirm: eventData.autoConfirm || false,
+        waitlistEnabled: eventData.waitlistEnabled || false,
+        autoConfirmRegistration: eventData.autoConfirmRegistration || false,
       };
 
       const schedule = await storage.createCourseSchedule(scheduleData);
