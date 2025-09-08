@@ -105,27 +105,21 @@ export function EventCreationForm({ onClose, onEventCreated }: EventCreationForm
   // Create event mutation
   const createEventMutation = useMutation({
     mutationFn: async (data: EventFormData) => {
-      console.log("Sending event data:", data);
       const response = await apiRequest("POST", "/api/instructor/events", data);
-      console.log("Response status:", response.status);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log("Error response text:", errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-      
-      const result = await response.json();
-      console.log("Parsed response:", result);
-      return result;
+      return response.json();
     },
     onSuccess: () => {
       toast({
         title: "Event Created",
         description: "Your training event has been created successfully.",
       });
+      // Invalidate multiple queries to refresh all event displays
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/course-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
       onEventCreated?.();
       onClose();
     },
@@ -143,6 +137,26 @@ export function EventCreationForm({ onClose, onEventCreated }: EventCreationForm
   const recurrencePattern = form.watch("recurrencePattern");
 
   const onSubmit = (data: EventFormData) => {
+    // Only submit if we're on the final tab and have all required data
+    if (currentTab !== "settings") {
+      toast({
+        title: "Complete the form",
+        description: "Please complete all tabs before creating the event.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validate required fields
+    if (!data.courseId || !data.startDate || !data.endDate) {
+      toast({
+        title: "Missing Required Fields",
+        description: "Please fill in course, start date, and end date.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Process the form data
     const processedData = {
       ...data,
@@ -184,7 +198,12 @@ export function EventCreationForm({ onClose, onEventCreated }: EventCreationForm
   ];
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={(e) => {
+      // Prevent form submission when pressing Enter unless on the submit button
+      if (e.key === 'Enter' && e.target !== e.currentTarget) {
+        e.preventDefault();
+      }
+    }}>
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>

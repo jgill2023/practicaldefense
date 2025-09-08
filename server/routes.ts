@@ -87,6 +87,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get courses with detailed schedule information for calendar display
+  app.get('/api/instructor/courses-detailed', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const courses = await storage.getCoursesByInstructor(userId);
+      res.json(courses);
+    } catch (error) {
+      console.error("Error fetching detailed instructor courses:", error);
+      res.status(500).json({ message: "Failed to fetch detailed courses" });
+    }
+  });
+
   // Course schedule routes
   app.post('/api/courses/:courseId/schedules', isAuthenticated, async (req: any, res) => {
     try {
@@ -213,22 +225,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Event creation endpoint (creates course schedules) - MOVED UP
   app.post("/api/instructor/events", isAuthenticated, async (req: any, res) => {
     try {
-      console.log("EVENTS ENDPOINT HIT! Event creation request received:", JSON.stringify(req.body, null, 2));
-      
       const userId = req.user?.claims?.sub;
       const eventData = req.body;
       
       // Validate required fields
       if (!eventData.courseId || !eventData.startDate || !eventData.endDate) {
-        console.log("Missing required fields:", { courseId: eventData.courseId, startDate: eventData.startDate, endDate: eventData.endDate });
         return res.status(400).json({ error: "Missing required fields: courseId, startDate, endDate" });
       }
 
       // Verify the course belongs to the instructor
-      console.log("Fetching course:", eventData.courseId, "for instructor:", userId);
       const course = await storage.getCourse(eventData.courseId);
       if (!course || course.instructorId !== userId) {
-        console.log("Course validation failed:", { course: course?.id, instructorId: course?.instructorId, userId });
         return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
       }
 
@@ -250,14 +257,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         autoConfirmRegistration: eventData.autoConfirmRegistration !== undefined ? eventData.autoConfirmRegistration : true,
       };
 
-      console.log("Creating schedule with data:", JSON.stringify(scheduleData, null, 2));
       const schedule = await storage.createCourseSchedule(scheduleData);
-      console.log("Schedule created successfully:", schedule.id);
       
       res.status(201).json(schedule);
     } catch (error: any) {
       console.error("Error creating event:", error);
-      console.error("Error stack:", error.stack);
       return res.status(500).json({ error: "Failed to create event: " + error.message });
     }
   });
@@ -301,13 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Simple test endpoint
-  app.post("/api/instructor/test-events", isAuthenticated, async (req: any, res) => {
-    console.log("TEST ENDPOINT HIT!");
-    res.json({ message: "Test endpoint working!" });
-  });
-
-  // REMOVED DUPLICATE - moved up to position after course creation
+  // Put waiver upload endpoint here
 
   app.put("/api/waivers", isAuthenticated, async (req: any, res) => {
     if (!req.body.waiverURL) {

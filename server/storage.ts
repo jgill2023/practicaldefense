@@ -140,6 +140,7 @@ export class DatabaseStorage implements IStorage {
     return courseList;
   }
 
+
   // Course schedule operations
   async createCourseSchedule(schedule: InsertCourseSchedule): Promise<CourseSchedule> {
     const [newSchedule] = await db
