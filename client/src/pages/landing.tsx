@@ -42,13 +42,20 @@ export default function Landing() {
         {/* Background Image */}
         <div className="absolute inset-0">
           <div 
-            className="w-full h-full bg-cover bg-top"
-            style={{backgroundImage: "url('/hero-bg.jpg')"}}
+            className="w-full h-full bg-cover bg-top bg-gray-800"
+            style={{
+              backgroundImage: "url('/hero-bg.jpg')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'top center',
+              backgroundRepeat: 'no-repeat'
+            }}
           ></div>
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         </div>
 
         {/* Content */}
-        <div className="relative z-10 text-center text-white px-4 sm:px-6 lg:px-8">
+        <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
           <h1 className="text-5xl lg:text-7xl font-bold mb-4 tracking-tight">
             Practical Defense Training
           </h1>
@@ -79,7 +86,7 @@ export default function Landing() {
         </div>
 
         {/* Bottom Banner */}
-        <div className="absolute bottom-0 left-0 right-0 bg-accent/90 text-white py-4 z-10">
+        <div className="absolute bottom-0 left-0 right-0 bg-accent/90 text-white py-4 z-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <p className="text-lg lg:text-xl font-medium">
               It's <span className="italic font-bold">your</span> life. It's <span className="italic font-bold">your</span> safety and protection. It's <span className="italic font-bold">YOUR</span> responsibility.
