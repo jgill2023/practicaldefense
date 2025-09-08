@@ -64,24 +64,15 @@ export default function Landing() {
             You Don't Have To Be Defenseless.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+          <div className="flex justify-center mb-16">
             <Button 
               size="lg" 
               className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-3 text-lg"
               onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
               data-testid="button-browse-courses"
             >
-              <GraduationCap className="mr-2 h-5 w-5" />
-              View Training Courses
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="border-white text-white hover:bg-white hover:text-black px-8 py-3 text-lg"
-              onClick={() => window.location.href = '/api/login'}
-              data-testid="button-login"
-            >
-              Login
+              <Calendar className="mr-2 h-5 w-5" />
+              View Upcoming Courses
             </Button>
           </div>
         </div>
