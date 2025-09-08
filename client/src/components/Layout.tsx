@@ -26,26 +26,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="flex-shrink-0">
                 <Link href="/">
                   <h1 className="text-xl font-bold text-primary-foreground cursor-pointer" data-testid="link-home">
-                    Elite Tactical Training
+                    Practical Defense Training
                   </h1>
                 </Link>
               </div>
               <nav className="hidden md:flex space-x-8">
+                <a href="#schedule" className="text-primary-foreground hover:text-accent transition-colors">Schedule</a>
                 <Link href="/#courses">
                   <a className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-courses">
                     Courses
                   </a>
                 </Link>
-                <a href="#about" className="text-primary-foreground hover:text-accent transition-colors">About</a>
-                <a href="#contact" className="text-primary-foreground hover:text-accent transition-colors">Contact</a>
+                <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors">About Us</a>
+                <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors">Resources</a>
+                <a href="#our-store" className="text-primary-foreground hover:text-accent transition-colors">Our Store</a>
+                <a href="#contact-us" className="text-primary-foreground hover:text-accent transition-colors">Contact Us</a>
               </nav>
             </div>
             
             <div className="flex items-center space-x-4">
-              <div className="hidden sm:flex items-center space-x-2 text-primary-foreground">
-                <Shield className="h-4 w-4 text-success" />
-                <span className="text-sm">NRA Certified</span>
-              </div>
               
               {!isAuthenticated ? (
                 <Button 
@@ -96,9 +95,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {isMobileMenuOpen && (
             <div className="md:hidden border-t border-primary-foreground/20 py-4">
               <nav className="flex flex-col space-y-2">
+                <a href="#schedule" className="text-primary-foreground hover:text-accent transition-colors py-2">Schedule</a>
                 <a href="#courses" className="text-primary-foreground hover:text-accent transition-colors py-2">Courses</a>
-                <a href="#about" className="text-primary-foreground hover:text-accent transition-colors py-2">About</a>
-                <a href="#contact" className="text-primary-foreground hover:text-accent transition-colors py-2">Contact</a>
+                <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors py-2">About Us</a>
+                <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors py-2">Resources</a>
+                <a href="#our-store" className="text-primary-foreground hover:text-accent transition-colors py-2">Our Store</a>
+                <a href="#contact-us" className="text-primary-foreground hover:text-accent transition-colors py-2">Contact Us</a>
               </nav>
             </div>
           )}
@@ -113,9 +115,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div className="space-y-4">
-              <h3 className="text-xl font-bold">Elite Tactical Training</h3>
+              <h3 className="text-xl font-bold">Practical Defense Training</h3>
               <p className="text-primary-foreground/80">
-                Professional firearms instruction by certified NRA instructors. Serving the local community with safe, comprehensive training programs.
+                Professional firearms instruction by certified instructors. Serving the local community with safe, comprehensive training programs.
               </p>
             </div>
             
@@ -159,7 +161,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
           
           <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-primary-foreground/80">
-            <p>&copy; 2024 Elite Tactical Training Academy. All rights reserved. NRA Certified Instructor.</p>
+            <p>&copy; 2024 Practical Defense Training. All rights reserved.</p>
           </div>
         </div>
       </footer>
