@@ -45,7 +45,6 @@ export default function Landing() {
             className="w-full h-full bg-cover bg-center"
             style={{backgroundImage: "url('/hero-bg.jpg')"}}
           ></div>
-          <div className="absolute inset-0" style={{backgroundColor: 'rgba(0, 0, 0, 0.68)'}}></div>
         </div>
 
         {/* Content */}
