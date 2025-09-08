@@ -222,6 +222,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update/Edit course endpoint
+  app.put("/api/instructor/courses/:courseId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const courseId = req.params.courseId;
+      const updateData = req.body;
+
+      // Verify the course belongs to the instructor
+      const existingCourse = await storage.getCourse(courseId);
+      if (!existingCourse || existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      }
+
+      const updatedCourse = await storage.updateCourse(courseId, updateData);
+      res.json(updatedCourse);
+    } catch (error: any) {
+      console.error("Error updating course:", error);
+      res.status(500).json({ error: "Failed to update course: " + error.message });
+    }
+  });
+
+  // Archive course endpoint (soft delete - sets archived flag)
+  app.patch("/api/instructor/courses/:courseId/archive", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const courseId = req.params.courseId;
+
+      // Verify the course belongs to the instructor
+      const existingCourse = await storage.getCourse(courseId);
+      if (!existingCourse || existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      }
+
+      const archivedCourse = await storage.updateCourse(courseId, { isActive: false });
+      res.json({ message: "Course archived successfully", course: archivedCourse });
+    } catch (error: any) {
+      console.error("Error archiving course:", error);
+      res.status(500).json({ error: "Failed to archive course: " + error.message });
+    }
+  });
+
+  // Unpublish course endpoint (deactivate)
+  app.patch("/api/instructor/courses/:courseId/unpublish", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const courseId = req.params.courseId;
+
+      // Verify the course belongs to the instructor
+      const existingCourse = await storage.getCourse(courseId);
+      if (!existingCourse || existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      }
+
+      const unpublishedCourse = await storage.updateCourse(courseId, { isActive: false });
+      res.json({ message: "Course unpublished successfully", course: unpublishedCourse });
+    } catch (error: any) {
+      console.error("Error unpublishing course:", error);
+      res.status(500).json({ error: "Failed to unpublish course: " + error.message });
+    }
+  });
+
+  // Publish course endpoint (activate)
+  app.patch("/api/instructor/courses/:courseId/publish", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const courseId = req.params.courseId;
+
+      // Verify the course belongs to the instructor
+      const existingCourse = await storage.getCourse(courseId);
+      if (!existingCourse || existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      }
+
+      const publishedCourse = await storage.updateCourse(courseId, { isActive: true });
+      res.json({ message: "Course published successfully", course: publishedCourse });
+    } catch (error: any) {
+      console.error("Error publishing course:", error);
+      res.status(500).json({ error: "Failed to publish course: " + error.message });
+    }
+  });
+
+  // Delete course endpoint (hard delete)
+  app.delete("/api/instructor/courses/:courseId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const courseId = req.params.courseId;
+
+      // Verify the course belongs to the instructor
+      const existingCourse = await storage.getCourse(courseId);
+      if (!existingCourse || existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      }
+
+      // Check if course has any enrollments
+      const hasEnrollments = existingCourse.schedules?.some(schedule => 
+        schedule.enrollments && schedule.enrollments.length > 0
+      );
+      
+      if (hasEnrollments) {
+        return res.status(400).json({ 
+          error: "Cannot delete course with existing enrollments. Archive it instead." 
+        });
+      }
+
+      await storage.deleteCourse(courseId);
+      res.json({ message: "Course deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting course:", error);
+      res.status(500).json({ error: "Failed to delete course: " + error.message });
+    }
+  });
+
   // Event creation endpoint (creates course schedules) - MOVED UP
   app.post("/api/instructor/events", isAuthenticated, async (req: any, res) => {
     try {
