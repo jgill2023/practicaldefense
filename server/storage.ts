@@ -308,7 +308,7 @@ export class DatabaseStorage implements IStorage {
       .filter(e => e.paymentStatus === 'deposit')
       .reduce((sum, e) => {
         const price = parseFloat(e.course?.price || '0');
-        const depositAmount = parseFloat(e.course?.depositAmount || '0');
+        const depositAmount = 50; // Default deposit amount or get from course settings
         return sum + (price - depositAmount);
       }, 0);
 

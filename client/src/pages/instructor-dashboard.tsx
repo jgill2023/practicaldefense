@@ -28,6 +28,19 @@ export default function InstructorDashboard() {
     retry: false,
   });
 
+  // Fetch dashboard statistics
+  const { data: dashboardStats, isLoading: statsLoading } = useQuery<{
+    upcomingCourses: number;
+    pastCourses: number;
+    allStudents: number;
+    totalRevenue: number;
+    outstandingRevenue: number;
+  }>({
+    queryKey: ["/api/instructor/dashboard-stats"],
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    retry: false,
+  });
+
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || (user as User)?.role !== 'instructor')) {
       toast({
@@ -50,14 +63,12 @@ export default function InstructorDashboard() {
     );
   }
 
-  const totalStudents = enrollments.filter(e => e.status === 'confirmed').length;
-  const activeCourses = courses.filter(c => c.isActive).length;
-  const monthlyRevenue = enrollments
-    .filter(e => e.paymentStatus === 'paid' && e.createdAt && new Date(e.createdAt).getMonth() === new Date().getMonth())
-    .reduce((sum, e) => sum + parseFloat(e.course?.price || '0'), 0);
-  const completionRate = enrollments.length > 0 
-    ? Math.round((enrollments.filter(e => e.status === 'completed').length / enrollments.length) * 100)
-    : 0;
+  // Use dashboard statistics from API
+  const upcomingCourses = dashboardStats?.upcomingCourses || 0;
+  const pastCourses = dashboardStats?.pastCourses || 0;
+  const allStudents = dashboardStats?.allStudents || 0;
+  const totalRevenue = dashboardStats?.totalRevenue || 0;
+  const outstandingRevenue = dashboardStats?.outstandingRevenue || 0;
 
   return (
     <Layout>
@@ -92,50 +103,69 @@ export default function InstructorDashboard() {
         </div>
 
         {/* Dashboard Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary" data-testid="text-total-students">{totalStudents}</div>
-              <p className="text-sm text-muted-foreground">Enrolled students</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Courses</CardTitle>
+              <CardTitle className="text-sm font-medium">Upcoming Courses</CardTitle>
               <GraduationCap className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-accent" data-testid="text-active-courses">{activeCourses}</div>
-              <p className="text-sm text-muted-foreground">Currently running</p>
+              <div className="text-3xl font-bold text-primary" data-testid="text-upcoming-courses">
+                {statsLoading ? '...' : upcomingCourses}
+              </div>
+              <p className="text-sm text-muted-foreground">Scheduled events</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+              <CardTitle className="text-sm font-medium">Past Courses</CardTitle>
+              <GraduationCap className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-muted-foreground" data-testid="text-past-courses">
+                {statsLoading ? '...' : pastCourses}
+              </div>
+              <p className="text-sm text-muted-foreground">Completed events</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">All Students</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-accent" data-testid="text-all-students">
+                {statsLoading ? '...' : allStudents}
+              </div>
+              <p className="text-sm text-muted-foreground">Unique students</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-secondary" data-testid="text-monthly-revenue">
-                ${monthlyRevenue.toLocaleString()}
+              <div className="text-3xl font-bold text-success" data-testid="text-total-revenue">
+                {statsLoading ? '...' : `$${totalRevenue.toLocaleString()}`}
               </div>
-              <p className="text-sm text-muted-foreground">This month</p>
+              <p className="text-sm text-muted-foreground">Lifetime earnings</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Outstanding Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-success" data-testid="text-completion-rate">{completionRate}%</div>
-              <p className="text-sm text-muted-foreground">Average completion</p>
+              <div className="text-3xl font-bold text-secondary" data-testid="text-outstanding-revenue">
+                {statsLoading ? '...' : `$${outstandingRevenue.toLocaleString()}`}
+              </div>
+              <p className="text-sm text-muted-foreground">Deposit balance</p>
             </CardContent>
           </Card>
         </div>
