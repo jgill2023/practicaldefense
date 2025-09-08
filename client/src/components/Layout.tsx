@@ -10,11 +10,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const handleLogin = (type: 'student' | 'instructor') => {
-    // Store intended role for after login
-    localStorage.setItem('intended_role', type);
-    window.location.href = '/api/login';
-  };
+  
 
   const handleLogout = () => {
     window.location.href = '/api/logout';
@@ -52,22 +48,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
               
               {!isAuthenticated ? (
-                <>
-                  <Button 
-                    className="bg-accent text-accent-foreground hover:bg-accent/90"
-                    onClick={() => handleLogin('student')}
-                    data-testid="button-student-login"
-                  >
-                    Student Portal
-                  </Button>
-                  <Button 
-                    className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                    onClick={() => handleLogin('instructor')}
-                    data-testid="button-instructor-login"
-                  >
-                    Instructor Login
-                  </Button>
-                </>
+                <Button 
+                  className="bg-accent text-accent-foreground hover:bg-accent/90"
+                  onClick={() => window.location.href = '/api/login'}
+                  data-testid="button-login"
+                >
+                  Login
+                </Button>
               ) : (
                 <div className="flex items-center space-x-4">
                   {user?.role === 'instructor' ? (

@@ -65,10 +65,10 @@ export default function Landing() {
                   size="lg" 
                   variant="outline" 
                   className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
-                  onClick={() => window.location.href = 'tel:+15551234567'}
-                  data-testid="button-contact-instructor"
+                  onClick={() => window.location.href = '/api/login'}
+                  data-testid="button-login"
                 >
-                  Contact Instructor
+                  Login
                 </Button>
               </div>
               
