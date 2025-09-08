@@ -57,7 +57,7 @@ export default function Landing() {
 
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
-          <h1 className="font-bold mb-4 tracking-tight" style={{ fontSize: '40px' }}>
+          <h1 className="font-medium mb-4 tracking-tight" style={{ fontSize: '40px' }}>
             Practical Defense Training
           </h1>
           <p className="font-light mb-12 tracking-wide" style={{ fontSize: '25px' }}>

@@ -10,14 +10,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  
+
 
   const handleLogout = () => {
     window.location.href = '/api/logout';
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background font-noto-sans">
       {/* Header Navigation */}
       <header className="bg-primary shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,12 +25,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* Company name aligned to the left */}
             <div className="flex-shrink-0">
               <Link href="/">
-                <h1 className="text-xl font-bold text-primary-foreground cursor-pointer" data-testid="link-home">
+                <h1 className="text-xl font-normal text-primary-foreground cursor-pointer" data-testid="link-home">
                   Practical Defense Training
                 </h1>
               </Link>
             </div>
-            
+
             {/* Navigation and login aligned to the right */}
             <div className="flex items-center space-x-8">
               <nav className="hidden md:flex space-x-8">
@@ -43,9 +43,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <a href="#our-store" className="text-primary-foreground hover:text-accent transition-colors">Our Store</a>
                 <a href="#contact-us" className="text-primary-foreground hover:text-accent transition-colors">Contact Us</a>
               </nav>
-              
+
               <div className="flex items-center space-x-4">
-              
+
               {!isAuthenticated ? (
                 <Button 
                   className="bg-accent text-accent-foreground hover:bg-accent/90"
@@ -121,7 +121,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 Professional firearms instruction by certified instructors. Serving the local community with safe, comprehensive training programs.
               </p>
             </div>
-            
+
             <div className="space-y-4">
               <h4 className="font-semibold">Courses</h4>
               <div className="space-y-2 text-primary-foreground/80">
@@ -131,7 +131,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <a href="#" className="block hover:text-accent transition-colors">Instructor Certification</a>
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <h4 className="font-semibold">Support</h4>
               <div className="space-y-2 text-primary-foreground/80">
@@ -141,7 +141,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <a href="#" className="block hover:text-accent transition-colors">Terms of Service</a>
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <h4 className="font-semibold">Contact</h4>
               <div className="space-y-2 text-primary-foreground/80">
@@ -160,7 +160,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </div>
-          
+
           <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-primary-foreground/80">
             <p>&copy; 2024 Practical Defense Training. All rights reserved.</p>
           </div>
