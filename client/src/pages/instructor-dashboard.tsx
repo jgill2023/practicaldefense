@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp } from "lucide-react";
-import type { CourseWithSchedules, EnrollmentWithDetails } from "@shared/schema";
+import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 
 export default function InstructorDashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -18,18 +18,18 @@ export default function InstructorDashboard() {
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/courses"],
-    enabled: isAuthenticated && user?.role === 'instructor',
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
   });
 
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/instructor/enrollments"],
-    enabled: isAuthenticated && user?.role === 'instructor',
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
   });
 
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || user?.role !== 'instructor')) {
+    if (!isLoading && (!isAuthenticated || (user as User)?.role !== 'instructor')) {
       toast({
         title: "Unauthorized",
         description: "You need instructor access to view this page. Redirecting...",
@@ -67,17 +67,18 @@ export default function InstructorDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-bold mb-1" data-testid="text-instructor-name">
-                {user?.firstName} {user?.lastName} - Instructor Dashboard
+                {(user as User)?.firstName} {(user as User)?.lastName} - Instructor Dashboard
               </h1>
               <p className="text-primary-foreground/80">Manage your training business efficiently</p>
             </div>
             <div className="flex items-center space-x-4 mt-4 sm:mt-0">
               <Button 
                 className="bg-accent text-accent-foreground hover:bg-accent/90"
-                data-testid="button-create-course"
+                onClick={() => setLocation('/course-management')}
+                data-testid="button-manage-courses"
               >
                 <Plus className="mr-2 h-4 w-4" />
-                New Course
+                Manage Courses
               </Button>
               <Button 
                 className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
