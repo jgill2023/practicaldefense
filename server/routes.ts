@@ -210,49 +210,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Course image upload endpoint
-  app.put("/api/course-images", isAuthenticated, async (req: any, res) => {
-    if (!req.body.courseImageURL) {
-      return res.status(400).json({ error: "courseImageURL is required" });
-    }
-
-    const userId = req.user?.claims?.sub;
-
-    try {
-      const objectStorageService = new ObjectStorageService();
-      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
-        req.body.courseImageURL,
-        {
-          owner: userId,
-          visibility: "public", // Course images should be publicly viewable
-        },
-      );
-
-      res.status(200).json({
-        objectPath: objectPath,
-      });
-    } catch (error) {
-      console.error("Error setting course image:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  // Dashboard statistics endpoint
-  app.get("/api/instructor/dashboard-stats", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user?.claims?.sub;
-      const stats = await storage.getInstructorDashboardStats(userId);
-      res.json(stats);
-    } catch (error: any) {
-      console.error("Error fetching dashboard stats:", error);
-      res.status(500).json({ error: "Failed to fetch dashboard stats: " + error.message });
-    }
-  });
-
-  // Event creation endpoint (creates course schedules)
+  // Event creation endpoint (creates course schedules) - MOVED UP
   app.post("/api/instructor/events", isAuthenticated, async (req: any, res) => {
     try {
-      console.log("Event creation request received:", JSON.stringify(req.body, null, 2));
+      console.log("EVENTS ENDPOINT HIT! Event creation request received:", JSON.stringify(req.body, null, 2));
       
       const userId = req.user?.claims?.sub;
       const eventData = req.body;
@@ -300,6 +261,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: "Failed to create event: " + error.message });
     }
   });
+
+  // Course image upload endpoint
+  app.put("/api/course-images", isAuthenticated, async (req: any, res) => {
+    if (!req.body.courseImageURL) {
+      return res.status(400).json({ error: "courseImageURL is required" });
+    }
+
+    const userId = req.user?.claims?.sub;
+
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        req.body.courseImageURL,
+        {
+          owner: userId,
+          visibility: "public", // Course images should be publicly viewable
+        },
+      );
+
+      res.status(200).json({
+        objectPath: objectPath,
+      });
+    } catch (error) {
+      console.error("Error setting course image:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Dashboard statistics endpoint
+  app.get("/api/instructor/dashboard-stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const stats = await storage.getInstructorDashboardStats(userId);
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard stats: " + error.message });
+    }
+  });
+
+  // Simple test endpoint
+  app.post("/api/instructor/test-events", isAuthenticated, async (req: any, res) => {
+    console.log("TEST ENDPOINT HIT!");
+    res.json({ message: "Test endpoint working!" });
+  });
+
+  // REMOVED DUPLICATE - moved up to position after course creation
 
   app.put("/api/waivers", isAuthenticated, async (req: any, res) => {
     if (!req.body.waiverURL) {
