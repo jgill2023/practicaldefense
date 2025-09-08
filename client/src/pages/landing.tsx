@@ -42,7 +42,7 @@ export default function Landing() {
         {/* Background Image */}
         <div className="absolute inset-0">
           <div 
-            className="w-full h-full bg-cover bg-top bg-gray-800"
+            className="w-full h-full bg-cover bg-top"
             style={{
               backgroundImage: "url('/hero-bg.jpg')",
               backgroundSize: 'cover',
@@ -50,16 +50,14 @@ export default function Landing() {
               backgroundRepeat: 'no-repeat'
             }}
           ></div>
-          {/* Dark overlay for text readability */}
-          <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         </div>
 
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
-          <h1 className="text-5xl lg:text-7xl font-bold mb-4 tracking-tight">
+          <h1 className="font-bold mb-4 tracking-tight" style={{ fontSize: '40px' }}>
             Practical Defense Training
           </h1>
-          <p className="text-2xl lg:text-3xl font-light mb-12 tracking-wide">
+          <p className="font-light mb-12 tracking-wide" style={{ fontSize: '25px' }}>
             You Don't Have To Be Defenseless.
           </p>
           
