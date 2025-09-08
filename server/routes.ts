@@ -249,6 +249,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Event creation endpoint (creates course schedules)
+  app.post("/api/instructor/events", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const eventData = req.body;
+      
+      // Validate required fields
+      if (!eventData.courseId || !eventData.startDate || !eventData.endDate) {
+        return res.status(400).json({ error: "Missing required fields: courseId, startDate, endDate" });
+      }
+
+      // Verify the course belongs to the instructor
+      const course = await storage.getCourse(eventData.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      }
+
+      // Create the course schedule
+      const scheduleData = {
+        courseId: eventData.courseId,
+        startDate: new Date(eventData.startDate),
+        endDate: new Date(eventData.endDate),
+        startTime: eventData.startTime || "09:00",
+        endTime: eventData.endTime || "17:00",
+        location: eventData.location || null,
+        maxSpots: eventData.maxSpots || 20,
+        availableSpots: eventData.availableSpots || eventData.maxSpots || 20,
+        isRecurring: eventData.isRecurring || false,
+        daysOfWeek: eventData.daysOfWeek || null,
+        notes: eventData.notes || null,
+        registrationDeadline: eventData.registrationDeadline ? new Date(eventData.registrationDeadline) : null,
+        enableWaitlist: eventData.enableWaitlist || false,
+        autoConfirm: eventData.autoConfirm || false,
+      };
+
+      const schedule = await storage.createCourseSchedule(scheduleData);
+      res.status(201).json(schedule);
+    } catch (error: any) {
+      console.error("Error creating event:", error);
+      res.status(500).json({ error: "Failed to create event: " + error.message });
+    }
+  });
+
   app.put("/api/waivers", isAuthenticated, async (req: any, res) => {
     if (!req.body.waiverURL) {
       return res.status(400).json({ error: "waiverURL is required" });
