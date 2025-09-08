@@ -43,6 +43,15 @@ export interface IStorage {
   getEnrollmentsByStudent(studentId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByInstructor(instructorId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByCourse(courseId: string): Promise<EnrollmentWithDetails[]>;
+  
+  // Dashboard statistics
+  getInstructorDashboardStats(instructorId: string): Promise<{
+    upcomingCourses: number;
+    pastCourses: number;
+    allStudents: number;
+    totalRevenue: number;
+    outstandingRevenue: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -232,6 +241,84 @@ export class DatabaseStorage implements IStorage {
       orderBy: desc(enrollments.createdAt),
     });
     return enrollmentList;
+  }
+
+  // Dashboard statistics
+  async getInstructorDashboardStats(instructorId: string): Promise<{
+    upcomingCourses: number;
+    pastCourses: number;
+    allStudents: number;
+    totalRevenue: number;
+    outstandingRevenue: number;
+  }> {
+    const now = new Date();
+    
+    // Get all courses for this instructor
+    const instructorCourses = await db.query.courses.findMany({
+      where: eq(courses.instructorId, instructorId),
+      with: {
+        schedules: true,
+      },
+    });
+
+    // Get all enrollments for instructor's courses
+    const allEnrollments = await db.query.enrollments.findMany({
+      with: {
+        course: true,
+        schedule: true,
+        student: true,
+      },
+    });
+
+    // Filter enrollments for this instructor's courses
+    const instructorEnrollments = allEnrollments.filter(e => 
+      e.course && e.course.instructorId === instructorId
+    );
+
+    // Calculate upcoming courses
+    const upcomingCourses = instructorCourses.reduce((count, course) => {
+      const upcomingSchedules = course.schedules.filter(schedule => 
+        schedule.startDate && new Date(schedule.startDate) > now
+      );
+      return count + upcomingSchedules.length;
+    }, 0);
+
+    // Calculate past courses
+    const pastCourses = instructorCourses.reduce((count, course) => {
+      const pastSchedules = course.schedules.filter(schedule => 
+        schedule.endDate && new Date(schedule.endDate) < now
+      );
+      return count + pastSchedules.length;
+    }, 0);
+
+    // Calculate unique students (all students who have enrolled)
+    const uniqueStudentIds = new Set(instructorEnrollments.map(e => e.studentId));
+    const allStudents = uniqueStudentIds.size;
+
+    // Calculate total revenue (all paid enrollments)
+    const totalRevenue = instructorEnrollments
+      .filter(e => e.paymentStatus === 'paid')
+      .reduce((sum, e) => {
+        const price = parseFloat(e.course?.price || '0');
+        return sum + price;
+      }, 0);
+
+    // Calculate outstanding revenue (enrollments with deposit only)
+    const outstandingRevenue = instructorEnrollments
+      .filter(e => e.paymentStatus === 'deposit')
+      .reduce((sum, e) => {
+        const price = parseFloat(e.course?.price || '0');
+        const depositAmount = parseFloat(e.course?.depositAmount || '0');
+        return sum + (price - depositAmount);
+      }, 0);
+
+    return {
+      upcomingCourses,
+      pastCourses,
+      allStudents,
+      totalRevenue,
+      outstandingRevenue,
+    };
   }
 }
 
