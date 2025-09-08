@@ -1,12 +1,8 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import Uppy from "@uppy/core";
-import { DashboardModal } from "@uppy/react";
-import "@uppy/core/dist/style.css";
-import "@uppy/dashboard/dist/style.css";
-import AwsS3 from "@uppy/aws-s3";
-import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Upload } from "lucide-react";
 
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
@@ -15,9 +11,7 @@ interface ObjectUploaderProps {
     method: "PUT";
     url: string;
   }>;
-  onComplete?: (
-    result: UploadResult<Record<string, unknown>, Record<string, unknown>>
-  ) => void;
+  onComplete?: (result: { successful: any[] }) => void;
   buttonClassName?: string;
   children: ReactNode;
 }
@@ -58,36 +52,64 @@ export function ObjectUploader({
   buttonClassName,
   children,
 }: ObjectUploaderProps) {
-  const [showModal, setShowModal] = useState(false);
-  const [uppy] = useState(() =>
-    new Uppy({
-      restrictions: {
-        maxNumberOfFiles,
-        maxFileSize,
-      },
-      autoProceed: false,
-    })
-      .use(AwsS3, {
-        shouldUseMultipart: false,
-        getUploadParameters: onGetUploadParameters,
-      })
-      .on("complete", (result) => {
-        onComplete?.(result);
-      })
-  );
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > maxFileSize) {
+      alert(`File size must be less than ${Math.round(maxFileSize / 1024 / 1024)}MB`);
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const { url } = await onGetUploadParameters();
+      const response = await fetch(url, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      if (response.ok) {
+        onComplete?.({
+          successful: [{ uploadURL: url }]
+        });
+      } else {
+        alert('Upload failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Upload failed. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div>
-      <Button onClick={() => setShowModal(true)} className={buttonClassName}>
-        {children}
-      </Button>
-
-      <DashboardModal
-        uppy={uppy}
-        open={showModal}
-        onRequestClose={() => setShowModal(false)}
-        proudlyDisplayPoweredByUppy={false}
+      <input
+        type="file"
+        id="file-upload"
+        className="hidden"
+        onChange={handleFileUpload}
+        disabled={isUploading}
       />
+      <Button 
+        onClick={() => document.getElementById('file-upload')?.click()} 
+        className={buttonClassName}
+        disabled={isUploading}
+      >
+        {isUploading ? (
+          <div className="animate-spin w-4 h-4 border-2 border-transparent border-t-current rounded-full mr-2" />
+        ) : (
+          <Upload className="mr-2 h-4 w-4" />
+        )}
+        {isUploading ? 'Uploading...' : children}
+      </Button>
     </div>
   );
 }

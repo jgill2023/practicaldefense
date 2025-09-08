@@ -159,8 +159,8 @@ export default function InstructorDashboard() {
                 {courses.slice(0, 5).map(course => {
                   const enrollmentCount = enrollments.filter(e => e.courseId === course.id).length;
                   const nextSchedule = course.schedules
-                    .filter(s => new Date(s.startDate) > new Date())
-                    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
+                    .filter(s => s.startDate && new Date(s.startDate) > new Date())
+                    .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())[0];
                   
                   return (
                     <div key={course.id} className="flex items-center justify-between p-4 bg-muted rounded-lg">
@@ -174,7 +174,7 @@ export default function InstructorDashboard() {
                           </h5>
                           <p className="text-sm text-muted-foreground">
                             {nextSchedule && nextSchedule.startDate 
-                              ? `${new Date(nextSchedule.startDate).toLocaleDateString()} • ${enrollmentCount} students registered`
+                              ? `${new Date(nextSchedule.startDate!).toLocaleDateString()} • ${enrollmentCount} students registered`
                               : `${enrollmentCount} total enrollments`
                             }
                           </p>
