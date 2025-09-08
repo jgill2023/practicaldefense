@@ -9,6 +9,7 @@ import { Layout } from "@/components/Layout";
 import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
 import type { CourseWithSchedules } from "@shared/schema";
+import heroImage from "@assets/MainHeader2AndyOVERLAY_1757359693558.jpg";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
@@ -42,14 +43,16 @@ export default function Landing() {
         {/* Background Image */}
         <div className="absolute inset-0">
           <div 
-            className="w-full h-full bg-cover bg-top"
+            className="w-full h-full bg-cover bg-center"
             style={{
-              backgroundImage: "url('/hero-bg.jpg')",
+              backgroundImage: `url(${heroImage})`,
               backgroundSize: 'cover',
-              backgroundPosition: 'top center',
+              backgroundPosition: 'center center',
               backgroundRepeat: 'no-repeat'
             }}
           ></div>
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-black/40"></div>
         </div>
 
         {/* Content */}
