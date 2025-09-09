@@ -496,6 +496,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         values.push(req.body.notes || null);
       }
       
+      // Handle date fields
+      if (req.body.startDate !== undefined) {
+        updateParts.push(`start_date = $${values.length + 1}`);
+        values.push(req.body.startDate);
+      }
+      if (req.body.endDate !== undefined) {
+        updateParts.push(`end_date = $${values.length + 1}`);
+        values.push(req.body.endDate);
+      }
+      if (req.body.registrationDeadline !== undefined) {
+        updateParts.push(`registration_deadline = $${values.length + 1}`);
+        values.push(req.body.registrationDeadline || null);
+      }
+      if (req.body.waitlistEnabled !== undefined) {
+        updateParts.push(`waitlist_enabled = $${values.length + 1}`);
+        values.push(req.body.waitlistEnabled);
+      }
+      if (req.body.autoConfirmRegistration !== undefined) {
+        updateParts.push(`auto_confirm_registration = $${values.length + 1}`);
+        values.push(req.body.autoConfirmRegistration);
+      }
+      
       // Always update timestamp
       updateParts.push(`updated_at = $${values.length + 1}`);
       values.push(new Date().toISOString());
