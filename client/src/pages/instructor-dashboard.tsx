@@ -117,112 +117,70 @@ export default function InstructorDashboard() {
     archived: [] // Placeholder for archived course types
   };
 
-  // Helper function to render schedule cards for each category  
-  const renderScheduleCards = (categoryName: string, scheduleList: any[]) => {
+  // Helper function to render schedule table for each category  
+  const renderScheduleTable = (categoryName: string, scheduleList: any[]) => {
     if (coursesLoading) {
       return (
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="animate-pulse p-6 bg-muted/20 rounded-lg">
-              <div className="h-6 bg-muted rounded w-2/3 mb-3" />
-              <div className="grid grid-cols-4 gap-4">
-                <div className="h-4 bg-muted rounded" />
-                <div className="h-4 bg-muted rounded" />
-                <div className="h-4 bg-muted rounded" />
-                <div className="h-4 bg-muted rounded" />
-              </div>
-            </div>
-          ))}
+        <div className="animate-pulse">
+          <div className="grid gap-4 p-4" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-4 bg-muted rounded"></div>
+          </div>
         </div>
       );
     }
 
     if (scheduleList.length === 0) {
       return (
-        <div className="text-center py-12 text-muted-foreground">
-          <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
-          <p className="text-lg font-medium mb-2">No {categoryName} events</p>
-          <p className="text-sm">Schedule your first course to get started</p>
+        <div className="text-center py-8 text-muted-foreground">
+          No {categoryName} schedules found
         </div>
       );
     }
 
     return (
-      <div className="space-y-4">
-        {scheduleList.map((schedule) => {
-          const displayDate = schedule.startDate 
-            ? new Date(schedule.startDate).toLocaleDateString('en-US', { 
-                weekday: 'short', 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric' 
-              })
-            : '-';
+      <div className="border rounded-lg">
+        {/* Table Header */}
+        <div className="grid gap-4 p-4 bg-muted/20 font-medium text-sm border-b" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
+          <div>Course</div>
+          <div>Date</div>
+          <div>Students</div>
+          <div>Revenue</div>
+          <div>Status</div>
+          <div>Actions</div>
+        </div>
+        
+        {/* Table Body */}
+        <div className="divide-y">
+          {scheduleList.map((schedule) => {
+            const displayDate = schedule.startDate 
+              ? new Date(schedule.startDate).toLocaleDateString()
+              : '-';
 
-          const enrollmentCount = enrollments.filter(e => e.scheduleId === schedule.id).length;
-          const scheduleEnrollments = enrollments.filter(e => e.scheduleId === schedule.id);
-          
-          // Calculate collected revenue (paid enrollments)
-          const collectedRevenue = scheduleEnrollments
-            .filter(e => e.paymentStatus === 'paid')
-            .reduce((sum, e) => sum + parseFloat(schedule.course.price.toString()), 0);
-          
-          // Calculate outstanding revenue (deposit only enrollments)
-          const outstandingRevenue = scheduleEnrollments
-            .filter(e => e.paymentStatus === 'deposit')
-            .reduce((sum, e) => {
-              const coursePrice = parseFloat(schedule.course.price.toString());
-              const depositAmount = 50; // Default deposit amount
-              return sum + (coursePrice - depositAmount);
-            }, 0);
-          
-          const spotsLeft = schedule.maxSpots ? schedule.maxSpots - enrollmentCount : 'N/A';
+            const enrollmentCount = enrollments.filter(e => e.scheduleId === schedule.id).length;
+            const scheduleRevenue = enrollmentCount * parseFloat(schedule.course.price.toString());
             
-          return (
-            <Card key={schedule.id} className="p-6 hover:shadow-md transition-shadow" data-testid={`schedule-card-${schedule.id}`}>
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-lg text-card-foreground" data-testid={`text-schedule-course-${schedule.id}`}>
-                      {schedule.course.title}
-                    </h3>
-                    {spotsLeft !== 'N/A' && (
-                      <Badge variant="outline" className="text-xs">
-                        {spotsLeft} spots left
-                      </Badge>
-                    )}
+            return (
+              <div key={schedule.id} className="grid gap-4 p-4 hover:bg-muted/20 transition-colors" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
+                <div>
+                  <div className="font-medium text-card-foreground" data-testid={`text-schedule-course-${schedule.id}`}>
+                    {schedule.course.title}
                   </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>{displayDate}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        {schedule.startTime && schedule.endTime 
-                          ? `${schedule.startTime} - ${schedule.endTime}`
-                          : schedule.startTime || 'Time TBD'
-                        }
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span>{enrollmentCount} enrolled</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {schedule.location && (
-                        <>
-                          <span className="h-4 w-4 text-center">📍</span>
-                          <span>{schedule.location}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                  <div className="text-sm text-muted-foreground">{schedule.course.category}</div>
                 </div>
-                
-                <div className="flex items-center gap-2 ml-4">
+                <div className="text-sm">
+                  {displayDate}
+                  {schedule.startTime && (
+                    <div className="text-xs text-muted-foreground">{schedule.startTime}</div>
+                  )}
+                </div>
+                <div className="text-sm">{enrollmentCount}</div>
+                <div className="text-sm font-medium">${scheduleRevenue.toLocaleString()}</div>
+                <div>
                   <Badge variant={
                     categoryName === 'upcoming' ? "default" :
                     categoryName === 'past' ? "secondary" :
@@ -232,7 +190,31 @@ export default function InstructorDashboard() {
                     {categoryName === 'past' && "Completed"}
                     {categoryName === 'cancelled' && "Cancelled"}
                   </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Edit Course Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => setEditingCourse(schedule.course)}
+                    data-testid={`button-edit-schedule-${schedule.id}`}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
                   
+                  {/* View Roster Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => console.log('View roster for schedule', schedule.id)}
+                    data-testid={`button-roster-schedule-${schedule.id}`}
+                  >
+                    <Users className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* More Actions Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -245,21 +227,6 @@ export default function InstructorDashboard() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => setEditingCourse(schedule.course)}
-                        data-testid={`menuitem-edit-schedule-${schedule.id}`}
-                      >
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit Course
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => console.log('View roster for schedule', schedule.id)}
-                        data-testid={`menuitem-roster-schedule-${schedule.id}`}
-                      >
-                        <Users className="mr-2 h-4 w-4" />
-                        View Roster
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => console.log('Unpublish schedule', schedule.id)}
                         data-testid={`menuitem-unpublish-schedule-${schedule.id}`}
@@ -287,25 +254,9 @@ export default function InstructorDashboard() {
                   </DropdownMenu>
                 </div>
               </div>
-              
-              {/* Revenue Section */}
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
-                <div className="text-center">
-                  <div className="text-sm text-muted-foreground mb-1">Collected Revenue</div>
-                  <div className="text-lg font-semibold text-green-600" data-testid={`collected-revenue-${schedule.id}`}>
-                    ${collectedRevenue.toLocaleString()}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-sm text-muted-foreground mb-1">Outstanding Revenue</div>
-                  <div className="text-lg font-semibold text-orange-600" data-testid={`outstanding-revenue-${schedule.id}`}>
-                    ${outstandingRevenue.toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     );
   };
@@ -599,22 +550,19 @@ export default function InstructorDashboard() {
               {/* Schedule Tab Content */}
               <TabsContent value="upcoming" className="mt-0">
                 <div className="py-6">
-                  <h2 className="text-lg font-semibold mb-4 text-foreground">Upcoming Events</h2>
-                  {renderScheduleCards('upcoming', categorizedSchedules.upcoming)}
+                  {renderScheduleTable('upcoming', categorizedSchedules.upcoming)}
                 </div>
               </TabsContent>
 
               <TabsContent value="past" className="mt-0">
                 <div className="py-6">
-                  <h2 className="text-lg font-semibold mb-4 text-foreground">Past Events</h2>
-                  {renderScheduleCards('past', categorizedSchedules.past)}
+                  {renderScheduleTable('past', categorizedSchedules.past)}
                 </div>
               </TabsContent>
 
               <TabsContent value="cancelled" className="mt-0">
                 <div className="py-6">
-                  <h2 className="text-lg font-semibold mb-4 text-foreground">Cancelled Events</h2>
-                  {renderScheduleCards('cancelled', categorizedSchedules.cancelled)}
+                  {renderScheduleTable('cancelled', categorizedSchedules.cancelled)}
                 </div>
               </TabsContent>
             </Tabs>
