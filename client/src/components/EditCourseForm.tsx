@@ -124,7 +124,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
   };
 
   const handleImageUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    if (result.successful.length > 0) {
+    if (result.successful && result.successful.length > 0) {
       const uploadURL = result.successful[0].uploadURL;
       if (uploadURL) {
         try {
