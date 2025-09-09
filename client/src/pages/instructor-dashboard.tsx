@@ -191,7 +191,7 @@ export default function InstructorDashboard() {
                     )}
                     {spotsLeft > 10 && (
                       <Badge variant="secondary" className="text-xs">
-                        Available
+                        {spotsLeft} spots left
                       </Badge>
                     )}
                   </div>
