@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export default function InstructorDashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
   const [showEventForm, setShowEventForm] = useState(false);
   const [showCourseForm, setShowCourseForm] = useState(false);
@@ -54,6 +56,105 @@ export default function InstructorDashboard() {
     queryKey: ["/api/instructor/dashboard-stats"],
     enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
+  });
+
+  // Archive course mutation
+  const archiveCourseMutation = useMutation({
+    mutationFn: async (courseId: string) => {
+      await apiRequest("PATCH", `/api/instructor/courses/${courseId}/archive`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Course Archived",
+        description: "Course has been archived successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Archive Failed",
+        description: "Failed to archive course. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete course mutation
+  const deleteCourseMutation = useMutation({
+    mutationFn: async (courseId: string) => {
+      await apiRequest("DELETE", `/api/instructor/courses/${courseId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Course Deleted",
+        description: "Course has been permanently deleted.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      const errorMessage = error.message.includes('Cannot delete course')
+        ? error.message.split(': ')[1] || 'Cannot delete course with existing data'
+        : 'Failed to delete course. Please try again.';
+      toast({
+        title: "Delete Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Unpublish course mutation
+  const unpublishCourseMutation = useMutation({
+    mutationFn: async (courseId: string) => {
+      await apiRequest("PATCH", `/api/instructor/courses/${courseId}/unpublish`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Course Unpublished",
+        description: "Course has been unpublished successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Unpublish Failed",
+        description: "Failed to unpublish course. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   useEffect(() => {
@@ -398,27 +499,34 @@ export default function InstructorDashboard() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => console.log('Unpublish course', course.title)}
+                        onClick={() => unpublishCourseMutation.mutate(course.id)}
+                        disabled={unpublishCourseMutation.isPending}
                         data-testid={`menuitem-unpublish-${course.id}`}
                       >
                         <EyeOff className="mr-2 h-4 w-4" />
-                        Unpublish
+                        {unpublishCourseMutation.isPending ? 'Unpublishing...' : 'Unpublish'}
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => console.log('Archive course', course.title)}
+                        onClick={() => archiveCourseMutation.mutate(course.id)}
+                        disabled={archiveCourseMutation.isPending}
                         data-testid={`menuitem-archive-${course.id}`}
                       >
                         <Archive className="mr-2 h-4 w-4" />
-                        Archive
+                        {archiveCourseMutation.isPending ? 'Archiving...' : 'Archive'}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onClick={() => console.log('Delete course', course.title)}
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to permanently delete this course? This action cannot be undone.')) {
+                            deleteCourseMutation.mutate(course.id);
+                          }
+                        }}
+                        disabled={deleteCourseMutation.isPending}
                         className="text-destructive"
                         data-testid={`menuitem-delete-${course.id}`}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete Course
+                        {deleteCourseMutation.isPending ? 'Deleting...' : 'Delete Course'}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
