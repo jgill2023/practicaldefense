@@ -50,9 +50,14 @@ export default function CourseManagement() {
   const calendarEvents = useMemo(() => {
     return courses.flatMap(course => 
       course.schedules.map(schedule => {
-        // Parse dates properly - convert Date objects to ISO strings and extract date part
-        const startDateStr = schedule.startDate?.toISOString().split('T')[0]; // Get "2025-09-27"
-        const endDateStr = schedule.endDate?.toISOString().split('T')[0];     // Get "2025-09-28"
+        // Parse dates properly - handle both string and Date formats
+        const startDateStr = schedule.startDate instanceof Date 
+          ? schedule.startDate.toISOString().split('T')[0]
+          : schedule.startDate?.split('T')[0]?.split(' ')[0]; // Handle "2025-09-27 00:00:00" or "2025-09-27T00:00:00Z"
+        
+        const endDateStr = schedule.endDate instanceof Date
+          ? schedule.endDate.toISOString().split('T')[0]
+          : schedule.endDate?.split('T')[0]?.split(' ')[0];
         
         return {
           id: schedule.id,
