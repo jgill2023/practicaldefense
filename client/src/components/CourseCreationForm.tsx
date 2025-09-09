@@ -396,14 +396,6 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
                     maxFileSize={5 * 1024 * 1024} // 5MB
                     onGetUploadParameters={handleGetUploadParameters}
                     onComplete={handleUploadComplete}
-                    onError={(error: any) => {
-                      console.error('ObjectUploader error:', error);
-                      toast({
-                        title: "Upload Error",
-                        description: "Failed to upload image. Please try again.",
-                        variant: "destructive",
-                      });
-                    }}
                     buttonClassName="w-full"
                   >
                     <div className="flex items-center justify-center space-x-2">
