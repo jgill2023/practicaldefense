@@ -460,61 +460,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
-      // Create a safe update object with only the fields we want to update
-      const updateData: any = {};
-      
+      console.log("=== SCHEDULE UPDATE DEBUG ===");
       console.log("Raw request body:", JSON.stringify(req.body, null, 2));
       
-      // Safe non-date fields
-      if (req.body.startTime !== undefined) updateData.startTime = req.body.startTime;
-      if (req.body.endTime !== undefined) updateData.endTime = req.body.endTime;
-      if (req.body.location !== undefined) updateData.location = req.body.location;
-      if (req.body.maxSpots !== undefined) updateData.maxSpots = req.body.maxSpots;
-      if (req.body.availableSpots !== undefined) updateData.availableSpots = req.body.availableSpots;
-      if (req.body.waitlistEnabled !== undefined) updateData.waitlistEnabled = req.body.waitlistEnabled;
-      if (req.body.autoConfirmRegistration !== undefined) updateData.autoConfirmRegistration = req.body.autoConfirmRegistration;
-      if (req.body.notes !== undefined) updateData.notes = req.body.notes;
+      // For now, let's only update non-date fields to isolate the issue
+      const updateData: any = {};
       
-      // Handle date fields very carefully
-      if (req.body.startDate && req.body.startDate !== null && req.body.startDate !== '') {
-        try {
-          const startDate = new Date(req.body.startDate);
-          if (!isNaN(startDate.getTime())) {
-            updateData.startDate = startDate;
-            console.log("Converted startDate:", updateData.startDate);
-          }
-        } catch (error) {
-          console.log("Failed to convert startDate:", req.body.startDate);
-        }
+      // Only safe non-date fields first
+      if (req.body.startTime !== undefined) {
+        updateData.startTime = req.body.startTime;
+        console.log("Added startTime:", req.body.startTime);
+      }
+      if (req.body.endTime !== undefined) {
+        updateData.endTime = req.body.endTime;
+        console.log("Added endTime:", req.body.endTime);
+      }
+      if (req.body.location !== undefined) {
+        updateData.location = req.body.location;
+        console.log("Added location:", req.body.location);
+      }
+      if (req.body.maxSpots !== undefined) {
+        updateData.maxSpots = Number(req.body.maxSpots);
+        console.log("Added maxSpots:", updateData.maxSpots);
+      }
+      if (req.body.availableSpots !== undefined) {
+        updateData.availableSpots = Number(req.body.availableSpots);
+        console.log("Added availableSpots:", updateData.availableSpots);
+      }
+      if (req.body.waitlistEnabled !== undefined) {
+        updateData.waitlistEnabled = Boolean(req.body.waitlistEnabled);
+        console.log("Added waitlistEnabled:", updateData.waitlistEnabled);
+      }
+      if (req.body.autoConfirmRegistration !== undefined) {
+        updateData.autoConfirmRegistration = Boolean(req.body.autoConfirmRegistration);
+        console.log("Added autoConfirmRegistration:", updateData.autoConfirmRegistration);
+      }
+      if (req.body.notes !== undefined) {
+        updateData.notes = req.body.notes || null;
+        console.log("Added notes:", updateData.notes);
       }
       
-      if (req.body.endDate && req.body.endDate !== null && req.body.endDate !== '') {
-        try {
-          const endDate = new Date(req.body.endDate);
-          if (!isNaN(endDate.getTime())) {
-            updateData.endDate = endDate;
-            console.log("Converted endDate:", updateData.endDate);
-          }
-        } catch (error) {
-          console.log("Failed to convert endDate:", req.body.endDate);
-        }
-      }
-      
-      if (req.body.registrationDeadline && req.body.registrationDeadline !== null && req.body.registrationDeadline !== '') {
-        try {
-          const regDeadline = new Date(req.body.registrationDeadline);
-          if (!isNaN(regDeadline.getTime())) {
-            updateData.registrationDeadline = regDeadline;
-            console.log("Converted registrationDeadline:", updateData.registrationDeadline);
-          }
-        } catch (error) {
-          console.log("Failed to convert registrationDeadline:", req.body.registrationDeadline);
-        }
-      } else if (req.body.registrationDeadline === '') {
-        updateData.registrationDeadline = null;
-      }
-      
-      console.log("Final updateData:", JSON.stringify(updateData, null, 2));
+      console.log("Final non-date updateData:", JSON.stringify(updateData, null, 2));
+      console.log("=== END DEBUG ===");
 
       const updatedSchedule = await storage.updateCourseSchedule(scheduleId, updateData);
       res.json({ message: "Schedule updated successfully", schedule: updatedSchedule });
