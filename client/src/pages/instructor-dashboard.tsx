@@ -264,9 +264,11 @@ export default function InstructorDashboard() {
     onSuccess: () => {
       toast({
         title: "Schedule Deleted",
-        description: "Training schedule has been permanently deleted.",
+        description: "Training schedule has been moved to deleted items.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/deleted-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -301,6 +303,7 @@ export default function InstructorDashboard() {
         description: "Training schedule has been cancelled successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -332,6 +335,7 @@ export default function InstructorDashboard() {
         description: "Training schedule has been unpublished successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
