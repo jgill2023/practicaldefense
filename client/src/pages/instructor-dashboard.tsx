@@ -537,15 +537,15 @@ export default function InstructorDashboard() {
     return (
       <div className="overflow-x-auto bg-muted rounded-lg border">
         <div className="min-w-[600px]">
-          <div className="grid grid-cols-6 gap-4 p-3 bg-muted text-sm font-medium text-muted-foreground border-b">
-            <div>Course</div>
-            <div>Next</div>
-            <div>Students</div>
-            <div>Revenue</div>
-            <div>Status</div>
-            <div>Actions</div>
+          <div className="grid p-3 bg-muted text-sm font-medium text-muted-foreground border-b" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
+            <div className="pr-3">Course</div>
+            <div className="px-2">Next</div>
+            <div className="px-2 text-center">Students</div>
+            <div className="px-2 text-right">Revenue</div>
+            <div className="px-2">Status</div>
+            <div className="pl-2 text-right">Actions</div>
           </div>
-          <div className="space-y-3 p-3 bg-background">
+          <div className="bg-background">
             {scheduleList.map((schedule) => {
             const displayDate = schedule.startDate 
               ? formatDateShort(schedule.startDate)
@@ -568,8 +568,8 @@ export default function InstructorDashboard() {
             const outstandingRevenue = pendingEnrollments.length * coursePrice;
 
             return (
-              <div key={schedule.id} className="grid gap-4 p-4 border-b hover:bg-muted/20 transition-colors" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
-                <div className="min-w-0">
+              <div key={schedule.id} className="grid p-4 border-b hover:bg-muted/20 transition-colors" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
+                <div className="min-w-0 pr-3">
                   <div className="font-medium text-card-foreground truncate" data-testid={`text-schedule-course-${schedule.id}`}>
                     {schedule.course.title}
                   </div>
@@ -591,25 +591,25 @@ export default function InstructorDashboard() {
                   )}
 
                 </div>
-                <div className="text-sm">
+                <div className="text-sm px-2">
                   {displayDate}
                   {displayTime !== '-' && (
                     <div className="text-xs text-muted-foreground">{displayTime}</div>
                   )}
                 </div>
-                <div className="text-sm">{enrollmentCount}</div>
-                <div className="text-sm">
+                <div className="text-sm text-center px-2">{enrollmentCount}</div>
+                <div className="text-sm text-right px-2">
                   <div className="font-medium text-emerald-600">${collectedRevenue.toLocaleString()}</div>
                   {outstandingRevenue > 0 && (
                     <div className="text-xs text-amber-600">${outstandingRevenue.toLocaleString()}</div>
                   )}
                 </div>
-                <div>
+                <div className="px-2">
                   <Badge variant={schedule.status === 'cancelled' ? 'destructive' : 'default'} className="text-xs">
                     {schedule.status === 'cancelled' ? 'Cancelled' : 'Active'}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-end gap-1 pl-2">
                     {/* Edit Schedule Button */}
                     <Button
                       variant="ghost"
@@ -729,13 +729,13 @@ export default function InstructorDashboard() {
     return (
       <div className="overflow-x-auto bg-muted rounded-lg border">
         <div className="min-w-[600px]">
-          <div className="grid grid-cols-6 gap-4 p-3 bg-muted text-sm font-medium text-muted-foreground border-b">
-            <div>Course</div>
-            <div>Next</div>
-            <div>Students</div>
-            <div>Revenue</div>
-            <div>Status</div>
-            <div>Actions</div>
+          <div className="grid p-3 bg-muted text-sm font-medium text-muted-foreground border-b" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
+            <div className="pr-3">Course</div>
+            <div className="px-2">Next</div>
+            <div className="px-2 text-center">Students</div>
+            <div className="px-2 text-right">Revenue</div>
+            <div className="px-2">Status</div>
+            <div className="pl-2 text-right">Actions</div>
           </div>
           <div className="divide-y bg-background">
             {courseList.map((course) => {
@@ -751,22 +751,22 @@ export default function InstructorDashboard() {
               const courseRevenue = enrollmentCount * parseFloat(course.price.toString());
 
               return (
-                <div key={course.id} className="grid gap-4 p-4 hover:bg-muted/20 transition-colors" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
-                  <div>
-                    <div className="font-medium text-card-foreground" data-testid={`text-course-name-${course.id}`}>
+                <div key={course.id} className="grid p-4 hover:bg-muted/20 transition-colors border-b" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
+                  <div className="min-w-0 pr-3">
+                    <div className="font-medium text-card-foreground truncate" data-testid={`text-course-name-${course.id}`}>
                       {course.title}
                     </div>
                     <div className="text-sm text-muted-foreground">{course.category}</div>
                   </div>
-                  <div className="text-sm">
+                  <div className="text-sm px-2">
                     {displayDate}
                     {nextSchedule?.startTime && (
                       <div className="text-xs text-muted-foreground">{nextSchedule.startTime}</div>
                     )}
                   </div>
-                  <div className="text-sm">{enrollmentCount}</div>
-                  <div className="text-sm font-medium">${courseRevenue.toLocaleString()}</div>
-                  <div>
+                  <div className="text-sm text-center px-2">{enrollmentCount}</div>
+                  <div className="text-sm font-medium text-right px-2">${courseRevenue.toLocaleString()}</div>
+                  <div className="px-2">
                     <Badge variant={
                       course.isActive ? "default" :
                       categoryName === 'archived' ? "destructive" :
@@ -777,7 +777,7 @@ export default function InstructorDashboard() {
                        "Unpublished"}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-end gap-1 pl-2">
                     {/* Edit Course Button */}
                     <Button
                       variant="ghost"
