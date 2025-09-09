@@ -44,41 +44,42 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <a href="#contact-us" className="text-primary-foreground hover:text-accent transition-colors">Contact Us</a>
               </nav>
 
+              {/* Desktop auth buttons */}
               <div className="hidden md:flex items-center space-x-4">
-
-              {!isAuthenticated ? (
-                <Button 
-                  className="bg-accent text-accent-foreground hover:bg-accent/90"
-                  onClick={() => window.location.href = '/api/login'}
-                  data-testid="button-login"
-                >
-                  Login
-                </Button>
-              ) : (
-                <div className="flex items-center space-x-4">
-                  {(user as any)?.role === 'instructor' ? (
-                    <Link href="/instructor-dashboard">
-                      <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard">
-                        Dashboard
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Link href="/student-portal">
-                      <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-portal">
-                        My Portal
-                      </Button>
-                    </Link>
-                  )}
+                {!isAuthenticated ? (
                   <Button 
-                    variant="outline" 
-                    className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary"
-                    onClick={handleLogout}
-                    data-testid="button-logout"
+                    className="bg-accent text-accent-foreground hover:bg-accent/90"
+                    onClick={() => window.location.href = '/api/login'}
+                    data-testid="button-login"
                   >
-                    Logout
+                    Login
                   </Button>
-                </div>
-              )}
+                ) : (
+                  <>
+                    {(user as any)?.role === 'instructor' ? (
+                      <Link href="/instructor-dashboard">
+                        <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard">
+                          Dashboard
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link href="/student-portal">
+                        <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-portal">
+                          My Portal
+                        </Button>
+                      </Link>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary"
+                      onClick={handleLogout}
+                      data-testid="button-logout"
+                    >
+                      Logout
+                    </Button>
+                  </>
+                )}
+              </div>
 
               {/* Mobile menu button */}
               <button 
@@ -88,7 +89,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
-              </div>
             </div>
           </div>
 
