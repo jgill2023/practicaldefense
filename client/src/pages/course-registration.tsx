@@ -17,6 +17,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Clock, Calendar, User, Upload, DollarSign, FileText, Users } from "lucide-react";
 import type { CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import type { UploadResult } from '@uppy/core';
+import { formatDateSafe } from "@/lib/dateUtils";
 
 export default function CourseRegistration() {
   const [, params] = useRoute("/course-registration/:id");
