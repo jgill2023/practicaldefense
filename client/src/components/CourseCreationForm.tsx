@@ -48,11 +48,12 @@ const courseCategories = [
 ];
 
 interface CourseCreationFormProps {
+  isOpen?: boolean;
+  onClose?: () => void;
   onCourseCreated?: () => void;
 }
 
-export function CourseCreationForm({ onCourseCreated }: CourseCreationFormProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }: CourseCreationFormProps) {
   const [currentTab, setCurrentTab] = useState("basic");
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
   const { toast } = useToast();
@@ -78,7 +79,7 @@ export function CourseCreationForm({ onCourseCreated }: CourseCreationFormProps)
       });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
       onCourseCreated?.();
-      setIsOpen(false);
+      onClose?.();
       form.reset();
       setUploadedImageUrl("");
     },
@@ -137,13 +138,7 @@ export function CourseCreationForm({ onCourseCreated }: CourseCreationFormProps)
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-create-course">
-          <Plus className="mr-2 h-4 w-4" />
-          Create New Course
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
@@ -383,7 +378,7 @@ export function CourseCreationForm({ onCourseCreated }: CourseCreationFormProps)
           </Tabs>
 
           <div className="flex justify-between pt-6 border-t">
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
             <div className="flex space-x-2">
