@@ -272,9 +272,9 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="description">Full Description *</Label>
-                    <div className="border border-input rounded-md overflow-hidden">
+                    <div className="react-quill-wrapper">
                       <ReactQuill
-                        value={form.watch("description")}
+                        value={form.watch("description") || ""}
                         onChange={(content) => form.setValue("description", content)}
                         placeholder="Detailed course description, learning objectives, what students will gain..."
                         modules={{
@@ -292,7 +292,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                           'list', 'bullet', 'blockquote', 'link'
                         ]}
                         theme="snow"
-                        style={{ minHeight: '120px' }}
+                        style={{ minHeight: '200px' }}
                       />
                     </div>
                     {form.formState.errors.description && (
