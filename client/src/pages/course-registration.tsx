@@ -214,7 +214,7 @@ export default function CourseRegistration() {
             <CardTitle>Course Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary mb-1" data-testid="text-course-price">
                   ${course.price}
@@ -227,17 +227,6 @@ export default function CourseRegistration() {
                 </div>
                 <div className="text-sm text-muted-foreground">Duration</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-secondary mb-1" data-testid="text-max-students">
-                  {course.maxStudents}
-                </div>
-                <div className="text-sm text-muted-foreground">Max Students</div>
-              </div>
-              <div className="text-center">
-                <Badge className="text-lg px-3 py-1" data-testid="badge-course-category">
-                  {course.category}
-                </Badge>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -246,46 +235,62 @@ export default function CourseRegistration() {
           {/* Schedule Selection */}
           <Card>
             <CardHeader>
-              <CardTitle>Select Schedule</CardTitle>
+              <CardTitle>Choose Course Date</CardTitle>
             </CardHeader>
             <CardContent>
               {availableSchedules.length > 0 ? (
                 <div className="space-y-4">
-                  {availableSchedules.map((schedule) => (
-                    <div
-                      key={schedule.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                        selectedSchedule?.id === schedule.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                      onClick={() => setSelectedSchedule(schedule)}
-                      data-testid={`schedule-option-${schedule.id}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <div className="flex items-center text-sm">
-                            <Calendar className="mr-2 h-4 w-4 text-accent" />
-                            {new Date(schedule.startDate).toLocaleDateString()} - {new Date(schedule.endDate).toLocaleDateString()}
-                          </div>
-                          {schedule.location && (
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <span className="mr-2">📍</span>
-                              {schedule.location}
+                  <Label htmlFor="schedule">Available Dates *</Label>
+                  <Select onValueChange={(value) => {
+                    const schedule = availableSchedules.find(s => s.id === value);
+                    setSelectedSchedule(schedule || null);
+                  }}>
+                    <SelectTrigger data-testid="select-course-schedule">
+                      <SelectValue placeholder="Select a course date" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableSchedules.map((schedule) => (
+                        <SelectItem key={schedule.id} value={schedule.id}>
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {new Date(schedule.startDate).toLocaleDateString()} - {new Date(schedule.endDate).toLocaleDateString()}
+                              </span>
+                              {schedule.location && (
+                                <span className="text-xs text-muted-foreground">
+                                  📍 {schedule.location}
+                                </span>
+                              )}
                             </div>
-                          )}
+                            <span className="text-xs text-success ml-4">
+                              {schedule.availableSpots} spots left
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedSchedule && (
+                    <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                      <div className="text-sm">
+                        <div className="font-medium text-accent mb-1">Selected Date:</div>
+                        <div className="flex items-center text-muted-foreground">
+                          <Calendar className="mr-2 h-4 w-4 text-accent" />
+                          {new Date(selectedSchedule.startDate).toLocaleDateString()} - {new Date(selectedSchedule.endDate).toLocaleDateString()}
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm font-medium text-success">
-                            {schedule.availableSpots} spots left
+                        {selectedSchedule.location && (
+                          <div className="flex items-center text-muted-foreground mt-1">
+                            <span className="mr-2">📍</span>
+                            {selectedSchedule.location}
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            Click to select
-                          </div>
+                        )}
+                        <div className="flex items-center text-success mt-1">
+                          <Users className="mr-2 h-4 w-4" />
+                          {selectedSchedule.availableSpots} spots available
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8">
