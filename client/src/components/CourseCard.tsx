@@ -13,11 +13,11 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
   // Helper function to safely format date without timezone issues
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
-    // Extract just the date part from ISO string to avoid timezone conversion
+    // Extract just the date part from ISO string and format directly
     const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
     const [year, month, day] = datePart.split('-');
-    const date = new Date(Number(year), Number(month) - 1, Number(day));
-    return date.toLocaleDateString();
+    // Format directly without Date object to avoid timezone issues
+    return `${month}/${day}/${year}`;
   };
 
   // Find the next available schedule
