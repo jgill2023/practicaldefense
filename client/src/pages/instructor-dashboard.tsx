@@ -299,53 +299,42 @@ export default function InstructorDashboard() {
           <div className="p-6">
             {/* Tab-style Navigation */}
             <Tabs defaultValue="active" className="w-full">
-              {/* Custom Tab Header */}
-              <div className="border-b border-border">
-                <div className="flex space-x-8">
-                  <TabsTrigger 
-                    value="active" 
-                    className="flex items-center gap-2 pb-4 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none"
-                    data-testid="tab-active-courses"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded border border-current flex items-center justify-center">
-                        <div className="w-2 h-2 bg-current rounded-sm"></div>
-                      </div>
-                      Active ({categorizedCourses.upcoming.length})
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="archived" 
-                    className="flex items-center gap-2 pb-4 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none"
-                    data-testid="tab-archived-courses"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Archive className="w-4 h-4" />
-                      Archived ({categorizedCourses.archived.length})
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="drafts" 
-                    className="flex items-center gap-2 pb-4 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none"
-                    data-testid="tab-draft-courses"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Eye className="w-4 h-4" />
-                      Drafts ({categorizedCourses.pending.length})
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="deleted" 
-                    className="flex items-center gap-2 pb-4 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none"
-                    data-testid="tab-deleted-courses"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Trash2 className="w-4 h-4" />
-                      Deleted (0)
-                    </div>
-                  </TabsTrigger>
-                </div>
-              </div>
+              <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none justify-start w-full">
+                <TabsTrigger 
+                  value="active" 
+                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
+                  data-testid="tab-active-courses"
+                >
+                  <div className="w-4 h-4 rounded border border-current flex items-center justify-center">
+                    <div className="w-2 h-2 bg-current rounded-sm"></div>
+                  </div>
+                  Active ({categorizedCourses.upcoming.length})
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="archived" 
+                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
+                  data-testid="tab-archived-courses"
+                >
+                  <Archive className="w-4 h-4" />
+                  Archived ({categorizedCourses.archived.length})
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="drafts" 
+                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
+                  data-testid="tab-draft-courses"
+                >
+                  <Eye className="w-4 h-4" />
+                  Drafts ({categorizedCourses.pending.length})
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="deleted" 
+                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
+                  data-testid="tab-deleted-courses"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Deleted (0)
+                </TabsTrigger>
+              </TabsList>
 
               {/* Tab Content */}
               <TabsContent value="active" className="mt-0">
