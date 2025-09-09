@@ -156,6 +156,19 @@ export default function CourseRegistration() {
       waiverUrl,
       status: 'pending',
       paymentStatus: 'pending',
+      // Student information
+      studentInfo: {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        emergencyContact: formData.emergencyContact,
+        specialRequirements: formData.specialRequirements,
+      },
+      // Account creation (for non-authenticated users)
+      accountCreation: !isAuthenticated && formData.createAccount ? {
+        password: formData.password,
+      } : undefined,
     });
   };
 

@@ -163,6 +163,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Course registration endpoint (supports non-authenticated users with account creation)
+  app.post('/api/course-registration', async (req: any, res) => {
+    try {
+      const { studentInfo, accountCreation, ...enrollmentData } = req.body;
+
+      let studentId;
+
+      // If user is authenticated, use their existing account
+      if (req.isAuthenticated()) {
+        studentId = req.user.claims.sub;
+      } else {
+        // Handle non-authenticated registration
+        if (accountCreation && accountCreation.password) {
+          // Create new user account
+          try {
+            const existingUser = await storage.getUserByEmail(studentInfo.email);
+            if (existingUser) {
+              return res.status(400).json({ 
+                message: "An account with this email already exists. Please log in instead." 
+              });
+            }
+
+            const newUser = await storage.upsertUser({
+              email: studentInfo.email,
+              firstName: studentInfo.firstName,
+              lastName: studentInfo.lastName,
+              role: 'student',
+            });
+            studentId = newUser.id;
+
+            // TODO: Store password securely (would need to implement password hashing)
+            // For now, we'll create the account without password since we're using Replit Auth
+            
+          } catch (error) {
+            console.error("Error creating user account:", error);
+            return res.status(500).json({ message: "Failed to create user account" });
+          }
+        } else {
+          // Create a temporary user record for guest registration
+          try {
+            const tempUser = await storage.upsertUser({
+              email: studentInfo.email,
+              firstName: studentInfo.firstName,
+              lastName: studentInfo.lastName,
+              role: 'student',
+            });
+            studentId = tempUser.id;
+          } catch (error) {
+            console.error("Error creating temporary user:", error);
+            return res.status(500).json({ message: "Failed to create user record" });
+          }
+        }
+      }
+
+      // Create enrollment with the determined student ID
+      const validatedData = insertEnrollmentSchema.parse({
+        ...enrollmentData,
+        studentId,
+      });
+
+      const enrollment = await storage.createEnrollment(validatedData);
+      res.status(201).json(enrollment);
+    } catch (error) {
+      console.error("Error in course registration:", error);
+      res.status(500).json({ message: "Failed to complete registration" });
+    }
+  });
+
   app.get('/api/student/enrollments', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
