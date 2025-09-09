@@ -123,7 +123,7 @@ export default function InstructorDashboard() {
     return (
       <div className="overflow-x-auto">
         {/* Table Header */}
-        <div className="grid grid-cols-6 gap-4 p-4 border-b bg-muted/30 text-sm font-medium text-muted-foreground">
+        <div className="grid gap-4 p-4 border-b bg-muted/30 text-sm font-medium text-muted-foreground" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
           <div>Course</div>
           <div>Date</div>
           <div>Students</div>
@@ -152,7 +152,7 @@ export default function InstructorDashboard() {
             const courseRevenue = enrollmentCount * parseFloat(course.price.toString());
             
             return (
-              <div key={course.id} className="grid grid-cols-6 gap-4 p-4 hover:bg-muted/20 transition-colors">
+              <div key={course.id} className="grid gap-4 p-4 hover:bg-muted/20 transition-colors" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
                 <div>
                   <div className="font-medium text-card-foreground" data-testid={`text-course-name-${course.id}`}>
                     {course.title}
