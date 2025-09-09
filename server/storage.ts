@@ -35,6 +35,7 @@ export interface IStorage {
   
   // Course schedule operations
   createCourseSchedule(schedule: InsertCourseSchedule): Promise<CourseSchedule>;
+  duplicateCourseSchedule(scheduleId: string): Promise<CourseSchedule>;
   updateCourseSchedule(id: string, schedule: Partial<InsertCourseSchedule>): Promise<CourseSchedule>;
   deleteCourseSchedule(id: string): Promise<CourseSchedule>;
   permanentlyDeleteCourseSchedule(id: string): Promise<void>;
@@ -222,6 +223,34 @@ export class DatabaseStorage implements IStorage {
     const [newSchedule] = await db
       .insert(courseSchedules)
       .values(schedule)
+      .returning();
+    return newSchedule;
+  }
+
+  async duplicateCourseSchedule(scheduleId: string): Promise<CourseSchedule> {
+    // Get the original schedule
+    const originalSchedule = await this.getCourseSchedule(scheduleId);
+    if (!originalSchedule) {
+      throw new Error('Schedule not found');
+    }
+
+    // Create a duplicate schedule with similar data but no start date set
+    const duplicateData: InsertCourseSchedule = {
+      courseId: originalSchedule.courseId,
+      startDate: originalSchedule.startDate, // Keep the same date initially
+      endDate: originalSchedule.endDate,
+      startTime: originalSchedule.startTime,
+      endTime: originalSchedule.endTime,
+      location: originalSchedule.location,
+      maxStudents: originalSchedule.maxStudents,
+      availableSpots: originalSchedule.maxStudents, // Reset to max capacity
+      isPublished: false, // Start as draft
+      registrationDeadline: originalSchedule.registrationDeadline,
+    };
+
+    const [newSchedule] = await db
+      .insert(courseSchedules)
+      .values(duplicateData)
       .returning();
     return newSchedule;
   }

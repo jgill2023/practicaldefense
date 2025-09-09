@@ -267,6 +267,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Duplicate schedule endpoint
+  app.post("/api/instructor/schedules/:scheduleId/duplicate", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const scheduleId = req.params.scheduleId;
+
+      // Get the schedule and verify it belongs to the instructor's course
+      const schedule = await storage.getCourseSchedule(scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ error: "Schedule not found" });
+      }
+
+      const course = await storage.getCourse(schedule.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
+      }
+
+      const duplicatedSchedule = await storage.duplicateCourseSchedule(scheduleId);
+      res.json({ message: "Schedule duplicated successfully", schedule: duplicatedSchedule });
+    } catch (error: any) {
+      console.error("Error duplicating schedule:", error);
+      res.status(500).json({ error: "Failed to duplicate schedule: " + error.message });
+    }
+  });
+
   // Archive course endpoint (soft delete - sets archived flag)
   app.patch("/api/instructor/courses/:courseId/archive", isAuthenticated, async (req: any, res) => {
     try {
