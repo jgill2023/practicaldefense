@@ -2,7 +2,7 @@ import { useState, lazy, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { Save, Clock, Target, FileText, ImageIcon } from "lucide-react";
-import type { CourseWithSchedules } from "@shared/schema";
+import type { CourseWithSchedules, Category } from "@shared/schema";
 import type { UploadResult } from "@uppy/core";
 
 // Lazy load ReactQuill to avoid SSR issues
@@ -38,18 +38,6 @@ const courseSchema = z.object({
 
 type CourseFormData = z.infer<typeof courseSchema>;
 
-const courseCategories = [
-  "Basic Firearms Safety",
-  "Concealed Carry",
-  "Advanced Marksmanship",
-  "Tactical Training",
-  "Hunter Safety",
-  "Competition Shooting",
-  "Self-Defense",
-  "Law Enforcement",
-  "Military Training",
-  "Instructor Development",
-];
 
 interface EditCourseFormProps {
   course: CourseWithSchedules;
@@ -63,6 +51,11 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>(course.imageUrl || "");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch categories from API
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['/api/categories'],
+  });
 
   const form = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
@@ -215,9 +208,17 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {courseCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
+                        {categories
+                          .filter(category => category.isActive)
+                          .map((category) => (
+                          <SelectItem key={category.id} value={category.name}>
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: category.color || '#3b82f6' }}
+                              />
+                              {category.name}
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
