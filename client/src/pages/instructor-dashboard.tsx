@@ -320,7 +320,7 @@ export default function InstructorDashboard() {
         {/* Table Header */}
         <div className="grid gap-4 p-4 border-b bg-muted/30 text-sm font-medium text-muted-foreground" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
           <div>Course</div>
-          <div>Date</div>
+          <div>Next Course</div>
           <div>Students</div>
           <div>Revenue</div>
           <div>Status</div>
@@ -334,15 +334,14 @@ export default function InstructorDashboard() {
             const nextSchedule = course.schedules
               .filter(s => s.startDate && new Date(s.startDate) > new Date())
               .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())[0];
-            const lastSchedule = course.schedules
-              .filter(s => s.startDate && new Date(s.startDate) <= new Date())
-              .sort((a, b) => new Date(b.startDate!).getTime() - new Date(a.startDate!).getTime())[0];
             
-            const displayDate = categoryName === 'upcoming' && nextSchedule?.startDate
-              ? new Date(nextSchedule.startDate).toLocaleDateString()
-              : categoryName === 'past' && lastSchedule?.startDate
-              ? new Date(lastSchedule.startDate).toLocaleDateString()
-              : '-';
+            const displayDate = nextSchedule?.startDate
+              ? new Date(nextSchedule.startDate).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                })
+              : 'No upcoming courses';
 
             const courseRevenue = enrollmentCount * parseFloat(course.price.toString());
             
@@ -356,7 +355,7 @@ export default function InstructorDashboard() {
                 </div>
                 <div className="text-sm">
                   {displayDate}
-                  {nextSchedule?.startTime && categoryName === 'upcoming' && (
+                  {nextSchedule?.startTime && (
                     <div className="text-xs text-muted-foreground">{nextSchedule.startTime}</div>
                   )}
                 </div>
