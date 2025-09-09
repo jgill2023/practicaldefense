@@ -45,11 +45,7 @@ export function CategoryManagement() {
 
   const createCategoryMutation = useMutation({
     mutationFn: (data: InsertCategory) =>
-      apiRequest('/api/categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      }),
+      apiRequest('POST', '/api/categories', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
       setIsCreateDialogOpen(false);
@@ -70,11 +66,7 @@ export function CategoryManagement() {
 
   const updateCategoryMutation = useMutation({
     mutationFn: (data: { id: string; updates: Partial<InsertCategory> }) =>
-      apiRequest(`/api/categories/${data.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data.updates),
-      }),
+      apiRequest('PUT', `/api/categories/${data.id}`, data.updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
       setEditingCategory(null);
@@ -95,9 +87,7 @@ export function CategoryManagement() {
 
   const deleteCategoryMutation = useMutation({
     mutationFn: (id: string) =>
-      apiRequest(`/api/categories/${id}`, {
-        method: 'DELETE',
-      }),
+      apiRequest('DELETE', `/api/categories/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
       toast({
