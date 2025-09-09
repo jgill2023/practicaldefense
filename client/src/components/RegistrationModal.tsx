@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Clock, Users, DollarSign, X } from "lucide-react";
 import type { CourseWithSchedules } from "@shared/schema";
+import { formatDateSafe } from "@/lib/dateUtils";
 
 interface RegistrationModalProps {
   course: CourseWithSchedules;
@@ -108,7 +109,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
                   <Calendar className="mr-2 h-4 w-4 text-accent" />
                   <div>
                     <div className="font-medium" data-testid="text-modal-start-date">
-                      {new Date(nextSchedule.startDate).toLocaleDateString()}
+                      {formatDateSafe(nextSchedule.startDate)}
                     </div>
                     <div className="text-muted-foreground text-xs">Start Date</div>
                   </div>

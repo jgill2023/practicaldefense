@@ -24,6 +24,7 @@ import { CourseCreationForm } from "@/components/CourseCreationForm";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
+import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 
 export default function InstructorDashboard() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -423,11 +424,7 @@ export default function InstructorDashboard() {
       <div className="space-y-3">
         {scheduleList.map((schedule) => {
           const displayDate = schedule.startDate 
-            ? new Date(schedule.startDate).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric', 
-                year: 'numeric'
-              })
+            ? formatDateShort(schedule.startDate)
             : '-';
           
           const displayTime = schedule.startTime && schedule.endTime 
@@ -619,11 +616,7 @@ export default function InstructorDashboard() {
               .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())[0];
             
             const displayDate = nextSchedule?.startDate
-              ? new Date(nextSchedule.startDate).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric'
-                })
+              ? formatDateShort(nextSchedule.startDate)
               : 'NONE';
 
             const courseRevenue = enrollmentCount * parseFloat(course.price.toString());
@@ -913,13 +906,13 @@ export default function InstructorDashboard() {
                                   {schedule.course?.title || 'Unknown Course'}
                                 </h3>
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                                  <span>{new Date(schedule.startDate).toLocaleDateString()}</span>
+                                  <span>{formatDateSafe(schedule.startDate)}</span>
                                   <span>{schedule.startTime} - {schedule.endTime}</span>
                                   {schedule.location && <span>{schedule.location}</span>}
                                 </div>
                                 <Badge variant="destructive" className="mb-2">Deleted</Badge>
                                 <p className="text-sm text-muted-foreground">
-                                  Deleted on {schedule.deletedAt ? new Date(schedule.deletedAt).toLocaleDateString() : 'Unknown'}
+                                  Deleted on {schedule.deletedAt ? formatDateSafe(schedule.deletedAt) : 'Unknown'}
                                 </p>
                               </div>
                               <div className="ml-4">
@@ -1072,7 +1065,7 @@ export default function InstructorDashboard() {
                                 </div>
                                 <Badge variant="destructive" className="mb-2">Deleted</Badge>
                                 <p className="text-sm text-muted-foreground">
-                                  Deleted on {course.deletedAt ? new Date(course.deletedAt).toLocaleDateString() : 'Unknown'}
+                                  Deleted on {course.deletedAt ? formatDateSafe(course.deletedAt) : 'Unknown'}
                                 </p>
                               </div>
                               <div className="ml-4">
