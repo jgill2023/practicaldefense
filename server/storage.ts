@@ -131,6 +131,14 @@ export class DatabaseStorage implements IStorage {
       where: eq(courses.instructorId, instructorId),
       with: {
         schedules: {
+          with: {
+            enrollments: {
+              with: {
+                student: true,
+              },
+            },
+            waitlistEntries: true,
+          },
           orderBy: asc(courseSchedules.startDate),
         },
         instructor: true,
