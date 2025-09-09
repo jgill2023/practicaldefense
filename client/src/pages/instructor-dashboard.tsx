@@ -8,10 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { CourseManagementActions } from "@/components/CourseManagementActions";
 import { EditCourseForm } from "@/components/EditCourseForm";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2 } from "lucide-react";
+import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 
 export default function InstructorDashboard() {
@@ -180,11 +187,67 @@ export default function InstructorDashboard() {
                     {categoryName === 'archived' && "Archived"}
                   </Badge>
                 </div>
-                <div>
-                  <CourseManagementActions 
-                    course={course}
-                    onEditCourse={(course) => setEditingCourse(course)}
-                  />
+                <div className="flex items-center gap-2">
+                  {/* Edit Course Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => setEditingCourse(course)}
+                    data-testid={`button-edit-course-${course.id}`}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* View Roster Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => console.log('View roster for', course.title)}
+                    data-testid={`button-roster-course-${course.id}`}
+                  >
+                    <Users className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* More Actions Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                        data-testid={`button-more-actions-${course.id}`}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => console.log('Unpublish course', course.title)}
+                        data-testid={`menuitem-unpublish-${course.id}`}
+                      >
+                        <EyeOff className="mr-2 h-4 w-4" />
+                        Unpublish
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => console.log('Archive course', course.title)}
+                        data-testid={`menuitem-archive-${course.id}`}
+                      >
+                        <Archive className="mr-2 h-4 w-4" />
+                        Archive
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => console.log('Delete course', course.title)}
+                        className="text-destructive"
+                        data-testid={`menuitem-delete-${course.id}`}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Course
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             );
