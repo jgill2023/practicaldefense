@@ -337,15 +337,13 @@ export default function InstructorDashboard() {
                 <div className="text-sm font-medium">${courseRevenue.toLocaleString()}</div>
                 <div>
                   <Badge variant={
-                    categoryName === 'upcoming' ? "default" :
-                    categoryName === 'past' ? "secondary" :
-                    categoryName === 'pending' ? "outline" :
-                    "destructive"
+                    course.isActive ? "default" :
+                    categoryName === 'archived' ? "destructive" :
+                    "outline"
                   } className="text-xs">
-                    {categoryName === 'upcoming' && "Active"}
-                    {categoryName === 'past' && "Completed"}
-                    {categoryName === 'pending' && "Draft"}
-                    {categoryName === 'archived' && "Archived"}
+                    {course.isActive ? "Active" : 
+                     categoryName === 'archived' ? "Archived" : 
+                     "Unpublished"}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
