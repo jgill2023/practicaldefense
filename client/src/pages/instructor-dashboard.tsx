@@ -20,7 +20,7 @@ import { EditCourseForm } from "@/components/EditCourseForm";
 import { EventCreationForm } from "@/components/EventCreationForm";
 import { CourseCreationForm } from "@/components/CourseCreationForm";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus } from "lucide-react";
+import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 
 export default function InstructorDashboard() {
@@ -117,18 +117,19 @@ export default function InstructorDashboard() {
     archived: [] // Placeholder for archived course types
   };
 
-  // Helper function to render schedule table for each category  
-  const renderScheduleTable = (categoryName: string, scheduleList: any[]) => {
+  // Helper function to render schedule cards for each category  
+  const renderScheduleCards = (categoryName: string, scheduleList: any[]) => {
     if (coursesLoading) {
       return (
-        <div className="animate-pulse">
-          <div className="grid gap-4 p-4" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
-            <div className="h-4 bg-muted rounded"></div>
-            <div className="h-4 bg-muted rounded"></div>
-            <div className="h-4 bg-muted rounded"></div>
-            <div className="h-4 bg-muted rounded"></div>
-            <div className="h-4 bg-muted rounded"></div>
-            <div className="h-4 bg-muted rounded"></div>
+        <div className="animate-pulse space-y-3">
+          <div className="bg-card border rounded-lg p-4">
+            <div className="space-y-3">
+              <div className="h-6 bg-muted rounded w-3/4"></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="h-4 bg-muted rounded"></div>
+                <div className="h-4 bg-muted rounded"></div>
+              </div>
+            </div>
           </div>
         </div>
       );
@@ -137,60 +138,99 @@ export default function InstructorDashboard() {
     if (scheduleList.length === 0) {
       return (
         <div className="text-center py-8 text-muted-foreground">
-          No {categoryName} schedules found
+          No {categoryName} training sessions
         </div>
       );
     }
 
     return (
-      <div className="border rounded-lg">
-        {/* Table Header */}
-        <div className="grid gap-4 p-4 bg-muted/20 font-medium text-sm border-b" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
-          <div>Course</div>
-          <div>Date</div>
-          <div>Students</div>
-          <div>Revenue</div>
-          <div>Status</div>
-          <div>Actions</div>
-        </div>
-        
-        {/* Table Body */}
-        <div className="divide-y">
-          {scheduleList.map((schedule) => {
-            const displayDate = schedule.startDate 
-              ? new Date(schedule.startDate).toLocaleDateString()
-              : '-';
+      <div className="space-y-3">
+        {scheduleList.map((schedule) => {
+          const displayDate = schedule.startDate 
+            ? new Date(schedule.startDate).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric', 
+                year: 'numeric'
+              })
+            : '-';
+          
+          const displayTime = schedule.startTime && schedule.endTime 
+            ? `${schedule.startTime.slice(0,5)} - ${schedule.endTime.slice(0,5)}`
+            : '-';
 
-            const enrollmentCount = enrollments.filter(e => e.scheduleId === schedule.id).length;
-            const scheduleRevenue = enrollmentCount * parseFloat(schedule.course.price.toString());
-            
-            return (
-              <div key={schedule.id} className="grid gap-4 p-4 hover:bg-muted/20 transition-colors" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
-                <div>
-                  <div className="font-medium text-card-foreground" data-testid={`text-schedule-course-${schedule.id}`}>
-                    {schedule.course.title}
+          const scheduleEnrollments = enrollments.filter(e => e.scheduleId === schedule.id);
+          const enrollmentCount = scheduleEnrollments.length;
+          const spotsLeft = schedule.availableSpots;
+          
+          // Revenue calculations
+          const coursePrice = parseFloat(schedule.course.price.toString());
+          const paidEnrollments = scheduleEnrollments.filter(e => e.paymentStatus === 'paid');
+          const pendingEnrollments = scheduleEnrollments.filter(e => e.paymentStatus === 'pending');
+          
+          const collectedRevenue = paidEnrollments.length * coursePrice;
+          const outstandingRevenue = pendingEnrollments.length * coursePrice;
+          
+          return (
+            <div key={schedule.id} className="bg-card border rounded-lg p-4 hover:shadow-sm transition-shadow">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 space-y-3">
+                  {/* Course title and spots left */}
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-medium text-card-foreground" data-testid={`text-schedule-course-${schedule.id}`}>
+                      {schedule.course.title}
+                    </h3>
+                    {spotsLeft <= 10 && spotsLeft > 0 && (
+                      <Badge variant="destructive" className="text-xs">
+                        {spotsLeft} spots left
+                      </Badge>
+                    )}
+                    {spotsLeft === 0 && (
+                      <Badge variant="destructive" className="text-xs">
+                        Full
+                      </Badge>
+                    )}
+                    {spotsLeft > 10 && (
+                      <Badge variant="secondary" className="text-xs">
+                        Available
+                      </Badge>
+                    )}
                   </div>
-                  <div className="text-sm text-muted-foreground">{schedule.course.category}</div>
+                  
+                  {/* Course details in a compact layout */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      <span>{displayDate}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      <span>{displayTime}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Users className="h-4 w-4" />
+                      <span>{enrollmentCount} enrolled</span>
+                    </div>
+                    {schedule.location && (
+                      <div className="flex items-center gap-1 col-span-2 lg:col-span-1">
+                        <span className="truncate">{schedule.location}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Revenue information */}
+                  <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                    <div>
+                      <div className="text-xs text-muted-foreground">Collected Revenue</div>
+                      <div className="font-medium text-emerald-600">${collectedRevenue.toLocaleString()}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Outstanding Revenue</div>
+                      <div className="font-medium text-amber-600">${outstandingRevenue.toLocaleString()}</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-sm">
-                  {displayDate}
-                  {schedule.startTime && (
-                    <div className="text-xs text-muted-foreground">{schedule.startTime}</div>
-                  )}
-                </div>
-                <div className="text-sm">{enrollmentCount}</div>
-                <div className="text-sm font-medium">${scheduleRevenue.toLocaleString()}</div>
-                <div>
-                  <Badge variant={
-                    categoryName === 'upcoming' ? "default" :
-                    categoryName === 'past' ? "secondary" :
-                    "destructive"
-                  } className="text-xs">
-                    {categoryName === 'upcoming' && "Scheduled"}
-                    {categoryName === 'past' && "Completed"}
-                    {categoryName === 'cancelled' && "Cancelled"}
-                  </Badge>
-                </div>
+                
+                {/* Actions */}
                 <div className="flex items-center gap-2">
                   {/* Edit Course Button */}
                   <Button
@@ -254,9 +294,9 @@ export default function InstructorDashboard() {
                   </DropdownMenu>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -550,19 +590,19 @@ export default function InstructorDashboard() {
               {/* Schedule Tab Content */}
               <TabsContent value="upcoming" className="mt-0">
                 <div className="py-6">
-                  {renderScheduleTable('upcoming', categorizedSchedules.upcoming)}
+                  {renderScheduleCards('upcoming', categorizedSchedules.upcoming)}
                 </div>
               </TabsContent>
 
               <TabsContent value="past" className="mt-0">
                 <div className="py-6">
-                  {renderScheduleTable('past', categorizedSchedules.past)}
+                  {renderScheduleCards('past', categorizedSchedules.past)}
                 </div>
               </TabsContent>
 
               <TabsContent value="cancelled" className="mt-0">
                 <div className="py-6">
-                  {renderScheduleTable('cancelled', categorizedSchedules.cancelled)}
+                  {renderScheduleCards('cancelled', categorizedSchedules.cancelled)}
                 </div>
               </TabsContent>
             </Tabs>
