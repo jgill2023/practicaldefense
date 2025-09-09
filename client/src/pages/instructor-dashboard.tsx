@@ -178,6 +178,44 @@ export default function InstructorDashboard() {
     },
   });
 
+  // Duplicate schedule mutation
+  const duplicateScheduleMutation = useMutation({
+    mutationFn: async (scheduleId: string) => {
+      const response = await apiRequest("POST", `/api/instructor/schedules/${scheduleId}/duplicate`);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Schedule Duplicated",
+        description: "Schedule has been duplicated successfully. Opening edit form...",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      
+      // Open edit form for the newly duplicated schedule
+      setTimeout(() => {
+        setEditingSchedule(data.schedule);
+      }, 500);
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Duplication Failed",
+        description: "Failed to duplicate schedule. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Unpublish course mutation
   const unpublishCourseMutation = useMutation({
     mutationFn: async (courseId: string) => {
@@ -550,6 +588,18 @@ export default function InstructorDashboard() {
                     data-testid={`button-roster-schedule-${schedule.id}`}
                   >
                     <Users className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Duplicate Schedule Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => duplicateScheduleMutation.mutate(schedule.id)}
+                    disabled={duplicateScheduleMutation.isPending}
+                    data-testid={`button-duplicate-schedule-${schedule.id}`}
+                  >
+                    <Copy className="h-4 w-4" />
                   </Button>
                   
                   {/* More Actions Dropdown */}
