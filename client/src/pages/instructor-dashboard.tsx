@@ -536,19 +536,20 @@ export default function InstructorDashboard() {
 
     return (
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Course</th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Date</th>
-              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Students</th>
-              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Revenue</th>
-              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Status</th>
-              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {scheduleList.map((schedule) => {
+        <div className="max-h-96 overflow-y-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Course</th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Date</th>
+                <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Students</th>
+                <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Revenue</th>
+                <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Status</th>
+                <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {scheduleList.map((schedule) => {
             const displayDate = schedule.startDate 
               ? formatDateShort(schedule.startDate)
               : '-';
@@ -669,8 +670,9 @@ export default function InstructorDashboard() {
               </tr>
             );
             })}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   };
@@ -704,19 +706,20 @@ export default function InstructorDashboard() {
 
     return (
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Course</th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Date</th>
-              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Students</th>
-              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Revenue</th>
-              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Status</th>
-              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {courseList.map((course) => {
+        <div className="max-h-96 overflow-y-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Course</th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Date</th>
+                <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Students</th>
+                <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Revenue</th>
+                <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Status</th>
+                <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {courseList.map((course) => {
               const enrollmentCount = enrollments.filter(e => e.courseId === course.id).length;
               const nextSchedule = course.schedules
                 .filter(s => s.startDate && new Date(s.startDate) > new Date())
@@ -812,8 +815,9 @@ export default function InstructorDashboard() {
                 </tr>
               );
             })}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   };
