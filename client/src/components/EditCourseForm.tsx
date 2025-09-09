@@ -285,17 +285,28 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                           placeholder="Detailed course description, learning objectives, what students will gain..."
                           modules={{
                             toolbar: [
-                              [{ 'header': [1, 2, 3, false] }],
-                              ['bold', 'italic', 'underline'],
-                              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                              ['blockquote'],
-                              ['link'],
+                              [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                              [{ 'font': [] }],
+                              [{ 'size': ['small', false, 'large', 'huge'] }],
+                              ['bold', 'italic', 'underline', 'strike'],
+                              [{ 'color': [] }, { 'background': [] }],
+                              [{ 'script': 'sub'}, { 'script': 'super' }],
+                              [{ 'align': [] }],
+                              [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'indent': '-1'}, { 'indent': '+1' }],
+                              ['blockquote', 'code-block'],
+                              ['link', 'image'],
                               ['clean']
                             ]
                           }}
                           formats={[
-                            'header', 'bold', 'italic', 'underline', 
-                            'list', 'bullet', 'blockquote', 'link'
+                            'header', 'font', 'size',
+                            'bold', 'italic', 'underline', 'strike', 
+                            'color', 'background',
+                            'script',
+                            'align',
+                            'list', 'bullet', 'indent',
+                            'blockquote', 'code-block',
+                            'link', 'image'
                           ]}
                           theme="snow"
                           style={{ minHeight: '200px' }}
