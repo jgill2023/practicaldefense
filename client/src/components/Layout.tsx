@@ -58,20 +58,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <div className="flex items-center space-x-4">
                   {user?.role === 'instructor' ? (
                     <Link href="/instructor-dashboard">
-                      <Button variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard">
+                      <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard">
                         Dashboard
                       </Button>
                     </Link>
                   ) : (
                     <Link href="/student-portal">
-                      <Button variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary" data-testid="link-student-portal">
+                      <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-portal">
                         My Portal
                       </Button>
                     </Link>
                   )}
                   <Button 
                     variant="outline" 
-                    className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
+                    className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary"
                     onClick={handleLogout}
                     data-testid="button-logout"
                   >
