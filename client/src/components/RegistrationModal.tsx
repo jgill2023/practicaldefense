@@ -21,7 +21,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
 
   // Find the next available schedule
   const nextSchedule = course.schedules
-    .filter(schedule => new Date(schedule.startDate) > new Date())
+    .filter(schedule => !schedule.deletedAt && new Date(schedule.startDate) > new Date())
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
 
   const handleRegister = () => {

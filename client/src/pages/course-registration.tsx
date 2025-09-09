@@ -195,7 +195,10 @@ export default function CourseRegistration() {
   }
 
   const availableSchedules = course.schedules.filter(
-    schedule => new Date(schedule.startDate) > new Date() && schedule.availableSpots > 0
+    schedule => 
+      !schedule.deletedAt && // Exclude deleted schedules
+      new Date(schedule.startDate) > new Date() && 
+      schedule.availableSpots > 0
   );
 
   return (
