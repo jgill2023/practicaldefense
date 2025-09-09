@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -23,8 +23,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon, Clock, MapPin, Users, Calendar as CalendarLucide } from "lucide-react";
 import type { CourseSchedule } from "@shared/schema";
 
@@ -39,7 +39,6 @@ const scheduleFormSchema = z.object({
   registrationDeadline: z.string().optional(),
   waitlistEnabled: z.boolean(),
   autoConfirmRegistration: z.boolean(),
-  notes: z.string().optional(),
 });
 
 type ScheduleFormData = z.infer<typeof scheduleFormSchema>;
@@ -51,27 +50,50 @@ interface EditScheduleFormProps {
   onScheduleUpdated?: () => void;
 }
 
+// Generate time options in 15-minute increments from 6:00 AM to 8:00 PM
+const generateTimeOptions = () => {
+  const times = [];
+  for (let hour = 6; hour <= 20; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      const displayTime = new Date(`2000-01-01T${timeStr}`).toLocaleTimeString([], { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      });
+      times.push({ value: timeStr, label: displayTime });
+    }
+  }
+  return times;
+};
+
 export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated }: EditScheduleFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const timeOptions = generateTimeOptions();
 
   const form = useForm<ScheduleFormData>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: {
       startDate: schedule?.startDate ? 
-        (schedule.startDate.includes('T') ? schedule.startDate.split('T')[0] : schedule.startDate) : '',
+        (typeof schedule.startDate === 'string' 
+          ? (schedule.startDate.includes('T') ? schedule.startDate.split('T')[0] : schedule.startDate)
+          : schedule.startDate.toISOString().split('T')[0]) : '',
       endDate: schedule?.endDate ? 
-        (schedule.endDate.includes('T') ? schedule.endDate.split('T')[0] : schedule.endDate) : '',
+        (typeof schedule.endDate === 'string' 
+          ? (schedule.endDate.includes('T') ? schedule.endDate.split('T')[0] : schedule.endDate)
+          : schedule.endDate.toISOString().split('T')[0]) : '',
       startTime: schedule?.startTime || '',
       endTime: schedule?.endTime || '',
       location: schedule?.location || '',
       maxSpots: schedule?.maxSpots || 20,
       availableSpots: schedule?.availableSpots || 20,
       registrationDeadline: schedule?.registrationDeadline ? 
-        (schedule.registrationDeadline.includes('T') ? schedule.registrationDeadline.split('T')[0] : schedule.registrationDeadline) : '',
+        (typeof schedule.registrationDeadline === 'string' 
+          ? (schedule.registrationDeadline.includes('T') ? schedule.registrationDeadline.split('T')[0] : schedule.registrationDeadline)
+          : schedule.registrationDeadline.toISOString().split('T')[0]) : '',
       waitlistEnabled: schedule?.waitlistEnabled ?? true,
       autoConfirmRegistration: schedule?.autoConfirmRegistration ?? true,
-      notes: schedule?.notes || '',
     },
   });
 
@@ -86,7 +108,6 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
         availableSpots: data.availableSpots,
         waitlistEnabled: data.waitlistEnabled,
         autoConfirmRegistration: data.autoConfirmRegistration,
-        notes: data.notes || null,
         startDate: data.startDate, // Send as string, server will convert
         endDate: data.endDate, // Send as string, server will convert
         registrationDeadline: data.registrationDeadline || null, // Send as string or null
@@ -122,6 +143,15 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
       });
     },
   });
+
+  // Watch start date and automatically set end date
+  const startDate = form.watch("startDate");
+  
+  useEffect(() => {
+    if (startDate) {
+      form.setValue("endDate", startDate);
+    }
+  }, [startDate, form]);
 
   const onSubmit = (data: ScheduleFormData) => {
     updateScheduleMutation.mutate(data);
@@ -183,9 +213,20 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Start Time *</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} data-testid="input-start-time" />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-start-time">
+                            <SelectValue placeholder="Select start time" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {timeOptions.map((time) => (
+                            <SelectItem key={time.value} value={time.value}>
+                              {time.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -197,9 +238,20 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>End Time *</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} data-testid="input-end-time" />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-end-time">
+                            <SelectValue placeholder="Select end time" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {timeOptions.map((time) => (
+                            <SelectItem key={time.value} value={time.value}>
+                              {time.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -360,30 +412,6 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
               </div>
             </div>
 
-            {/* Notes Section */}
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Session Notes</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Add any specific notes for this training session..."
-                        className="min-h-[80px]"
-                        {...field}
-                        data-testid="textarea-notes"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Any special instructions or notes for this specific session
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-3 pt-4 border-t">
