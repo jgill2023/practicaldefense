@@ -341,7 +341,7 @@ export default function InstructorDashboard() {
                   day: 'numeric',
                   year: 'numeric'
                 })
-              : 'No upcoming courses';
+              : 'NONE';
 
             const courseRevenue = enrollmentCount * parseFloat(course.price.toString());
             
