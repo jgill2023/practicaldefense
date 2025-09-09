@@ -463,25 +463,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("=== SCHEDULE UPDATE DEBUG ===");
       console.log("Raw request body:", JSON.stringify(req.body, null, 2));
       
-      // Get current schedule to see what we're working with
-      console.log("Current schedule data:", JSON.stringify(schedule, null, 2));
+      // Try using raw SQL to bypass Drizzle's type conversion issues
+      const { db } = await import("./db");
+      const { sql } = await import("drizzle-orm");
       
-      // Let's try updating just one simple field to start
-      const updateData: any = {
-        // Always set updatedAt as a proper Date object
-        updatedAt: new Date(),
-      };
+      // Build a safe SQL update query manually
+      const updateParts = [];
+      const values = [];
       
-      // Only add one simple non-date field for testing
       if (req.body.location !== undefined) {
-        updateData.location = req.body.location;
-        console.log("Added location:", req.body.location);
+        updateParts.push("location = $" + (values.length + 1));
+        values.push(req.body.location);
+      }
+      if (req.body.startTime !== undefined) {
+        updateParts.push("start_time = $" + (values.length + 1));
+        values.push(req.body.startTime);
+      }
+      if (req.body.endTime !== undefined) {
+        updateParts.push("end_time = $" + (values.length + 1));
+        values.push(req.body.endTime);
+      }
+      if (req.body.maxSpots !== undefined) {
+        updateParts.push("max_spots = $" + (values.length + 1));
+        values.push(Number(req.body.maxSpots));
+      }
+      if (req.body.availableSpots !== undefined) {
+        updateParts.push("available_spots = $" + (values.length + 1));
+        values.push(Number(req.body.availableSpots));
+      }
+      if (req.body.notes !== undefined) {
+        updateParts.push("notes = $" + (values.length + 1));
+        values.push(req.body.notes || null);
       }
       
-      console.log("Minimal updateData:", JSON.stringify(updateData, null, 2));
-      console.log("=== END DEBUG ===");
-
-      const updatedSchedule = await storage.updateCourseSchedule(scheduleId, updateData);
+      // Always update the updated_at timestamp
+      updateParts.push("updated_at = $" + (values.length + 1));
+      values.push(new Date().toISOString());
+      
+      if (updateParts.length === 1) { // Only updatedAt
+        return res.status(400).json({ error: "No fields to update" });
+      }
+      
+      const updateQuery = `
+        UPDATE course_schedules 
+        SET ${updateParts.join(", ")}
+        WHERE id = $${values.length + 1}
+        RETURNING *
+      `;
+      values.push(scheduleId);
+      
+      console.log("SQL Query:", updateQuery);
+      console.log("Values:", values);
+      
+      const result = await db.execute(sql.raw(updateQuery, values));
+      console.log("Update result:", result);
+      
+      const updatedSchedule = result.rows[0];
       res.json({ message: "Schedule updated successfully", schedule: updatedSchedule });
     } catch (error: any) {
       console.error("Error updating schedule:", error);
