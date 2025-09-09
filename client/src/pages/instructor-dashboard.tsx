@@ -1048,28 +1048,29 @@ export default function InstructorDashboard() {
                     <div className="grid gap-6">
                       {deletedSchedules.map((schedule: any) => (
                         <Card key={schedule.id} className="border border-destructive/20 bg-destructive/5">
-                          <CardContent className="p-6">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-lg mb-2" data-testid={`text-schedule-title-${schedule.id}`}>
+                          <CardContent className="p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-lg mb-2 truncate" data-testid={`text-schedule-title-${schedule.id}`}>
                                   {schedule.course?.title || 'Unknown Course'}
                                 </h3>
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                                  <span>{formatDateSafe(schedule.startDate)}</span>
-                                  <span>{schedule.startTime} - {schedule.endTime}</span>
-                                  {schedule.location && <span>{schedule.location}</span>}
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
+                                  <span className="whitespace-nowrap">{formatDateSafe(schedule.startDate)}</span>
+                                  <span className="whitespace-nowrap">{schedule.startTime} - {schedule.endTime}</span>
+                                  {schedule.location && <span className="truncate">{schedule.location}</span>}
                                 </div>
                                 <Badge variant="destructive" className="mb-2">Deleted</Badge>
                                 <p className="text-sm text-muted-foreground">
                                   Deleted on {schedule.deletedAt ? formatDateSafe(schedule.deletedAt) : 'Unknown'}
                                 </p>
                               </div>
-                              <div className="ml-4">
+                              <div className="flex-shrink-0 w-full sm:w-auto">
                                 <Button
                                   onClick={() => openDeleteConfirmation('schedule', schedule.id, `${schedule.course.title} - ${formatDateSafe(schedule.startDate)}`)}
                                   variant="destructive"
                                   size="sm"
                                   disabled={permanentDeleteScheduleMutation.isPending}
+                                  className="w-full sm:w-auto"
                                   data-testid={`button-permanent-delete-schedule-${schedule.id}`}
                                 >
                                   <Trash2 className="w-4 h-4 mr-2" />
@@ -1200,29 +1201,30 @@ export default function InstructorDashboard() {
                     <div className="grid gap-6">
                       {deletedCourses.map((course) => (
                         <Card key={course.id} className="border border-destructive/20 bg-destructive/5">
-                          <CardContent className="p-6">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <h3 className="font-semibold text-lg mb-2" data-testid={`text-course-title-${course.id}`}>
+                          <CardContent className="p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-lg mb-2 truncate" data-testid={`text-course-title-${course.id}`}>
                                   {course.title}
                                 </h3>
-                                <p className="text-muted-foreground mb-4">{course.briefDescription || course.description}</p>
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                                  <span>${course.price}</span>
-                                  <span>{course.duration}</span>
-                                  <span>{course.category}</span>
+                                <p className="text-muted-foreground mb-4 line-clamp-2">{course.briefDescription || course.description}</p>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
+                                  <span className="whitespace-nowrap">${course.price}</span>
+                                  <span className="whitespace-nowrap">{course.duration}</span>
+                                  <span className="whitespace-nowrap">{course.category}</span>
                                 </div>
                                 <Badge variant="destructive" className="mb-2">Deleted</Badge>
                                 <p className="text-sm text-muted-foreground">
                                   Deleted on {course.deletedAt ? formatDateSafe(course.deletedAt) : 'Unknown'}
                                 </p>
                               </div>
-                              <div className="ml-4">
+                              <div className="flex-shrink-0 w-full sm:w-auto">
                                 <Button
                                   onClick={() => openDeleteConfirmation('course', course.id, course.title)}
                                   variant="destructive"
                                   size="sm"
                                   disabled={permanentDeleteCourseMutation.isPending}
+                                  className="w-full sm:w-auto"
                                   data-testid={`button-permanent-delete-course-${course.id}`}
                                 >
                                   <Trash2 className="w-4 h-4 mr-2" />
