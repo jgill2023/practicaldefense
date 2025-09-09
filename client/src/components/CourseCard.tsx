@@ -10,6 +10,16 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course, onRegister }: CourseCardProps) {
+  // Helper function to safely format date without timezone issues
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    // Extract just the date part from ISO string to avoid timezone conversion
+    const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+    const [year, month, day] = datePart.split('-');
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+    return date.toLocaleDateString();
+  };
+
   // Find the next available schedule
   const nextSchedule = course.schedules
     .filter(schedule => new Date(schedule.startDate) > new Date())
@@ -75,7 +85,7 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
               <div className="flex items-center text-sm text-muted-foreground">
                 <Calendar className="mr-2 h-4 w-4 text-accent" />
                 <span data-testid={`text-next-date-${course.id}`}>
-                  Next: {new Date(nextSchedule.startDate).toLocaleDateString()}
+                  Next: {formatDate(nextSchedule.startDate)}
                 </span>
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
