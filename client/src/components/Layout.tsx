@@ -97,11 +97,50 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="md:hidden border-t border-primary-foreground/20 py-4">
               <nav className="flex flex-col space-y-2">
                 <a href="#schedule" className="text-primary-foreground hover:text-accent transition-colors py-2">Schedule</a>
-                <a href="#courses" className="text-primary-foreground hover:text-accent transition-colors py-2">Courses</a>
+                <Link href="/#courses" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-courses-mobile">
+                  Courses
+                </Link>
                 <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors py-2">About Us</a>
                 <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors py-2">Resources</a>
                 <a href="#our-store" className="text-primary-foreground hover:text-accent transition-colors py-2">Our Store</a>
                 <a href="#contact-us" className="text-primary-foreground hover:text-accent transition-colors py-2">Contact Us</a>
+                
+                {/* Mobile auth buttons */}
+                <div className="border-t border-primary-foreground/20 mt-2 pt-2 space-y-2">
+                  {!isAuthenticated ? (
+                    <Button 
+                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                      onClick={() => window.location.href = '/api/login'}
+                      data-testid="button-login-mobile"
+                    >
+                      Login
+                    </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      {user?.role === 'instructor' ? (
+                        <Link href="/instructor-dashboard" className="block">
+                          <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard-mobile">
+                            Dashboard
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Link href="/student-portal" className="block">
+                          <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-portal-mobile">
+                            My Portal
+                          </Button>
+                        </Link>
+                      )}
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary"
+                        onClick={handleLogout}
+                        data-testid="button-logout-mobile"
+                      >
+                        Logout
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </nav>
             </div>
           )}
