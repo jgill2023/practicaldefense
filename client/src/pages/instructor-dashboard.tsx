@@ -81,26 +81,183 @@ export default function InstructorDashboard() {
   const totalRevenue = dashboardStats?.totalRevenue || 0;
   const outstandingRevenue = dashboardStats?.outstandingRevenue || 0;
 
-  // Categorize courses based on their status and schedules
-  const categorizedCourses = {
-    upcoming: courses.filter(course => {
-      if (!course.isActive) return false;
-      return course.schedules.some(schedule => 
-        schedule.startDate && new Date(schedule.startDate) > new Date()
-      );
-    }),
-    past: courses.filter(course => {
-      if (!course.isActive) return false;
-      return course.schedules.length > 0 && 
-        course.schedules.every(schedule => 
-          schedule.startDate && new Date(schedule.startDate) <= new Date()
-        );
-    }),
-    pending: courses.filter(course => !course.isActive),
-    archived: [] // No archived functionality yet, show empty for now
+  // Get all schedules from all courses and categorize them
+  const allSchedules = courses.flatMap(course => 
+    course.schedules.map(schedule => ({
+      ...schedule,
+      course
+    }))
+  );
+
+  // Categorize schedules by status and date
+  const categorizedSchedules = {
+    upcoming: allSchedules.filter(schedule => 
+      schedule.course.isActive && 
+      schedule.startDate && 
+      new Date(schedule.startDate) > new Date()
+    ).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()),
+    
+    past: allSchedules.filter(schedule => 
+      schedule.course.isActive && 
+      schedule.startDate && 
+      new Date(schedule.startDate) <= new Date()
+    ).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()),
+    
+    cancelled: [] // Placeholder for cancelled schedules
   };
 
-  // Helper function to render course table for each category
+  // Categorize course types (unique courses)
+  const categorizedCourseTypes = {
+    active: courses.filter(course => course.isActive),
+    drafts: courses.filter(course => !course.isActive),
+    archived: [] // Placeholder for archived course types
+  };
+
+  // Helper function to render schedule table for each category  
+  const renderScheduleTable = (categoryName: string, scheduleList: any[]) => {
+    if (coursesLoading) {
+      return (
+        <div className="animate-pulse">
+          <div className="grid gap-4 p-4" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-4 bg-muted rounded"></div>
+          </div>
+        </div>
+      );
+    }
+
+    if (scheduleList.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          No {categoryName} schedules found
+        </div>
+      );
+    }
+
+    return (
+      <div className="border rounded-lg">
+        {/* Table Header */}
+        <div className="grid gap-4 p-4 bg-muted/20 font-medium text-sm border-b" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
+          <div>Course</div>
+          <div>Date</div>
+          <div>Students</div>
+          <div>Revenue</div>
+          <div>Status</div>
+          <div>Actions</div>
+        </div>
+        
+        {/* Table Body */}
+        <div className="divide-y">
+          {scheduleList.map((schedule) => {
+            const displayDate = schedule.startDate 
+              ? new Date(schedule.startDate).toLocaleDateString()
+              : '-';
+
+            const enrollmentCount = enrollments.filter(e => e.scheduleId === schedule.id).length;
+            const scheduleRevenue = enrollmentCount * parseFloat(schedule.course.price.toString());
+            
+            return (
+              <div key={schedule.id} className="grid gap-4 p-4 hover:bg-muted/20 transition-colors" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
+                <div>
+                  <div className="font-medium text-card-foreground" data-testid={`text-schedule-course-${schedule.id}`}>
+                    {schedule.course.title}
+                  </div>
+                  <div className="text-sm text-muted-foreground">{schedule.course.category}</div>
+                </div>
+                <div className="text-sm">
+                  {displayDate}
+                  {schedule.startTime && (
+                    <div className="text-xs text-muted-foreground">{schedule.startTime}</div>
+                  )}
+                </div>
+                <div className="text-sm">{enrollmentCount}</div>
+                <div className="text-sm font-medium">${scheduleRevenue.toLocaleString()}</div>
+                <div>
+                  <Badge variant={
+                    categoryName === 'upcoming' ? "default" :
+                    categoryName === 'past' ? "secondary" :
+                    "destructive"
+                  } className="text-xs">
+                    {categoryName === 'upcoming' && "Scheduled"}
+                    {categoryName === 'past' && "Completed"}
+                    {categoryName === 'cancelled' && "Cancelled"}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Edit Course Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => setEditingCourse(schedule.course)}
+                    data-testid={`button-edit-schedule-${schedule.id}`}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* View Roster Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => console.log('View roster for schedule', schedule.id)}
+                    data-testid={`button-roster-schedule-${schedule.id}`}
+                  >
+                    <Users className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* More Actions Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                        data-testid={`button-more-schedule-${schedule.id}`}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => console.log('Unpublish schedule', schedule.id)}
+                        data-testid={`menuitem-unpublish-schedule-${schedule.id}`}
+                      >
+                        <EyeOff className="mr-2 h-4 w-4" />
+                        Unpublish
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => console.log('Cancel schedule', schedule.id)}
+                        data-testid={`menuitem-cancel-schedule-${schedule.id}`}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Cancel
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => console.log('Delete schedule', schedule.id)}
+                        className="text-destructive"
+                        data-testid={`menuitem-delete-schedule-${schedule.id}`}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Schedule
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Helper function to render course types table for each category
   const renderCourseTable = (categoryName: string, courseList: CourseWithSchedules[]) => {
     if (coursesLoading) {
       return (
@@ -197,17 +354,6 @@ export default function InstructorDashboard() {
                     data-testid={`button-edit-course-${course.id}`}
                   >
                     <Edit className="h-4 w-4" />
-                  </Button>
-                  
-                  {/* View Roster Button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                    onClick={() => console.log('View roster for', course.title)}
-                    data-testid={`button-roster-course-${course.id}`}
-                  >
-                    <Users className="h-4 w-4" />
                   </Button>
                   
                   {/* More Actions Dropdown */}
@@ -357,10 +503,64 @@ export default function InstructorDashboard() {
           </Card>
         </div>
 
-        {/* Course Management Section */}
+        {/* Schedule Management Section */}
+        <div className="bg-card rounded-lg border mb-8">
+          <div className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Schedule</h2>
+            <Tabs defaultValue="upcoming" className="w-full">
+              <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none justify-start w-full">
+                <TabsTrigger 
+                  value="upcoming" 
+                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
+                  data-testid="tab-upcoming-schedules"
+                >
+                  <Clock className="w-4 h-4" />
+                  Upcoming ({categorizedSchedules.upcoming.length})
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="past" 
+                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
+                  data-testid="tab-past-schedules"
+                >
+                  <Archive className="w-4 h-4" />
+                  Past ({categorizedSchedules.past.length})
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="cancelled" 
+                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
+                  data-testid="tab-cancelled-schedules"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Cancelled ({categorizedSchedules.cancelled.length})
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Schedule Tab Content */}
+              <TabsContent value="upcoming" className="mt-0">
+                <div className="py-6">
+                  {renderScheduleTable('upcoming', categorizedSchedules.upcoming)}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="past" className="mt-0">
+                <div className="py-6">
+                  {renderScheduleTable('past', categorizedSchedules.past)}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="cancelled" className="mt-0">
+                <div className="py-6">
+                  {renderScheduleTable('cancelled', categorizedSchedules.cancelled)}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+
+        {/* Course Types Section */}
         <div className="bg-card rounded-lg border">
           <div className="p-6">
-            {/* Tab-style Navigation */}
+            <h2 className="text-xl font-semibold mb-4">Active Course Types</h2>
             <Tabs defaultValue="active" className="w-full">
               <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none justify-start w-full">
                 <TabsTrigger 
@@ -369,7 +569,7 @@ export default function InstructorDashboard() {
                   data-testid="tab-active-courses"
                 >
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  Active ({categorizedCourses.upcoming.length})
+                  Active ({categorizedCourseTypes.active.length})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="archived" 
@@ -377,7 +577,7 @@ export default function InstructorDashboard() {
                   data-testid="tab-archived-courses"
                 >
                   <Archive className="w-4 h-4" />
-                  Archived ({categorizedCourses.archived.length})
+                  Archived ({categorizedCourseTypes.archived.length})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="drafts" 
@@ -385,7 +585,7 @@ export default function InstructorDashboard() {
                   data-testid="tab-draft-courses"
                 >
                   <Eye className="w-4 h-4" />
-                  Drafts ({categorizedCourses.pending.length})
+                  Drafts ({categorizedCourseTypes.drafts.length})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="deleted" 
@@ -404,7 +604,7 @@ export default function InstructorDashboard() {
                     <div className="w-4 h-4 bg-green-500 rounded-full"></div>
                     Active Courses
                   </h2>
-                  {renderCourseTable('upcoming', categorizedCourses.upcoming)}
+                  {renderCourseTable('active', categorizedCourseTypes.active)}
                 </div>
               </TabsContent>
 
@@ -414,7 +614,7 @@ export default function InstructorDashboard() {
                     <Archive className="w-5 h-5" />
                     Archived Courses
                   </h2>
-                  {renderCourseTable('archived', categorizedCourses.archived)}
+                  {renderCourseTable('archived', categorizedCourseTypes.archived)}
                 </div>
               </TabsContent>
 
@@ -424,8 +624,8 @@ export default function InstructorDashboard() {
                     <Eye className="w-5 h-5" />
                     Draft Courses
                   </h2>
-                  {renderCourseTable('pending', categorizedCourses.pending)}
-                  {categorizedCourses.pending.length === 0 && !coursesLoading && (
+                  {renderCourseTable('drafts', categorizedCourseTypes.drafts)}
+                  {categorizedCourseTypes.drafts.length === 0 && !coursesLoading && (
                     <div className="mt-6 text-center">
                       <Button 
                         onClick={() => setLocation('/course-management')}
