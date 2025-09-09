@@ -9,6 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +38,11 @@ export default function InstructorDashboard() {
   const [editingSchedule, setEditingSchedule] = useState<any | null>(null);
   const [showEventForm, setShowEventForm] = useState(false);
   const [showCourseForm, setShowCourseForm] = useState(false);
+  
+  // Permanent deletion confirmation states
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<{type: 'course' | 'schedule', id: string, title: string} | null>(null);
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/courses"],
@@ -408,6 +416,27 @@ export default function InstructorDashboard() {
       });
     },
   });
+
+  // Helper function to open delete confirmation dialog
+  const openDeleteConfirmation = (type: 'course' | 'schedule', id: string, title: string) => {
+    setDeleteTarget({ type, id, title });
+    setDeleteConfirmText('');
+    setShowDeleteConfirm(true);
+  };
+
+  // Handle permanent deletion confirmation
+  const handleDeleteConfirmation = () => {
+    if (deleteConfirmText === 'DELETE' && deleteTarget) {
+      if (deleteTarget.type === 'course') {
+        permanentDeleteCourseMutation.mutate(deleteTarget.id);
+      } else {
+        permanentDeleteScheduleMutation.mutate(deleteTarget.id);
+      }
+      setShowDeleteConfirm(false);
+      setDeleteTarget(null);
+      setDeleteConfirmText('');
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || (user as User)?.role !== 'instructor')) {
@@ -1028,7 +1057,7 @@ export default function InstructorDashboard() {
                               </div>
                               <div className="ml-4">
                                 <Button
-                                  onClick={() => permanentDeleteScheduleMutation.mutate(schedule.id)}
+                                  onClick={() => openDeleteConfirmation('schedule', schedule.id, `${schedule.course.title} - ${formatDateSafe(schedule.startDate)}`)}
                                   variant="destructive"
                                   size="sm"
                                   disabled={permanentDeleteScheduleMutation.isPending}
@@ -1181,7 +1210,7 @@ export default function InstructorDashboard() {
                               </div>
                               <div className="ml-4">
                                 <Button
-                                  onClick={() => permanentDeleteCourseMutation.mutate(course.id)}
+                                  onClick={() => openDeleteConfirmation('course', course.id, course.title)}
                                   variant="destructive"
                                   size="sm"
                                   disabled={permanentDeleteCourseMutation.isPending}
@@ -1247,6 +1276,58 @@ export default function InstructorDashboard() {
           // The form handles query invalidation internally
         }}
       />
+
+      {/* Permanent Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">
+              Permanent Deletion Confirmation
+            </DialogTitle>
+            <DialogDescription>
+              You are about to permanently delete{' '}
+              <span className="font-semibold">{deleteTarget?.title}</span>.
+              This action cannot be undone and will permanently remove all data.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="confirmText" className="text-sm font-medium">
+                Type <span className="font-mono font-bold text-red-600">DELETE</span> to confirm:
+              </Label>
+              <Input
+                id="confirmText"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type DELETE to confirm"
+                className="mt-1"
+                autoComplete="off"
+              />
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeleteTarget(null);
+                  setDeleteConfirmText('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteConfirmation}
+                disabled={deleteConfirmText !== 'DELETE' || (deleteTarget?.type === 'course' && permanentDeleteCourseMutation.isPending) || (deleteTarget?.type === 'schedule' && permanentDeleteScheduleMutation.isPending)}
+              >
+                {((deleteTarget?.type === 'course' && permanentDeleteCourseMutation.isPending) || (deleteTarget?.type === 'schedule' && permanentDeleteScheduleMutation.isPending)) ? 'Deleting...' : 'Delete Permanently'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
