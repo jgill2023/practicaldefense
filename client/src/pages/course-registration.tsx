@@ -202,7 +202,7 @@ export default function CourseRegistration() {
     <Layout>
       <div className="max-w-3xl mx-auto px-4 py-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-4" data-testid="text-course-title">
+          <h1 className="text-3xl font-medium text-foreground mb-4" data-testid="text-course-title">
             Register for {course.title}
           </h1>
           <p className="text-muted-foreground">{course.description}</p>
@@ -216,13 +216,13 @@ export default function CourseRegistration() {
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary mb-1" data-testid="text-course-price">
+                <div className="text-xl font-bold text-primary mb-1" data-testid="text-course-price">
                   ${course.price}
                 </div>
                 <div className="text-sm text-muted-foreground">Price</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-accent mb-1" data-testid="text-course-duration">
+                <div className="text-xl font-bold text-accent mb-1" data-testid="text-course-duration">
                   {course.duration}
                 </div>
                 <div className="text-sm text-muted-foreground">Duration</div>
