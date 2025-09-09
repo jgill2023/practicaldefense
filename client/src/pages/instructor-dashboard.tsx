@@ -560,7 +560,17 @@ export default function InstructorDashboard() {
         {/* Course Types Section */}
         <div className="bg-card rounded-lg border">
           <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Active Course Types</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Active Course Types</h2>
+              <Button 
+                onClick={() => setLocation('/course-management')}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                data-testid="button-create-new-course"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Course
+              </Button>
+            </div>
             <Tabs defaultValue="active" className="w-full">
               <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none justify-start w-full">
                 <TabsTrigger 
