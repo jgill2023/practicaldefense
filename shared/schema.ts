@@ -37,6 +37,17 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Course categories table for better organization
+export const categories = pgTable("categories", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  description: text("description"),
+  color: varchar("color", { length: 7 }).default('#3b82f6'), // Hex color for UI
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const courses = pgTable("courses", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   title: varchar("title", { length: 255 }).notNull(),
@@ -44,7 +55,8 @@ export const courses = pgTable("courses", {
   briefDescription: varchar("brief_description", { length: 500 }),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   duration: varchar("duration", { length: 100 }).notNull(),
-  category: varchar("category", { length: 100 }).notNull(),
+  categoryId: uuid("category_id").references(() => categories.id),
+  category: varchar("category", { length: 100 }).notNull(), // Keep for backward compatibility
   // Firearms-specific fields
   classroomTime: varchar("classroom_time", { length: 50 }), // e.g., "4 hours", "2 days"
   rangeTime: varchar("range_time", { length: 50 }), // e.g., "6 hours", "1 day"
