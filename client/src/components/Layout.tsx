@@ -44,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <a href="#contact-us" className="text-primary-foreground hover:text-accent transition-colors">Contact Us</a>
               </nav>
 
-              <div className="flex items-center space-x-4">
+              <div className="hidden md:flex items-center space-x-4">
 
               {!isAuthenticated ? (
                 <Button 
@@ -56,7 +56,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </Button>
               ) : (
                 <div className="flex items-center space-x-4">
-                  {user?.role === 'instructor' ? (
+                  {(user as any)?.role === 'instructor' ? (
                     <Link href="/instructor-dashboard">
                       <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard">
                         Dashboard
@@ -117,7 +117,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </Button>
                   ) : (
                     <div className="space-y-2">
-                      {user?.role === 'instructor' ? (
+                      {(user as any)?.role === 'instructor' ? (
                         <Link href="/instructor-dashboard" className="block">
                           <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard-mobile">
                             Dashboard
