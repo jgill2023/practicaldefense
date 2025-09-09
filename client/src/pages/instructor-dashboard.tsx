@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CourseManagementActions } from "@/components/CourseManagementActions";
 import { EditCourseForm } from "@/components/EditCourseForm";
+import { EventCreationForm } from "@/components/EventCreationForm";
+import { CourseCreationForm } from "@/components/CourseCreationForm";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
@@ -26,6 +28,8 @@ export default function InstructorDashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [showCourseForm, setShowCourseForm] = useState(false);
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/courses"],
@@ -509,7 +513,7 @@ export default function InstructorDashboard() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Schedule</h2>
               <Button 
-                onClick={() => setLocation('/course-management')}
+                onClick={() => setShowEventForm(true)}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 data-testid="button-schedule-course"
               >
@@ -573,7 +577,7 @@ export default function InstructorDashboard() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Active Course Types</h2>
               <Button 
-                onClick={() => setLocation('/course-management')}
+                onClick={() => setShowCourseForm(true)}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 data-testid="button-create-new-course"
               >
@@ -648,7 +652,7 @@ export default function InstructorDashboard() {
                   {categorizedCourseTypes.drafts.length === 0 && !coursesLoading && (
                     <div className="mt-6 text-center">
                       <Button 
-                        onClick={() => setLocation('/course-management')}
+                        onClick={() => setShowCourseForm(true)}
                         data-testid="button-create-course"
                       >
                         <Plus className="mr-2 h-4 w-4" />
@@ -683,6 +687,27 @@ export default function InstructorDashboard() {
           onClose={() => setEditingCourse(null)}
           onCourseUpdated={() => {
             // Course list will automatically refresh via query invalidation
+          }}
+        />
+      )}
+
+      {/* Event Creation Form Modal */}
+      {showEventForm && (
+        <EventCreationForm
+          onClose={() => setShowEventForm(false)}
+          onEventCreated={() => {
+            setShowEventForm(false);
+            // The form handles query invalidation internally
+          }}
+        />
+      )}
+
+      {/* Course Creation Form Modal */}
+      {showCourseForm && (
+        <CourseCreationForm
+          onCourseCreated={() => {
+            setShowCourseForm(false);
+            // The form handles query invalidation internally
           }}
         />
       )}
