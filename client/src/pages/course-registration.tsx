@@ -33,6 +33,10 @@ export default function CourseRegistration() {
     emergencyContact: '',
     specialRequirements: '',
     agreeToTerms: false,
+    // Account creation fields (for non-authenticated users)
+    password: '',
+    confirmPassword: '',
+    createAccount: !isAuthenticated, // Default to true if not authenticated
   });
   const [waiverUrl, setWaiverUrl] = useState<string>('');
 
@@ -98,14 +102,25 @@ export default function CourseRegistration() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isAuthenticated) {
-      toast({
-        title: "Login Required",
-        description: "Please log in to register for courses",
-        variant: "destructive",
-      });
-      window.location.href = '/api/login';
-      return;
+    // Account creation validation for non-authenticated users
+    if (!isAuthenticated && formData.createAccount) {
+      if (!formData.password || formData.password.length < 6) {
+        toast({
+          title: "Password Required",
+          description: "Password must be at least 6 characters long",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (formData.password !== formData.confirmPassword) {
+        toast({
+          title: "Password Mismatch",
+          description: "Passwords do not match",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     if (!selectedSchedule) {
@@ -345,6 +360,75 @@ export default function CourseRegistration() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Account Creation (for non-authenticated users) */}
+          {!isAuthenticated && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <User className="mr-2 h-5 w-5" />
+                  Create Your Account
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Create a secure account to complete your registration and track your training progress.
+                </p>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="createAccount"
+                    checked={formData.createAccount}
+                    onCheckedChange={(checked) => 
+                      setFormData(prev => ({ ...prev, createAccount: checked as boolean }))
+                    }
+                    data-testid="checkbox-create-account"
+                  />
+                  <Label htmlFor="createAccount" className="text-sm font-medium">
+                    Create an account for me (recommended)
+                  </Label>
+                </div>
+
+                {formData.createAccount && (
+                  <div className="space-y-4 pl-6 border-l-2 border-primary/20">
+                    <div>
+                      <Label htmlFor="password">Password *</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                        placeholder="Minimum 6 characters"
+                        required={formData.createAccount}
+                        data-testid="input-password"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                        placeholder="Confirm your password"
+                        required={formData.createAccount}
+                        data-testid="input-confirm-password"
+                      />
+                    </div>
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p>Benefits of creating an account:</p>
+                      <ul className="list-disc list-inside space-y-1 ml-2">
+                        <li>Track your training progress</li>
+                        <li>View certificates and completion records</li>
+                        <li>Receive updates about future courses</li>
+                        <li>Faster registration for future courses</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Waiver Upload */}
           <Card>
