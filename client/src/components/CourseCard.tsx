@@ -62,9 +62,11 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
           {course.title}
         </h3>
         
-        <p className="text-muted-foreground mb-4 line-clamp-3" data-testid={`text-description-${course.id}`}>
-          {course.description}
-        </p>
+        <div 
+          className="text-muted-foreground mb-4 line-clamp-3" 
+          data-testid={`text-description-${course.id}`}
+          dangerouslySetInnerHTML={{ __html: course.description }}
+        />
         
         <div className="space-y-3 mb-6">
           <div className="flex items-center text-sm text-muted-foreground">

@@ -17,6 +17,8 @@ import { ObjectUploader } from "@/components/ObjectUploader";
 import { Save, Clock, Target, FileText, ImageIcon } from "lucide-react";
 import type { CourseWithSchedules } from "@shared/schema";
 import type { UploadResult } from "@uppy/core";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const courseSchema = z.object({
   title: z.string().min(1, "Course title is required"),
@@ -161,7 +163,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="firearms">Firearms</TabsTrigger>
+              <TabsTrigger value="firearms">Time Breakdown</TabsTrigger>
               <TabsTrigger value="media">Media</TabsTrigger>
             </TabsList>
 
@@ -270,13 +272,29 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="description">Full Description *</Label>
-                    <Textarea
-                      id="description"
-                      {...form.register("description")}
-                      placeholder="Detailed course description, learning objectives, what students will gain..."
-                      className="min-h-32"
-                      data-testid="input-description"
-                    />
+                    <div className="border border-input rounded-md overflow-hidden">
+                      <ReactQuill
+                        value={form.watch("description")}
+                        onChange={(content) => form.setValue("description", content)}
+                        placeholder="Detailed course description, learning objectives, what students will gain..."
+                        modules={{
+                          toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            ['blockquote'],
+                            ['link'],
+                            ['clean']
+                          ]
+                        }}
+                        formats={[
+                          'header', 'bold', 'italic', 'underline', 
+                          'list', 'bullet', 'blockquote', 'link'
+                        ]}
+                        theme="snow"
+                        style={{ minHeight: '120px' }}
+                      />
+                    </div>
                     {form.formState.errors.description && (
                       <p className="text-sm text-red-600 mt-1">{form.formState.errors.description.message}</p>
                     )}

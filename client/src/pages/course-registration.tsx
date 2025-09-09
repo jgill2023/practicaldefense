@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Clock, Calendar, User, Upload, DollarSign, FileText } from "lucide-react";
+import { Clock, Calendar, User, Upload, DollarSign, FileText, Users } from "lucide-react";
 import type { CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import type { UploadResult } from '@uppy/core';
 
@@ -205,7 +205,10 @@ export default function CourseRegistration() {
           <h1 className="text-3xl font-medium text-foreground mb-4" data-testid="text-course-title">
             Register for {course.title}
           </h1>
-          <p className="text-muted-foreground">{course.description}</p>
+          <div 
+            className="text-muted-foreground" 
+            dangerouslySetInnerHTML={{ __html: course.description }}
+          />
         </div>
 
         {/* Course Summary */}

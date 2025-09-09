@@ -80,9 +80,11 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
           {/* Course Description */}
           <div>
             <h5 className="font-semibold text-card-foreground mb-2">Course Description</h5>
-            <p className="text-muted-foreground" data-testid="text-modal-description">
-              {course.description}
-            </p>
+            <div 
+              className="text-muted-foreground" 
+              data-testid="text-modal-description"
+              dangerouslySetInnerHTML={{ __html: course.description }}
+            />
           </div>
 
           {/* Next Schedule Info */}
