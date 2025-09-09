@@ -44,6 +44,7 @@ interface CourseCreationFormProps {
 export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }: CourseCreationFormProps) {
   const [currentTab, setCurrentTab] = useState("basic");
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -94,24 +95,39 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
   };
 
   const handleGetUploadParameters = async () => {
-    const response = await apiRequest("POST", "/api/objects/upload");
-    const data = await response.json();
-    return {
-      method: 'PUT' as const,
-      url: data.uploadURL,
-    };
+    try {
+      console.log('Getting upload parameters...');
+      setIsUploadingImage(true);
+      const response = await apiRequest("POST", "/api/objects/upload");
+      const data = await response.json();
+      console.log('Upload parameters received:', data);
+      return {
+        method: 'PUT' as const,
+        url: data.uploadURL,
+      };
+    } catch (error) {
+      console.error('Error getting upload parameters:', error);
+      setIsUploadingImage(false);
+      throw error;
+    }
   };
 
   const handleUploadComplete = async (result: { successful: any[] }) => {
+    console.log('Upload complete result:', result);
+    
     if (result.successful && result.successful.length > 0) {
       const uploadURL = result.successful[0].uploadURL;
+      console.log('Processing upload URL:', uploadURL);
+      
       if (uploadURL) {
         try {
           // Update the course image and set ACL policy
+          console.log('Setting course image ACL...');
           const response = await apiRequest("PUT", "/api/course-images", {
             courseImageURL: uploadURL,
           });
           const data = await response.json();
+          console.log('ACL response:', data);
           
           // Set the uploaded image URL for preview and form
           setUploadedImageUrl(data.objectPath);
@@ -122,15 +138,19 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
             description: "Course image has been uploaded successfully.",
           });
         } catch (error) {
-          console.error('Upload error:', error);
+          console.error('Upload processing error:', error);
           toast({
             title: "Upload Error",
             description: "Failed to process uploaded image. Please try again.",
             variant: "destructive",
           });
+        } finally {
+          setIsUploadingImage(false);
         }
       }
     } else {
+      console.error('Upload failed - no successful uploads');
+      setIsUploadingImage(false);
       toast({
         title: "Upload Failed",
         description: "No files were successfully uploaded.",
@@ -151,7 +171,7 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
 
         <form onSubmit={form.handleSubmit(onSubmit)} onKeyDown={(e) => {
           // Prevent form submission on Enter key press
-          if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+          if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'BUTTON') {
             e.preventDefault();
           }
         }} className="space-y-6">
@@ -376,6 +396,14 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
                     maxFileSize={5 * 1024 * 1024} // 5MB
                     onGetUploadParameters={handleGetUploadParameters}
                     onComplete={handleUploadComplete}
+                    onError={(error: any) => {
+                      console.error('ObjectUploader error:', error);
+                      toast({
+                        title: "Upload Error",
+                        description: "Failed to upload image. Please try again.",
+                        variant: "destructive",
+                      });
+                    }}
                     buttonClassName="w-full"
                   >
                     <div className="flex items-center justify-center space-x-2">
@@ -428,10 +456,10 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
               ) : (
                 <Button 
                   type="submit" 
-                  disabled={createCourseMutation.isPending}
+                  disabled={createCourseMutation.isPending || isUploadingImage}
                   data-testid="button-submit-course"
                 >
-                  {createCourseMutation.isPending ? "Creating..." : "Create Course"}
+                  {createCourseMutation.isPending ? "Creating..." : isUploadingImage ? "Uploading Image..." : "Create Course"}
                 </Button>
               )}
             </div>
