@@ -736,7 +736,7 @@ export default function InstructorDashboard() {
                   .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())[0];
 
                 const displayDate = nextSchedule?.startDate
-                  ? formatDateShort(nextSchedule.startDate)
+                  ? formatDateShort(nextSchedule.startDate.toString())
                   : 'NONE';
 
                 const courseRevenue = enrollmentCount * parseFloat(course.price.toString());
