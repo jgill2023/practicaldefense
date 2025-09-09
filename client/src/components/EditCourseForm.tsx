@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,8 +17,9 @@ import { ObjectUploader } from "@/components/ObjectUploader";
 import { Save, Clock, Target, FileText, ImageIcon } from "lucide-react";
 import type { CourseWithSchedules } from "@shared/schema";
 import type { UploadResult } from "@uppy/core";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+
+// Lazy load ReactQuill to avoid SSR issues
+const ReactQuill = lazy(() => import('react-quill'));
 
 const courseSchema = z.object({
   title: z.string().min(1, "Course title is required"),
@@ -273,27 +274,33 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                   <div>
                     <Label htmlFor="description">Full Description *</Label>
                     <div className="react-quill-wrapper">
-                      <ReactQuill
-                        value={form.watch("description") || ""}
-                        onChange={(content) => form.setValue("description", content)}
-                        placeholder="Detailed course description, learning objectives, what students will gain..."
-                        modules={{
-                          toolbar: [
-                            [{ 'header': [1, 2, 3, false] }],
-                            ['bold', 'italic', 'underline'],
-                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                            ['blockquote'],
-                            ['link'],
-                            ['clean']
-                          ]
-                        }}
-                        formats={[
-                          'header', 'bold', 'italic', 'underline', 
-                          'list', 'bullet', 'blockquote', 'link'
-                        ]}
-                        theme="snow"
-                        style={{ minHeight: '200px' }}
-                      />
+                      <Suspense fallback={
+                        <div className="h-48 bg-muted animate-pulse rounded-md flex items-center justify-center">
+                          <span className="text-muted-foreground">Loading editor...</span>
+                        </div>
+                      }>
+                        <ReactQuill
+                          value={form.watch("description") || ""}
+                          onChange={(content) => form.setValue("description", content)}
+                          placeholder="Detailed course description, learning objectives, what students will gain..."
+                          modules={{
+                            toolbar: [
+                              [{ 'header': [1, 2, 3, false] }],
+                              ['bold', 'italic', 'underline'],
+                              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                              ['blockquote'],
+                              ['link'],
+                              ['clean']
+                            ]
+                          }}
+                          formats={[
+                            'header', 'bold', 'italic', 'underline', 
+                            'list', 'bullet', 'blockquote', 'link'
+                          ]}
+                          theme="snow"
+                          style={{ minHeight: '200px' }}
+                        />
+                      </Suspense>
                     </div>
                     {form.formState.errors.description && (
                       <p className="text-sm text-red-600 mt-1">{form.formState.errors.description.message}</p>
