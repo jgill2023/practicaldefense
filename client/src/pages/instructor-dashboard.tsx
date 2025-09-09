@@ -937,40 +937,42 @@ export default function InstructorDashboard() {
               </Button>
             </div>
             <Tabs defaultValue="upcoming" className="w-full">
-              <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none justify-start w-full">
-                <TabsTrigger 
-                  value="upcoming" 
-                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
-                  data-testid="tab-upcoming-schedules"
-                >
-                  <Clock className="w-4 h-4" />
-                  Upcoming ({categorizedSchedules.upcoming.length})
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="past" 
-                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
-                  data-testid="tab-past-schedules"
-                >
-                  <Archive className="w-4 h-4" />
-                  Past ({categorizedSchedules.past.length})
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="cancelled" 
-                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
-                  data-testid="tab-cancelled-schedules"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Cancelled ({categorizedSchedules.cancelled.length})
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="deleted" 
-                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
-                  data-testid="tab-deleted-schedules"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Deleted ({deletedSchedules.length})
-                </TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto">
+                <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none justify-start min-w-max w-full">
+                  <TabsTrigger 
+                    value="upcoming" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-upcoming-schedules"
+                  >
+                    <Clock className="w-4 h-4" />
+                    Upcoming ({categorizedSchedules.upcoming.length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="past" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-past-schedules"
+                  >
+                    <Archive className="w-4 h-4" />
+                    Past ({categorizedSchedules.past.length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="cancelled" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-cancelled-schedules"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Cancelled ({categorizedSchedules.cancelled.length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="deleted" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-deleted-schedules"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Deleted ({deletedSchedules.length})
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               {/* Schedule Tab Content */}
               <TabsContent value="upcoming" className="mt-0">
