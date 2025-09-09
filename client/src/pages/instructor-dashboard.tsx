@@ -26,7 +26,7 @@ import { EventCreationForm } from "@/components/EventCreationForm";
 import { CourseCreationForm } from "@/components/CourseCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy } from "lucide-react";
+import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 
@@ -1204,6 +1204,24 @@ export default function InstructorDashboard() {
                 </div>
               </TabsContent>
             </Tabs>
+          </div>
+        </div>
+
+        {/* Category Management Section */}
+        <div className="bg-card rounded-lg border mt-8">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <FolderOpen className="w-5 h-5" />
+                  Category Management
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Organize your courses with custom categories
+                </p>
+              </div>
+            </div>
+            <CategoryManagement />
           </div>
         </div>
       </div>
