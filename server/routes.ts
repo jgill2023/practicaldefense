@@ -84,15 +84,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log the first schedule's date format to debug timezone issues
       if (courses.length > 0 && courses[0].schedules && courses[0].schedules.length > 0) {
         console.log("=== COURSE DATE DEBUG ===");
-        console.log("First schedule dates:", {
-          startDate: courses[0].schedules[0].startDate,
-          endDate: courses[0].schedules[0].endDate,
-          startDateType: typeof courses[0].schedules[0].startDate,
-          endDateType: typeof courses[0].schedules[0].endDate
-        });
+        console.log("First schedule raw data:", JSON.stringify(courses[0].schedules[0], null, 2));
         console.log("=== END DEBUG ===");
       }
       
+      // Disable caching to ensure fresh data for debugging
+      res.set('Cache-Control', 'no-cache');
       res.json(courses);
     } catch (error) {
       console.error("Error fetching instructor courses:", error);
