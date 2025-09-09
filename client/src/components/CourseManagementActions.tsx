@@ -108,6 +108,8 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
     schedule.enrollments && schedule.enrollments.length > 0
   );
 
+  const hasSchedules = course.schedules && course.schedules.length > 0;
+
   return (
     <>
       <DropdownMenu>
@@ -159,7 +161,7 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
           
           <DropdownMenuItem 
             onClick={() => setShowDeleteConfirm(true)}
-            disabled={hasEnrollments}
+            disabled={hasSchedules}
             data-testid={`button-delete-course-${course.id}`}
             className="text-red-600 focus:text-red-600 disabled:text-gray-400"
           >
@@ -206,6 +208,11 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
                   Cannot delete "{course.title}" because it has existing enrollments. 
                   Please archive the course instead to preserve student data.
                 </>
+              ) : hasSchedules ? (
+                <>
+                  Cannot delete "{course.title}" because it has existing events/schedules. 
+                  Please delete all events first or archive the course instead.
+                </>
               ) : (
                 <>
                   Are you sure you want to permanently delete "{course.title}"? 
@@ -216,7 +223,7 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
-            {!hasEnrollments && (
+            {!hasSchedules && (
               <AlertDialogAction
                 onClick={() => {
                   deleteCourseMutation.mutate(course.id);

@@ -315,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
       }
 
-      // Check if course has any enrollments
+      // Check if course has any enrollments or schedules
       const hasEnrollments = existingCourse.schedules?.some(schedule => 
         schedule.enrollments && schedule.enrollments.length > 0
       );
@@ -323,6 +323,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (hasEnrollments) {
         return res.status(400).json({ 
           error: "Cannot delete course with existing enrollments. Archive it instead." 
+        });
+      }
+
+      // Check if course has any schedules (even without enrollments)
+      const hasSchedules = existingCourse.schedules && existingCourse.schedules.length > 0;
+      
+      if (hasSchedules) {
+        return res.status(400).json({ 
+          error: "Cannot delete course with existing schedules. Archive it instead or delete all events first." 
         });
       }
 
