@@ -460,7 +460,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
-      const updatedSchedule = await storage.updateCourseSchedule(scheduleId, req.body);
+      // Convert date strings back to Date objects for the database
+      const updateData = { ...req.body };
+      if (updateData.startDate) {
+        updateData.startDate = new Date(updateData.startDate);
+      }
+      if (updateData.endDate) {
+        updateData.endDate = new Date(updateData.endDate);
+      }
+      if (updateData.registrationDeadline) {
+        updateData.registrationDeadline = new Date(updateData.registrationDeadline);
+      }
+
+      const updatedSchedule = await storage.updateCourseSchedule(scheduleId, updateData);
       res.json({ message: "Schedule updated successfully", schedule: updatedSchedule });
     } catch (error: any) {
       console.error("Error updating schedule:", error);
