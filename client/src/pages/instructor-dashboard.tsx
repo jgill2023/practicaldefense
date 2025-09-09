@@ -535,21 +535,18 @@ export default function InstructorDashboard() {
     }
 
     return (
-      <div>
-        <div className="overflow-x-auto bg-muted rounded-lg border">
-          <div className="min-w-[600px]">
-            <div className="grid grid-cols-6 gap-4 p-3 bg-muted text-sm font-medium text-muted-foreground border-b">
-              <div>Course</div>
-              <div>Next</div>
-              <div>Students</div>
-              <div>Revenue</div>
-              <div>Status</div>
-              <div>Actions</div>
-            </div>
+      <div className="overflow-x-auto bg-muted rounded-lg border">
+        <div className="min-w-[600px]">
+          <div className="grid grid-cols-6 gap-4 p-3 bg-muted text-sm font-medium text-muted-foreground border-b">
+            <div>Course</div>
+            <div>Next</div>
+            <div>Students</div>
+            <div>Revenue</div>
+            <div>Status</div>
+            <div>Actions</div>
           </div>
-        </div>
-        <div className="space-y-3 mt-3">
-          {scheduleList.map((schedule) => {
+          <div className="space-y-3 p-3 bg-background">
+            {scheduleList.map((schedule) => {
             const displayDate = schedule.startDate 
               ? formatDateShort(schedule.startDate)
               : '-';
@@ -571,54 +568,48 @@ export default function InstructorDashboard() {
             const outstandingRevenue = pendingEnrollments.length * coursePrice;
 
             return (
-              <div key={schedule.id} className="bg-card border rounded-lg p-4 hover:shadow-sm transition-shadow">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-3">
-                    {/* Course title and spots left */}
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-medium text-card-foreground" data-testid={`text-schedule-course-${schedule.id}`}>
-                        {schedule.course.title}
-                      </h3>
-                      {spotsLeft <= 10 && spotsLeft > 0 && (
-                        <Badge variant="destructive" className="text-xs">
-                          {spotsLeft} spots left
-                        </Badge>
-                      )}
-                      {spotsLeft === 0 && (
-                        <Badge variant="destructive" className="text-xs">
-                          Full
-                        </Badge>
-                      )}
-                      {spotsLeft > 10 && (
-                        <Badge variant="secondary" className="text-xs">
-                          {spotsLeft} spots left
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Course details with revenue in a compact layout */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{displayDate}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        <span>{enrollmentCount} enrolled</span>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground">Collected Revenue</div>
-                        <div className="font-medium text-emerald-600">${collectedRevenue.toLocaleString()}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-muted-foreground">Outstanding Revenue</div>
-                        <div className="font-medium text-amber-600">${outstandingRevenue.toLocaleString()}</div>
-                      </div>
-                    </div>
+              <div key={schedule.id} className="grid gap-4 p-4 border-b hover:bg-muted/20 transition-colors" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
+                <div className="min-w-0">
+                  <div className="font-medium text-card-foreground truncate" data-testid={`text-schedule-course-${schedule.id}`}>
+                    {schedule.course.title}
                   </div>
+                  <div className="text-sm text-muted-foreground">{schedule.course.category}</div>
+                  {spotsLeft <= 10 && spotsLeft > 0 && (
+                    <Badge variant="destructive" className="text-xs mt-1">
+                      {spotsLeft} spots left
+                    </Badge>
+                  )}
+                  {spotsLeft === 0 && (
+                    <Badge variant="destructive" className="text-xs mt-1">
+                      Full
+                    </Badge>
+                  )}
+                  {spotsLeft > 10 && (
+                    <Badge variant="secondary" className="text-xs mt-1">
+                      {spotsLeft} spots left
+                    </Badge>
+                  )}
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
+                </div>
+                <div className="text-sm">
+                  {displayDate}
+                  {displayTime !== '-' && (
+                    <div className="text-xs text-muted-foreground">{displayTime}</div>
+                  )}
+                </div>
+                <div className="text-sm">{enrollmentCount}</div>
+                <div className="text-sm">
+                  <div className="font-medium text-emerald-600">${collectedRevenue.toLocaleString()}</div>
+                  {outstandingRevenue > 0 && (
+                    <div className="text-xs text-amber-600">${outstandingRevenue.toLocaleString()}</div>
+                  )}
+                </div>
+                <div>
+                  <Badge variant={schedule.status === 'cancelled' ? 'destructive' : 'default'} className="text-xs">
+                    {schedule.status === 'cancelled' ? 'Cancelled' : 'Active'}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
                     {/* Edit Schedule Button */}
                     <Button
                       variant="ghost"
@@ -699,10 +690,10 @@ export default function InstructorDashboard() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                </div>
               </div>
             );
-          })}
+            })}
+          </div>
         </div>
       </div>
     );
@@ -736,21 +727,17 @@ export default function InstructorDashboard() {
     }
 
     return (
-      <div>
-        <div className="overflow-x-auto bg-muted rounded-lg border">
-          <div className="min-w-[600px]">
-            <div className="grid grid-cols-6 gap-4 p-3 bg-muted text-sm font-medium text-muted-foreground border-b">
-              <div>Course</div>
-              <div>Next</div>
-              <div>Students</div>
-              <div>Revenue</div>
-              <div>Status</div>
-              <div>Actions</div>
-            </div>
+      <div className="overflow-x-auto bg-muted rounded-lg border">
+        <div className="min-w-[600px]">
+          <div className="grid grid-cols-6 gap-4 p-3 bg-muted text-sm font-medium text-muted-foreground border-b">
+            <div>Course</div>
+            <div>Next</div>
+            <div>Students</div>
+            <div>Revenue</div>
+            <div>Status</div>
+            <div>Actions</div>
           </div>
-        </div>
-        <div className="divide-y mt-3">
-          <div className="min-w-[600px]">
+          <div className="divide-y bg-background">
             {courseList.map((course) => {
               const enrollmentCount = enrollments.filter(e => e.courseId === course.id).length;
               const nextSchedule = course.schedules
