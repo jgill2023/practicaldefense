@@ -80,16 +80,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const courses = await storage.getCoursesByInstructor(userId);
-      
-      // Log the first schedule's date format to debug timezone issues
-      if (courses.length > 0 && courses[0].schedules && courses[0].schedules.length > 0) {
-        console.log("=== COURSE DATE DEBUG ===");
-        console.log("First schedule raw data:", JSON.stringify(courses[0].schedules[0], null, 2));
-        console.log("=== END DEBUG ===");
-      }
-      
-      // Disable caching to ensure fresh data for debugging
-      res.set('Cache-Control', 'no-cache');
       res.json(courses);
     } catch (error) {
       console.error("Error fetching instructor courses:", error);
@@ -470,10 +460,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
-      console.log("=== RAW PG UPDATE ATTEMPT ===");
-      console.log("Schedule ID:", scheduleId);
-      console.log("Request body:", JSON.stringify(req.body, null, 2));
-      
       // Use direct PostgreSQL connection bypassing Drizzle entirely
       const { pool } = await import("./db");
       
@@ -544,13 +530,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `;
       values.push(scheduleId);
       
-      console.log("Direct PG Query:", query);
-      console.log("Values:", values);
-      
       const result = await pool.query(query, values);
-      console.log("Direct PG Result rows:", result.rows.length);
-      console.log("Updated schedule data:", JSON.stringify(result.rows[0], null, 2));
-      
       const updatedSchedule = result.rows[0];
       res.json({ message: "Schedule updated successfully", schedule: updatedSchedule });
     } catch (error: any) {
