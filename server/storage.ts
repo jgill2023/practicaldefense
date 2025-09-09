@@ -1,10 +1,13 @@
 import {
   users,
+  categories,
   courses,
   courseSchedules,
   enrollments,
   type User,
   type UpsertUser,
+  type Category,
+  type InsertCategory,
   type Course,
   type InsertCourse,
   type CourseSchedule,
@@ -22,6 +25,13 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  
+  // Category operations
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category>;
+  deleteCategory(id: string): Promise<void>;
+  getCategory(id: string): Promise<Category | undefined>;
+  getCategories(): Promise<Category[]>;
   
   // Course operations
   createCourse(course: InsertCourse): Promise<Course>;
@@ -90,6 +100,40 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  // Category operations
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db
+      .insert(categories)
+      .values(category)
+      .returning();
+    return newCategory;
+  }
+
+  async updateCategory(id: string, categoryData: Partial<InsertCategory>): Promise<Category> {
+    const [updatedCategory] = await db
+      .update(categories)
+      .set({ ...categoryData, updatedAt: new Date() })
+      .where(eq(categories.id, id))
+      .returning();
+    if (!updatedCategory) {
+      throw new Error('Category not found');
+    }
+    return updatedCategory;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
+  }
+
+  async getCategory(id: string): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category;
+  }
+
+  async getCategories(): Promise<Category[]> {
+    return await db.select().from(categories).where(eq(categories.isActive, true)).orderBy(asc(categories.name));
   }
 
   // Course operations

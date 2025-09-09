@@ -155,10 +155,18 @@ export const userRelations = relations(users, ({ many }) => ({
   waitlistEntries: many(waitlist),
 }));
 
+export const categoryRelations = relations(categories, ({ many }) => ({
+  courses: many(courses),
+}));
+
 export const courseRelations = relations(courses, ({ one, many }) => ({
   instructor: one(users, {
     fields: [courses.instructorId],
     references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [courses.categoryId],
+    references: [categories.id],
   }),
   schedules: many(courseSchedules),
   enrollments: many(enrollments),
@@ -210,6 +218,12 @@ export const waitlistRelations = relations(waitlist, ({ one }) => ({
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users);
 
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertCourseSchema = createInsertSchema(courses).omit({
   id: true,
   createdAt: true,
@@ -242,6 +256,8 @@ export const insertWaitlistSchema = createInsertSchema(waitlist).omit({
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type Category = typeof categories.$inferSelect;
 export type InsertCourse = z.infer<typeof insertCourseSchema>;
 export type Course = typeof courses.$inferSelect;
 export type InsertCourseSchedule = z.infer<typeof insertCourseScheduleSchema>;
