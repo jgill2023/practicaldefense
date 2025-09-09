@@ -460,45 +460,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
-      // Convert date strings back to Date objects for the database
-      const updateData = { ...req.body };
+      // Create a safe update object with only the fields we want to update
+      const updateData: any = {};
+      
       console.log("Raw request body:", JSON.stringify(req.body, null, 2));
       
-      // Handle date conversions safely
-      if (updateData.startDate && updateData.startDate !== null && updateData.startDate !== '') {
-        const startDate = new Date(updateData.startDate);
-        if (!isNaN(startDate.getTime())) {
-          updateData.startDate = startDate;
-          console.log("Converted startDate:", updateData.startDate);
-        } else {
-          delete updateData.startDate; // Remove invalid date
+      // Safe non-date fields
+      if (req.body.startTime !== undefined) updateData.startTime = req.body.startTime;
+      if (req.body.endTime !== undefined) updateData.endTime = req.body.endTime;
+      if (req.body.location !== undefined) updateData.location = req.body.location;
+      if (req.body.maxSpots !== undefined) updateData.maxSpots = req.body.maxSpots;
+      if (req.body.availableSpots !== undefined) updateData.availableSpots = req.body.availableSpots;
+      if (req.body.waitlistEnabled !== undefined) updateData.waitlistEnabled = req.body.waitlistEnabled;
+      if (req.body.autoConfirmRegistration !== undefined) updateData.autoConfirmRegistration = req.body.autoConfirmRegistration;
+      if (req.body.notes !== undefined) updateData.notes = req.body.notes;
+      
+      // Handle date fields very carefully
+      if (req.body.startDate && req.body.startDate !== null && req.body.startDate !== '') {
+        try {
+          const startDate = new Date(req.body.startDate);
+          if (!isNaN(startDate.getTime())) {
+            updateData.startDate = startDate;
+            console.log("Converted startDate:", updateData.startDate);
+          }
+        } catch (error) {
+          console.log("Failed to convert startDate:", req.body.startDate);
         }
-      } else if (updateData.startDate === null || updateData.startDate === '') {
-        delete updateData.startDate; // Don't update if null or empty
       }
       
-      if (updateData.endDate && updateData.endDate !== null && updateData.endDate !== '') {
-        const endDate = new Date(updateData.endDate);
-        if (!isNaN(endDate.getTime())) {
-          updateData.endDate = endDate;
-          console.log("Converted endDate:", updateData.endDate);
-        } else {
-          delete updateData.endDate; // Remove invalid date
+      if (req.body.endDate && req.body.endDate !== null && req.body.endDate !== '') {
+        try {
+          const endDate = new Date(req.body.endDate);
+          if (!isNaN(endDate.getTime())) {
+            updateData.endDate = endDate;
+            console.log("Converted endDate:", updateData.endDate);
+          }
+        } catch (error) {
+          console.log("Failed to convert endDate:", req.body.endDate);
         }
-      } else if (updateData.endDate === null || updateData.endDate === '') {
-        delete updateData.endDate; // Don't update if null or empty
       }
       
-      if (updateData.registrationDeadline && updateData.registrationDeadline !== null && updateData.registrationDeadline !== '') {
-        const regDeadline = new Date(updateData.registrationDeadline);
-        if (!isNaN(regDeadline.getTime())) {
-          updateData.registrationDeadline = regDeadline;
-          console.log("Converted registrationDeadline:", updateData.registrationDeadline);
-        } else {
-          updateData.registrationDeadline = null; // Set to null for invalid date
+      if (req.body.registrationDeadline && req.body.registrationDeadline !== null && req.body.registrationDeadline !== '') {
+        try {
+          const regDeadline = new Date(req.body.registrationDeadline);
+          if (!isNaN(regDeadline.getTime())) {
+            updateData.registrationDeadline = regDeadline;
+            console.log("Converted registrationDeadline:", updateData.registrationDeadline);
+          }
+        } catch (error) {
+          console.log("Failed to convert registrationDeadline:", req.body.registrationDeadline);
         }
-      } else if (updateData.registrationDeadline === '') {
-        updateData.registrationDeadline = null; // Empty string becomes null
+      } else if (req.body.registrationDeadline === '') {
+        updateData.registrationDeadline = null;
       }
       
       console.log("Final updateData:", JSON.stringify(updateData, null, 2));
