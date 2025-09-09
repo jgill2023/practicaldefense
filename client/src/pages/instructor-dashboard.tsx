@@ -22,7 +22,7 @@ import { EditScheduleForm } from "@/components/EditScheduleForm";
 import { EventCreationForm } from "@/components/EventCreationForm";
 import { CourseCreationForm } from "@/components/CourseCreationForm";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar } from "lucide-react";
+import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 
@@ -135,6 +135,44 @@ export default function InstructorDashboard() {
       toast({
         title: "Delete Failed",
         description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Duplicate course mutation
+  const duplicateCourseMutation = useMutation({
+    mutationFn: async (courseId: string) => {
+      const response = await apiRequest("POST", `/api/instructor/courses/${courseId}/duplicate`);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Course Duplicated",
+        description: "Course has been duplicated successfully. Opening edit form...",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      
+      // Open edit form for the newly duplicated course
+      setTimeout(() => {
+        setEditingCourse(data.course);
+      }, 500);
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Duplication Failed",
+        description: "Failed to duplicate course. Please try again.",
         variant: "destructive",
       });
     },
@@ -658,6 +696,29 @@ export default function InstructorDashboard() {
                     data-testid={`button-edit-course-${course.id}`}
                   >
                     <Edit className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* View Roster Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => console.log('View roster for course', course.id)}
+                    data-testid={`button-roster-course-${course.id}`}
+                  >
+                    <Users className="h-4 w-4" />
+                  </Button>
+                  
+                  {/* Duplicate Course Button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => duplicateCourseMutation.mutate(course.id)}
+                    disabled={duplicateCourseMutation.isPending}
+                    data-testid={`button-duplicate-course-${course.id}`}
+                  >
+                    <Copy className="h-4 w-4" />
                   </Button>
                   
                   {/* More Actions Dropdown */}
