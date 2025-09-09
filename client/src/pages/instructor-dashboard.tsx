@@ -621,17 +621,6 @@ export default function InstructorDashboard() {
                       <Edit className="h-4 w-4" />
                     </Button>
 
-                    {/* View Roster Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                      onClick={() => console.log('View roster for schedule', schedule.id)}
-                      data-testid={`button-roster-schedule-${schedule.id}`}
-                    >
-                      <Users className="h-4 w-4" />
-                    </Button>
-
                     {/* Duplicate Schedule Button */}
                     <Button
                       variant="ghost"
@@ -644,14 +633,14 @@ export default function InstructorDashboard() {
                       <Copy className="h-4 w-4" />
                     </Button>
 
-                    {/* More Actions Dropdown */}
+                    {/* More Actions Menu */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                          data-testid={`button-more-schedule-${schedule.id}`}
+                          data-testid={`button-schedule-actions-${schedule.id}`}
                         >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
@@ -690,9 +679,10 @@ export default function InstructorDashboard() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-              </div>
-            );
-            })}
+                </div>
+              );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -779,89 +769,90 @@ export default function InstructorDashboard() {
                       </Badge>
                     </div>
                     <div className="flex items-center justify-center gap-1">
-                    {/* Edit Course Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                      onClick={() => setEditingCourse(course)}
-                      data-testid={`button-edit-course-${course.id}`}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                      {/* Edit Course Button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                        onClick={() => setEditingCourse(course)}
+                        data-testid={`button-edit-course-${course.id}`}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
 
-                    {/* View Roster Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                      onClick={() => console.log('View roster for course', course.id)}
-                      data-testid={`button-roster-course-${course.id}`}
-                    >
-                      <Users className="h-4 w-4" />
-                    </Button>
+                      {/* View Roster Button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                        onClick={() => console.log('View roster for course', course.id)}
+                        data-testid={`button-roster-course-${course.id}`}
+                      >
+                        <Users className="h-4 w-4" />
+                      </Button>
 
-                    {/* Duplicate Course Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                      onClick={() => duplicateCourseMutation.mutate(course.id)}
-                      disabled={duplicateCourseMutation.isPending}
-                      data-testid={`button-duplicate-course-${course.id}`}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
+                      {/* Duplicate Course Button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                        onClick={() => duplicateCourseMutation.mutate(course.id)}
+                        disabled={duplicateCourseMutation.isPending}
+                        data-testid={`button-duplicate-course-${course.id}`}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
 
-                    {/* More Actions Dropdown */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                          data-testid={`button-more-actions-${course.id}`}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => unpublishCourseMutation.mutate(course.id)}
-                          disabled={unpublishCourseMutation.isPending}
-                          data-testid={`menuitem-unpublish-${course.id}`}
-                        >
-                          <EyeOff className="mr-2 h-4 w-4" />
-                          {unpublishCourseMutation.isPending ? 'Unpublishing...' : 'Unpublish'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => archiveCourseMutation.mutate(course.id)}
-                          disabled={archiveCourseMutation.isPending}
-                          data-testid={`menuitem-archive-${course.id}`}
-                        >
-                          <Archive className="mr-2 h-4 w-4" />
-                          {archiveCourseMutation.isPending ? 'Archiving...' : 'Archive'}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            if (window.confirm('Are you sure you want to permanently delete this course? This action cannot be undone.')) {
-                              deleteCourseMutation.mutate(course.id);
-                            }
-                          }}
-                          disabled={deleteCourseMutation.isPending}
-                          className="text-destructive"
-                          data-testid={`menuitem-delete-${course.id}`}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          {deleteCourseMutation.isPending ? 'Deleting...' : 'Delete Course'}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      {/* More Actions Dropdown Menu */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                            data-testid={`button-more-actions-${course.id}`}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => unpublishCourseMutation.mutate(course.id)}
+                            disabled={unpublishCourseMutation.isPending}
+                            data-testid={`menuitem-unpublish-${course.id}`}
+                          >
+                            <EyeOff className="mr-2 h-4 w-4" />
+                            {unpublishCourseMutation.isPending ? 'Unpublishing...' : 'Unpublish'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => archiveCourseMutation.mutate(course.id)}
+                            disabled={archiveCourseMutation.isPending}
+                            data-testid={`menuitem-archive-${course.id}`}
+                          >
+                            <Archive className="mr-2 h-4 w-4" />
+                            {archiveCourseMutation.isPending ? 'Archiving...' : 'Archive'}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to permanently delete this course? This action cannot be undone.')) {
+                                deleteCourseMutation.mutate(course.id);
+                              }
+                            }}
+                            disabled={deleteCourseMutation.isPending}
+                            className="text-destructive"
+                            data-testid={`menuitem-delete-${course.id}`}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            {deleteCourseMutation.isPending ? 'Deleting...' : 'Delete Course'}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -934,10 +925,10 @@ export default function InstructorDashboard() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-accent" data-testid="text-all-students">
+              <div className="text-3xl font-bold text-blue-600" data-testid="text-all-students">
                 {statsLoading ? '...' : allStudents}
               </div>
-              <p className="text-sm text-muted-foreground">Unique students</p>
+              <p className="text-sm text-muted-foreground">Unique learners</p>
             </CardContent>
           </Card>
 
@@ -947,28 +938,28 @@ export default function InstructorDashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-success" data-testid="text-total-revenue">
+              <div className="text-3xl font-bold text-green-600" data-testid="text-total-revenue">
                 {statsLoading ? '...' : `$${totalRevenue.toLocaleString()}`}
               </div>
-              <p className="text-sm text-muted-foreground">Lifetime earnings</p>
+              <p className="text-sm text-muted-foreground">From all courses</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Outstanding Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-secondary" data-testid="text-outstanding-revenue">
+              <div className="text-3xl font-bold text-amber-600" data-testid="text-outstanding-revenue">
                 {statsLoading ? '...' : `$${outstandingRevenue.toLocaleString()}`}
               </div>
-              <p className="text-sm text-muted-foreground">Deposit balance</p>
+              <p className="text-sm text-muted-foreground">Pending payments</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Schedule Management Section */}
+        {/* Schedule Section */}
         <div className="bg-card rounded-lg border mb-8">
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
@@ -1060,18 +1051,18 @@ export default function InstructorDashboard() {
                                   {schedule.course?.title || 'Unknown Course'}
                                 </h3>
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
-                                  <span className="whitespace-nowrap">{formatDateSafe(schedule.startDate)}</span>
+                                  <span className="whitespace-nowrap">{schedule.startDate ? formatDateSafe(schedule.startDate.toString()) : 'Unknown'}</span>
                                   <span className="whitespace-nowrap">{schedule.startTime} - {schedule.endTime}</span>
                                   {schedule.location && <span className="truncate">{schedule.location}</span>}
                                 </div>
                                 <Badge variant="destructive" className="mb-2">Deleted</Badge>
                                 <p className="text-sm text-muted-foreground">
-                                  Deleted on {schedule.deletedAt ? formatDateSafe(schedule.deletedAt) : 'Unknown'}
+                                  Deleted on {schedule.deletedAt ? formatDateSafe(schedule.deletedAt.toString()) : 'Unknown'}
                                 </p>
                               </div>
                               <div className="flex-shrink-0 w-full sm:w-auto">
                                 <Button
-                                  onClick={() => openDeleteConfirmation('schedule', schedule.id, `${schedule.course.title} - ${formatDateSafe(schedule.startDate)}`)}
+                                  onClick={() => openDeleteConfirmation('schedule', schedule.id, `${schedule.course.title} - ${schedule.startDate ? formatDateSafe(schedule.startDate.toString()) : 'Unknown'}`)}
                                   variant="destructive"
                                   size="sm"
                                   disabled={permanentDeleteScheduleMutation.isPending}
@@ -1220,7 +1211,7 @@ export default function InstructorDashboard() {
                                 </div>
                                 <Badge variant="destructive" className="mb-2">Deleted</Badge>
                                 <p className="text-sm text-muted-foreground">
-                                  Deleted on {course.deletedAt ? formatDateSafe(course.deletedAt) : 'Unknown'}
+                                  Deleted on {course.deletedAt ? formatDateSafe(course.deletedAt.toString()) : 'Unknown'}
                                 </p>
                               </div>
                               <div className="flex-shrink-0 w-full sm:w-auto">
