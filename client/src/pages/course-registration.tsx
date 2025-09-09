@@ -260,7 +260,7 @@ export default function CourseRegistration() {
                           <div className="flex items-center justify-between w-full">
                             <div className="flex flex-col">
                               <span className="font-medium">
-                                {new Date(schedule.startDate).toLocaleDateString()} - {new Date(schedule.endDate).toLocaleDateString()}
+                                {formatDateSafe(schedule.startDate)} - {formatDateSafe(schedule.endDate)}
                               </span>
                               {schedule.location && (
                                 <span className="text-xs text-muted-foreground">
@@ -282,7 +282,7 @@ export default function CourseRegistration() {
                         <div className="font-medium text-accent mb-1">Selected Date:</div>
                         <div className="flex items-center text-muted-foreground">
                           <Calendar className="mr-2 h-4 w-4 text-accent" />
-                          {new Date(selectedSchedule.startDate).toLocaleDateString()} - {new Date(selectedSchedule.endDate).toLocaleDateString()}
+                          {formatDateSafe(selectedSchedule.startDate)} - {formatDateSafe(selectedSchedule.endDate)}
                         </div>
                         {selectedSchedule.location && (
                           <div className="flex items-center text-muted-foreground mt-1">
@@ -565,7 +565,7 @@ export default function CourseRegistration() {
               
               {selectedSchedule && (
                 <p className="text-center text-sm text-muted-foreground mt-4">
-                  You will be charged ${course.price} for the course on {new Date(selectedSchedule.startDate).toLocaleDateString()}
+                  You will be charged ${course.price} for the course on {formatDateSafe(selectedSchedule.startDate)}
                 </p>
               )}
             </CardContent>
