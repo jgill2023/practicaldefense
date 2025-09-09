@@ -93,8 +93,8 @@ export default function InstructorDashboard() {
     archived: courses.filter(course => course.isArchived)
   };
 
-  // Helper function to render course table for each category
-  const renderCourseTable = (categoryName: string, courseList: CourseWithSchedules[]) => {
+  // Helper function to render course list for each category
+  const renderCourseList = (categoryName: string, courseList: CourseWithSchedules[], emptyIcon: any, emptyMessage: string) => {
     if (coursesLoading) {
       return (
         <div className="space-y-4">
@@ -111,10 +111,12 @@ export default function InstructorDashboard() {
     if (courseList.length === 0) {
       return (
         <div className="text-center py-12">
-          <h3 className="text-lg font-medium text-muted-foreground mb-2">No courses found in this category</h3>
+          {emptyIcon}
+          <h3 className="text-lg font-medium text-muted-foreground mb-2">{emptyMessage}</h3>
           <p className="text-sm text-muted-foreground">
-            {categoryName === 'active' && "Create new courses or schedule existing ones to see them here"}
-            {categoryName === 'drafts' && "Draft courses will appear here when you create them"}
+            {categoryName === 'upcoming' && "Create new courses or schedule existing ones to see them here"}
+            {categoryName === 'past' && "Complete some courses to see them appear here"}
+            {categoryName === 'pending' && "Draft courses will appear here when you create them"}
             {categoryName === 'archived' && "Archived courses will be shown here"}
           </p>
         </div>
@@ -122,76 +124,67 @@ export default function InstructorDashboard() {
     }
 
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b text-left">
-              <th className="pb-3 text-sm font-medium text-muted-foreground">Course</th>
-              <th className="pb-3 text-sm font-medium text-muted-foreground">Date</th>
-              <th className="pb-3 text-sm font-medium text-muted-foreground">Students</th>
-              <th className="pb-3 text-sm font-medium text-muted-foreground">Revenue</th>
-              <th className="pb-3 text-sm font-medium text-muted-foreground">Status</th>
-              <th className="pb-3 text-sm font-medium text-muted-foreground">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {courseList.map(course => {
-              const enrollmentCount = enrollments.filter(e => e.courseId === course.id).length;
-              const nextSchedule = course.schedules
-                .filter(s => s.startDate && new Date(s.startDate) > new Date())
-                .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())[0];
-              const lastSchedule = course.schedules
-                .filter(s => s.startDate && new Date(s.startDate) <= new Date())
-                .sort((a, b) => new Date(b.startDate!).getTime() - new Date(a.startDate!).getTime())[0];
-              
-              const courseRevenue = enrollmentCount * course.price;
-              
-              return (
-                <tr key={course.id} className="border-b hover:bg-muted/50">
-                  <td className="py-4">
-                    <div className="font-medium" data-testid={`text-course-name-${course.id}`}>
-                      {course.title}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {course.schedules.length} schedule{course.schedules.length !== 1 ? 's' : ''}
-                    </div>
-                  </td>
-                  <td className="py-4 text-sm text-muted-foreground">
-                    {categoryName === 'active' && nextSchedule && nextSchedule.startDate 
-                      ? new Date(nextSchedule.startDate!).toLocaleDateString()
-                      : lastSchedule && lastSchedule.startDate
-                      ? new Date(lastSchedule.startDate!).toLocaleDateString()
-                      : "No date set"
+      <div className="space-y-4">
+        {courseList.map(course => {
+          const enrollmentCount = enrollments.filter(e => e.courseId === course.id).length;
+          const nextSchedule = course.schedules
+            .filter(s => s.startDate && new Date(s.startDate) > new Date())
+            .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())[0];
+          const lastSchedule = course.schedules
+            .filter(s => s.startDate && new Date(s.startDate) <= new Date())
+            .sort((a, b) => new Date(b.startDate!).getTime() - new Date(a.startDate!).getTime())[0];
+          
+          return (
+            <div key={course.id} className="flex items-center justify-between p-4 bg-card border rounded-lg hover:shadow-md transition-shadow">
+              <div className="flex items-center space-x-4">
+                <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center">
+                  <GraduationCap className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h5 className="font-medium text-card-foreground" data-testid={`text-course-name-${course.id}`}>
+                    {course.title}
+                  </h5>
+                  <p className="text-sm text-muted-foreground mb-1">
+                    {categoryName === 'upcoming' && nextSchedule && nextSchedule.startDate 
+                      ? `Next: ${new Date(nextSchedule.startDate!).toLocaleDateString()} at ${nextSchedule.startTime}`
+                      : categoryName === 'past' && lastSchedule && lastSchedule.startDate
+                      ? `Last: ${new Date(lastSchedule.startDate!).toLocaleDateString()}`
+                      : categoryName === 'pending'
+                      ? "Draft - not published"
+                      : categoryName === 'archived'
+                      ? "Archived course"
+                      : `${enrollmentCount} total enrollments`
                     }
-                  </td>
-                  <td className="py-4 text-sm">
-                    {enrollmentCount}
-                  </td>
-                  <td className="py-4 text-sm">
-                    ${courseRevenue.toLocaleString()}
-                  </td>
-                  <td className="py-4">
-                    <Badge variant={
-                      categoryName === 'active' ? "default" :
-                      categoryName === 'drafts' ? "outline" :
-                      "secondary"
-                    }>
-                      {categoryName === 'active' && "Active"}
-                      {categoryName === 'drafts' && "Draft"}
-                      {categoryName === 'archived' && "Archived"}
-                    </Badge>
-                  </td>
-                  <td className="py-4">
-                    <CourseManagementActions 
-                      course={course}
-                      onEditCourse={(course) => setEditingCourse(course)}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  </p>
+                  <div className="flex items-center space-x-3 text-xs text-muted-foreground">
+                    <span>{enrollmentCount} students</span>
+                    <span>•</span>
+                    <span>{course.schedules.length} schedule{course.schedules.length !== 1 ? 's' : ''}</span>
+                    <span>•</span>
+                    <span>${course.price}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Badge variant={
+                  categoryName === 'upcoming' ? "default" :
+                  categoryName === 'past' ? "secondary" :
+                  categoryName === 'pending' ? "outline" :
+                  "destructive"
+                }>
+                  {categoryName === 'upcoming' && "Active"}
+                  {categoryName === 'past' && "Completed"}
+                  {categoryName === 'pending' && "Draft"}
+                  {categoryName === 'archived' && "Archived"}
+                </Badge>
+                <CourseManagementActions 
+                  course={course}
+                  onEditCourse={(course) => setEditingCourse(course)}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -296,81 +289,60 @@ export default function InstructorDashboard() {
           </Card>
         </div>
 
-        {/* Course Management */}
-        <div className="bg-white rounded-lg border">
-          <Tabs defaultValue="active" className="w-full">
-            <div className="border-b">
-              <TabsList className="h-auto p-0 bg-transparent justify-start rounded-none w-full">
-                <TabsTrigger 
-                  value="active" 
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-4"
-                  data-testid="tab-active-courses"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    Active ({categorizedCourses.upcoming.length})
-                  </div>
+        {/* Course Management Tabs */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Course Management</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Organize and manage your courses by category
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="upcoming" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="upcoming" className="flex items-center gap-2" data-testid="tab-upcoming-courses">
+                  <Clock className="h-4 w-4" />
+                  Upcoming ({categorizedCourses.upcoming.length})
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="archived" 
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-4"
-                  data-testid="tab-archived-courses"
-                >
-                  <div className="flex items-center gap-2">
-                    <Archive className="h-4 w-4" />
-                    Archived ({categorizedCourses.archived.length})
-                  </div>
+                <TabsTrigger value="past" className="flex items-center gap-2" data-testid="tab-past-courses">
+                  <GraduationCap className="h-4 w-4" />
+                  Past ({categorizedCourses.past.length})
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="drafts" 
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-4"
-                  data-testid="tab-draft-courses"
-                >
-                  <div className="flex items-center gap-2">
-                    <EyeOff className="h-4 w-4" />
-                    Drafts ({categorizedCourses.pending.length})
-                  </div>
+                <TabsTrigger value="pending" className="flex items-center gap-2" data-testid="tab-pending-courses">
+                  <EyeOff className="h-4 w-4" />
+                  Pending ({categorizedCourses.pending.length})
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="deleted" 
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-4"
-                  data-testid="tab-deleted-courses"
-                >
-                  <div className="flex items-center gap-2">
-                    <Trash2 className="h-4 w-4" />
-                    Deleted (0)
-                  </div>
+                <TabsTrigger value="archived" className="flex items-center gap-2" data-testid="tab-archived-courses">
+                  <Archive className="h-4 w-4" />
+                  Archived ({categorizedCourses.archived.length})
                 </TabsTrigger>
               </TabsList>
-            </div>
 
-            <TabsContent value="active" className="p-0 m-0">
-              <div className="p-6">
-                <div className="flex items-center mb-6">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <h2 className="text-xl font-semibold">Active Courses</h2>
-                </div>
-                {renderCourseTable('active', categorizedCourses.upcoming)}
-              </div>
-            </TabsContent>
+              <TabsContent value="upcoming" className="mt-6">
+                {renderCourseList(
+                  'upcoming',
+                  categorizedCourses.upcoming,
+                  <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />,
+                  "No upcoming courses"
+                )}
+              </TabsContent>
 
-            <TabsContent value="archived" className="p-0 m-0">
-              <div className="p-6">
-                <div className="flex items-center mb-6">
-                  <Archive className="h-5 w-5 mr-2" />
-                  <h2 className="text-xl font-semibold">Archived Courses</h2>
-                </div>
-                {renderCourseTable('archived', categorizedCourses.archived)}
-              </div>
-            </TabsContent>
+              <TabsContent value="past" className="mt-6">
+                {renderCourseList(
+                  'past',
+                  categorizedCourses.past,
+                  <GraduationCap className="mx-auto h-12 w-12 text-muted-foreground mb-4" />,
+                  "No past courses"
+                )}
+              </TabsContent>
 
-            <TabsContent value="drafts" className="p-0 m-0">
-              <div className="p-6">
-                <div className="flex items-center mb-6">
-                  <EyeOff className="h-5 w-5 mr-2" />
-                  <h2 className="text-xl font-semibold">Draft Courses</h2>
-                </div>
-                {renderCourseTable('drafts', categorizedCourses.pending)}
+              <TabsContent value="pending" className="mt-6">
+                {renderCourseList(
+                  'pending',
+                  categorizedCourses.pending,
+                  <EyeOff className="mx-auto h-12 w-12 text-muted-foreground mb-4" />,
+                  "No pending courses"
+                )}
                 {categorizedCourses.pending.length === 0 && !coursesLoading && (
                   <div className="mt-6 text-center">
                     <Button 
@@ -382,26 +354,19 @@ export default function InstructorDashboard() {
                     </Button>
                   </div>
                 )}
-              </div>
-            </TabsContent>
+              </TabsContent>
 
-            <TabsContent value="deleted" className="p-0 m-0">
-              <div className="p-6">
-                <div className="flex items-center mb-6">
-                  <Trash2 className="h-5 w-5 mr-2" />
-                  <h2 className="text-xl font-semibold">Deleted Courses</h2>
-                </div>
-                <div className="text-center py-12">
-                  <Trash2 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium text-muted-foreground mb-2">No deleted courses</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Deleted courses will appear here
-                  </p>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+              <TabsContent value="archived" className="mt-6">
+                {renderCourseList(
+                  'archived',
+                  categorizedCourses.archived,
+                  <Archive className="mx-auto h-12 w-12 text-muted-foreground mb-4" />,
+                  "No archived courses"
+                )}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Edit Course Form */}
