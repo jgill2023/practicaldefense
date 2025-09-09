@@ -58,14 +58,17 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
   const form = useForm<ScheduleFormData>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: {
-      startDate: schedule?.startDate || '',
-      endDate: schedule?.endDate || '',
+      startDate: schedule?.startDate ? 
+        (typeof schedule.startDate === 'string' ? schedule.startDate : schedule.startDate.toISOString().split('T')[0]) : '',
+      endDate: schedule?.endDate ? 
+        (typeof schedule.endDate === 'string' ? schedule.endDate : schedule.endDate.toISOString().split('T')[0]) : '',
       startTime: schedule?.startTime || '',
       endTime: schedule?.endTime || '',
       location: schedule?.location || '',
       maxSpots: schedule?.maxSpots || 20,
       availableSpots: schedule?.availableSpots || 20,
-      registrationDeadline: schedule?.registrationDeadline || '',
+      registrationDeadline: schedule?.registrationDeadline ? 
+        (typeof schedule.registrationDeadline === 'string' ? schedule.registrationDeadline : schedule.registrationDeadline.toISOString().split('T')[0]) : '',
       waitlistEnabled: schedule?.waitlistEnabled ?? true,
       autoConfirmRegistration: schedule?.autoConfirmRegistration ?? true,
       notes: schedule?.notes || '',
