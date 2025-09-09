@@ -77,11 +77,19 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
   const updateScheduleMutation = useMutation({
     mutationFn: async (data: ScheduleFormData) => {
       const updateData = {
-        ...data,
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
+        startTime: data.startTime,
+        endTime: data.endTime,
+        location: data.location || null,
+        maxSpots: data.maxSpots,
+        availableSpots: data.availableSpots,
+        waitlistEnabled: data.waitlistEnabled,
+        autoConfirmRegistration: data.autoConfirmRegistration,
+        notes: data.notes || null,
+        // Convert date strings to ISO strings for the database
+        startDate: new Date(data.startDate).toISOString(),
+        endDate: new Date(data.endDate).toISOString(),
         registrationDeadline: data.registrationDeadline 
-          ? new Date(data.registrationDeadline) 
+          ? new Date(data.registrationDeadline).toISOString()
           : null,
       };
       
