@@ -368,9 +368,7 @@ export default function InstructorDashboard() {
                   className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
                   data-testid="tab-active-courses"
                 >
-                  <div className="w-4 h-4 rounded border border-current flex items-center justify-center">
-                    <div className="w-2 h-2 bg-current rounded-sm"></div>
-                  </div>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                   Active ({categorizedCourses.upcoming.length})
                 </TabsTrigger>
                 <TabsTrigger 
@@ -403,9 +401,7 @@ export default function InstructorDashboard() {
               <TabsContent value="active" className="mt-0">
                 <div className="py-6">
                   <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <div className="w-5 h-5 rounded border border-current flex items-center justify-center">
-                      <div className="w-2.5 h-2.5 bg-current rounded-sm"></div>
-                    </div>
+                    <div className="w-4 h-4 bg-green-500 rounded-full"></div>
                     Active Courses
                   </h2>
                   {renderCourseTable('upcoming', categorizedCourses.upcoming)}
