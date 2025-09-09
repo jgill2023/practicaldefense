@@ -25,22 +25,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
 
   const handleRegister = () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Login Required",
-        description: "Please log in to register for courses",
-        variant: "destructive",
-      });
-      
-      // Store the course ID for after login
-      localStorage.setItem('pending_course_registration', course.id);
-      setTimeout(() => {
-        window.location.href = '/api/login';
-      }, 1500);
-      return;
-    }
-
-    // Navigate to full registration page
+    // Navigate directly to registration page (no authentication required)
     setLocation(`/course-registration/${course.id}`);
     onClose();
   };
