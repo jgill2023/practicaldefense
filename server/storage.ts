@@ -24,6 +24,7 @@ export interface IStorage {
   
   // Course operations
   createCourse(course: InsertCourse): Promise<Course>;
+  duplicateCourse(courseId: string): Promise<Course>;
   updateCourse(id: string, course: Partial<InsertCourse>): Promise<Course>;
   deleteCourse(id: string): Promise<Course>;
   permanentlyDeleteCourse(id: string): Promise<void>;
@@ -89,6 +90,32 @@ export class DatabaseStorage implements IStorage {
     const [newCourse] = await db
       .insert(courses)
       .values(course)
+      .returning();
+    return newCourse;
+  }
+
+  async duplicateCourse(courseId: string): Promise<Course> {
+    // Get the original course
+    const originalCourse = await this.getCourse(courseId);
+    if (!originalCourse) {
+      throw new Error('Course not found');
+    }
+
+    // Create a duplicate with a new title
+    const duplicateData: InsertCourse = {
+      title: `${originalCourse.title} (Copy)`,
+      description: originalCourse.description,
+      category: originalCourse.category,
+      price: originalCourse.price,
+      duration: originalCourse.duration,
+      imageUrl: originalCourse.imageUrl,
+      instructorId: originalCourse.instructorId,
+      isActive: false, // Start as inactive/draft
+    };
+
+    const [newCourse] = await db
+      .insert(courses)
+      .values(duplicateData)
       .returning();
     return newCourse;
   }

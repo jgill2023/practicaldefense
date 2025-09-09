@@ -327,6 +327,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Duplicate course endpoint
+  app.post("/api/instructor/courses/:courseId/duplicate", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const courseId = req.params.courseId;
+
+      // Verify the course belongs to the instructor
+      const existingCourse = await storage.getCourse(courseId);
+      if (!existingCourse || existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      }
+
+      const duplicatedCourse = await storage.duplicateCourse(courseId);
+      res.json({ message: "Course duplicated successfully", course: duplicatedCourse });
+    } catch (error: any) {
+      console.error("Error duplicating course:", error);
+      res.status(500).json({ error: "Failed to duplicate course: " + error.message });
+    }
+  });
+
   // Delete course endpoint (soft delete)
   app.delete("/api/instructor/courses/:courseId", isAuthenticated, async (req: any, res) => {
     try {
