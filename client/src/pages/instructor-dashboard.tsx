@@ -484,16 +484,21 @@ export default function InstructorDashboard() {
     upcoming: allSchedules.filter(schedule => 
       schedule.course.isActive && 
       schedule.startDate && 
-      new Date(schedule.startDate) > new Date()
+      new Date(schedule.startDate) > new Date() &&
+      !schedule.notes?.includes('CANCELLED:') // Exclude cancelled schedules
     ).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()),
     
     past: allSchedules.filter(schedule => 
       schedule.course.isActive && 
       schedule.startDate && 
-      new Date(schedule.startDate) <= new Date()
+      new Date(schedule.startDate) <= new Date() &&
+      !schedule.notes?.includes('CANCELLED:') // Exclude cancelled schedules
     ).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()),
     
-    cancelled: [] // Placeholder for cancelled schedules
+    cancelled: allSchedules.filter(schedule => 
+      schedule.course.isActive && 
+      schedule.notes?.includes('CANCELLED:') // Include only cancelled schedules
+    ).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
   };
 
   // Categorize course types (unique courses)
