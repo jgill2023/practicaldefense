@@ -460,51 +460,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
-      console.log("=== SCHEDULE UPDATE DEBUG ===");
-      console.log("Raw request body:", JSON.stringify(req.body, null, 2));
+      console.log("=== RAW PG UPDATE ATTEMPT ===");
+      console.log("Schedule ID:", scheduleId);
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
       
-      // Try using raw SQL to bypass Drizzle's type conversion issues
-      const { db } = await import("./db");
-      const { sql } = await import("drizzle-orm");
+      // Use direct PostgreSQL connection bypassing Drizzle entirely
+      const { pool } = await import("./db");
       
-      // Build a safe SQL update query manually
+      // Build SQL update manually
       const updateParts = [];
       const values = [];
       
       if (req.body.location !== undefined) {
-        updateParts.push("location = $" + (values.length + 1));
+        updateParts.push(`location = $${values.length + 1}`);
         values.push(req.body.location);
       }
       if (req.body.startTime !== undefined) {
-        updateParts.push("start_time = $" + (values.length + 1));
+        updateParts.push(`start_time = $${values.length + 1}`);
         values.push(req.body.startTime);
       }
       if (req.body.endTime !== undefined) {
-        updateParts.push("end_time = $" + (values.length + 1));
+        updateParts.push(`end_time = $${values.length + 1}`);
         values.push(req.body.endTime);
       }
       if (req.body.maxSpots !== undefined) {
-        updateParts.push("max_spots = $" + (values.length + 1));
+        updateParts.push(`max_spots = $${values.length + 1}`);
         values.push(Number(req.body.maxSpots));
       }
       if (req.body.availableSpots !== undefined) {
-        updateParts.push("available_spots = $" + (values.length + 1));
+        updateParts.push(`available_spots = $${values.length + 1}`);
         values.push(Number(req.body.availableSpots));
       }
       if (req.body.notes !== undefined) {
-        updateParts.push("notes = $" + (values.length + 1));
+        updateParts.push(`notes = $${values.length + 1}`);
         values.push(req.body.notes || null);
       }
       
-      // Always update the updated_at timestamp
-      updateParts.push("updated_at = $" + (values.length + 1));
+      // Always update timestamp
+      updateParts.push(`updated_at = $${values.length + 1}`);
       values.push(new Date().toISOString());
       
-      if (updateParts.length === 1) { // Only updatedAt
+      if (updateParts.length === 1) {
         return res.status(400).json({ error: "No fields to update" });
       }
       
-      const updateQuery = `
+      const query = `
         UPDATE course_schedules 
         SET ${updateParts.join(", ")}
         WHERE id = $${values.length + 1}
@@ -512,11 +512,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `;
       values.push(scheduleId);
       
-      console.log("SQL Query:", updateQuery);
+      console.log("Direct PG Query:", query);
       console.log("Values:", values);
       
-      const result = await db.execute(sql.raw(updateQuery, values));
-      console.log("Update result:", result);
+      const result = await pool.query(query, values);
+      console.log("Direct PG Result rows:", result.rows.length);
       
       const updatedSchedule = result.rows[0];
       res.json({ message: "Schedule updated successfully", schedule: updatedSchedule });

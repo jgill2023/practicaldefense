@@ -1,0 +1,41 @@
+Error: Extension context invalidated.
+    at web-client-content-script.js:2:356132
+    at new Promise (<anonymous>)
+    at Object.sendMessage (web-client-content-script.js:2:356083)
+    at web-client-content-script.js:2:357411
+    at p (web-client-content-script.js:2:347936)
+    at Generator.<anonymous> (web-client-content-script.js:2:349275)
+    at Generator.next (web-client-content-script.js:2:348301)
+    at u (web-client-content-script.js:2:354953)
+    at i (web-client-content-script.js:2:355156)
+    at web-client-content-script.js:2:355215
+injected.js:278  PATCH https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/api/instructor/schedules/5873deab-1555-4a4b-8849-a8b5ba27bb39 500 (Internal Server Error)
+window.fetch @ Network.js:219
+apply @ injected.js:278
+apiRequest @ queryClient.ts:15
+mutationFn @ EditScheduleForm.tsx:94
+fn @ @tanstack_react-query.js?v=44d0c202:1189
+run @ @tanstack_react-query.js?v=44d0c202:494
+start @ @tanstack_react-query.js?v=44d0c202:536
+execute @ @tanstack_react-query.js?v=44d0c202:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=44d0c202:2630
+(anonymous) @ @tanstack_react-query.js?v=44d0c202:3295
+onSubmit @ EditScheduleForm.tsx:126
+(anonymous) @ chunk-XJYEGDCZ.js?v=44d0c202:1465
+await in (anonymous)
+callCallback2 @ chunk-UZOKQUDP.js?v=44d0c202:3674
+invokeGuardedCallbackDev @ chunk-UZOKQUDP.js?v=44d0c202:3699
+invokeGuardedCallback @ chunk-UZOKQUDP.js?v=44d0c202:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-UZOKQUDP.js?v=44d0c202:3736
+executeDispatch @ chunk-UZOKQUDP.js?v=44d0c202:7014
+processDispatchQueueItemsInOrder @ chunk-UZOKQUDP.js?v=44d0c202:7034
+processDispatchQueue @ chunk-UZOKQUDP.js?v=44d0c202:7043
+dispatchEventsForPlugins @ chunk-UZOKQUDP.js?v=44d0c202:7051
+(anonymous) @ chunk-UZOKQUDP.js?v=44d0c202:7174
+batchedUpdates$1 @ chunk-UZOKQUDP.js?v=44d0c202:18913
+batchedUpdates @ chunk-UZOKQUDP.js?v=44d0c202:3579
+dispatchEventForPluginEventSystem @ chunk-UZOKQUDP.js?v=44d0c202:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-UZOKQUDP.js?v=44d0c202:5478
+dispatchEvent @ chunk-UZOKQUDP.js?v=44d0c202:5472
+dispatchDiscreteEvent @ chunk-UZOKQUDP.js?v=44d0c202:5449Understand this error
