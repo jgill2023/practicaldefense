@@ -49,18 +49,24 @@ export default function CourseManagement() {
   // Transform course schedules into calendar events
   const calendarEvents = useMemo(() => {
     return courses.flatMap(course => 
-      course.schedules.map(schedule => ({
-        id: schedule.id,
-        title: `${course.title}`,
-        start: new Date(`${schedule.startDate} ${schedule.startTime}`),
-        end: new Date(`${schedule.endDate} ${schedule.endTime}`),
-        resource: {
-          course,
-          schedule,
-          enrollmentCount: schedule.enrollments?.length || 0,
-          waitlistCount: schedule.waitlistEntries?.length || 0,
-        }
-      }))
+      course.schedules.map(schedule => {
+        // Parse dates properly - convert Date objects to ISO strings and extract date part
+        const startDateStr = schedule.startDate?.toISOString().split('T')[0]; // Get "2025-09-27"
+        const endDateStr = schedule.endDate?.toISOString().split('T')[0];     // Get "2025-09-28"
+        
+        return {
+          id: schedule.id,
+          title: `${course.title}`,
+          start: new Date(`${startDateStr}T${schedule.startTime}:00`), // Format: "2025-09-27T08:30:00"
+          end: new Date(`${endDateStr}T${schedule.endTime}:00`),       // Format: "2025-09-28T16:30:00"
+          resource: {
+            course,
+            schedule,
+            enrollmentCount: schedule.enrollments?.length || 0,
+            waitlistCount: schedule.waitlistEntries?.length || 0,
+          }
+        };
+      })
     );
   }, [courses]);
 
