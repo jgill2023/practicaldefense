@@ -196,29 +196,16 @@ export default function InstructorDashboard() {
                     )}
                   </div>
                   
-                  {/* Course details in a compact layout */}
+                  {/* Course details with revenue in a compact layout */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
                       <span>{displayDate}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      <span>{displayTime}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
                       <span>{enrollmentCount} enrolled</span>
                     </div>
-                    {schedule.location && (
-                      <div className="flex items-center gap-1 col-span-2 lg:col-span-1">
-                        <span className="truncate">{schedule.location}</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Revenue information */}
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                     <div>
                       <div className="text-xs text-muted-foreground">Collected Revenue</div>
                       <div className="font-medium text-emerald-600">${collectedRevenue.toLocaleString()}</div>
