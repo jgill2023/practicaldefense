@@ -112,6 +112,8 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
             courseImageURL: uploadURL,
           });
           const data = await response.json();
+          
+          // Set the uploaded image URL for preview and form
           setUploadedImageUrl(data.objectPath);
           form.setValue("imageUrl", data.objectPath);
           
@@ -120,13 +122,20 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
             description: "Course image has been uploaded successfully.",
           });
         } catch (error) {
+          console.error('Upload error:', error);
           toast({
             title: "Upload Error",
-            description: "Failed to process uploaded image.",
+            description: "Failed to process uploaded image. Please try again.",
             variant: "destructive",
           });
         }
       }
+    } else {
+      toast({
+        title: "Upload Failed",
+        description: "No files were successfully uploaded.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -140,7 +149,12 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} onKeyDown={(e) => {
+          // Prevent form submission on Enter key press
+          if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+            e.preventDefault();
+          }
+        }} className="space-y-6">
           <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
