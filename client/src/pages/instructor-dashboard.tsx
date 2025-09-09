@@ -18,7 +18,7 @@ import {
 import { CourseManagementActions } from "@/components/CourseManagementActions";
 import { EditCourseForm } from "@/components/EditCourseForm";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical } from "lucide-react";
+import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 
 export default function InstructorDashboard() {
@@ -506,7 +506,17 @@ export default function InstructorDashboard() {
         {/* Schedule Management Section */}
         <div className="bg-card rounded-lg border mb-8">
           <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Schedule</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Schedule</h2>
+              <Button 
+                onClick={() => setLocation('/course-management')}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                data-testid="button-schedule-course"
+              >
+                <CalendarPlus className="w-4 h-4 mr-2" />
+                Schedule Course
+              </Button>
+            </div>
             <Tabs defaultValue="upcoming" className="w-full">
               <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none justify-start w-full">
                 <TabsTrigger 
