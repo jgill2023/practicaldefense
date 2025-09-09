@@ -80,6 +80,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const courses = await storage.getCoursesByInstructor(userId);
+      
+      // Log the first schedule's date format to debug timezone issues
+      if (courses.length > 0 && courses[0].schedules && courses[0].schedules.length > 0) {
+        console.log("=== COURSE DATE DEBUG ===");
+        console.log("First schedule dates:", {
+          startDate: courses[0].schedules[0].startDate,
+          endDate: courses[0].schedules[0].endDate,
+          startDateType: typeof courses[0].schedules[0].startDate,
+          endDateType: typeof courses[0].schedules[0].endDate
+        });
+        console.log("=== END DEBUG ===");
+      }
+      
       res.json(courses);
     } catch (error) {
       console.error("Error fetching instructor courses:", error);
@@ -539,6 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const result = await pool.query(query, values);
       console.log("Direct PG Result rows:", result.rows.length);
+      console.log("Updated schedule data:", JSON.stringify(result.rows[0], null, 2));
       
       const updatedSchedule = result.rows[0];
       res.json({ message: "Schedule updated successfully", schedule: updatedSchedule });
