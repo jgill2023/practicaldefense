@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -69,11 +70,12 @@ const eventSchema = z.object({
 type EventFormData = z.infer<typeof eventSchema>;
 
 interface EventCreationFormProps {
+  isOpen?: boolean;
   onClose: () => void;
   onEventCreated?: () => void;
 }
 
-export function EventCreationForm({ onClose, onEventCreated }: EventCreationFormProps) {
+export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: EventCreationFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentTab, setCurrentTab] = useState("basic");
@@ -198,12 +200,21 @@ export function EventCreationForm({ onClose, onEventCreated }: EventCreationForm
   ];
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={(e) => {
-      // Prevent form submission when pressing Enter unless on the submit button
-      if (e.key === 'Enter' && e.target !== e.currentTarget) {
-        e.preventDefault();
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center space-x-2">
+            <CalendarIcon className="h-5 w-5" />
+            <span>Create New Training Event</span>
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={(e) => {
+          // Prevent form submission when pressing Enter unless on the submit button
+          if (e.key === 'Enter' && e.target !== e.currentTarget) {
+            e.preventDefault();
+          }
+        }}>
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
@@ -651,6 +662,8 @@ export function EventCreationForm({ onClose, onEventCreated }: EventCreationForm
           )}
         </div>
       </div>
-    </form>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

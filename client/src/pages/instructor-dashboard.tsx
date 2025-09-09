@@ -692,15 +692,14 @@ export default function InstructorDashboard() {
       )}
 
       {/* Event Creation Form Modal */}
-      {showEventForm && (
-        <EventCreationForm
-          onClose={() => setShowEventForm(false)}
-          onEventCreated={() => {
-            setShowEventForm(false);
-            // The form handles query invalidation internally
-          }}
-        />
-      )}
+      <EventCreationForm
+        isOpen={showEventForm}
+        onClose={() => setShowEventForm(false)}
+        onEventCreated={() => {
+          setShowEventForm(false);
+          // The form handles query invalidation internally
+        }}
+      />
 
       {/* Course Creation Form Modal */}
       <CourseCreationForm
