@@ -157,6 +157,103 @@ export default function InstructorDashboard() {
     },
   });
 
+  // Schedule management mutations
+  const deleteScheduleMutation = useMutation({
+    mutationFn: async (scheduleId: string) => {
+      await apiRequest("DELETE", `/api/instructor/schedules/${scheduleId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Schedule Deleted",
+        description: "Training schedule has been permanently deleted.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      const errorMessage = error.message.includes('Cannot delete schedule')
+        ? error.message.split(': ')[1] || 'Cannot delete schedule with existing enrollments'
+        : 'Failed to delete schedule. Please try again.';
+      toast({
+        title: "Delete Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const cancelScheduleMutation = useMutation({
+    mutationFn: async (scheduleId: string) => {
+      await apiRequest("PATCH", `/api/instructor/schedules/${scheduleId}/cancel`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Schedule Cancelled",
+        description: "Training schedule has been cancelled successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Cancel Failed",
+        description: "Failed to cancel schedule. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const unpublishScheduleMutation = useMutation({
+    mutationFn: async (scheduleId: string) => {
+      await apiRequest("PATCH", `/api/instructor/schedules/${scheduleId}/unpublish`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Schedule Unpublished",
+        description: "Training schedule has been unpublished successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Unpublish Failed",
+        description: "Failed to unpublish schedule. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || (user as User)?.role !== 'instructor')) {
       toast({
@@ -356,27 +453,34 @@ export default function InstructorDashboard() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => console.log('Unpublish schedule', schedule.id)}
+                        onClick={() => unpublishScheduleMutation.mutate(schedule.id)}
+                        disabled={unpublishScheduleMutation.isPending}
                         data-testid={`menuitem-unpublish-schedule-${schedule.id}`}
                       >
                         <EyeOff className="mr-2 h-4 w-4" />
-                        Unpublish
+                        {unpublishScheduleMutation.isPending ? 'Unpublishing...' : 'Unpublish'}
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => console.log('Cancel schedule', schedule.id)}
+                        onClick={() => cancelScheduleMutation.mutate(schedule.id)}
+                        disabled={cancelScheduleMutation.isPending}
                         data-testid={`menuitem-cancel-schedule-${schedule.id}`}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Cancel
+                        {cancelScheduleMutation.isPending ? 'Cancelling...' : 'Cancel'}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onClick={() => console.log('Delete schedule', schedule.id)}
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to permanently delete this training schedule? This action cannot be undone.')) {
+                            deleteScheduleMutation.mutate(schedule.id);
+                          }
+                        }}
+                        disabled={deleteScheduleMutation.isPending}
                         className="text-destructive"
                         data-testid={`menuitem-delete-schedule-${schedule.id}`}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete Schedule
+                        {deleteScheduleMutation.isPending ? 'Deleting...' : 'Delete Schedule'}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

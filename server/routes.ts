@@ -387,6 +387,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete schedule endpoint
+  app.delete("/api/instructor/schedules/:scheduleId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const scheduleId = req.params.scheduleId;
+
+      // Get schedule to verify ownership
+      const schedule = await storage.getCourseSchedule(scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ error: "Schedule not found" });
+      }
+
+      // Verify the course belongs to the instructor
+      const course = await storage.getCourse(schedule.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
+      }
+
+      // Check if schedule has enrollments
+      const enrollments = await storage.getEnrollmentsByScheduleId(scheduleId);
+      if (enrollments.length > 0) {
+        return res.status(400).json({ 
+          error: "Cannot delete schedule with existing enrollments. Cancel it instead." 
+        });
+      }
+
+      await storage.deleteCourseSchedule(scheduleId);
+      res.json({ message: "Schedule deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting schedule:", error);
+      res.status(500).json({ error: "Failed to delete schedule: " + error.message });
+    }
+  });
+
+  // Cancel schedule endpoint
+  app.patch("/api/instructor/schedules/:scheduleId/cancel", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const scheduleId = req.params.scheduleId;
+
+      // Get schedule to verify ownership
+      const schedule = await storage.getCourseSchedule(scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ error: "Schedule not found" });
+      }
+
+      // Verify the course belongs to the instructor
+      const course = await storage.getCourse(schedule.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
+      }
+
+      // For now, we'll add a notes field to indicate cancellation
+      // In a more complete system, you might have a separate status field
+      const updatedSchedule = await storage.updateCourseSchedule(scheduleId, {
+        notes: (schedule.notes ? schedule.notes + "\n" : "") + `CANCELLED: ${new Date().toISOString()}`
+      });
+
+      res.json({ message: "Schedule cancelled successfully", schedule: updatedSchedule });
+    } catch (error: any) {
+      console.error("Error cancelling schedule:", error);
+      res.status(500).json({ error: "Failed to cancel schedule: " + error.message });
+    }
+  });
+
+  // Unpublish schedule endpoint
+  app.patch("/api/instructor/schedules/:scheduleId/unpublish", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const scheduleId = req.params.scheduleId;
+
+      // Get schedule to verify ownership
+      const schedule = await storage.getCourseSchedule(scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ error: "Schedule not found" });
+      }
+
+      // Verify the course belongs to the instructor
+      const course = await storage.getCourse(schedule.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
+      }
+
+      // Set available spots to 0 to effectively unpublish
+      const updatedSchedule = await storage.updateCourseSchedule(scheduleId, {
+        availableSpots: 0,
+        notes: (schedule.notes ? schedule.notes + "\n" : "") + `UNPUBLISHED: ${new Date().toISOString()}`
+      });
+
+      res.json({ message: "Schedule unpublished successfully", schedule: updatedSchedule });
+    } catch (error: any) {
+      console.error("Error unpublishing schedule:", error);
+      res.status(500).json({ error: "Failed to unpublish schedule: " + error.message });
+    }
+  });
+
   // Course image upload endpoint
   app.put("/api/course-images", isAuthenticated, async (req: any, res) => {
     if (!req.body.courseImageURL) {

@@ -184,6 +184,12 @@ export class DatabaseStorage implements IStorage {
     return schedules;
   }
 
+  async deleteCourseSchedule(id: string): Promise<void> {
+    await db
+      .delete(courseSchedules)
+      .where(eq(courseSchedules.id, id));
+  }
+
   // Enrollment operations
   async createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment> {
     const [newEnrollment] = await db
@@ -212,6 +218,19 @@ export class DatabaseStorage implements IStorage {
       },
     });
     return enrollment;
+  }
+
+  async getEnrollmentsByScheduleId(scheduleId: string): Promise<EnrollmentWithDetails[]> {
+    const enrollmentList = await db.query.enrollments.findMany({
+      where: eq(enrollments.scheduleId, scheduleId),
+      with: {
+        course: true,
+        schedule: true,
+        student: true,
+      },
+      orderBy: desc(enrollments.createdAt),
+    });
+    return enrollmentList;
   }
 
   async getEnrollmentsByStudent(studentId: string): Promise<EnrollmentWithDetails[]> {
