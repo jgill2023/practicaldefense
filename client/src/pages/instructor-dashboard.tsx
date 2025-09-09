@@ -535,81 +535,81 @@ export default function InstructorDashboard() {
     }
 
     return (
-      <div className="overflow-x-auto bg-muted rounded-lg border">
-        <div className="min-w-[600px]">
-          <div className="grid p-3 bg-muted text-sm font-medium text-muted-foreground border-b" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
-            <div className="pr-3">Course</div>
-            <div className="px-2">Next</div>
-            <div className="px-2 text-center">Students</div>
-            <div className="px-2 text-right">Revenue</div>
-            <div className="px-2">Status</div>
-            <div className="pl-2 text-right">Actions</div>
-          </div>
-          <div className="bg-background">
-            {scheduleList.map((schedule) => {
-            const displayDate = schedule.startDate 
-              ? formatDateShort(schedule.startDate)
-              : '-';
+      <div className="bg-background rounded-lg border">
+        <div className="overflow-x-auto">
+          <div className="min-w-[600px]">
+            <div className="grid grid-cols-6 gap-4 p-4 bg-muted text-sm font-medium text-muted-foreground border-b">
+              <div>Course</div>
+              <div>Date</div>
+              <div className="text-center">Students</div>
+              <div className="text-center">Revenue</div>
+              <div className="text-center">Status</div>
+              <div className="text-center">Actions</div>
+            </div>
+            <div className="divide-y">
+              {scheduleList.map((schedule) => {
+              const displayDate = schedule.startDate 
+                ? formatDateShort(schedule.startDate)
+                : '-';
 
-            const displayTime = schedule.startTime && schedule.endTime 
-              ? `${schedule.startTime.slice(0,5)} - ${schedule.endTime.slice(0,5)}`
-              : '-';
+              const displayTime = schedule.startTime && schedule.endTime 
+                ? `${schedule.startTime.slice(0,5)} - ${schedule.endTime.slice(0,5)}`
+                : '-';
 
-            const scheduleEnrollments = enrollments.filter(e => e.scheduleId === schedule.id);
-            const enrollmentCount = scheduleEnrollments.length;
-            const spotsLeft = schedule.availableSpots;
+              const scheduleEnrollments = enrollments.filter(e => e.scheduleId === schedule.id);
+              const enrollmentCount = scheduleEnrollments.length;
+              const spotsLeft = schedule.availableSpots;
 
-            // Revenue calculations
-            const coursePrice = parseFloat(schedule.course.price.toString());
-            const paidEnrollments = scheduleEnrollments.filter(e => e.paymentStatus === 'paid');
-            const pendingEnrollments = scheduleEnrollments.filter(e => e.paymentStatus === 'pending');
+              // Revenue calculations
+              const coursePrice = parseFloat(schedule.course.price.toString());
+              const paidEnrollments = scheduleEnrollments.filter(e => e.paymentStatus === 'paid');
+              const pendingEnrollments = scheduleEnrollments.filter(e => e.paymentStatus === 'pending');
 
-            const collectedRevenue = paidEnrollments.length * coursePrice;
-            const outstandingRevenue = pendingEnrollments.length * coursePrice;
+              const collectedRevenue = paidEnrollments.length * coursePrice;
+              const outstandingRevenue = pendingEnrollments.length * coursePrice;
 
-            return (
-              <div key={schedule.id} className="grid p-4 border-b hover:bg-muted/20 transition-colors" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
-                <div className="min-w-0 pr-3">
-                  <div className="font-medium text-card-foreground truncate" data-testid={`text-schedule-course-${schedule.id}`}>
-                    {schedule.course.title}
+              return (
+                <div key={schedule.id} className="grid grid-cols-6 gap-4 p-4 hover:bg-muted/20 transition-colors">
+                  <div className="min-w-0">
+                    <div className="font-medium text-card-foreground truncate" data-testid={`text-schedule-course-${schedule.id}`}>
+                      {schedule.course.title}
+                    </div>
+                    <div className="text-sm text-muted-foreground">{schedule.course.category}</div>
+                    {spotsLeft <= 10 && spotsLeft > 0 && (
+                      <Badge variant="destructive" className="text-xs mt-1">
+                        {spotsLeft} spots left
+                      </Badge>
+                    )}
+                    {spotsLeft === 0 && (
+                      <Badge variant="destructive" className="text-xs mt-1">
+                        Full
+                      </Badge>
+                    )}
+                    {spotsLeft > 10 && (
+                      <Badge variant="secondary" className="text-xs mt-1">
+                        {spotsLeft} spots left
+                      </Badge>
+                    )}
                   </div>
-                  <div className="text-sm text-muted-foreground">{schedule.course.category}</div>
-                  {spotsLeft <= 10 && spotsLeft > 0 && (
-                    <Badge variant="destructive" className="text-xs mt-1">
-                      {spotsLeft} spots left
+                  <div className="text-sm">
+                    {displayDate}
+                    {displayTime !== '-' && (
+                      <div className="text-xs text-muted-foreground">{displayTime}</div>
+                    )}
+                  </div>
+                  <div className="text-sm text-center">{enrollmentCount}</div>
+                  <div className="text-sm text-center">
+                    <div className="font-medium text-emerald-600">${collectedRevenue.toLocaleString()}</div>
+                    {outstandingRevenue > 0 && (
+                      <div className="text-xs text-amber-600">${outstandingRevenue.toLocaleString()}</div>
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <Badge variant={schedule.status === 'cancelled' ? 'destructive' : 'default'} className="text-xs">
+                      {schedule.status === 'cancelled' ? 'Cancelled' : 'Active'}
                     </Badge>
-                  )}
-                  {spotsLeft === 0 && (
-                    <Badge variant="destructive" className="text-xs mt-1">
-                      Full
-                    </Badge>
-                  )}
-                  {spotsLeft > 10 && (
-                    <Badge variant="secondary" className="text-xs mt-1">
-                      {spotsLeft} spots left
-                    </Badge>
-                  )}
-
-                </div>
-                <div className="text-sm px-2">
-                  {displayDate}
-                  {displayTime !== '-' && (
-                    <div className="text-xs text-muted-foreground">{displayTime}</div>
-                  )}
-                </div>
-                <div className="text-sm text-center px-2">{enrollmentCount}</div>
-                <div className="text-sm text-right px-2">
-                  <div className="font-medium text-emerald-600">${collectedRevenue.toLocaleString()}</div>
-                  {outstandingRevenue > 0 && (
-                    <div className="text-xs text-amber-600">${outstandingRevenue.toLocaleString()}</div>
-                  )}
-                </div>
-                <div className="px-2">
-                  <Badge variant={schedule.status === 'cancelled' ? 'destructive' : 'default'} className="text-xs">
-                    {schedule.status === 'cancelled' ? 'Cancelled' : 'Active'}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-end gap-1 pl-2">
+                  </div>
+                  <div className="flex items-center justify-center gap-1">
                     {/* Edit Schedule Button */}
                     <Button
                       variant="ghost"
@@ -727,57 +727,58 @@ export default function InstructorDashboard() {
     }
 
     return (
-      <div className="overflow-x-auto bg-muted rounded-lg border">
-        <div className="min-w-[600px]">
-          <div className="grid p-3 bg-muted text-sm font-medium text-muted-foreground border-b" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
-            <div className="pr-3">Course</div>
-            <div className="px-2">Next</div>
-            <div className="px-2 text-center">Students</div>
-            <div className="px-2 text-right">Revenue</div>
-            <div className="px-2">Status</div>
-            <div className="pl-2 text-right">Actions</div>
-          </div>
-          <div className="divide-y bg-background">
-            {courseList.map((course) => {
-              const enrollmentCount = enrollments.filter(e => e.courseId === course.id).length;
-              const nextSchedule = course.schedules
-                .filter(s => s.startDate && new Date(s.startDate) > new Date())
-                .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())[0];
+      <div className="bg-background rounded-lg border">
+        <div className="overflow-x-auto">
+          <div className="min-w-[600px]">
+            <div className="grid grid-cols-6 gap-4 p-4 bg-muted text-sm font-medium text-muted-foreground border-b">
+              <div>Course</div>
+              <div>Date</div>
+              <div className="text-center">Students</div>
+              <div className="text-center">Revenue</div>
+              <div className="text-center">Status</div>
+              <div className="text-center">Actions</div>
+            </div>
+            <div className="divide-y">
+              {courseList.map((course) => {
+                const enrollmentCount = enrollments.filter(e => e.courseId === course.id).length;
+                const nextSchedule = course.schedules
+                  .filter(s => s.startDate && new Date(s.startDate) > new Date())
+                  .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())[0];
 
-              const displayDate = nextSchedule?.startDate
-                ? formatDateShort(nextSchedule.startDate)
-                : 'NONE';
+                const displayDate = nextSchedule?.startDate
+                  ? formatDateShort(nextSchedule.startDate)
+                  : 'NONE';
 
-              const courseRevenue = enrollmentCount * parseFloat(course.price.toString());
+                const courseRevenue = enrollmentCount * parseFloat(course.price.toString());
 
-              return (
-                <div key={course.id} className="grid p-4 hover:bg-muted/20 transition-colors border-b" style={{ gridTemplateColumns: '2fr 1.5fr 1fr 1fr 1fr 1.5fr' }}>
-                  <div className="min-w-0 pr-3">
-                    <div className="font-medium text-card-foreground truncate" data-testid={`text-course-name-${course.id}`}>
-                      {course.title}
+                return (
+                  <div key={course.id} className="grid grid-cols-6 gap-4 p-4 hover:bg-muted/20 transition-colors">
+                    <div className="min-w-0">
+                      <div className="font-medium text-card-foreground truncate" data-testid={`text-course-name-${course.id}`}>
+                        {course.title}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{course.category}</div>
                     </div>
-                    <div className="text-sm text-muted-foreground">{course.category}</div>
-                  </div>
-                  <div className="text-sm px-2">
-                    {displayDate}
-                    {nextSchedule?.startTime && (
-                      <div className="text-xs text-muted-foreground">{nextSchedule.startTime}</div>
-                    )}
-                  </div>
-                  <div className="text-sm text-center px-2">{enrollmentCount}</div>
-                  <div className="text-sm font-medium text-right px-2">${courseRevenue.toLocaleString()}</div>
-                  <div className="px-2">
-                    <Badge variant={
-                      course.isActive ? "default" :
-                      categoryName === 'archived' ? "destructive" :
-                      "outline"
-                    } className="text-xs">
-                      {course.isActive ? "Active" : 
-                       categoryName === 'archived' ? "Archived" : 
-                       "Unpublished"}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-end gap-1 pl-2">
+                    <div className="text-sm">
+                      {displayDate}
+                      {nextSchedule?.startTime && (
+                        <div className="text-xs text-muted-foreground">{nextSchedule.startTime}</div>
+                      )}
+                    </div>
+                    <div className="text-sm text-center">{enrollmentCount}</div>
+                    <div className="text-sm font-medium text-center">${courseRevenue.toLocaleString()}</div>
+                    <div className="text-center">
+                      <Badge variant={
+                        course.isActive ? "default" :
+                        categoryName === 'archived' ? "destructive" :
+                        "outline"
+                      } className="text-xs">
+                        {course.isActive ? "Active" : 
+                         categoryName === 'archived' ? "Archived" : 
+                         "Unpublished"}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-center gap-1">
                     {/* Edit Course Button */}
                     <Button
                       variant="ghost"
