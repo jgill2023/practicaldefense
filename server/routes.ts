@@ -463,44 +463,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("=== SCHEDULE UPDATE DEBUG ===");
       console.log("Raw request body:", JSON.stringify(req.body, null, 2));
       
-      // For now, let's only update non-date fields to isolate the issue
-      const updateData: any = {};
+      // Get current schedule to see what we're working with
+      console.log("Current schedule data:", JSON.stringify(schedule, null, 2));
       
-      // Only safe non-date fields first
-      if (req.body.startTime !== undefined) {
-        updateData.startTime = req.body.startTime;
-        console.log("Added startTime:", req.body.startTime);
-      }
-      if (req.body.endTime !== undefined) {
-        updateData.endTime = req.body.endTime;
-        console.log("Added endTime:", req.body.endTime);
-      }
+      // Let's try updating just one simple field to start
+      const updateData: any = {
+        // Always set updatedAt as a proper Date object
+        updatedAt: new Date(),
+      };
+      
+      // Only add one simple non-date field for testing
       if (req.body.location !== undefined) {
         updateData.location = req.body.location;
         console.log("Added location:", req.body.location);
       }
-      if (req.body.maxSpots !== undefined) {
-        updateData.maxSpots = Number(req.body.maxSpots);
-        console.log("Added maxSpots:", updateData.maxSpots);
-      }
-      if (req.body.availableSpots !== undefined) {
-        updateData.availableSpots = Number(req.body.availableSpots);
-        console.log("Added availableSpots:", updateData.availableSpots);
-      }
-      if (req.body.waitlistEnabled !== undefined) {
-        updateData.waitlistEnabled = Boolean(req.body.waitlistEnabled);
-        console.log("Added waitlistEnabled:", updateData.waitlistEnabled);
-      }
-      if (req.body.autoConfirmRegistration !== undefined) {
-        updateData.autoConfirmRegistration = Boolean(req.body.autoConfirmRegistration);
-        console.log("Added autoConfirmRegistration:", updateData.autoConfirmRegistration);
-      }
-      if (req.body.notes !== undefined) {
-        updateData.notes = req.body.notes || null;
-        console.log("Added notes:", updateData.notes);
-      }
       
-      console.log("Final non-date updateData:", JSON.stringify(updateData, null, 2));
+      console.log("Minimal updateData:", JSON.stringify(updateData, null, 2));
       console.log("=== END DEBUG ===");
 
       const updatedSchedule = await storage.updateCourseSchedule(scheduleId, updateData);
