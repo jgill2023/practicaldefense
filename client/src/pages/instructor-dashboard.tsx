@@ -535,156 +535,142 @@ export default function InstructorDashboard() {
     }
 
     return (
-      <div className="bg-background rounded-lg border">
-        <div className="overflow-x-auto">
-          <div className="min-w-[600px]">
-            <div className="grid grid-cols-6 gap-4 p-4 bg-muted text-sm font-medium text-muted-foreground border-b">
-              <div>Course</div>
-              <div>Date</div>
-              <div className="text-center">Students</div>
-              <div className="text-center">Revenue</div>
-              <div className="text-center">Status</div>
-              <div className="text-center">Actions</div>
-            </div>
-            <div className="divide-y">
-              {scheduleList.map((schedule) => {
-              const displayDate = schedule.startDate 
-                ? formatDateShort(schedule.startDate)
-                : '-';
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Course</th>
+              <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Date</th>
+              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Students</th>
+              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Revenue</th>
+              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Status</th>
+              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {scheduleList.map((schedule) => {
+            const displayDate = schedule.startDate 
+              ? formatDateShort(schedule.startDate)
+              : '-';
 
-              const displayTime = schedule.startTime && schedule.endTime 
-                ? `${schedule.startTime.slice(0,5)} - ${schedule.endTime.slice(0,5)}`
-                : '-';
+            const displayTime = schedule.startTime && schedule.endTime 
+              ? `${schedule.startTime.slice(0,5)} - ${schedule.endTime.slice(0,5)}`
+              : '-';
 
-              const scheduleEnrollments = enrollments.filter(e => e.scheduleId === schedule.id);
-              const enrollmentCount = scheduleEnrollments.length;
-              const spotsLeft = schedule.availableSpots;
+            const scheduleEnrollments = enrollments.filter(e => e.scheduleId === schedule.id);
+            const enrollmentCount = scheduleEnrollments.length;
+            const spotsLeft = schedule.availableSpots;
 
-              // Revenue calculations
-              const coursePrice = parseFloat(schedule.course.price.toString());
-              const paidEnrollments = scheduleEnrollments.filter(e => e.paymentStatus === 'paid');
-              const pendingEnrollments = scheduleEnrollments.filter(e => e.paymentStatus === 'pending');
+            // Revenue calculations
+            const coursePrice = parseFloat(schedule.course.price.toString());
+            const paidEnrollments = scheduleEnrollments.filter(e => e.paymentStatus === 'paid');
+            const pendingEnrollments = scheduleEnrollments.filter(e => e.paymentStatus === 'pending');
 
-              const collectedRevenue = paidEnrollments.length * coursePrice;
-              const outstandingRevenue = pendingEnrollments.length * coursePrice;
+            const collectedRevenue = paidEnrollments.length * coursePrice;
+            const outstandingRevenue = pendingEnrollments.length * coursePrice;
 
-              return (
-                <div key={schedule.id} className="grid grid-cols-6 gap-4 p-4 hover:bg-muted/20 transition-colors">
-                  <div className="min-w-0">
-                    <div className="font-medium text-card-foreground truncate" data-testid={`text-schedule-course-${schedule.id}`}>
-                      {schedule.course.title}
-                    </div>
-                    <div className="text-sm text-muted-foreground">{schedule.course.category}</div>
-                    {spotsLeft <= 10 && spotsLeft > 0 && (
-                      <Badge variant="destructive" className="text-xs mt-1">
-                        {spotsLeft} spots left
-                      </Badge>
-                    )}
-                    {spotsLeft === 0 && (
-                      <Badge variant="destructive" className="text-xs mt-1">
-                        Full
-                      </Badge>
-                    )}
-                    {spotsLeft > 10 && (
-                      <Badge variant="secondary" className="text-xs mt-1">
-                        {spotsLeft} spots left
-                      </Badge>
-                    )}
+            return (
+              <tr key={schedule.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4">
+                  <div className="font-medium text-gray-900" data-testid={`text-schedule-course-${schedule.id}`}>
+                    {schedule.course.title}
                   </div>
-                  <div className="text-sm">
-                    {displayDate}
-                    {displayTime !== '-' && (
-                      <div className="text-xs text-muted-foreground">{displayTime}</div>
-                    )}
-                  </div>
-                  <div className="text-sm text-center">{enrollmentCount}</div>
-                  <div className="text-sm text-center">
-                    <div className="font-medium text-emerald-600">${collectedRevenue.toLocaleString()}</div>
-                    {outstandingRevenue > 0 && (
-                      <div className="text-xs text-amber-600">${outstandingRevenue.toLocaleString()}</div>
-                    )}
-                  </div>
-                  <div className="text-center">
-                    <Badge variant={schedule.status === 'cancelled' ? 'destructive' : 'default'} className="text-xs">
-                      {schedule.status === 'cancelled' ? 'Cancelled' : 'Active'}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="text-sm text-gray-500">{schedule.course.category}</div>
+                  {spotsLeft <= 10 && spotsLeft > 0 && (
+                    <span className="inline-block mt-1 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                      {spotsLeft} spots left
+                    </span>
+                  )}
+                  {spotsLeft === 0 && (
+                    <span className="inline-block mt-1 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                      Full
+                    </span>
+                  )}
+                  {spotsLeft > 10 && (
+                    <span className="inline-block mt-1 px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
+                      {spotsLeft} spots left
+                    </span>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900">
+                  <div>{displayDate}</div>
+                  {displayTime !== '-' && (
+                    <div className="text-xs text-gray-500">{displayTime}</div>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-center text-sm text-gray-900">{enrollmentCount}</td>
+                <td className="px-6 py-4 text-center">
+                  <div className="font-medium text-green-600">${collectedRevenue.toLocaleString()}</div>
+                  {outstandingRevenue > 0 && (
+                    <div className="text-xs text-amber-600">${outstandingRevenue.toLocaleString()}</div>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                    schedule.status === 'cancelled' 
+                      ? 'bg-red-100 text-red-800' 
+                      : 'bg-green-100 text-green-800'
+                  }`}>
+                    {schedule.status === 'cancelled' ? 'Cancelled' : 'Active'}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-center gap-2">
+                    {/* View/Edit Schedule Button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                      onClick={() => setEditingSchedule(schedule)}
+                      data-testid={`button-edit-schedule-${schedule.id}`}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+
                     {/* Edit Schedule Button */}
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
                       onClick={() => setEditingSchedule(schedule)}
                       data-testid={`button-edit-schedule-${schedule.id}`}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
 
-                    {/* Duplicate Schedule Button */}
+                    {/* Users Button */}
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                      onClick={() => duplicateScheduleMutation.mutate(schedule.id)}
-                      disabled={duplicateScheduleMutation.isPending}
-                      data-testid={`button-duplicate-schedule-${schedule.id}`}
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                      onClick={() => console.log('View roster for schedule', schedule.id)}
+                      data-testid={`button-roster-schedule-${schedule.id}`}
                     >
-                      <Copy className="h-4 w-4" />
+                      <Users className="h-4 w-4" />
                     </Button>
 
-                    {/* More Actions Menu */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                          data-testid={`button-schedule-actions-${schedule.id}`}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => unpublishScheduleMutation.mutate(schedule.id)}
-                          disabled={unpublishScheduleMutation.isPending}
-                          data-testid={`menuitem-unpublish-schedule-${schedule.id}`}
-                        >
-                          <EyeOff className="mr-2 h-4 w-4" />
-                          {unpublishScheduleMutation.isPending ? 'Unpublishing...' : 'Unpublish'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => cancelScheduleMutation.mutate(schedule.id)}
-                          disabled={cancelScheduleMutation.isPending}
-                          data-testid={`menuitem-cancel-schedule-${schedule.id}`}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          {cancelScheduleMutation.isPending ? 'Cancelling...' : 'Cancel'}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            if (window.confirm('Are you sure you want to permanently delete this training schedule? This action cannot be undone.')) {
-                              deleteScheduleMutation.mutate(schedule.id);
-                            }
-                          }}
-                          disabled={deleteScheduleMutation.isPending}
-                          className="text-destructive"
-                          data-testid={`menuitem-delete-schedule-${schedule.id}`}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          {deleteScheduleMutation.isPending ? 'Deleting...' : 'Delete Schedule'}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {/* Delete Button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to permanently delete this training schedule? This action cannot be undone.')) {
+                          deleteScheduleMutation.mutate(schedule.id);
+                        }
+                      }}
+                      disabled={deleteScheduleMutation.isPending}
+                      data-testid={`button-delete-schedule-${schedule.id}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                </div>
-              );
-              })}
-            </div>
-          </div>
-        </div>
+                </td>
+              </tr>
+            );
+            })}
+          </tbody>
+        </table>
       </div>
     );
   };
@@ -717,63 +703,78 @@ export default function InstructorDashboard() {
     }
 
     return (
-      <div className="bg-background rounded-lg border">
-        <div className="overflow-x-auto">
-          <div className="min-w-[600px]">
-            <div className="grid grid-cols-6 gap-4 p-4 bg-muted text-sm font-medium text-muted-foreground border-b">
-              <div>Course</div>
-              <div>Date</div>
-              <div className="text-center">Students</div>
-              <div className="text-center">Revenue</div>
-              <div className="text-center">Status</div>
-              <div className="text-center">Actions</div>
-            </div>
-            <div className="divide-y">
-              {courseList.map((course) => {
-                const enrollmentCount = enrollments.filter(e => e.courseId === course.id).length;
-                const nextSchedule = course.schedules
-                  .filter(s => s.startDate && new Date(s.startDate) > new Date())
-                  .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())[0];
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Course</th>
+              <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Date</th>
+              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Students</th>
+              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Revenue</th>
+              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Status</th>
+              <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {courseList.map((course) => {
+              const enrollmentCount = enrollments.filter(e => e.courseId === course.id).length;
+              const nextSchedule = course.schedules
+                .filter(s => s.startDate && new Date(s.startDate) > new Date())
+                .sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())[0];
 
-                const displayDate = nextSchedule?.startDate
-                  ? formatDateShort(nextSchedule.startDate.toString())
-                  : 'NONE';
+              const displayDate = nextSchedule?.startDate
+                ? formatDateShort(nextSchedule.startDate.toString())
+                : 'NONE';
 
-                const courseRevenue = enrollmentCount * parseFloat(course.price.toString());
+              const courseRevenue = enrollmentCount * parseFloat(course.price.toString());
 
-                return (
-                  <div key={course.id} className="grid grid-cols-6 gap-4 p-4 hover:bg-muted/20 transition-colors">
-                    <div className="min-w-0">
-                      <div className="font-medium text-card-foreground truncate" data-testid={`text-course-name-${course.id}`}>
-                        {course.title}
-                      </div>
-                      <div className="text-sm text-muted-foreground">{course.category}</div>
+              return (
+                <tr key={course.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-gray-900" data-testid={`text-course-name-${course.id}`}>
+                      {course.title}
                     </div>
-                    <div className="text-sm">
-                      {displayDate}
-                      {nextSchedule?.startTime && (
-                        <div className="text-xs text-muted-foreground">{nextSchedule.startTime}</div>
-                      )}
-                    </div>
-                    <div className="text-sm text-center">{enrollmentCount}</div>
-                    <div className="text-sm font-medium text-center">${courseRevenue.toLocaleString()}</div>
-                    <div className="text-center">
-                      <Badge variant={
-                        course.isActive ? "default" :
-                        categoryName === 'archived' ? "destructive" :
-                        "outline"
-                      } className="text-xs">
-                        {course.isActive ? "Active" : 
-                         categoryName === 'archived' ? "Archived" : 
-                         "Unpublished"}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="text-sm text-gray-500">{course.category}</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">
+                    <div>{displayDate}</div>
+                    {nextSchedule?.startTime && (
+                      <div className="text-xs text-gray-500">{nextSchedule.startTime}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center text-sm text-gray-900">{enrollmentCount}</td>
+                  <td className="px-6 py-4 text-center text-sm font-medium text-gray-900">${courseRevenue.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                      course.isActive 
+                        ? 'bg-green-100 text-green-800' 
+                        : categoryName === 'archived' 
+                        ? 'bg-red-100 text-red-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {course.isActive ? "Active" : 
+                       categoryName === 'archived' ? "Archived" : 
+                       "Unpublished"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-2">
+                      {/* View Button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                        onClick={() => setEditingCourse(course)}
+                        data-testid={`button-view-course-${course.id}`}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+
                       {/* Edit Course Button */}
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                        className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
                         onClick={() => setEditingCourse(course)}
                         data-testid={`button-edit-course-${course.id}`}
                       >
@@ -784,77 +785,35 @@ export default function InstructorDashboard() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                        className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
                         onClick={() => console.log('View roster for course', course.id)}
                         data-testid={`button-roster-course-${course.id}`}
                       >
                         <Users className="h-4 w-4" />
                       </Button>
 
-                      {/* Duplicate Course Button */}
+                      {/* Delete Course Button */}
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                        onClick={() => duplicateCourseMutation.mutate(course.id)}
-                        disabled={duplicateCourseMutation.isPending}
-                        data-testid={`button-duplicate-course-${course.id}`}
+                        className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to permanently delete this course? This action cannot be undone.')) {
+                            deleteCourseMutation.mutate(course.id);
+                          }
+                        }}
+                        disabled={deleteCourseMutation.isPending}
+                        data-testid={`button-delete-course-${course.id}`}
                       >
-                        <Copy className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-
-                      {/* More Actions Dropdown Menu */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                            data-testid={`button-more-actions-${course.id}`}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => unpublishCourseMutation.mutate(course.id)}
-                            disabled={unpublishCourseMutation.isPending}
-                            data-testid={`menuitem-unpublish-${course.id}`}
-                          >
-                            <EyeOff className="mr-2 h-4 w-4" />
-                            {unpublishCourseMutation.isPending ? 'Unpublishing...' : 'Unpublish'}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => archiveCourseMutation.mutate(course.id)}
-                            disabled={archiveCourseMutation.isPending}
-                            data-testid={`menuitem-archive-${course.id}`}
-                          >
-                            <Archive className="mr-2 h-4 w-4" />
-                            {archiveCourseMutation.isPending ? 'Archiving...' : 'Archive'}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => {
-                              if (window.confirm('Are you sure you want to permanently delete this course? This action cannot be undone.')) {
-                                deleteCourseMutation.mutate(course.id);
-                              }
-                            }}
-                            disabled={deleteCourseMutation.isPending}
-                            className="text-destructive"
-                            data-testid={`menuitem-delete-${course.id}`}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            {deleteCourseMutation.isPending ? 'Deleting...' : 'Delete Course'}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     );
   };
