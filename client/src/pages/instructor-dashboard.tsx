@@ -45,6 +45,18 @@ export default function InstructorDashboard() {
     retry: false,
   });
 
+  const { data: deletedCourses = [], isLoading: deletedCoursesLoading } = useQuery<CourseWithSchedules[]>({
+    queryKey: ["/api/instructor/deleted-courses"],
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    retry: false,
+  });
+
+  const { data: deletedSchedules = [], isLoading: deletedSchedulesLoading } = useQuery<any[]>({
+    queryKey: ["/api/instructor/deleted-schedules"],
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    retry: false,
+  });
+
   // Fetch dashboard statistics
   const { data: dashboardStats, isLoading: statsLoading } = useQuery<{
     upcomingCourses: number;
@@ -249,6 +261,70 @@ export default function InstructorDashboard() {
       toast({
         title: "Unpublish Failed",
         description: "Failed to unpublish schedule. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Permanent delete course mutation (hard delete)
+  const permanentDeleteCourseMutation = useMutation({
+    mutationFn: async (courseId: string) => {
+      await apiRequest("DELETE", `/api/instructor/courses/${courseId}/permanent`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Course Permanently Deleted",
+        description: "Course has been permanently removed and cannot be recovered.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/deleted-courses"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Delete Failed",
+        description: "Failed to permanently delete course. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Permanent delete schedule mutation (hard delete)
+  const permanentDeleteScheduleMutation = useMutation({
+    mutationFn: async (scheduleId: string) => {
+      await apiRequest("DELETE", `/api/instructor/schedules/${scheduleId}/permanent`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Schedule Permanently Deleted",
+        description: "Schedule has been permanently removed and cannot be recovered.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/deleted-schedules"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Delete Failed",
+        description: "Failed to permanently delete schedule. Please try again.",
         variant: "destructive",
       });
     },
@@ -783,6 +859,14 @@ export default function InstructorDashboard() {
                   <Trash2 className="w-4 h-4" />
                   Cancelled ({categorizedSchedules.cancelled.length})
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="deleted" 
+                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
+                  data-testid="tab-deleted-schedules"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Deleted ({deletedSchedules.length})
+                </TabsTrigger>
               </TabsList>
 
               {/* Schedule Tab Content */}
@@ -801,6 +885,59 @@ export default function InstructorDashboard() {
               <TabsContent value="cancelled" className="mt-0">
                 <div className="py-6">
                   {renderScheduleCards('cancelled', categorizedSchedules.cancelled)}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="deleted" className="mt-0">
+                <div className="py-6">
+                  {deletedSchedulesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+                    </div>
+                  ) : deletedSchedules.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Trash2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-foreground mb-2">No Deleted Schedules</h3>
+                      <p className="text-muted-foreground">Deleted training schedules will appear here.</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-6">
+                      {deletedSchedules.map((schedule: any) => (
+                        <Card key={schedule.id} className="border border-destructive/20 bg-destructive/5">
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-lg mb-2" data-testid={`text-schedule-title-${schedule.id}`}>
+                                  {schedule.course?.title || 'Unknown Course'}
+                                </h3>
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                                  <span>{new Date(schedule.startDate).toLocaleDateString()}</span>
+                                  <span>{schedule.startTime} - {schedule.endTime}</span>
+                                  {schedule.location && <span>{schedule.location}</span>}
+                                </div>
+                                <Badge variant="destructive" className="mb-2">Deleted</Badge>
+                                <p className="text-sm text-muted-foreground">
+                                  Deleted on {schedule.deletedAt ? new Date(schedule.deletedAt).toLocaleDateString() : 'Unknown'}
+                                </p>
+                              </div>
+                              <div className="ml-4">
+                                <Button
+                                  onClick={() => permanentDeleteScheduleMutation.mutate(schedule.id)}
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={permanentDeleteScheduleMutation.isPending}
+                                  data-testid={`button-permanent-delete-schedule-${schedule.id}`}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  {permanentDeleteScheduleMutation.isPending ? "Deleting..." : "Delete Permanently"}
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
@@ -853,7 +990,7 @@ export default function InstructorDashboard() {
                   data-testid="tab-deleted-courses"
                 >
                   <Trash2 className="w-4 h-4" />
-                  Deleted (0)
+                  Deleted ({deletedCourses.length})
                 </TabsTrigger>
               </TabsList>
 
@@ -905,9 +1042,55 @@ export default function InstructorDashboard() {
                     <Trash2 className="w-5 h-5" />
                     Deleted Courses
                   </h2>
-                  <div className="text-center py-12 text-muted-foreground">
-                    No courses found in this category
-                  </div>
+                  {deletedCoursesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+                    </div>
+                  ) : deletedCourses.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Trash2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-foreground mb-2">No Deleted Courses</h3>
+                      <p className="text-muted-foreground">Deleted course types will appear here.</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-6">
+                      {deletedCourses.map((course) => (
+                        <Card key={course.id} className="border border-destructive/20 bg-destructive/5">
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-lg mb-2" data-testid={`text-course-title-${course.id}`}>
+                                  {course.title}
+                                </h3>
+                                <p className="text-muted-foreground mb-4">{course.briefDescription || course.description}</p>
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                                  <span>${course.price}</span>
+                                  <span>{course.duration}</span>
+                                  <span>{course.category}</span>
+                                </div>
+                                <Badge variant="destructive" className="mb-2">Deleted</Badge>
+                                <p className="text-sm text-muted-foreground">
+                                  Deleted on {course.deletedAt ? new Date(course.deletedAt).toLocaleDateString() : 'Unknown'}
+                                </p>
+                              </div>
+                              <div className="ml-4">
+                                <Button
+                                  onClick={() => permanentDeleteCourseMutation.mutate(course.id)}
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={permanentDeleteCourseMutation.isPending}
+                                  data-testid={`button-permanent-delete-course-${course.id}`}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  {permanentDeleteCourseMutation.isPending ? "Deleting..." : "Delete Permanently"}
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>

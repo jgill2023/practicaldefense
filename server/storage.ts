@@ -15,7 +15,7 @@ import {
   type EnrollmentWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, isNull, isNotNull } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -25,16 +25,21 @@ export interface IStorage {
   // Course operations
   createCourse(course: InsertCourse): Promise<Course>;
   updateCourse(id: string, course: Partial<InsertCourse>): Promise<Course>;
-  deleteCourse(id: string): Promise<void>;
+  deleteCourse(id: string): Promise<Course>;
+  permanentlyDeleteCourse(id: string): Promise<void>;
   getCourse(id: string): Promise<CourseWithSchedules | undefined>;
   getCourses(): Promise<CourseWithSchedules[]>;
   getCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]>;
+  getDeletedCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]>;
   
   // Course schedule operations
   createCourseSchedule(schedule: InsertCourseSchedule): Promise<CourseSchedule>;
   updateCourseSchedule(id: string, schedule: Partial<InsertCourseSchedule>): Promise<CourseSchedule>;
+  deleteCourseSchedule(id: string): Promise<CourseSchedule>;
+  permanentlyDeleteCourseSchedule(id: string): Promise<void>;
   getCourseSchedule(id: string): Promise<CourseSchedule | undefined>;
   getCourseSchedules(courseId: string): Promise<CourseSchedule[]>;
+  getDeletedSchedulesByInstructor(instructorId: string): Promise<any[]>;
   
   // Enrollment operations
   createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment>;
@@ -97,8 +102,43 @@ export class DatabaseStorage implements IStorage {
     return updatedCourse;
   }
 
-  async deleteCourse(id: string): Promise<void> {
-    await db.delete(courses).where(eq(courses.id, id));
+  async deleteCourse(id: string): Promise<Course> {
+    // Soft delete - set deletedAt timestamp
+    const [deletedCourse] = await db
+      .update(courses)
+      .set({ deletedAt: new Date() })
+      .where(eq(courses.id, id))
+      .returning();
+    return deletedCourse;
+  }
+
+  async permanentlyDeleteCourse(id: string): Promise<void> {
+    // Hard delete - permanently remove from database
+    await db
+      .delete(courses)
+      .where(eq(courses.id, id));
+  }
+
+  async getDeletedCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]> {
+    const courseList = await db.query.courses.findMany({
+      where: and(eq(courses.instructorId, instructorId), isNotNull(courses.deletedAt)),
+      with: {
+        schedules: {
+          with: {
+            enrollments: {
+              with: {
+                student: true,
+              },
+            },
+            waitlistEntries: true,
+          },
+          orderBy: asc(courseSchedules.startDate),
+        },
+        instructor: true,
+      },
+      orderBy: desc(courses.deletedAt),
+    });
+    return courseList;
   }
 
   async getCourse(id: string): Promise<CourseWithSchedules | undefined> {
@@ -128,9 +168,10 @@ export class DatabaseStorage implements IStorage {
 
   async getCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]> {
     const courseList = await db.query.courses.findMany({
-      where: eq(courses.instructorId, instructorId),
+      where: and(eq(courses.instructorId, instructorId), isNull(courses.deletedAt)),
       with: {
         schedules: {
+          where: isNull(courseSchedules.deletedAt),
           with: {
             enrollments: {
               with: {
@@ -184,10 +225,41 @@ export class DatabaseStorage implements IStorage {
     return schedules;
   }
 
-  async deleteCourseSchedule(id: string): Promise<void> {
+  async deleteCourseSchedule(id: string): Promise<CourseSchedule> {
+    // Soft delete - set deletedAt timestamp
+    const [deletedSchedule] = await db
+      .update(courseSchedules)
+      .set({ deletedAt: new Date() })
+      .where(eq(courseSchedules.id, id))
+      .returning();
+    return deletedSchedule;
+  }
+
+  async permanentlyDeleteCourseSchedule(id: string): Promise<void> {
+    // Hard delete - permanently remove from database
     await db
       .delete(courseSchedules)
       .where(eq(courseSchedules.id, id));
+  }
+
+  async getDeletedSchedulesByInstructor(instructorId: string): Promise<any[]> {
+    const scheduleList = await db.query.courseSchedules.findMany({
+      where: isNotNull(courseSchedules.deletedAt),
+      with: {
+        course: {
+          where: eq(courses.instructorId, instructorId),
+        },
+        enrollments: {
+          with: {
+            student: true,
+          },
+        },
+        waitlistEntries: true,
+      },
+      orderBy: desc(courseSchedules.deletedAt),
+    });
+    // Filter out schedules where course is null (doesn't belong to instructor)
+    return scheduleList.filter(schedule => schedule.course !== null);
   }
 
   // Enrollment operations

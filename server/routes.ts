@@ -99,6 +99,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get deleted courses for instructor
+  app.get('/api/instructor/deleted-courses', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const courses = await storage.getDeletedCoursesByInstructor(userId);
+      res.json(courses);
+    } catch (error) {
+      console.error("Error fetching deleted courses:", error);
+      res.status(500).json({ message: "Failed to fetch deleted courses" });
+    }
+  });
+
+  // Get deleted schedules for instructor
+  app.get('/api/instructor/deleted-schedules', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const schedules = await storage.getDeletedSchedulesByInstructor(userId);
+      res.json(schedules);
+    } catch (error) {
+      console.error("Error fetching deleted schedules:", error);
+      res.status(500).json({ message: "Failed to fetch deleted schedules" });
+    }
+  });
+
   // Course schedule routes
   app.post('/api/courses/:courseId/schedules', isAuthenticated, async (req: any, res) => {
     try {
@@ -303,7 +327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete course endpoint (hard delete)
+  // Delete course endpoint (soft delete)
   app.delete("/api/instructor/courses/:courseId", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
@@ -315,31 +339,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
       }
 
-      // Check if course has any enrollments or schedules
-      const hasEnrollments = existingCourse.schedules?.some(schedule => 
-        schedule.enrollments && schedule.enrollments.length > 0
-      );
-      
-      if (hasEnrollments) {
-        return res.status(400).json({ 
-          error: "Cannot delete course with existing enrollments. Archive it instead." 
-        });
-      }
-
-      // Check if course has any schedules (even without enrollments)
-      const hasSchedules = existingCourse.schedules && existingCourse.schedules.length > 0;
-      
-      if (hasSchedules) {
-        return res.status(400).json({ 
-          error: "Cannot delete course with existing schedules. Archive it instead or delete all events first." 
-        });
-      }
-
-      await storage.deleteCourse(courseId);
-      res.json({ message: "Course deleted successfully" });
+      // Perform soft delete
+      const deletedCourse = await storage.deleteCourse(courseId);
+      res.json({ message: "Course moved to deleted items", course: deletedCourse });
     } catch (error: any) {
       console.error("Error deleting course:", error);
       res.status(500).json({ error: "Failed to delete course: " + error.message });
+    }
+  });
+
+  // Permanently delete course endpoint (hard delete)
+  app.delete("/api/instructor/courses/:courseId/permanent", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const courseId = req.params.courseId;
+
+      // Since this is for deleted courses, we need to check directly in the database
+      // as the regular getCourse won't return deleted courses
+      const courses = await storage.getDeletedCoursesByInstructor(userId);
+      const existingCourse = courses.find(c => c.id === courseId);
+      
+      if (!existingCourse) {
+        return res.status(403).json({ error: "Unauthorized: Course not found in deleted items or does not belong to instructor" });
+      }
+
+      await storage.permanentlyDeleteCourse(courseId);
+      res.json({ message: "Course permanently deleted" });
+    } catch (error: any) {
+      console.error("Error permanently deleting course:", error);
+      res.status(500).json({ error: "Failed to permanently delete course: " + error.message });
     }
   });
 
@@ -387,7 +415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete schedule endpoint
+  // Delete schedule endpoint (soft delete)
   app.delete("/api/instructor/schedules/:scheduleId", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
@@ -405,19 +433,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
-      // Check if schedule has enrollments
-      const enrollments = await storage.getEnrollmentsByScheduleId(scheduleId);
-      if (enrollments.length > 0) {
-        return res.status(400).json({ 
-          error: "Cannot delete schedule with existing enrollments. Cancel it instead." 
-        });
-      }
-
-      await storage.deleteCourseSchedule(scheduleId);
-      res.json({ message: "Schedule deleted successfully" });
+      // Perform soft delete
+      const deletedSchedule = await storage.deleteCourseSchedule(scheduleId);
+      res.json({ message: "Schedule moved to deleted items", schedule: deletedSchedule });
     } catch (error: any) {
       console.error("Error deleting schedule:", error);
       res.status(500).json({ error: "Failed to delete schedule: " + error.message });
+    }
+  });
+
+  // Permanently delete schedule endpoint (hard delete)
+  app.delete("/api/instructor/schedules/:scheduleId/permanent", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const scheduleId = req.params.scheduleId;
+
+      // Check if schedule exists in deleted schedules
+      const deletedSchedules = await storage.getDeletedSchedulesByInstructor(userId);
+      const existingSchedule = deletedSchedules.find(s => s.id === scheduleId);
+      
+      if (!existingSchedule) {
+        return res.status(403).json({ error: "Unauthorized: Schedule not found in deleted items or does not belong to instructor" });
+      }
+
+      await storage.permanentlyDeleteCourseSchedule(scheduleId);
+      res.json({ message: "Schedule permanently deleted" });
+    } catch (error: any) {
+      console.error("Error permanently deleting schedule:", error);
+      res.status(500).json({ error: "Failed to permanently delete schedule: " + error.message });
     }
   });
 

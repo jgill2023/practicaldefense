@@ -53,6 +53,7 @@ export const courses = pgTable("courses", {
   maxStudents: integer("max_students").notNull().default(20),
   instructorId: varchar("instructor_id").notNull().references(() => users.id),
   isActive: boolean("is_active").notNull().default(true),
+  deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   imageUrl: varchar("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -82,6 +83,7 @@ export const courseSchedules = pgTable("course_schedules", {
   // Event specific category (more granular than course category)
   eventCategory: varchar("event_category", { length: 100 }),
   notes: text("notes"),
+  deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
