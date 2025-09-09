@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CourseManagementActions } from "@/components/CourseManagementActions";
 import { EditCourseForm } from "@/components/EditCourseForm";
+import { EditScheduleForm } from "@/components/EditScheduleForm";
 import { EventCreationForm } from "@/components/EventCreationForm";
 import { CourseCreationForm } from "@/components/CourseCreationForm";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -30,6 +31,7 @@ export default function InstructorDashboard() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
+  const [editingSchedule, setEditingSchedule] = useState<any | null>(null);
   const [showEventForm, setShowEventForm] = useState(false);
   const [showCourseForm, setShowCourseForm] = useState(false);
 
@@ -493,12 +495,12 @@ export default function InstructorDashboard() {
                 
                 {/* Actions */}
                 <div className="flex items-center gap-2">
-                  {/* Edit Course Button */}
+                  {/* Edit Schedule Button */}
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                    onClick={() => setEditingCourse(schedule.course)}
+                    onClick={() => setEditingSchedule(schedule)}
                     data-testid={`button-edit-schedule-${schedule.id}`}
                   >
                     <Edit className="h-4 w-4" />
@@ -1106,6 +1108,18 @@ export default function InstructorDashboard() {
           onClose={() => setEditingCourse(null)}
           onCourseUpdated={() => {
             // Course list will automatically refresh via query invalidation
+          }}
+        />
+      )}
+
+      {/* Edit Schedule Form */}
+      {editingSchedule && (
+        <EditScheduleForm
+          schedule={editingSchedule}
+          isOpen={!!editingSchedule}
+          onClose={() => setEditingSchedule(null)}
+          onScheduleUpdated={() => {
+            // Schedule list will automatically refresh via query invalidation
           }}
         />
       )}

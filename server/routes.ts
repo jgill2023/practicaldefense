@@ -442,6 +442,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update schedule endpoint
+  app.patch("/api/instructor/schedules/:scheduleId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const scheduleId = req.params.scheduleId;
+
+      // Get schedule to verify ownership
+      const schedule = await storage.getCourseSchedule(scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ error: "Schedule not found" });
+      }
+
+      // Verify the course belongs to the instructor
+      const course = await storage.getCourse(schedule.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
+      }
+
+      const updatedSchedule = await storage.updateCourseSchedule(scheduleId, req.body);
+      res.json({ message: "Schedule updated successfully", schedule: updatedSchedule });
+    } catch (error: any) {
+      console.error("Error updating schedule:", error);
+      res.status(500).json({ error: "Failed to update schedule: " + error.message });
+    }
+  });
+
   // Permanently delete schedule endpoint (hard delete)
   app.delete("/api/instructor/schedules/:scheduleId/permanent", isAuthenticated, async (req: any, res) => {
     try {
