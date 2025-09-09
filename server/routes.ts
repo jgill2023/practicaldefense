@@ -462,15 +462,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Convert date strings back to Date objects for the database
       const updateData = { ...req.body };
-      if (updateData.startDate) {
-        updateData.startDate = new Date(updateData.startDate);
+      console.log("Raw request body:", JSON.stringify(req.body, null, 2));
+      
+      // Handle date conversions safely
+      if (updateData.startDate && updateData.startDate !== null && updateData.startDate !== '') {
+        const startDate = new Date(updateData.startDate);
+        if (!isNaN(startDate.getTime())) {
+          updateData.startDate = startDate;
+          console.log("Converted startDate:", updateData.startDate);
+        } else {
+          delete updateData.startDate; // Remove invalid date
+        }
+      } else if (updateData.startDate === null || updateData.startDate === '') {
+        delete updateData.startDate; // Don't update if null or empty
       }
-      if (updateData.endDate) {
-        updateData.endDate = new Date(updateData.endDate);
+      
+      if (updateData.endDate && updateData.endDate !== null && updateData.endDate !== '') {
+        const endDate = new Date(updateData.endDate);
+        if (!isNaN(endDate.getTime())) {
+          updateData.endDate = endDate;
+          console.log("Converted endDate:", updateData.endDate);
+        } else {
+          delete updateData.endDate; // Remove invalid date
+        }
+      } else if (updateData.endDate === null || updateData.endDate === '') {
+        delete updateData.endDate; // Don't update if null or empty
       }
-      if (updateData.registrationDeadline) {
-        updateData.registrationDeadline = new Date(updateData.registrationDeadline);
+      
+      if (updateData.registrationDeadline && updateData.registrationDeadline !== null && updateData.registrationDeadline !== '') {
+        const regDeadline = new Date(updateData.registrationDeadline);
+        if (!isNaN(regDeadline.getTime())) {
+          updateData.registrationDeadline = regDeadline;
+          console.log("Converted registrationDeadline:", updateData.registrationDeadline);
+        } else {
+          updateData.registrationDeadline = null; // Set to null for invalid date
+        }
+      } else if (updateData.registrationDeadline === '') {
+        updateData.registrationDeadline = null; // Empty string becomes null
       }
+      
+      console.log("Final updateData:", JSON.stringify(updateData, null, 2));
 
       const updatedSchedule = await storage.updateCourseSchedule(scheduleId, updateData);
       res.json({ message: "Schedule updated successfully", schedule: updatedSchedule });

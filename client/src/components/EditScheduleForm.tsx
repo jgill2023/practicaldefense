@@ -76,6 +76,7 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
 
   const updateScheduleMutation = useMutation({
     mutationFn: async (data: ScheduleFormData) => {
+      // Send the raw form data to the server, let the server handle date conversion
       const updateData = {
         startTime: data.startTime,
         endTime: data.endTime,
@@ -85,12 +86,9 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
         waitlistEnabled: data.waitlistEnabled,
         autoConfirmRegistration: data.autoConfirmRegistration,
         notes: data.notes || null,
-        // Convert date strings to ISO strings for the database
-        startDate: new Date(data.startDate).toISOString(),
-        endDate: new Date(data.endDate).toISOString(),
-        registrationDeadline: data.registrationDeadline 
-          ? new Date(data.registrationDeadline).toISOString()
-          : null,
+        startDate: data.startDate, // Send as string, server will convert
+        endDate: data.endDate, // Send as string, server will convert
+        registrationDeadline: data.registrationDeadline || null, // Send as string or null
       };
       
       await apiRequest("PATCH", `/api/instructor/schedules/${schedule.id}`, updateData);
