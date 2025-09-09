@@ -234,7 +234,7 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Schedule not found');
     }
 
-    // Create a duplicate schedule with similar data but no start date set
+    // Create a duplicate schedule with similar data
     const duplicateData: InsertCourseSchedule = {
       courseId: originalSchedule.courseId,
       startDate: originalSchedule.startDate, // Keep the same date initially
@@ -242,9 +242,8 @@ export class DatabaseStorage implements IStorage {
       startTime: originalSchedule.startTime,
       endTime: originalSchedule.endTime,
       location: originalSchedule.location,
-      maxStudents: originalSchedule.maxStudents,
-      availableSpots: originalSchedule.maxStudents, // Reset to max capacity
-      isPublished: false, // Start as draft
+      maxSpots: originalSchedule.maxSpots,
+      availableSpots: originalSchedule.maxSpots, // Reset to max capacity
       registrationDeadline: originalSchedule.registrationDeadline,
     };
 
