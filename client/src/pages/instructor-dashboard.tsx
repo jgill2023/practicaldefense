@@ -1065,40 +1065,42 @@ export default function InstructorDashboard() {
               </Button>
             </div>
             <Tabs defaultValue="active" className="w-full">
-              <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none justify-start w-full">
-                <TabsTrigger 
-                  value="active" 
-                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
-                  data-testid="tab-active-courses"
-                >
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  Active ({categorizedCourseTypes.active.length})
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="archived" 
-                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
-                  data-testid="tab-archived-courses"
-                >
-                  <Archive className="w-4 h-4" />
-                  Archived ({categorizedCourseTypes.archived.length})
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="drafts" 
-                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
-                  data-testid="tab-draft-courses"
-                >
-                  <Eye className="w-4 h-4" />
-                  Drafts ({categorizedCourseTypes.drafts.length})
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="deleted" 
-                  className="flex items-center gap-2 pb-4 pt-0 px-0 mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground"
-                  data-testid="tab-deleted-courses"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Deleted ({deletedCourses.length})
-                </TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto">
+                <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none justify-start min-w-max w-full">
+                  <TabsTrigger 
+                    value="active" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-active-courses"
+                  >
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    Active ({categorizedCourseTypes.active.length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="archived" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-archived-courses"
+                  >
+                    <Archive className="w-4 h-4" />
+                    Archived ({categorizedCourseTypes.archived.length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="drafts" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-draft-courses"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Drafts ({categorizedCourseTypes.drafts.length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="deleted" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-deleted-courses"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Deleted ({deletedCourses.length})
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               {/* Tab Content */}
               <TabsContent value="active" className="mt-0">
