@@ -369,6 +369,7 @@ export default function InstructorDashboard() {
         description: "Course has been permanently removed and cannot be recovered.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/deleted-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -401,6 +402,7 @@ export default function InstructorDashboard() {
         description: "Schedule has been permanently removed and cannot be recovered.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/deleted-schedules"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
