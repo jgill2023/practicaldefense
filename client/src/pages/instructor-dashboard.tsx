@@ -646,11 +646,9 @@ export default function InstructorDashboard() {
                       size="sm"
                       className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600"
                       onClick={() => {
-                        if (window.confirm('Are you sure you want to duplicate this course? This will create a new course with the same details.')) {
-                          duplicateCourseMutation.mutate(schedule.courseId);
-                        }
+                        duplicateScheduleMutation.mutate(schedule.id);
                       }}
-                      disabled={duplicateCourseMutation.isPending}
+                      disabled={duplicateScheduleMutation.isPending}
                       data-testid={`button-duplicate-course-${schedule.id}`}
                     >
                       <Copy className="h-4 w-4" />
