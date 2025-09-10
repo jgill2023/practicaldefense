@@ -144,8 +144,11 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
   const recurrencePattern = form.watch("recurrencePattern");
 
   const onSubmit = (data: EventFormData) => {
+    console.log('Form submission attempted - current tab:', currentTab);
+    
     // Only submit if we're on the final tab and have all required data
     if (currentTab !== "settings") {
+      console.log('Preventing submission - not on settings tab');
       toast({
         title: "Complete the form",
         description: "Please complete all tabs before creating the event.",
@@ -215,7 +218,18 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={(e) => {
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          console.log('Form native submit prevented - current tab:', currentTab);
+          
+          // Only allow submission on settings tab
+          if (currentTab === "settings") {
+            console.log('Proceeding with form submission');
+            form.handleSubmit(onSubmit)(e);
+          } else {
+            console.log('Blocking submission - not on settings tab');
+          }
+        }} className="space-y-6" onKeyDown={(e) => {
           // Prevent form submission when pressing Enter
           if (e.key === 'Enter') {
             e.preventDefault();
@@ -675,15 +689,12 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
             </Button>
           ) : (
             <Button 
-              type="submit" 
+              type="button"
               disabled={createEventMutation.isPending}
               onClick={(e) => {
-                // Ensure we're really submitting the form
-                const formData = form.getValues();
-                if (!formData.courseId || !formData.startDate || !formData.endDate) {
-                  e.preventDefault();
-                  form.handleSubmit(onSubmit)(e);
-                }
+                console.log('Create Event button clicked - current tab:', currentTab);
+                // Manually trigger form submission since we've disabled the form's default behavior
+                form.handleSubmit(onSubmit)(e);
               }}
             >
               {createEventMutation.isPending ? "Creating..." : "Create Event"}
