@@ -618,17 +618,6 @@ export default function InstructorDashboard() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-center gap-2">
-                    {/* View/Edit Schedule Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                      onClick={() => setEditingSchedule(schedule)}
-                      data-testid={`button-edit-schedule-${schedule.id}`}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-
                     {/* Edit Schedule Button */}
                     <Button
                       variant="ghost"
@@ -649,6 +638,22 @@ export default function InstructorDashboard() {
                       data-testid={`button-roster-schedule-${schedule.id}`}
                     >
                       <Users className="h-4 w-4" />
+                    </Button>
+
+                    {/* Duplicate Course Button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600"
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to duplicate this course? This will create a new course with the same details.')) {
+                          duplicateCourseMutation.mutate(schedule.courseId);
+                        }
+                      }}
+                      disabled={duplicateCourseMutation.isPending}
+                      data-testid={`button-duplicate-course-${schedule.id}`}
+                    >
+                      <Copy className="h-4 w-4" />
                     </Button>
 
                     {/* Delete Button */}
