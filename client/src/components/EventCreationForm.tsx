@@ -216,8 +216,8 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" onKeyDown={(e) => {
-          // Prevent form submission when pressing Enter unless on the submit button
-          if (e.key === 'Enter' && e.target !== e.currentTarget) {
+          // Prevent form submission when pressing Enter
+          if (e.key === 'Enter') {
             e.preventDefault();
           }
         }}>
@@ -241,7 +241,10 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="courseId">Course *</Label>
-                <Select onValueChange={(value) => form.setValue("courseId", value)}>
+                <Select 
+                  value={form.watch("courseId") || ""}
+                  onValueChange={(value) => form.setValue("courseId", value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a course" />
                   </SelectTrigger>
@@ -671,7 +674,18 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
               Next
             </Button>
           ) : (
-            <Button type="submit" disabled={createEventMutation.isPending}>
+            <Button 
+              type="submit" 
+              disabled={createEventMutation.isPending}
+              onClick={(e) => {
+                // Ensure we're really submitting the form
+                const formData = form.getValues();
+                if (!formData.courseId || !formData.startDate || !formData.endDate) {
+                  e.preventDefault();
+                  form.handleSubmit(onSubmit)(e);
+                }
+              }}
+            >
               {createEventMutation.isPending ? "Creating..." : "Create Event"}
             </Button>
           )}
