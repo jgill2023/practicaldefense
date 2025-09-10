@@ -28,7 +28,7 @@ import {
   Repeat,
   Settings
 } from "lucide-react";
-import type { CourseWithSchedules, InsertCourseSchedule, EventCategory, RecurrencePattern } from "@shared/schema";
+import type { CourseWithSchedules, InsertCourseSchedule, EventCategory, RecurrencePattern, Category } from "@shared/schema";
 
 // Form validation schema
 const eventSchema = z.object({
@@ -83,6 +83,11 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
   // Fetch available courses
   const { data: courses = [] } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/courses"],
+  });
+
+  // Fetch categories from API
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['/api/categories'],
   });
 
   const form = useForm<EventFormData>({
@@ -187,7 +192,8 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
     appendSession(newSession);
   };
 
-  const eventCategories: EventCategory[] = ['basic', 'advanced', 'concealed', 'specialty', 'refresher'];
+  // Use dynamic categories from API instead of hardcoded ones
+  const activeCategories = categories.filter(category => category.isActive);
   const recurrencePatterns: RecurrencePattern[] = ['daily', 'weekly', 'monthly', 'custom'];
   const daysOfWeek = [
     { value: 1, label: 'Monday' },
@@ -254,14 +260,23 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
 
               <div>
                 <Label htmlFor="eventCategory">Event Category</Label>
-                <Select onValueChange={(value) => form.setValue("eventCategory", value)}>
+                <Select 
+                  value={form.watch("eventCategory") || ""}
+                  onValueChange={(value) => form.setValue("eventCategory", value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {eventCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category.charAt(0).toUpperCase() + category.slice(1)}
+                    {activeCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: category.color || '#3b82f6' }}
+                          />
+                          {category.name}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
