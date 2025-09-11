@@ -275,14 +275,14 @@ export default function Landing() {
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
               Straightforward Firearms Training
             </h2>
-            <div className="max-w-4xl mx-auto space-y-3">
-              <p className="text-lg text-muted-foreground font-light">
+            <div className="max-w-6xl mx-auto space-y-3">
+              <p className="text-base text-muted-foreground font-light">
                 Practical Defense Training, LLC offers straightforward firearms training, with a focus and emphasis on New Mexico concealed carry training. One of the few courses which preaches and teaches practical over "tacti-cool"; bringing reliable and effective firearms training to the responsibly armed citizen. Students will gain the knowledge and skills necessary to legally and responsibly carry a concealed handgun in the State of New Mexico and those States with whom New Mexico shares reciprocity with.
               </p>
-              <p className="text-lg text-muted-foreground font-light">
+              <p className="text-base text-muted-foreground font-light">
                 We believe your firearms training should be <span className="font-semibold">SAFE</span>, <span className="font-semibold">FUN</span>, and <span className="font-semibold">PRACTICAL</span>.
               </p>
-              <p className="text-lg text-muted-foreground font-light">
+              <p className="text-base text-muted-foreground font-light">
                 Your safety and protection begins with <span className="italic font-semibold">you</span>. It's <span className="italic font-semibold">your</span> life. It's <span className="italic font-semibold">your</span> safety and protection. It's <span className="italic font-semibold">your</span> responsibility.
               </p>
             </div>
