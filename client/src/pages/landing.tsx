@@ -78,9 +78,17 @@ export default function Landing() {
           return dateComparison;
         }
         
-        // Then by category order
-        const orderA = categoryOrderMap.get(a.category) || 9999;
-        const orderB = categoryOrderMap.get(b.category) || 9999;
+        // Then by category order - handle both string and object formats
+        const getCategoryName = (category: any): string => {
+          if (!category) return 'General';
+          if (typeof category === 'string') return category as string;
+          if (typeof category === 'object' && 'name' in category && category.name) {
+            return category.name as string;
+          }
+          return 'General';
+        };
+        const orderA = categoryOrderMap.get(getCategoryName(a.category as any)) || 9999;
+        const orderB = categoryOrderMap.get(getCategoryName(b.category as any)) || 9999;
         
         if (orderA !== orderB) {
           return orderA - orderB;
@@ -94,8 +102,19 @@ export default function Landing() {
       const now = new Date();
       const categorySchedules: CourseWithSchedules[] = [];
       
-      // Filter courses by category
-      const categoryCourses = courses.filter(course => course.category === courseFilter);
+      // Filter courses by category - handle both string and object formats
+      const categoryCourses = courses.filter(course => {
+        if (!course.category) return false;
+        // Handle string format (old)
+        if (typeof course.category === 'string') {
+          return course.category === courseFilter;
+        }
+        // Handle object format (new)
+        if (typeof course.category === 'object' && 'name' in course.category) {
+          return (course.category as any).name === courseFilter;
+        }
+        return false;
+      });
       
       // For each course in the category, create individual entries for each upcoming schedule
       categoryCourses.forEach(course => {
@@ -288,8 +307,8 @@ export default function Landing() {
             </div>
           </div>
           
-          {/* Course Filter Tabs */}
-          <div className="flex flex-wrap justify-center gap-4 mb-12">
+          {/* Course Filter Tabs - Mobile Responsive */}
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-12 px-2">
             <Button 
               variant={courseFilter === "all" ? "default" : "outline"}
               onClick={() => setCourseFilter("all")}
@@ -309,13 +328,13 @@ export default function Landing() {
             ))}
           </div>
           
-          {/* Course Grid */}
+          {/* Course Grid - Mobile Responsive */}
           {isLoading ? (
-            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               {[1, 2, 3].map(i => (
                 <Card key={i} className="animate-pulse">
                   <div className="h-48 bg-muted" />
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="h-4 bg-muted rounded mb-2" />
                     <div className="h-4 bg-muted rounded w-3/4 mb-4" />
                     <div className="h-20 bg-muted rounded mb-4" />
@@ -325,7 +344,7 @@ export default function Landing() {
               ))}
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               {sortedAndFilteredCourses.map(course => (
                 <CourseCard 
                   key={course.id} 

@@ -44,25 +44,29 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
   };
 
   // Helper to safely get category name (handles both string and object formats)
-  const getCategoryName = () => {
+  const getCategoryName = (): string => {
     if (!course.category) return 'General';
     // If it's a string (old format), return it
     if (typeof course.category === 'string') return course.category || 'General';
     // If it's an object (new format), return the name
-    if (typeof course.category === 'object' && course.category.name) {
-      return course.category.name;
+    if (typeof course.category === 'object' && 'name' in course.category) {
+      return (course.category as any).name as string;
     }
     return 'General';
   };
 
   return (
-    <Card className="overflow-hidden border border-border hover:shadow-xl transition-shadow" data-testid={`course-card-${course.id}`}>
+    <Card className="overflow-hidden border border-border hover:shadow-xl transition-shadow w-full" data-testid={`course-card-${course.id}`}>
       <img 
         src={course.imageUrl || getImageUrl(getCategoryName())} 
         alt={course.title}
-        className="w-full h-48 object-cover"
+        className="w-full h-40 sm:h-48 object-cover"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.src = getImageUrl(getCategoryName());
+        }}
       />
-      <CardContent className="p-6">
+      <CardContent className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
           <Badge className={getCategoryColor(getCategoryName())} data-testid={`badge-category-${course.id}`}>
             {getCategoryName()}

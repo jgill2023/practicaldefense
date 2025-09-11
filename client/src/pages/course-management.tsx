@@ -195,7 +195,7 @@ export default function CourseManagement() {
   const [selectedView, setSelectedView] = useState<'calendar' | 'list'>('calendar');
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<CourseScheduleWithSessions | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<{course: CourseWithSchedules, schedule: CourseScheduleWithSessions} | null>(null);
   const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
 
   // Fetch instructor's courses with detailed schedules
@@ -329,7 +329,12 @@ export default function CourseManagement() {
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
                     <span className="whitespace-nowrap">${course.price}</span>
                     <span className="whitespace-nowrap">{course.duration}</span>
-                    <span className="whitespace-nowrap">{course.category}</span>
+                    <span className="whitespace-nowrap">
+                      {typeof course.category === 'string' ? course.category : 
+                       (course.category && typeof course.category === 'object' && 'name' in course.category) 
+                         ? (course.category as any).name || 'General' 
+                         : 'General'}
+                    </span>
                     <span className="whitespace-nowrap">{course.schedules?.length || 0} schedules</span>
                   </div>
                 </div>
