@@ -18,7 +18,7 @@ The client-side application is built using React 18 with TypeScript and follows 
 - **Form Handling**: React Hook Form with Zod validation schemas
 - **Payment Processing**: Stripe Elements for secure payment handling
 
-The application uses a role-based routing system that redirects users to appropriate dashboards based on their role (student/instructor).
+The application uses a role-based routing system that redirects users to appropriate dashboards based on their role (student/instructor). Course management functionality is consolidated on the dedicated Course Management page to avoid confusion and provide a unified experience for instructors.
 
 ## Backend Architecture
 The server follows a RESTful API design pattern built on Node.js:

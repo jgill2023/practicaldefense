@@ -23,7 +23,6 @@ import { CourseManagementActions } from "@/components/CourseManagementActions";
 import { EditCourseForm } from "@/components/EditCourseForm";
 import { EditScheduleForm } from "@/components/EditScheduleForm";
 import { EventCreationForm } from "@/components/EventCreationForm";
-import { CourseCreationForm } from "@/components/CourseCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen } from "lucide-react";
@@ -38,7 +37,6 @@ export default function InstructorDashboard() {
   const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<any | null>(null);
   const [showEventForm, setShowEventForm] = useState(false);
-  const [showCourseForm, setShowCourseForm] = useState(false);
 
   // Permanent deletion confirmation states
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -1056,161 +1054,6 @@ export default function InstructorDashboard() {
           </div>
         </div>
 
-        {/* Course Types Section */}
-        <div className="bg-card rounded-lg border">
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Active Course Types</h2>
-              <Button 
-                onClick={() => setShowCourseForm(true)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                data-testid="button-create-new-course"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create New Course
-              </Button>
-            </div>
-            <Tabs defaultValue="active" className="w-full">
-              <div className="overflow-x-auto">
-                <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none justify-start min-w-max w-full">
-                  <TabsTrigger 
-                    value="active" 
-                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
-                    data-testid="tab-active-courses"
-                  >
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    Active ({categorizedCourseTypes.active.length})
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="archived" 
-                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
-                    data-testid="tab-archived-courses"
-                  >
-                    <Archive className="w-4 h-4" />
-                    Archived ({categorizedCourseTypes.archived.length})
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="drafts" 
-                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
-                    data-testid="tab-draft-courses"
-                  >
-                    <Eye className="w-4 h-4" />
-                    Drafts ({categorizedCourseTypes.drafts.length})
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="deleted" 
-                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
-                    data-testid="tab-deleted-courses"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Deleted ({deletedCourses.length})
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-
-              {/* Tab Content */}
-              <TabsContent value="active" className="mt-0">
-                <div className="py-6">
-                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                    Active Courses
-                  </h2>
-                  {renderCourseTable('active', categorizedCourseTypes.active)}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="archived" className="mt-0">
-                <div className="py-6">
-                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Archive className="w-5 h-5" />
-                    Archived Courses
-                  </h2>
-                  {renderCourseTable('archived', categorizedCourseTypes.archived)}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="drafts" className="mt-0">
-                <div className="py-6">
-                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Eye className="w-5 h-5" />
-                    Draft Courses
-                  </h2>
-                  {renderCourseTable('drafts', categorizedCourseTypes.drafts)}
-                  {categorizedCourseTypes.drafts.length === 0 && !coursesLoading && (
-                    <div className="mt-6 text-center">
-                      <Button 
-                        onClick={() => setShowCourseForm(true)}
-                        data-testid="button-create-course"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Your First Course
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="deleted" className="mt-0">
-                <div className="py-6">
-                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Trash2 className="w-5 h-5" />
-                    Deleted Courses
-                  </h2>
-                  {deletedCoursesLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
-                    </div>
-                  ) : deletedCourses.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Trash2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-foreground mb-2">No Deleted Courses</h3>
-                      <p className="text-muted-foreground">Deleted course types will appear here.</p>
-                    </div>
-                  ) : (
-                    <div className="grid gap-6">
-                      {deletedCourses.map((course) => (
-                        <Card key={course.id} className="border border-destructive/20 bg-destructive/5">
-                          <CardContent className="p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-lg mb-2 truncate" data-testid={`text-course-title-${course.id}`}>
-                                  {course.title}
-                                </h3>
-                                <p className="text-muted-foreground mb-4 line-clamp-2">{course.briefDescription || course.description}</p>
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
-                                  <span className="whitespace-nowrap">${course.price}</span>
-                                  <span className="whitespace-nowrap">{course.duration}</span>
-                                  <span className="whitespace-nowrap">{course.category}</span>
-                                </div>
-                                <Badge variant="destructive" className="mb-2">Deleted</Badge>
-                                <p className="text-sm text-muted-foreground">
-                                  Deleted on {course.deletedAt ? formatDateSafe(course.deletedAt.toString()) : 'Unknown'}
-                                </p>
-                              </div>
-                              <div className="flex-shrink-0 w-full sm:w-auto">
-                                <Button
-                                  onClick={() => openDeleteConfirmation('course', course.id, course.title)}
-                                  variant="destructive"
-                                  size="sm"
-                                  disabled={permanentDeleteCourseMutation.isPending}
-                                  className="w-full sm:w-auto"
-                                  data-testid={`button-permanent-delete-course-${course.id}`}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  {permanentDeleteCourseMutation.isPending ? "Deleting..." : "Delete Permanently"}
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
 
         {/* Category Management Section */}
         <div className="bg-card rounded-lg border mt-8">
@@ -1265,15 +1108,6 @@ export default function InstructorDashboard() {
         }}
       />
 
-      {/* Course Creation Form Modal */}
-      <CourseCreationForm
-        isOpen={showCourseForm}
-        onClose={() => setShowCourseForm(false)}
-        onCourseCreated={() => {
-          setShowCourseForm(false);
-          // The form handles query invalidation internally
-        }}
-      />
 
       {/* Permanent Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
