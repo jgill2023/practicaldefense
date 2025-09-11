@@ -43,6 +43,7 @@ export const categories = pgTable("categories", {
   name: varchar("name", { length: 100 }).notNull().unique(),
   description: text("description"),
   color: varchar("color", { length: 7 }).default('#3b82f6'), // Hex color for UI
+  sortOrder: integer("sort_order"), // For custom ordering of categories
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

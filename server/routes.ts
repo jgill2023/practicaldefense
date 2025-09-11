@@ -94,6 +94,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reorder categories endpoint
+  app.post('/api/categories/reorder', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const { items } = req.body;
+      if (!items || !Array.isArray(items)) {
+        return res.status(400).json({ message: "Invalid request: items array required" });
+      }
+
+      await storage.reorderCategories(items);
+      res.json({ message: "Categories reordered successfully" });
+    } catch (error) {
+      console.error("Error reordering categories:", error);
+      res.status(500).json({ message: "Failed to reorder categories" });
+    }
+  });
+
   // Course routes
   app.get('/api/courses', async (req, res) => {
     try {

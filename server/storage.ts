@@ -18,7 +18,7 @@ import {
   type EnrollmentWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, desc, asc, isNull, isNotNull, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -32,6 +32,7 @@ export interface IStorage {
   deleteCategory(id: string): Promise<void>;
   getCategory(id: string): Promise<Category | undefined>;
   getCategories(): Promise<Category[]>;
+  reorderCategories(updates: {id: string; sortOrder: number}[]): Promise<void>;
   
   // Course operations
   createCourse(course: InsertCourse): Promise<Course>;
@@ -133,7 +134,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCategories(): Promise<Category[]> {
-    return await db.select().from(categories).where(eq(categories.isActive, true)).orderBy(asc(categories.name));
+    return await db
+      .select()
+      .from(categories)
+      .where(eq(categories.isActive, true))
+      .orderBy(
+        sql`COALESCE(${categories.sortOrder}, 9999)`,
+        asc(categories.name)
+      );
+  }
+
+  async reorderCategories(updates: {id: string; sortOrder: number}[]): Promise<void> {
+    // Perform batch update in a transaction for atomicity
+    await db.transaction(async (tx) => {
+      for (const update of updates) {
+        await tx
+          .update(categories)
+          .set({ sortOrder: update.sortOrder })
+          .where(eq(categories.id, update.id));
+      }
+    });
   }
 
   // Course operations

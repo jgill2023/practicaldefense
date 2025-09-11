@@ -21,6 +21,10 @@ export default function Landing() {
     queryKey: ["/api/courses"],
   });
 
+  const { data: categories = [] } = useQuery<any[]>({
+    queryKey: ["/api/categories"],
+  });
+
   const filteredCourses = courses.filter(course => {
     if (courseFilter === "all") return true;
     return course.category === courseFilter;
@@ -140,27 +144,16 @@ export default function Landing() {
             >
               All Courses
             </Button>
-            <Button 
-              variant={courseFilter === "In-Person Session" ? "default" : "outline"}
-              onClick={() => setCourseFilter("In-Person Session")}
-              data-testid="filter-in-person-session"
-            >
-              In-Person Session
-            </Button>
-            <Button 
-              variant={courseFilter === "Defensive Handgun" ? "default" : "outline"}
-              onClick={() => setCourseFilter("Defensive Handgun")}
-              data-testid="filter-defensive-handgun"
-            >
-              Defensive Handgun
-            </Button>
-            <Button 
-              variant={courseFilter === "Concealed Carry" ? "default" : "outline"}
-              onClick={() => setCourseFilter("Concealed Carry")}
-              data-testid="filter-concealed-carry"
-            >
-              Concealed Carry
-            </Button>
+            {categories.map((category) => (
+              <Button
+                key={category.id}
+                variant={courseFilter === category.name ? "default" : "outline"}
+                onClick={() => setCourseFilter(category.name)}
+                data-testid={`filter-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                {category.name}
+              </Button>
+            ))}
           </div>
           
           {/* Course Grid */}

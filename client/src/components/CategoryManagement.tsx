@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Plus, Palette } from "lucide-react";
+import { Edit, Trash2, Plus, Palette, ArrowUp, ArrowDown, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Category, InsertCategory } from "@shared/schema";
@@ -32,6 +32,8 @@ export function CategoryManagement() {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [localCategories, setLocalCategories] = useState<Category[]>([]);
+  const [hasUnsavedOrder, setHasUnsavedOrder] = useState(false);
   const [formData, setFormData] = useState<InsertCategory>({
     name: "",
     description: "",
@@ -42,6 +44,12 @@ export function CategoryManagement() {
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
+
+  // Sync local categories with fetched categories
+  useEffect(() => {
+    setLocalCategories(categories);
+    setHasUnsavedOrder(false);
+  }, [categories]);
 
   const createCategoryMutation = useMutation({
     mutationFn: (data: InsertCategory) =>
@@ -104,6 +112,26 @@ export function CategoryManagement() {
     },
   });
 
+  const reorderCategoriesMutation = useMutation({
+    mutationFn: (items: { id: string; sortOrder: number }[]) =>
+      apiRequest('POST', '/api/categories/reorder', { items }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      setHasUnsavedOrder(false);
+      toast({
+        title: "Success",
+        description: "Category order saved successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to save category order",
+        variant: "destructive",
+      });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -141,6 +169,27 @@ export function CategoryManagement() {
     }
   };
 
+  const moveCategory = (index: number, direction: 'up' | 'down') => {
+    const newCategories = [...localCategories];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    // Swap the categories
+    [newCategories[index], newCategories[targetIndex]] = [newCategories[targetIndex], newCategories[index]];
+    
+    setLocalCategories(newCategories);
+    setHasUnsavedOrder(true);
+  };
+
+  const saveOrder = () => {
+    // Generate new sort order values (10, 20, 30, etc.)
+    const items = localCategories.map((category, index) => ({
+      id: category.id,
+      sortOrder: (index + 1) * 10
+    }));
+    
+    reorderCategoriesMutation.mutate(items);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -152,14 +201,28 @@ export function CategoryManagement() {
                 Manage course categories to organize your training programs
               </CardDescription>
             </div>
-            <Button
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="gap-2"
-              data-testid="button-create-category"
-            >
-              <Plus className="h-4 w-4" />
-              Add Category
-            </Button>
+            <div className="flex gap-2">
+              {hasUnsavedOrder && (
+                <Button
+                  onClick={saveOrder}
+                  disabled={reorderCategoriesMutation.isPending}
+                  variant="default"
+                  className="gap-2"
+                  data-testid="button-save-order"
+                >
+                  <Save className="h-4 w-4" />
+                  {reorderCategoriesMutation.isPending ? "Saving..." : "Save Order"}
+                </Button>
+              )}
+              <Button
+                onClick={() => setIsCreateDialogOpen(true)}
+                className="gap-2"
+                data-testid="button-create-category"
+              >
+                <Plus className="h-4 w-4" />
+                Add Category
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -167,6 +230,7 @@ export function CategoryManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Order</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Color</TableHead>
@@ -175,15 +239,37 @@ export function CategoryManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {categories.length === 0 ? (
+                {localCategories.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                       No categories found. Create your first category to get started.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  categories.map((category) => (
+                  localCategories.map((category, index) => (
                     <TableRow key={category.id} data-testid={`row-category-${category.id}`}>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => moveCategory(index, 'up')}
+                            disabled={index === 0}
+                            data-testid={`button-move-up-${category.id}`}
+                          >
+                            <ArrowUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => moveCategory(index, 'down')}
+                            disabled={index === localCategories.length - 1}
+                            data-testid={`button-move-down-${category.id}`}
+                          >
+                            <ArrowDown className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           <div 
