@@ -160,14 +160,13 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <GraduationCap className="h-5 w-5" />
-            <span>Create New Training Course</span>
-          </DialogTitle>
-        </DialogHeader>
+    <div className="max-w-4xl">
+      <div className="mb-6">
+        <h2 className="flex items-center space-x-2 text-lg font-semibold">
+          <GraduationCap className="h-5 w-5" />
+          <span>Create New Training Course</span>
+        </h2>
+      </div>
 
         <form onSubmit={form.handleSubmit(onSubmit)} onKeyDown={(e) => {
           // Prevent form submission on Enter key press
@@ -457,7 +456,6 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
             </div>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+    </div>
   );
 }

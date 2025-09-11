@@ -44,6 +44,7 @@ export default function CourseManagement() {
   const queryClient = useQueryClient();
   const [selectedView, setSelectedView] = useState<'calendar' | 'list'>('calendar');
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
+  const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CourseScheduleWithSessions | null>(null);
 
   // Fetch instructor's courses with detailed schedules
@@ -183,12 +184,25 @@ export default function CourseManagement() {
             </p>
           </div>
           <div className="flex items-center space-x-4 mt-4 sm:mt-0">
-            <CourseCreationForm 
-              onCourseCreated={() => {
-                queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
-                queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
-              }}
-            />
+            <Dialog open={showCreateCourseModal} onOpenChange={setShowCreateCourseModal}>
+              <DialogTrigger asChild>
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-create-course">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Course
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <CourseCreationForm 
+                  isOpen={showCreateCourseModal}
+                  onClose={() => setShowCreateCourseModal(false)}
+                  onCourseCreated={() => {
+                    queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+                    queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+                    setShowCreateCourseModal(false);
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
             <Dialog open={showCreateEventModal} onOpenChange={setShowCreateEventModal}>
               <DialogTrigger asChild>
                 <Button className="bg-accent text-accent-foreground hover:bg-accent/90" data-testid="button-create-event">
