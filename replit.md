@@ -44,6 +44,7 @@ Key entities include:
 - **Course Schedules**: Multiple schedule instances per course for recurring training
 - **Enrollments**: Links students to course schedules with payment status tracking
 - **Sessions**: Persistent session storage for authentication
+- **App Settings**: Global application configuration including home page course display limits
 
 ## Authentication and Authorization
 The system implements a secure authentication flow:
@@ -53,6 +54,15 @@ The system implements a secure authentication flow:
 - **Role-Based Access**: User roles (student/instructor) determine available features and routes
 - **Protected Routes**: Middleware-based route protection with automatic redirects
 - **Security**: HTTPS enforcement, secure cookies, and CSRF protection
+
+## Administrative Settings System
+The platform includes a comprehensive admin settings system for instructors:
+
+- **App Settings Management**: Centralized configuration stored in PostgreSQL
+- **Home Page Controls**: Configurable course display limits (1-50 courses) for landing page
+- **Real-time Updates**: Settings changes automatically update the home page via cache invalidation
+- **Validation**: Server-side validation ensures settings remain within acceptable ranges
+- **UI Integration**: Settings panel integrated into Course Management page with form validation
 
 ## File Upload and Storage
 The platform includes a comprehensive file management system:
