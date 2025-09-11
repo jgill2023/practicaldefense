@@ -1,11 +1,15 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Calendar, momentLocalizer } from 'react-big-calendar';
@@ -20,11 +24,14 @@ import {
   Edit,
   Trash2,
   Copy,
-  MoreHorizontal
+  MoreHorizontal,
+  Settings,
+  Save
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import type { CourseWithSchedules, CourseScheduleWithSessions, User } from "@shared/schema";
+import type { CourseWithSchedules, CourseScheduleWithSessions, User, AppSettings, InsertAppSettings } from "@shared/schema";
+import { insertAppSettingsSchema } from "@shared/schema";
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { EventCreationForm } from "@/components/EventCreationForm";
 import { CourseCreationForm } from "@/components/CourseCreationForm";
@@ -44,6 +51,52 @@ export default function CourseManagement() {
     queryKey: ["/api/instructor/courses-detailed"],
     enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
+  });
+
+  // Fetch app settings
+  const { data: appSettings } = useQuery<AppSettings>({
+    queryKey: ["/api/app-settings"],
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    retry: false,
+  });
+
+  // Form for app settings
+  const settingsForm = useForm<InsertAppSettings>({
+    resolver: zodResolver(insertAppSettingsSchema),
+    defaultValues: {
+      homeCoursesLimit: appSettings?.homeCoursesLimit ?? 20,
+    },
+  });
+
+  // Update form when settings load
+  useEffect(() => {
+    if (appSettings) {
+      settingsForm.reset({
+        homeCoursesLimit: appSettings.homeCoursesLimit,
+      });
+    }
+  }, [appSettings, settingsForm]);
+
+  // App settings update mutation
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (data: InsertAppSettings) => {
+      const response = await apiRequest("PATCH", "/api/app-settings", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/app-settings"] });
+      toast({
+        title: "Settings Updated",
+        description: "Home page course limit has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update settings. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Transform course schedules into calendar events
@@ -158,6 +211,53 @@ export default function CourseManagement() {
             </Dialog>
           </div>
         </div>
+
+        {/* Settings Tile */}
+        <Card className="mb-6">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-2 text-lg">
+              <Settings className="h-5 w-5" />
+              <span>Home Page Settings</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form 
+              onSubmit={settingsForm.handleSubmit((data) => {
+                updateSettingsMutation.mutate(data);
+              })}
+              className="flex items-center space-x-4"
+            >
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="homeCoursesLimit" className="text-sm font-medium">
+                  Courses to display on home page:
+                </Label>
+                <Input
+                  id="homeCoursesLimit"
+                  type="number"
+                  min="1"
+                  max="50"
+                  className="w-20"
+                  {...settingsForm.register("homeCoursesLimit", { valueAsNumber: true })}
+                  data-testid="input-home-courses-limit"
+                />
+                <Button 
+                  type="submit" 
+                  size="sm" 
+                  disabled={updateSettingsMutation.isPending}
+                  data-testid="button-save-home-courses-limit"
+                >
+                  <Save className="mr-1 h-3 w-3" />
+                  {updateSettingsMutation.isPending ? "Saving..." : "Save"}
+                </Button>
+              </div>
+              {settingsForm.formState.errors.homeCoursesLimit && (
+                <p className="text-sm text-destructive" data-testid="status-home-courses-limit">
+                  {settingsForm.formState.errors.homeCoursesLimit.message}
+                </p>
+              )}
+            </form>
+          </CardContent>
+        </Card>
 
         {/* View Toggle */}
         <Tabs value={selectedView} onValueChange={(value) => setSelectedView(value as 'calendar' | 'list')} className="mb-6">
