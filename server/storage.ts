@@ -4,6 +4,7 @@ import {
   courses,
   courseSchedules,
   enrollments,
+  appSettings,
   type User,
   type UpsertUser,
   type Category,
@@ -14,6 +15,8 @@ import {
   type InsertCourseSchedule,
   type Enrollment,
   type InsertEnrollment,
+  type AppSettings,
+  type InsertAppSettings,
   type CourseWithSchedules,
   type EnrollmentWithDetails,
 } from "@shared/schema";
@@ -62,6 +65,10 @@ export interface IStorage {
   getEnrollmentsByStudent(studentId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByInstructor(instructorId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByCourse(courseId: string): Promise<EnrollmentWithDetails[]>;
+  
+  // App settings operations
+  getAppSettings(): Promise<AppSettings>;
+  updateAppSettings(input: InsertAppSettings): Promise<AppSettings>;
   
   // Dashboard statistics
   getInstructorDashboardStats(instructorId: string): Promise<{
@@ -550,6 +557,44 @@ export class DatabaseStorage implements IStorage {
       totalRevenue,
       outstandingRevenue,
     };
+  }
+
+  // App settings operations
+  async getAppSettings(): Promise<AppSettings> {
+    const settings = await db.select().from(appSettings).limit(1);
+    
+    if (settings.length === 0) {
+      // Create default settings if none exist
+      const [newSettings] = await db.insert(appSettings).values({
+        homeCoursesLimit: 20,
+      }).returning();
+      return newSettings;
+    }
+    
+    return settings[0];
+  }
+
+  async updateAppSettings(input: InsertAppSettings): Promise<AppSettings> {
+    const existingSettings = await db.select().from(appSettings).limit(1);
+    
+    if (existingSettings.length === 0) {
+      // Create new settings if none exist
+      const [newSettings] = await db.insert(appSettings).values({
+        ...input,
+      }).returning();
+      return newSettings;
+    }
+    
+    // Update existing settings
+    const [updatedSettings] = await db.update(appSettings)
+      .set({
+        ...input,
+        updatedAt: sql`now()`,
+      })
+      .where(eq(appSettings.id, existingSettings[0].id))
+      .returning();
+    
+    return updatedSettings;
   }
 }
 
