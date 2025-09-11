@@ -25,10 +25,31 @@ export default function Landing() {
     queryKey: ["/api/categories"],
   });
 
-  const filteredCourses = courses.filter(course => {
-    if (courseFilter === "all") return true;
-    return course.category === courseFilter;
-  });
+  // Sort courses by category order, then filter
+  const sortedAndFilteredCourses = (() => {
+    // Create a map of category names to their sort order for quick lookup
+    const categoryOrderMap = new Map();
+    categories.forEach((category, index) => {
+      categoryOrderMap.set(category.name, category.sortOrder || (9999 + index));
+    });
+
+    // Sort all courses by their category's sort order
+    const sortedCourses = [...courses].sort((a, b) => {
+      const orderA = categoryOrderMap.get(a.category) || 9999;
+      const orderB = categoryOrderMap.get(b.category) || 9999;
+      
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      
+      // If same category order, sort by course title
+      return a.title.localeCompare(b.title);
+    });
+
+    // Then apply the filter
+    if (courseFilter === "all") return sortedCourses;
+    return sortedCourses.filter(course => course.category === courseFilter);
+  })();
 
   const handleRegisterCourse = (course: CourseWithSchedules) => {
     setSelectedCourse(course);
@@ -173,7 +194,7 @@ export default function Landing() {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
-              {filteredCourses.map(course => (
+              {sortedAndFilteredCourses.map(course => (
                 <CourseCard 
                   key={course.id} 
                   course={course} 
