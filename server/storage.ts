@@ -265,6 +265,7 @@ export class DatabaseStorage implements IStorage {
           orderBy: asc(courseSchedules.startDate),
         },
         instructor: true,
+        category: true,
       },
       orderBy: desc(courses.deletedAt),
     });
@@ -287,6 +288,7 @@ export class DatabaseStorage implements IStorage {
           },
         },
         instructor: true,
+        category: true,
       },
     });
     return course;
@@ -309,6 +311,7 @@ export class DatabaseStorage implements IStorage {
           orderBy: asc(courseSchedules.startDate),
         },
         instructor: true,
+        category: true,
       },
       orderBy: desc(courses.createdAt),
     });
@@ -337,6 +340,7 @@ export class DatabaseStorage implements IStorage {
           orderBy: asc(courseSchedules.startDate),
         },
         instructor: true,
+        category: true,
       },
       orderBy: desc(courses.createdAt),
     });

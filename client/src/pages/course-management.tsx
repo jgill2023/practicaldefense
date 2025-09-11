@@ -388,16 +388,9 @@ export default function CourseManagement() {
 
   // Custom event style function
   const eventStyleGetter = (event: any) => {
-    const { schedule } = event.resource;
-    let backgroundColor = '#1f2937'; // navy default
-    
-    if (schedule.availableSpots === 0) {
-      backgroundColor = '#dc2626'; // red for full classes
-    } else if (schedule.availableSpots <= 3) {
-      backgroundColor = '#f59e0b'; // amber for nearly full
-    } else {
-      backgroundColor = '#059669'; // green for available
-    }
+    const { course } = event.resource;
+    // Use the category color if available, otherwise fallback to a default color
+    const backgroundColor = course.category?.color || '#3b82f6'; // Use category color or default blue
 
     return {
       style: {
