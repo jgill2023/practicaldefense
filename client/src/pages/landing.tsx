@@ -25,7 +25,7 @@ export default function Landing() {
     queryKey: ["/api/categories"],
   });
 
-  // Sort courses by category order, then filter
+  // Sort courses first by date, then by category order
   const sortedAndFilteredCourses = (() => {
     // Create a map of category names to their sort order for quick lookup
     const categoryOrderMap = new Map();
@@ -33,8 +33,41 @@ export default function Landing() {
       categoryOrderMap.set(category.name, category.sortOrder || (9999 + index));
     });
 
-    // Sort all courses by their category's sort order
+    // Helper function to get the earliest upcoming schedule date for a course
+    const getEarliestDate = (course: CourseWithSchedules) => {
+      if (!course.schedules || course.schedules.length === 0) {
+        return new Date('9999-12-31'); // Courses without schedules go to the end
+      }
+      
+      const now = new Date();
+      const upcomingDates = course.schedules
+        .filter(schedule => new Date(schedule.startDate) >= now)
+        .map(schedule => new Date(schedule.startDate))
+        .sort((a, b) => a.getTime() - b.getTime());
+      
+      // If no upcoming dates, use the most recent past date
+      if (upcomingDates.length === 0) {
+        const pastDates = course.schedules
+          .map(schedule => new Date(schedule.startDate))
+          .sort((a, b) => b.getTime() - a.getTime());
+        return pastDates[0] || new Date('9999-12-31');
+      }
+      
+      return upcomingDates[0];
+    };
+
+    // Sort all courses first by date, then by category order
     const sortedCourses = [...courses].sort((a, b) => {
+      const dateA = getEarliestDate(a);
+      const dateB = getEarliestDate(b);
+      
+      // First sort by date
+      const dateComparison = dateA.getTime() - dateB.getTime();
+      if (dateComparison !== 0) {
+        return dateComparison;
+      }
+      
+      // Then by category order
       const orderA = categoryOrderMap.get(a.category) || 9999;
       const orderB = categoryOrderMap.get(b.category) || 9999;
       
@@ -42,7 +75,7 @@ export default function Landing() {
         return orderA - orderB;
       }
       
-      // If same category order, sort by course title
+      // Finally by course title
       return a.title.localeCompare(b.title);
     });
 
