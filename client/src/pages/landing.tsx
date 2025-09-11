@@ -10,6 +10,9 @@ import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
 import type { CourseWithSchedules, AppSettings } from "@shared/schema";
 import heroImage from "@assets/MainHeader2AndyOVERLAY_1757359693558.jpg";
+import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
+import laptopImage from "@assets/laptop2_1757565355142.jpg";
+import dhcImage from "@assets/DHC_1757565361710.jpg";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
@@ -196,7 +199,7 @@ export default function Landing() {
               </h3>
               <div className="mb-4">
                 <img 
-                  src="@assets/CCW-Range_1757565346453.jpg" 
+                  src={ccwRangeImage} 
                   alt="Concealed Carry Training"
                   className="w-full object-cover rounded-lg"
                   style={{ aspectRatio: '500/331' }}
@@ -220,7 +223,7 @@ export default function Landing() {
               </h3>
               <div className="mb-4">
                 <img 
-                  src="@assets/laptop2_1757565355142.jpg" 
+                  src={laptopImage} 
                   alt="Online Course"
                   className="w-full object-cover rounded-lg"
                   style={{ aspectRatio: '500/331' }}
@@ -244,7 +247,7 @@ export default function Landing() {
               </h3>
               <div className="mb-4">
                 <img 
-                  src="@assets/DHC_1757565361710.jpg" 
+                  src={dhcImage} 
                   alt="Defensive Handgun Training"
                   className="w-full object-cover rounded-lg"
                   style={{ aspectRatio: '500/331' }}
