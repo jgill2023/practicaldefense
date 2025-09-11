@@ -201,7 +201,7 @@ export default function Landing() {
                 <img 
                   src={ccwRangeImage} 
                   alt="Concealed Carry Training"
-                  className="w-full object-cover rounded-lg"
+                  className="w-full object-cover"
                   style={{ aspectRatio: '500/331' }}
                 />
               </div>
@@ -225,7 +225,7 @@ export default function Landing() {
                 <img 
                   src={laptopImage} 
                   alt="Online Course"
-                  className="w-full object-cover rounded-lg"
+                  className="w-full object-cover"
                   style={{ aspectRatio: '500/331' }}
                 />
               </div>
@@ -249,7 +249,7 @@ export default function Landing() {
                 <img 
                   src={dhcImage} 
                   alt="Defensive Handgun Training"
-                  className="w-full object-cover rounded-lg"
+                  className="w-full object-cover"
                   style={{ aspectRatio: '500/331' }}
                 />
               </div>
