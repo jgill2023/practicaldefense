@@ -184,34 +184,83 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Trust Indicators */}
+      {/* Course Feature Blurbs */}
       <section className="bg-muted py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center">
-            <div className="text-center" data-testid="trust-ssl">
-              <div className="bg-success/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Shield className="text-success h-8 w-8" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            {/* Concealed Carry */}
+            <div className="text-center" data-testid="feature-concealed-carry">
+              <h3 className="text-lg font-semibold text-foreground mb-4 uppercase tracking-wide">
+                CONCEALED CARRY
+              </h3>
+              <div className="mb-4">
+                <img 
+                  src="@assets/CCW-Range_1757565346453.jpg" 
+                  alt="Concealed Carry Training"
+                  className="w-full object-cover rounded-lg"
+                  style={{ aspectRatio: '500/331' }}
+                />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">SSL Encrypted</p>
+              <p className="text-muted-foreground mb-6 px-4">
+                We offer one of the most comprehensive and fun concealed carry courses in the state.
+              </p>
+              <Button 
+                className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-2"
+                data-testid="button-learn-more-ccw"
+              >
+                LEARN MORE
+              </Button>
             </div>
-            <div className="text-center" data-testid="trust-certified">
-              <div className="bg-success/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Tag className="text-success h-8 w-8" />
+
+            {/* Online NM CCW Course */}
+            <div className="text-center" data-testid="feature-online-course">
+              <h3 className="text-lg font-semibold text-foreground mb-4 uppercase tracking-wide">
+                ONLINE NM CCW COURSE
+              </h3>
+              <div className="mb-4">
+                <img 
+                  src="@assets/laptop2_1757565355142.jpg" 
+                  alt="Online Course"
+                  className="w-full object-cover rounded-lg"
+                  style={{ aspectRatio: '500/331' }}
+                />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">NRA Certified</p>
+              <p className="text-muted-foreground mb-6 px-4">
+                Complete the majority of classroom instruction online, at your own pace!
+              </p>
+              <Button 
+                className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-2"
+                data-testid="button-enroll-now"
+              >
+                ENROLL NOW
+              </Button>
             </div>
-            <div className="text-center" data-testid="trust-students">
-              <div className="bg-success/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Users className="text-success h-8 w-8" />
+
+            {/* Defensive Handgun */}
+            <div className="text-center" data-testid="feature-defensive-handgun">
+              <h3 className="text-lg font-semibold text-foreground mb-4 uppercase tracking-wide">
+                DEFENSIVE HANDGUN
+              </h3>
+              <div className="mb-4">
+                <img 
+                  src="@assets/DHC_1757565361710.jpg" 
+                  alt="Defensive Handgun Training"
+                  className="w-full object-cover rounded-lg"
+                  style={{ aspectRatio: '500/331' }}
+                />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">500+ Trained Students</p>
+              <p className="text-muted-foreground mb-6 px-4">
+                We offer 3 hour defensive handgun clinics, as well as 1 and 2 day defensive handgun courses.
+              </p>
+              <Button 
+                className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-2"
+                data-testid="button-learn-more-defensive"
+              >
+                LEARN MORE
+              </Button>
             </div>
-            <div className="text-center" data-testid="trust-rating">
-              <div className="bg-success/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Star className="text-success h-8 w-8" />
-              </div>
-              <p className="text-sm font-medium text-muted-foreground">Local Expert</p>
-            </div>
+
           </div>
         </div>
       </section>
