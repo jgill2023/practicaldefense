@@ -23,7 +23,16 @@ export default function Landing() {
 
   const filteredCourses = courses.filter(course => {
     if (courseFilter === "all") return true;
-    return course.category.toLowerCase() === courseFilter;
+    
+    // Map filter values to actual database categories
+    const categoryMappings: Record<string, string[]> = {
+      "basic": ["In-Person Session"],
+      "advanced": ["Defensive Handgun"],
+      "concealed": ["Concealed Carry"]
+    };
+    
+    const allowedCategories = categoryMappings[courseFilter] || [];
+    return allowedCategories.includes(course.category);
   });
 
   const handleRegisterCourse = (course: CourseWithSchedules) => {
