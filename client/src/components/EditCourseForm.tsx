@@ -49,6 +49,7 @@ interface EditCourseFormProps {
 export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: EditCourseFormProps) {
   const [currentTab, setCurrentTab] = useState("basic");
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>(course.imageUrl || "");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -111,37 +112,67 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
 
   // Handle image upload
   const handleGetUploadParameters = async () => {
-    const response = await apiRequest("POST", "/api/objects/upload");
-    const data = await response.json();
-    return {
-      method: "PUT" as const,
-      url: data.uploadURL,
-    };
+    try {
+      console.log('Getting upload parameters...');
+      setIsUploadingImage(true);
+      const response = await apiRequest("POST", "/api/objects/upload");
+      const data = await response.json();
+      console.log('Upload parameters received:', data);
+      return {
+        method: 'PUT' as const,
+        url: data.uploadURL,
+      };
+    } catch (error) {
+      console.error('Error getting upload parameters:', error);
+      setIsUploadingImage(false);
+      throw error;
+    }
   };
 
-  const handleImageUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+  const handleImageUploadComplete = async (result: { successful: any[] }) => {
+    console.log('Upload complete result:', result);
+    
     if (result.successful && result.successful.length > 0) {
       const uploadURL = result.successful[0].uploadURL;
+      console.log('Processing upload URL:', uploadURL);
+      
       if (uploadURL) {
         try {
+          // Update the course image and set ACL policy
+          console.log('Setting course image ACL...');
           const response = await apiRequest("PUT", "/api/course-images", {
             courseImageURL: uploadURL,
           });
           const data = await response.json();
+          console.log('ACL response:', data);
+          
+          // Set the uploaded image URL for preview and form
           setUploadedImageUrl(data.objectPath);
           form.setValue("imageUrl", data.objectPath);
+          
           toast({
             title: "Image Uploaded",
             description: "Course image has been uploaded successfully.",
           });
         } catch (error) {
+          console.error('Upload processing error:', error);
           toast({
             title: "Upload Error",
-            description: "Failed to process the uploaded image.",
+            description: "Failed to process uploaded image. Please try again.",
             variant: "destructive",
           });
+        } finally {
+          setIsUploadingImage(false);
         }
       }
+    } else {
+      console.error('Upload failed - no successful uploads');
+      setIsUploadingImage(false);
+      toast({
+        title: "Upload Failed",
+        description: "No files were successfully uploaded.",
+        variant: "destructive",
+      });
     }
   };
 
