@@ -45,6 +45,149 @@ import { formatDateSafe } from "@/lib/dateUtils";
 
 const localizer = momentLocalizer(moment);
 
+// Restore Course Button Component
+function RestoreCourseButton({ course }: { course: CourseWithSchedules }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const restoreMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("PATCH", `/api/instructor/courses/${course.id}/restore`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/deleted-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+      toast({
+        title: "Course Restored",
+        description: `"${course.title}" has been restored successfully.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to restore course. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => restoreMutation.mutate()}
+      disabled={restoreMutation.isPending}
+      data-testid={`button-restore-${course.id}`}
+    >
+      {restoreMutation.isPending ? "Restoring..." : "Restore"}
+    </Button>
+  );
+}
+
+// Delete Permanently Button Component
+function DeletePermanentlyButton({ course }: { course: CourseWithSchedules }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isOpen, setIsOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", `/api/instructor/courses/${course.id}/permanent`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/deleted-courses"] });
+      toast({
+        title: "Course Permanently Deleted",
+        description: `"${course.title}" has been permanently deleted.`,
+      });
+      setIsOpen(false);
+      setConfirmText("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to permanently delete course. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDelete = () => {
+    if (confirmText === "DELET") {
+      deleteMutation.mutate();
+    }
+  };
+
+  return (
+    <>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={() => setIsOpen(true)}
+        data-testid={`button-delete-permanently-${course.id}`}
+      >
+        Delete Permanently
+      </Button>
+      
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Permanently Delete Course</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              <p className="mb-2">You are about to permanently delete:</p>
+              <p className="font-semibold text-foreground">"{course.title}"</p>
+            </div>
+            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-sm text-destructive font-medium mb-2">⚠️ Warning</p>
+              <p className="text-sm text-muted-foreground">
+                This action cannot be undone. The course and all its associated data will be permanently removed.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-text" className="text-sm font-medium">
+                Type <code className="bg-muted px-1 py-0.5 rounded text-xs">DELET</code> to confirm:
+              </Label>
+              <Input
+                id="confirm-text"
+                type="text"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="Type DELET here"
+                data-testid={`input-confirm-delete-${course.id}`}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsOpen(false);
+                  setConfirmText("");
+                }}
+                data-testid={`button-cancel-delete-${course.id}`}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={confirmText !== "DELET" || deleteMutation.isPending}
+                data-testid={`button-confirm-delete-${course.id}`}
+              >
+                {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 export default function CourseManagement() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -213,13 +356,13 @@ export default function CourseManagement() {
         const startDateStr = schedule.startDate instanceof Date 
           ? schedule.startDate.toISOString().split('T')[0]
           : typeof schedule.startDate === 'string' && schedule.startDate
-            ? schedule.startDate.split('T')[0]?.split(' ')[0] 
+            ? (schedule.startDate as string).split('T')[0]?.split(' ')[0] 
             : new Date().toISOString().split('T')[0]; // Fallback to today
         
         const endDateStr = schedule.endDate instanceof Date
           ? schedule.endDate.toISOString().split('T')[0]
           : typeof schedule.endDate === 'string' && schedule.endDate
-            ? schedule.endDate.split('T')[0]?.split(' ')[0]
+            ? (schedule.endDate as string).split('T')[0]?.split(' ')[0]
             : new Date().toISOString().split('T')[0]; // Fallback to today
         
         return {
@@ -507,6 +650,12 @@ export default function CourseManagement() {
                                 <p className="text-sm text-muted-foreground">
                                   Deleted on {course.deletedAt ? formatDateSafe(course.deletedAt.toString()) : 'Unknown'}
                                 </p>
+                              </div>
+                              <div className="flex-shrink-0 w-full sm:w-auto">
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                  <RestoreCourseButton course={course} />
+                                  <DeletePermanentlyButton course={course} />
+                                </div>
                               </div>
                             </div>
                           </CardContent>

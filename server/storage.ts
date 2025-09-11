@@ -224,6 +224,16 @@ export class DatabaseStorage implements IStorage {
       .where(eq(courses.id, id));
   }
 
+  async restoreCourse(id: string): Promise<Course> {
+    // Restore course by clearing deletedAt timestamp
+    const [restoredCourse] = await db
+      .update(courses)
+      .set({ deletedAt: null, updatedAt: new Date() })
+      .where(eq(courses.id, id))
+      .returning();
+    return restoredCourse;
+  }
+
   async getDeletedCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]> {
     const courseList = await db.query.courses.findMany({
       where: and(eq(courses.instructorId, instructorId), isNotNull(courses.deletedAt)),

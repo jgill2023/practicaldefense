@@ -600,6 +600,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Restore course endpoint (undelete)
+  app.patch("/api/instructor/courses/:courseId/restore", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const courseId = req.params.courseId;
+
+      // Verify the course exists in deleted items and belongs to the instructor
+      const deletedCourses = await storage.getDeletedCoursesByInstructor(userId);
+      const existingCourse = deletedCourses.find(c => c.id === courseId);
+      
+      if (!existingCourse) {
+        return res.status(403).json({ error: "Unauthorized: Course not found in deleted items or does not belong to instructor" });
+      }
+
+      const restoredCourse = await storage.restoreCourse(courseId);
+      res.json({ message: "Course restored successfully", course: restoredCourse });
+    } catch (error: any) {
+      console.error("Error restoring course:", error);
+      res.status(500).json({ error: "Failed to restore course: " + error.message });
+    }
+  });
+
   // Event creation endpoint (creates course schedules) - MOVED UP
   app.post("/api/instructor/events", isAuthenticated, async (req: any, res) => {
     try {
