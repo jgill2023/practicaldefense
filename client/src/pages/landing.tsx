@@ -104,6 +104,7 @@ export default function Landing() {
         upcomingSchedules.forEach(schedule => {
           categorySchedules.push({
             ...course,
+            id: `${course.id}-${schedule.id}`, // Create unique ID for React key
             schedules: [schedule], // Only include this specific schedule
           });
         });
