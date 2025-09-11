@@ -98,6 +98,12 @@ export default function Landing() {
         return a.title.localeCompare(b.title);
       });
     } else {
+      // Debug: Log all courses and their categories
+      console.log('All courses and their categories:');
+      courses.forEach(course => {
+        console.log(`Course: ${course.title}, Category:`, course.category, typeof course.category);
+      });
+      
       // For specific category filters, show individual schedules
       const now = new Date();
       const categorySchedules: CourseWithSchedules[] = [];
@@ -107,14 +113,19 @@ export default function Landing() {
         if (!course.category) return false;
         // Handle string format (old)
         if (typeof course.category === 'string') {
+          console.log('String category comparison:', course.category, '===', courseFilter, course.category === courseFilter);
           return course.category === courseFilter;
         }
         // Handle object format (new)
         if (typeof course.category === 'object' && 'name' in course.category) {
+          console.log('Object category comparison:', (course.category as any).name, '===', courseFilter, (course.category as any).name === courseFilter);
           return (course.category as any).name === courseFilter;
         }
+        console.log('No category match for course:', course.title, 'category:', course.category);
         return false;
       });
+      
+      console.log('Filter applied:', courseFilter, 'Found courses:', categoryCourses.length, categoryCourses.map(c => c.title));
       
       // For each course in the category, create individual entries for each upcoming schedule
       categoryCourses.forEach(course => {
