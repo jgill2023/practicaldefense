@@ -149,6 +149,13 @@ export const waitlist = pgTable("waitlist", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Application settings for configurable UI preferences
+export const appSettings = pgTable("app_settings", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  homeCoursesLimit: integer("home_courses_limit").notNull().default(20),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const userRelations = relations(users, ({ many }) => ({
   coursesAsInstructor: many(courses),
@@ -254,6 +261,13 @@ export const insertWaitlistSchema = createInsertSchema(waitlist).omit({
   updatedAt: true,
 });
 
+export const insertAppSettingsSchema = createInsertSchema(appSettings).omit({
+  id: true,
+  updatedAt: true,
+}).extend({
+  homeCoursesLimit: z.number().int().min(1).max(50),
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -269,6 +283,8 @@ export type InsertEnrollment = z.infer<typeof insertEnrollmentSchema>;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
 export type WaitlistEntry = typeof waitlist.$inferSelect;
+export type InsertAppSettings = z.infer<typeof insertAppSettingsSchema>;
+export type AppSettings = typeof appSettings.$inferSelect;
 
 // Extended types with relations
 export type CourseWithSchedules = Course & {
