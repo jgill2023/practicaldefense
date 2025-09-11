@@ -205,7 +205,7 @@ export default function Landing() {
                   style={{ aspectRatio: '500/331' }}
                 />
               </div>
-              <p className="text-muted-foreground mb-6 px-4">
+              <p className="text-sm text-muted-foreground mb-4 px-4">
                 We offer one of the most comprehensive and fun concealed carry courses in the state.
               </p>
               <Button 
@@ -229,7 +229,7 @@ export default function Landing() {
                   style={{ aspectRatio: '500/331' }}
                 />
               </div>
-              <p className="text-muted-foreground mb-6 px-4">
+              <p className="text-sm text-muted-foreground mb-4 px-4">
                 Complete the majority of classroom instruction online, at your own pace!
               </p>
               <Button 
@@ -253,7 +253,7 @@ export default function Landing() {
                   style={{ aspectRatio: '500/331' }}
                 />
               </div>
-              <p className="text-muted-foreground mb-6 px-4">
+              <p className="text-sm text-muted-foreground mb-4 px-4">
                 We offer 3 hour defensive handgun clinics, as well as 1 and 2 day defensive handgun courses.
               </p>
               <Button 
