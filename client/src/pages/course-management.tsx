@@ -26,7 +26,10 @@ import {
   Copy,
   MoreHorizontal,
   Settings,
-  Save
+  Save,
+  Archive,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -35,6 +38,10 @@ import { insertAppSettingsSchema } from "@shared/schema";
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { EventCreationForm } from "@/components/EventCreationForm";
 import { CourseCreationForm } from "@/components/CourseCreationForm";
+import { EditCourseForm } from "@/components/EditCourseForm";
+import { CourseManagementActions } from "@/components/CourseManagementActions";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { formatDateSafe } from "@/lib/dateUtils";
 
 const localizer = momentLocalizer(moment);
 
@@ -46,6 +53,7 @@ export default function CourseManagement() {
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CourseScheduleWithSessions | null>(null);
+  const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
 
   // Fetch instructor's courses with detailed schedules
   const { data: courses = [], isLoading: coursesLoading } = useQuery<CourseWithSchedules[]>({
@@ -60,6 +68,22 @@ export default function CourseManagement() {
     enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
   });
+
+  // Fetch deleted courses
+  const { data: deletedCourses = [], isLoading: deletedCoursesLoading } = useQuery<CourseWithSchedules[]>({
+    queryKey: ["/api/instructor/deleted-courses"],
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    retry: false,
+  });
+
+  // Categorize courses by status (for now, treat all courses as active)
+  const categorizedCourseTypes = useMemo(() => {
+    const active: CourseWithSchedules[] = courses;
+    const archived: CourseWithSchedules[] = [];
+    const drafts: CourseWithSchedules[] = [];
+
+    return { active, archived, drafts };
+  }, [courses]);
 
   // Form for app settings
   const settingsForm = useForm<InsertAppSettings>({
@@ -100,6 +124,87 @@ export default function CourseManagement() {
     },
   });
 
+  // Render course table function
+  const renderCourseTable = (type: 'active' | 'archived' | 'drafts', courseList: CourseWithSchedules[]) => {
+    if (coursesLoading) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+        </div>
+      );
+    }
+
+    if (courseList.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <div className="w-12 h-12 text-muted-foreground mx-auto mb-4">
+            {type === 'active' && <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">A</div>}
+            {type === 'archived' && <Archive className="w-12 h-12" />}
+            {type === 'drafts' && <Eye className="w-12 h-12" />}
+          </div>
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            No {type.charAt(0).toUpperCase() + type.slice(1)} Courses
+          </h3>
+          <p className="text-muted-foreground">
+            {type === 'active' && "Published course types will appear here."}
+            {type === 'archived' && "Archived course types will appear here."}
+            {type === 'drafts' && "Draft course types will appear here."}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid gap-6">
+        {courseList.map((course) => (
+          <Card key={course.id} className={`transition-all hover:shadow-md ${
+            type === 'archived' ? 'border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800' :
+            type === 'drafts' ? 'border-gray-200 bg-gray-50 dark:bg-gray-950/20 dark:border-gray-800' :
+            'border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800'
+          }`}>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-semibold text-lg truncate" data-testid={`text-course-title-${course.id}`}>
+                      {course.title}
+                    </h3>
+                    <Badge 
+                      variant={
+                        type === 'active' ? 'default' :
+                        type === 'archived' ? 'secondary' : 
+                        'outline'
+                      }
+                      className="ml-2 flex-shrink-0"
+                    >
+                      {type === 'active' ? 'Published' : 
+                       type === 'archived' ? 'Archived' : 
+                       'Draft'}
+                    </Badge>
+                  </div>
+                  <p className="text-muted-foreground mb-4 line-clamp-2">{course.briefDescription || course.description}</p>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
+                    <span className="whitespace-nowrap">${course.price}</span>
+                    <span className="whitespace-nowrap">{course.duration}</span>
+                    <span className="whitespace-nowrap">{course.category}</span>
+                    <span className="whitespace-nowrap">{course.schedules?.length || 0} schedules</span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 w-full sm:w-auto">
+                  <CourseManagementActions 
+                    course={course}
+                    onEditCourse={(course) => setEditingCourse(course)}
+                    data-testid={`actions-course-${course.id}`}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
   // Transform course schedules into calendar events
   const calendarEvents = useMemo(() => {
     return courses.flatMap(course => 
@@ -107,11 +212,15 @@ export default function CourseManagement() {
         // Parse dates properly - handle both string and Date formats
         const startDateStr = schedule.startDate instanceof Date 
           ? schedule.startDate.toISOString().split('T')[0]
-          : schedule.startDate?.split('T')[0]?.split(' ')[0]; // Handle "2025-09-27 00:00:00" or "2025-09-27T00:00:00Z"
+          : typeof schedule.startDate === 'string' && schedule.startDate
+            ? schedule.startDate.split('T')[0]?.split(' ')[0] 
+            : new Date().toISOString().split('T')[0]; // Fallback to today
         
         const endDateStr = schedule.endDate instanceof Date
           ? schedule.endDate.toISOString().split('T')[0]
-          : schedule.endDate?.split('T')[0]?.split(' ')[0];
+          : typeof schedule.endDate === 'string' && schedule.endDate
+            ? schedule.endDate.split('T')[0]?.split(' ')[0]
+            : new Date().toISOString().split('T')[0]; // Fallback to today
         
         return {
           id: schedule.id,
@@ -270,6 +379,144 @@ export default function CourseManagement() {
                 </p>
               )}
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Active Courses Section */}
+        <Card className="mb-6">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-2 text-lg">
+              <div className="w-5 h-5 bg-green-500 rounded-full"></div>
+              <span>Active Courses</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="active" className="w-full">
+              <div className="overflow-x-auto">
+                <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none justify-start min-w-max w-full">
+                  <TabsTrigger 
+                    value="active" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-active-courses"
+                  >
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    Active ({categorizedCourseTypes.active.length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="archived" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-archived-courses"
+                  >
+                    <Archive className="w-4 h-4" />
+                    Archived ({categorizedCourseTypes.archived.length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="drafts" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-draft-courses"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Drafts ({categorizedCourseTypes.drafts.length})
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="deleted" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-deleted-courses"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Deleted ({deletedCourses.length})
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              {/* Tab Content */}
+              <TabsContent value="active" className="mt-0">
+                <div className="py-6">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                    Active Courses
+                  </h2>
+                  {renderCourseTable('active', categorizedCourseTypes.active)}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="archived" className="mt-0">
+                <div className="py-6">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Archive className="w-5 h-5" />
+                    Archived Courses
+                  </h2>
+                  {renderCourseTable('archived', categorizedCourseTypes.archived)}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="drafts" className="mt-0">
+                <div className="py-6">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Eye className="w-5 h-5" />
+                    Draft Courses
+                  </h2>
+                  {renderCourseTable('drafts', categorizedCourseTypes.drafts)}
+                  {categorizedCourseTypes.drafts.length === 0 && !coursesLoading && (
+                    <div className="mt-6 text-center">
+                      <Button 
+                        onClick={() => setShowCreateCourseModal(true)}
+                        data-testid="button-create-course"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Your First Course
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="deleted" className="mt-0">
+                <div className="py-6">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Trash2 className="w-5 h-5" />
+                    Deleted Courses
+                  </h2>
+                  {deletedCoursesLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+                    </div>
+                  ) : deletedCourses.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Trash2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-foreground mb-2">No Deleted Courses</h3>
+                      <p className="text-muted-foreground">Deleted course types will appear here.</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-6">
+                      {deletedCourses.map((course) => (
+                        <Card key={course.id} className="border border-destructive/20 bg-destructive/5">
+                          <CardContent className="p-4 sm:p-6">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-lg mb-2 truncate" data-testid={`text-course-title-${course.id}`}>
+                                  {course.title}
+                                </h3>
+                                <p className="text-muted-foreground mb-4 line-clamp-2">{course.briefDescription || course.description}</p>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
+                                  <span className="whitespace-nowrap">${course.price}</span>
+                                  <span className="whitespace-nowrap">{course.duration}</span>
+                                  <span className="whitespace-nowrap">{course.category}</span>
+                                </div>
+                                <Badge variant="destructive" className="mb-2">Deleted</Badge>
+                                <p className="text-sm text-muted-foreground">
+                                  Deleted on {course.deletedAt ? formatDateSafe(course.deletedAt.toString()) : 'Unknown'}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
 
@@ -467,6 +714,18 @@ export default function CourseManagement() {
               </div>
             </DialogContent>
           </Dialog>
+        )}
+
+        {/* Edit Course Form */}
+        {editingCourse && (
+          <EditCourseForm
+            course={editingCourse}
+            isOpen={!!editingCourse}
+            onClose={() => setEditingCourse(null)}
+            onCourseUpdated={() => {
+              // Course list will automatically refresh via query invalidation
+            }}
+          />
         )}
       </div>
     </Layout>
