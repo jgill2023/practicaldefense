@@ -17,7 +17,8 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
     .filter(schedule => !schedule.deletedAt && new Date(schedule.startDate) > new Date())
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryColor = (category: string | null) => {
+    if (!category) return 'bg-muted/10 text-muted-foreground';
     switch (category.toLowerCase()) {
       case 'basic':
         return 'bg-accent/10 text-accent';
@@ -30,7 +31,8 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
     }
   };
 
-  const getImageUrl = (category: string) => {
+  const getImageUrl = (category: string | null) => {
+    if (!category) return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
     switch (category.toLowerCase()) {
       case 'concealed':
         return 'https://images.unsplash.com/photo-1593784991095-a205069470b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
@@ -41,17 +43,29 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
     }
   };
 
+  // Helper to safely get category name (handles both string and object formats)
+  const getCategoryName = () => {
+    if (!course.category) return 'General';
+    // If it's a string (old format), return it
+    if (typeof course.category === 'string') return course.category || 'General';
+    // If it's an object (new format), return the name
+    if (typeof course.category === 'object' && course.category.name) {
+      return course.category.name;
+    }
+    return 'General';
+  };
+
   return (
     <Card className="overflow-hidden border border-border hover:shadow-xl transition-shadow" data-testid={`course-card-${course.id}`}>
       <img 
-        src={course.imageUrl || getImageUrl(course.category)} 
+        src={course.imageUrl || getImageUrl(getCategoryName())} 
         alt={course.title}
         className="w-full h-48 object-cover"
       />
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <Badge className={getCategoryColor(course.category)} data-testid={`badge-category-${course.id}`}>
-            {course.category}
+          <Badge className={getCategoryColor(getCategoryName())} data-testid={`badge-category-${course.id}`}>
+            {getCategoryName()}
           </Badge>
           <span className="text-2xl font-bold text-primary" data-testid={`text-price-${course.id}`}>
             ${course.price}
