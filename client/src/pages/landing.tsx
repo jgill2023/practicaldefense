@@ -209,7 +209,7 @@ export default function Landing() {
                 We offer one of the most comprehensive and fun concealed carry courses in the state.
               </p>
               <Button 
-                className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-2"
+                className="bg-black text-white hover:bg-gray-800 px-8 py-2 rounded-none font-medium tracking-wide"
                 data-testid="button-learn-more-ccw"
               >
                 LEARN MORE
@@ -233,7 +233,7 @@ export default function Landing() {
                 Complete the majority of classroom instruction online, at your own pace!
               </p>
               <Button 
-                className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-2"
+                className="bg-black text-white hover:bg-gray-800 px-8 py-2 rounded-none font-medium tracking-wide"
                 data-testid="button-enroll-now"
               >
                 ENROLL NOW
@@ -257,7 +257,7 @@ export default function Landing() {
                 We offer 3 hour defensive handgun clinics, as well as 1 and 2 day defensive handgun courses.
               </p>
               <Button 
-                className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-2"
+                className="bg-black text-white hover:bg-gray-800 px-8 py-2 rounded-none font-medium tracking-wide"
                 data-testid="button-learn-more-defensive"
               >
                 LEARN MORE
