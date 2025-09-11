@@ -116,7 +116,7 @@ function DeletePermanentlyButton({ course }: { course: CourseWithSchedules }) {
   });
 
   const handleDelete = () => {
-    if (confirmText === "DELET") {
+    if (confirmText === "DELETE") {
       deleteMutation.mutate();
     }
   };
@@ -150,14 +150,14 @@ function DeletePermanentlyButton({ course }: { course: CourseWithSchedules }) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirm-text" className="text-sm font-medium">
-                Type <code className="bg-muted px-1 py-0.5 rounded text-xs">DELET</code> to confirm:
+                Type <code className="bg-muted px-1 py-0.5 rounded text-xs">DELETE</code> to confirm:
               </Label>
               <Input
                 id="confirm-text"
                 type="text"
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
-                placeholder="Type DELET here"
+                placeholder="Type DELETE here"
                 data-testid={`input-confirm-delete-${course.id}`}
               />
             </div>
@@ -175,7 +175,7 @@ function DeletePermanentlyButton({ course }: { course: CourseWithSchedules }) {
               <Button
                 variant="destructive"
                 onClick={handleDelete}
-                disabled={confirmText !== "DELET" || deleteMutation.isPending}
+                disabled={confirmText !== "DELETE" || deleteMutation.isPending}
                 data-testid={`button-confirm-delete-${course.id}`}
               >
                 {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}

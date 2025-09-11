@@ -42,6 +42,7 @@ export interface IStorage {
   duplicateCourse(courseId: string): Promise<Course>;
   updateCourse(id: string, course: Partial<InsertCourse>): Promise<Course>;
   deleteCourse(id: string): Promise<Course>;
+  restoreCourse(id: string): Promise<Course>;
   permanentlyDeleteCourse(id: string): Promise<void>;
   getCourse(id: string): Promise<CourseWithSchedules | undefined>;
   getCourses(): Promise<CourseWithSchedules[]>;
@@ -218,7 +219,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async permanentlyDeleteCourse(id: string): Promise<void> {
-    // Hard delete - permanently remove from database
+    // Hard delete - permanently remove from database with cascade
+    // First delete related data in proper order to maintain referential integrity
+    
+    // Delete enrollments first (references courseSchedules)
+    await db
+      .delete(enrollments)
+      .where(eq(enrollments.courseId, id));
+    
+    // Delete course schedules (references courses)
+    await db
+      .delete(courseSchedules)
+      .where(eq(courseSchedules.courseId, id));
+    
+    // Finally delete the course itself
     await db
       .delete(courses)
       .where(eq(courses.id, id));
@@ -240,6 +254,7 @@ export class DatabaseStorage implements IStorage {
       with: {
         schedules: {
           with: {
+            eventSessions: true,
             enrollments: {
               with: {
                 student: true,
@@ -260,7 +275,17 @@ export class DatabaseStorage implements IStorage {
     const course = await db.query.courses.findFirst({
       where: eq(courses.id, id),
       with: {
-        schedules: true,
+        schedules: {
+          with: {
+            eventSessions: true,
+            enrollments: {
+              with: {
+                student: true,
+              },
+            },
+            waitlistEntries: true,
+          },
+        },
         instructor: true,
       },
     });
@@ -272,6 +297,15 @@ export class DatabaseStorage implements IStorage {
       where: eq(courses.isActive, true),
       with: {
         schedules: {
+          with: {
+            eventSessions: true,
+            enrollments: {
+              with: {
+                student: true,
+              },
+            },
+            waitlistEntries: true,
+          },
           orderBy: asc(courseSchedules.startDate),
         },
         instructor: true,
@@ -292,6 +326,7 @@ export class DatabaseStorage implements IStorage {
         schedules: {
           where: isNull(courseSchedules.deletedAt),
           with: {
+            eventSessions: true,
             enrollments: {
               with: {
                 student: true,
