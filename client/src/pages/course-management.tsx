@@ -383,7 +383,7 @@ export default function CourseManagement() {
 
   // Handle event selection in calendar
   const handleSelectEvent = (event: any) => {
-    setSelectedEvent(event.resource.schedule);
+    setSelectedEvent(event.resource);
   };
 
   // Custom event style function
@@ -831,19 +831,19 @@ export default function CourseManagement() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Start Date:</span>
-                      <div>{moment(selectedEvent.startDate).format('MMM DD, YYYY')}</div>
+                      <div>{moment(selectedEvent.schedule.startDate).format('MMM DD, YYYY')}</div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">End Date:</span>
-                      <div>{moment(selectedEvent.endDate).format('MMM DD, YYYY')}</div>
+                      <div>{moment(selectedEvent.schedule.endDate).format('MMM DD, YYYY')}</div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Time:</span>
-                      <div>{selectedEvent.startTime} - {selectedEvent.endTime}</div>
+                      <div>{selectedEvent.schedule.startTime} - {selectedEvent.schedule.endTime}</div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Available Spots:</span>
-                      <div>{selectedEvent.availableSpots} / {selectedEvent.maxSpots}</div>
+                      <div>{selectedEvent.schedule.availableSpots} / {selectedEvent.schedule.maxSpots}</div>
                     </div>
                   </div>
                 </div>
@@ -851,7 +851,13 @@ export default function CourseManagement() {
                   <Button variant="outline" onClick={() => setSelectedEvent(null)}>
                     Close
                   </Button>
-                  <Button>
+                  <Button 
+                    onClick={() => {
+                      setEditingCourse(selectedEvent.course);
+                      setSelectedEvent(null);
+                    }}
+                    data-testid="button-manage-event"
+                  >
                     Manage Event
                   </Button>
                 </div>
