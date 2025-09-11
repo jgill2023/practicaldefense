@@ -69,8 +69,9 @@ The platform includes a comprehensive file management system:
 
 - **Storage Provider**: Google Cloud Storage integration
 - **Access Control**: Custom ACL (Access Control List) system for file permissions
-- **Upload Interface**: Uppy-based file upload component with progress tracking
+- **Upload Interface**: Custom ObjectUploader component with progress tracking
 - **Use Cases**: Student waiver uploads and course certificate management
+- **Form Integration**: Upload buttons properly configured with type="button" to prevent unintended form submissions
 
 ## Payment Processing
 Integrated Stripe payment system handles course enrollments:

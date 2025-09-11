@@ -99,6 +99,7 @@ export function ObjectUploader({
         disabled={isUploading}
       />
       <Button 
+        type="button"
         onClick={() => document.getElementById('file-upload')?.click()} 
         className={buttonClassName}
         disabled={isUploading}
