@@ -406,7 +406,9 @@ export default function CourseManagement() {
         opacity: 0.8,
         color: 'white',
         border: '0px',
-        display: 'block'
+        display: 'block',
+        fontSize: '11px',
+        lineHeight: '1.2'
       }
     };
   };
@@ -706,11 +708,11 @@ export default function CourseManagement() {
               </CardHeader>
               <CardContent>
                 {coursesLoading ? (
-                  <div className="h-96 flex items-center justify-center">
+                  <div className="h-[600px] flex items-center justify-center">
                     <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
                   </div>
                 ) : (
-                  <div className="h-96">
+                  <div className="h-[600px]">
                     <Calendar
                       localizer={localizer}
                       events={calendarEvents}
