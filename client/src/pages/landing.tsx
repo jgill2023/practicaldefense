@@ -23,16 +23,7 @@ export default function Landing() {
 
   const filteredCourses = courses.filter(course => {
     if (courseFilter === "all") return true;
-    
-    // Map filter values to actual database categories
-    const categoryMappings: Record<string, string[]> = {
-      "basic": ["In-Person Session"],
-      "advanced": ["Defensive Handgun"],
-      "concealed": ["Concealed Carry"]
-    };
-    
-    const allowedCategories = categoryMappings[courseFilter] || [];
-    return allowedCategories.includes(course.category);
+    return course.category === courseFilter;
   });
 
   const handleRegisterCourse = (course: CourseWithSchedules) => {
@@ -150,23 +141,23 @@ export default function Landing() {
               All Courses
             </Button>
             <Button 
-              variant={courseFilter === "basic" ? "default" : "outline"}
-              onClick={() => setCourseFilter("basic")}
-              data-testid="filter-basic"
+              variant={courseFilter === "In-Person Session" ? "default" : "outline"}
+              onClick={() => setCourseFilter("In-Person Session")}
+              data-testid="filter-in-person-session"
             >
-              Basic Training
+              In-Person Session
             </Button>
             <Button 
-              variant={courseFilter === "advanced" ? "default" : "outline"}
-              onClick={() => setCourseFilter("advanced")}
-              data-testid="filter-advanced"
+              variant={courseFilter === "Defensive Handgun" ? "default" : "outline"}
+              onClick={() => setCourseFilter("Defensive Handgun")}
+              data-testid="filter-defensive-handgun"
             >
-              Advanced
+              Defensive Handgun
             </Button>
             <Button 
-              variant={courseFilter === "concealed" ? "default" : "outline"}
-              onClick={() => setCourseFilter("concealed")}
-              data-testid="filter-concealed"
+              variant={courseFilter === "Concealed Carry" ? "default" : "outline"}
+              onClick={() => setCourseFilter("Concealed Carry")}
+              data-testid="filter-concealed-carry"
             >
               Concealed Carry
             </Button>
