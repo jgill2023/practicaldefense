@@ -8,7 +8,7 @@ import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User } from "
 import { Layout } from "@/components/Layout";
 import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
-import type { CourseWithSchedules } from "@shared/schema";
+import type { CourseWithSchedules, AppSettings } from "@shared/schema";
 import heroImage from "@assets/MainHeader2AndyOVERLAY_1757359693558.jpg";
 
 export default function Landing() {
@@ -23,6 +23,10 @@ export default function Landing() {
 
   const { data: categories = [] } = useQuery<any[]>({
     queryKey: ["/api/categories"],
+  });
+
+  const { data: appSettings } = useQuery<AppSettings>({
+    queryKey: ["/api/app-settings"],
   });
 
   // Sort courses first by date, then by category order
@@ -80,8 +84,13 @@ export default function Landing() {
     });
 
     // Then apply the filter
-    if (courseFilter === "all") return sortedCourses;
-    return sortedCourses.filter(course => course.category === courseFilter);
+    const filteredCourses = courseFilter === "all" 
+      ? sortedCourses 
+      : sortedCourses.filter(course => course.category === courseFilter);
+    
+    // Apply the course limit from app settings
+    const courseLimit = appSettings?.homeCoursesLimit || 20;
+    return filteredCourses.slice(0, courseLimit);
   })();
 
   const handleRegisterCourse = (course: CourseWithSchedules) => {
