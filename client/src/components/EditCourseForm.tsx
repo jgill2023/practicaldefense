@@ -82,7 +82,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       const courseData = {
         ...data,
         price: parseFloat(data.price),
-        imageUrl: uploadedImageUrl || data.imageUrl,
+        imageUrl: data.imageUrl, // Use form value directly since it's updated on image upload
       };
       const response = await apiRequest("PUT", `/api/instructor/courses/${course.id}`, courseData);
       return response.json();
@@ -94,6 +94,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/courses"] }); // Invalidate homepage courses
       onCourseUpdated?.();
       onClose();
     },
