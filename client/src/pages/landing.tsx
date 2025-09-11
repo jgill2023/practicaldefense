@@ -60,37 +60,66 @@ export default function Landing() {
       return upcomingDates[0];
     };
 
-    // Sort all courses first by date, then by category order
-    const sortedCourses = [...courses].sort((a, b) => {
-      const dateA = getEarliestDate(a);
-      const dateB = getEarliestDate(b);
-      
-      // First sort by date
-      const dateComparison = dateA.getTime() - dateB.getTime();
-      if (dateComparison !== 0) {
-        return dateComparison;
-      }
-      
-      // Then by category order
-      const orderA = categoryOrderMap.get(a.category) || 9999;
-      const orderB = categoryOrderMap.get(b.category) || 9999;
-      
-      if (orderA !== orderB) {
-        return orderA - orderB;
-      }
-      
-      // Finally by course title
-      return a.title.localeCompare(b.title);
-    });
+    // Different behavior based on filter selection
+    let coursesToDisplay: CourseWithSchedules[];
 
-    // Then apply the filter
-    const filteredCourses = courseFilter === "all" 
-      ? sortedCourses 
-      : sortedCourses.filter(course => course.category === courseFilter);
+    if (courseFilter === "all") {
+      // For "All Courses", show unique courses (current behavior)
+      coursesToDisplay = [...courses].sort((a, b) => {
+        const dateA = getEarliestDate(a);
+        const dateB = getEarliestDate(b);
+        
+        // First sort by date
+        const dateComparison = dateA.getTime() - dateB.getTime();
+        if (dateComparison !== 0) {
+          return dateComparison;
+        }
+        
+        // Then by category order
+        const orderA = categoryOrderMap.get(a.category) || 9999;
+        const orderB = categoryOrderMap.get(b.category) || 9999;
+        
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        
+        // Finally by course title
+        return a.title.localeCompare(b.title);
+      });
+    } else {
+      // For specific category filters, show individual schedules
+      const now = new Date();
+      const categorySchedules: CourseWithSchedules[] = [];
+      
+      // Filter courses by category
+      const categoryCourses = courses.filter(course => course.category === courseFilter);
+      
+      // For each course in the category, create individual entries for each upcoming schedule
+      categoryCourses.forEach(course => {
+        const upcomingSchedules = course.schedules.filter(schedule => 
+          new Date(schedule.startDate) >= now
+        );
+        
+        // Create a separate course entry for each upcoming schedule
+        upcomingSchedules.forEach(schedule => {
+          categorySchedules.push({
+            ...course,
+            schedules: [schedule], // Only include this specific schedule
+          });
+        });
+      });
+      
+      // Sort by schedule date
+      coursesToDisplay = categorySchedules.sort((a, b) => {
+        const dateA = new Date(a.schedules[0]?.startDate || '9999-12-31');
+        const dateB = new Date(b.schedules[0]?.startDate || '9999-12-31');
+        return dateA.getTime() - dateB.getTime();
+      });
+    }
     
     // Apply the course limit from app settings
     const courseLimit = appSettings?.homeCoursesLimit || 20;
-    return filteredCourses.slice(0, courseLimit);
+    return coursesToDisplay.slice(0, courseLimit);
   })();
 
   const handleRegisterCourse = (course: CourseWithSchedules) => {

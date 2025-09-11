@@ -79,7 +79,7 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
               <div className="flex items-center text-sm text-muted-foreground">
                 <Calendar className="mr-2 h-4 w-4 text-accent" />
                 <span data-testid={`text-next-date-${course.id}`}>
-                  Next: {formatDateSafe(nextSchedule.startDate)}
+                  Next: {formatDateSafe(nextSchedule.startDate.toString())}
                 </span>
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
