@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
-import Home from "@/pages/home";
 import InstructorDashboard from "@/pages/instructor-dashboard";
 import CourseManagement from "@/pages/course-management";
 import StudentPortal from "@/pages/student-portal";
@@ -26,18 +25,13 @@ function Router() {
 
   return (
     <Switch>
-      {!isAuthenticated ? (
+      <Route path="/" component={Landing} />
+      <Route path="/course-registration/:id" component={CourseRegistration} />
+      {isAuthenticated && (
         <>
-          <Route path="/" component={Landing} />
-          <Route path="/course-registration/:id" component={CourseRegistration} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={Home} />
           <Route path="/instructor-dashboard" component={InstructorDashboard} />
           <Route path="/course-management" component={CourseManagement} />
           <Route path="/student-portal" component={StudentPortal} />
-          <Route path="/course-registration/:id" component={CourseRegistration} />
           <Route path="/checkout" component={Checkout} />
         </>
       )}
