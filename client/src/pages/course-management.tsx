@@ -644,7 +644,12 @@ export default function CourseManagement() {
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
                                   <span className="whitespace-nowrap">${course.price}</span>
                                   <span className="whitespace-nowrap">{course.duration}</span>
-                                  <span className="whitespace-nowrap">{course.category}</span>
+                                  <span className="whitespace-nowrap">
+                                    {typeof course.category === 'string' ? course.category : 
+                                     (course.category && typeof course.category === 'object' && 'name' in course.category) 
+                                       ? (course.category as any).name || 'General' 
+                                       : 'General'}
+                                  </span>
                                 </div>
                                 <Badge variant="destructive" className="mb-2">Deleted</Badge>
                                 <p className="text-sm text-muted-foreground">

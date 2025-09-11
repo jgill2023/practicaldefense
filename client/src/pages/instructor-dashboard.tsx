@@ -577,7 +577,12 @@ export default function InstructorDashboard() {
                   <div className="font-medium text-gray-900" data-testid={`text-schedule-course-${schedule.id}`}>
                     {schedule.course.title}
                   </div>
-                  <div className="text-sm text-gray-500">{schedule.course.category}</div>
+                  <div className="text-sm text-gray-500">
+                    {typeof schedule.course.category === 'string' ? schedule.course.category : 
+                     (schedule.course.category && typeof schedule.course.category === 'object' && 'name' in schedule.course.category) 
+                       ? (schedule.course.category as any).name || 'General' 
+                       : 'General'}
+                  </div>
                   {spotsLeft <= 10 && spotsLeft > 0 && (
                     <span className="inline-block mt-1 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
                       {spotsLeft} spots left
@@ -741,7 +746,12 @@ export default function InstructorDashboard() {
                     <div className="font-medium text-gray-900" data-testid={`text-course-name-${course.id}`}>
                       {course.title}
                     </div>
-                    <div className="text-sm text-gray-500">{course.category}</div>
+                    <div className="text-sm text-gray-500">
+                      {typeof course.category === 'string' ? course.category : 
+                       (course.category && typeof course.category === 'object' && 'name' in course.category) 
+                         ? (course.category as any).name || 'General' 
+                         : 'General'}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
                     <div>{displayDate}</div>

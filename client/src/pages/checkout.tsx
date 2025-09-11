@@ -224,7 +224,10 @@ export default function Checkout() {
                     ${enrollment.course.price}
                   </div>
                   <Badge variant="outline">
-                    {enrollment.course.category}
+                    {typeof enrollment.course.category === 'string' ? enrollment.course.category : 
+                     (enrollment.course.category && typeof enrollment.course.category === 'object' && 'name' in enrollment.course.category) 
+                       ? (enrollment.course.category as any).name || 'General' 
+                       : 'General'}
                   </Badge>
                 </div>
               </div>
