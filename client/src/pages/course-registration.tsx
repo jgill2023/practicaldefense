@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useRoute } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useStripe, useElements, PaymentElement, Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/Layout";
@@ -14,9 +16,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Clock, Calendar, User, DollarSign, Users } from "lucide-react";
+import { Clock, Calendar, User, DollarSign, Users, CreditCard, Shield } from "lucide-react";
 import type { CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
+
+// Load Stripe outside of component render
+if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+}
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 export default function CourseRegistration() {
   const [, params] = useRoute("/course-registration/:id");
@@ -25,6 +33,9 @@ export default function CourseRegistration() {
   const { toast } = useToast();
   
   const [selectedSchedule, setSelectedSchedule] = useState<CourseSchedule | null>(null);
+  const [showPayment, setShowPayment] = useState(false);
+  const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -44,6 +55,7 @@ export default function CourseRegistration() {
     queryKey: ["/api/courses", params?.id],
     enabled: !!params?.id,
   });
+
 
   const enrollMutation = useMutation({
     mutationFn: async (enrollmentData: any) => {
@@ -155,12 +167,14 @@ export default function CourseRegistration() {
     );
   }
 
-  const availableSchedules = course.schedules.filter(
-    schedule => 
-      !schedule.deletedAt && // Exclude deleted schedules
-      new Date(schedule.startDate) > new Date() && 
-      schedule.availableSpots > 0
-  );
+  const availableSchedules = course.schedules
+    .filter(
+      schedule => 
+        !schedule.deletedAt && // Exclude deleted schedules
+        new Date(schedule.startDate) > new Date() && 
+        schedule.availableSpots > 0
+    )
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()); // Sort by earliest date first
 
   return (
     <Layout>
@@ -449,7 +463,7 @@ export default function CourseRegistration() {
                       <Label htmlFor="deposit" className="flex-1 cursor-pointer">
                         <div className="font-medium">Deposit Only</div>
                         <div className="text-sm text-muted-foreground">
-                          Pay deposit now: ${course.depositAmount} (remaining ${course.price - course.depositAmount} due later)
+                          Pay deposit now: ${course.depositAmount} (remaining ${(parseFloat(course.price) - parseFloat(course.depositAmount)).toFixed(2)} due later)
                         </div>
                       </Label>
                     </div>
