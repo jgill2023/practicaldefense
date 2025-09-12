@@ -126,6 +126,7 @@ export const enrollments = pgTable("enrollments", {
   scheduleId: uuid("schedule_id").notNull().references(() => courseSchedules.id),
   status: varchar("status").notNull().default('pending'), // 'pending', 'confirmed', 'completed', 'cancelled'
   paymentStatus: varchar("payment_status").notNull().default('pending'), // 'pending', 'paid', 'failed'
+  paymentOption: varchar("payment_option").notNull().default('full'), // 'full' or 'deposit'
   paymentIntentId: varchar("payment_intent_id"),
   waiverUrl: varchar("waiver_url"),
   registrationDate: timestamp("registration_date").defaultNow(),

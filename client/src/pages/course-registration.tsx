@@ -116,6 +116,7 @@ export default function CourseRegistration() {
       scheduleId: selectedSchedule.id,
       status: 'pending',
       paymentStatus: 'pending',
+      paymentOption: formData.paymentOption, // Pass the selected payment option
       // Student information
       studentInfo: {
         firstName: formData.firstName,

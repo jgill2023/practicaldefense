@@ -107,7 +107,7 @@ const CheckoutForm = ({ enrollment }: { enrollment: EnrollmentWithDetails }) => 
         ) : (
           <>
             <CreditCard className="mr-2 h-4 w-4" />
-            Complete Payment - ${enrollment.course.price}
+            Complete Payment - ${getPaymentAmount(enrollment)}
           </>
         )}
       </Button>
@@ -131,12 +131,27 @@ export default function Checkout() {
   
   const enrollment = enrollments?.find(e => e.id === enrollmentId);
 
+  // Calculate the payment amount based on the payment option
+  const getPaymentAmount = (enrollment: any) => {
+    if (!enrollment) return 0;
+    
+    const coursePrice = parseFloat(enrollment.course.price);
+    const depositAmount = enrollment.course.depositAmount ? parseFloat(enrollment.course.depositAmount) : null;
+    
+    if (enrollment.paymentOption === 'deposit' && depositAmount) {
+      return depositAmount;
+    }
+    return coursePrice;
+  };
+
   useEffect(() => {
     if (!enrollment) return;
     
+    const paymentAmount = getPaymentAmount(enrollment);
+    
     // Create PaymentIntent as soon as the page loads
     apiRequest("POST", "/api/create-payment-intent", {
-      amount: parseFloat(enrollment.course.price),
+      amount: paymentAmount,
       courseId: enrollment.courseId,
       scheduleId: enrollment.scheduleId,
     })
@@ -221,29 +236,48 @@ export default function Checkout() {
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-primary" data-testid="text-order-price">
-                    ${enrollment.course.price}
+                    ${getPaymentAmount(enrollment)}
                   </div>
-                  <Badge variant="outline">
-                    {typeof enrollment.course.category === 'string' ? enrollment.course.category : 
-                     (enrollment.course.category && typeof enrollment.course.category === 'object' && 'name' in enrollment.course.category) 
-                       ? (enrollment.course.category as any).name || 'General' 
-                       : 'General'}
-                  </Badge>
+                  <div className="flex gap-2 mt-2">
+                    <Badge variant="outline">
+                      {typeof enrollment.course.category === 'string' ? enrollment.course.category : 
+                       (enrollment.course.category && typeof enrollment.course.category === 'object' && 'name' in enrollment.course.category) 
+                         ? (enrollment.course.category as any).name || 'General' 
+                         : 'General'}
+                    </Badge>
+                    {enrollment.paymentOption === 'deposit' && (
+                      <Badge variant="secondary">
+                        Deposit Payment
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
               
               <div className="border-t pt-4">
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Course fee</span>
+                  <span>Full course fee</span>
                   <span>${enrollment.course.price}</span>
                 </div>
+                {enrollment.paymentOption === 'deposit' && enrollment.course.depositAmount && (
+                  <>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Paying today (deposit)</span>
+                      <span>${enrollment.course.depositAmount}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Remaining balance</span>
+                      <span>${(parseFloat(enrollment.course.price) - parseFloat(enrollment.course.depositAmount)).toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Processing fee</span>
                   <span>$0.00</span>
                 </div>
                 <div className="flex justify-between font-semibold text-lg mt-2 pt-2 border-t">
-                  <span>Total</span>
-                  <span data-testid="text-total-amount">${enrollment.course.price}</span>
+                  <span>Total due today</span>
+                  <span data-testid="text-total-amount">${getPaymentAmount(enrollment)}</span>
                 </div>
               </div>
             </div>
