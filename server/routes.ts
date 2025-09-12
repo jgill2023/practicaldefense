@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema } from "@shared/schema";
+import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema } from "@shared/schema";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -1124,6 +1124,264 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error confirming enrollment:", error);
       res.status(500).json({ message: "Error confirming enrollment: " + error.message });
+    }
+  });
+
+  // Instructor courses endpoint for forms management
+  app.get("/api/instructor/courses", async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const courses = await storage.getCoursesByInstructor(userId);
+      res.json(courses);
+    } catch (error: any) {
+      console.error("Error fetching instructor courses:", error);
+      res.status(500).json({ message: "Error fetching instructor courses: " + error.message });
+    }
+  });
+
+  // Course Information Forms API Routes
+  
+  // Get forms for a course
+  app.get("/api/course-forms/:courseId", async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Verify instructor owns the course
+      const course = await storage.getCourse(courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const forms = await storage.getCourseInformationFormsByCourse(courseId);
+      res.json(forms);
+    } catch (error: any) {
+      console.error("Error fetching course forms:", error);
+      res.status(500).json({ message: "Error fetching course forms: " + error.message });
+    }
+  });
+
+  // Create a new course information form
+  app.post("/api/course-forms", async (req, res) => {
+    try {
+      // Validate request body with Zod
+      const validatedData = insertCourseInformationFormSchema.omit({ id: true, createdAt: true, updatedAt: true, sortOrder: true }).parse(req.body);
+      const { courseId, title, description, isRequired } = validatedData;
+
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Verify instructor owns the course
+      const course = await storage.getCourse(courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const form = await storage.createCourseInformationForm({
+        courseId,
+        title,
+        description,
+        isRequired: Boolean(isRequired),
+        sortOrder: 0, // Will be handled by database default or UI sorting
+      });
+
+      res.status(201).json(form);
+    } catch (error: any) {
+      console.error("Error creating course form:", error);
+      res.status(500).json({ message: "Error creating course form: " + error.message });
+    }
+  });
+
+  // Update a course information form
+  app.patch("/api/course-forms/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { title, description, isRequired } = req.body;
+
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Verify instructor owns the form's course
+      const form = await storage.getCourseInformationForm(id);
+      if (!form || form.course.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updatedForm = await storage.updateCourseInformationForm(id, {
+        title,
+        description,
+        isRequired: Boolean(isRequired),
+      });
+
+      res.json(updatedForm);
+    } catch (error: any) {
+      console.error("Error updating course form:", error);
+      res.status(500).json({ message: "Error updating course form: " + error.message });
+    }
+  });
+
+  // Delete a course information form
+  app.delete("/api/course-forms/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Verify instructor owns the form's course
+      const form = await storage.getCourseInformationForm(id);
+      if (!form || form.course.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.deleteCourseInformationForm(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting course form:", error);
+      res.status(500).json({ message: "Error deleting course form: " + error.message });
+    }
+  });
+
+  // Create a form field
+  app.post("/api/course-form-fields", async (req, res) => {
+    try {
+      // Validate request body with Zod
+      const validatedData = insertCourseInformationFormFieldSchema.omit({ id: true, createdAt: true, updatedAt: true, sortOrder: true }).parse(req.body);
+      const { formId, fieldType, label, placeholder, isRequired, options } = validatedData;
+
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Verify instructor owns the form's course
+      const form = await storage.getCourseInformationForm(formId);
+      if (!form || form.course.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get current max sort order for this form
+      const existingFields = await storage.getCourseInformationFormFields(formId);
+      const maxSortOrder = existingFields.length > 0 ? Math.max(...existingFields.map(f => f.sortOrder)) : -1;
+
+      const field = await storage.createCourseInformationFormField({
+        formId,
+        fieldType,
+        label,
+        placeholder,
+        isRequired: Boolean(isRequired),
+        options,
+        sortOrder: maxSortOrder + 1,
+      });
+
+      res.status(201).json(field);
+    } catch (error: any) {
+      console.error("Error creating form field:", error);
+      res.status(500).json({ message: "Error creating form field: " + error.message });
+    }
+  });
+
+  // Update a form field
+  app.patch("/api/course-form-fields/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { fieldType, label, placeholder, isRequired, options } = req.body;
+
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // We need to query all forms to find the field and verify ownership
+      const forms = await storage.getCourseInformationForms();
+      let targetField = null;
+      let targetForm = null;
+
+      for (const form of forms) {
+        const field = form.fields.find(f => f.id === id);
+        if (field) {
+          targetField = field;
+          targetForm = form;
+          break;
+        }
+      }
+
+      if (!targetField || !targetForm) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+
+      // Verify instructor owns the form's course
+      if (targetForm.course.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updatedField = await storage.updateCourseInformationFormField(id, {
+        fieldType,
+        label,
+        placeholder,
+        isRequired: Boolean(isRequired),
+        options,
+      });
+
+      res.json(updatedField);
+    } catch (error: any) {
+      console.error("Error updating form field:", error);
+      res.status(500).json({ message: "Error updating form field: " + error.message });
+    }
+  });
+
+  // Delete a form field
+  app.delete("/api/course-form-fields/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Query all forms to find the field and verify ownership
+      const forms = await storage.getCourseInformationForms();
+      let targetField = null;
+      let targetForm = null;
+
+      for (const form of forms) {
+        const field = form.fields.find(f => f.id === id);
+        if (field) {
+          targetField = field;
+          targetForm = form;
+          break;
+        }
+      }
+
+      if (!targetField || !targetForm) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+
+      // Verify instructor owns the form's course
+      if (targetForm.course.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.deleteCourseInformationFormField(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error deleting form field:", error);
+      res.status(500).json({ message: "Error deleting form field: " + error.message });
     }
   });
 

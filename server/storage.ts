@@ -5,6 +5,9 @@ import {
   courseSchedules,
   enrollments,
   appSettings,
+  courseInformationForms,
+  courseInformationFormFields,
+  studentFormResponses,
   type User,
   type UpsertUser,
   type Category,
@@ -19,6 +22,13 @@ import {
   type InsertAppSettings,
   type CourseWithSchedules,
   type EnrollmentWithDetails,
+  type CourseInformationForm,
+  type InsertCourseInformationForm,
+  type CourseInformationFormField,
+  type InsertCourseInformationFormField,
+  type StudentFormResponse,
+  type InsertStudentFormResponse,
+  type CourseInformationFormWithFields,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, isNull, isNotNull, sql } from "drizzle-orm";
@@ -66,6 +76,28 @@ export interface IStorage {
   getEnrollmentsByStudent(studentId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByInstructor(instructorId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByCourse(courseId: string): Promise<EnrollmentWithDetails[]>;
+  
+  // Course Information Forms operations
+  createCourseInformationForm(form: InsertCourseInformationForm): Promise<CourseInformationForm>;
+  updateCourseInformationForm(id: string, form: Partial<InsertCourseInformationForm>): Promise<CourseInformationForm>;
+  deleteCourseInformationForm(id: string): Promise<void>;
+  getCourseInformationForm(id: string): Promise<CourseInformationFormWithFields | undefined>;
+  getCourseInformationForms(): Promise<CourseInformationFormWithFields[]>;
+  getCourseInformationFormsByCourse(courseId: string): Promise<CourseInformationFormWithFields[]>;
+  
+  // Course Information Form Fields operations
+  createCourseInformationFormField(field: InsertCourseInformationFormField): Promise<CourseInformationFormField>;
+  updateCourseInformationFormField(id: string, field: Partial<InsertCourseInformationFormField>): Promise<CourseInformationFormField>;
+  deleteCourseInformationFormField(id: string): Promise<void>;
+  getCourseInformationFormFields(formId: string): Promise<CourseInformationFormField[]>;
+  reorderCourseInformationFormFields(updates: {id: string; sortOrder: number}[]): Promise<void>;
+  
+  // Student Form Response operations
+  createStudentFormResponse(response: InsertStudentFormResponse): Promise<StudentFormResponse>;
+  updateStudentFormResponse(id: string, response: Partial<InsertStudentFormResponse>): Promise<StudentFormResponse>;
+  getStudentFormResponsesByEnrollment(enrollmentId: string): Promise<StudentFormResponse[]>;
+  getStudentFormResponsesByForm(formId: string): Promise<StudentFormResponse[]>;
+  getStudentFormResponsesWithDetails(enrollmentId: string): Promise<any[]>;
   
   // App settings operations
   getAppSettings(): Promise<AppSettings>;
@@ -222,7 +254,12 @@ export class DatabaseStorage implements IStorage {
     // Hard delete - permanently remove from database with cascade
     // First delete related data in proper order to maintain referential integrity
     
-    // Delete enrollments first (references courseSchedules)
+    // Delete course information forms (will cascade to fields and responses)
+    await db
+      .delete(courseInformationForms)
+      .where(eq(courseInformationForms.courseId, id));
+    
+    // Delete enrollments (references courseSchedules)
     await db
       .delete(enrollments)
       .where(eq(enrollments.courseId, id));
@@ -648,6 +685,165 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedSettings;
+  }
+
+  // Course Information Forms operations
+  async createCourseInformationForm(form: InsertCourseInformationForm): Promise<CourseInformationForm> {
+    const [newForm] = await db.insert(courseInformationForms).values(form).returning();
+    return newForm;
+  }
+
+  async updateCourseInformationForm(id: string, form: Partial<InsertCourseInformationForm>): Promise<CourseInformationForm> {
+    const [updatedForm] = await db
+      .update(courseInformationForms)
+      .set({
+        ...form,
+        updatedAt: sql`now()`,
+      })
+      .where(eq(courseInformationForms.id, id))
+      .returning();
+    return updatedForm;
+  }
+
+  async deleteCourseInformationForm(id: string): Promise<void> {
+    await db.delete(courseInformationForms).where(eq(courseInformationForms.id, id));
+  }
+
+  async getCourseInformationForm(id: string): Promise<CourseInformationFormWithFields | undefined> {
+    const form = await db.query.courseInformationForms.findFirst({
+      where: eq(courseInformationForms.id, id),
+      with: {
+        fields: {
+          orderBy: asc(courseInformationFormFields.sortOrder),
+        },
+        course: true,
+      },
+    });
+    return form as CourseInformationFormWithFields | undefined;
+  }
+
+  async getCourseInformationForms(): Promise<CourseInformationFormWithFields[]> {
+    const forms = await db.query.courseInformationForms.findMany({
+      with: {
+        fields: {
+          orderBy: asc(courseInformationFormFields.sortOrder),
+        },
+        course: true,
+      },
+      orderBy: asc(courseInformationForms.sortOrder),
+    });
+    return forms as CourseInformationFormWithFields[];
+  }
+
+  async getCourseInformationFormsByCourse(courseId: string): Promise<CourseInformationFormWithFields[]> {
+    const forms = await db.query.courseInformationForms.findMany({
+      where: eq(courseInformationForms.courseId, courseId),
+      with: {
+        fields: {
+          orderBy: asc(courseInformationFormFields.sortOrder),
+        },
+        course: true,
+      },
+      orderBy: asc(courseInformationForms.sortOrder),
+    });
+    return forms as CourseInformationFormWithFields[];
+  }
+
+  // Course Information Form Fields operations
+  async createCourseInformationFormField(field: InsertCourseInformationFormField): Promise<CourseInformationFormField> {
+    const [newField] = await db.insert(courseInformationFormFields).values(field).returning();
+    return newField;
+  }
+
+  async updateCourseInformationFormField(id: string, field: Partial<InsertCourseInformationFormField>): Promise<CourseInformationFormField> {
+    const [updatedField] = await db
+      .update(courseInformationFormFields)
+      .set({
+        ...field,
+        updatedAt: sql`now()`,
+      })
+      .where(eq(courseInformationFormFields.id, id))
+      .returning();
+    return updatedField;
+  }
+
+  async deleteCourseInformationFormField(id: string): Promise<void> {
+    await db.delete(courseInformationFormFields).where(eq(courseInformationFormFields.id, id));
+  }
+
+  async getCourseInformationFormFields(formId: string): Promise<CourseInformationFormField[]> {
+    const fields = await db
+      .select()
+      .from(courseInformationFormFields)
+      .where(eq(courseInformationFormFields.formId, formId))
+      .orderBy(asc(courseInformationFormFields.sortOrder));
+    return fields;
+  }
+
+  async reorderCourseInformationFormFields(updates: {id: string; sortOrder: number}[]): Promise<void> {
+    for (const update of updates) {
+      await db
+        .update(courseInformationFormFields)
+        .set({ 
+          sortOrder: update.sortOrder,
+          updatedAt: sql`now()`,
+        })
+        .where(eq(courseInformationFormFields.id, update.id));
+    }
+  }
+
+  // Student Form Response operations
+  async createStudentFormResponse(response: InsertStudentFormResponse): Promise<StudentFormResponse> {
+    const [newResponse] = await db.insert(studentFormResponses).values(response).returning();
+    return newResponse;
+  }
+
+  async updateStudentFormResponse(id: string, response: Partial<InsertStudentFormResponse>): Promise<StudentFormResponse> {
+    const [updatedResponse] = await db
+      .update(studentFormResponses)
+      .set(response)
+      .where(eq(studentFormResponses.id, id))
+      .returning();
+    return updatedResponse;
+  }
+
+  async getStudentFormResponsesByEnrollment(enrollmentId: string): Promise<StudentFormResponse[]> {
+    const responses = await db
+      .select()
+      .from(studentFormResponses)
+      .where(eq(studentFormResponses.enrollmentId, enrollmentId));
+    return responses;
+  }
+
+  async getStudentFormResponsesByForm(formId: string): Promise<StudentFormResponse[]> {
+    const responses = await db
+      .select()
+      .from(studentFormResponses)
+      .where(eq(studentFormResponses.formId, formId));
+    return responses;
+  }
+
+  async getStudentFormResponsesWithDetails(enrollmentId: string): Promise<any[]> {
+    const responses = await db.query.studentFormResponses.findMany({
+      where: eq(studentFormResponses.enrollmentId, enrollmentId),
+      with: {
+        field: true,
+        form: {
+          with: {
+            course: true,
+          },
+        },
+        enrollment: {
+          with: {
+            student: true,
+            course: true,
+            schedule: true,
+          },
+        },
+      },
+      orderBy: asc(studentFormResponses.submittedAt),
+    });
+    return responses;
   }
 }
 

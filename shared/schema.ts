@@ -317,3 +317,114 @@ export type EventCategory = 'basic' | 'advanced' | 'concealed' | 'specialty' | '
 export type RegistrationStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type WaitlistStatus = 'waiting' | 'offered' | 'enrolled' | 'expired';
+
+// Course Information Forms - for post-registration student forms
+export const courseInformationForms = pgTable("course_information_forms", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  courseId: uuid("course_id").notNull().references(() => courses.id, { onDelete: 'cascade' }),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  isRequired: boolean("is_required").notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const courseInformationFormFields = pgTable("course_information_form_fields", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  formId: uuid("form_id").notNull().references(() => courseInformationForms.id, { onDelete: 'cascade' }),
+  fieldType: varchar("field_type", { length: 50 }).notNull(), // text, email, phone, select, checkbox, textarea, date
+  label: varchar("label", { length: 255 }).notNull(),
+  placeholder: varchar("placeholder", { length: 255 }),
+  isRequired: boolean("is_required").notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
+  options: jsonb("options"), // JSON object for select/radio options
+  validation: jsonb("validation"), // JSON object for validation rules
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const studentFormResponses = pgTable("student_form_responses", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  enrollmentId: uuid("enrollment_id").notNull().references(() => enrollments.id, { onDelete: 'cascade' }),
+  formId: uuid("form_id").notNull().references(() => courseInformationForms.id, { onDelete: 'cascade' }),
+  fieldId: uuid("field_id").notNull().references(() => courseInformationFormFields.id, { onDelete: 'cascade' }),
+  response: text("response"),
+  submittedAt: timestamp("submitted_at").defaultNow(),
+}, (table) => [{
+  uniqueEnrollmentField: sql`UNIQUE(${table.enrollmentId}, ${table.fieldId})`
+}]);
+
+// Relations for course information forms
+export const courseInformationFormsRelations = relations(courseInformationForms, ({ one, many }) => ({
+  course: one(courses, {
+    fields: [courseInformationForms.courseId],
+    references: [courses.id],
+  }),
+  fields: many(courseInformationFormFields),
+  responses: many(studentFormResponses),
+}));
+
+export const courseInformationFormFieldsRelations = relations(courseInformationFormFields, ({ one, many }) => ({
+  form: one(courseInformationForms, {
+    fields: [courseInformationFormFields.formId],
+    references: [courseInformationForms.id],
+  }),
+  responses: many(studentFormResponses),
+}));
+
+export const studentFormResponsesRelations = relations(studentFormResponses, ({ one }) => ({
+  enrollment: one(enrollments, {
+    fields: [studentFormResponses.enrollmentId],
+    references: [enrollments.id],
+  }),
+  form: one(courseInformationForms, {
+    fields: [studentFormResponses.formId],
+    references: [courseInformationForms.id],
+  }),
+  field: one(courseInformationFormFields, {
+    fields: [studentFormResponses.fieldId],
+    references: [courseInformationFormFields.id],
+  }),
+}));
+
+// Insert schemas for course information forms
+export const insertCourseInformationFormSchema = createInsertSchema(courseInformationForms).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCourseInformationFormFieldSchema = createInsertSchema(courseInformationFormFields).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStudentFormResponseSchema = createInsertSchema(studentFormResponses).omit({
+  id: true,
+  submittedAt: true,
+});
+
+// Types for course information forms
+export type InsertCourseInformationForm = z.infer<typeof insertCourseInformationFormSchema>;
+export type CourseInformationForm = typeof courseInformationForms.$inferSelect;
+export type InsertCourseInformationFormField = z.infer<typeof insertCourseInformationFormFieldSchema>;
+export type CourseInformationFormField = typeof courseInformationFormFields.$inferSelect;
+export type InsertStudentFormResponse = z.infer<typeof insertStudentFormResponseSchema>;
+export type StudentFormResponse = typeof studentFormResponses.$inferSelect;
+
+// Extended types for course information forms
+export type CourseInformationFormWithFields = CourseInformationForm & {
+  fields: CourseInformationFormField[];
+  course: Course;
+};
+
+export type StudentFormResponseWithDetails = StudentFormResponse & {
+  field: CourseInformationFormField;
+  form: CourseInformationForm;
+  enrollment: EnrollmentWithDetails;
+};
+
+export type FormFieldType = 'text' | 'email' | 'phone' | 'select' | 'checkbox' | 'textarea' | 'date' | 'number';

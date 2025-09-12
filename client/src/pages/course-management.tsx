@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,7 +30,8 @@ import {
   Save,
   Archive,
   Eye,
-  EyeOff
+  EyeOff,
+  FileText
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -298,7 +300,7 @@ export default function CourseManagement() {
     }
 
     return (
-      <div className="grid gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6">
         {courseList.map((course) => (
           <Card key={course.id} className={`transition-all hover:shadow-md ${
             type === 'archived' ? 'border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800' :
@@ -325,7 +327,7 @@ export default function CourseManagement() {
                        'Draft'}
                     </Badge>
                   </div>
-                  <p className="text-muted-foreground mb-4 line-clamp-2">{course.briefDescription || course.description}</p>
+
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
                     <span className="whitespace-nowrap">${course.price}</span>
                     <span className="whitespace-nowrap">{course.duration}</span>
@@ -436,6 +438,13 @@ export default function CourseManagement() {
             </p>
           </div>
           <div className="flex items-center space-x-4 mt-4 sm:mt-0">
+            <Link href="/course-forms-management">
+              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground" data-testid="button-manage-forms">
+                <FileText className="mr-2 h-4 w-4" />
+                Course Forms
+              </Button>
+            </Link>
+            
             <Dialog open={showCreateCourseModal} onOpenChange={setShowCreateCourseModal}>
               <DialogTrigger asChild>
                 <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-create-course">
@@ -640,7 +649,7 @@ export default function CourseManagement() {
                                 <h3 className="font-semibold text-lg mb-2 truncate" data-testid={`text-course-title-${course.id}`}>
                                   {course.title}
                                 </h3>
-                                <p className="text-muted-foreground mb-4 line-clamp-2">{course.briefDescription || course.description}</p>
+              
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
                                   <span className="whitespace-nowrap">${course.price}</span>
                                   <span className="whitespace-nowrap">{course.duration}</span>

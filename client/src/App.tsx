@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import InstructorDashboard from "@/pages/instructor-dashboard";
 import CourseManagement from "@/pages/course-management";
+import CourseFormsManagement from "@/pages/course-forms-management";
 import StudentPortal from "@/pages/student-portal";
 import CourseRegistration from "@/pages/course-registration";
 import Checkout from "@/pages/checkout";
@@ -32,6 +33,7 @@ function Router() {
         <>
           <Route path="/instructor-dashboard" component={InstructorDashboard} />
           <Route path="/course-management" component={CourseManagement} />
+          <Route path="/course-forms-management" component={CourseFormsManagement} />
           <Route path="/student-portal" component={StudentPortal} />
         </>
       )}
