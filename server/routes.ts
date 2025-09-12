@@ -988,6 +988,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           line_items: [{
             amount: Math.round(paymentAmount * 100),
             tax_code: 'txcd_10401000', // Online education services
+            reference: `course-${enrollment.courseId}-${enrollment.paymentOption || 'full'}`,
           }],
           customer_details: {
             address: {
