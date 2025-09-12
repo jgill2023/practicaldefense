@@ -55,6 +55,7 @@ export const courses = pgTable("courses", {
   description: text("description").notNull(),
   briefDescription: varchar("brief_description", { length: 500 }),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  depositAmount: decimal("deposit_amount", { precision: 10, scale: 2 }),
   duration: varchar("duration", { length: 100 }).notNull(),
   categoryId: uuid("category_id").references(() => categories.id),
   category: varchar("category", { length: 100 }).notNull(), // Keep for backward compatibility

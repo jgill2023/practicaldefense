@@ -158,10 +158,6 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
               </div>
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-accent rounded-full mr-3"></div>
-                Upload signed waiver document (required)
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-accent rounded-full mr-3"></div>
                 Secure payment processing via Stripe
               </div>
               <div className="flex items-center">

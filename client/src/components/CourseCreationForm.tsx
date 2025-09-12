@@ -22,6 +22,13 @@ const courseSchema = z.object({
   briefDescription: z.string().max(500, "Brief description must be under 500 characters").optional(),
   description: z.string().min(1, "Course description is required"),
   price: z.string().min(1, "Price is required"),
+  depositAmount: z.string().optional().refine((val) => {
+    if (!val || val === "") return true;
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= 0;
+  }, {
+    message: "Deposit amount must be a valid non-negative number"
+  }),
   duration: z.string().min(1, "Duration is required"),
   category: z.string().min(1, "Category is required"),
   classroomTime: z.string().optional(),
@@ -30,6 +37,14 @@ const courseSchema = z.object({
   prerequisites: z.string().optional(),
   maxStudents: z.number().min(1, "Must allow at least 1 student").max(100, "Cannot exceed 100 students"),
   imageUrl: z.string().optional(),
+}).refine((data) => {
+  if (!data.depositAmount || data.depositAmount === "") return true;
+  const deposit = parseFloat(data.depositAmount);
+  const price = parseFloat(data.price);
+  return !isNaN(deposit) && !isNaN(price) && deposit <= price;
+}, {
+  message: "Deposit amount cannot exceed the course price",
+  path: ["depositAmount"]
 });
 
 type CourseFormData = z.infer<typeof courseSchema>;
@@ -89,6 +104,8 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
   const onSubmit = (data: CourseFormData) => {
     const courseData = {
       ...data,
+      price: parseFloat(data.price),
+      depositAmount: data.depositAmount && data.depositAmount !== "" ? parseFloat(data.depositAmount) : undefined,
       imageUrl: uploadedImageUrl || undefined,
     };
     createCourseMutation.mutate(courseData);
@@ -259,6 +276,21 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
                         <p className="text-sm text-destructive mt-1">{form.formState.errors.duration.message}</p>
                       )}
                     </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="depositAmount">Deposit Amount (Optional)</Label>
+                    <Input
+                      id="depositAmount"
+                      type="number"
+                      step="0.01"
+                      {...form.register("depositAmount")}
+                      placeholder="50.00 (leave empty if no deposit required)"
+                      data-testid="input-deposit-amount"
+                    />
+                    {form.formState.errors.depositAmount && (
+                      <p className="text-sm text-destructive mt-1">{form.formState.errors.depositAmount.message}</p>
+                    )}
                   </div>
 
                   <div>

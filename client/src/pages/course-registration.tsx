@@ -12,11 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ObjectUploader } from "@/components/ObjectUploader";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Clock, Calendar, User, Upload, DollarSign, FileText, Users } from "lucide-react";
+import { Clock, Calendar, User, DollarSign, Users } from "lucide-react";
 import type { CourseWithSchedules, CourseSchedule } from "@shared/schema";
-import type { UploadResult } from '@uppy/core';
 import { formatDateSafe } from "@/lib/dateUtils";
 
 export default function CourseRegistration() {
@@ -31,15 +29,14 @@ export default function CourseRegistration() {
     lastName: '',
     email: '',
     phone: '',
-    emergencyContact: '',
-    specialRequirements: '',
+    dateOfBirth: '',
+    couponCode: '',
     agreeToTerms: false,
     // Account creation fields (for non-authenticated users)
     password: '',
     confirmPassword: '',
     createAccount: !isAuthenticated, // Default to true if not authenticated
   });
-  const [waiverUrl, setWaiverUrl] = useState<string>('');
 
   const { data: course, isLoading: courseLoading } = useQuery<CourseWithSchedules>({
     queryKey: ["/api/courses", params?.id],
@@ -68,37 +65,6 @@ export default function CourseRegistration() {
     },
   });
 
-  const handleGetUploadParameters = async () => {
-    const response = await apiRequest("POST", "/api/objects/upload");
-    const data = await response.json();
-    return {
-      method: 'PUT' as const,
-      url: data.uploadURL,
-    };
-  };
-
-  const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    if (result.successful && result.successful[0]) {
-      const uploadURL = result.successful[0].uploadURL;
-      if (uploadURL) {
-        try {
-          const response = await apiRequest("PUT", "/api/waivers", { waiverURL: uploadURL });
-          const data = await response.json();
-          setWaiverUrl(data.objectPath);
-          toast({
-            title: "Waiver Uploaded",
-            description: "Your waiver has been successfully uploaded and secured.",
-          });
-        } catch (error) {
-          toast({
-            title: "Upload Error",
-            description: "Failed to process waiver upload. Please try again.",
-            variant: "destructive",
-          });
-        }
-      }
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,19 +108,10 @@ export default function CourseRegistration() {
       return;
     }
 
-    if (!waiverUrl) {
-      toast({
-        title: "Waiver Required",
-        description: "Please upload a signed waiver document",
-        variant: "destructive",
-      });
-      return;
-    }
 
     enrollMutation.mutate({
       courseId: params?.id,
       scheduleId: selectedSchedule.id,
-      waiverUrl,
       status: 'pending',
       paymentStatus: 'pending',
       // Student information
@@ -163,8 +120,8 @@ export default function CourseRegistration() {
         lastName: formData.lastName,
         email: formData.email,
         phone: formData.phone,
-        emergencyContact: formData.emergencyContact,
-        specialRequirements: formData.specialRequirements,
+        dateOfBirth: formData.dateOfBirth,
+        couponCode: formData.couponCode,
       },
       // Account creation (for non-authenticated users)
       accountCreation: !isAuthenticated && formData.createAccount ? {
@@ -261,7 +218,7 @@ export default function CourseRegistration() {
                           <div className="flex items-center justify-between w-full">
                             <div className="flex flex-col">
                               <span className="font-medium">
-                                {formatDateSafe(schedule.startDate)} - {formatDateSafe(schedule.endDate)}
+                                {formatDateSafe(schedule.startDate.toString())} - {formatDateSafe(schedule.endDate.toString())}
                               </span>
                               {schedule.location && (
                                 <span className="text-xs text-muted-foreground">
@@ -283,7 +240,7 @@ export default function CourseRegistration() {
                         <div className="font-medium text-accent mb-1">Selected Date:</div>
                         <div className="flex items-center text-muted-foreground">
                           <Calendar className="mr-2 h-4 w-4 text-accent" />
-                          {formatDateSafe(selectedSchedule.startDate)} - {formatDateSafe(selectedSchedule.endDate)}
+                          {formatDateSafe(selectedSchedule.startDate.toString())} - {formatDateSafe(selectedSchedule.endDate.toString())}
                         </div>
                         {selectedSchedule.location && (
                           <div className="flex items-center text-muted-foreground mt-1">
@@ -363,24 +320,25 @@ export default function CourseRegistration() {
               </div>
 
               <div>
-                <Label htmlFor="emergencyContact">Emergency Contact</Label>
+                <Label htmlFor="dateOfBirth">Date of Birth *</Label>
                 <Input
-                  id="emergencyContact"
-                  value={formData.emergencyContact}
-                  onChange={(e) => setFormData(prev => ({ ...prev, emergencyContact: e.target.value }))}
-                  placeholder="Name and phone number"
-                  data-testid="input-emergency-contact"
+                  id="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                  required
+                  data-testid="input-date-of-birth"
                 />
               </div>
 
               <div>
-                <Label htmlFor="specialRequirements">Special Requirements or Notes</Label>
-                <Textarea
-                  id="specialRequirements"
-                  value={formData.specialRequirements}
-                  onChange={(e) => setFormData(prev => ({ ...prev, specialRequirements: e.target.value }))}
-                  placeholder="Any special accommodations or requirements"
-                  data-testid="textarea-special-requirements"
+                <Label htmlFor="couponCode">Coupon Code (optional)</Label>
+                <Input
+                  id="couponCode"
+                  value={formData.couponCode}
+                  onChange={(e) => setFormData(prev => ({ ...prev, couponCode: e.target.value }))}
+                  placeholder="Enter coupon code if you have one"
+                  data-testid="input-coupon-code"
                 />
               </div>
             </CardContent>
@@ -455,64 +413,6 @@ export default function CourseRegistration() {
             </Card>
           )}
 
-          {/* Waiver Upload */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FileText className="mr-2 h-5 w-5" />
-                Digital Waiver Required
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Please upload your signed waiver document. Accepted formats: PDF, JPG, PNG (Max 5MB)
-                </p>
-                
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                  {waiverUrl ? (
-                    <div className="space-y-4">
-                      <div className="text-success">
-                        <FileText className="mx-auto h-12 w-12 mb-2" />
-                        <p className="font-medium">Waiver uploaded successfully!</p>
-                        <p className="text-sm text-muted-foreground">Your waiver has been securely stored.</p>
-                      </div>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setWaiverUrl('')}
-                        data-testid="button-upload-different-waiver"
-                      >
-                        Upload Different Waiver
-                      </Button>
-                    </div>
-                  ) : (
-                    <div>
-                      <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <ObjectUploader
-                        maxNumberOfFiles={1}
-                        maxFileSize={5242880} // 5MB
-                        onGetUploadParameters={handleGetUploadParameters}
-                        onComplete={handleUploadComplete}
-                        buttonClassName="bg-accent text-accent-foreground hover:bg-accent/90"
-                      >
-                        <Upload className="mr-2 h-4 w-4" />
-                        Choose Waiver File
-                      </ObjectUploader>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        PDF, JPG, PNG up to 5MB
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center space-x-2 text-sm text-success">
-                  <FileText className="h-4 w-4" />
-                  <span>256-bit SSL encryption - Your documents are secure</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Terms and Conditions */}
           <Card>
@@ -548,7 +448,7 @@ export default function CourseRegistration() {
                 type="submit"
                 size="lg"
                 className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                disabled={enrollMutation.isPending || !selectedSchedule || !waiverUrl || !formData.agreeToTerms}
+                disabled={enrollMutation.isPending || !selectedSchedule || !formData.agreeToTerms}
                 data-testid="button-proceed-payment"
               >
                 {enrollMutation.isPending ? (
@@ -566,7 +466,7 @@ export default function CourseRegistration() {
               
               {selectedSchedule && (
                 <p className="text-center text-sm text-muted-foreground mt-4">
-                  You will be charged ${course.price} for the course on {formatDateSafe(selectedSchedule.startDate)}
+                  You will be charged ${course.price} for the course on {formatDateSafe(selectedSchedule.startDate.toString())}
                 </p>
               )}
             </CardContent>

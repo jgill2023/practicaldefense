@@ -26,6 +26,13 @@ const courseSchema = z.object({
   briefDescription: z.string().max(500, "Brief description must be under 500 characters").optional(),
   description: z.string().min(1, "Course description is required"),
   price: z.string().min(1, "Price is required"),
+  depositAmount: z.string().optional().refine((val) => {
+    if (!val || val === "") return true;
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= 0;
+  }, {
+    message: "Deposit amount must be a valid non-negative number"
+  }),
   duration: z.string().min(1, "Duration is required"),
   category: z.string().min(1, "Category is required"),
   classroomTime: z.string().optional(),
@@ -34,6 +41,14 @@ const courseSchema = z.object({
   prerequisites: z.string().optional(),
   maxStudents: z.number().min(1, "Must allow at least 1 student").max(100, "Cannot exceed 100 students"),
   imageUrl: z.string().optional(),
+}).refine((data) => {
+  if (!data.depositAmount || data.depositAmount === "") return true;
+  const deposit = parseFloat(data.depositAmount);
+  const price = parseFloat(data.price);
+  return !isNaN(deposit) && !isNaN(price) && deposit <= price;
+}, {
+  message: "Deposit amount cannot exceed the course price",
+  path: ["depositAmount"]
 });
 
 type CourseFormData = z.infer<typeof courseSchema>;
@@ -65,6 +80,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       briefDescription: course.briefDescription || "",
       description: course.description,
       price: course.price.toString(),
+      depositAmount: course.depositAmount ? course.depositAmount.toString() : "",
       duration: course.duration,
       category: course.category,
       classroomTime: course.classroomTime || "",
@@ -82,6 +98,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       const courseData = {
         ...data,
         price: parseFloat(data.price),
+        depositAmount: data.depositAmount && data.depositAmount !== "" ? parseFloat(data.depositAmount) : undefined,
         imageUrl: data.imageUrl, // Use form value directly since it's updated on image upload
       };
       const response = await apiRequest("PUT", `/api/instructor/courses/${course.id}`, courseData);
@@ -289,6 +306,21 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                         <p className="text-sm text-red-600 mt-1">{form.formState.errors.maxStudents.message}</p>
                       )}
                     </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="depositAmount">Deposit Amount (Optional)</Label>
+                    <Input
+                      id="depositAmount"
+                      type="number"
+                      step="0.01"
+                      {...form.register("depositAmount")}
+                      placeholder="50.00 (leave empty if no deposit required)"
+                      data-testid="input-deposit-amount"
+                    />
+                    {form.formState.errors.depositAmount && (
+                      <p className="text-sm text-red-600 mt-1">{form.formState.errors.depositAmount.message}</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>

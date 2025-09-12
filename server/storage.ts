@@ -429,11 +429,16 @@ export class DatabaseStorage implements IStorage {
 
   async getDeletedSchedulesByInstructor(instructorId: string): Promise<any[]> {
     const scheduleList = await db.query.courseSchedules.findMany({
-      where: isNotNull(courseSchedules.deletedAt),
+      where: and(
+        isNotNull(courseSchedules.deletedAt),
+        eq(courseSchedules.courseId, 
+          db.select({ id: courses.id })
+            .from(courses)
+            .where(eq(courses.instructorId, instructorId))
+        )
+      ),
       with: {
-        course: {
-          where: eq(courses.instructorId, instructorId),
-        },
+        course: true,
         enrollments: {
           with: {
             student: true,
@@ -443,7 +448,6 @@ export class DatabaseStorage implements IStorage {
       },
       orderBy: desc(courseSchedules.deletedAt),
     });
-    // Filter out schedules where course is null (doesn't belong to instructor)
     return scheduleList.filter(schedule => schedule.course !== null);
   }
 
