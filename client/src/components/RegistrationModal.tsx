@@ -58,7 +58,12 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">Category:</span>
-                <Badge className="ml-2" data-testid="badge-modal-category">{course.category}</Badge>
+                <Badge className="ml-2" data-testid="badge-modal-category">
+                  {typeof course.category === 'string' ? course.category : 
+                   (course.category && typeof course.category === 'object' && 'name' in course.category) 
+                     ? (course.category as any).name || 'General' 
+                     : 'General'}
+                </Badge>
               </div>
               <div>
                 <span className="text-muted-foreground">Duration:</span>
