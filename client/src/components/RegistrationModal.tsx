@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Clock, Users, DollarSign, X } from "lucide-react";
+import { Calendar, Clock, Users, X } from "lucide-react";
 import type { CourseWithSchedules } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
 
@@ -183,8 +183,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
               className="flex-1 bg-secondary text-secondary-foreground hover:bg-secondary/90"
               data-testid="button-modal-proceed"
             >
-              <DollarSign className="mr-2 h-4 w-4" />
-              {nextSchedule ? `Proceed to Registration - $${course.price}` : 'No Schedules Available'}
+              {nextSchedule ? 'Proceed to Registration' : 'No Schedules Available'}
             </Button>
           </div>
         </div>

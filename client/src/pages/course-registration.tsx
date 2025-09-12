@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Clock, Calendar, User, DollarSign, Users } from "lucide-react";
@@ -32,6 +33,7 @@ export default function CourseRegistration() {
     dateOfBirth: '',
     couponCode: '',
     agreeToTerms: false,
+    paymentOption: 'full' as 'full' | 'deposit', // Default to full payment
     // Account creation fields (for non-authenticated users)
     password: '',
     confirmPassword: '',
@@ -413,6 +415,54 @@ export default function CourseRegistration() {
             </Card>
           )}
 
+          {/* Payment Options */}
+          {course && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <DollarSign className="mr-2 h-5 w-5" />
+                  Payment Options
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <RadioGroup
+                  value={formData.paymentOption}
+                  onValueChange={(value: 'full' | 'deposit') => 
+                    setFormData(prev => ({ ...prev, paymentOption: value }))
+                  }
+                  className="space-y-3"
+                >
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <RadioGroupItem value="full" id="full" data-testid="radio-full-payment" />
+                    <Label htmlFor="full" className="flex-1 cursor-pointer">
+                      <div className="font-medium">Full Payment</div>
+                      <div className="text-sm text-muted-foreground">
+                        Pay the complete course fee: ${course.price}
+                      </div>
+                    </Label>
+                  </div>
+                  
+                  {course.depositAmount && (
+                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <RadioGroupItem value="deposit" id="deposit" data-testid="radio-deposit-payment" />
+                      <Label htmlFor="deposit" className="flex-1 cursor-pointer">
+                        <div className="font-medium">Deposit Only</div>
+                        <div className="text-sm text-muted-foreground">
+                          Pay deposit now: ${course.depositAmount} (remaining ${course.price - course.depositAmount} due later)
+                        </div>
+                      </Label>
+                    </div>
+                  )}
+                </RadioGroup>
+                
+                {!course.depositAmount && (
+                  <p className="text-sm text-muted-foreground">
+                    Only full payment is available for this course.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Terms and Conditions */}
           <Card>
@@ -459,7 +509,7 @@ export default function CourseRegistration() {
                 ) : (
                   <>
                     <DollarSign className="mr-2 h-4 w-4" />
-                    Proceed to Payment - ${course.price}
+                    Proceed to Payment
                   </>
                 )}
               </Button>
