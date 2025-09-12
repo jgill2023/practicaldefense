@@ -981,27 +981,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       try {
         // Use Stripe Tax to calculate taxes based on your dashboard settings
+        console.log('Attempting Stripe Tax calculation for Albuquerque, NM...');
+        
         taxCalculation = await stripe.tax.calculations.create({
           currency: 'usd',
           line_items: [{
             amount: Math.round(paymentAmount * 100),
-            tax_code: 'txcd_10401000', // Online education services - set this in your Stripe dashboard
+            tax_code: 'txcd_10401000', // Online education services
           }],
           customer_details: {
             address: {
-              country: 'US', // Default to US - you can collect this from customer later
+              country: 'US',
+              state: 'NM',
+              city: 'Albuquerque', 
+              postal_code: '87101', // Albuquerque zip code
             },
             address_source: 'billing',
           },
+        });
+
+        console.log('✅ Stripe Tax Calculation Success:', {
+          subtotal_cents: Math.round(paymentAmount * 100),
+          subtotal_dollars: paymentAmount,
+          tax_calculation_id: taxCalculation?.id,
+          amount_total_cents: taxCalculation?.amount_total,
+          total_dollars: taxCalculation?.amount_total ? (taxCalculation.amount_total / 100) : 0,
+          tax_amount_exclusive_cents: taxCalculation?.tax_amount_exclusive,
+          tax_dollars: taxCalculation?.tax_amount_exclusive ? (taxCalculation.tax_amount_exclusive / 100) : 0,
+          tax_rate_calculated: taxCalculation?.tax_amount_exclusive && paymentAmount ? 
+            ((taxCalculation.tax_amount_exclusive / 100) / paymentAmount * 100).toFixed(4) + '%' : '0%'
         });
 
         if (taxCalculation && taxCalculation.amount_total) {
           finalAmount = taxCalculation.amount_total;
           taxAmount = taxCalculation.tax_amount_exclusive || 0;
         }
-      } catch (taxError) {
-        console.warn('Tax calculation failed, proceeding without tax:', taxError);
-        // Continue without tax if calculation fails
+      } catch (taxError: any) {
+        console.error('❌ Stripe Tax calculation failed:', {
+          error_message: taxError.message,
+          error_type: taxError.type,
+          error_code: taxError.code,
+          error_decline_code: taxError.decline_code,
+          full_error: taxError
+        });
+        // Continue without tax if calculation fails - using 0% tax
+        console.log('Proceeding with 0% tax due to Stripe Tax API error');
       }
 
       const paymentIntent = await stripe.paymentIntents.create({
