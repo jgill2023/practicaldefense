@@ -974,12 +974,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid payment amount" });
       }
 
-      // For now, using simple fixed tax rate until address collection is implemented
-      // TODO: Implement Stripe Tax with customer address collection
-      const taxRate = 0.08; // 8% tax rate - adjust based on your location/requirements
-      const taxAmount = Math.round(paymentAmount * taxRate * 100); // Tax in cents
-      const subtotalAmount = Math.round(paymentAmount * 100); // Course price in cents
-      const finalAmount = subtotalAmount + taxAmount;
+      // Calculate tax using Stripe Tax Calculation API
+      let taxCalculation = null;
+      let taxAmount = 0;
+      let finalAmount = Math.round(paymentAmount * 100);
+
+      try {
+        // Use Stripe Tax to calculate taxes based on your dashboard settings
+        taxCalculation = await stripe.tax.calculations.create({
+          currency: 'usd',
+          line_items: [{
+            amount: Math.round(paymentAmount * 100),
+            tax_code: 'txcd_10401000', // Online education services - set this in your Stripe dashboard
+          }],
+          customer_details: {
+            address: {
+              country: 'US', // Default to US - you can collect this from customer later
+            },
+            address_source: 'billing',
+          },
+        });
+
+        if (taxCalculation && taxCalculation.amount_total) {
+          finalAmount = taxCalculation.amount_total;
+          taxAmount = taxCalculation.tax_amount_exclusive || 0;
+        }
+      } catch (taxError) {
+        console.warn('Tax calculation failed, proceeding without tax:', taxError);
+        // Continue without tax if calculation fails
+      }
 
       const paymentIntent = await stripe.paymentIntents.create({
         amount: finalAmount,
@@ -991,15 +1014,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           scheduleId: enrollment.scheduleId,
           studentId: userId,
           paymentOption: enrollment.paymentOption || 'full',
-          subtotal_amount: subtotalAmount.toString(),
-          tax_amount: taxAmount.toString(),
+          tax_calculation_id: taxCalculation?.id || null,
         },
       });
+
       res.json({ 
         clientSecret: paymentIntent.client_secret,
         subtotal: paymentAmount,
-        tax: parseFloat((taxAmount / 100).toFixed(2)),
-        total: parseFloat((finalAmount / 100).toFixed(2))
+        tax: taxAmount / 100,
+        total: finalAmount / 100,
+        tax_included: taxAmount > 0
       });
     } catch (error: any) {
       res.status(500).json({ message: "Error creating payment intent: " + error.message });

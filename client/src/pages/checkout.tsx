@@ -131,7 +131,7 @@ const CheckoutForm = ({ enrollment }: { enrollment: EnrollmentWithDetails }) => 
 export default function Checkout() {
   const [, params] = useRoute("/checkout");
   const [clientSecret, setClientSecret] = useState("");
-  const [taxInfo, setTaxInfo] = useState<{subtotal: number, tax: number, total: number} | null>(null);
+  const [taxInfo, setTaxInfo] = useState<{subtotal: number, tax: number, total: number, tax_included: boolean} | null>(null);
   const { toast } = useToast();
   
   // Get enrollment ID from URL params
@@ -171,7 +171,8 @@ export default function Checkout() {
         setTaxInfo({
           subtotal: data.subtotal,
           tax: data.tax,
-          total: data.total
+          total: data.total,
+          tax_included: data.tax_included
         });
       })
       .catch((error) => {
@@ -265,7 +266,7 @@ export default function Checkout() {
                         Deposit Payment
                       </Badge>
                     )}
-                    {taxInfo?.tax && taxInfo.tax > 0 && (
+                    {taxInfo?.tax_included && (
                       <Badge variant="default">
                         Tax Included
                       </Badge>
@@ -287,7 +288,7 @@ export default function Checkout() {
                     <span>${(parseFloat(enrollment.course.price) - parseFloat(enrollment.course.depositAmount)).toFixed(2)}</span>
                   </div>
                 )}
-                {taxInfo?.tax && taxInfo.tax > 0 && (
+                {taxInfo?.tax_included && taxInfo.tax > 0 && (
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Tax</span>
                     <span>${taxInfo.tax.toFixed(2)}</span>
