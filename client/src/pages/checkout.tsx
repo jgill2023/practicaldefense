@@ -26,6 +26,19 @@ const CheckoutForm = ({ enrollment }: { enrollment: EnrollmentWithDetails }) => 
   const [, setLocation] = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Calculate the payment amount based on the payment option
+  const getPaymentAmount = (enrollment: any) => {
+    if (!enrollment) return 0;
+    
+    const coursePrice = parseFloat(enrollment.course.price);
+    const depositAmount = enrollment.course.depositAmount ? parseFloat(enrollment.course.depositAmount) : null;
+    
+    if (enrollment.paymentOption === 'deposit' && depositAmount) {
+      return depositAmount;
+    }
+    return coursePrice;
+  };
+
   const confirmEnrollmentMutation = useMutation({
     mutationFn: async ({ enrollmentId, paymentIntentId }: { enrollmentId: string; paymentIntentId: string }) => {
       const response = await apiRequest("POST", "/api/confirm-enrollment", {
@@ -131,7 +144,7 @@ export default function Checkout() {
   
   const enrollment = enrollments?.find(e => e.id === enrollmentId);
 
-  // Calculate the payment amount based on the payment option
+  // Calculate the payment amount based on the payment option (for display purposes)
   const getPaymentAmount = (enrollment: any) => {
     if (!enrollment) return 0;
     
