@@ -131,6 +131,7 @@ const CheckoutForm = ({ enrollment }: { enrollment: EnrollmentWithDetails }) => 
 export default function Checkout() {
   const [, params] = useRoute("/checkout");
   const [clientSecret, setClientSecret] = useState("");
+  const [taxInfo, setTaxInfo] = useState<{subtotal: number, tax: number, total: number} | null>(null);
   const { toast } = useToast();
   
   // Get enrollment ID from URL params
@@ -167,6 +168,11 @@ export default function Checkout() {
       .then((res) => res.json())
       .then((data) => {
         setClientSecret(data.clientSecret);
+        setTaxInfo({
+          subtotal: data.subtotal,
+          tax: data.tax,
+          total: data.total
+        });
       })
       .catch((error) => {
         toast({
@@ -245,7 +251,7 @@ export default function Checkout() {
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-primary" data-testid="text-order-price">
-                    ${getPaymentAmount(enrollment)}
+                    ${taxInfo?.total?.toFixed(2) || getPaymentAmount(enrollment)}
                   </div>
                   <div className="flex gap-2 mt-2">
                     <Badge variant="outline">
@@ -259,26 +265,33 @@ export default function Checkout() {
                         Deposit Payment
                       </Badge>
                     )}
+                    {taxInfo?.tax && taxInfo.tax > 0 && (
+                      <Badge variant="default">
+                        Tax Included
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
               
               <div className="border-t pt-4">
                 <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Full course fee</span>
-                  <span>${enrollment.course.price}</span>
+                  <span>
+                    {enrollment.paymentOption === 'deposit' ? 'Course deposit' : 'Course fee'}
+                  </span>
+                  <span>${taxInfo?.subtotal?.toFixed(2) || getPaymentAmount(enrollment)}</span>
                 </div>
                 {enrollment.paymentOption === 'deposit' && enrollment.course.depositAmount && (
-                  <>
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>Paying today (deposit)</span>
-                      <span>${enrollment.course.depositAmount}</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>Remaining balance</span>
-                      <span>${(parseFloat(enrollment.course.price) - parseFloat(enrollment.course.depositAmount)).toFixed(2)}</span>
-                    </div>
-                  </>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Remaining balance (due later)</span>
+                    <span>${(parseFloat(enrollment.course.price) - parseFloat(enrollment.course.depositAmount)).toFixed(2)}</span>
+                  </div>
+                )}
+                {taxInfo?.tax && taxInfo.tax > 0 && (
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Tax</span>
+                    <span>${taxInfo.tax.toFixed(2)}</span>
+                  </div>
                 )}
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Processing fee</span>
@@ -286,7 +299,7 @@ export default function Checkout() {
                 </div>
                 <div className="flex justify-between font-semibold text-lg mt-2 pt-2 border-t">
                   <span>Total due today</span>
-                  <span data-testid="text-total-amount">${getPaymentAmount(enrollment)}</span>
+                  <span data-testid="text-total-amount">${taxInfo?.total?.toFixed(2) || getPaymentAmount(enrollment)}</span>
                 </div>
               </div>
             </div>

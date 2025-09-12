@@ -974,18 +974,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid payment amount" });
       }
 
+      // For now, using simple fixed tax rate until address collection is implemented
+      // TODO: Implement Stripe Tax with customer address collection
+      const taxRate = 0.08; // 8% tax rate - adjust based on your location/requirements
+      const taxAmount = Math.round(paymentAmount * taxRate * 100); // Tax in cents
+      const subtotalAmount = Math.round(paymentAmount * 100); // Course price in cents
+      const finalAmount = subtotalAmount + taxAmount;
+
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(paymentAmount * 100), // Convert to cents
+        amount: finalAmount,
         currency: "usd",
+        automatic_payment_methods: { enabled: true },
         metadata: {
           enrollmentId,
           courseId: enrollment.courseId,
           scheduleId: enrollment.scheduleId,
           studentId: userId,
           paymentOption: enrollment.paymentOption || 'full',
+          subtotal_amount: subtotalAmount.toString(),
+          tax_amount: taxAmount.toString(),
         },
       });
-      res.json({ clientSecret: paymentIntent.client_secret });
+      res.json({ 
+        clientSecret: paymentIntent.client_secret,
+        subtotal: paymentAmount,
+        tax: parseFloat((taxAmount / 100).toFixed(2)),
+        total: parseFloat((finalAmount / 100).toFixed(2))
+      });
     } catch (error: any) {
       res.status(500).json({ message: "Error creating payment intent: " + error.message });
     }
