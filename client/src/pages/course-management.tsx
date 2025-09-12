@@ -437,7 +437,7 @@ export default function CourseManagement() {
               Manage your training courses, schedules, and enrollments
             </p>
           </div>
-          <div className="flex items-center space-x-4 mt-4 sm:mt-0">
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mt-4 sm:mt-0">
             <Link href="/course-forms-management">
               <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground" data-testid="button-manage-forms">
                 <FileText className="mr-2 h-4 w-4" />
