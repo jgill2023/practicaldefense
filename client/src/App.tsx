@@ -27,12 +27,12 @@ function Router() {
     <Switch>
       <Route path="/" component={Landing} />
       <Route path="/course-registration/:id" component={CourseRegistration} />
+      <Route path="/checkout" component={Checkout} />
       {isAuthenticated && (
         <>
           <Route path="/instructor-dashboard" component={InstructorDashboard} />
           <Route path="/course-management" component={CourseManagement} />
           <Route path="/student-portal" component={StudentPortal} />
-          <Route path="/checkout" component={Checkout} />
         </>
       )}
       <Route component={NotFound} />
