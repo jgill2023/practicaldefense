@@ -147,13 +147,9 @@ export default function Checkout() {
   useEffect(() => {
     if (!enrollment) return;
     
-    const paymentAmount = getPaymentAmount(enrollment);
-    
-    // Create PaymentIntent as soon as the page loads
+    // Create PaymentIntent as soon as the page loads - server calculates amount
     apiRequest("POST", "/api/create-payment-intent", {
-      amount: paymentAmount,
-      courseId: enrollment.courseId,
-      scheduleId: enrollment.scheduleId,
+      enrollmentId: enrollment.id,
     })
       .then((res) => res.json())
       .then((data) => {

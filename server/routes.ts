@@ -944,14 +944,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe payment routes
   app.post("/api/create-payment-intent", isAuthenticated, async (req: any, res) => {
     try {
-      const { amount, courseId, scheduleId } = req.body;
+      const { enrollmentId } = req.body;
+      const userId = req.user?.claims?.sub;
+
+      // Fetch enrollment to calculate correct payment amount server-side
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment || enrollment.studentId !== userId) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+
+      // Get course details to access price and deposit amount
+      const course = await storage.getCourse(enrollment.courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      // Calculate payment amount based on payment option
+      let paymentAmount: number;
+      const coursePrice = parseFloat(course.price);
+      
+      if (enrollment.paymentOption === 'deposit' && course.depositAmount) {
+        paymentAmount = parseFloat(course.depositAmount);
+      } else {
+        paymentAmount = coursePrice;
+      }
+
+      // Validate payment amount
+      if (paymentAmount <= 0) {
+        return res.status(400).json({ message: "Invalid payment amount" });
+      }
+
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount * 100), // Convert to cents
+        amount: Math.round(paymentAmount * 100), // Convert to cents
         currency: "usd",
         metadata: {
-          courseId,
-          scheduleId,
-          studentId: req.user?.claims?.sub,
+          enrollmentId,
+          courseId: enrollment.courseId,
+          scheduleId: enrollment.scheduleId,
+          studentId: userId,
+          paymentOption: enrollment.paymentOption || 'full',
         },
       });
       res.json({ clientSecret: paymentIntent.client_secret });
@@ -976,10 +1007,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Payment not completed" });
       }
 
+      // Critical security checks: verify payment intent belongs to this enrollment and user
+      if (paymentIntent.metadata.enrollmentId !== enrollmentId) {
+        console.error(`Payment intent enrollment mismatch: expected ${enrollmentId}, got ${paymentIntent.metadata.enrollmentId}`);
+        return res.status(400).json({ message: "Payment verification failed - enrollment mismatch" });
+      }
+      
+      if (paymentIntent.metadata.studentId !== userId) {
+        console.error(`Payment intent user mismatch: expected ${userId}, got ${paymentIntent.metadata.studentId}`);
+        return res.status(400).json({ message: "Payment verification failed - user mismatch" });
+      }
+
+      if (paymentIntent.currency !== 'usd') {
+        console.error(`Payment intent currency mismatch: expected usd, got ${paymentIntent.currency}`);
+        return res.status(400).json({ message: "Payment verification failed - currency mismatch" });
+      }
+
+      // Get course details for payment amount verification
+      const course = await storage.getCourse(enrollment.courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      // Calculate expected payment amount for verification
+      let expectedAmount: number;
+      const coursePrice = parseFloat(course.price);
+      
+      if (enrollment.paymentOption === 'deposit' && course.depositAmount) {
+        expectedAmount = parseFloat(course.depositAmount);
+      } else {
+        expectedAmount = coursePrice;
+      }
+
+      // Verify payment amount matches expectations (within 1 cent tolerance for rounding)
+      const paidAmount = paymentIntent.amount / 100; // Convert from cents
+      if (Math.abs(paidAmount - expectedAmount) > 0.01) {
+        console.error(`Payment amount mismatch: expected ${expectedAmount}, got ${paidAmount}`);
+        return res.status(400).json({ message: "Payment amount verification failed" });
+      }
+
+      // Determine payment status based on payment option
+      const paymentStatus = enrollment.paymentOption === 'deposit' ? 'deposit' : 'paid';
+
       // Update enrollment status
       const updatedEnrollment = await storage.updateEnrollment(enrollmentId, {
         status: 'confirmed',
-        paymentStatus: 'paid',
+        paymentStatus,
         paymentIntentId,
       });
 
