@@ -34,19 +34,9 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="modal-registration">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl font-bold text-card-foreground">
-              Course Registration
-            </DialogTitle>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={onClose}
-              data-testid="button-close-modal"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="text-2xl font-bold text-card-foreground">
+            Course Registration
+          </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
