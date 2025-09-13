@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -20,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Archive, Trash2, EyeOff, Eye } from "lucide-react";
+import { MoreHorizontal, Edit, Archive, Trash2, EyeOff, Eye, Percent } from "lucide-react";
 import type { CourseWithSchedules } from "@shared/schema";
 
 interface CourseManagementActionsProps {
@@ -33,6 +34,7 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // Archive course mutation
   const archiveCourseMutation = useMutation({
@@ -126,6 +128,14 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
           >
             <Edit className="mr-2 h-4 w-4" />
             Edit Course
+          </DropdownMenuItem>
+
+          <DropdownMenuItem 
+            onClick={() => setLocation(`/promo-codes/${course.id}`)}
+            data-testid={`button-promo-codes-${course.id}`}
+          >
+            <Percent className="mr-2 h-4 w-4" />
+            Manage Promo Codes
           </DropdownMenuItem>
           
           <DropdownMenuItem 

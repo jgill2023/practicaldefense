@@ -11,6 +11,7 @@ import CourseFormsManagement from "@/pages/course-forms-management";
 import StudentPortal from "@/pages/student-portal";
 import CourseRegistration from "@/pages/course-registration";
 import Checkout from "@/pages/checkout";
+import PromoCodesPage from "@/pages/promo-codes";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -35,6 +36,7 @@ function Router() {
           <Route path="/course-management" component={CourseManagement} />
           <Route path="/course-forms-management" component={CourseFormsManagement} />
           <Route path="/student-portal" component={StudentPortal} />
+          <Route path="/promo-codes/:courseId" component={PromoCodesPage} />
         </>
       )}
       <Route component={NotFound} />
