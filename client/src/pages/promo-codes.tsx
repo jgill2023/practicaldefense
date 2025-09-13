@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -28,6 +30,8 @@ const promoCodeFormSchema = insertPromoCodeSchema.extend({
   maxTotalUses: z.string().optional(),
   maxUsesPerUser: z.string().optional(),
   minCartSubtotal: z.string().optional(),
+  scopeCourseIds: z.array(z.string()).optional(),
+  scopeCategoryIds: z.array(z.string()).optional(),
 });
 
 type PromoCodeFormData = z.infer<typeof promoCodeFormSchema>;
@@ -40,6 +44,15 @@ export default function PromoCodesPage() {
   // Fetch promo codes
   const { data: promoCodes = [], isLoading } = useQuery<PromoCodeWithDetails[]>({
     queryKey: ["/api/instructor/coupons"],
+  });
+
+  // Fetch courses and categories for scope selection
+  const { data: courses = [] } = useQuery<any[]>({
+    queryKey: ["/api/courses"],
+  });
+
+  const { data: categories = [] } = useQuery<any[]>({
+    queryKey: ["/api/categories"],
   });
 
   // Create promo code mutation
@@ -141,6 +154,8 @@ export default function PromoCodesPage() {
       firstPurchaseOnly: false,
       newCustomersOnly: false,
       maxUsesPerUser: "1",
+      scopeCourseIds: [],
+      scopeCategoryIds: [],
     },
   });
 
@@ -162,6 +177,8 @@ export default function PromoCodesPage() {
       minCartSubtotal: promoCode.minCartSubtotal?.toString() || "",
       startDate: promoCode.startDate ? new Date(promoCode.startDate).toISOString().split('T')[0] : "",
       endDate: promoCode.endDate ? new Date(promoCode.endDate).toISOString().split('T')[0] : "",
+      scopeCourseIds: promoCode.scopeCourseIds || [],
+      scopeCategoryIds: promoCode.scopeCategoryIds || [],
     });
   };
 
@@ -330,6 +347,116 @@ export default function PromoCodesPage() {
                         )}
                       />
                     </div>
+
+                    {/* Scope Selection */}
+                    <FormField
+                      control={form.control}
+                      name="scopeType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Scope *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} data-testid="select-scope-type">
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select scope" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="GLOBAL">All Courses (Sitewide)</SelectItem>
+                              <SelectItem value="COURSES">Specific Courses</SelectItem>
+                              <SelectItem value="CATEGORIES">Specific Categories</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Specific Courses Selection */}
+                    {form.watch("scopeType") === "COURSES" && (
+                      <FormField
+                        control={form.control}
+                        name="scopeCourseIds"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Select Courses</FormLabel>
+                            <FormControl>
+                              <ScrollArea className="h-32 w-full border rounded-md p-3">
+                                <div className="space-y-2">
+                                  {courses.map((course: any) => (
+                                    <div key={course.id} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={`course-${course.id}`}
+                                        checked={field.value?.includes(course.id) || false}
+                                        onCheckedChange={(checked: boolean) => {
+                                          const currentValues = field.value || [];
+                                          if (checked) {
+                                            field.onChange([...currentValues, course.id]);
+                                          } else {
+                                            field.onChange(currentValues.filter((id: string) => id !== course.id));
+                                          }
+                                        }}
+                                        data-testid={`checkbox-course-${course.id}`}
+                                      />
+                                      <label
+                                        htmlFor={`course-${course.id}`}
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                      >
+                                        {course.title}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                              </ScrollArea>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {/* Specific Categories Selection */}
+                    {form.watch("scopeType") === "CATEGORIES" && (
+                      <FormField
+                        control={form.control}
+                        name="scopeCategoryIds"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Select Categories</FormLabel>
+                            <FormControl>
+                              <ScrollArea className="h-32 w-full border rounded-md p-3">
+                                <div className="space-y-2">
+                                  {categories.map((category: any) => (
+                                    <div key={category.id} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={`category-${category.id}`}
+                                        checked={field.value?.includes(category.id) || false}
+                                        onCheckedChange={(checked: boolean) => {
+                                          const currentValues = field.value || [];
+                                          if (checked) {
+                                            field.onChange([...currentValues, category.id]);
+                                          } else {
+                                            field.onChange(currentValues.filter((id: string) => id !== category.id));
+                                          }
+                                        }}
+                                        data-testid={`checkbox-category-${category.id}`}
+                                      />
+                                      <label
+                                        htmlFor={`category-${category.id}`}
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                      >
+                                        {category.name}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                              </ScrollArea>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
