@@ -246,7 +246,7 @@ function StudentsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="current" data-testid="tab-current-students">
-            Current Students
+            Current
             {studentsData?.current && studentsData.current.length > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {studentsData.current.length}
@@ -254,7 +254,7 @@ function StudentsPage() {
             )}
           </TabsTrigger>
           <TabsTrigger value="upcoming" data-testid="tab-upcoming-students">
-            Upcoming Students
+            Upcoming
             {studentsData?.upcoming && studentsData.upcoming.length > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {studentsData.upcoming.length}
@@ -262,7 +262,7 @@ function StudentsPage() {
             )}
           </TabsTrigger>
           <TabsTrigger value="past" data-testid="tab-past-students">
-            Past Students
+            Past
             {studentsData?.past && studentsData.past.length > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {studentsData.past.length}
