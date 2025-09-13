@@ -31,7 +31,8 @@ import {
   Archive,
   Eye,
   EyeOff,
-  FileText
+  FileText,
+  BadgePercent
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -438,6 +439,12 @@ export default function CourseManagement() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mt-4 sm:mt-0">
+            <Link href="/promo-codes">
+              <Button variant="default" data-testid="button-manage-promos">
+                <BadgePercent className="mr-2 h-4 w-4" />
+                Manage Promos
+              </Button>
+            </Link>
             <Link href="/course-forms-management">
               <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground" data-testid="button-manage-forms">
                 <FileText className="mr-2 h-4 w-4" />

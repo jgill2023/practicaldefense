@@ -26,6 +26,7 @@ const promoCodeSchema = z.object({
   description: z.string().min(1, "Description is required"),
   type: z.enum(["PERCENT", "FIXED_AMOUNT"]),
   value: z.string().min(1, "Value is required"),
+  scopeCourseIds: z.array(z.string()).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   maxTotalUses: z.string().optional(),
@@ -37,24 +38,31 @@ const promoCodeSchema = z.object({
 type PromoCodeFormData = z.infer<typeof promoCodeSchema>;
 
 export default function PromoCodesPage() {
-  const { courseId } = useParams<{ courseId: string }>();
+  const { courseId } = useParams<{ courseId?: string }>();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPromoCode, setEditingPromoCode] = useState<PromoCode | null>(null);
 
-  // Fetch course details
+  // Fetch course details (only when viewing a specific course)
   const { data: course } = useQuery<CourseWithSchedules>({
     queryKey: ["/api/instructor/courses", courseId],
     enabled: isAuthenticated && !!courseId,
     retry: false,
   });
 
-  // Fetch promo codes for this course
+  // Fetch all courses (for general view and course selection)
+  const { data: allCourses = [] } = useQuery<CourseWithSchedules[]>({
+    queryKey: ["/api/instructor/courses"],
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  // Fetch promo codes (course-specific or all)
   const { data: promoCodes = [], isLoading } = useQuery<PromoCode[]>({
-    queryKey: ["/api/instructor/coupons", courseId],
-    enabled: isAuthenticated && !!courseId,
+    queryKey: courseId ? ["/api/instructor/coupons", courseId] : ["/api/instructor/coupons"],
+    enabled: isAuthenticated,
     retry: false,
   });
 
@@ -65,6 +73,7 @@ export default function PromoCodesPage() {
       description: "",
       type: "PERCENT",
       value: "",
+      scopeCourseIds: courseId ? [courseId] : [],
       status: "ACTIVE",
     },
   });
@@ -76,6 +85,7 @@ export default function PromoCodesPage() {
         description: editingPromoCode.description || "",
         type: editingPromoCode.type as "PERCENT" | "FIXED_AMOUNT",
         value: editingPromoCode.value,
+        scopeCourseIds: editingPromoCode.scopeCourseIds || (courseId ? [courseId] : []),
         startDate: editingPromoCode.startDate ? new Date(editingPromoCode.startDate).toISOString().split('T')[0] : "",
         endDate: editingPromoCode.endDate ? new Date(editingPromoCode.endDate).toISOString().split('T')[0] : "",
         maxTotalUses: editingPromoCode.maxTotalUses?.toString() || "",
@@ -89,6 +99,7 @@ export default function PromoCodesPage() {
         description: "",
         type: "PERCENT",
         value: "",
+        scopeCourseIds: courseId ? [courseId] : [],
         status: "ACTIVE",
       });
     }
@@ -98,13 +109,15 @@ export default function PromoCodesPage() {
     mutationFn: async (data: PromoCodeFormData) => {
       const payload = {
         ...data,
-        courseIds: [courseId],
-        value: data.value,
+        name: data.description, // Map description to name field required by schema
+        scopeCourseIds: courseId ? [courseId] : data.scopeCourseIds || [],
+        scopeType: courseId ? 'COURSES' : (data.scopeCourseIds && data.scopeCourseIds.length > 0 ? 'COURSES' : 'GLOBAL'),
+        value: parseFloat(data.value),
         startDate: data.startDate || null,
         endDate: data.endDate || null,
         maxTotalUses: data.maxTotalUses ? parseInt(data.maxTotalUses) : null,
         maxUsesPerUser: data.maxUsesPerUser ? parseInt(data.maxUsesPerUser) : null,
-        minCartSubtotal: data.minCartSubtotal || null,
+        minCartSubtotal: data.minCartSubtotal ? parseFloat(data.minCartSubtotal) : null,
       };
       const response = await apiRequest("POST", "/api/instructor/coupons", payload);
       return response.json();
@@ -114,7 +127,7 @@ export default function PromoCodesPage() {
         title: "Promo Code Created",
         description: "The promo code has been created successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor/coupons", courseId] });
+      queryClient.invalidateQueries({ queryKey: courseId ? ["/api/instructor/coupons", courseId] : ["/api/instructor/coupons"] });
       setShowCreateModal(false);
       form.reset();
     },
@@ -132,12 +145,14 @@ export default function PromoCodesPage() {
       if (!editingPromoCode) return;
       const payload = {
         ...data,
-        value: data.value,
+        name: data.description, // Map description to name field required by schema
+        scopeType: courseId ? 'COURSES' : (data.scopeCourseIds && data.scopeCourseIds.length > 0 ? 'COURSES' : 'GLOBAL'),
+        value: parseFloat(data.value),
         startDate: data.startDate || null,
         endDate: data.endDate || null,
         maxTotalUses: data.maxTotalUses ? parseInt(data.maxTotalUses) : null,
         maxUsesPerUser: data.maxUsesPerUser ? parseInt(data.maxUsesPerUser) : null,
-        minCartSubtotal: data.minCartSubtotal || null,
+        minCartSubtotal: data.minCartSubtotal ? parseFloat(data.minCartSubtotal) : null,
       };
       const response = await apiRequest("PUT", `/api/instructor/coupons/${editingPromoCode.id}`, payload);
       return response.json();
@@ -147,7 +162,7 @@ export default function PromoCodesPage() {
         title: "Promo Code Updated",
         description: "The promo code has been updated successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor/coupons", courseId] });
+      queryClient.invalidateQueries({ queryKey: courseId ? ["/api/instructor/coupons", courseId] : ["/api/instructor/coupons"] });
       setEditingPromoCode(null);
       form.reset();
     },
@@ -170,7 +185,7 @@ export default function PromoCodesPage() {
         title: "Promo Code Deleted",
         description: "The promo code has been deleted successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor/coupons", courseId] });
+      queryClient.invalidateQueries({ queryKey: courseId ? ["/api/instructor/coupons", courseId] : ["/api/instructor/coupons"] });
     },
     onError: (error: any) => {
       toast({
@@ -197,16 +212,19 @@ export default function PromoCodesPage() {
     <Layout>
       <div className="container mx-auto py-8 max-w-6xl">
         <div className="flex items-center gap-4 mb-6">
-          <Link href="/course-management">
+          <Link href={courseId ? "/course-management" : "/instructor-dashboard"}>
             <Button variant="ghost" size="sm" data-testid="button-back-to-courses">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Courses
+              {courseId ? "Back to Courses" : "Back to Dashboard"}
             </Button>
           </Link>
           <div>
             <h1 className="text-3xl font-bold">Promo Codes</h1>
             <p className="text-muted-foreground">
-              {course ? `Managing promo codes for "${course.title}"` : "Loading course..."}
+              {courseId ? 
+                (course ? `Managing promo codes for "${course.title}"` : "Loading course...") : 
+                "Managing all promo codes"
+              }
             </p>
           </div>
         </div>
@@ -233,7 +251,8 @@ export default function PromoCodesPage() {
                   {editingPromoCode ? "Edit Promo Code" : "Create New Promo Code"}
                 </DialogTitle>
                 <DialogDescription>
-                  {editingPromoCode ? "Update the promo code details below." : "Create a new promo code for this course."}
+                  {editingPromoCode ? "Update the promo code details below." : 
+                   courseId ? "Create a new promo code for this course." : "Create a new promo code for selected courses."}
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
@@ -281,12 +300,50 @@ export default function PromoCodesPage() {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Input placeholder="Save 20% on this course" {...field} data-testid="input-promo-description" />
+                          <Input placeholder={courseId ? "Save 20% on this course" : "Save 20% on selected courses"} {...field} data-testid="input-promo-description" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  {!courseId && (
+                    <FormField
+                      control={form.control}
+                      name="scopeCourseIds"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Apply to Courses (optional)</FormLabel>
+                          <FormControl>
+                            <Select
+                              onValueChange={(value) => {
+                                const currentValues = field.value || [];
+                                const newValues = currentValues.includes(value)
+                                  ? currentValues.filter(id => id !== value)
+                                  : [...currentValues, value];
+                                field.onChange(newValues);
+                              }}
+                              value=""
+                            >
+                              <SelectTrigger data-testid="select-course-scope">
+                                <SelectValue placeholder={`${(field.value || []).length} course(s) selected`} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {allCourses.map((course) => (
+                                  <SelectItem key={course.id} value={course.id}>
+                                    {(field.value || []).includes(course.id) ? "✓ " : ""}{course.title}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                          <p className="text-sm text-muted-foreground">
+                            Leave empty to create a global promo code that applies to all courses
+                          </p>
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -422,7 +479,7 @@ export default function PromoCodesPage() {
           <CardHeader>
             <CardTitle>Promo Codes</CardTitle>
             <CardDescription>
-              Manage promo codes for this course
+              {courseId ? "Manage promo codes for this course" : "Manage all promo codes across courses"}
             </CardDescription>
           </CardHeader>
           <CardContent>

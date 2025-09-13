@@ -36,6 +36,7 @@ function Router() {
           <Route path="/course-management" component={CourseManagement} />
           <Route path="/course-forms-management" component={CourseFormsManagement} />
           <Route path="/student-portal" component={StudentPortal} />
+          <Route path="/promo-codes" component={PromoCodesPage} />
           <Route path="/promo-codes/:courseId" component={PromoCodesPage} />
         </>
       )}
