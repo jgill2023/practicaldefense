@@ -227,6 +227,15 @@ export default function CourseRegistration() {
 
   // Create draft enrollment when schedule is selected and form is valid
   const createDraftEnrollment = async (schedule: CourseSchedule) => {
+    if (!course) {
+      toast({
+        title: "Error",
+        description: "Course information not available",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     if (!isAuthenticated && formData.createAccount) {
       if (!formData.password || formData.password.length < 6) {
         toast({
@@ -267,7 +276,7 @@ export default function CourseRegistration() {
     }
 
     initiateDraftMutation.mutate({
-      courseId: params?.id,
+      courseId: course.id,
       scheduleId: schedule.id,
       paymentOption: formData.paymentOption,
       studentInfo: {
@@ -915,71 +924,6 @@ export default function CourseRegistration() {
               )}
 
             </div>
-          )}
-
-          {/* Terms and Conditions - shown when payment section is visible */}
-          {selectedSchedule && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Tag className="mr-2 h-5 w-5" />
-                  Promo Code
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Have a promo code? Enter it below to apply any available discounts to your order.
-                </p>
-                
-                {!promoCodeApplied ? (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Enter promo code"
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                      onKeyDown={(e) => e.key === 'Enter' && validateAndApplyPromoCode()}
-                      className="flex-1"
-                      data-testid="input-promo-code"
-                    />
-                    <Button 
-                      onClick={validateAndApplyPromoCode}
-                      disabled={!promoCode.trim() || isValidatingPromo || !currentEnrollment}
-                      size="sm"
-                      data-testid="button-apply-promo"
-                    >
-                      {isValidatingPromo ? "Checking..." : "Apply"}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4" />
-                      <span className="text-sm font-medium" data-testid="text-applied-promo">
-                        {promoCodeApplied} applied
-                      </span>
-                      {taxInfo?.discountAmount && (
-                        <span className="text-sm">- Saved ${taxInfo.discountAmount.toFixed(2)}</span>
-                      )}
-                    </div>
-                    <Button 
-                      onClick={removePromoCode}
-                      variant="ghost" 
-                      size="sm"
-                      className="h-auto p-1 text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100"
-                      data-testid="button-remove-promo"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-                
-                {promoError && (
-                  <div className="text-red-600 text-sm mt-1" data-testid="text-promo-error">
-                    {promoError}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           )}
 
           {/* Terms and Conditions */}
