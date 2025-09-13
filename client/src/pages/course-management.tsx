@@ -31,8 +31,7 @@ import {
   Archive,
   Eye,
   EyeOff,
-  FileText,
-  Tag
+  FileText
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -443,13 +442,6 @@ export default function CourseManagement() {
               <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground" data-testid="button-manage-forms">
                 <FileText className="mr-2 h-4 w-4" />
                 Course Forms
-              </Button>
-            </Link>
-            
-            <Link href="/promo-codes">
-              <Button variant="outline" className="border-accent text-accent hover:bg-accent hover:text-accent-foreground" data-testid="button-promo-codes">
-                <Tag className="mr-2 h-4 w-4" />
-                Promo Codes
               </Button>
             </Link>
             

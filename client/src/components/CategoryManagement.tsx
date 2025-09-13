@@ -47,9 +47,11 @@ export function CategoryManagement() {
 
   // Sync local categories with fetched categories
   useEffect(() => {
-    setLocalCategories(categories);
-    setHasUnsavedOrder(false);
-  }, [categories]);
+    if (categories.length > 0 || localCategories.length === 0) {
+      setLocalCategories(categories);
+      setHasUnsavedOrder(false);
+    }
+  }, [categories, localCategories.length]);
 
   const createCategoryMutation = useMutation({
     mutationFn: (data: InsertCategory) =>

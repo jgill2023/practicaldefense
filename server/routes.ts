@@ -4,9 +4,8 @@ import Stripe from "stripe";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
-import type { User } from "@shared/schema";
 import { ObjectPermission } from "./objectAcl";
-import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, insertCouponSchema } from "@shared/schema";
+import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema } from "@shared/schema";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -19,69 +18,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
-  // Ensure user middleware - guarantees user exists in storage before authorization checks
-  const ensureUser = async (req: any, res: any, next: any) => {
-    try {
-      const userId = req.user.claims.sub;
-      let user = await storage.getUser(userId);
-      
-      // If user doesn't exist, create them from session claims
-      if (!user) {
-        console.log("ensureUser: Creating user from claims for", userId);
-        const claims = req.user.claims;
-        
-        // Determine role based on claims
-        const role = (claims.sub?.includes('instructor') || claims.role === 'instructor') ? 'instructor' : 'student';
-        
-        const newUser = {
-          id: claims.sub,
-          email: claims.email,
-          firstName: claims.first_name || '',
-          lastName: claims.last_name || '',
-          role: role as 'instructor' | 'student',
-        };
-        user = await storage.upsertUser(newUser);
-        console.log("ensureUser: Created user", user);
-      }
-      
-      // Attach user to request for later use
-      req.currentUser = user;
-      next();
-    } catch (error) {
-      console.error("ensureUser middleware error:", error);
-      res.status(500).json({ message: "Failed to ensure user" });
-    }
-  };
-
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      console.log("Fetching user with ID:", userId);
-      
-      let user = await storage.getUser(userId);
-      console.log("User from storage:", user);
-      
-      // If user doesn't exist, create them from the session claims
-      if (!user) {
-        console.log("User not found, creating from claims:", req.user.claims);
-        const claims = req.user.claims;
-        
-        // Determine role based on claims - for testing, if sub contains 'instructor', make them instructor
-        const role = (claims.sub?.includes('instructor') || claims.role === 'instructor') ? 'instructor' : 'student';
-        console.log("Assigning role:", role, "based on claims");
-        
-        const newUser = {
-          id: claims.sub,
-          email: claims.email,
-          firstName: claims.first_name || '',
-          lastName: claims.last_name || '',
-          role: role as 'instructor' | 'student',
-        };
-        user = await storage.upsertUser(newUser);
-        console.log("Created new user:", user);
-      }
-      
+      const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -1441,115 +1382,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error deleting form field:", error);
       res.status(500).json({ message: "Error deleting form field: " + error.message });
-    }
-  });
-
-  // Coupon/Promo Code routes
-  
-  // Get coupons for instructor
-  app.get('/api/instructor/coupons', isAuthenticated, ensureUser, async (req: any, res) => {
-    try {
-      if (req.currentUser.role !== 'instructor') {
-        console.log("Coupon API - Access denied. User role:", req.currentUser.role, "Required: instructor");
-        return res.status(403).json({ message: "Access denied. Instructor role required." });
-      }
-
-      const coupons = await storage.getCouponsByCreator(req.currentUser.id);
-      console.log("Coupon API - Found coupons:", coupons.length);
-      res.json(coupons);
-    } catch (error) {
-      console.error("Error fetching coupons:", error);
-      res.status(500).json({ message: "Failed to fetch coupons" });
-    }
-  });
-
-  // Create new coupon
-  app.post('/api/instructor/coupons', isAuthenticated, ensureUser, async (req: any, res) => {
-    try {
-      if (req.currentUser.role !== 'instructor') {
-        return res.status(403).json({ message: "Access denied. Instructor role required." });
-      }
-
-      console.log("Request body:", req.body);
-      console.log("Current user:", req.currentUser);
-      
-      const validatedData = insertCouponSchema.parse(req.body);
-      
-      const couponData = {
-        ...validatedData,
-        createdBy: req.currentUser.id,
-      };
-      
-      console.log("Final coupon data before storage:", couponData);
-      const coupon = await storage.createCoupon(couponData);
-      res.status(201).json(coupon);
-    } catch (error) {
-      console.error("Error creating coupon:", error);
-      res.status(500).json({ message: "Failed to create coupon" });
-    }
-  });
-
-  // Update coupon
-  app.put('/api/instructor/coupons/:id', isAuthenticated, ensureUser, async (req: any, res) => {
-    try {
-      if (req.currentUser.role !== 'instructor') {
-        return res.status(403).json({ message: "Access denied. Instructor role required." });
-      }
-
-      // Verify coupon ownership
-      const existingCoupon = await storage.getCoupon(req.params.id);
-      if (!existingCoupon || existingCoupon.createdBy !== req.currentUser.id) {
-        return res.status(404).json({ message: "Coupon not found or access denied" });
-      }
-
-      const validatedData = insertCouponSchema.partial().parse(req.body);
-      const coupon = await storage.updateCoupon(req.params.id, validatedData);
-      res.json(coupon);
-    } catch (error) {
-      console.error("Error updating coupon:", error);
-      res.status(500).json({ message: "Failed to update coupon" });
-    }
-  });
-
-  // Delete coupon
-  app.delete('/api/instructor/coupons/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      
-      if (!user || user.role !== 'instructor') {
-        return res.status(403).json({ message: "Access denied. Instructor role required." });
-      }
-
-      // Verify coupon ownership
-      const existingCoupon = await storage.getCoupon(req.params.id);
-      if (!existingCoupon || existingCoupon.createdBy !== userId) {
-        return res.status(404).json({ message: "Coupon not found or access denied" });
-      }
-
-      await storage.deleteCoupon(req.params.id);
-      res.json({ message: "Coupon deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting coupon:", error);
-      res.status(500).json({ message: "Failed to delete coupon" });
-    }
-  });
-
-  // Validate coupon for checkout
-  app.post('/api/validate-coupon', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { code, courseId } = req.body;
-
-      if (!code || !courseId) {
-        return res.status(400).json({ message: "Coupon code and course ID are required" });
-      }
-
-      const validation = await storage.validateCoupon(code, userId, courseId);
-      res.json(validation);
-    } catch (error) {
-      console.error("Error validating coupon:", error);
-      res.status(500).json({ message: "Failed to validate coupon" });
     }
   });
 

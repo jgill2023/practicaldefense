@@ -8,8 +8,6 @@ import {
   courseInformationForms,
   courseInformationFormFields,
   studentFormResponses,
-  coupons,
-  couponUsage,
   type User,
   type UpsertUser,
   type Category,
@@ -31,11 +29,6 @@ import {
   type StudentFormResponse,
   type InsertStudentFormResponse,
   type CourseInformationFormWithFields,
-  type Coupon,
-  type InsertCoupon,
-  type CouponUsage,
-  type InsertCouponUsage,
-  type CouponWithUsage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, isNull, isNotNull, sql } from "drizzle-orm";
@@ -106,25 +99,6 @@ export interface IStorage {
   getStudentFormResponsesByForm(formId: string): Promise<StudentFormResponse[]>;
   getStudentFormResponsesWithDetails(enrollmentId: string): Promise<any[]>;
   
-  // Coupon operations
-  createCoupon(coupon: InsertCoupon): Promise<Coupon>;
-  updateCoupon(id: string, coupon: Partial<InsertCoupon>): Promise<Coupon>;
-  deleteCoupon(id: string): Promise<void>;
-  getCoupon(id: string): Promise<CouponWithUsage | undefined>;
-  getCouponByCode(code: string): Promise<CouponWithUsage | undefined>;
-  getCoupons(): Promise<CouponWithUsage[]>;
-  getCouponsByCreator(creatorId: string): Promise<CouponWithUsage[]>;
-  validateCoupon(code: string, userId: string, courseId: string): Promise<{
-    isValid: boolean;
-    coupon?: Coupon;
-    error?: string;
-  }>;
-  
-  // Coupon usage operations
-  createCouponUsage(usage: InsertCouponUsage): Promise<CouponUsage>;
-  getCouponUsageByUser(userId: string): Promise<CouponUsage[]>;
-  getCouponUsageByCoupon(couponId: string): Promise<CouponUsage[]>;
-
   // App settings operations
   getAppSettings(): Promise<AppSettings>;
   updateAppSettings(input: InsertAppSettings): Promise<AppSettings>;
@@ -869,183 +843,6 @@ export class DatabaseStorage implements IStorage {
       orderBy: asc(studentFormResponses.submittedAt),
     });
     return responses;
-  }
-
-  // Coupon operations
-  async createCoupon(coupon: InsertCoupon): Promise<Coupon> {
-    const [newCoupon] = await db.insert(coupons).values({
-      ...coupon,
-      discountValue: coupon.discountValue.toString(),
-      minimumOrderAmount: coupon.minimumOrderAmount?.toString(),
-    }).returning();
-    return newCoupon;
-  }
-
-  async updateCoupon(id: string, coupon: Partial<InsertCoupon>): Promise<Coupon> {
-    const updateData: any = { ...coupon };
-    if (coupon.discountValue !== undefined) {
-      updateData.discountValue = coupon.discountValue.toString();
-    }
-    if (coupon.minimumOrderAmount !== undefined) {
-      updateData.minimumOrderAmount = coupon.minimumOrderAmount.toString();
-    }
-    
-    const [updatedCoupon] = await db
-      .update(coupons)
-      .set({
-        ...updateData,
-        updatedAt: sql`now()`,
-      })
-      .where(eq(coupons.id, id))
-      .returning();
-    return updatedCoupon;
-  }
-
-  async deleteCoupon(id: string): Promise<void> {
-    await db.delete(coupons).where(eq(coupons.id, id));
-  }
-
-  async getCoupon(id: string): Promise<CouponWithUsage | undefined> {
-    const coupon = await db.query.coupons.findFirst({
-      where: eq(coupons.id, id),
-      with: {
-        creator: true,
-        usage: {
-          with: {
-            user: true,
-            enrollment: true,
-          },
-        },
-      },
-    });
-    return coupon as CouponWithUsage | undefined;
-  }
-
-  async getCouponByCode(code: string): Promise<CouponWithUsage | undefined> {
-    const coupon = await db.query.coupons.findFirst({
-      where: eq(coupons.code, code),
-      with: {
-        creator: true,
-        usage: {
-          with: {
-            user: true,
-            enrollment: true,
-          },
-        },
-      },
-    });
-    return coupon as CouponWithUsage | undefined;
-  }
-
-  async getCoupons(): Promise<CouponWithUsage[]> {
-    const allCoupons = await db.query.coupons.findMany({
-      with: {
-        creator: true,
-        usage: {
-          with: {
-            user: true,
-            enrollment: true,
-          },
-        },
-      },
-      orderBy: desc(coupons.createdAt),
-    });
-    return allCoupons as CouponWithUsage[];
-  }
-
-  async getCouponsByCreator(creatorId: string): Promise<CouponWithUsage[]> {
-    const creatorCoupons = await db.query.coupons.findMany({
-      where: eq(coupons.createdBy, creatorId),
-      with: {
-        creator: true,
-        usage: {
-          with: {
-            user: true,
-            enrollment: true,
-          },
-        },
-      },
-      orderBy: desc(coupons.createdAt),
-    });
-    return creatorCoupons as CouponWithUsage[];
-  }
-
-  async validateCoupon(code: string, userId: string, courseId: string): Promise<{
-    isValid: boolean;
-    coupon?: Coupon;
-    error?: string;
-  }> {
-    const coupon = await this.getCouponByCode(code);
-    
-    if (!coupon) {
-      return { isValid: false, error: "Coupon code not found" };
-    }
-    
-    if (!coupon.isActive) {
-      return { isValid: false, error: "Coupon is no longer active" };
-    }
-    
-    const now = new Date();
-    if (coupon.validFrom && new Date(coupon.validFrom) > now) {
-      return { isValid: false, error: "Coupon is not yet valid" };
-    }
-    
-    if (coupon.validUntil && new Date(coupon.validUntil) < now) {
-      return { isValid: false, error: "Coupon has expired" };
-    }
-    
-    // Check total usage limit
-    if (coupon.maxUsageTotal && coupon.currentUsageCount >= coupon.maxUsageTotal) {
-      return { isValid: false, error: "Coupon usage limit reached" };
-    }
-    
-    // Check per-user usage limit
-    const userUsageCount = coupon.usage.filter(usage => usage.userId === userId).length;
-    if (userUsageCount >= coupon.maxUsagePerUser) {
-      return { isValid: false, error: "You have reached the usage limit for this coupon" };
-    }
-    
-    // Check course restrictions
-    if (coupon.applicableCourseIds && coupon.applicableCourseIds.length > 0) {
-      if (!coupon.applicableCourseIds.includes(courseId)) {
-        return { isValid: false, error: "Coupon is not valid for this course" };
-      }
-    }
-    
-    return { isValid: true, coupon };
-  }
-
-  // Coupon usage operations
-  async createCouponUsage(usage: InsertCouponUsage): Promise<CouponUsage> {
-    const [newUsage] = await db.insert(couponUsage).values(usage).returning();
-    
-    // Update coupon usage count
-    await db
-      .update(coupons)
-      .set({
-        currentUsageCount: sql`${coupons.currentUsageCount} + 1`,
-      })
-      .where(eq(coupons.id, usage.couponId));
-    
-    return newUsage;
-  }
-
-  async getCouponUsageByUser(userId: string): Promise<CouponUsage[]> {
-    const usage = await db
-      .select()
-      .from(couponUsage)
-      .where(eq(couponUsage.userId, userId))
-      .orderBy(desc(couponUsage.usedAt));
-    return usage;
-  }
-
-  async getCouponUsageByCoupon(couponId: string): Promise<CouponUsage[]> {
-    const usage = await db
-      .select()
-      .from(couponUsage)
-      .where(eq(couponUsage.couponId, couponId))
-      .orderBy(desc(couponUsage.usedAt));
-    return usage;
   }
 }
 
