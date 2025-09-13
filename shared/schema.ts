@@ -400,13 +400,12 @@ export const coupons = pgTable("coupons", {
   maxUsageTotal: integer("max_usage_total"), // null = unlimited
   maxUsagePerUser: integer("max_usage_per_user").notNull().default(1),
   currentUsageCount: integer("current_usage_count").notNull().default(0),
+  applicationType: varchar("application_type", { length: 50 }).notNull().default("all_products_and_courses"), // 'all_products_and_courses', 'all_products', 'all_courses', 'specific_items'
+  applicableCourseIds: text("applicable_course_ids").array(), // array of course IDs for specific targeting
   validFrom: timestamp("valid_from").defaultNow(),
   validUntil: timestamp("valid_until"),
   isActive: boolean("is_active").notNull().default(true),
   createdBy: varchar("created_by").notNull().references(() => users.id),
-  // Application type and course restrictions
-  applicationType: varchar("application_type", { length: 30 }).notNull().default("all_products_and_courses"), // 'all_products_and_courses', 'all_products', 'all_courses', 'specific_items'
-  applicableCourseIds: text("applicable_course_ids").array(), // Array of course IDs
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -472,10 +471,20 @@ export const insertCouponSchema = createInsertSchema(coupons).omit({
   createdAt: true,
   updatedAt: true,
 }).extend({
-  discountValue: z.number().positive(),
-  maxUsageTotal: z.number().int().positive().optional(),
-  maxUsagePerUser: z.number().int().positive().min(1),
-  minimumOrderAmount: z.number().positive().optional(),
+  discountValue: z.coerce.number().positive(),
+  maxUsageTotal: z.coerce.number().int().positive().optional().nullable(),
+  maxUsagePerUser: z.coerce.number().int().positive().min(1),
+  minimumOrderAmount: z.coerce.number().positive().optional().nullable(),
+  validFrom: z.preprocess(
+    v => v === "" || v == null ? undefined : (v instanceof Date ? v : new Date(v as string)), 
+    z.date().optional()
+  ),
+  validUntil: z.preprocess(
+    v => v === "" || v == null ? undefined : (v instanceof Date ? v : new Date(v as string)), 
+    z.date().optional()
+  ),
+  applicationType: z.string().default("all_products_and_courses"),
+  applicableCourseIds: z.array(z.string()).default([]),
 });
 
 export const insertCouponUsageSchema = createInsertSchema(couponUsage).omit({

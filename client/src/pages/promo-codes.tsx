@@ -76,6 +76,7 @@ export default function PromoCodesPage() {
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: InsertCoupon) => {
+      console.log("Creating coupon with data:", data);
       const response = await apiRequest("POST", "/api/instructor/coupons", data);
       return response.json();
     },
@@ -89,6 +90,7 @@ export default function PromoCodesPage() {
       createForm.reset();
     },
     onError: (error) => {
+      console.error("Create coupon error:", error);
       toast({
         title: "Error",
         description: "Failed to create promo code",
@@ -143,6 +145,10 @@ export default function PromoCodesPage() {
   });
 
   const handleCreate = (data: InsertCoupon) => {
+    console.log("Form data before submission:", data);
+    console.log("Form errors:", createForm.formState.errors);
+    console.log("Form is valid:", createForm.formState.isValid);
+    console.log("Form submission count:", createForm.formState.submitCount);
     createMutation.mutate(data);
   };
 
@@ -224,7 +230,16 @@ export default function PromoCodesPage() {
                   <DialogTitle>Create New Promo Code</DialogTitle>
                 </DialogHeader>
                 <Form {...createForm}>
-                  <form onSubmit={createForm.handleSubmit(handleCreate)} className="space-y-6">
+                  <form 
+                    onSubmit={createForm.handleSubmit(
+                      handleCreate,
+                      (errors) => {
+                        console.log("Form validation errors:", errors);
+                        console.log("Form onSubmit triggered but validation failed");
+                      }
+                    )} 
+                    className="space-y-6"
+                  >
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={createForm.control}
@@ -252,7 +267,7 @@ export default function PromoCodesPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Discount Type</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger data-testid="select-discount-type">
                                   <SelectValue placeholder="Select type" />
@@ -294,7 +309,7 @@ export default function PromoCodesPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Applies To</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger data-testid="select-application-type">
                                 <SelectValue placeholder="Select what this promo code applies to" />
@@ -353,7 +368,8 @@ export default function PromoCodesPage() {
                                       <button
                                         type="button"
                                         onClick={() => {
-                                          field.onChange(field.value.filter((id: string) => id !== courseId));
+                                          const currentValues = field.value || [];
+                                          field.onChange(currentValues.filter((id: string) => id !== courseId));
                                         }}
                                         className="ml-1 text-primary/60 hover:text-primary"
                                       >
@@ -512,6 +528,11 @@ export default function PromoCodesPage() {
                       <Button 
                         type="submit" 
                         disabled={createMutation.isPending}
+                        onClick={(e) => {
+                          console.log("Submit button clicked");
+                          console.log("Form state:", createForm.formState);
+                          console.log("Form values:", createForm.getValues());
+                        }}
                         data-testid="button-submit-create"
                       >
                         {createMutation.isPending ? "Creating..." : "Create Promo Code"}
