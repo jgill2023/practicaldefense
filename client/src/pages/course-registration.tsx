@@ -717,8 +717,8 @@ export default function CourseRegistration() {
             </Card>
           )}
 
-          {/* Payment Section */}
-          {currentEnrollment && isDraftCreated && clientSecret && (
+          {/* Payment Section - Show immediately when schedule is selected */}
+          {selectedSchedule && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-foreground mb-2">Complete Your Payment</h2>
@@ -735,18 +735,18 @@ export default function CourseRegistration() {
                     <div className="flex items-start justify-between">
                       <div>
                         <h4 className="font-semibold text-foreground" data-testid="text-order-course-title">
-                          {currentEnrollment?.course?.title || 'Course'}
+                          {course.title}
                         </h4>
                         <p className="text-sm text-muted-foreground">
-                          {currentEnrollment?.schedule?.startDate ? new Date(currentEnrollment.schedule.startDate).toLocaleDateString() : 'TBD'} - {currentEnrollment?.course?.duration || 'TBD'}
+                          {selectedSchedule.startDate ? new Date(selectedSchedule.startDate).toLocaleDateString() : 'TBD'} - {course.duration || 'TBD'}
                         </p>
-                        {currentEnrollment?.schedule?.location && (
-                          <p className="text-sm text-muted-foreground">📍 {currentEnrollment.schedule.location}</p>
+                        {selectedSchedule.location && (
+                          <p className="text-sm text-muted-foreground">📍 {selectedSchedule.location}</p>
                         )}
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-primary" data-testid="text-order-price">
-                          ${taxInfo?.total?.toFixed(2) || getPaymentAmount(currentEnrollment)}
+                          ${formData.paymentOption === 'deposit' && course.depositAmount ? course.depositAmount : course.price}
                         </div>
                         <div className="flex gap-2 mt-2">
                           <Badge variant="outline">
@@ -814,49 +814,111 @@ export default function CourseRegistration() {
                 </CardContent>
               </Card>
 
-              {/* Payment Form */}
+              {/* Promo Code Section */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <CreditCard className="mr-2 h-5 w-5" />
-                    Payment Information
+                    <Tag className="mr-2 h-5 w-5" />
+                    Promo Code
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Elements 
-                    key={clientSecret}
-                    stripe={stripePromise} 
-                    options={{ 
-                      clientSecret,
-                      appearance: {
-                        theme: 'stripe',
-                        variables: {
-                          colorPrimary: '#1F2937',
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Have a promo code? Enter it below to apply any available discounts to your order.
+                  </p>
+                  
+                  {!promoCodeApplied ? (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter promo code"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === 'Enter' && validateAndApplyPromoCode()}
+                        className="flex-1"
+                        data-testid="input-promo-code"
+                      />
+                      <Button 
+                        onClick={validateAndApplyPromoCode}
+                        disabled={!promoCode.trim() || isValidatingPromo || !currentEnrollment}
+                        size="sm"
+                        data-testid="button-apply-promo"
+                      >
+                        {isValidatingPromo ? "Checking..." : "Apply"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4" />
+                        <span className="text-sm font-medium" data-testid="text-applied-promo">
+                          {promoCodeApplied} applied
+                        </span>
+                        {taxInfo?.discountAmount && (
+                          <span className="text-sm">- Saved ${taxInfo.discountAmount.toFixed(2)}</span>
+                        )}
+                      </div>
+                      <Button 
+                        onClick={removePromoCode}
+                        variant="ghost" 
+                        size="sm"
+                        className="h-auto p-1 text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100"
+                        data-testid="button-remove-promo"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {promoError && (
+                    <div className="text-red-600 text-sm mt-1" data-testid="text-promo-error">
+                      {promoError}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Payment Form - Only show when we have clientSecret */}
+              {clientSecret ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <CreditCard className="mr-2 h-5 w-5" />
+                      Payment Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Elements 
+                      key={clientSecret}
+                      stripe={stripePromise} 
+                      options={{ 
+                        clientSecret,
+                        appearance: {
+                          theme: 'stripe',
+                          variables: {
+                            colorPrimary: '#1F2937',
+                          }
                         }
-                      }
-                    }}
-                  >
-                    <CheckoutForm enrollment={currentEnrollment} confirmEnrollmentMutation={confirmEnrollmentMutation} />
-                  </Elements>
-                </CardContent>
-              </Card>
+                      }}
+                    >
+                      <CheckoutForm enrollment={currentEnrollment} confirmEnrollmentMutation={confirmEnrollmentMutation} />
+                    </Elements>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">Setting up payment...</h3>
+                    <p className="text-muted-foreground">Please complete the student information above to continue</p>
+                  </CardContent>
+                </Card>
+              )}
+
             </div>
           )}
 
-          {currentEnrollment && isDraftCreated && !clientSecret && (
-            <div className="mb-6">
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">Setting up payment...</h3>
-                  <p className="text-muted-foreground">Please wait while we prepare your secure checkout</p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Promo Code Section - shown when payment form is visible */}
-          {currentEnrollment && isDraftCreated && (
+          {/* Terms and Conditions - shown when payment section is visible */}
+          {selectedSchedule && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
