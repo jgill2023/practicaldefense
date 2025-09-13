@@ -428,3 +428,168 @@ export type StudentFormResponseWithDetails = StudentFormResponse & {
 };
 
 export type FormFieldType = 'text' | 'email' | 'phone' | 'select' | 'checkbox' | 'textarea' | 'date' | 'number';
+
+// Promo Codes table for discount/coupon functionality
+export const promoCodes = pgTable("promo_codes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: varchar("code", { length: 50 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  
+  // Discount configuration
+  type: varchar("type", { length: 20 }).notNull(), // 'PERCENT' or 'FIXED_AMOUNT'
+  value: decimal("value", { precision: 10, scale: 2 }).notNull(), // Percentage or dollar amount
+  
+  // Scope configuration
+  scopeType: varchar("scope_type", { length: 20 }).notNull().default('GLOBAL'), // 'GLOBAL', 'COURSES', 'CATEGORIES'
+  scopeCourseIds: text("scope_course_ids").array(), // Array of course IDs when scoped to specific courses
+  scopeCategoryIds: text("scope_category_ids").array(), // Array of category IDs when scoped to categories
+  exclusionCourseIds: text("exclusion_course_ids").array(), // Courses to exclude from discount
+  exclusionCategoryIds: text("exclusion_category_ids").array(), // Categories to exclude from discount
+  
+  // Eligibility criteria
+  minCartSubtotal: decimal("min_cart_subtotal", { precision: 10, scale: 2 }),
+  firstPurchaseOnly: boolean("first_purchase_only").notNull().default(false),
+  newCustomersOnly: boolean("new_customers_only").notNull().default(false),
+  allowedUserIds: text("allowed_user_ids").array(), // Specific users who can use this code
+  deniedUserIds: text("denied_user_ids").array(), // Users who cannot use this code
+  
+  // Usage limits
+  maxTotalUses: integer("max_total_uses"), // null = unlimited
+  maxUsesPerUser: integer("max_uses_per_user").default(1),
+  currentUseCount: integer("current_use_count").notNull().default(0),
+  
+  // Time constraints
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  validDaysOfWeek: varchar("valid_days_of_week", { length: 20 }), // Comma-separated: '1,2,3,4,5' for Mon-Fri
+  validTimeStart: varchar("valid_time_start", { length: 8 }), // HH:MM:SS format
+  validTimeEnd: varchar("valid_time_end", { length: 8 }), // HH:MM:SS format
+  
+  // Stacking and application rules
+  stackingPolicy: varchar("stacking_policy", { length: 20 }).notNull().default('EXCLUSIVE'), // 'EXCLUSIVE', 'STACKABLE'
+  applyToTax: boolean("apply_to_tax").notNull().default(false),
+  applyToShipping: boolean("apply_to_shipping").notNull().default(false),
+  
+  // Status management
+  status: varchar("status", { length: 20 }).notNull().default('ACTIVE'), // 'ACTIVE', 'SCHEDULED', 'PAUSED', 'EXPIRED'
+  
+  // Audit fields
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+  updatedBy: varchar("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Promo Code Redemptions table to track usage and enforce limits
+export const promoCodeRedemptions = pgTable("promo_code_redemptions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  promoCodeId: uuid("promo_code_id").notNull().references(() => promoCodes.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  enrollmentId: uuid("enrollment_id").references(() => enrollments.id),
+  
+  // Redemption details
+  originalAmount: decimal("original_amount", { precision: 10, scale: 2 }).notNull(),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).notNull(),
+  finalAmount: decimal("final_amount", { precision: 10, scale: 2 }).notNull(),
+  
+  // Payment integration
+  paymentIntentId: varchar("payment_intent_id"),
+  stripeMetadata: jsonb("stripe_metadata"), // Store additional Stripe metadata
+  
+  // Tracking
+  ipAddress: varchar("ip_address", { length: 45 }), // Support IPv6
+  userAgent: text("user_agent"),
+  redemptionSource: varchar("redemption_source", { length: 50 }).default('CHECKOUT'), // 'CHECKOUT', 'ADMIN', etc.
+  
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_promo_redemptions_code_user").on(table.promoCodeId, table.userId),
+  index("idx_promo_redemptions_enrollment").on(table.enrollmentId),
+]);
+
+// Relations for promo codes
+export const promoCodeRelations = relations(promoCodes, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [promoCodes.createdBy],
+    references: [users.id],
+  }),
+  updater: one(users, {
+    fields: [promoCodes.updatedBy],
+    references: [users.id],
+  }),
+  redemptions: many(promoCodeRedemptions),
+}));
+
+export const promoCodeRedemptionRelations = relations(promoCodeRedemptions, ({ one }) => ({
+  promoCode: one(promoCodes, {
+    fields: [promoCodeRedemptions.promoCodeId],
+    references: [promoCodes.id],
+  }),
+  user: one(users, {
+    fields: [promoCodeRedemptions.userId],
+    references: [users.id],
+  }),
+  enrollment: one(enrollments, {
+    fields: [promoCodeRedemptions.enrollmentId],
+    references: [enrollments.id],
+  }),
+}));
+
+// Insert schemas for promo codes
+export const insertPromoCodeSchema = createInsertSchema(promoCodes).omit({
+  id: true,
+  currentUseCount: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  value: z.number().positive("Discount value must be positive"),
+  type: z.enum(['PERCENT', 'FIXED_AMOUNT']),
+  scopeType: z.enum(['GLOBAL', 'COURSES', 'CATEGORIES']),
+  stackingPolicy: z.enum(['EXCLUSIVE', 'STACKABLE']),
+  status: z.enum(['ACTIVE', 'SCHEDULED', 'PAUSED', 'EXPIRED']),
+  maxTotalUses: z.number().int().positive().optional(),
+  maxUsesPerUser: z.number().int().positive().default(1),
+  minCartSubtotal: z.number().positive().optional(),
+});
+
+export const insertPromoCodeRedemptionSchema = createInsertSchema(promoCodeRedemptions).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for promo codes
+export type InsertPromoCode = z.infer<typeof insertPromoCodeSchema>;
+export type PromoCode = typeof promoCodes.$inferSelect;
+export type InsertPromoCodeRedemption = z.infer<typeof insertPromoCodeRedemptionSchema>;
+export type PromoCodeRedemption = typeof promoCodeRedemptions.$inferSelect;
+
+// Extended types for promo codes
+export type PromoCodeWithDetails = PromoCode & {
+  creator: User;
+  updater?: User;
+  redemptions: PromoCodeRedemptionWithDetails[];
+  redemptionCount: number;
+};
+
+export type PromoCodeRedemptionWithDetails = PromoCodeRedemption & {
+  promoCode: PromoCode;
+  user: User;
+  enrollment?: EnrollmentWithDetails;
+};
+
+// Promo code validation result type
+export type PromoCodeValidationResult = {
+  isValid: boolean;
+  code?: PromoCode;
+  discountAmount?: number;
+  finalAmount?: number;
+  error?: string;
+  errorCode?: 'EXPIRED' | 'NOT_FOUND' | 'USAGE_LIMIT_REACHED' | 'USER_LIMIT_REACHED' | 'MIN_AMOUNT_NOT_MET' | 'NOT_ELIGIBLE' | 'SCOPE_MISMATCH' | 'TIME_RESTRICTION';
+};
+
+// Promo code types for better type safety
+export type PromoCodeType = 'PERCENT' | 'FIXED_AMOUNT';
+export type PromoCodeScopeType = 'GLOBAL' | 'COURSES' | 'CATEGORIES';
+export type PromoCodeStackingPolicy = 'EXCLUSIVE' | 'STACKABLE';
+export type PromoCodeStatus = 'ACTIVE' | 'SCHEDULED' | 'PAUSED' | 'EXPIRED';
