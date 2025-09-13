@@ -858,6 +858,15 @@ export default function InstructorDashboard() {
                 Manage Courses
               </Button>
               <Button 
+                variant="outline"
+                className="border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+                onClick={() => setLocation('/students')}
+                data-testid="button-manage-students"
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Students
+              </Button>
+              <Button 
                 className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
                 data-testid="button-view-reports"
               >

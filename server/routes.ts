@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { randomUUID } from "crypto";
 import Stripe from "stripe";
+import { z } from "zod";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -454,6 +455,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching instructor enrollments:", error);
       res.status(500).json({ message: "Failed to fetch enrollments" });
+    }
+  });
+
+  app.get('/api/students', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const studentsData = await storage.getStudentsByInstructor(userId);
+      res.json(studentsData);
+    } catch (error) {
+      console.error("Error fetching students data:", error);
+      res.status(500).json({ message: "Failed to fetch students data" });
+    }
+  });
+
+  app.patch('/api/students/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const studentId = req.params.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Verify instructor has access to this student through enrollments
+      const studentsData = await storage.getStudentsByInstructor(userId);
+      const allStudents = [...studentsData.current, ...studentsData.past, ...studentsData.upcoming];
+      const studentExists = allStudents.some(student => student.id === studentId);
+      
+      if (!studentExists) {
+        return res.status(403).json({ message: "Access denied. Student not found in your courses." });
+      }
+
+      // Validate request body
+      const updateSchema = z.object({
+        phone: z.string().optional(),
+        concealedCarryLicenseExpiration: z.string().optional(),
+      });
+      
+      const validatedData = updateSchema.parse(req.body);
+      
+      // Convert date string to proper format for database
+      const updateData = {
+        ...validatedData,
+        concealedCarryLicenseExpiration: validatedData.concealedCarryLicenseExpiration 
+          ? new Date(validatedData.concealedCarryLicenseExpiration).toISOString()
+          : undefined,
+      };
+
+      const updatedStudent = await storage.updateStudent(studentId, updateData);
+      res.json(updatedStudent);
+    } catch (error) {
+      console.error("Error updating student:", error);
+      res.status(500).json({ message: "Failed to update student" });
     }
   });
 

@@ -46,6 +46,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateStudent(id: string, data: { phone?: string; concealedCarryLicenseExpiration?: string }): Promise<User>;
   
   // Category operations
   createCategory(category: InsertCategory): Promise<Category>;
@@ -84,6 +85,11 @@ export interface IStorage {
   getEnrollmentsByStudent(studentId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByInstructor(instructorId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByCourse(courseId: string): Promise<EnrollmentWithDetails[]>;
+  getStudentsByInstructor(instructorId: string): Promise<{
+    current: any[];
+    past: any[];
+    upcoming: any[];
+  }>;
   
   // Draft enrollment operations for single-page registration
   initiateRegistration(data: {
@@ -197,6 +203,34 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
+    return user;
+  }
+
+  async updateStudent(id: string, data: { phone?: string; concealedCarryLicenseExpiration?: string }): Promise<User> {
+    const updateData: any = {
+      updatedAt: new Date(),
+    };
+
+    if (data.phone !== undefined) {
+      updateData.phone = data.phone;
+    }
+
+    if (data.concealedCarryLicenseExpiration !== undefined) {
+      updateData.concealedCarryLicenseExpiration = data.concealedCarryLicenseExpiration 
+        ? new Date(data.concealedCarryLicenseExpiration) 
+        : null;
+    }
+
+    const [user] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning();
+    
+    if (!user) {
+      throw new Error(`User with id ${id} not found`);
+    }
+
     return user;
   }
 
@@ -652,6 +686,114 @@ export class DatabaseStorage implements IStorage {
       orderBy: desc(enrollments.createdAt),
     });
     return enrollmentList;
+  }
+
+  async getStudentsByInstructor(instructorId: string): Promise<{
+    current: any[];
+    past: any[];
+    upcoming: any[];
+  }> {
+    // Get all enrollments for instructor's courses (all payment statuses)
+    const enrollmentList = await db.query.enrollments.findMany({
+      with: {
+        course: true,
+        schedule: true,
+        student: true,
+      },
+      orderBy: desc(enrollments.createdAt),
+    });
+
+    // Filter for instructor's courses only
+    const instructorEnrollments = enrollmentList.filter(e => 
+      e.course && e.course.instructorId === instructorId
+    );
+
+    // Group students by enrollment status
+    const studentsMap = new Map<string, {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone?: string;
+      concealedCarryLicenseExpiration?: string;
+      enrollments: any[];
+    }>();
+
+    const now = new Date();
+
+    // Process enrollments and categorize by schedule dates
+    const currentEnrollments: any[] = [];
+    const pastEnrollments: any[] = [];
+    const upcomingEnrollments: any[] = [];
+
+    for (const enrollment of instructorEnrollments) {
+      if (!enrollment.student || !enrollment.schedule || !enrollment.course) continue;
+
+      const scheduleDate = new Date(enrollment.schedule.startDate);
+      const scheduleDateTime = new Date(enrollment.schedule.endDate);
+
+      const enrollmentData = {
+        id: enrollment.id,
+        courseTitle: enrollment.course.title,
+        courseAbbreviation: enrollment.course.abbreviation || '',
+        scheduleDate: enrollment.schedule.startDate,
+        scheduleStartTime: enrollment.schedule.startTime,
+        scheduleEndTime: enrollment.schedule.endTime,
+        paymentStatus: enrollment.paymentStatus,
+      };
+
+      // Categorize based on schedule timing
+      if (scheduleDateTime < now) {
+        // Past: course has ended
+        pastEnrollments.push({
+          ...enrollment,
+          enrollmentData,
+        });
+      } else if (scheduleDate <= now) {
+        // Current: course is today or ongoing
+        currentEnrollments.push({
+          ...enrollment,
+          enrollmentData,
+        });
+      } else {
+        // Upcoming: course hasn't started yet
+        upcomingEnrollments.push({
+          ...enrollment,
+          enrollmentData,
+        });
+      }
+    }
+
+    // Process each category
+    const processEnrollments = (enrollmentsList: any[]) => {
+      const studentsMap = new Map();
+      
+      for (const enrollment of enrollmentsList) {
+        const studentId = enrollment.student.id;
+        
+        if (!studentsMap.has(studentId)) {
+          studentsMap.set(studentId, {
+            id: enrollment.student.id,
+            firstName: enrollment.student.firstName || '',
+            lastName: enrollment.student.lastName || '',
+            email: enrollment.student.email || '',
+            phone: enrollment.student.phone || undefined,
+            concealedCarryLicenseExpiration: enrollment.student.concealedCarryLicenseExpiration || undefined,
+            enrollments: [],
+          });
+        }
+        
+        studentsMap.get(studentId).enrollments.push(enrollment.enrollmentData);
+      }
+      
+      return Array.from(studentsMap.values());
+    };
+
+    return {
+      current: processEnrollments(currentEnrollments),
+      past: processEnrollments(pastEnrollments),
+      upcoming: processEnrollments(upcomingEnrollments),
+    };
   }
 
   // Draft enrollment operations for single-page registration
