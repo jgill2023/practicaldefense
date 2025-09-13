@@ -213,12 +213,13 @@ export default function CourseRegistration() {
     createPaymentIntent();
   };
 
-  const createPaymentIntent = async (appliedPromoCode?: string) => {
-    if (!currentEnrollment) return;
+  const createPaymentIntent = async (appliedPromoCode?: string, enrollment?: any) => {
+    const enrollmentToUse = enrollment || currentEnrollment;
+    if (!enrollmentToUse) return;
 
     try {
       const response = await apiRequest("POST", "/api/create-payment-intent", {
-        enrollmentId: currentEnrollment.id,
+        enrollmentId: enrollmentToUse.id,
         promoCode: appliedPromoCode || undefined,
       });
       
@@ -242,6 +243,13 @@ export default function CourseRegistration() {
     }
   };
 
+  // Create payment intent when enrollment is set
+  useEffect(() => {
+    if (currentEnrollment) {
+      createPaymentIntent(promoCodeApplied || undefined);
+    }
+  }, [currentEnrollment]);
+
 
   const enrollMutation = useMutation({
     mutationFn: async (enrollmentData: any) => {
@@ -255,7 +263,6 @@ export default function CourseRegistration() {
       });
       setCurrentEnrollment(enrollment);
       setShowPayment(true);
-      createPaymentIntent();
       queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
     },
     onError: (error) => {
