@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Layout } from "@/components/Layout";
@@ -858,15 +858,6 @@ export default function InstructorDashboard() {
                 Manage Courses
               </Button>
               <Button 
-                variant="outline"
-                className="border-accent text-accent hover:bg-accent hover:text-accent-foreground"
-                onClick={() => setLocation('/students')}
-                data-testid="button-manage-students"
-              >
-                <Users className="mr-2 h-4 w-4" />
-                Students
-              </Button>
-              <Button 
                 className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
                 data-testid="button-view-reports"
               >
@@ -905,18 +896,20 @@ export default function InstructorDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">All Students</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600" data-testid="text-all-students">
-                {statsLoading ? '...' : allStudents}
-              </div>
-              <p className="text-sm text-muted-foreground">Unique learners</p>
-            </CardContent>
-          </Card>
+          <Link href="/students" data-testid="link-all-students">
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">All Students</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600" data-testid="text-all-students">
+                  {statsLoading ? '...' : allStudents}
+                </div>
+                <p className="text-sm text-muted-foreground">Unique learners</p>
+              </CardContent>
+            </Card>
+          </Link>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
