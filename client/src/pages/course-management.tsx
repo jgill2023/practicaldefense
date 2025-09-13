@@ -32,7 +32,8 @@ import {
   Eye,
   EyeOff,
   FileText,
-  BadgePercent
+  BadgePercent,
+  ArrowLeft
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -430,6 +431,16 @@ export default function CourseManagement() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back to Dashboard Link */}
+        <div className="mb-6">
+          <Link href="/instructor-dashboard">
+            <Button variant="ghost" size="sm" data-testid="button-back-to-dashboard">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </Link>
+        </div>
+        
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
           <div>
