@@ -85,6 +85,37 @@ export interface IStorage {
   getEnrollmentsByInstructor(instructorId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByCourse(courseId: string): Promise<EnrollmentWithDetails[]>;
   
+  // Draft enrollment operations for single-page registration
+  initiateRegistration(data: {
+    courseId: string;
+    scheduleId: string;
+    paymentOption: 'full' | 'deposit';
+  }): Promise<Enrollment>;
+  upsertPaymentIntent(enrollmentId: string, promoCode?: string): Promise<{
+    clientSecret: string;
+    originalAmount: number;
+    subtotal: number;
+    discountAmount: number;
+    tax: number;
+    total: number;
+    tax_included: boolean;
+    promoCode?: string;
+  }>;
+  finalizeEnrollment(data: {
+    enrollmentId: string;
+    paymentIntentId: string;
+    studentInfo: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      dateOfBirth: string;
+    };
+    accountCreation?: {
+      password: string;
+    };
+  }): Promise<Enrollment>;
+  
   // Course Information Forms operations
   createCourseInformationForm(form: InsertCourseInformationForm): Promise<CourseInformationForm>;
   updateCourseInformationForm(id: string, form: Partial<InsertCourseInformationForm>): Promise<CourseInformationForm>;
@@ -621,6 +652,339 @@ export class DatabaseStorage implements IStorage {
       orderBy: desc(enrollments.createdAt),
     });
     return enrollmentList;
+  }
+
+  // Draft enrollment operations for single-page registration
+  async initiateRegistration(data: {
+    courseId: string;
+    scheduleId: string;
+    paymentOption: 'full' | 'deposit';
+  }): Promise<Enrollment> {
+    const [draftEnrollment] = await db
+      .insert(enrollments)
+      .values({
+        courseId: data.courseId,
+        scheduleId: data.scheduleId,
+        paymentOption: data.paymentOption,
+        status: 'initiated',
+        paymentStatus: 'pending',
+        studentId: null, // No student yet for draft enrollment
+      })
+      .returning();
+    return draftEnrollment;
+  }
+
+  async upsertPaymentIntent(enrollmentId: string, promoCode?: string): Promise<{
+    clientSecret: string;
+    originalAmount: number;
+    subtotal: number;
+    discountAmount: number;
+    tax: number;
+    total: number;
+    tax_included: boolean;
+    promoCode?: string;
+  }> {
+    // Import Stripe here to avoid circular dependencies
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    
+    // Get enrollment and course details
+    const enrollment = await db.query.enrollments.findFirst({
+      where: eq(enrollments.id, enrollmentId),
+      with: {
+        course: true,
+        schedule: true,
+      },
+    });
+    
+    if (!enrollment || !enrollment.course) {
+      throw new Error('Enrollment or course not found');
+    }
+    
+    const course = enrollment.course;
+    
+    // Calculate payment amount based on payment option
+    let paymentAmount: number;
+    const coursePrice = parseFloat(course.price);
+    
+    if (enrollment.paymentOption === 'deposit' && course.depositAmount) {
+      paymentAmount = parseFloat(course.depositAmount);
+    } else {
+      paymentAmount = coursePrice;
+    }
+    
+    if (paymentAmount <= 0) {
+      throw new Error('Invalid payment amount');
+    }
+    
+    // Apply promo code discount if provided
+    let discountAmount = 0;
+    let finalPaymentAmount = paymentAmount;
+    let promoCodeInfo = null;
+    
+    if (promoCode) {
+      // For draft enrollments, we'll use a placeholder userId for promo validation
+      // The actual user validation will happen during finalization
+      const validation = await this.validatePromoCode(promoCode, 'draft-enrollment', enrollment.courseId, paymentAmount);
+      if (validation.isValid && validation.discountAmount !== undefined && validation.finalAmount !== undefined) {
+        discountAmount = validation.discountAmount;
+        finalPaymentAmount = validation.finalAmount;
+        promoCodeInfo = {
+          code: promoCode,
+          discountAmount,
+          type: validation.code?.type,
+          value: validation.code?.value
+        };
+      } else {
+        throw new Error(`Invalid promo code: ${validation.error}`);
+      }
+    }
+    
+    // Calculate tax using Stripe Tax Calculation API
+    let taxCalculation = null;
+    let taxAmount = 0;
+    let finalAmount = Math.round(finalPaymentAmount * 100);
+    
+    try {
+      taxCalculation = await stripe.tax.calculations.create({
+        currency: 'usd',
+        line_items: [{
+          amount: Math.round(finalPaymentAmount * 100),
+          tax_code: 'txcd_10401000', // Online education services
+          reference: `course-${enrollment.courseId}-${enrollment.paymentOption || 'full'}`,
+        }],
+        customer_details: {
+          address: {
+            country: 'US',
+            state: 'NM',
+            city: 'Albuquerque',
+            postal_code: '87101',
+          },
+          address_source: 'billing',
+        },
+      });
+      
+      if (taxCalculation && taxCalculation.amount_total) {
+        finalAmount = taxCalculation.amount_total;
+        taxAmount = taxCalculation.tax_amount_exclusive || 0;
+      }
+    } catch (taxError: any) {
+      console.error('Stripe Tax calculation failed:', taxError.message);
+      // Continue without tax if calculation fails
+    }
+    
+    // Create or update the Stripe PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: finalAmount,
+      currency: "usd",
+      automatic_payment_methods: { enabled: true },
+      metadata: {
+        enrollmentId,
+        courseId: enrollment.courseId,
+        scheduleId: enrollment.scheduleId,
+        paymentOption: enrollment.paymentOption || 'full',
+        tax_calculation_id: taxCalculation?.id || null,
+        promo_code: promoCode || null,
+        original_amount: paymentAmount.toString(),
+        discount_amount: discountAmount.toString(),
+      },
+    });
+    
+    // Update enrollment with Stripe PaymentIntent ID and promo code
+    await db
+      .update(enrollments)
+      .set({
+        stripePaymentIntentId: paymentIntent.id,
+        promoCodeApplied: promoCode || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(enrollments.id, enrollmentId));
+    
+    return {
+      clientSecret: paymentIntent.client_secret!,
+      originalAmount: paymentAmount,
+      subtotal: finalPaymentAmount,
+      discountAmount,
+      tax: taxAmount / 100,
+      total: finalAmount / 100,
+      tax_included: taxAmount > 0,
+      promoCode: promoCodeInfo?.code,
+    };
+  }
+
+  async finalizeEnrollment(data: {
+    enrollmentId: string;
+    paymentIntentId: string;
+    studentInfo: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      dateOfBirth: string;
+    };
+    accountCreation?: {
+      password: string;
+    };
+  }): Promise<Enrollment> {
+    // Import Stripe here
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    
+    // Get enrollment with related data first
+    const enrollment = await db.query.enrollments.findFirst({
+      where: eq(enrollments.id, data.enrollmentId),
+      with: {
+        course: true,
+        schedule: true,
+      },
+    });
+    
+    if (!enrollment) {
+      throw new Error('Enrollment not found');
+    }
+    
+    if (enrollment.status !== 'initiated') {
+      throw new Error('Enrollment not in initiated state');
+    }
+    
+    // Verify payment with Stripe FIRST (critical security check)
+    const paymentIntent = await stripe.paymentIntents.retrieve(data.paymentIntentId);
+    if (paymentIntent.status !== 'succeeded') {
+      throw new Error('Payment not completed');
+    }
+    
+    // Verify payment intent belongs to this enrollment
+    if (paymentIntent.metadata.enrollmentId !== data.enrollmentId) {
+      throw new Error('Payment verification failed - enrollment mismatch');
+    }
+    
+    // CRITICAL SECURITY FIX: Calculate expected payment amount server-side and validate
+    if (!enrollment.course) {
+      throw new Error('Course information not found');
+    }
+    
+    // Calculate expected payment amount based on enrollment payment option
+    let expectedAmount = 0;
+    const coursePrice = parseFloat(enrollment.course.price);
+    
+    if (enrollment.paymentOption === 'full') {
+      expectedAmount = coursePrice;
+    } else if (enrollment.paymentOption === 'deposit') {
+      const depositAmount = parseFloat(enrollment.course.depositAmount || '0');
+      expectedAmount = depositAmount > 0 ? depositAmount : 50; // Default to $50 if not set
+    }
+    
+    // Apply promo code discount if applicable
+    let discountAmount = 0;
+    if (enrollment.promoCodeApplied) {
+      const validation = await this.validatePromoCode(
+        enrollment.promoCodeApplied,
+        data.studentInfo.email, // Temporary user ID for validation
+        enrollment.courseId,
+        expectedAmount
+      );
+      if (validation.isValid) {
+        discountAmount = validation.discountAmount || 0;
+      }
+    }
+    
+    const subtotal = expectedAmount - discountAmount;
+    // Add tax if applicable (using same logic as upsertPaymentIntent)
+    const taxRate = 0.06; // 6% tax rate - should match payment intent creation
+    const taxAmount = Math.round(subtotal * taxRate * 100);
+    const expectedTotalCents = Math.round(subtotal * 100) + taxAmount;
+    
+    // Validate payment amount matches server calculation
+    if (paymentIntent.amount_received !== expectedTotalCents) {
+      throw new Error(
+        `Payment amount mismatch: expected $${(expectedTotalCents / 100).toFixed(2)}, ` +
+        `received $${(paymentIntent.amount_received / 100).toFixed(2)}`
+      );
+    }
+    
+    // Create or find user by email
+    let user = await this.getUserByEmail(data.studentInfo.email);
+    
+    if (!user) {
+      // Create new user
+      user = await this.upsertUser({
+        email: data.studentInfo.email,
+        firstName: data.studentInfo.firstName,
+        lastName: data.studentInfo.lastName,
+        role: 'student',
+      });
+    }
+    
+    // WRAP ENTIRE PROCESS IN TRANSACTION FOR ATOMICITY
+    const result = await db.transaction(async (tx) => {
+      // Check schedule capacity and atomically decrement spots
+      const schedule = enrollment.schedule;
+      if (!schedule || schedule.availableSpots <= 0) {
+        throw new Error('No available spots in this course schedule');
+      }
+      
+      // Atomically decrement available spots to prevent race conditions
+      const [updatedSchedule] = await tx
+        .update(courseSchedules)
+        .set({
+          availableSpots: sql`${courseSchedules.availableSpots} - 1`,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(courseSchedules.id, enrollment.scheduleId),
+            sql`${courseSchedules.availableSpots} > 0`
+          )
+        )
+        .returning();
+      
+      if (!updatedSchedule) {
+        throw new Error('No available spots remaining for this course schedule');
+      }
+      
+      // Finalize the enrollment with consistent field names
+      const [finalizedEnrollment] = await tx
+        .update(enrollments)
+        .set({
+          studentId: user.id,
+          status: 'confirmed',
+          paymentStatus: 'paid',
+          stripePaymentIntentId: data.paymentIntentId, // Consistent field name
+          studentInfo: data.studentInfo,
+          confirmationDate: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(enrollments.id, data.enrollmentId))
+        .returning();
+      
+      // Record promo code redemption if applicable
+      if (enrollment.promoCodeApplied) {
+        const promoCode = await this.getPromoCodeByCode(enrollment.promoCodeApplied);
+        if (promoCode) {
+          // Record redemption in the transaction
+          await tx.insert(promoCodeRedemptions).values({
+            promoCodeId: promoCode.id,
+            userId: user.id,
+            enrollmentId: data.enrollmentId,
+            originalAmount: expectedAmount.toString(),
+            discountAmount: discountAmount.toString(),
+            finalAmount: (subtotal).toString(),
+            paymentIntentId: data.paymentIntentId,
+          });
+          
+          // Update promo code usage count atomically
+          await tx
+            .update(promoCodes)
+            .set({
+              currentUseCount: sql`${promoCodes.currentUseCount} + 1`,
+              updatedAt: new Date(),
+            })
+            .where(eq(promoCodes.id, promoCode.id));
+        }
+      }
+      
+      return finalizedEnrollment;
+    });
+    
+    return result;
   }
 
   // Dashboard statistics

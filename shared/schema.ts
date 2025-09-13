@@ -306,7 +306,7 @@ export type CourseScheduleWithSessions = CourseSchedule & {
 export type EnrollmentWithDetails = Enrollment & {
   course: Course;
   schedule: CourseSchedule;
-  student: User;
+  student: User | null; // Nullable for draft enrollments
 };
 
 export type WaitlistWithUser = WaitlistEntry & {
