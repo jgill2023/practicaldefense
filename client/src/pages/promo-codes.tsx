@@ -22,7 +22,7 @@ import { Link } from "wouter";
 import type { PromoCode, CourseWithSchedules } from "@shared/schema";
 
 const promoCodeSchema = z.object({
-  code: z.string().min(1, "Code is required").max(50, "Code too long"),
+  code: z.string().min(1, "Code is required").max(50, "Code too long").regex(/^[A-Z0-9_-]+$/, "Code must be uppercase letters, numbers, dashes, or underscores only"),
   description: z.string().min(1, "Description is required"),
   type: z.enum(["PERCENT", "FIXED_AMOUNT"]),
   value: z.string().min(1, "Value is required"),
@@ -32,7 +32,7 @@ const promoCodeSchema = z.object({
   maxTotalUses: z.string().optional(),
   maxUsesPerUser: z.string().optional(),
   minCartSubtotal: z.string().optional(),
-  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
+  status: z.enum(["ACTIVE", "SCHEDULED", "PAUSED", "EXPIRED"]).default("ACTIVE"),
 });
 
 type PromoCodeFormData = z.infer<typeof promoCodeSchema>;
@@ -81,7 +81,7 @@ export default function PromoCodesPage() {
   useEffect(() => {
     if (editingPromoCode) {
       form.reset({
-        code: editingPromoCode.code,
+        code: editingPromoCode.code.toUpperCase(),
         description: editingPromoCode.description || "",
         type: editingPromoCode.type as "PERCENT" | "FIXED_AMOUNT",
         value: editingPromoCode.value,
@@ -91,7 +91,7 @@ export default function PromoCodesPage() {
         maxTotalUses: editingPromoCode.maxTotalUses?.toString() || "",
         maxUsesPerUser: editingPromoCode.maxUsesPerUser?.toString() || "",
         minCartSubtotal: editingPromoCode.minCartSubtotal || "",
-        status: editingPromoCode.status as "ACTIVE" | "INACTIVE",
+        status: editingPromoCode.status as "ACTIVE" | "SCHEDULED" | "PAUSED" | "EXPIRED",
       });
     } else {
       form.reset({
@@ -109,6 +109,7 @@ export default function PromoCodesPage() {
     mutationFn: async (data: PromoCodeFormData) => {
       const payload = {
         ...data,
+        code: data.code.toUpperCase().trim(), // Transform to uppercase
         name: data.description, // Map description to name field required by schema
         scopeCourseIds: courseId ? [courseId] : data.scopeCourseIds || [],
         scopeType: courseId ? 'COURSES' : (data.scopeCourseIds && data.scopeCourseIds.length > 0 ? 'COURSES' : 'GLOBAL'),
@@ -145,6 +146,7 @@ export default function PromoCodesPage() {
       if (!editingPromoCode) return;
       const payload = {
         ...data,
+        code: data.code.toUpperCase().trim(), // Transform to uppercase
         name: data.description, // Map description to name field required by schema
         scopeType: courseId ? 'COURSES' : (data.scopeCourseIds && data.scopeCourseIds.length > 0 ? 'COURSES' : 'GLOBAL'),
         value: parseFloat(data.value),
@@ -265,8 +267,14 @@ export default function PromoCodesPage() {
                         <FormItem>
                           <FormLabel>Code</FormLabel>
                           <FormControl>
-                            <Input placeholder="SAVE20" {...field} data-testid="input-promo-code" />
+                            <Input 
+                              placeholder="SAVE20" 
+                              {...field}
+                              onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                              data-testid="input-promo-code" 
+                            />
                           </FormControl>
+                          <p className="text-xs text-muted-foreground">Use uppercase letters, numbers, dashes, or underscores only</p>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -285,7 +293,9 @@ export default function PromoCodesPage() {
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="ACTIVE">Active</SelectItem>
-                              <SelectItem value="INACTIVE">Inactive</SelectItem>
+                              <SelectItem value="SCHEDULED">Scheduled</SelectItem>
+                              <SelectItem value="PAUSED">Paused</SelectItem>
+                              <SelectItem value="EXPIRED">Expired</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
