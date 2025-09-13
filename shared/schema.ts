@@ -404,7 +404,8 @@ export const coupons = pgTable("coupons", {
   validUntil: timestamp("valid_until"),
   isActive: boolean("is_active").notNull().default(true),
   createdBy: varchar("created_by").notNull().references(() => users.id),
-  // Course restrictions (null = applies to all courses)
+  // Application type and course restrictions
+  applicationType: varchar("application_type", { length: 30 }).notNull().default("all_products_and_courses"), // 'all_products_and_courses', 'all_products', 'all_courses', 'specific_items'
   applicableCourseIds: text("applicable_course_ids").array(), // Array of course IDs
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

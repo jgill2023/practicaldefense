@@ -38,8 +38,14 @@ export default function PromoCodesPage() {
   const [editingCoupon, setEditingCoupon] = useState<CouponWithUsage | null>(null);
 
   // Fetch coupons
-  const { data: coupons = [], isLoading } = useQuery({
+  const { data: coupons = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/instructor/coupons"],
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+  });
+
+  // Fetch courses for dropdown
+  const { data: courses = [] } = useQuery<any[]>({
+    queryKey: ["/api/instructor/courses"],
     enabled: isAuthenticated && (user as User)?.role === 'instructor',
   });
 
@@ -54,6 +60,8 @@ export default function PromoCodesPage() {
       maxUsagePerUser: 1,
       maxUsageTotal: undefined,
       minimumOrderAmount: undefined,
+      applicationType: "all_products_and_courses",
+      applicableCourseIds: [],
       validFrom: undefined,
       validUntil: undefined,
       isActive: true,
@@ -271,6 +279,7 @@ export default function PromoCodesPage() {
                             <Textarea 
                               placeholder="Describe what this promo code is for..." 
                               {...field} 
+                              value={field.value || ""}
                               data-testid="textarea-description"
                             />
                           </FormControl>
@@ -278,6 +287,88 @@ export default function PromoCodesPage() {
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={createForm.control}
+                      name="applicationType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Applies To</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-application-type">
+                                <SelectValue placeholder="Select what this promo code applies to" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="all_products_and_courses">All Products and Courses</SelectItem>
+                              <SelectItem value="all_products">All Products</SelectItem>
+                              <SelectItem value="all_courses">All Courses</SelectItem>
+                              <SelectItem value="specific_items">Specific Courses</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {createForm.watch("applicationType") === "specific_items" && (
+                      <FormField
+                        control={createForm.control}
+                        name="applicableCourseIds"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Select Courses</FormLabel>
+                            <FormControl>
+                              <Select 
+                                onValueChange={(value) => {
+                                  const currentValues = field.value || [];
+                                  if (!currentValues.includes(value)) {
+                                    field.onChange([...currentValues, value]);
+                                  }
+                                }}
+                              >
+                                <SelectTrigger data-testid="select-courses">
+                                  <SelectValue placeholder="Select courses this promo code applies to" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {courses.map((course: any) => (
+                                    <SelectItem key={course.id} value={course.id}>
+                                      {course.title}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            {field.value && Array.isArray(field.value) && field.value.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {field.value.map((courseId: string) => {
+                                  const course = courses.find((c: any) => c.id === courseId);
+                                  return (
+                                    <div 
+                                      key={courseId} 
+                                      className="bg-primary/10 text-primary px-2 py-1 rounded-md text-sm flex items-center gap-1"
+                                    >
+                                      {course?.title}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          field.onChange(field.value.filter((id: string) => id !== courseId));
+                                        }}
+                                        className="ml-1 text-primary/60 hover:text-primary"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
@@ -294,7 +385,7 @@ export default function PromoCodesPage() {
                                 step="0.01"
                                 min="0"
                                 {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : 0)}
                                 data-testid="input-discount-value"
                               />
                             </FormControl>
@@ -314,7 +405,7 @@ export default function PromoCodesPage() {
                                 type="number" 
                                 min="1"
                                 {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 1)}
                                 data-testid="input-max-usage-per-user"
                               />
                             </FormControl>
@@ -609,6 +700,7 @@ export default function PromoCodesPage() {
                         <FormControl>
                           <Textarea 
                             {...field} 
+                            value={field.value || ""}
                             data-testid="textarea-edit-description"
                           />
                         </FormControl>
