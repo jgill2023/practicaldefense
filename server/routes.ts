@@ -1470,12 +1470,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
-      const validatedData = insertCouponSchema.parse({
-        ...req.body,
-        createdBy: req.currentUser.id,
-      });
+      console.log("Request body:", req.body);
+      console.log("Current user:", req.currentUser);
       
-      const coupon = await storage.createCoupon(validatedData);
+      const validatedData = insertCouponSchema.parse(req.body);
+      
+      const couponData = {
+        ...validatedData,
+        createdBy: req.currentUser.id,
+      };
+      
+      console.log("Final coupon data before storage:", couponData);
+      const coupon = await storage.createCoupon(couponData);
       res.status(201).json(coupon);
     } catch (error) {
       console.error("Error creating coupon:", error);
