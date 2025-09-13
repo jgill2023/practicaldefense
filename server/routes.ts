@@ -1393,6 +1393,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Promo code / coupon routes
+  app.get("/api/instructor/coupons", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const promoCodes = await storage.getPromoCodesByCreator(userId);
+      res.json(promoCodes);
+    } catch (error: any) {
+      console.error("Error fetching promo codes:", error);
+      res.status(500).json({ error: "Failed to fetch promo codes: " + error.message });
+    }
+  });
+
+  app.post("/api/instructor/coupons", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const promoCodeData = {
+        ...req.body,
+        createdBy: userId,
+        updatedBy: userId,
+      };
+      
+      const newPromoCode = await storage.createPromoCode(promoCodeData);
+      res.json(newPromoCode);
+    } catch (error: any) {
+      console.error("Error creating promo code:", error);
+      res.status(500).json({ error: "Failed to create promo code: " + error.message });
+    }
+  });
+
+  app.put("/api/instructor/coupons/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      const updateData = {
+        ...req.body,
+        updatedBy: userId,
+      };
+      
+      const updatedPromoCode = await storage.updatePromoCode(id, updateData);
+      res.json(updatedPromoCode);
+    } catch (error: any) {
+      console.error("Error updating promo code:", error);
+      res.status(500).json({ error: "Failed to update promo code: " + error.message });
+    }
+  });
+
+  app.delete("/api/instructor/coupons/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      await storage.deletePromoCode(id);
+      res.json({ message: "Promo code deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting promo code:", error);
+      res.status(500).json({ error: "Failed to delete promo code: " + error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

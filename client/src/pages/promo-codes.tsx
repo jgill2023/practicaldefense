@@ -22,17 +22,17 @@ import { Link } from "wouter";
 import type { PromoCode, CourseWithSchedules } from "@shared/schema";
 
 const promoCodeSchema = z.object({
-  code: z.string(),
-  description: z.string(),
-  type: z.string(),
-  value: z.string(),
+  code: z.string().min(1, "Code is required"),
+  description: z.string().min(1, "Description is required"),
+  type: z.enum(["PERCENT", "FIXED_AMOUNT"]),
+  value: z.string().min(1, "Value is required"),
   scopeCourseIds: z.array(z.string()).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   maxTotalUses: z.string().optional(),
   maxUsesPerUser: z.string().optional(),
   minCartSubtotal: z.string().optional(),
-  status: z.string(),
+  status: z.enum(["ACTIVE", "SCHEDULED", "PAUSED", "EXPIRED"]),
 });
 
 type PromoCodeFormData = z.infer<typeof promoCodeSchema>;
@@ -67,6 +67,7 @@ export default function PromoCodesPage() {
   });
 
   const form = useForm<PromoCodeFormData>({
+    resolver: zodResolver(promoCodeSchema),
     defaultValues: {
       code: "",
       description: "",
