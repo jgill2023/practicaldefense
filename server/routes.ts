@@ -945,7 +945,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe payment routes
   app.post("/api/create-payment-intent", isAuthenticated, async (req: any, res) => {
     try {
-      const { enrollmentId } = req.body;
+      const { enrollmentId, promoCode } = req.body;
       const userId = req.user?.claims?.sub;
 
       // Fetch enrollment to calculate correct payment amount server-side
@@ -975,10 +975,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid payment amount" });
       }
 
-      // Calculate tax using Stripe Tax Calculation API
+      // Apply promo code discount if provided
+      let discountAmount = 0;
+      let finalPaymentAmount = paymentAmount;
+      let promoCodeInfo = null;
+      
+      if (promoCode) {
+        const validation = await storage.validatePromoCode(promoCode, userId, enrollment.courseId, paymentAmount);
+        if (validation.isValid && validation.discountAmount !== undefined && validation.finalAmount !== undefined) {
+          discountAmount = validation.discountAmount;
+          finalPaymentAmount = validation.finalAmount;
+          promoCodeInfo = {
+            code: promoCode,
+            discountAmount,
+            type: validation.code?.type,
+            value: validation.code?.value
+          };
+          console.log(`✅ Promo code applied: ${promoCode}, discount: $${discountAmount}, final amount: $${finalPaymentAmount}`);
+        } else {
+          console.log(`❌ Invalid promo code: ${promoCode}, error: ${validation.error}`);
+          return res.status(400).json({ 
+            message: `Invalid promo code: ${validation.error}`,
+            errorCode: validation.errorCode 
+          });
+        }
+      }
+
+      // Calculate tax using Stripe Tax Calculation API on the discounted amount
       let taxCalculation = null;
       let taxAmount = 0;
-      let finalAmount = Math.round(paymentAmount * 100);
+      let finalAmount = Math.round(finalPaymentAmount * 100);
 
       try {
         // Use Stripe Tax to calculate taxes based on your dashboard settings
@@ -987,7 +1013,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         taxCalculation = await stripe.tax.calculations.create({
           currency: 'usd',
           line_items: [{
-            amount: Math.round(paymentAmount * 100),
+            amount: Math.round(finalPaymentAmount * 100),
             tax_code: 'txcd_10401000', // Online education services
             reference: `course-${enrollment.courseId}-${enrollment.paymentOption || 'full'}`,
           }],
@@ -1003,15 +1029,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         console.log('✅ Stripe Tax Calculation Success:', {
-          subtotal_cents: Math.round(paymentAmount * 100),
-          subtotal_dollars: paymentAmount,
+          original_amount: paymentAmount,
+          discounted_amount: finalPaymentAmount,
+          discount_applied: discountAmount,
+          promo_code: promoCode || 'none',
+          subtotal_cents: Math.round(finalPaymentAmount * 100),
+          subtotal_dollars: finalPaymentAmount,
           tax_calculation_id: taxCalculation?.id,
           amount_total_cents: taxCalculation?.amount_total,
           total_dollars: taxCalculation?.amount_total ? (taxCalculation.amount_total / 100) : 0,
           tax_amount_exclusive_cents: taxCalculation?.tax_amount_exclusive,
           tax_dollars: taxCalculation?.tax_amount_exclusive ? (taxCalculation.tax_amount_exclusive / 100) : 0,
-          tax_rate_calculated: taxCalculation?.tax_amount_exclusive && paymentAmount ? 
-            ((taxCalculation.tax_amount_exclusive / 100) / paymentAmount * 100).toFixed(4) + '%' : '0%'
+          tax_rate_calculated: taxCalculation?.tax_amount_exclusive && finalPaymentAmount ? 
+            ((taxCalculation.tax_amount_exclusive / 100) / finalPaymentAmount * 100).toFixed(4) + '%' : '0%'
         });
 
         if (taxCalculation && taxCalculation.amount_total) {
@@ -1041,15 +1071,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           studentId: userId,
           paymentOption: enrollment.paymentOption || 'full',
           tax_calculation_id: taxCalculation?.id || null,
+          promo_code: promoCode || null,
+          original_amount: paymentAmount.toString(),
+          discount_amount: discountAmount.toString(),
         },
       });
 
       res.json({ 
         clientSecret: paymentIntent.client_secret,
-        subtotal: paymentAmount,
+        originalAmount: paymentAmount,
+        subtotal: finalPaymentAmount,
+        discountAmount,
         tax: taxAmount / 100,
         total: finalAmount / 100,
-        tax_included: taxAmount > 0
+        tax_included: taxAmount > 0,
+        promoCode: promoCodeInfo
       });
     } catch (error: any) {
       res.status(500).json({ message: "Error creating payment intent: " + error.message });
@@ -1450,6 +1486,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error deleting promo code:", error);
       res.status(500).json({ error: "Failed to delete promo code: " + error.message });
+    }
+  });
+
+  // Promo code validation during checkout
+  app.post("/api/validate-promo-code", isAuthenticated, async (req: any, res) => {
+    try {
+      const { code, courseId, amount } = req.body;
+      const userId = req.user?.claims?.sub;
+
+      if (!code || !courseId || !amount) {
+        return res.status(400).json({ error: "Missing required fields: code, courseId, amount" });
+      }
+
+      const validation = await storage.validatePromoCode(code, userId, courseId, amount);
+      res.json(validation);
+    } catch (error: any) {
+      console.error("Error validating promo code:", error);
+      res.status(500).json({ error: "Failed to validate promo code: " + error.message });
     }
   });
 

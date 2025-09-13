@@ -9,7 +9,8 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Shield } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { CreditCard, Shield, Tag, Check, X } from "lucide-react";
 import type { EnrollmentWithDetails } from "@shared/schema";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
@@ -131,7 +132,11 @@ const CheckoutForm = ({ enrollment }: { enrollment: EnrollmentWithDetails }) => 
 export default function Checkout() {
   const [, params] = useRoute("/checkout");
   const [clientSecret, setClientSecret] = useState("");
-  const [taxInfo, setTaxInfo] = useState<{subtotal: number, tax: number, total: number, tax_included: boolean} | null>(null);
+  const [taxInfo, setTaxInfo] = useState<{subtotal: number, tax: number, total: number, tax_included: boolean, originalAmount?: number, discountAmount?: number, promoCode?: any} | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoCodeApplied, setPromoCodeApplied] = useState<string | null>(null);
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
   const { toast } = useToast();
   
   // Get enrollment ID from URL params
@@ -158,31 +163,96 @@ export default function Checkout() {
     return coursePrice;
   };
 
+  const validateAndApplyPromoCode = async () => {
+    if (!promoCode.trim() || !enrollment) return;
+
+    setIsValidatingPromo(true);
+    setPromoError(null);
+
+    try {
+      const response = await apiRequest("POST", "/api/validate-promo-code", {
+        code: promoCode.trim(),
+        courseId: enrollment.courseId,
+        amount: getPaymentAmount(enrollment),
+      });
+      
+      const validation = await response.json();
+
+      if (validation.isValid) {
+        setPromoCodeApplied(promoCode.trim());
+        toast({
+          title: "Promo Code Applied!",
+          description: `You saved $${validation.discountAmount.toFixed(2)}`,
+        });
+        // Recreate payment intent with promo code
+        createPaymentIntent(promoCode.trim());
+      } else {
+        setPromoError(validation.error || "Invalid promo code");
+        toast({
+          title: "Invalid Promo Code",
+          description: validation.error || "Please check your code and try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      setPromoError("Failed to validate promo code");
+      toast({
+        title: "Validation Failed",
+        description: "Unable to validate promo code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  };
+
+  const removePromoCode = () => {
+    setPromoCode("");
+    setPromoCodeApplied(null);
+    setPromoError(null);
+    toast({
+      title: "Promo Code Removed",
+      description: "The discount has been removed from your order.",
+    });
+    // Recreate payment intent without promo code
+    createPaymentIntent();
+  };
+
+  const createPaymentIntent = async (appliedPromoCode?: string) => {
+    if (!enrollment) return;
+
+    try {
+      const response = await apiRequest("POST", "/api/create-payment-intent", {
+        enrollmentId: enrollment.id,
+        promoCode: appliedPromoCode || undefined,
+      });
+      
+      const data = await response.json();
+      setClientSecret(data.clientSecret);
+      setTaxInfo({
+        originalAmount: data.originalAmount,
+        subtotal: data.subtotal,
+        discountAmount: data.discountAmount || 0,
+        tax: data.tax,
+        total: data.total,
+        tax_included: data.tax_included,
+        promoCode: data.promoCode
+      });
+    } catch (error) {
+      toast({
+        title: "Payment Setup Failed", 
+        description: "Unable to initialize payment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     if (!enrollment) return;
     
     // Create PaymentIntent as soon as the page loads - server calculates amount
-    apiRequest("POST", "/api/create-payment-intent", {
-      enrollmentId: enrollment.id,
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setClientSecret(data.clientSecret);
-        setTaxInfo({
-          subtotal: data.subtotal,
-          tax: data.tax,
-          total: data.total,
-          tax_included: data.tax_included
-        });
-      })
-      .catch((error) => {
-        toast({
-          title: "Payment Setup Failed",
-          description: "Unable to initialize payment. Please try again.",
-          variant: "destructive",
-        });
-      });
-  }, [enrollment, toast]);
+    createPaymentIntent();
+  }, [enrollment]);
 
   if (isLoading || !enrollment) {
     return (
@@ -280,7 +350,7 @@ export default function Checkout() {
                   <span>
                     {enrollment.paymentOption === 'deposit' ? 'Course deposit' : 'Course fee'}
                   </span>
-                  <span>${taxInfo?.subtotal?.toFixed(2) || getPaymentAmount(enrollment)}</span>
+                  <span>${taxInfo?.originalAmount?.toFixed(2) || getPaymentAmount(enrollment)}</span>
                 </div>
                 {enrollment.paymentOption === 'deposit' && enrollment.course.depositAmount && (
                   <div className="flex justify-between text-sm text-muted-foreground">
@@ -288,6 +358,72 @@ export default function Checkout() {
                     <span>${(parseFloat(enrollment.course.price) - parseFloat(enrollment.course.depositAmount)).toFixed(2)}</span>
                   </div>
                 )}
+                
+                {/* Promo Code Section */}
+                <div className="mt-4 p-3 border rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Tag className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Promo Code</span>
+                  </div>
+                  
+                  {!promoCodeApplied ? (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter promo code"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === 'Enter' && validateAndApplyPromoCode()}
+                        className="flex-1"
+                        data-testid="input-promo-code"
+                      />
+                      <Button 
+                        onClick={validateAndApplyPromoCode}
+                        disabled={!promoCode.trim() || isValidatingPromo}
+                        size="sm"
+                        data-testid="button-apply-promo"
+                      >
+                        {isValidatingPromo ? "Checking..." : "Apply"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-2 rounded">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4" />
+                        <span className="text-sm font-medium" data-testid="text-applied-promo">
+                          {promoCodeApplied} applied
+                        </span>
+                      </div>
+                      <Button 
+                        onClick={removePromoCode}
+                        variant="ghost" 
+                        size="sm"
+                        className="h-auto p-1 text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100"
+                        data-testid="button-remove-promo"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {promoError && (
+                    <div className="text-red-600 text-sm mt-1" data-testid="text-promo-error">
+                      {promoError}
+                    </div>
+                  )}
+                </div>
+
+                {/* Show discount if applied */}
+                {taxInfo?.discountAmount && taxInfo.discountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                    <span>Discount ({promoCodeApplied})</span>
+                    <span data-testid="text-discount-amount">-${taxInfo.discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Subtotal</span>
+                  <span>${taxInfo?.subtotal?.toFixed(2) || getPaymentAmount(enrollment)}</span>
+                </div>
                 {taxInfo?.tax_included && taxInfo.tax > 0 && (
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Tax</span>
