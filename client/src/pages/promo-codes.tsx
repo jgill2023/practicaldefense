@@ -24,10 +24,7 @@ import type { PromoCode, CourseWithSchedules } from "@shared/schema";
 const promoCodeSchema = z.object({
   code: z.string()
     .min(1, "Code is required")
-    .max(50, "Code too long")
-    .trim()
-    .regex(/^[A-Z0-9_-]+$/i, "Code must contain only letters, numbers, dashes, or underscores")
-    .transform(s => s.toUpperCase()),
+    .max(50, "Code too long"),
   description: z.string().min(1, "Description is required"),
   type: z.enum(["PERCENT", "FIXED_AMOUNT"]),
   value: z.string().min(1, "Value is required"),
@@ -73,6 +70,7 @@ export default function PromoCodesPage() {
 
   const form = useForm<PromoCodeFormData>({
     resolver: zodResolver(promoCodeSchema),
+    mode: "onChange",
     defaultValues: {
       code: "",
       description: "",
@@ -82,6 +80,7 @@ export default function PromoCodesPage() {
       status: "ACTIVE",
     },
   });
+
 
 
   useEffect(() => {
@@ -276,7 +275,6 @@ export default function PromoCodesPage() {
                             <Input 
                               placeholder="SAVE20" 
                               {...field}
-                              value={(field.value ?? "").toUpperCase()}
                               data-testid="input-promo-code" 
                             />
                           </FormControl>
