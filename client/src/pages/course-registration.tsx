@@ -116,8 +116,6 @@ export default function CourseRegistration() {
   const { toast } = useToast();
   
   const [selectedSchedule, setSelectedSchedule] = useState<CourseSchedule | null>(null);
-  const [showPayment, setShowPayment] = useState(false);
-  const [enrollmentId, setEnrollmentId] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState("");
   const [taxInfo, setTaxInfo] = useState<{subtotal: number, tax: number, total: number, tax_included: boolean, originalAmount?: number, discountAmount?: number, promoCode?: any} | null>(null);
   const [promoCode, setPromoCode] = useState("");
@@ -125,6 +123,7 @@ export default function CourseRegistration() {
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
   const [currentEnrollment, setCurrentEnrollment] = useState<any>(null);
+  const [isDraftCreated, setIsDraftCreated] = useState(false);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -165,27 +164,35 @@ export default function CourseRegistration() {
     setPromoError(null);
 
     try {
-      const response = await apiRequest("POST", "/api/validate-promo-code", {
-        code: promoCode.trim(),
-        courseId: currentEnrollment.courseId,
-        amount: getPaymentAmount(currentEnrollment),
+      const response = await apiRequest("POST", "/api/course-registration/payment-intent", {
+        enrollmentId: currentEnrollment.id,
+        promoCode: promoCode.trim(),
+        paymentOption: formData.paymentOption,
       });
       
-      const validation = await response.json();
-
-      if (validation.isValid) {
+      const data = await response.json();
+      
+      if (data.clientSecret) {
         setPromoCodeApplied(promoCode.trim());
+        setClientSecret(data.clientSecret);
+        setTaxInfo({
+          originalAmount: data.originalAmount,
+          subtotal: data.subtotal,
+          discountAmount: data.discountAmount || 0,
+          tax: data.tax,
+          total: data.total,
+          tax_included: data.tax_included,
+          promoCode: data.promoCode
+        });
         toast({
           title: "Promo Code Applied!",
-          description: `You saved $${validation.discountAmount.toFixed(2)}`,
+          description: `You saved $${data.discountAmount?.toFixed(2) || '0.00'}`,
         });
-        // Recreate payment intent with promo code
-        createPaymentIntent(promoCode.trim());
       } else {
-        setPromoError(validation.error || "Invalid promo code");
+        setPromoError(data.error || "Invalid promo code");
         toast({
           title: "Invalid Promo Code",
-          description: validation.error || "Please check your code and try again.",
+          description: data.error || "Please check your code and try again.",
           variant: "destructive",
         });
       }
@@ -201,7 +208,7 @@ export default function CourseRegistration() {
     }
   };
 
-  const removePromoCode = () => {
+  const removePromoCode = async () => {
     setPromoCode("");
     setPromoCodeApplied(null);
     setPromoError(null);
@@ -210,60 +217,88 @@ export default function CourseRegistration() {
       description: "The discount has been removed from your order.",
     });
     // Recreate payment intent without promo code
-    createPaymentIntent();
+    if (currentEnrollment) {
+      createPaymentIntentMutation.mutate({
+        enrollmentId: currentEnrollment.id,
+        paymentOption: formData.paymentOption,
+      });
+    }
   };
 
-  const createPaymentIntent = async (appliedPromoCode?: string, enrollment?: any) => {
-    const enrollmentToUse = enrollment || currentEnrollment;
-    if (!enrollmentToUse) return;
-
-    try {
-      const response = await apiRequest("POST", "/api/create-payment-intent", {
-        enrollmentId: enrollmentToUse.id,
-        promoCode: appliedPromoCode || undefined,
-      });
+  // Create draft enrollment when schedule is selected and form is valid
+  const createDraftEnrollment = async (schedule: CourseSchedule) => {
+    if (!isAuthenticated && formData.createAccount) {
+      if (!formData.password || formData.password.length < 6) {
+        toast({
+          title: "Password Required",
+          description: "Password must be at least 6 characters long",
+          variant: "destructive",
+        });
+        return false;
+      }
       
-      const data = await response.json();
-      setClientSecret(data.clientSecret);
-      setTaxInfo({
-        originalAmount: data.originalAmount,
-        subtotal: data.subtotal,
-        discountAmount: data.discountAmount || 0,
-        tax: data.tax,
-        total: data.total,
-        tax_included: data.tax_included,
-        promoCode: data.promoCode
-      });
-    } catch (error) {
+      if (formData.password !== formData.confirmPassword) {
+        toast({
+          title: "Password Mismatch",
+          description: "Passwords do not match",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    // Check required fields
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.dateOfBirth) {
       toast({
-        title: "Payment Setup Failed", 
-        description: "Unable to initialize payment. Please try again.",
+        title: "Required Fields Missing",
+        description: "Please fill in all required student information fields",
         variant: "destructive",
       });
+      return false;
     }
+
+    if (!formData.agreeToTerms) {
+      toast({
+        title: "Terms Required",
+        description: "Please agree to the terms and conditions",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    initiateDraftMutation.mutate({
+      courseId: params?.id,
+      scheduleId: schedule.id,
+      paymentOption: formData.paymentOption,
+      studentInfo: {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        dateOfBirth: formData.dateOfBirth,
+      },
+      accountCreation: !isAuthenticated && formData.createAccount ? {
+        password: formData.password,
+      } : undefined,
+    });
+    
+    return true;
   };
 
-  // Create payment intent when enrollment is set
-  useEffect(() => {
-    if (currentEnrollment) {
-      createPaymentIntent(promoCodeApplied || undefined);
-    }
-  }, [currentEnrollment]);
 
-
-  const enrollMutation = useMutation({
+  const initiateDraftMutation = useMutation({
     mutationFn: async (enrollmentData: any) => {
-      const response = await apiRequest("POST", "/api/course-registration", enrollmentData);
+      const response = await apiRequest("POST", "/api/course-registration/initiate", enrollmentData);
       return response.json();
     },
     onSuccess: (enrollment) => {
-      toast({
-        title: "Registration Initiated",
-        description: "Now complete your payment below...",
-      });
       setCurrentEnrollment(enrollment);
-      setShowPayment(true);
-      queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
+      setIsDraftCreated(true);
+      // Create payment intent immediately after draft enrollment
+      createPaymentIntentMutation.mutate({
+        enrollmentId: enrollment.id,
+        paymentOption: formData.paymentOption,
+      });
     },
     onError: (error) => {
       toast({
@@ -274,9 +309,39 @@ export default function CourseRegistration() {
     },
   });
 
+  const createPaymentIntentMutation = useMutation({
+    mutationFn: async ({ enrollmentId, paymentOption, promoCode }: { enrollmentId: string; paymentOption: string; promoCode?: string }) => {
+      const response = await apiRequest("POST", "/api/course-registration/payment-intent", {
+        enrollmentId,
+        paymentOption,
+        promoCode,
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setClientSecret(data.clientSecret);
+      setTaxInfo({
+        originalAmount: data.originalAmount,
+        subtotal: data.subtotal,
+        discountAmount: data.discountAmount || 0,
+        tax: data.tax,
+        total: data.total,
+        tax_included: data.tax_included,
+        promoCode: data.promoCode
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Payment Setup Failed",
+        description: "Unable to initialize payment. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const confirmEnrollmentMutation = useMutation({
     mutationFn: async ({ enrollmentId, paymentIntentId }: { enrollmentId: string; paymentIntentId: string }) => {
-      const response = await apiRequest("POST", "/api/confirm-enrollment", {
+      const response = await apiRequest("POST", "/api/course-registration/confirm", {
         enrollmentId,
         paymentIntentId,
       });
@@ -300,69 +365,38 @@ export default function CourseRegistration() {
   });
 
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Handle schedule selection and trigger payment form
+  const handleScheduleChange = async (scheduleId: string) => {
+    const schedule = availableSchedules.find(s => s.id === scheduleId);
+    if (!schedule) return;
     
-    // Account creation validation for non-authenticated users
-    if (!isAuthenticated && formData.createAccount) {
-      if (!formData.password || formData.password.length < 6) {
-        toast({
-          title: "Password Required",
-          description: "Password must be at least 6 characters long",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (formData.password !== formData.confirmPassword) {
-        toast({
-          title: "Password Mismatch",
-          description: "Passwords do not match",
-          variant: "destructive",
-        });
-        return;
-      }
+    setSelectedSchedule(schedule);
+    
+    // Create draft enrollment if we have all required info
+    if (formData.firstName && formData.lastName && formData.email && formData.phone && formData.dateOfBirth && formData.agreeToTerms) {
+      await createDraftEnrollment(schedule);
     }
-
-    if (!selectedSchedule) {
-      toast({
-        title: "Schedule Required",
-        description: "Please select a course schedule",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.agreeToTerms) {
-      toast({
-        title: "Terms Required",
-        description: "Please agree to the terms and conditions",
-        variant: "destructive",
-      });
-      return;
-    }
-
-
-    enrollMutation.mutate({
-      courseId: params?.id,
-      scheduleId: selectedSchedule.id,
-      status: 'pending',
-      paymentStatus: 'pending',
-      paymentOption: formData.paymentOption, // Pass the selected payment option
-      // Student information
-      studentInfo: {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        dateOfBirth: formData.dateOfBirth,
-      },
-      // Account creation (for non-authenticated users)
-      accountCreation: !isAuthenticated && formData.createAccount ? {
-        password: formData.password,
-      } : undefined,
-    });
   };
+
+  // Update payment option and recreate payment intent
+  const handlePaymentOptionChange = (paymentOption: 'full' | 'deposit') => {
+    setFormData(prev => ({ ...prev, paymentOption }));
+    
+    if (currentEnrollment && isDraftCreated) {
+      createPaymentIntentMutation.mutate({
+        enrollmentId: currentEnrollment.id,
+        paymentOption,
+        promoCode: promoCodeApplied || undefined,
+      });
+    }
+  };
+
+  // Watch for form changes and create/update draft when ready
+  useEffect(() => {
+    if (selectedSchedule && formData.firstName && formData.lastName && formData.email && formData.phone && formData.dateOfBirth && formData.agreeToTerms && !isDraftCreated) {
+      createDraftEnrollment(selectedSchedule);
+    }
+  }, [formData, selectedSchedule, isDraftCreated]);
 
   if (courseLoading || !course) {
     return (
@@ -431,7 +465,7 @@ export default function CourseRegistration() {
           </CardContent>
         </Card>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="space-y-8">
           {/* Schedule Selection */}
           <Card>
             <CardHeader>
@@ -441,10 +475,7 @@ export default function CourseRegistration() {
               {availableSchedules.length > 0 ? (
                 <div className="space-y-4">
                   <Label htmlFor="schedule">Available Dates *</Label>
-                  <Select onValueChange={(value) => {
-                    const schedule = availableSchedules.find(s => s.id === value);
-                    setSelectedSchedule(schedule || null);
-                  }}>
+                  <Select onValueChange={handleScheduleChange}>
                     <SelectTrigger data-testid="select-course-schedule">
                       <SelectValue placeholder="Select a course date" />
                     </SelectTrigger>
@@ -651,9 +682,7 @@ export default function CourseRegistration() {
               <CardContent className="space-y-4">
                 <RadioGroup
                   value={formData.paymentOption}
-                  onValueChange={(value: 'full' | 'deposit') => 
-                    setFormData(prev => ({ ...prev, paymentOption: value }))
-                  }
+                  onValueChange={handlePaymentOptionChange}
                   className="space-y-3"
                 >
                   <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
@@ -689,7 +718,7 @@ export default function CourseRegistration() {
           )}
 
           {/* Payment Section */}
-          {showPayment && currentEnrollment && clientSecret && (
+          {currentEnrollment && isDraftCreated && clientSecret && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-foreground mb-2">Complete Your Payment</h2>
@@ -753,59 +782,6 @@ export default function CourseRegistration() {
                           <span>${currentEnrollment?.course?.price && currentEnrollment?.course?.depositAmount ? (parseFloat(currentEnrollment.course.price) - parseFloat(currentEnrollment.course.depositAmount)).toFixed(2) : '0.00'}</span>
                         </div>
                       )}
-                      
-                      {/* Promo Code Section */}
-                      <div className="mt-4 p-3 border rounded-lg bg-muted/30">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Tag className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">Promo Code</span>
-                        </div>
-                        
-                        {!promoCodeApplied ? (
-                          <div className="flex gap-2">
-                            <Input
-                              placeholder="Enter promo code"
-                              value={promoCode}
-                              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                              onKeyDown={(e) => e.key === 'Enter' && validateAndApplyPromoCode()}
-                              className="flex-1"
-                              data-testid="input-promo-code"
-                            />
-                            <Button 
-                              onClick={validateAndApplyPromoCode}
-                              disabled={!promoCode.trim() || isValidatingPromo}
-                              size="sm"
-                              data-testid="button-apply-promo"
-                            >
-                              {isValidatingPromo ? "Checking..." : "Apply"}
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-2 rounded">
-                            <div className="flex items-center gap-2">
-                              <Check className="h-4 w-4" />
-                              <span className="text-sm font-medium" data-testid="text-applied-promo">
-                                {promoCodeApplied} applied
-                              </span>
-                            </div>
-                            <Button 
-                              onClick={removePromoCode}
-                              variant="ghost" 
-                              size="sm"
-                              className="h-auto p-1 text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100"
-                              data-testid="button-remove-promo"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
-                        
-                        {promoError && (
-                          <div className="text-red-600 text-sm mt-1" data-testid="text-promo-error">
-                            {promoError}
-                          </div>
-                        )}
-                      </div>
 
                       {/* Show discount if applied */}
                       {taxInfo?.discountAmount && taxInfo.discountAmount > 0 && (
@@ -867,7 +843,7 @@ export default function CourseRegistration() {
             </div>
           )}
 
-          {showPayment && currentEnrollment && !clientSecret && (
+          {currentEnrollment && isDraftCreated && !clientSecret && (
             <div className="mb-6">
               <Card>
                 <CardContent className="p-8 text-center">
@@ -877,6 +853,71 @@ export default function CourseRegistration() {
                 </CardContent>
               </Card>
             </div>
+          )}
+
+          {/* Promo Code Section - shown when payment form is visible */}
+          {currentEnrollment && isDraftCreated && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Tag className="mr-2 h-5 w-5" />
+                  Promo Code
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Have a promo code? Enter it below to apply any available discounts to your order.
+                </p>
+                
+                {!promoCodeApplied ? (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter promo code"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === 'Enter' && validateAndApplyPromoCode()}
+                      className="flex-1"
+                      data-testid="input-promo-code"
+                    />
+                    <Button 
+                      onClick={validateAndApplyPromoCode}
+                      disabled={!promoCode.trim() || isValidatingPromo || !currentEnrollment}
+                      size="sm"
+                      data-testid="button-apply-promo"
+                    >
+                      {isValidatingPromo ? "Checking..." : "Apply"}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-4 w-4" />
+                      <span className="text-sm font-medium" data-testid="text-applied-promo">
+                        {promoCodeApplied} applied
+                      </span>
+                      {taxInfo?.discountAmount && (
+                        <span className="text-sm">- Saved ${taxInfo.discountAmount.toFixed(2)}</span>
+                      )}
+                    </div>
+                    <Button 
+                      onClick={removePromoCode}
+                      variant="ghost" 
+                      size="sm"
+                      className="h-auto p-1 text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100"
+                      data-testid="button-remove-promo"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+                
+                {promoError && (
+                  <div className="text-red-600 text-sm mt-1" data-testid="text-promo-error">
+                    {promoError}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
           {/* Terms and Conditions */}
@@ -906,39 +947,17 @@ export default function CourseRegistration() {
             </CardContent>
           </Card>
 
-          {/* Submit Button */}
-          {!showPayment && (
+          {/* Show loading when creating draft */}
+          {selectedSchedule && initiateDraftMutation.isPending && (
             <Card>
-              <CardContent className="pt-6">
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                  disabled={enrollMutation.isPending || !selectedSchedule || !formData.agreeToTerms}
-                  data-testid="button-proceed-payment"
-                >
-                  {enrollMutation.isPending ? (
-                    <>
-                      <div className="animate-spin w-4 h-4 border-2 border-transparent border-t-current rounded-full mr-2" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <DollarSign className="mr-2 h-4 w-4" />
-                      Continue to Payment
-                    </>
-                  )}
-                </Button>
-                
-                {selectedSchedule && course && (
-                  <p className="text-center text-sm text-muted-foreground mt-4">
-                    You will be charged ${course.price} for the course on {formatDateSafe(selectedSchedule.startDate.toString())}
-                  </p>
-                )}
+              <CardContent className="p-8 text-center">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">Preparing your registration...</h3>
+                <p className="text-muted-foreground">Please wait while we set up your course enrollment</p>
               </CardContent>
             </Card>
           )}
-        </form>
+        </div>
 
       </div>
     </Layout>
