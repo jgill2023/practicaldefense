@@ -389,6 +389,63 @@ export const studentFormResponsesRelations = relations(studentFormResponses, ({ 
   }),
 }));
 
+// Coupon/Promo Code Management
+export const coupons = pgTable("coupons", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: varchar("code", { length: 50 }).notNull().unique(),
+  description: text("description"),
+  discountType: varchar("discount_type", { length: 20 }).notNull(), // 'percentage' or 'fixed'
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(),
+  minimumOrderAmount: decimal("minimum_order_amount", { precision: 10, scale: 2 }),
+  maxUsageTotal: integer("max_usage_total"), // null = unlimited
+  maxUsagePerUser: integer("max_usage_per_user").notNull().default(1),
+  currentUsageCount: integer("current_usage_count").notNull().default(0),
+  validFrom: timestamp("valid_from").defaultNow(),
+  validUntil: timestamp("valid_until"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+  // Course restrictions (null = applies to all courses)
+  applicableCourseIds: text("applicable_course_ids").array(), // Array of course IDs
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const couponUsage = pgTable("coupon_usage", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  couponId: uuid("coupon_id").notNull().references(() => coupons.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  enrollmentId: uuid("enrollment_id").notNull().references(() => enrollments.id),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).notNull(),
+  usedAt: timestamp("used_at").defaultNow(),
+}, (table) => [
+  // Ensure a user can only use a coupon once per enrollment
+  sql`UNIQUE(${table.couponId}, ${table.userId}, ${table.enrollmentId})`
+]);
+
+// Relations for coupons
+export const couponRelations = relations(coupons, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [coupons.createdBy],
+    references: [users.id],
+  }),
+  usage: many(couponUsage),
+}));
+
+export const couponUsageRelations = relations(couponUsage, ({ one }) => ({
+  coupon: one(coupons, {
+    fields: [couponUsage.couponId],
+    references: [coupons.id],
+  }),
+  user: one(users, {
+    fields: [couponUsage.userId],
+    references: [users.id],
+  }),
+  enrollment: one(enrollments, {
+    fields: [couponUsage.enrollmentId],
+    references: [enrollments.id],
+  }),
+}));
+
 // Insert schemas for course information forms
 export const insertCourseInformationFormSchema = createInsertSchema(courseInformationForms).omit({
   id: true,
@@ -405,6 +462,24 @@ export const insertCourseInformationFormFieldSchema = createInsertSchema(courseI
 export const insertStudentFormResponseSchema = createInsertSchema(studentFormResponses).omit({
   id: true,
   submittedAt: true,
+});
+
+// Insert schemas for coupons
+export const insertCouponSchema = createInsertSchema(coupons).omit({
+  id: true,
+  currentUsageCount: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  discountValue: z.number().positive(),
+  maxUsageTotal: z.number().int().positive().optional(),
+  maxUsagePerUser: z.number().int().positive().min(1),
+  minimumOrderAmount: z.number().positive().optional(),
+});
+
+export const insertCouponUsageSchema = createInsertSchema(couponUsage).omit({
+  id: true,
+  usedAt: true,
 });
 
 // Types for course information forms
@@ -428,3 +503,23 @@ export type StudentFormResponseWithDetails = StudentFormResponse & {
 };
 
 export type FormFieldType = 'text' | 'email' | 'phone' | 'select' | 'checkbox' | 'textarea' | 'date' | 'number';
+
+// Types for coupons
+export type InsertCoupon = z.infer<typeof insertCouponSchema>;
+export type Coupon = typeof coupons.$inferSelect;
+export type InsertCouponUsage = z.infer<typeof insertCouponUsageSchema>;
+export type CouponUsage = typeof couponUsage.$inferSelect;
+
+// Extended types for coupons
+export type CouponWithUsage = Coupon & {
+  usage: CouponUsage[];
+  creator: User;
+};
+
+export type CouponUsageWithDetails = CouponUsage & {
+  coupon: Coupon;
+  user: User;
+  enrollment: EnrollmentWithDetails;
+};
+
+export type DiscountType = 'percentage' | 'fixed';

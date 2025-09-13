@@ -5,9 +5,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
+import Home from "@/pages/home";
 import InstructorDashboard from "@/pages/instructor-dashboard";
 import CourseManagement from "@/pages/course-management";
 import CourseFormsManagement from "@/pages/course-forms-management";
+import PromoCodesPage from "@/pages/promo-codes";
 import StudentPortal from "@/pages/student-portal";
 import CourseRegistration from "@/pages/course-registration";
 import Checkout from "@/pages/checkout";
@@ -26,17 +28,15 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={Landing} />
+      <Route path="/" component={Home} />
+      <Route path="/landing" component={Landing} />
       <Route path="/course-registration/:id" component={CourseRegistration} />
       <Route path="/checkout" component={Checkout} />
-      {isAuthenticated && (
-        <>
-          <Route path="/instructor-dashboard" component={InstructorDashboard} />
-          <Route path="/course-management" component={CourseManagement} />
-          <Route path="/course-forms-management" component={CourseFormsManagement} />
-          <Route path="/student-portal" component={StudentPortal} />
-        </>
-      )}
+      <Route path="/instructor-dashboard" component={InstructorDashboard} />
+      <Route path="/course-management" component={CourseManagement} />
+      <Route path="/course-forms-management" component={CourseFormsManagement} />
+      <Route path="/promo-codes" component={PromoCodesPage} />
+      <Route path="/student-portal" component={StudentPortal} />
       <Route component={NotFound} />
     </Switch>
   );
