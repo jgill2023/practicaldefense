@@ -8,6 +8,8 @@ import {
   courseInformationForms,
   courseInformationFormFields,
   studentFormResponses,
+  promoCodes,
+  promoCodeRedemptions,
   type User,
   type UpsertUser,
   type Category,
@@ -29,6 +31,12 @@ import {
   type StudentFormResponse,
   type InsertStudentFormResponse,
   type CourseInformationFormWithFields,
+  type PromoCode,
+  type InsertPromoCode,
+  type PromoCodeRedemption,
+  type InsertPromoCodeRedemption,
+  type PromoCodeWithDetails,
+  type PromoCodeValidationResult,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, isNull, isNotNull, sql } from "drizzle-orm";
@@ -111,6 +119,25 @@ export interface IStorage {
     totalRevenue: number;
     outstandingRevenue: number;
   }>;
+  
+  // Promo code operations
+  createPromoCode(promoCode: InsertPromoCode): Promise<PromoCode>;
+  updatePromoCode(id: string, promoCode: Partial<InsertPromoCode>): Promise<PromoCode>;
+  deletePromoCode(id: string): Promise<void>;
+  getPromoCode(id: string): Promise<PromoCodeWithDetails | undefined>;
+  getPromoCodeByCode(code: string): Promise<PromoCode | undefined>;
+  getPromoCodes(): Promise<PromoCodeWithDetails[]>;
+  getPromoCodesByCreator(createdBy: string): Promise<PromoCodeWithDetails[]>;
+  
+  // Promo code validation and redemption
+  validatePromoCode(code: string, userId: string, courseId: string, amount: number): Promise<PromoCodeValidationResult>;
+  redeemPromoCode(redemption: InsertPromoCodeRedemption): Promise<PromoCodeRedemption>;
+  getPromoCodeRedemptions(promoCodeId: string): Promise<PromoCodeRedemption[]>;
+  getPromoCodeRedemptionsByUser(userId: string): Promise<PromoCodeRedemption[]>;
+  
+  // Promo code utility methods
+  generatePromoCode(): Promise<string>;
+  updatePromoCodeUsageCount(promoCodeId: string, increment: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -843,6 +870,348 @@ export class DatabaseStorage implements IStorage {
       orderBy: asc(studentFormResponses.submittedAt),
     });
     return responses;
+  }
+
+  // Promo code operations
+  async createPromoCode(promoCode: InsertPromoCode): Promise<PromoCode> {
+    const [newPromoCode] = await db
+      .insert(promoCodes)
+      .values(promoCode)
+      .returning();
+    return newPromoCode;
+  }
+
+  async updatePromoCode(id: string, promoCodeData: Partial<InsertPromoCode>): Promise<PromoCode> {
+    const [updatedPromoCode] = await db
+      .update(promoCodes)
+      .set({ ...promoCodeData, updatedAt: new Date() })
+      .where(eq(promoCodes.id, id))
+      .returning();
+    if (!updatedPromoCode) {
+      throw new Error('Promo code not found');
+    }
+    return updatedPromoCode;
+  }
+
+  async deletePromoCode(id: string): Promise<void> {
+    await db.delete(promoCodes).where(eq(promoCodes.id, id));
+  }
+
+  async getPromoCode(id: string): Promise<PromoCodeWithDetails | undefined> {
+    const promoCode = await db.query.promoCodes.findFirst({
+      where: eq(promoCodes.id, id),
+      with: {
+        creator: true,
+        updater: true,
+        redemptions: {
+          with: {
+            user: true,
+            enrollment: {
+              with: {
+                course: true,
+                schedule: true,
+                student: true,
+              },
+            },
+          },
+          orderBy: desc(promoCodeRedemptions.createdAt),
+        },
+      },
+    });
+    
+    if (!promoCode) return undefined;
+    
+    return {
+      ...promoCode,
+      redemptionCount: promoCode.redemptions.length,
+    };
+  }
+
+  async getPromoCodeByCode(code: string): Promise<PromoCode | undefined> {
+    const [promoCode] = await db
+      .select()
+      .from(promoCodes)
+      .where(eq(promoCodes.code, code.toUpperCase()));
+    return promoCode;
+  }
+
+  async getPromoCodes(): Promise<PromoCodeWithDetails[]> {
+    const promoCodeList = await db.query.promoCodes.findMany({
+      with: {
+        creator: true,
+        updater: true,
+        redemptions: {
+          with: {
+            user: true,
+          },
+        },
+      },
+      orderBy: desc(promoCodes.createdAt),
+    });
+    
+    return promoCodeList.map(promoCode => ({
+      ...promoCode,
+      redemptionCount: promoCode.redemptions.length,
+    }));
+  }
+
+  async getPromoCodesByCreator(createdBy: string): Promise<PromoCodeWithDetails[]> {
+    const promoCodeList = await db.query.promoCodes.findMany({
+      where: eq(promoCodes.createdBy, createdBy),
+      with: {
+        creator: true,
+        updater: true,
+        redemptions: {
+          with: {
+            user: true,
+          },
+        },
+      },
+      orderBy: desc(promoCodes.createdAt),
+    });
+    
+    return promoCodeList.map(promoCode => ({
+      ...promoCode,
+      redemptionCount: promoCode.redemptions.length,
+    }));
+  }
+
+  // Promo code validation and redemption
+  async validatePromoCode(code: string, userId: string, courseId: string, amount: number): Promise<PromoCodeValidationResult> {
+    const promoCode = await this.getPromoCodeByCode(code);
+    
+    if (!promoCode) {
+      return {
+        isValid: false,
+        error: 'Promo code not found',
+        errorCode: 'NOT_FOUND',
+      };
+    }
+
+    // Check if promo code is active
+    if (promoCode.status !== 'ACTIVE') {
+      return {
+        isValid: false,
+        error: 'Promo code is not active',
+        errorCode: 'EXPIRED',
+      };
+    }
+
+    // Check date validity
+    const now = new Date();
+    if (promoCode.startDate && new Date(promoCode.startDate) > now) {
+      return {
+        isValid: false,
+        error: 'Promo code is not yet valid',
+        errorCode: 'TIME_RESTRICTION',
+      };
+    }
+    
+    if (promoCode.endDate && new Date(promoCode.endDate) < now) {
+      return {
+        isValid: false,
+        error: 'Promo code has expired',
+        errorCode: 'EXPIRED',
+      };
+    }
+
+    // Check time of day restrictions
+    if (promoCode.validTimeStart && promoCode.validTimeEnd) {
+      const currentTime = now.toTimeString().slice(0, 8);
+      if (currentTime < promoCode.validTimeStart || currentTime > promoCode.validTimeEnd) {
+        return {
+          isValid: false,
+          error: 'Promo code is not valid at this time',
+          errorCode: 'TIME_RESTRICTION',
+        };
+      }
+    }
+
+    // Check day of week restrictions
+    if (promoCode.validDaysOfWeek) {
+      const currentDay = now.getDay().toString(); // 0=Sunday, 1=Monday, etc.
+      const validDays = promoCode.validDaysOfWeek.split(',');
+      if (!validDays.includes(currentDay)) {
+        return {
+          isValid: false,
+          error: 'Promo code is not valid on this day',
+          errorCode: 'TIME_RESTRICTION',
+        };
+      }
+    }
+
+    // Check total usage limit
+    if (promoCode.maxTotalUses && promoCode.currentUseCount >= promoCode.maxTotalUses) {
+      return {
+        isValid: false,
+        error: 'Promo code usage limit reached',
+        errorCode: 'USAGE_LIMIT_REACHED',
+      };
+    }
+
+    // Check per-user usage limit
+    if (promoCode.maxUsesPerUser) {
+      const userRedemptions = await this.getPromoCodeRedemptionsByUser(userId);
+      const thisCodeUses = userRedemptions.filter(r => r.promoCodeId === promoCode.id).length;
+      if (thisCodeUses >= promoCode.maxUsesPerUser) {
+        return {
+          isValid: false,
+          error: 'You have reached the usage limit for this promo code',
+          errorCode: 'USER_LIMIT_REACHED',
+        };
+      }
+    }
+
+    // Check minimum cart amount
+    if (promoCode.minCartSubtotal && amount < parseFloat(promoCode.minCartSubtotal)) {
+      return {
+        isValid: false,
+        error: `Minimum order amount of $${promoCode.minCartSubtotal} required`,
+        errorCode: 'MIN_AMOUNT_NOT_MET',
+      };
+    }
+
+    // Check course scope
+    if (promoCode.scopeType === 'COURSES' && promoCode.scopeCourseIds) {
+      if (!promoCode.scopeCourseIds.includes(courseId)) {
+        return {
+          isValid: false,
+          error: 'This promo code is not valid for this course',
+          errorCode: 'SCOPE_MISMATCH',
+        };
+      }
+    }
+
+    // Check category scope
+    if (promoCode.scopeType === 'CATEGORIES' && promoCode.scopeCategoryIds) {
+      const course = await this.getCourse(courseId);
+      if (!course || !course.categoryId || !promoCode.scopeCategoryIds.includes(course.categoryId)) {
+        return {
+          isValid: false,
+          error: 'This promo code is not valid for this course category',
+          errorCode: 'SCOPE_MISMATCH',
+        };
+      }
+    }
+
+    // Check exclusions
+    if (promoCode.exclusionCourseIds && promoCode.exclusionCourseIds.includes(courseId)) {
+      return {
+        isValid: false,
+        error: 'This course is excluded from this promo code',
+        errorCode: 'SCOPE_MISMATCH',
+      };
+    }
+
+    // Check user eligibility
+    if (promoCode.allowedUserIds && !promoCode.allowedUserIds.includes(userId)) {
+      return {
+        isValid: false,
+        error: 'You are not eligible for this promo code',
+        errorCode: 'NOT_ELIGIBLE',
+      };
+    }
+
+    if (promoCode.deniedUserIds && promoCode.deniedUserIds.includes(userId)) {
+      return {
+        isValid: false,
+        error: 'You are not eligible for this promo code',
+        errorCode: 'NOT_ELIGIBLE',
+      };
+    }
+
+    // Check first purchase eligibility
+    if (promoCode.firstPurchaseOnly) {
+      const userEnrollments = await this.getEnrollmentsByStudent(userId);
+      const paidEnrollments = userEnrollments.filter(e => e.paymentStatus === 'paid');
+      if (paidEnrollments.length > 0) {
+        return {
+          isValid: false,
+          error: 'This promo code is only valid for first-time purchases',
+          errorCode: 'NOT_ELIGIBLE',
+        };
+      }
+    }
+
+    // Calculate discount amount
+    let discountAmount = 0;
+    if (promoCode.type === 'PERCENT') {
+      discountAmount = amount * (parseFloat(promoCode.value) / 100);
+    } else if (promoCode.type === 'FIXED_AMOUNT') {
+      discountAmount = Math.min(parseFloat(promoCode.value), amount);
+    }
+
+    const finalAmount = Math.max(0, amount - discountAmount);
+
+    return {
+      isValid: true,
+      code: promoCode,
+      discountAmount,
+      finalAmount,
+    };
+  }
+
+  async redeemPromoCode(redemption: InsertPromoCodeRedemption): Promise<PromoCodeRedemption> {
+    const [newRedemption] = await db
+      .insert(promoCodeRedemptions)
+      .values(redemption)
+      .returning();
+    
+    // Update the promo code usage count
+    await this.updatePromoCodeUsageCount(redemption.promoCodeId, 1);
+    
+    return newRedemption;
+  }
+
+  async getPromoCodeRedemptions(promoCodeId: string): Promise<PromoCodeRedemption[]> {
+    const redemptions = await db
+      .select()
+      .from(promoCodeRedemptions)
+      .where(eq(promoCodeRedemptions.promoCodeId, promoCodeId))
+      .orderBy(desc(promoCodeRedemptions.createdAt));
+    return redemptions;
+  }
+
+  async getPromoCodeRedemptionsByUser(userId: string): Promise<PromoCodeRedemption[]> {
+    const redemptions = await db
+      .select()
+      .from(promoCodeRedemptions)
+      .where(eq(promoCodeRedemptions.userId, userId))
+      .orderBy(desc(promoCodeRedemptions.createdAt));
+    return redemptions;
+  }
+
+  // Promo code utility methods
+  async generatePromoCode(): Promise<string> {
+    let code: string;
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    do {
+      // Generate a random 8-character alphanumeric code
+      code = Math.random().toString(36).substring(2, 10).toUpperCase();
+      attempts++;
+      
+      // Check if code already exists
+      const existingCode = await this.getPromoCodeByCode(code);
+      if (!existingCode) {
+        return code;
+      }
+    } while (attempts < maxAttempts);
+    
+    // If we can't generate a unique code, add timestamp
+    const timestamp = Date.now().toString().slice(-4);
+    return `${code.substring(0, 4)}${timestamp}`;
+  }
+
+  async updatePromoCodeUsageCount(promoCodeId: string, increment: number): Promise<void> {
+    await db
+      .update(promoCodes)
+      .set({
+        currentUseCount: sql`${promoCodes.currentUseCount} + ${increment}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(promoCodes.id, promoCodeId));
   }
 }
 
