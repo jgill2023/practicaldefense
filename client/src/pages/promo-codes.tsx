@@ -52,6 +52,10 @@ export default function PromoCodesPage() {
       discountType: "percentage",
       discountValue: 10,
       maxUsagePerUser: 1,
+      maxUsageTotal: undefined,
+      minimumOrderAmount: undefined,
+      validFrom: undefined,
+      validUntil: undefined,
       isActive: true,
     },
   });
