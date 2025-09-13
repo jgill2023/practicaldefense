@@ -1,18 +1,19 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { randomUUID } from "crypto";
 import Stripe from "stripe";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField } from "@shared/schema";
+import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField } from "@shared/schema";
 import "./types"; // Import type declarations
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-08-27.basil",
+  apiVersion: "2024-11-20.acacia",
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -280,71 +281,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Course registration endpoint (supports non-authenticated users with account creation)
+  // DEPRECATED: Legacy course registration endpoint - Use the new secure flow instead
+  // This endpoint bypassed security checks and is now disabled
   app.post('/api/course-registration', async (req: any, res) => {
+    res.status(410).json({ 
+      message: "This endpoint has been deprecated for security reasons. Please use the new registration flow: /api/course-registration/initiate",
+      newEndpoint: "/api/course-registration/initiate"
+    });
+  });
+
+  // Single-page registration flow endpoints
+  
+  // Step 1: Initiate draft enrollment
+  app.post('/api/course-registration/initiate', async (req: any, res) => {
     try {
-      const { studentInfo, accountCreation, ...enrollmentData } = req.body;
+      const validatedData = initiateRegistrationSchema.parse(req.body);
+      const { scheduleId, paymentOption, promoCode, studentInfo, accountCreation } = validatedData;
 
-      let studentId;
-
+      let userId = null;
+      let accountCreated = false;
+      
       // If user is authenticated, use their existing account
       if (req.isAuthenticated()) {
-        studentId = req.user.claims.sub;
+        userId = req.user.claims.sub;
       } else {
-        // Handle non-authenticated registration
+        // For non-authenticated users, handle account creation if requested
+        // but keep draft enrollment with studentId=null until proper login
         if (accountCreation && accountCreation.password) {
-          // Create new user account
           try {
             const existingUser = await storage.getUserByEmail(studentInfo.email);
             if (existingUser) {
-              return res.status(400).json({ 
-                message: "An account with this email already exists. Please log in instead." 
-              });
+              return res.status(400).json({ message: "An account with this email already exists. Please log in." });
             }
-
+            
+            // Create the user account but don't assign it to the enrollment yet
+            // User must log in properly to claim the enrollment
             const newUser = await storage.upsertUser({
               email: studentInfo.email,
               firstName: studentInfo.firstName,
               lastName: studentInfo.lastName,
               role: 'student',
             });
-            studentId = newUser.id;
-
-            // TODO: Store password securely (would need to implement password hashing)
-            // For now, we'll create the account without password since we're using Replit Auth
-            
+            accountCreated = true;
+            // Keep userId = null for draft enrollment security
           } catch (error) {
             console.error("Error creating user account:", error);
             return res.status(500).json({ message: "Failed to create user account" });
           }
-        } else {
-          // Create a temporary user record for guest registration
-          try {
-            const tempUser = await storage.upsertUser({
-              email: studentInfo.email,
-              firstName: studentInfo.firstName,
-              lastName: studentInfo.lastName,
-              role: 'student',
-            });
-            studentId = tempUser.id;
-          } catch (error) {
-            console.error("Error creating temporary user:", error);
-            return res.status(500).json({ message: "Failed to create user record" });
-          }
+        }
+        // For all non-authenticated users (including those who just created accounts), userId remains null
+      }
+
+      const draftEnrollment = await storage.initiateRegistration({
+        scheduleId,
+        paymentOption,
+        promoCode,
+        studentInfo,
+        userId, // This will be null for non-authenticated users (including new account holders)
+      });
+
+      // Include account creation status in response
+      const response = {
+        ...draftEnrollment,
+        accountCreated
+      };
+
+      res.status(201).json(response);
+    } catch (error) {
+      console.error("Error initiating registration:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to initiate registration" });
+    }
+  });
+
+  // Step 2: Create or update payment intent for draft enrollment
+  app.post('/api/course-registration/payment-intent', async (req: any, res) => {
+    try {
+      const validatedData = paymentIntentRequestSchema.parse(req.body);
+      const { enrollmentId, promoCode } = validatedData;
+      
+      // Verify enrollment ownership
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+      
+      // Check ownership: either authenticated user owns it, or it's a guest enrollment
+      if (req.isAuthenticated()) {
+        const userId = req.user.claims.sub;
+        if (enrollment.studentId !== userId) {
+          return res.status(403).json({ message: "Access denied - enrollment ownership required" });
+        }
+      } else if (enrollment.studentId !== null) {
+        // Guest users can only access enrollments without a studentId (draft enrollments)
+        return res.status(403).json({ message: "Access denied - authentication required" });
+      }
+
+      const paymentData = await storage.upsertPaymentIntent({
+        enrollmentId,
+        promoCode,
+      });
+
+      res.json(paymentData);
+    } catch (error) {
+      console.error("Error creating payment intent:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create payment intent" });
+    }
+  });
+
+  // Step 3: Finalize enrollment after payment confirmation
+  app.post('/api/course-registration/confirm', async (req: any, res) => {
+    try {
+      const validatedData = confirmEnrollmentSchema.parse(req.body);
+      const { enrollmentId, paymentIntentId, studentInfo } = validatedData;
+      
+      // Verify enrollment ownership
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+      
+      // Check ownership: either authenticated user owns it, guest user matches email, or it's a draft enrollment
+      if (req.isAuthenticated()) {
+        const userId = req.user.claims.sub;
+        if (enrollment.studentId !== userId) {
+          return res.status(403).json({ message: "Access denied - enrollment ownership required" });
+        }
+      } else {
+        // For guest users, verify email matches the stored studentInfo or it's a draft enrollment
+        if (enrollment.studentInfo && enrollment.studentInfo.email !== studentInfo.email) {
+          return res.status(403).json({ message: "Access denied - email mismatch" });
         }
       }
 
-      // Create enrollment with the determined student ID
-      const validatedData = insertEnrollmentSchema.parse({
-        ...enrollmentData,
-        studentId,
+      const finalizedEnrollment = await storage.finalizeEnrollment({
+        enrollmentId,
+        paymentIntentId,
+        studentInfo,
       });
 
-      const enrollment = await storage.createEnrollment(validatedData);
-      res.status(201).json(enrollment);
+      res.status(200).json(finalizedEnrollment);
     } catch (error) {
-      console.error("Error in course registration:", error);
-      res.status(500).json({ message: "Failed to complete registration" });
+      console.error("Error finalizing enrollment:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to finalize enrollment" });
     }
   });
 

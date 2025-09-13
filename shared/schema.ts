@@ -596,3 +596,42 @@ export type PromoCodeType = 'PERCENT' | 'FIXED_AMOUNT';
 export type PromoCodeScopeType = 'GLOBAL' | 'COURSES' | 'CATEGORIES';
 export type PromoCodeStackingPolicy = 'EXCLUSIVE' | 'STACKABLE';
 export type PromoCodeStatus = 'ACTIVE' | 'SCHEDULED' | 'PAUSED' | 'EXPIRED';
+
+// Course registration API validation schemas
+export const studentInfoSchema = z.object({
+  firstName: z.string().min(1, "First name is required").max(50),
+  lastName: z.string().min(1, "Last name is required").max(50),
+  email: z.string().email("Valid email is required").max(255),
+});
+
+export const accountCreationSchema = z.object({
+  password: z.string().min(8, "Password must be at least 8 characters").max(100),
+}).optional();
+
+export const initiateRegistrationSchema = z.object({
+  scheduleId: z.string().uuid("Valid schedule ID is required"),
+  paymentOption: z.enum(['full', 'deposit'], {
+    errorMap: () => ({ message: "Payment option must be 'full' or 'deposit'" })
+  }),
+  promoCode: z.string().max(50).optional(),
+  studentInfo: studentInfoSchema,
+  accountCreation: accountCreationSchema,
+});
+
+export const paymentIntentRequestSchema = z.object({
+  enrollmentId: z.string().uuid("Valid enrollment ID is required"),
+  promoCode: z.string().max(50).optional(),
+});
+
+export const confirmEnrollmentSchema = z.object({
+  enrollmentId: z.string().uuid("Valid enrollment ID is required"),
+  paymentIntentId: z.string().min(1, "Payment intent ID is required").max(255),
+  studentInfo: studentInfoSchema,
+});
+
+// Types for course registration API
+export type StudentInfo = z.infer<typeof studentInfoSchema>;
+export type AccountCreation = z.infer<typeof accountCreationSchema>;
+export type InitiateRegistration = z.infer<typeof initiateRegistrationSchema>;
+export type PaymentIntentRequest = z.infer<typeof paymentIntentRequestSchema>;
+export type ConfirmEnrollment = z.infer<typeof confirmEnrollmentSchema>;
