@@ -5,7 +5,8 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema } from "@shared/schema";
+import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField } from "@shared/schema";
+import "./types"; // Import type declarations
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -1173,8 +1174,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/course-forms", async (req, res) => {
     try {
       // Validate request body with Zod
-      const validatedData = insertCourseInformationFormSchema.omit({ id: true, createdAt: true, updatedAt: true, sortOrder: true }).parse(req.body);
-      const { courseId, title, description, isRequired } = validatedData;
+      const { courseId, title, description, isRequired } = insertCourseInformationFormSchema.parse({
+        ...req.body,
+        // Provide defaults for omitted fields
+        sortOrder: 0,
+        isActive: true
+      });
 
       const userId = req.user?.claims?.sub;
       if (!userId) {
@@ -1260,8 +1265,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/course-form-fields", async (req, res) => {
     try {
       // Validate request body with Zod
-      const validatedData = insertCourseInformationFormFieldSchema.omit({ id: true, createdAt: true, updatedAt: true, sortOrder: true }).parse(req.body);
-      const { formId, fieldType, label, placeholder, isRequired, options } = validatedData;
+      const { formId, fieldType, label, placeholder, isRequired, options } = insertCourseInformationFormFieldSchema.parse({
+        ...req.body,
+        // Provide defaults for omitted fields
+        sortOrder: 0
+      });
 
       const userId = req.user?.claims?.sub;
       if (!userId) {

@@ -325,7 +325,12 @@ export class DatabaseStorage implements IStorage {
                 schedule: true,
               },
             },
-            waitlistEntries: true,
+            waitlistEntries: {
+              with: {
+                student: true,
+                schedule: true,
+              },
+            },
           },
           orderBy: asc(courseSchedules.startDate),
         },
@@ -351,7 +356,12 @@ export class DatabaseStorage implements IStorage {
                 schedule: true,
               },
             },
-            waitlistEntries: true,
+            waitlistEntries: {
+              with: {
+                student: true,
+                schedule: true,
+              },
+            },
           },
         },
         instructor: true,
@@ -375,7 +385,12 @@ export class DatabaseStorage implements IStorage {
                 schedule: true,
               },
             },
-            waitlistEntries: true,
+            waitlistEntries: {
+              with: {
+                student: true,
+                schedule: true,
+              },
+            },
           },
           orderBy: asc(courseSchedules.startDate),
         },
@@ -406,7 +421,12 @@ export class DatabaseStorage implements IStorage {
                 schedule: true,
               },
             },
-            waitlistEntries: true,
+            waitlistEntries: {
+              with: {
+                student: true,
+                schedule: true,
+              },
+            },
           },
           orderBy: asc(courseSchedules.startDate),
         },
