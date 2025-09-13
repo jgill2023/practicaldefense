@@ -732,7 +732,7 @@ export default function CourseRegistration() {
                   )}
                 </Button>
                 
-                {selectedSchedule && (
+                {selectedSchedule && course && (
                   <p className="text-center text-sm text-muted-foreground mt-4">
                     You will be charged ${course.price} for the course on {formatDateSafe(selectedSchedule.startDate.toString())}
                   </p>
@@ -902,6 +902,7 @@ export default function CourseRegistration() {
               </CardHeader>
               <CardContent>
                 <Elements 
+                  key={clientSecret}
                   stripe={stripePromise} 
                   options={{ 
                     clientSecret,
