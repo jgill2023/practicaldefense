@@ -321,6 +321,8 @@ export class DatabaseStorage implements IStorage {
             enrollments: {
               with: {
                 student: true,
+                course: true,
+                schedule: true,
               },
             },
             waitlistEntries: true,
@@ -345,6 +347,8 @@ export class DatabaseStorage implements IStorage {
             enrollments: {
               with: {
                 student: true,
+                course: true,
+                schedule: true,
               },
             },
             waitlistEntries: true,
@@ -367,6 +371,8 @@ export class DatabaseStorage implements IStorage {
             enrollments: {
               with: {
                 student: true,
+                course: true,
+                schedule: true,
               },
             },
             waitlistEntries: true,
@@ -396,6 +402,8 @@ export class DatabaseStorage implements IStorage {
             enrollments: {
               with: {
                 student: true,
+                course: true,
+                schedule: true,
               },
             },
             waitlistEntries: true,
@@ -874,20 +882,27 @@ export class DatabaseStorage implements IStorage {
 
   // Promo code operations
   async createPromoCode(promoCode: InsertPromoCode): Promise<PromoCode> {
+    const payload: any = {
+      ...promoCode,
+      value: String(promoCode.value), // Force string conversion for database
+    };
     const [newPromoCode] = await db
       .insert(promoCodes)
-      .values({
-        ...promoCode,
-        value: promoCode.value.toString(), // Convert number to string for database storage
-      })
+      .values(payload)
       .returning();
     return newPromoCode;
   }
 
   async updatePromoCode(id: string, promoCodeData: Partial<InsertPromoCode>): Promise<PromoCode> {
+    const updateData: any = { 
+      ...promoCodeData, 
+      ...(promoCodeData.value !== undefined ? { value: String(promoCodeData.value) } : {}),
+      updatedAt: new Date() 
+    };
+    
     const [updatedPromoCode] = await db
       .update(promoCodes)
-      .set({ ...promoCodeData, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(promoCodes.id, id))
       .returning();
     if (!updatedPromoCode) {
@@ -909,6 +924,7 @@ export class DatabaseStorage implements IStorage {
         redemptions: {
           with: {
             user: true,
+            promoCode: true,
             enrollment: {
               with: {
                 course: true,
@@ -926,6 +942,11 @@ export class DatabaseStorage implements IStorage {
     
     return {
       ...promoCode,
+      updater: promoCode.updater || undefined,
+      redemptions: promoCode.redemptions.map(r => ({
+        ...r,
+        enrollment: r.enrollment || undefined,
+      })),
       redemptionCount: promoCode.redemptions.length,
     };
   }
@@ -946,6 +967,14 @@ export class DatabaseStorage implements IStorage {
         redemptions: {
           with: {
             user: true,
+            promoCode: true,
+            enrollment: {
+              with: {
+                course: true,
+                schedule: true,
+                student: true,
+              },
+            },
           },
         },
       },
@@ -954,6 +983,11 @@ export class DatabaseStorage implements IStorage {
     
     return promoCodeList.map(promoCode => ({
       ...promoCode,
+      updater: promoCode.updater || undefined,
+      redemptions: promoCode.redemptions.map(r => ({
+        ...r,
+        enrollment: r.enrollment || undefined,
+      })),
       redemptionCount: promoCode.redemptions.length,
     }));
   }
@@ -967,6 +1001,14 @@ export class DatabaseStorage implements IStorage {
         redemptions: {
           with: {
             user: true,
+            promoCode: true,
+            enrollment: {
+              with: {
+                course: true,
+                schedule: true,
+                student: true,
+              },
+            },
           },
         },
       },
@@ -975,6 +1017,11 @@ export class DatabaseStorage implements IStorage {
     
     return promoCodeList.map(promoCode => ({
       ...promoCode,
+      updater: promoCode.updater || undefined,
+      redemptions: promoCode.redemptions.map(r => ({
+        ...r,
+        enrollment: r.enrollment || undefined,
+      })),
       redemptionCount: promoCode.redemptions.length,
     }));
   }
