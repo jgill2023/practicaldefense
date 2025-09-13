@@ -26,8 +26,8 @@ const promoCodeSchema = z.object({
     .min(1, "Code is required")
     .max(50, "Code too long")
     .trim()
-    .transform(s => s.toUpperCase())
-    .pipe(z.string().regex(/^[A-Z0-9_-]+$/, "Code must contain only uppercase letters, numbers, dashes, or underscores")),
+    .regex(/^[A-Z0-9_-]+$/i, "Code must contain only letters, numbers, dashes, or underscores")
+    .transform(s => s.toUpperCase()),
   description: z.string().min(1, "Description is required"),
   type: z.enum(["PERCENT", "FIXED_AMOUNT"]),
   value: z.string().min(1, "Value is required"),
@@ -276,7 +276,7 @@ export default function PromoCodesPage() {
                             <Input 
                               placeholder="SAVE20" 
                               {...field}
-                              onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                              value={(field.value ?? "").toUpperCase()}
                               data-testid="input-promo-code" 
                             />
                           </FormControl>
@@ -291,7 +291,7 @@ export default function PromoCodesPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Status</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select value={field.value} onValueChange={field.onChange}>
                             <FormControl>
                               <SelectTrigger data-testid="select-promo-status">
                                 <SelectValue placeholder="Select status" />
@@ -367,7 +367,7 @@ export default function PromoCodesPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Discount Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select value={field.value} onValueChange={field.onChange}>
                             <FormControl>
                               <SelectTrigger data-testid="select-promo-type">
                                 <SelectValue placeholder="Select type" />
