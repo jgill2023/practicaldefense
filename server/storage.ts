@@ -876,7 +876,10 @@ export class DatabaseStorage implements IStorage {
   async createPromoCode(promoCode: InsertPromoCode): Promise<PromoCode> {
     const [newPromoCode] = await db
       .insert(promoCodes)
-      .values(promoCode)
+      .values({
+        ...promoCode,
+        value: promoCode.value.toString(), // Convert number to string for database storage
+      })
       .returning();
     return newPromoCode;
   }
