@@ -121,13 +121,16 @@ export const eventSessions = pgTable("event_sessions", {
 
 export const enrollments = pgTable("enrollments", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  studentId: varchar("student_id").notNull().references(() => users.id),
+  studentId: varchar("student_id").references(() => users.id), // Nullable for draft enrollments
   courseId: uuid("course_id").notNull().references(() => courses.id),
   scheduleId: uuid("schedule_id").notNull().references(() => courseSchedules.id),
-  status: varchar("status").notNull().default('pending'), // 'pending', 'confirmed', 'completed', 'cancelled'
+  status: varchar("status").notNull().default('initiated'), // 'initiated', 'pending', 'confirmed', 'completed', 'cancelled'
   paymentStatus: varchar("payment_status").notNull().default('pending'), // 'pending', 'paid', 'failed'
   paymentOption: varchar("payment_option").notNull().default('full'), // 'full' or 'deposit'
   paymentIntentId: varchar("payment_intent_id"),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"), // For tracking Stripe PI
+  promoCodeApplied: varchar("promo_code_applied"), // Store applied promo code
+  studentInfo: jsonb("student_info"), // Store student data for draft enrollments
   waiverUrl: varchar("waiver_url"),
   registrationDate: timestamp("registration_date").defaultNow(),
   confirmationDate: timestamp("confirmation_date"),
