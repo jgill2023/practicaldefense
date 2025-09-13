@@ -22,10 +22,12 @@ import { Link } from "wouter";
 import type { PromoCode, CourseWithSchedules } from "@shared/schema";
 
 const promoCodeSchema = z.object({
-  code: z.preprocess(
-    (val) => typeof val === 'string' ? val.toUpperCase().trim() : val,
-    z.string().min(1, "Code is required").max(50, "Code too long").regex(/^[A-Z0-9_-]+$/, "Code must be uppercase letters, numbers, dashes, or underscores only")
-  ),
+  code: z.string()
+    .min(1, "Code is required")
+    .max(50, "Code too long")
+    .trim()
+    .transform(s => s.toUpperCase())
+    .pipe(z.string().regex(/^[A-Z0-9_-]+$/, "Code must contain only uppercase letters, numbers, dashes, or underscores")),
   description: z.string().min(1, "Description is required"),
   type: z.enum(["PERCENT", "FIXED_AMOUNT"]),
   value: z.string().min(1, "Value is required"),
@@ -80,6 +82,7 @@ export default function PromoCodesPage() {
       status: "ACTIVE",
     },
   });
+
 
   useEffect(() => {
     if (editingPromoCode) {
