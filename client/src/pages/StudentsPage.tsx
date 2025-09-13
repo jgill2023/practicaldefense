@@ -13,7 +13,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Users, Phone, Mail, Edit3, Calendar } from "lucide-react";
+import { Users, Phone, Mail, Edit3, Calendar, ArrowLeft } from "lucide-react";
+import { Link } from "wouter";
 import { format } from "date-fns";
 
 // Edit student form schema
@@ -236,6 +237,16 @@ function StudentsPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
+      {/* Back to Dashboard Link */}
+      <div className="mb-6">
+        <Link href="/instructor-dashboard">
+          <Button variant="ghost" size="sm" data-testid="button-back-to-dashboard">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        </Link>
+      </div>
+      
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Students Management</h1>
         <p className="text-muted-foreground">
