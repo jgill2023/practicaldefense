@@ -25,6 +25,7 @@ const courseSchema = z.object({
   title: z.string().min(1, "Course title is required"),
   briefDescription: z.string().max(500, "Brief description must be under 500 characters").optional(),
   description: z.string().min(1, "Course description is required"),
+  abbreviation: z.string().max(10, "Abbreviation must be under 10 characters").optional(),
   price: z.string().min(1, "Price is required"),
   depositAmount: z.string().optional().refine((val) => {
     if (!val || val === "") return true;
@@ -79,6 +80,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       title: course.title,
       briefDescription: course.briefDescription || "",
       description: course.description,
+      abbreviation: course.abbreviation || "",
       price: course.price.toString(),
       depositAmount: course.depositAmount ? course.depositAmount.toString() : "",
       duration: course.duration,
@@ -230,6 +232,21 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                     />
                     {form.formState.errors.title && (
                       <p className="text-sm text-red-600 mt-1">{form.formState.errors.title.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="abbreviation">Course Abbreviation</Label>
+                    <Input
+                      id="abbreviation"
+                      {...form.register("abbreviation")}
+                      placeholder="e.g., CCW, PDT, BPS"
+                      maxLength={10}
+                      data-testid="input-course-abbreviation"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Short code for easy identification (up to 10 characters)</p>
+                    {form.formState.errors.abbreviation && (
+                      <p className="text-sm text-red-600 mt-1">{form.formState.errors.abbreviation.message}</p>
                     )}
                   </div>
 

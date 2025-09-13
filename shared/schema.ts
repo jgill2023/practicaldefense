@@ -31,7 +31,9 @@ export const users = pgTable("users", {
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
+  phone: varchar("phone", { length: 20 }),
   profileImageUrl: varchar("profile_image_url"),
+  concealedCarryLicenseExpiration: timestamp("concealed_carry_license_expiration"),
   role: varchar("role").notNull().default('student'), // 'student' or 'instructor'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -54,6 +56,7 @@ export const courses = pgTable("courses", {
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description").notNull(),
   briefDescription: varchar("brief_description", { length: 500 }),
+  abbreviation: varchar("abbreviation", { length: 10 }), // Course abbreviation (e.g., "CCW", "PDT")
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   depositAmount: decimal("deposit_amount", { precision: 10, scale: 2 }),
   duration: varchar("duration", { length: 100 }).notNull(),

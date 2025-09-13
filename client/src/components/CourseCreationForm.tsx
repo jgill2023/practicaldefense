@@ -21,6 +21,7 @@ const courseSchema = z.object({
   title: z.string().min(1, "Course title is required"),
   briefDescription: z.string().max(500, "Brief description must be under 500 characters").optional(),
   description: z.string().min(1, "Course description is required"),
+  abbreviation: z.string().max(10, "Abbreviation must be under 10 characters").optional(),
   price: z.string().min(1, "Price is required"),
   depositAmount: z.string().optional().refine((val) => {
     if (!val || val === "") return true;
@@ -104,8 +105,6 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
   const onSubmit = (data: CourseFormData) => {
     const courseData = {
       ...data,
-      price: parseFloat(data.price),
-      depositAmount: data.depositAmount && data.depositAmount !== "" ? parseFloat(data.depositAmount) : undefined,
       imageUrl: uploadedImageUrl || undefined,
     };
     createCourseMutation.mutate(courseData);
@@ -218,6 +217,21 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
                     />
                     {form.formState.errors.title && (
                       <p className="text-sm text-destructive mt-1">{form.formState.errors.title.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="abbreviation">Course Abbreviation</Label>
+                    <Input
+                      id="abbreviation"
+                      {...form.register("abbreviation")}
+                      placeholder="e.g., CCW, PDT, BPS"
+                      maxLength={10}
+                      data-testid="input-course-abbreviation"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Short code for easy identification (up to 10 characters)</p>
+                    {form.formState.errors.abbreviation && (
+                      <p className="text-sm text-destructive mt-1">{form.formState.errors.abbreviation.message}</p>
                     )}
                   </div>
 
