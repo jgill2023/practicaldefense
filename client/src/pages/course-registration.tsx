@@ -688,6 +688,197 @@ export default function CourseRegistration() {
             </Card>
           )}
 
+          {/* Payment Section */}
+          {showPayment && currentEnrollment && clientSecret && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-foreground mb-2">Complete Your Payment</h2>
+                <p className="text-muted-foreground">Secure payment powered by Stripe</p>
+              </div>
+
+              {/* Order Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-semibold text-foreground" data-testid="text-order-course-title">
+                          {currentEnrollment?.course?.title || 'Course'}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          {currentEnrollment?.schedule?.startDate ? new Date(currentEnrollment.schedule.startDate).toLocaleDateString() : 'TBD'} - {currentEnrollment?.course?.duration || 'TBD'}
+                        </p>
+                        {currentEnrollment?.schedule?.location && (
+                          <p className="text-sm text-muted-foreground">📍 {currentEnrollment.schedule.location}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-primary" data-testid="text-order-price">
+                          ${taxInfo?.total?.toFixed(2) || getPaymentAmount(currentEnrollment)}
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                          <Badge variant="outline">
+                            {typeof currentEnrollment?.course?.category === 'string' ? currentEnrollment.course.category : 
+                             (currentEnrollment?.course?.category && typeof currentEnrollment.course.category === 'object' && 'name' in currentEnrollment.course.category) 
+                               ? (currentEnrollment.course.category as any).name || 'General' 
+                               : 'General'}
+                          </Badge>
+                          {currentEnrollment?.paymentOption === 'deposit' && (
+                            <Badge variant="secondary">
+                              Deposit Payment
+                            </Badge>
+                          )}
+                          {taxInfo?.tax_included && (
+                            <Badge variant="default">
+                              Tax Included
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>
+                          {currentEnrollment?.paymentOption === 'deposit' ? 'Course deposit' : 'Course fee'}
+                        </span>
+                        <span>${taxInfo?.originalAmount?.toFixed(2) || getPaymentAmount(currentEnrollment)}</span>
+                      </div>
+                      {currentEnrollment?.paymentOption === 'deposit' && currentEnrollment?.course?.depositAmount && (
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>Remaining balance (due later)</span>
+                          <span>${currentEnrollment?.course?.price && currentEnrollment?.course?.depositAmount ? (parseFloat(currentEnrollment.course.price) - parseFloat(currentEnrollment.course.depositAmount)).toFixed(2) : '0.00'}</span>
+                        </div>
+                      )}
+                      
+                      {/* Promo Code Section */}
+                      <div className="mt-4 p-3 border rounded-lg bg-muted/30">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Tag className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">Promo Code</span>
+                        </div>
+                        
+                        {!promoCodeApplied ? (
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Enter promo code"
+                              value={promoCode}
+                              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                              onKeyDown={(e) => e.key === 'Enter' && validateAndApplyPromoCode()}
+                              className="flex-1"
+                              data-testid="input-promo-code"
+                            />
+                            <Button 
+                              onClick={validateAndApplyPromoCode}
+                              disabled={!promoCode.trim() || isValidatingPromo}
+                              size="sm"
+                              data-testid="button-apply-promo"
+                            >
+                              {isValidatingPromo ? "Checking..." : "Apply"}
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-2 rounded">
+                            <div className="flex items-center gap-2">
+                              <Check className="h-4 w-4" />
+                              <span className="text-sm font-medium" data-testid="text-applied-promo">
+                                {promoCodeApplied} applied
+                              </span>
+                            </div>
+                            <Button 
+                              onClick={removePromoCode}
+                              variant="ghost" 
+                              size="sm"
+                              className="h-auto p-1 text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100"
+                              data-testid="button-remove-promo"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {promoError && (
+                          <div className="text-red-600 text-sm mt-1" data-testid="text-promo-error">
+                            {promoError}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Show discount if applied */}
+                      {taxInfo?.discountAmount && taxInfo.discountAmount > 0 && (
+                        <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                          <span>Discount ({promoCodeApplied})</span>
+                          <span data-testid="text-discount-amount">-${taxInfo.discountAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Subtotal</span>
+                        <span>${taxInfo?.subtotal?.toFixed(2) || getPaymentAmount(currentEnrollment)}</span>
+                      </div>
+                      {taxInfo?.tax_included && taxInfo.tax > 0 && (
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>Tax</span>
+                          <span>${taxInfo.tax.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Processing fee</span>
+                        <span>$0.00</span>
+                      </div>
+                      <div className="flex justify-between font-semibold text-lg mt-2 pt-2 border-t">
+                        <span>Total due today</span>
+                        <span data-testid="text-total-amount">${taxInfo?.total?.toFixed(2) || getPaymentAmount(currentEnrollment)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Payment Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    Payment Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Elements 
+                    key={clientSecret}
+                    stripe={stripePromise} 
+                    options={{ 
+                      clientSecret,
+                      appearance: {
+                        theme: 'stripe',
+                        variables: {
+                          colorPrimary: '#1F2937',
+                        }
+                      }
+                    }}
+                  >
+                    <CheckoutForm enrollment={currentEnrollment} confirmEnrollmentMutation={confirmEnrollmentMutation} />
+                  </Elements>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {showPayment && currentEnrollment && !clientSecret && (
+            <div className="mb-6">
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">Setting up payment...</h3>
+                  <p className="text-muted-foreground">Please wait while we prepare your secure checkout</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Terms and Conditions */}
           <Card>
             <CardContent className="pt-6">
@@ -749,196 +940,6 @@ export default function CourseRegistration() {
           )}
         </form>
 
-        {/* Payment Section */}
-        {showPayment && currentEnrollment && clientSecret && (
-          <div className="mt-12 space-y-8">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Complete Your Payment</h2>
-              <p className="text-muted-foreground">Secure payment powered by Stripe</p>
-            </div>
-
-            {/* Order Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-semibold text-foreground" data-testid="text-order-course-title">
-                        {currentEnrollment.course.title}
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(currentEnrollment.schedule.startDate).toLocaleDateString()} - {currentEnrollment.course.duration}
-                      </p>
-                      {currentEnrollment.schedule.location && (
-                        <p className="text-sm text-muted-foreground">📍 {currentEnrollment.schedule.location}</p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-primary" data-testid="text-order-price">
-                        ${taxInfo?.total?.toFixed(2) || getPaymentAmount(currentEnrollment)}
-                      </div>
-                      <div className="flex gap-2 mt-2">
-                        <Badge variant="outline">
-                          {typeof currentEnrollment.course.category === 'string' ? currentEnrollment.course.category : 
-                           (currentEnrollment.course.category && typeof currentEnrollment.course.category === 'object' && 'name' in currentEnrollment.course.category) 
-                             ? (currentEnrollment.course.category as any).name || 'General' 
-                             : 'General'}
-                        </Badge>
-                        {currentEnrollment.paymentOption === 'deposit' && (
-                          <Badge variant="secondary">
-                            Deposit Payment
-                          </Badge>
-                        )}
-                        {taxInfo?.tax_included && (
-                          <Badge variant="default">
-                            Tax Included
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>
-                        {currentEnrollment.paymentOption === 'deposit' ? 'Course deposit' : 'Course fee'}
-                      </span>
-                      <span>${taxInfo?.originalAmount?.toFixed(2) || getPaymentAmount(currentEnrollment)}</span>
-                    </div>
-                    {currentEnrollment.paymentOption === 'deposit' && currentEnrollment.course.depositAmount && (
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Remaining balance (due later)</span>
-                        <span>${(parseFloat(currentEnrollment.course.price) - parseFloat(currentEnrollment.course.depositAmount)).toFixed(2)}</span>
-                      </div>
-                    )}
-                    
-                    {/* Promo Code Section */}
-                    <div className="mt-4 p-3 border rounded-lg bg-muted/30">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Tag className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">Promo Code</span>
-                      </div>
-                      
-                      {!promoCodeApplied ? (
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Enter promo code"
-                            value={promoCode}
-                            onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                            onKeyDown={(e) => e.key === 'Enter' && validateAndApplyPromoCode()}
-                            className="flex-1"
-                            data-testid="input-promo-code"
-                          />
-                          <Button 
-                            onClick={validateAndApplyPromoCode}
-                            disabled={!promoCode.trim() || isValidatingPromo}
-                            size="sm"
-                            data-testid="button-apply-promo"
-                          >
-                            {isValidatingPromo ? "Checking..." : "Apply"}
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-2 rounded">
-                          <div className="flex items-center gap-2">
-                            <Check className="h-4 w-4" />
-                            <span className="text-sm font-medium" data-testid="text-applied-promo">
-                              {promoCodeApplied} applied
-                            </span>
-                          </div>
-                          <Button 
-                            onClick={removePromoCode}
-                            variant="ghost" 
-                            size="sm"
-                            className="h-auto p-1 text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100"
-                            data-testid="button-remove-promo"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      )}
-                      
-                      {promoError && (
-                        <div className="text-red-600 text-sm mt-1" data-testid="text-promo-error">
-                          {promoError}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Show discount if applied */}
-                    {taxInfo?.discountAmount && taxInfo.discountAmount > 0 && (
-                      <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
-                        <span>Discount ({promoCodeApplied})</span>
-                        <span data-testid="text-discount-amount">-${taxInfo.discountAmount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>Subtotal</span>
-                      <span>${taxInfo?.subtotal?.toFixed(2) || getPaymentAmount(currentEnrollment)}</span>
-                    </div>
-                    {taxInfo?.tax_included && taxInfo.tax > 0 && (
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Tax</span>
-                        <span>${taxInfo.tax.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>Processing fee</span>
-                      <span>$0.00</span>
-                    </div>
-                    <div className="flex justify-between font-semibold text-lg mt-2 pt-2 border-t">
-                      <span>Total due today</span>
-                      <span data-testid="text-total-amount">${taxInfo?.total?.toFixed(2) || getPaymentAmount(currentEnrollment)}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Payment Form */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <CreditCard className="mr-2 h-5 w-5" />
-                  Payment Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Elements 
-                  key={clientSecret}
-                  stripe={stripePromise} 
-                  options={{ 
-                    clientSecret,
-                    appearance: {
-                      theme: 'stripe',
-                      variables: {
-                        colorPrimary: '#1F2937',
-                      }
-                    }
-                  }}
-                >
-                  <CheckoutForm enrollment={currentEnrollment} confirmEnrollmentMutation={confirmEnrollmentMutation} />
-                </Elements>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {showPayment && currentEnrollment && !clientSecret && (
-          <div className="mt-12">
-            <Card>
-              <CardContent className="p-8 text-center">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">Setting up payment...</h3>
-                <p className="text-muted-foreground">Please wait while we prepare your secure checkout</p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </div>
     </Layout>
   );
