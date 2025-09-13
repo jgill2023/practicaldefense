@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Archive, Trash2, EyeOff, Eye, Percent } from "lucide-react";
+import { MoreHorizontal, Edit, Archive, Trash2, EyeOff, Eye } from "lucide-react";
 import type { CourseWithSchedules } from "@shared/schema";
 
 interface CourseManagementActionsProps {
@@ -130,13 +130,6 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
             Edit Course
           </DropdownMenuItem>
 
-          <DropdownMenuItem 
-            onClick={() => setLocation(`/promo-codes/${course.id}`)}
-            data-testid={`button-promo-codes-${course.id}`}
-          >
-            <Percent className="mr-2 h-4 w-4" />
-            Manage Promo Codes
-          </DropdownMenuItem>
           
           <DropdownMenuItem 
             onClick={() => publishCourseMutation.mutate({ 
