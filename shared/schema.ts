@@ -468,6 +468,7 @@ export const insertStudentFormResponseSchema = createInsertSchema(studentFormRes
 export const insertCouponSchema = createInsertSchema(coupons).omit({
   id: true,
   currentUsageCount: true,
+  createdBy: true, // Handled server-side
   createdAt: true,
   updatedAt: true,
 }).extend({

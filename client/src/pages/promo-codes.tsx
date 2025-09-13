@@ -146,10 +146,13 @@ export default function PromoCodesPage() {
 
   const handleCreate = (data: InsertCoupon) => {
     console.log("Form data before submission:", data);
-    console.log("Form errors:", createForm.formState.errors);
-    console.log("Form is valid:", createForm.formState.isValid);
-    console.log("Form submission count:", createForm.formState.submitCount);
-    createMutation.mutate(data);
+    // Add the current user's ID as createdBy
+    const submissionData = {
+      ...data,
+      createdBy: user?.id
+    };
+    console.log("Submission data with createdBy:", submissionData);
+    createMutation.mutate(submissionData);
   };
 
   const handleEdit = (coupon: CouponWithUsage) => {
