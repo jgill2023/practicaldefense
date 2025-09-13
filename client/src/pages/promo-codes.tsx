@@ -24,7 +24,8 @@ import type { PromoCode, CourseWithSchedules } from "@shared/schema";
 const promoCodeSchema = z.object({
   code: z.string()
     .min(1, "Code is required")
-    .max(50, "Code too long"),
+    .max(50, "Code too long")
+    .transform(v => v.trim().toUpperCase()),
   description: z.string().min(1, "Description is required"),
   type: z.enum(["PERCENT", "FIXED_AMOUNT"]),
   value: z.string().min(1, "Value is required"),
