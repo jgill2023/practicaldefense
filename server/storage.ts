@@ -813,7 +813,17 @@ export class DatabaseStorage implements IStorage {
         studentId: null, // No student yet for draft enrollment
       })
       .returning();
-    return draftEnrollment;
+
+    // Return enrollment with course and schedule data included
+    const enrollmentWithDetails = await db.query.enrollments.findFirst({
+      where: eq(enrollments.id, draftEnrollment.id),
+      with: {
+        course: true,
+        schedule: true,
+      },
+    });
+
+    return enrollmentWithDetails || draftEnrollment;
   }
 
   async upsertPaymentIntent(enrollmentId: string, promoCode?: string): Promise<{
