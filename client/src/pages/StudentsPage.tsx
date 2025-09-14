@@ -152,7 +152,15 @@ function StudentsPage() {
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
-                          <Badge variant="secondary" className="text-sm font-medium">
+                          <Badge 
+                            variant="secondary" 
+                            className="text-sm font-medium border"
+                            style={{
+                              backgroundColor: enrollment.categoryColor ? `${enrollment.categoryColor}20` : '#f1f5f9',
+                              borderColor: enrollment.categoryColor || '#cbd5e1',
+                              color: enrollment.categoryColor || '#64748b'
+                            }}
+                          >
                             {enrollment.courseAbbreviation}
                           </Badge>
                         </div>
