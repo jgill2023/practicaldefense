@@ -1,6 +1,16 @@
 # Overview
 
-ProTrain Academy is a professional firearms training management platform built as a full-stack web application. The system enables instructors to manage courses, schedules, and student enrollments while providing students with a portal to browse, register for, and track their training progress. The platform includes integrated payment processing via Stripe and secure document management for training waivers and certificates.
+ProTrain Academy is a professional firearms training management platform built as a full-stack web application. The system enables instructors to manage courses, schedules, and student enrollments while providing students with a comprehensive portal to browse, register for, and track their training progress. The platform includes integrated payment processing via Stripe, secure document management for training waivers and certificates, advanced student management with license tracking, payment balance monitoring, and form completion status tracking.
+
+# Recent Changes
+
+## December 2024 - Enhanced Student Management System
+- Added comprehensive license management with automatic expiration warnings
+- Implemented payment balance tracking and form completion status monitoring  
+- Enhanced student dashboard with detailed course progress and administrative tools
+- Added email reminder preferences for license renewals and refresher courses
+- Created enhanced enrollment cards showing payment status and form completion
+- Integrated real-time status indicators with color-coded warning system
 
 # User Preferences
 
@@ -39,12 +49,14 @@ The application uses a relational database approach with PostgreSQL:
 
 ### Database Schema
 Key entities include:
-- **Users**: Stores user profiles with role-based access (student/instructor)
+- **Users**: Stores user profiles with role-based access (student/instructor), including license management fields for concealed carry permits, issued/expiration dates, and email reminder preferences
 - **Courses**: Course information with pricing, capacity, and categorization
 - **Course Schedules**: Multiple schedule instances per course for recurring training
-- **Enrollments**: Links students to course schedules with payment status tracking
+- **Enrollments**: Links students to course schedules with payment status tracking, supporting deposit vs full payment options
 - **Sessions**: Persistent session storage for authentication
 - **App Settings**: Global application configuration including home page course display limits
+- **Course Information Forms**: Dynamic form structure for course-specific waivers and documentation
+- **Student Form Responses**: Tracks completion status of required forms per enrollment
 
 ## Authentication and Authorization
 The system implements a secure authentication flow:
