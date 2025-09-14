@@ -502,15 +502,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateSchema = z.object({
         phone: z.string().optional(),
         concealedCarryLicenseExpiration: z.string().optional(),
+        concealedCarryLicenseIssued: z.string().optional(),
+        licenseExpirationReminderDays: z.number().optional(),
+        enableLicenseExpirationReminder: z.boolean().optional(),
+        refresherReminderDays: z.number().optional(),
+        enableRefresherReminder: z.boolean().optional(),
       });
       
       const validatedData = updateSchema.parse(req.body);
       
-      // Convert date string to proper format for database
+      // Convert date strings to proper format for database
       const updateData = {
         ...validatedData,
         concealedCarryLicenseExpiration: validatedData.concealedCarryLicenseExpiration 
           ? new Date(validatedData.concealedCarryLicenseExpiration).toISOString()
+          : undefined,
+        concealedCarryLicenseIssued: validatedData.concealedCarryLicenseIssued 
+          ? new Date(validatedData.concealedCarryLicenseIssued).toISOString()
           : undefined,
       };
 
@@ -519,6 +527,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating student:", error);
       res.status(500).json({ message: "Failed to update student" });
+    }
+  });
+
+  // Payment balance tracking
+  app.get('/api/enrollments/:enrollmentId/payment-balance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const enrollmentId = req.params.enrollmentId;
+      
+      // Verify enrollment ownership
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+      
+      // Check ownership: either student owns it or instructor has access
+      const user = await storage.getUser(userId);
+      const hasAccess = enrollment.studentId === userId || 
+                       (user?.role === 'instructor' && enrollment.course?.instructorId === userId);
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const paymentBalance = await storage.getPaymentBalance(enrollmentId);
+      res.json(paymentBalance);
+    } catch (error) {
+      console.error("Error fetching payment balance:", error);
+      res.status(500).json({ message: "Failed to fetch payment balance" });
+    }
+  });
+
+  // Form completion status tracking
+  app.get('/api/enrollments/:enrollmentId/form-completion', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const enrollmentId = req.params.enrollmentId;
+      
+      // Verify enrollment ownership
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+      
+      // Check ownership: either student owns it or instructor has access
+      const user = await storage.getUser(userId);
+      const hasAccess = enrollment.studentId === userId || 
+                       (user?.role === 'instructor' && enrollment.course?.instructorId === userId);
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const formStatus = await storage.getFormCompletionStatus(enrollmentId);
+      res.json(formStatus);
+    } catch (error) {
+      console.error("Error fetching form completion status:", error);
+      res.status(500).json({ message: "Failed to fetch form completion status" });
     }
   });
 
