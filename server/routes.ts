@@ -491,7 +491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Verify instructor has access to this student through enrollments
       const studentsData = await storage.getStudentsByInstructor(userId);
-      const allStudents = [...studentsData.current, ...studentsData.past, ...studentsData.upcoming];
+      const allStudents = [...studentsData.current, ...studentsData.former];
       const studentExists = allStudents.some(student => student.id === studentId);
       
       if (!studentExists) {

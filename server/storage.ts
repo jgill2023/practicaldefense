@@ -87,8 +87,7 @@ export interface IStorage {
   getEnrollmentsByCourse(courseId: string): Promise<EnrollmentWithDetails[]>;
   getStudentsByInstructor(instructorId: string): Promise<{
     current: any[];
-    past: any[];
-    upcoming: any[];
+    former: any[];
   }>;
   
   // Draft enrollment operations for single-page registration
@@ -690,82 +689,71 @@ export class DatabaseStorage implements IStorage {
 
   async getStudentsByInstructor(instructorId: string): Promise<{
     current: any[];
-    past: any[];
-    upcoming: any[];
+    former: any[];
   }> {
-    // Get all enrollments for instructor's courses (all payment statuses)
+    // Get all completed enrollments for instructor's courses (confirmed enrollments with paid status only)
     const enrollmentList = await db.query.enrollments.findMany({
       with: {
         course: true,
         schedule: true,
         student: true,
       },
+      where: and(
+        eq(enrollments.status, 'confirmed'),
+        eq(enrollments.paymentStatus, 'paid')
+      ),
       orderBy: desc(enrollments.createdAt),
     });
 
-    // Filter for instructor's courses only
-    const instructorEnrollments = enrollmentList.filter(e => 
-      e.course && e.course.instructorId === instructorId
-    );
-
-    // Group students by enrollment status
-    const studentsMap = new Map<string, {
-      id: string;
-      firstName: string;
-      lastName: string;
-      email: string;
-      phone?: string;
-      concealedCarryLicenseExpiration?: string;
-      enrollments: any[];
-    }>();
+    // Filter for instructor's courses only and exclude incomplete registrations
+    const instructorEnrollments = enrollmentList.filter(e => {
+      // Only include if we have complete student data and course belongs to instructor
+      return e.course && 
+             e.course.instructorId === instructorId &&
+             e.student &&
+             e.student.firstName &&
+             e.student.lastName &&
+             e.student.email &&
+             e.schedule;
+    });
 
     const now = new Date();
 
-    // Process enrollments and categorize by schedule dates
-    const currentEnrollments: any[] = [];
-    const pastEnrollments: any[] = [];
-    const upcomingEnrollments: any[] = [];
+    // Separate enrollments by course timing
+    const currentEnrollments: any[] = []; // Students enrolled in upcoming courses
+    const formerEnrollments: any[] = [];  // Students who have taken past courses
 
     for (const enrollment of instructorEnrollments) {
-      if (!enrollment.student || !enrollment.schedule || !enrollment.course) continue;
-
-      const scheduleDate = new Date(enrollment.schedule.startDate);
-      const scheduleDateTime = new Date(enrollment.schedule.endDate);
+      const scheduleEndDate = new Date(enrollment.schedule.endDate);
 
       const enrollmentData = {
         id: enrollment.id,
         courseTitle: enrollment.course.title,
-        courseAbbreviation: enrollment.course.abbreviation || '',
+        courseAbbreviation: enrollment.course.abbreviation || enrollment.course.title.split(' ').map(w => w[0]).join('').toUpperCase(),
         scheduleDate: enrollment.schedule.startDate,
         scheduleStartTime: enrollment.schedule.startTime,
         scheduleEndTime: enrollment.schedule.endTime,
         paymentStatus: enrollment.paymentStatus,
       };
 
-      // Categorize based on schedule timing
-      if (scheduleDateTime < now) {
-        // Past: course has ended
-        pastEnrollments.push({
-          ...enrollment,
-          enrollmentData,
-        });
-      } else if (scheduleDate <= now) {
-        // Current: course is today or ongoing
-        currentEnrollments.push({
+      // Categorize: current = upcoming courses, former = completed courses
+      if (scheduleEndDate < now) {
+        // Former: course has ended
+        formerEnrollments.push({
           ...enrollment,
           enrollmentData,
         });
       } else {
-        // Upcoming: course hasn't started yet
-        upcomingEnrollments.push({
+        // Current: course is upcoming or ongoing
+        currentEnrollments.push({
           ...enrollment,
           enrollmentData,
         });
       }
     }
 
-    // Process each category
-    const processEnrollments = (enrollmentsList: any[]) => {
+    // Process and sort each category
+    const processEnrollments = (enrollmentsList: any[], isCurrentStudents: boolean) => {
       const studentsMap = new Map();
       
       for (const enrollment of enrollmentsList) {
@@ -774,9 +762,9 @@ export class DatabaseStorage implements IStorage {
         if (!studentsMap.has(studentId)) {
           studentsMap.set(studentId, {
             id: enrollment.student.id,
-            firstName: enrollment.student.firstName || '',
-            lastName: enrollment.student.lastName || '',
-            email: enrollment.student.email || '',
+            firstName: enrollment.student.firstName,
+            lastName: enrollment.student.lastName,
+            email: enrollment.student.email,
             phone: enrollment.student.phone || undefined,
             concealedCarryLicenseExpiration: enrollment.student.concealedCarryLicenseExpiration || undefined,
             enrollments: [],
@@ -786,13 +774,70 @@ export class DatabaseStorage implements IStorage {
         studentsMap.get(studentId).enrollments.push(enrollment.enrollmentData);
       }
       
-      return Array.from(studentsMap.values());
+      const students = Array.from(studentsMap.values());
+      
+      // Sort students based on category
+      if (isCurrentStudents) {
+        // For current students: sort by upcoming course, then by date, then alphabetically by first name
+        students.forEach(student => {
+          student.enrollments.sort((a: any, b: any) => {
+            // First by course abbreviation
+            const courseCompare = a.courseAbbreviation.localeCompare(b.courseAbbreviation);
+            if (courseCompare !== 0) return courseCompare;
+            
+            // Then by date
+            const dateCompare = new Date(a.scheduleDate).getTime() - new Date(b.scheduleDate).getTime();
+            if (dateCompare !== 0) return dateCompare;
+            
+            // Then by start time
+            return a.scheduleStartTime.localeCompare(b.scheduleStartTime);
+          });
+        });
+        
+        // Sort students by their next upcoming course, then by first name
+        students.sort((a, b) => {
+          const aNext = a.enrollments[0];
+          const bNext = b.enrollments[0];
+          
+          // First by course abbreviation of next course
+          const courseCompare = aNext.courseAbbreviation.localeCompare(bNext.courseAbbreviation);
+          if (courseCompare !== 0) return courseCompare;
+          
+          // Then by date of next course
+          const dateCompare = new Date(aNext.scheduleDate).getTime() - new Date(bNext.scheduleDate).getTime();
+          if (dateCompare !== 0) return dateCompare;
+          
+          // Finally alphabetically by first name
+          return a.firstName.localeCompare(b.firstName);
+        });
+      } else {
+        // For former students: sort by most recent course completion, then alphabetically
+        students.forEach(student => {
+          student.enrollments.sort((a: any, b: any) => {
+            // Sort by most recent first
+            return new Date(b.scheduleDate).getTime() - new Date(a.scheduleDate).getTime();
+          });
+        });
+        
+        students.sort((a, b) => {
+          const aRecent = a.enrollments[0];
+          const bRecent = b.enrollments[0];
+          
+          // Sort by most recent course completion
+          const dateCompare = new Date(bRecent.scheduleDate).getTime() - new Date(aRecent.scheduleDate).getTime();
+          if (dateCompare !== 0) return dateCompare;
+          
+          // Then alphabetically by first name
+          return a.firstName.localeCompare(b.firstName);
+        });
+      }
+      
+      return students;
     };
 
     return {
-      current: processEnrollments(currentEnrollments),
-      past: processEnrollments(pastEnrollments),
-      upcoming: processEnrollments(upcomingEnrollments),
+      current: processEnrollments(currentEnrollments, true),
+      former: processEnrollments(formerEnrollments, false),
     };
   }
 

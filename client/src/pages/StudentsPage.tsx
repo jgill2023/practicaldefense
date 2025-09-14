@@ -46,8 +46,7 @@ interface Student {
 
 interface StudentsData {
   current: Student[];
-  past: Student[];
-  upcoming: Student[];
+  former: Student[];
 }
 
 function StudentsPage() {
@@ -102,9 +101,8 @@ function StudentsPage() {
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No {category} Students</h3>
             <p className="text-muted-foreground text-center">
-              {category === "current" && "No students are currently enrolled in active courses."}
-              {category === "past" && "No students have completed courses yet."}
-              {category === "upcoming" && "No students are enrolled in upcoming courses."}
+              {category === "current" && "No students are currently enrolled in upcoming courses."}
+              {category === "former" && "No students have completed courses yet."}
             </p>
           </CardContent>
         </Card>
@@ -154,12 +152,9 @@ function StudentsPage() {
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
-                          {enrollment.courseAbbreviation && (
-                            <Badge variant="secondary" className="text-xs">
-                              {enrollment.courseAbbreviation}
-                            </Badge>
-                          )}
-                          <span className="text-sm font-medium">{enrollment.courseTitle}</span>
+                          <Badge variant="secondary" className="text-sm font-medium">
+                            {enrollment.courseAbbreviation}
+                          </Badge>
                         </div>
                         <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                           <Calendar className="h-3 w-3" />
@@ -168,10 +163,10 @@ function StudentsPage() {
                           </span>
                         </div>
                         <Badge 
-                          variant={enrollment.paymentStatus === 'completed' ? 'default' : 
+                          variant={enrollment.paymentStatus === 'paid' ? 'default' : 
                                    enrollment.paymentStatus === 'pending' ? 'secondary' : 'destructive'}
                           className={`text-xs ${
-                            enrollment.paymentStatus === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                            enrollment.paymentStatus === 'paid' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
                             enrollment.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
                             ''
                           }`}
@@ -255,28 +250,20 @@ function StudentsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="current" data-testid="tab-current-students">
-            Current
+            Current Students
             {studentsData?.current && studentsData.current.length > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {studentsData.current.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="upcoming" data-testid="tab-upcoming-students">
-            Upcoming
-            {studentsData?.upcoming && studentsData.upcoming.length > 0 && (
+          <TabsTrigger value="former" data-testid="tab-former-students">
+            Former Students
+            {studentsData?.former && studentsData.former.length > 0 && (
               <Badge variant="secondary" className="ml-2">
-                {studentsData.upcoming.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="past" data-testid="tab-past-students">
-            Past
-            {studentsData?.past && studentsData.past.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
-                {studentsData.past.length}
+                {studentsData.former.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -286,12 +273,8 @@ function StudentsPage() {
           {renderStudentsTable(studentsData?.current || [], "current")}
         </TabsContent>
 
-        <TabsContent value="upcoming" className="space-y-4" data-testid="content-upcoming-students">
-          {renderStudentsTable(studentsData?.upcoming || [], "upcoming")}
-        </TabsContent>
-
-        <TabsContent value="past" className="space-y-4" data-testid="content-past-students">
-          {renderStudentsTable(studentsData?.past || [], "past")}
+        <TabsContent value="former" className="space-y-4" data-testid="content-former-students">
+          {renderStudentsTable(studentsData?.former || [], "former")}
         </TabsContent>
       </Tabs>
 
