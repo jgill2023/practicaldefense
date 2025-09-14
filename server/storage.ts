@@ -837,7 +837,8 @@ export class DatabaseStorage implements IStorage {
     promoCode?: string;
   }> {
     // Import Stripe here to avoid circular dependencies
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const Stripe = await import('stripe');
+    const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY!);
     
     // Get enrollment and course details
     const enrollment = await db.query.enrollments.findFirst({
@@ -846,6 +847,14 @@ export class DatabaseStorage implements IStorage {
         course: true,
         schedule: true,
       },
+    });
+    
+    console.log('📋 Enrollment data:', {
+      found: !!enrollment,
+      courseFound: !!enrollment?.course,
+      paymentOption: enrollment?.paymentOption,
+      coursePrice: enrollment?.course?.price,
+      depositAmount: enrollment?.course?.depositAmount
     });
     
     if (!enrollment || !enrollment.course) {
@@ -858,13 +867,24 @@ export class DatabaseStorage implements IStorage {
     let paymentAmount: number;
     const coursePrice = parseFloat(course.price);
     
+    console.log('💰 Price calculations:', {
+      rawCoursePrice: course.price,
+      parsedCoursePrice: coursePrice,
+      rawDepositAmount: course.depositAmount,
+      parsedDepositAmount: course.depositAmount ? parseFloat(course.depositAmount) : null,
+      paymentOption: enrollment.paymentOption
+    });
+    
     if (enrollment.paymentOption === 'deposit' && course.depositAmount) {
       paymentAmount = parseFloat(course.depositAmount);
     } else {
       paymentAmount = coursePrice;
     }
     
+    console.log('💵 Final payment amount:', paymentAmount);
+    
     if (paymentAmount <= 0) {
+      console.error('❌ Invalid payment amount:', paymentAmount);
       throw new Error('Invalid payment amount');
     }
     

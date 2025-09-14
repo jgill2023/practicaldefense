@@ -387,10 +387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied - authentication required" });
       }
 
-      const paymentData = await storage.upsertPaymentIntent({
-        enrollmentId,
-        promoCode,
-      });
+      const paymentData = await storage.upsertPaymentIntent(enrollmentId, promoCode);
 
       res.json(paymentData);
     } catch (error) {
