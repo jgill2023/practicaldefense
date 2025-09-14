@@ -46,7 +46,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  updateStudent(id: string, data: { phone?: string; concealedCarryLicenseExpiration?: string }): Promise<User>;
+  updateStudent(id: string, data: { phone?: string; concealedCarryLicenseExpiration?: string; concealedCarryLicenseIssued?: string; licenseExpirationReminderDays?: number; enableLicenseExpirationReminder?: boolean; refresherReminderDays?: number; enableRefresherReminder?: boolean }): Promise<User>;
   
   // Category operations
   createCategory(category: InsertCategory): Promise<Category>;
@@ -120,6 +120,20 @@ export interface IStorage {
       password: string;
     };
   }): Promise<Enrollment>;
+  
+  // Payment balance and form completion tracking
+  getPaymentBalance(enrollmentId: string): Promise<{
+    remainingBalance: number;
+    hasRemainingBalance: boolean;
+    originalAmount: number;
+    paidAmount: number;
+  }>;
+  getFormCompletionStatus(enrollmentId: string): Promise<{
+    totalForms: number;
+    completedForms: number;
+    isComplete: boolean;
+    missingForms: { id: string; title: string; isRequired: boolean }[];
+  }>;
   
   // Course Information Forms operations
   createCourseInformationForm(form: InsertCourseInformationForm): Promise<CourseInformationForm>;
@@ -205,7 +219,15 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateStudent(id: string, data: { phone?: string; concealedCarryLicenseExpiration?: string }): Promise<User> {
+  async updateStudent(id: string, data: { 
+    phone?: string; 
+    concealedCarryLicenseExpiration?: string;
+    concealedCarryLicenseIssued?: string;
+    licenseExpirationReminderDays?: number;
+    enableLicenseExpirationReminder?: boolean;
+    refresherReminderDays?: number;
+    enableRefresherReminder?: boolean;
+  }): Promise<User> {
     const updateData: any = {
       updatedAt: new Date(),
     };
@@ -218,6 +240,28 @@ export class DatabaseStorage implements IStorage {
       updateData.concealedCarryLicenseExpiration = data.concealedCarryLicenseExpiration 
         ? new Date(data.concealedCarryLicenseExpiration) 
         : null;
+    }
+
+    if (data.concealedCarryLicenseIssued !== undefined) {
+      updateData.concealedCarryLicenseIssued = data.concealedCarryLicenseIssued 
+        ? new Date(data.concealedCarryLicenseIssued) 
+        : null;
+    }
+
+    if (data.licenseExpirationReminderDays !== undefined) {
+      updateData.licenseExpirationReminderDays = data.licenseExpirationReminderDays;
+    }
+
+    if (data.enableLicenseExpirationReminder !== undefined) {
+      updateData.enableLicenseExpirationReminder = data.enableLicenseExpirationReminder;
+    }
+
+    if (data.refresherReminderDays !== undefined) {
+      updateData.refresherReminderDays = data.refresherReminderDays;
+    }
+
+    if (data.enableRefresherReminder !== undefined) {
+      updateData.enableRefresherReminder = data.enableRefresherReminder;
     }
 
     const [user] = await db
@@ -1863,6 +1907,90 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(promoCodes.id, promoCodeId));
+  }
+
+  // Payment balance calculation
+  async getPaymentBalance(enrollmentId: string): Promise<{
+    remainingBalance: number;
+    hasRemainingBalance: boolean;
+    originalAmount: number;
+    paidAmount: number;
+  }> {
+    const enrollment = await this.getEnrollment(enrollmentId);
+    if (!enrollment || !enrollment.course) {
+      throw new Error('Enrollment not found');
+    }
+
+    const coursePrice = parseFloat(enrollment.course.price);
+    const depositAmount = enrollment.course.depositAmount ? parseFloat(enrollment.course.depositAmount) : 0;
+    
+    let paidAmount = 0;
+    let remainingBalance = 0;
+    
+    if (enrollment.paymentStatus === 'paid') {
+      if (enrollment.paymentOption === 'deposit') {
+        paidAmount = depositAmount;
+        remainingBalance = coursePrice - depositAmount;
+      } else {
+        paidAmount = coursePrice;
+        remainingBalance = 0;
+      }
+    }
+    
+    return {
+      remainingBalance,
+      hasRemainingBalance: remainingBalance > 0,
+      originalAmount: coursePrice,
+      paidAmount,
+    };
+  }
+
+  // Form completion status checking
+  async getFormCompletionStatus(enrollmentId: string): Promise<{
+    totalForms: number;
+    completedForms: number;
+    isComplete: boolean;
+    missingForms: { id: string; title: string; isRequired: boolean }[];
+  }> {
+    const enrollment = await this.getEnrollment(enrollmentId);
+    if (!enrollment) {
+      throw new Error('Enrollment not found');
+    }
+
+    // Get all forms for this course
+    const courseForms = await db.query.courseInformationForms.findMany({
+      where: and(
+        eq(courseInformationForms.courseId, enrollment.courseId),
+        eq(courseInformationForms.isActive, true)
+      ),
+      with: {
+        fields: true,
+      },
+    });
+
+    // Get completed form responses for this enrollment
+    const completedResponses = await db.query.studentFormResponses.findMany({
+      where: eq(studentFormResponses.enrollmentId, enrollmentId),
+      with: {
+        form: true,
+      },
+    });
+
+    const completedFormIds = new Set(completedResponses.map(r => r.formId));
+    const missingForms = courseForms
+      .filter(form => !completedFormIds.has(form.id))
+      .map(form => ({
+        id: form.id,
+        title: form.title,
+        isRequired: form.isRequired,
+      }));
+
+    return {
+      totalForms: courseForms.length,
+      completedForms: completedFormIds.size,
+      isComplete: missingForms.length === 0,
+      missingForms,
+    };
   }
 }
 
