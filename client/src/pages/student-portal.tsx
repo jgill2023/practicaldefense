@@ -7,8 +7,124 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell } from "lucide-react";
 import { Calendar, Clock, FileText, Download, BookOpen, Award } from "lucide-react";
 import type { EnrollmentWithDetails } from "@shared/schema";
+
+// Enhanced enrollment card component with payment and form status
+function EnhancedEnrollmentCard({ enrollment }: { enrollment: EnrollmentWithDetails }) {
+  const { data: paymentBalance } = useQuery({
+    queryKey: ['/api/enrollments', enrollment.id, 'payment-balance'],
+    enabled: !!enrollment.id,
+    retry: false,
+  });
+  
+  const { data: formStatus } = useQuery({
+    queryKey: ['/api/enrollments', enrollment.id, 'form-completion'],
+    enabled: !!enrollment.id,
+    retry: false,
+  });
+
+  return (
+    <div className="p-4 bg-muted rounded-lg">
+      <div className="flex items-start justify-between mb-3">
+        <h4 className="font-semibold text-card-foreground" data-testid={`text-course-title-${enrollment.id}`}>
+          {enrollment.course.title}
+        </h4>
+        <Badge variant="outline">
+          {enrollment.status === 'confirmed' ? 'Confirmed' : enrollment.status}
+        </Badge>
+      </div>
+      
+      {/* Course Details */}
+      <div className="space-y-1 text-sm text-muted-foreground mb-3">
+        <div className="flex items-center">
+          <Calendar className="mr-2 h-4 w-4" />
+          {new Date(enrollment.schedule.startDate).toLocaleDateString()}
+        </div>
+        <div className="flex items-center">
+          <Clock className="mr-2 h-4 w-4" />
+          {enrollment.course.duration}
+        </div>
+        {enrollment.schedule.location && (
+          <div className="flex items-center">
+            <span className="mr-2">📍</span>
+            {enrollment.schedule.location}
+          </div>
+        )}
+      </div>
+
+      {/* Payment & Form Status */}
+      <div className="grid grid-cols-2 gap-4 mb-3">
+        {/* Payment Status */}
+        <div className="space-y-1">
+          <div className="flex items-center text-xs text-muted-foreground">
+            <CreditCard className="mr-1 h-3 w-3" />
+            Payment Status
+          </div>
+          {paymentBalance?.hasRemainingBalance ? (
+            <div className="flex items-center space-x-1">
+              <AlertCircle className="h-3 w-3 text-yellow-500" />
+              <span className="text-xs text-yellow-600 font-medium">
+                ${paymentBalance.remainingBalance.toFixed(2)} due
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1">
+              <CheckCircle2 className="h-3 w-3 text-success" />
+              <span className="text-xs text-success font-medium">Paid in full</span>
+            </div>
+          )}
+        </div>
+
+        {/* Form Status */}
+        <div className="space-y-1">
+          <div className="flex items-center text-xs text-muted-foreground">
+            <FileText className="mr-1 h-3 w-3" />
+            Forms Status
+          </div>
+          {formStatus?.isComplete ? (
+            <div className="flex items-center space-x-1">
+              <CheckCircle2 className="h-3 w-3 text-success" />
+              <span className="text-xs text-success font-medium">Complete</span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1">
+              <AlertCircle className="h-3 w-3 text-yellow-500" />
+              <span className="text-xs text-yellow-600 font-medium">
+                {formStatus?.missingForms?.length || 0} pending
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-2">
+        {paymentBalance?.hasRemainingBalance && (
+          <Button variant="outline" size="sm" data-testid={`button-make-payment-${enrollment.id}`}>
+            <CreditCard className="mr-2 h-4 w-4" />
+            Make Payment
+          </Button>
+        )}
+        
+        {!formStatus?.isComplete && (
+          <Button variant="outline" size="sm" data-testid={`button-complete-forms-${enrollment.id}`}>
+            <FileText className="mr-2 h-4 w-4" />
+            Complete Forms
+          </Button>
+        )}
+        
+        {enrollment.waiverUrl && (
+          <Button variant="outline" size="sm" data-testid={`button-download-waiver-${enrollment.id}`}>
+            <Download className="mr-2 h-4 w-4" />
+            Download Waiver
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function StudentPortal() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -19,6 +135,32 @@ export default function StudentPortal() {
     enabled: isAuthenticated,
     retry: false,
   });
+
+  // Add license expiration warning calculation
+  const getLicenseWarning = () => {
+    if (!user?.concealedCarryLicenseExpiration) return null;
+    
+    const expirationDate = new Date(user.concealedCarryLicenseExpiration);
+    const today = new Date();
+    const daysUntilExpiration = Math.ceil((expirationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilExpiration <= 30) {
+      return {
+        level: 'critical',
+        message: `License expires in ${daysUntilExpiration} days`,
+        color: 'destructive'
+      };
+    } else if (daysUntilExpiration <= 90) {
+      return {
+        level: 'warning', 
+        message: `License expires in ${daysUntilExpiration} days`,
+        color: 'warning'
+      };
+    }
+    return null;
+  };
+  
+  const licenseWarning = getLicenseWarning();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -61,13 +203,38 @@ export default function StudentPortal() {
               </h1>
               <p className="text-primary-foreground/80">Your training dashboard and course management</p>
             </div>
-            <div className="flex items-center space-x-2 mt-4 sm:mt-0">
-              <div className="bg-success/10 w-10 h-10 rounded-full flex items-center justify-center">
-                <FileText className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <div className="text-sm font-medium">Profile Complete</div>
-                <div className="text-xs text-primary-foreground/80">All waivers submitted</div>
+            <div className="flex items-center space-x-4 mt-4 sm:mt-0">
+              {/* License Status */}
+              {user?.concealedCarryLicenseExpiration && (
+                <div className="flex items-center space-x-2">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    licenseWarning?.level === 'critical' ? 'bg-destructive/10' : 
+                    licenseWarning?.level === 'warning' ? 'bg-yellow-500/10' : 
+                    'bg-success/10'
+                  }`}>
+                    <Shield className={`h-5 w-5 ${
+                      licenseWarning?.level === 'critical' ? 'text-destructive' :
+                      licenseWarning?.level === 'warning' ? 'text-yellow-500' :
+                      'text-success'
+                    }`} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">CCW License</div>
+                    <div className="text-xs text-primary-foreground/80">
+                      {licenseWarning ? licenseWarning.message : 'Valid'}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Profile Status */}
+              <div className="flex items-center space-x-2">
+                <div className="bg-success/10 w-10 h-10 rounded-full flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-success" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium">Profile Complete</div>
+                  <div className="text-xs text-primary-foreground/80">All waivers submitted</div>
+                </div>
               </div>
             </div>
           </div>
@@ -120,6 +287,98 @@ export default function StudentPortal() {
           </Card>
         </div>
 
+        {/* License Management Section */}
+        {user?.concealedCarryLicenseExpiration && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Shield className="mr-2 h-5 w-5" />
+                License Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Concealed Carry License Status</h4>
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-3 h-3 rounded-full ${
+                        licenseWarning?.level === 'critical' ? 'bg-destructive' :
+                        licenseWarning?.level === 'warning' ? 'bg-yellow-500' :
+                        'bg-success'
+                      }`}></div>
+                      <span className={`text-sm font-medium ${
+                        licenseWarning?.level === 'critical' ? 'text-destructive' :
+                        licenseWarning?.level === 'warning' ? 'text-yellow-600' :
+                        'text-success'
+                      }`}>
+                        {licenseWarning ? licenseWarning.message : 'License Valid'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {user.concealedCarryLicenseIssued && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Issued:</span>
+                        <span>{new Date(user.concealedCarryLicenseIssued).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Expires:</span>
+                      <span>{new Date(user.concealedCarryLicenseExpiration).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Renewal Reminders</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">License Expiration:</span>
+                        <div className="flex items-center space-x-2">
+                          <span>{user.enableLicenseExpirationReminder ? 'Enabled' : 'Disabled'}</span>
+                          <Bell className={`h-4 w-4 ${user.enableLicenseExpirationReminder ? 'text-primary' : 'text-muted-foreground'}`} />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Refresher Course:</span>
+                        <div className="flex items-center space-x-2">
+                          <span>{user.enableRefresherReminder ? 'Enabled' : 'Disabled'}</span>
+                          <Bell className={`h-4 w-4 ${user.enableRefresherReminder ? 'text-primary' : 'text-muted-foreground'}`} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {licenseWarning && (
+                    <div className={`p-3 rounded-lg border ${
+                      licenseWarning.level === 'critical' ? 'bg-destructive/5 border-destructive/20' :
+                      'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/10'
+                    }`}>
+                      <div className="flex items-start space-x-2">
+                        <AlertTriangle className={`h-4 w-4 mt-0.5 ${
+                          licenseWarning.level === 'critical' ? 'text-destructive' : 'text-yellow-500'
+                        }`} />
+                        <div className="text-sm">
+                          <p className="font-medium">Action Required</p>
+                          <p className="text-muted-foreground">
+                            {licenseWarning.level === 'critical' 
+                              ? 'Your license is expiring soon. Please renew immediately.'
+                              : 'Consider scheduling a renewal soon to avoid any issues.'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Upcoming Classes */}
           <Card>
@@ -142,38 +401,7 @@ export default function StudentPortal() {
               ) : upcomingClasses.length > 0 ? (
                 <div className="space-y-4">
                   {upcomingClasses.map(enrollment => (
-                    <div key={enrollment.id} className="p-4 bg-muted rounded-lg">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold text-card-foreground" data-testid={`text-course-title-${enrollment.id}`}>
-                          {enrollment.course.title}
-                        </h4>
-                        <Badge variant="outline">
-                          {enrollment.status === 'confirmed' ? 'Confirmed' : enrollment.status}
-                        </Badge>
-                      </div>
-                      <div className="space-y-1 text-sm text-muted-foreground">
-                        <div className="flex items-center">
-                          <Calendar className="mr-2 h-4 w-4" />
-                          {new Date(enrollment.schedule.startDate).toLocaleDateString()}
-                        </div>
-                        <div className="flex items-center">
-                          <Clock className="mr-2 h-4 w-4" />
-                          {enrollment.course.duration}
-                        </div>
-                        {enrollment.schedule.location && (
-                          <div className="flex items-center">
-                            <span className="mr-2">📍</span>
-                            {enrollment.schedule.location}
-                          </div>
-                        )}
-                      </div>
-                      {enrollment.waiverUrl && (
-                        <Button variant="outline" size="sm" className="mt-3" data-testid={`button-download-waiver-${enrollment.id}`}>
-                          <Download className="mr-2 h-4 w-4" />
-                          Download Waiver
-                        </Button>
-                      )}
-                    </div>
+                    <EnhancedEnrollmentCard key={enrollment.id} enrollment={enrollment} />
                   ))}
                 </div>
               ) : (
