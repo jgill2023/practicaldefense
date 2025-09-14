@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ObjectUploader } from "@/components/ObjectUploader";
-import { Save, Clock, Target, FileText, ImageIcon } from "lucide-react";
+import { Edit, FileText, ImageIcon } from "lucide-react";
 import type { CourseWithSchedules, Category } from "@shared/schema";
 import type { UploadResult } from "@uppy/core";
 
@@ -151,11 +151,11 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
 
   const handleImageUploadComplete = async (result: { successful: any[] }) => {
     console.log('Upload complete result:', result);
-    
+
     if (result.successful && result.successful.length > 0) {
       const uploadURL = result.successful[0].uploadURL;
       console.log('Processing upload URL:', uploadURL);
-      
+
       if (uploadURL) {
         try {
           // Update the course image and set ACL policy
@@ -165,11 +165,11 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
           });
           const data = await response.json();
           console.log('ACL response:', data);
-          
+
           // Set the uploaded image URL for preview and form
           setUploadedImageUrl(data.objectPath);
           form.setValue("imageUrl", data.objectPath);
-          
+
           toast({
             title: "Image Uploaded",
             description: "Course image has been uploaded successfully.",
@@ -202,7 +202,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
         <DialogHeader>
           <DialogTitle>Edit Course: {course.title}</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
             <TabsList className="grid w-full grid-cols-4">
@@ -527,7 +527,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
               disabled={updateCourseMutation.isPending}
               data-testid="button-update-course"
             >
-              <Save className="mr-2 h-4 w-4" />
+              <Edit className="mr-2 h-4 w-4" />
               {updateCourseMutation.isPending ? "Updating..." : "Update Course"}
             </Button>
           </div>
