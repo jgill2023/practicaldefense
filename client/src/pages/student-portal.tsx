@@ -7,19 +7,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell } from "lucide-react";
+import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit } from "lucide-react";
 import { Calendar, Clock, FileText, Download, BookOpen, Award } from "lucide-react";
-import type { EnrollmentWithDetails } from "@shared/schema";
+import type { EnrollmentWithDetails, User } from "@shared/schema";
+
+// Types for the query responses
+type PaymentBalanceResponse = {
+  hasRemainingBalance: boolean;
+  remainingBalance: number;
+};
+
+type FormStatusResponse = {
+  isComplete: boolean;
+  missingForms: number;
+};
 
 // Enhanced enrollment card component with payment and form status
 function EnhancedEnrollmentCard({ enrollment }: { enrollment: EnrollmentWithDetails }) {
-  const { data: paymentBalance } = useQuery({
+  const { data: paymentBalance } = useQuery<PaymentBalanceResponse>({
     queryKey: ['/api/enrollments', enrollment.id, 'payment-balance'],
     enabled: !!enrollment.id,
     retry: false,
   });
   
-  const { data: formStatus } = useQuery({
+  const { data: formStatus } = useQuery<FormStatusResponse>({
     queryKey: ['/api/enrollments', enrollment.id, 'form-completion'],
     enabled: !!enrollment.id,
     retry: false,
@@ -92,7 +103,7 @@ function EnhancedEnrollmentCard({ enrollment }: { enrollment: EnrollmentWithDeta
             <div className="flex items-center space-x-1">
               <AlertCircle className="h-3 w-3 text-yellow-500" />
               <span className="text-xs text-yellow-600 font-medium">
-                {formStatus?.missingForms?.length || 0} pending
+                {formStatus?.missingForms || 0} pending
               </span>
             </div>
           )}
@@ -138,9 +149,10 @@ export default function StudentPortal() {
 
   // Add license expiration warning calculation
   const getLicenseWarning = () => {
-    if (!user?.concealedCarryLicenseExpiration) return null;
+    const typedUser = user as User;
+    if (!typedUser?.concealedCarryLicenseExpiration) return null;
     
-    const expirationDate = new Date(user.concealedCarryLicenseExpiration);
+    const expirationDate = new Date(typedUser.concealedCarryLicenseExpiration);
     const today = new Date();
     const daysUntilExpiration = Math.ceil((expirationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     
@@ -197,15 +209,28 @@ export default function StudentPortal() {
         {/* Portal Header */}
         <div className="bg-primary rounded-xl p-6 text-primary-foreground mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold mb-1" data-testid="text-student-name">
-                Welcome, {user?.firstName} {user?.lastName}
-              </h1>
-              <p className="text-primary-foreground/80">Your training dashboard and course management</p>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold mb-1" data-testid="text-student-name">
+                    Welcome, {(user as User)?.firstName} {(user as User)?.lastName}
+                  </h1>
+                  <p className="text-primary-foreground/80">Your training dashboard and course management</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground hover:text-primary ml-4"
+                  data-testid="button-edit-profile"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Button>
+              </div>
             </div>
             <div className="flex items-center space-x-4 mt-4 sm:mt-0">
               {/* License Status */}
-              {user?.concealedCarryLicenseExpiration && (
+              {(user as User)?.concealedCarryLicenseExpiration && (
                 <div className="flex items-center space-x-2">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     licenseWarning?.level === 'critical' ? 'bg-destructive/10' : 
@@ -288,7 +313,7 @@ export default function StudentPortal() {
         </div>
 
         {/* License Management Section */}
-        {user?.concealedCarryLicenseExpiration && (
+        {(user as User)?.concealedCarryLicenseExpiration && (
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -318,15 +343,15 @@ export default function StudentPortal() {
                   </div>
                   
                   <div className="space-y-2">
-                    {user.concealedCarryLicenseIssued && (
+                    {(user as User).concealedCarryLicenseIssued && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Issued:</span>
-                        <span>{new Date(user.concealedCarryLicenseIssued).toLocaleDateString()}</span>
+                        <span>{new Date((user as User).concealedCarryLicenseIssued!).toLocaleDateString()}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Expires:</span>
-                      <span>{new Date(user.concealedCarryLicenseExpiration).toLocaleDateString()}</span>
+                      <span>{new Date((user as User).concealedCarryLicenseExpiration!).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </div>
@@ -338,15 +363,15 @@ export default function StudentPortal() {
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">License Expiration:</span>
                         <div className="flex items-center space-x-2">
-                          <span>{user.enableLicenseExpirationReminder ? 'Enabled' : 'Disabled'}</span>
-                          <Bell className={`h-4 w-4 ${user.enableLicenseExpirationReminder ? 'text-primary' : 'text-muted-foreground'}`} />
+                          <span>{(user as User).enableLicenseExpirationReminder ? 'Enabled' : 'Disabled'}</span>
+                          <Bell className={`h-4 w-4 ${(user as User).enableLicenseExpirationReminder ? 'text-primary' : 'text-muted-foreground'}`} />
                         </div>
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Refresher Course:</span>
                         <div className="flex items-center space-x-2">
-                          <span>{user.enableRefresherReminder ? 'Enabled' : 'Disabled'}</span>
-                          <Bell className={`h-4 w-4 ${user.enableRefresherReminder ? 'text-primary' : 'text-muted-foreground'}`} />
+                          <span>{(user as User).enableRefresherReminder ? 'Enabled' : 'Disabled'}</span>
+                          <Bell className={`h-4 w-4 ${(user as User).enableRefresherReminder ? 'text-primary' : 'text-muted-foreground'}`} />
                         </div>
                       </div>
                     </div>
