@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Users, Phone, Mail, Edit3, Calendar, ArrowLeft } from "lucide-react";
+import { Users, Phone, Mail, Edit, Calendar, ArrowLeft, Eye } from "lucide-react";
 import { Link } from "wouter";
 import { format } from "date-fns";
 
@@ -155,11 +155,6 @@ function StudentsPage() {
                           <Badge 
                             variant="secondary" 
                             className="text-sm font-medium border"
-                            style={{
-                              backgroundColor: enrollment.categoryColor ? `${enrollment.categoryColor}20` : '#f1f5f9',
-                              borderColor: enrollment.categoryColor || '#cbd5e1',
-                              color: enrollment.categoryColor || '#64748b'
-                            }}
                           >
                             {enrollment.courseAbbreviation}
                           </Badge>
@@ -200,6 +195,15 @@ function StudentsPage() {
                           <Button 
                             variant="outline" 
                             size="sm"
+                            onClick={() => {/* TODO: Implement student profile view */}}
+                            title={`View ${student.firstName} ${student.lastName}'s profile`}
+                            data-testid={`button-view-profile-${student.id}`}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
                             disabled={!student.phone}
                             onClick={() => student.phone && window.open(`tel:${student.phone}`, '_self')}
                             title={student.phone ? `Call ${student.phone}` : 'No phone number available'}
@@ -223,7 +227,7 @@ function StudentsPage() {
                             title={`Edit ${student.firstName} ${student.lastName}`}
                             data-testid={`button-edit-${student.id}`}
                           >
-                            <Edit3 className="h-4 w-4" />
+                            <Edit className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
