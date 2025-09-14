@@ -45,7 +45,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         preferredName: z.string().optional(),
         email: z.string().email("Invalid email address"),
         phone: z.string().optional(),
-        mailingAddress: z.string().optional(),
+        streetAddress: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zipCode: z.string().optional(),
         dateOfBirth: z.string().optional(),
         concealedCarryLicenseIssued: z.string().optional(),
         concealedCarryLicenseExpiration: z.string().optional(),
@@ -54,16 +57,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = profileUpdateSchema.parse(req.body);
       
-      // Convert date strings to Date objects if provided
+      // Convert date strings to Date objects - process all date fields unconditionally
       const updateData: any = { ...validatedData };
-      if (validatedData.dateOfBirth) {
-        updateData.dateOfBirth = new Date(validatedData.dateOfBirth);
-      }
-      if (validatedData.concealedCarryLicenseIssued) {
-        updateData.concealedCarryLicenseIssued = new Date(validatedData.concealedCarryLicenseIssued);
-      }
-      if (validatedData.concealedCarryLicenseExpiration) {
-        updateData.concealedCarryLicenseExpiration = new Date(validatedData.concealedCarryLicenseExpiration);
+      
+      // Helper function to safely convert date strings
+      const safeConvertDate = (dateString: string | undefined): Date | null => {
+        // Return null for empty, undefined, or invalid strings
+        if (!dateString || dateString.trim() === '' || dateString === 'undefined' || dateString === 'null') {
+          return null;
+        }
+        
+        try {
+          const date = new Date(dateString);
+          // Check if the date is valid and not "Invalid Date"
+          if (isNaN(date.getTime()) || date.getTime() === 0) {
+            return null;
+          }
+          return date;
+        } catch (error) {
+          return null;
+        }
+      };
+      
+      // Process all date fields unconditionally to prevent empty strings from reaching the database
+      const dateFields = ['dateOfBirth', 'concealedCarryLicenseIssued', 'concealedCarryLicenseExpiration'] as const;
+      
+      for (const field of dateFields) {
+        const convertedDate = safeConvertDate(validatedData[field] as string | undefined);
+        if (convertedDate) {
+          updateData[field] = convertedDate;
+        } else {
+          delete updateData[field];
+        }
       }
 
       const updatedUser = await storage.updateUser(userId, updateData);

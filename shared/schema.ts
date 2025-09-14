@@ -33,7 +33,10 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   preferredName: varchar("preferred_name"), // Nickname
   phone: varchar("phone", { length: 20 }),
-  mailingAddress: text("mailing_address"),
+  streetAddress: varchar("street_address", { length: 255 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 2 }), // State abbreviation (e.g., "NM", "TX")
+  zipCode: varchar("zip_code", { length: 10 }), // ZIP+4 format
   dateOfBirth: timestamp("date_of_birth"),
   profileImageUrl: varchar("profile_image_url"),
   concealedCarryLicenseExpiration: timestamp("concealed_carry_license_expiration"),

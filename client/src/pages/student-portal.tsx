@@ -38,7 +38,10 @@ const editProfileSchema = z.object({
   preferredName: z.string().optional(),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
-  mailingAddress: z.string().optional(),
+  streetAddress: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
   dateOfBirth: z.string().optional(),
   concealedCarryLicenseIssued: z.string().optional(),
   concealedCarryLicenseExpiration: z.string().optional(),
@@ -204,7 +207,10 @@ function EditProfileDialog({ isOpen, onClose, user }: {
       preferredName: user.preferredName || '',
       email: user.email || '',
       phone: user.phone || '',
-      mailingAddress: user.mailingAddress || '',
+      streetAddress: user.streetAddress || '',
+      city: user.city || '',
+      state: user.state || '',
+      zipCode: user.zipCode || '',
       dateOfBirth: formatDateForInput(user.dateOfBirth),
       concealedCarryLicenseIssued: formatDateForInput(user.concealedCarryLicenseIssued),
       concealedCarryLicenseExpiration: formatDateForInput(user.concealedCarryLicenseExpiration),
@@ -337,18 +343,60 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                 )}
               />
 
+              {/* Mailing Address Fields */}
               <FormField
                 control={form.control}
-                name="mailingAddress"
+                name="streetAddress"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Mailing Address</FormLabel>
+                    <FormLabel>Street Address</FormLabel>
                     <FormControl>
-                      <Textarea {...field} data-testid="input-mailing-address" />
+                      <Input {...field} placeholder="123 Main Street" data-testid="input-street-address" />
                     </FormControl>
                   </FormItem>
                 )}
               />
+
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Albuquerque" data-testid="input-city" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>State</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="NM" maxLength={2} data-testid="input-state" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="zipCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ZIP Code</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="87101" data-testid="input-zip-code" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             {/* License Information */}
