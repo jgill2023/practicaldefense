@@ -57,11 +57,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 ) : (
                   <>
                     {(user as any)?.role === 'instructor' ? (
-                      <Link href="/instructor-dashboard">
-                        <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard">
-                          Dashboard
-                        </Button>
-                      </Link>
+                      <>
+                        <Link href="/instructor-dashboard">
+                          <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard">
+                            Dashboard
+                          </Button>
+                        </Link>
+                        <Link href="/student-portal">
+                          <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-dashboard">
+                            Student Dashboard
+                          </Button>
+                        </Link>
+                      </>
                     ) : (
                       <Link href="/student-portal">
                         <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-portal">
@@ -118,11 +125,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   ) : (
                     <div className="space-y-2">
                       {(user as any)?.role === 'instructor' ? (
-                        <Link href="/instructor-dashboard" className="block">
-                          <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard-mobile">
-                            Dashboard
-                          </Button>
-                        </Link>
+                        <>
+                          <Link href="/instructor-dashboard" className="block">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard-mobile">
+                              Dashboard
+                            </Button>
+                          </Link>
+                          <Link href="/student-portal" className="block">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-dashboard-mobile">
+                              Student Dashboard
+                            </Button>
+                          </Link>
+                        </>
                       ) : (
                         <Link href="/student-portal" className="block">
                           <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-portal-mobile">
