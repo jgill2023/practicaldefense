@@ -14,7 +14,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-11-20.acacia",
+  apiVersion: "2025-08-27.basil",
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -30,6 +30,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Profile update route
+  app.put('/api/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Validate the request body
+      const profileUpdateSchema = z.object({
+        firstName: z.string().min(1, "First name is required"),
+        lastName: z.string().min(1, "Last name is required"),
+        preferredName: z.string().optional(),
+        email: z.string().email("Invalid email address"),
+        phone: z.string().optional(),
+        mailingAddress: z.string().optional(),
+        dateOfBirth: z.string().optional(),
+        concealedCarryLicenseIssued: z.string().optional(),
+        concealedCarryLicenseExpiration: z.string().optional(),
+        preferredContactMethods: z.array(z.string()).optional(),
+      });
+
+      const validatedData = profileUpdateSchema.parse(req.body);
+      
+      // Convert date strings to Date objects if provided
+      const updateData: any = { ...validatedData };
+      if (validatedData.dateOfBirth) {
+        updateData.dateOfBirth = new Date(validatedData.dateOfBirth);
+      }
+      if (validatedData.concealedCarryLicenseIssued) {
+        updateData.concealedCarryLicenseIssued = new Date(validatedData.concealedCarryLicenseIssued);
+      }
+      if (validatedData.concealedCarryLicenseExpiration) {
+        updateData.concealedCarryLicenseExpiration = new Date(validatedData.concealedCarryLicenseExpiration);
+      }
+
+      const updatedUser = await storage.updateUser(userId, updateData);
+      res.json(updatedUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
     }
   });
 

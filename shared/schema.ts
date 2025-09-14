@@ -31,10 +31,15 @@ export const users = pgTable("users", {
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
+  preferredName: varchar("preferred_name"), // Nickname
   phone: varchar("phone", { length: 20 }),
+  mailingAddress: text("mailing_address"),
+  dateOfBirth: timestamp("date_of_birth"),
   profileImageUrl: varchar("profile_image_url"),
   concealedCarryLicenseExpiration: timestamp("concealed_carry_license_expiration"),
   concealedCarryLicenseIssued: timestamp("concealed_carry_license_issued"),
+  // Preferred contact methods (stored as JSON array)
+  preferredContactMethods: text("preferred_contact_methods").array(), // ['text', 'email', 'phone']
   // Email reminder preferences
   licenseExpirationReminderDays: integer("license_expiration_reminder_days").default(60), // 30, 60, or 90 days
   enableLicenseExpirationReminder: boolean("enable_license_expiration_reminder").default(false),

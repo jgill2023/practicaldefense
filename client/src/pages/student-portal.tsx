@@ -1,13 +1,22 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit } from "lucide-react";
+import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X } from "lucide-react";
 import { Calendar, Clock, FileText, Download, BookOpen, Award } from "lucide-react";
 import type { EnrollmentWithDetails, User } from "@shared/schema";
 
@@ -21,6 +30,22 @@ type FormStatusResponse = {
   isComplete: boolean;
   missingForms: number;
 };
+
+// Edit profile form schema
+const editProfileSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  preferredName: z.string().optional(),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
+  mailingAddress: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  concealedCarryLicenseIssued: z.string().optional(),
+  concealedCarryLicenseExpiration: z.string().optional(),
+  preferredContactMethods: z.array(z.string()).optional(),
+});
+
+type EditProfileForm = z.infer<typeof editProfileSchema>;
 
 // Enhanced enrollment card component with payment and form status
 function EnhancedEnrollmentCard({ enrollment }: { enrollment: EnrollmentWithDetails }) {
@@ -137,9 +162,308 @@ function EnhancedEnrollmentCard({ enrollment }: { enrollment: EnrollmentWithDeta
   );
 }
 
+// Edit Profile Dialog Component
+function EditProfileDialog({ isOpen, onClose, user }: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  user: User;
+}) {
+  const { toast } = useToast();
+
+  // Contact method options
+  const contactMethods = [
+    { id: 'text', label: 'Text Message' },
+    { id: 'email', label: 'Email' },
+    { id: 'phone', label: 'Phone Call' }
+  ];
+
+  // Convert dates to string format for form inputs
+  const formatDateForInput = (date: Date | string | null) => {
+    if (!date) return '';
+    
+    // Handle string dates
+    if (typeof date === 'string') {
+      const parsedDate = new Date(date);
+      if (isNaN(parsedDate.getTime())) return '';
+      return parsedDate.toISOString().split('T')[0];
+    }
+    
+    // Handle Date objects
+    if (date instanceof Date) {
+      return date.toISOString().split('T')[0];
+    }
+    
+    return '';
+  };
+
+  const form = useForm<EditProfileForm>({
+    resolver: zodResolver(editProfileSchema),
+    defaultValues: {
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      preferredName: user.preferredName || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      mailingAddress: user.mailingAddress || '',
+      dateOfBirth: formatDateForInput(user.dateOfBirth),
+      concealedCarryLicenseIssued: formatDateForInput(user.concealedCarryLicenseIssued),
+      concealedCarryLicenseExpiration: formatDateForInput(user.concealedCarryLicenseExpiration),
+      preferredContactMethods: user.preferredContactMethods || [],
+    },
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: EditProfileForm) => apiRequest('PUT', '/api/profile', data),
+    onSuccess: () => {
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been successfully updated.",
+        variant: "default",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      onClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: EditProfileForm) => {
+    updateProfileMutation.mutate(data);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center">
+            <Edit className="mr-2 h-5 w-5" />
+            Edit Profile
+          </DialogTitle>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Basic Information</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name *</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-first-name" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name *</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-last-name" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="preferredName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Preferred Name (Nickname)</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-preferred-name" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="dateOfBirth"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date of Birth</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} data-testid="input-date-of-birth" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Contact Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Contact Information</h3>
+              
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address *</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} data-testid="input-email" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-phone" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="mailingAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mailing Address</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} data-testid="input-mailing-address" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* License Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">License Information</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="concealedCarryLicenseIssued"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>NM CCL Issue Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} data-testid="input-ccl-issued" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="concealedCarryLicenseExpiration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>NM CCL Expiration Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} data-testid="input-ccl-expiration" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Contact Preferences */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Preferred Contact Methods</h3>
+              <FormField
+                control={form.control}
+                name="preferredContactMethods"
+                render={() => (
+                  <FormItem>
+                    <div className="grid grid-cols-3 gap-4">
+                      {contactMethods.map((method) => (
+                        <FormField
+                          key={method.id}
+                          control={form.control}
+                          name="preferredContactMethods"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={method.id}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(method.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...(field.value || []), method.id])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== method.id
+                                            )
+                                          )
+                                    }}
+                                    data-testid={`checkbox-contact-${method.id}`}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {method.label}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Form Actions */}
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                data-testid="button-cancel-edit"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={updateProfileMutation.isPending}
+                data-testid="button-save-profile"
+              >
+                <Save className="mr-2 h-4 w-4" />
+                {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function StudentPortal() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/student/enrollments"],
@@ -221,6 +545,7 @@ export default function StudentPortal() {
                   variant="outline" 
                   size="sm" 
                   className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground hover:text-primary ml-4"
+                  onClick={() => setIsEditProfileOpen(true)}
                   data-testid="button-edit-profile"
                 >
                   <Edit className="h-4 w-4 mr-2" />
@@ -499,6 +824,15 @@ export default function StudentPortal() {
           </Card>
         </div>
       </div>
+
+      {/* Edit Profile Dialog */}
+      {user && (
+        <EditProfileDialog 
+          isOpen={isEditProfileOpen} 
+          onClose={() => setIsEditProfileOpen(false)} 
+          user={user as User} 
+        />
+      )}
     </Layout>
   );
 }
