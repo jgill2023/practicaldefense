@@ -333,12 +333,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // For all non-authenticated users (including those who just created accounts), userId remains null
       }
 
+      // Get the course ID from the schedule
+      const schedule = await storage.getCourseSchedule(scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ message: "Schedule not found" });
+      }
+
       const draftEnrollment = await storage.initiateRegistration({
+        courseId: schedule.courseId,
         scheduleId,
         paymentOption,
-        promoCode,
-        studentInfo,
-        userId, // This will be null for non-authenticated users (including new account holders)
       });
 
       // Include account creation status in response
