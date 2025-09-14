@@ -34,6 +34,13 @@ export const users = pgTable("users", {
   phone: varchar("phone", { length: 20 }),
   profileImageUrl: varchar("profile_image_url"),
   concealedCarryLicenseExpiration: timestamp("concealed_carry_license_expiration"),
+  concealedCarryLicenseIssued: timestamp("concealed_carry_license_issued"),
+  // Email reminder preferences
+  licenseExpirationReminderDays: integer("license_expiration_reminder_days").default(60), // 30, 60, or 90 days
+  enableLicenseExpirationReminder: boolean("enable_license_expiration_reminder").default(false),
+  // 2-year refresher reminder (24 months after license issued date)
+  refresherReminderDays: integer("refresher_reminder_days").default(60), // 30 or 60 days
+  enableRefresherReminder: boolean("enable_refresher_reminder").default(false),
   role: varchar("role").notNull().default('student'), // 'student' or 'instructor'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
