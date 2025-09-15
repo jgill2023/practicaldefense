@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
@@ -109,7 +111,7 @@ export function NotificationsManagement() {
   }>({
     queryKey: ['/api/admin/notification-logs', logsPage, logsFilters],
     queryFn: ({ queryKey }) => {
-      const [, page, filters] = queryKey;
+      const [, page, filters] = queryKey as [string, number, typeof logsFilters];
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '10', // Show 10 logs per page
@@ -879,11 +881,22 @@ export function NotificationsManagement() {
                   <FormItem>
                     <FormLabel>Message Body</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        {...field} 
+                      <ReactQuill 
+                        theme="snow"
+                        value={field.value || ''}
+                        onChange={field.onChange}
                         placeholder="Enter message content (you can use variables like {{firstName}}, {{courseName}}, etc.)"
-                        className="min-h-[120px]"
-                        data-testid="textarea-template-content"
+                        style={{ minHeight: '120px' }}
+                        data-testid="editor-template-content"
+                        modules={{
+                          toolbar: [
+                            [{ 'header': [1, 2, false] }],
+                            ['bold', 'italic', 'underline'],
+                            ['link'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            ['clean']
+                          ],
+                        }}
                       />
                     </FormControl>
                     <FormDescription>
@@ -893,41 +906,22 @@ export function NotificationsManagement() {
                 )}
               />
 
-              <div className="flex items-center space-x-4">
-                <FormField
-                  control={templateForm.control}
-                  name="isActive"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          data-testid="switch-template-active"
-                        />
-                      </FormControl>
-                      <FormLabel>Active</FormLabel>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={templateForm.control}
-                  name="isActive"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          data-testid="switch-template-global"
-                        />
-                      </FormControl>
-                      <FormLabel>Active Template</FormLabel>
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={templateForm.control}
+                name="isActive"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        data-testid="switch-template-active"
+                      />
+                    </FormControl>
+                    <FormLabel>Active</FormLabel>
+                  </FormItem>
+                )}
+              />
 
               <div className="flex justify-end space-x-2">
                 <Button
@@ -946,7 +940,7 @@ export function NotificationsManagement() {
                   {createTemplateMutation.isPending || updateTemplateMutation.isPending ? (
                     "Saving..."
                   ) : (
-                    selectedTemplate ? "Update Template" : "Create Template"
+                    selectedTemplate ? "Update Template" : "Save Template"
                   )}
                 </Button>
               </div>
