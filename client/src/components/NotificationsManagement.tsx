@@ -48,6 +48,15 @@ import { z } from "zod";
 // Template form schema
 const templateFormSchema = insertNotificationTemplateSchema.extend({
   content: z.string().min(1, "Template content is required"),
+}).superRefine((data, ctx) => {
+  // Additional validation for rich text content
+  if (!data.content || data.content.trim() === '' || data.content === '<p><br></p>') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Template content is required",
+      path: ['content']
+    });
+  }
 });
 
 type TemplateForm = z.infer<typeof templateFormSchema>;
@@ -824,7 +833,10 @@ export function NotificationsManagement() {
             </DialogTitle>
           </DialogHeader>
           <Form {...templateForm}>
-            <form onSubmit={templateForm.handleSubmit(handleSubmitTemplate)} className="space-y-4">
+            <form 
+              id="template-form" 
+              noValidate
+              className="space-y-4">
               <FormField
                 control={templateForm.control}
                 name="name"
@@ -884,7 +896,14 @@ export function NotificationsManagement() {
                       <ReactQuill 
                         theme="snow"
                         value={field.value || ''}
-                        onChange={field.onChange}
+                        onChange={(value) => {
+                          field.onChange(value);
+                          templateForm.setValue('content', value, { 
+                            shouldDirty: true, 
+                            shouldTouch: true, 
+                            shouldValidate: true 
+                          });
+                        }}
                         placeholder="Enter message content (you can use variables like {{firstName}}, {{courseName}}, etc.)"
                         style={{ minHeight: '120px' }}
                         data-testid="editor-template-content"
@@ -939,8 +958,9 @@ export function NotificationsManagement() {
                   Cancel
                 </Button>
                 <Button
-                  type="submit"
+                  type="button"
                   disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
+                  onClick={() => templateForm.handleSubmit(handleSubmitTemplate)()}
                   data-testid="button-save-template"
                 >
                   {createTemplateMutation.isPending || updateTemplateMutation.isPending ? (
