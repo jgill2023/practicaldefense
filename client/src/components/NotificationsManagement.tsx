@@ -866,9 +866,23 @@ export function NotificationsManagement() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select 
+                      onValueChange={(value) => {
+                        console.log('🔥 DROPDOWN SELECTION CHANGED:', value);
+                        field.onChange(value);
+                      }} 
+                      value={field.value}
+                      onOpenChange={(open) => {
+                        console.log('🔥 DROPDOWN OPEN STATE:', open);
+                      }}
+                    >
                       <FormControl>
-                        <SelectTrigger data-testid="select-template-type">
+                        <SelectTrigger 
+                          data-testid="select-template-type"
+                          onClick={() => {
+                            console.log('🔥 DROPDOWN TRIGGER CLICKED!');
+                          }}
+                        >
                           <SelectValue placeholder="Select template type" />
                         </SelectTrigger>
                       </FormControl>
@@ -970,6 +984,13 @@ export function NotificationsManagement() {
                 <Button
                   type="submit"
                   disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
+                  onClick={() => {
+                    console.log('🔥 SAVE BUTTON CLICKED!');
+                    console.log('🔥 Form values:', templateForm.getValues());
+                    console.log('🔥 Form errors:', templateForm.formState.errors);
+                    console.log('🔥 User data:', user);
+                    console.log('🔥 Form valid?', templateForm.formState.isValid);
+                  }}
                   data-testid="button-save-template"
                 >
                   {createTemplateMutation.isPending || updateTemplateMutation.isPending ? (
