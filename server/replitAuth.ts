@@ -108,14 +108,19 @@ export async function setupAuth(app: Express) {
       verified(null, user);
     };
 
-    for (const domain of process.env
-      .REPLIT_DOMAINS!.split(",")) {
+    // Get all domains and add localhost for development
+    const domains = process.env.REPLIT_DOMAINS!.split(",");
+    const allDomains = [...domains, "localhost"];
+    
+    for (const domain of allDomains) {
       const strategy = new Strategy(
         {
           name: `replitauth:${domain}`,
           config: config!,
           scope: "openid email profile offline_access",
-          callbackURL: `https://${domain}/api/callback`,
+          callbackURL: domain === "localhost" 
+            ? `http://localhost:5000/api/callback`
+            : `https://${domain}/api/callback`,
         },
         verify,
       );
