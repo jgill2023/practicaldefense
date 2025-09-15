@@ -24,6 +24,7 @@ import { EditCourseForm } from "@/components/EditCourseForm";
 import { EditScheduleForm } from "@/components/EditScheduleForm";
 import { EventCreationForm } from "@/components/EventCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
+import { RosterDialog } from "@/components/RosterDialog";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
@@ -37,6 +38,10 @@ export default function InstructorDashboard() {
   const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<any | null>(null);
   const [showEventForm, setShowEventForm] = useState(false);
+
+  // Roster dialog states
+  const [showRosterDialog, setShowRosterDialog] = useState(false);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
 
   // Permanent deletion confirmation states
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -639,7 +644,10 @@ export default function InstructorDashboard() {
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                      onClick={() => console.log('View roster for schedule', schedule.id)}
+                      onClick={() => {
+                        setSelectedScheduleId(schedule.id);
+                        setShowRosterDialog(true);
+                      }}
                       data-testid={`button-roster-schedule-${schedule.id}`}
                     >
                       <Users className="h-4 w-4" />
@@ -803,7 +811,17 @@ export default function InstructorDashboard() {
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                        onClick={() => console.log('View roster for course', course.id)}
+                        onClick={() => {
+                          // For course roster, we need to find a schedule first
+                          // Since our API works with schedules, let's use the first available schedule
+                          const firstSchedule = course.schedules?.[0];
+                          if (firstSchedule) {
+                            setSelectedScheduleId(firstSchedule.id);
+                            setShowRosterDialog(true);
+                          } else {
+                            console.log('No schedules available for course', course.id);
+                          }
+                        }}
                         data-testid={`button-roster-course-${course.id}`}
                       >
                         <Users className="h-4 w-4" />
@@ -1120,6 +1138,15 @@ export default function InstructorDashboard() {
         }}
       />
 
+      {/* Roster Dialog */}
+      <RosterDialog
+        scheduleId={selectedScheduleId}
+        isOpen={showRosterDialog}
+        onClose={() => {
+          setShowRosterDialog(false);
+          setSelectedScheduleId(null);
+        }}
+      />
 
       {/* Permanent Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
