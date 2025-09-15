@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import ReactQuill from "react-quill";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,7 +33,10 @@ import type {
   CourseInformationFormWithFields, 
   CourseInformationFormField, 
   FormFieldType,
-  CourseWithSchedules
+  CourseWithSchedules,
+  WaiverTemplate,
+  WaiverTemplateWithDetails,
+  InsertWaiverTemplate
 } from "@shared/schema";
 
 export default function CourseFormsManagement() {
@@ -45,6 +49,11 @@ export default function CourseFormsManagement() {
   const [showFieldEditor, setShowFieldEditor] = useState(false);
   const [editingField, setEditingField] = useState<CourseInformationFormField | null>(null);
   const [expandedForms, setExpandedForms] = useState<Set<string>>(new Set());
+  
+  // Waiver management state
+  const [showCreateWaiverDialog, setShowCreateWaiverDialog] = useState(false);
+  const [editingWaiver, setEditingWaiver] = useState<WaiverTemplateWithDetails | null>(null);
+  const [expandedWaivers, setExpandedWaivers] = useState<Set<string>>(new Set());
 
   // Fetch instructor's courses
   const { data: courses = [] } = useQuery<CourseWithSchedules[]>({
@@ -60,6 +69,11 @@ export default function CourseFormsManagement() {
       return response.json();
     },
     enabled: !!selectedCourse,
+  });
+
+  // Fetch waiver templates
+  const { data: waiverTemplates = [], isLoading: waiverTemplatesLoading } = useQuery<WaiverTemplateWithDetails[]>({
+    queryKey: ["/api/waiver-templates"],
   });
 
   // Form creation/update
@@ -149,6 +163,77 @@ export default function CourseFormsManagement() {
     },
   });
 
+  // Waiver template creation/update
+  const waiverTemplateMutation = useMutation({
+    mutationFn: async (data: InsertWaiverTemplate) => {
+      const url = editingWaiver ? `/api/waiver-templates/${editingWaiver.id}` : "/api/waiver-templates";
+      const method = editingWaiver ? "PATCH" : "POST";
+      const response = await apiRequest(method, url, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: editingWaiver ? "Waiver Template Updated" : "Waiver Template Created",
+        description: `Waiver template has been ${editingWaiver ? "updated" : "created"} successfully.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/waiver-templates"] });
+      setShowCreateWaiverDialog(false);
+      setEditingWaiver(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete waiver template
+  const deleteWaiverTemplateMutation = useMutation({
+    mutationFn: async (templateId: string) => {
+      await apiRequest("DELETE", `/api/waiver-templates/${templateId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Waiver Template Deleted",
+        description: "Waiver template has been deleted successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/waiver-templates"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Assign waiver to course
+  const assignWaiverMutation = useMutation({
+    mutationFn: async (data: { templateId: string; courseIds: string[] }) => {
+      const response = await apiRequest("POST", `/api/waiver-templates/${data.templateId}/assign`, {
+        courseIds: data.courseIds
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Waiver Assigned",
+        description: "Waiver template has been assigned to selected courses successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/waiver-templates"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const toggleFormExpansion = (formId: string) => {
     const newExpanded = new Set(expandedForms);
     if (newExpanded.has(formId)) {
@@ -157,6 +242,16 @@ export default function CourseFormsManagement() {
       newExpanded.add(formId);
     }
     setExpandedForms(newExpanded);
+  };
+
+  const toggleWaiverExpansion = (waiverId: string) => {
+    const newExpanded = new Set(expandedWaivers);
+    if (newExpanded.has(waiverId)) {
+      newExpanded.delete(waiverId);
+    } else {
+      newExpanded.add(waiverId);
+    }
+    setExpandedWaivers(newExpanded);
   };
 
   const handleCreateForm = (data: { title: string; description?: string; isRequired: boolean }) => {
@@ -178,6 +273,14 @@ export default function CourseFormsManagement() {
       formId,
       ...data
     });
+  };
+
+  const handleCreateWaiver = (data: { name: string; content: string; isActive: boolean; courseIds: string[] }) => {
+    waiverTemplateMutation.mutate(data);
+  };
+
+  const handleAssignWaiver = (templateId: string, courseIds: string[]) => {
+    assignWaiverMutation.mutate({ templateId, courseIds });
   };
 
   const fieldTypes: Array<{ value: FormFieldType; label: string }> = [
@@ -468,17 +571,196 @@ export default function CourseFormsManagement() {
           </TabsContent>
 
           <TabsContent value="waivers">
-            <Card>
-              <CardContent className="py-12">
-                <div className="text-center">
-                  <Clipboard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">Waiver Management</h3>
-                  <p className="text-muted-foreground">
-                    Create and manage digital waivers for your courses. Coming soon!
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Waiver Templates Management */}
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Waiver Templates</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Create and manage digital waiver templates that can be assigned to courses.
+                      </p>
+                    </div>
+                    <Dialog open={showCreateWaiverDialog} onOpenChange={setShowCreateWaiverDialog}>
+                      <DialogTrigger asChild>
+                        <Button data-testid="button-create-waiver">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Waiver Template
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>
+                            {editingWaiver ? "Edit Waiver Template" : "Create Waiver Template"}
+                          </DialogTitle>
+                          <DialogDescription>
+                            Create a digital waiver template that students will sign when enrolling in courses.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <CreateWaiverDialog 
+                          waiver={editingWaiver}
+                          courses={courses}
+                          onSubmit={handleCreateWaiver}
+                          onCancel={() => {
+                            setShowCreateWaiverDialog(false);
+                            setEditingWaiver(null);
+                          }}
+                        />
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardHeader>
+              </Card>
+
+              {/* Waiver Templates List */}
+              <div className="space-y-4">
+                {waiverTemplatesLoading ? (
+                  <Card>
+                    <CardContent className="py-8">
+                      <div className="text-center">
+                        <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+                        <p className="text-muted-foreground">Loading waiver templates...</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : waiverTemplates.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12">
+                      <div className="text-center">
+                        <Clipboard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-foreground mb-2">No Waiver Templates Yet</h3>
+                        <p className="text-muted-foreground mb-6">
+                          Create your first waiver template to start collecting digital signatures from students.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  waiverTemplates.map((waiver) => (
+                    <Card key={waiver.id} className="border border-border">
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleWaiverExpansion(waiver.id)}
+                              className="p-1 h-6 w-6"
+                            >
+                              {expandedWaivers.has(waiver.id) ? 
+                                <ChevronDown className="h-4 w-4" /> : 
+                                <ChevronRight className="h-4 w-4" />
+                              }
+                            </Button>
+                            <div>
+                              <h3 className="font-semibold" data-testid={`text-waiver-name-${waiver.id}`}>
+                                {waiver.name}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                Version {waiver.version} • Created by {waiver.creator.firstName} {waiver.creator.lastName}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            {waiver.isActive ? (
+                              <Badge variant="default">Active</Badge>
+                            ) : (
+                              <Badge variant="secondary">Inactive</Badge>
+                            )}
+                            <Badge variant="outline">
+                              {waiver.instanceCount} instance{waiver.instanceCount !== 1 ? 's' : ''}
+                            </Badge>
+                            <Badge variant="outline">
+                              {waiver.courseIds.length} course{waiver.courseIds.length !== 1 ? 's' : ''}
+                            </Badge>
+                            
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingWaiver(waiver);
+                                  setShowCreateWaiverDialog(true);
+                                }}
+                                data-testid={`button-edit-waiver-${waiver.id}`}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => deleteWaiverTemplateMutation.mutate(waiver.id)}
+                                className="text-destructive hover:text-destructive"
+                                data-testid={`button-delete-waiver-${waiver.id}`}
+                                disabled={waiver.instanceCount > 0}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardHeader>
+
+                      {expandedWaivers.has(waiver.id) && (
+                        <CardContent className="pt-0">
+                          <div className="border-t pt-4 space-y-6">
+                            {/* Waiver Content Preview */}
+                            <div>
+                              <h4 className="font-medium mb-3">Waiver Content</h4>
+                              <div 
+                                className="prose prose-sm max-w-none border rounded-lg p-4 bg-muted/20"
+                                dangerouslySetInnerHTML={{ __html: waiver.content }}
+                                data-testid={`waiver-content-preview-${waiver.id}`}
+                              />
+                            </div>
+
+                            {/* Assigned Courses */}
+                            <div>
+                              <h4 className="font-medium mb-3">Assigned Courses</h4>
+                              {waiver.courseIds.length === 0 ? (
+                                <div className="text-center py-4 border border-dashed rounded-lg">
+                                  <p className="text-muted-foreground">
+                                    No courses assigned. Use the course assignment feature to assign this waiver to courses.
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {waiver.courseIds.map((courseId) => {
+                                    const course = courses.find(c => c.id === courseId);
+                                    return course ? (
+                                      <div 
+                                        key={courseId}
+                                        className="p-3 border rounded-lg bg-background"
+                                      >
+                                        <div className="font-medium text-sm">{course.title}</div>
+                                        <div className="text-xs text-muted-foreground">
+                                          {course.schedules.length} schedule{course.schedules.length !== 1 ? 's' : ''}
+                                        </div>
+                                      </div>
+                                    ) : null;
+                                  })}
+                                </div>
+                              )}
+                              
+                              <div className="mt-4">
+                                <AssignWaiverDialog
+                                  waiver={waiver}
+                                  courses={courses}
+                                  onAssign={handleAssignWaiver}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      )}
+                    </Card>
+                  ))
+                )}
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="responses">
@@ -713,5 +995,229 @@ function FieldEditor({
         </Button>
       </div>
     </form>
+  );
+}
+
+// Create Waiver Dialog Component
+function CreateWaiverDialog({ 
+  waiver,
+  courses,
+  onSubmit, 
+  onCancel 
+}: { 
+  waiver?: WaiverTemplateWithDetails | null;
+  courses: CourseWithSchedules[];
+  onSubmit: (data: { name: string; content: string; isActive: boolean; courseIds: string[] }) => void;
+  onCancel: () => void;
+}) {
+  const [waiverData, setWaiverData] = useState({
+    name: waiver?.name || '',
+    content: waiver?.content || `<h2>LIABILITY WAIVER AND RELEASE AGREEMENT</h2>
+<p>I, the undersigned participant, acknowledge that I am voluntarily participating in firearms training activities offered by ProTrain Academy.</p>
+<h3>Acknowledgment of Risk</h3>
+<p>I understand and acknowledge that:</p>
+<ul>
+<li>Firearms training involves inherent risks and dangers</li>
+<li>Serious injury or death may occur from participation</li>
+<li>I assume all risks associated with participation</li>
+</ul>
+<h3>Release and Waiver</h3>
+<p>In consideration for being permitted to participate, I hereby:</p>
+<ul>
+<li>Release, waive, and discharge ProTrain Academy from all claims</li>
+<li>Agree to indemnify and hold harmless the training facility</li>
+<li>Acknowledge this agreement is binding on my heirs and assigns</li>
+</ul>
+<p><strong>By signing below, I acknowledge that I have read, understood, and agree to be bound by this waiver.</strong></p>`,
+    isActive: waiver?.isActive ?? true,
+    courseIds: waiver?.courseIds || []
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      name: waiverData.name,
+      content: waiverData.content,
+      isActive: waiverData.isActive,
+      courseIds: waiverData.courseIds
+    });
+  };
+
+  const handleCourseToggle = (courseId: string, checked: boolean) => {
+    setWaiverData(prev => ({
+      ...prev,
+      courseIds: checked 
+        ? [...prev.courseIds, courseId]
+        : prev.courseIds.filter(id => id !== courseId)
+    }));
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <Label htmlFor="waiver-name">Waiver Template Name *</Label>
+        <Input
+          id="waiver-name"
+          value={waiverData.name}
+          onChange={(e) => setWaiverData(prev => ({ ...prev, name: e.target.value }))}
+          placeholder="e.g., General Firearms Training Waiver"
+          required
+          data-testid="input-waiver-name"
+        />
+      </div>
+      
+      <div>
+        <Label htmlFor="waiver-content">Waiver Content *</Label>
+        <div className="mt-2">
+          <ReactQuill
+            value={waiverData.content}
+            onChange={(content) => setWaiverData(prev => ({ ...prev, content }))}
+            theme="snow"
+            placeholder="Enter the waiver content with legal terms and conditions..."
+            style={{ height: '300px', marginBottom: '50px' }}
+            modules={{
+              toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['clean']
+              ]
+            }}
+          />
+        </div>
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="waiver-active"
+          checked={waiverData.isActive}
+          onCheckedChange={(checked) => setWaiverData(prev => ({ ...prev, isActive: checked === true }))}
+          data-testid="checkbox-waiver-active"
+        />
+        <Label htmlFor="waiver-active">Active template (available for assignment to courses)</Label>
+      </div>
+
+      <div>
+        <Label>Assign to Courses</Label>
+        <p className="text-sm text-muted-foreground mb-3">
+          Select which courses should require this waiver. Students enrolling in selected courses will need to sign this waiver.
+        </p>
+        {courses.length === 0 ? (
+          <div className="text-center py-4 border border-dashed rounded-lg">
+            <p className="text-muted-foreground">No courses available</p>
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3">
+            {courses.map((course) => (
+              <div key={course.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`course-${course.id}`}
+                  checked={waiverData.courseIds.includes(course.id)}
+                  onCheckedChange={(checked) => handleCourseToggle(course.id, checked === true)}
+                  data-testid={`checkbox-course-${course.id}`}
+                />
+                <Label htmlFor={`course-${course.id}`} className="text-sm">
+                  {course.title}
+                </Label>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={!waiverData.name || !waiverData.content}>
+          {waiver ? "Update Waiver" : "Create Waiver"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// Assign Waiver Dialog Component
+function AssignWaiverDialog({ 
+  waiver,
+  courses,
+  onAssign
+}: { 
+  waiver: WaiverTemplateWithDetails;
+  courses: CourseWithSchedules[];
+  onAssign: (templateId: string, courseIds: string[]) => void;
+}) {
+  const [showDialog, setShowDialog] = useState(false);
+  const [selectedCourses, setSelectedCourses] = useState<string[]>(waiver.courseIds);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onAssign(waiver.id, selectedCourses);
+    setShowDialog(false);
+  };
+
+  const handleCourseToggle = (courseId: string, checked: boolean) => {
+    setSelectedCourses(prev => 
+      checked 
+        ? [...prev, courseId]
+        : prev.filter(id => id !== courseId)
+    );
+  };
+
+  return (
+    <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" data-testid={`button-assign-waiver-${waiver.id}`}>
+          <Settings className="h-4 w-4 mr-2" />
+          Manage Course Assignment
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Assign to Courses</DialogTitle>
+          <DialogDescription>
+            Select which courses should require the "{waiver.name}" waiver.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {courses.length === 0 ? (
+            <div className="text-center py-6 border border-dashed rounded-lg">
+              <p className="text-muted-foreground">No courses available</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-60 overflow-y-auto">
+              {courses.map((course) => (
+                <div key={course.id} className="flex items-start space-x-3">
+                  <Checkbox
+                    id={`assign-course-${course.id}`}
+                    checked={selectedCourses.includes(course.id)}
+                    onCheckedChange={(checked) => handleCourseToggle(course.id, checked === true)}
+                    data-testid={`checkbox-assign-course-${course.id}`}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor={`assign-course-${course.id}`} className="text-sm font-medium">
+                      {course.title}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {course.schedules.length} schedule{course.schedules.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              Update Assignment
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
