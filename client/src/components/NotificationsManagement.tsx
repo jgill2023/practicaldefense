@@ -890,10 +890,16 @@ export function NotificationsManagement() {
                         data-testid="editor-template-content"
                         modules={{
                           toolbar: [
-                            [{ 'header': [1, 2, false] }],
-                            ['bold', 'italic', 'underline'],
-                            ['link'],
-                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                            [{ 'font': [] }],
+                            [{ 'size': ['small', false, 'large', 'huge'] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'color': [] }, { 'background': [] }],
+                            [{ 'script': 'sub'}, { 'script': 'super' }],
+                            [{ 'align': [] }],
+                            ['blockquote', 'code-block'],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'indent': '-1'}, { 'indent': '+1' }],
+                            ['link', 'image', 'video'],
                             ['clean']
                           ],
                         }}
