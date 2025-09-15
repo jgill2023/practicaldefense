@@ -150,7 +150,7 @@ export function NotificationsManagement() {
       subject: '',
       content: '',
       isActive: true,
-      createdBy: (user as any)?.id || '',
+      createdBy: '',
     },
   });
 
@@ -354,11 +354,17 @@ export function NotificationsManagement() {
     if (selectedTemplate) {
       updateTemplateMutation.mutate({ ...data, id: selectedTemplate.id });
     } else {
-      // Ensure createdBy is set
+      // Ensure createdBy is properly set
+      const userId = (user as any)?.id;
+      if (!userId) {
+        console.error('No user ID available for template creation');
+        return;
+      }
       const templateData = { 
         ...data, 
-        createdBy: (user as any)?.id || data.createdBy || '' 
+        createdBy: userId
       };
+      console.log('🔥 Final template data being sent:', templateData);
       createTemplateMutation.mutate(templateData);
     }
   };
@@ -835,7 +841,7 @@ export function NotificationsManagement() {
 
       {/* Template Create/Edit Dialog */}
       <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
-        <DialogContent className="max-w-2xl z-[1000] pointer-events-auto">
+        <DialogContent className="max-w-2xl" style={{zIndex: 50}}>
           <DialogHeader>
             <DialogTitle>
               {selectedTemplate ? 'Edit Template' : 'Create New Template'}
@@ -886,7 +892,7 @@ export function NotificationsManagement() {
                           <SelectValue placeholder="Select template type" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="z-[100]">
+                      <SelectContent style={{zIndex: 9999}} className="bg-white border shadow-lg">
                         <SelectItem value="email">Email</SelectItem>
                         <SelectItem value="sms">SMS</SelectItem>
                       </SelectContent>
