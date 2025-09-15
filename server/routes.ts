@@ -663,8 +663,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      if (!user || user.role !== 'instructor') {
-        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
       }
 
       const format = req.query.format || 'excel';
@@ -689,7 +689,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime, 
             row.paymentStatus, row.enrollmentStatus, row.category, row.registrationDate
           ];
-          csvRows.push(values.map(v => `"${v}"`).join(','));
+          // Sanitize CSV values to prevent formula injection
+          const sanitizedValues = values.map(v => {
+            const str = String(v || '');
+            // Escape cells that start with formula characters
+            if (str.startsWith('=') || str.startsWith('+') || str.startsWith('-') || str.startsWith('@')) {
+              return `"'${str}"`; // Prefix with single quote to treat as literal
+            }
+            return `"${str.replace(/"/g, '""')}"`; // Escape quotes
+          });
+          csvRows.push(sanitizedValues.join(','));
         });
         
         res.setHeader('Content-Type', 'text/csv');
@@ -772,16 +781,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       
-      if (!user || user.role !== 'instructor') {
-        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
       }
 
-      // This would require Google Sheets API setup
-      // For now, return placeholder response
-      res.json({ 
-        message: "Google Sheets integration not yet configured. Please contact administrator.",
-        action: "setup_required"
-      });
+      // Google Sheets integration
+      try {
+        const { google } = await import('googleapis');
+        
+        // Check if credentials are available
+        if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+          return res.json({ 
+            message: "Google Sheets integration not configured. Please contact administrator to set up service account credentials.",
+            action: "setup_required"
+          });
+        }
+
+        // Parse service account credentials
+        const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
+        
+        // Initialize Google Sheets API
+        const auth = new google.auth.GoogleAuth({
+          credentials,
+          scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file']
+        });
+        
+        const sheets = google.sheets({ version: 'v4', auth });
+        const drive = google.drive({ version: 'v3', auth });
+        
+        // Get roster data
+        const data = await storage.getRosterExportData(userId);
+        const allRows = [...data.current, ...data.former];
+        
+        if (allRows.length === 0) {
+          return res.json({
+            message: "No student data available to export.",
+            action: "no_data"
+          });
+        }
+        
+        // Create new spreadsheet
+        const createResponse = await sheets.spreadsheets.create({
+          requestBody: {
+            properties: {
+              title: `Course Roster - ${new Date().toLocaleDateString()}`
+            },
+            sheets: [
+              {
+                properties: { title: 'Summary' },
+                data: [{
+                  rowData: [
+                    { values: [{ userEnteredValue: { stringValue: 'Course Roster Export Summary' } }] },
+                    { values: [{ userEnteredValue: { stringValue: 'Export Date' } }, { userEnteredValue: { stringValue: new Date().toLocaleDateString() } }] },
+                    { values: [{ userEnteredValue: { stringValue: 'Total Current Students' } }, { userEnteredValue: { numberValue: data.summary.totalCurrentStudents } }] },
+                    { values: [{ userEnteredValue: { stringValue: 'Total Former Students' } }, { userEnteredValue: { numberValue: data.summary.totalFormerStudents } }] },
+                    { values: [{ userEnteredValue: { stringValue: 'Total Courses' } }, { userEnteredValue: { numberValue: data.summary.totalCourses } }] }
+                  ]
+                }]
+              },
+              {
+                properties: { title: 'All Students' }
+              }
+            ]
+          }
+        });
+        
+        const spreadsheetId = createResponse.data.spreadsheetId;
+        
+        // Prepare data for the All Students sheet
+        const headers = [
+          'Student ID', 'First Name', 'Last Name', 'Email', 'Phone',
+          'Date of Birth', 'License Expiration', 'Course Title', 'Course Code',
+          'Schedule Date', 'Start Time', 'End Time', 'Payment Status',
+          'Enrollment Status', 'Category', 'Registration Date'
+        ];
+        
+        const values = [
+          headers,
+          ...allRows.map(row => [
+            row.studentId, row.firstName, row.lastName, row.email, row.phone,
+            row.dateOfBirth, row.licenseExpiration, row.courseTitle, row.courseAbbreviation,
+            row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime,
+            row.paymentStatus, row.enrollmentStatus, row.category, row.registrationDate
+          ])
+        ];
+        
+        // Update the All Students sheet with data
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: 'All Students!A1',
+          valueInputOption: 'RAW',
+          requestBody: { values }
+        });
+        
+        // Make the spreadsheet publicly readable
+        await drive.permissions.create({
+          fileId: spreadsheetId,
+          requestBody: {
+            role: 'reader',
+            type: 'anyone'
+          }
+        });
+        
+        const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
+        
+        res.json({
+          message: "Google Sheets export created successfully!",
+          action: "success",
+          spreadsheetUrl,
+          spreadsheetId
+        });
+        
+      } catch (googleError: any) {
+        console.error('Google Sheets API error:', googleError);
+        
+        if (googleError.message?.includes('credentials')) {
+          return res.json({ 
+            message: "Google Sheets credentials not properly configured. Please contact administrator.",
+            action: "setup_required"
+          });
+        }
+        
+        throw googleError;
+      }
       
     } catch (error) {
       console.error("Error creating Google Sheets export:", error);

@@ -52,6 +52,7 @@ interface StudentsData {
 function StudentsPage() {
   const [activeTab, setActiveTab] = useState("current");
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -62,6 +63,9 @@ function StudentsPage() {
 
   // Export handlers
   const handleExport = async (format: 'excel' | 'csv') => {
+    if (isExporting) return;
+    
+    setIsExporting(true);
     try {
       const response = await fetch(`/api/instructor/roster/export?format=${format}`, {
         method: 'GET',
@@ -69,7 +73,8 @@ function StudentsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Export failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Export failed');
       }
 
       // Create download link
@@ -87,16 +92,21 @@ function StudentsPage() {
         title: "Export Successful",
         description: `Course roster has been exported as ${format.toUpperCase()}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Export Failed",
-        description: "Failed to export course roster. Please try again.",
+        description: error.message || "Failed to export course roster. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsExporting(false);
     }
   };
 
   const handleGoogleSheetsExport = async () => {
+    if (isExporting) return;
+    
+    setIsExporting(true);
     try {
       const response = await apiRequest("POST", "/api/instructor/roster/google-sheets", {});
       const result = await response.json();
@@ -106,18 +116,42 @@ function StudentsPage() {
           title: "Setup Required",
           description: result.message,
         });
+      } else if (result.action === 'success') {
+        toast({
+          title: "Google Sheets Created!",
+          description: (
+            <div>
+              <p>{result.message}</p>
+              <a 
+                href={result.spreadsheetUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-500 underline mt-2 block"
+              >
+                Open Google Sheet
+              </a>
+            </div>
+          ),
+        });
+      } else if (result.action === 'no_data') {
+        toast({
+          title: "No Data",
+          description: result.message,
+        });
       } else {
         toast({
           title: "Google Sheets Export",
           description: "Google Sheets export has been initiated.",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Export Failed",
-        description: "Failed to create Google Sheets export. Please try again.",
+        description: error.message || "Failed to create Google Sheets export. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -336,27 +370,42 @@ function StudentsPage() {
               variant="outline"
               size="sm"
               onClick={() => handleExport('excel')}
+              disabled={isExporting}
               data-testid="button-export-excel"
             >
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              {isExporting ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+              ) : (
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+              )}
               Excel
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleExport('csv')}
+              disabled={isExporting}
               data-testid="button-export-csv"
             >
-              <FileText className="h-4 w-4 mr-2" />
+              {isExporting ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+              ) : (
+                <FileText className="h-4 w-4 mr-2" />
+              )}
               CSV
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleGoogleSheetsExport()}
+              disabled={isExporting}
               data-testid="button-export-google-sheets"
             >
-              <Share2 className="h-4 w-4 mr-2" />
+              {isExporting ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+              ) : (
+                <Share2 className="h-4 w-4 mr-2" />
+              )}
               Google Sheets
             </Button>
           </div>
