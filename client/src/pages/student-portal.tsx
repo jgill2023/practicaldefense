@@ -706,7 +706,7 @@ export default function StudentPortal() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground hover:text-primary ml-4"
+                  className="border-primary-foreground/20 text-slate-800 hover:bg-primary-foreground hover:text-primary ml-4"
                   onClick={() => setIsEditProfileOpen(true)}
                   data-testid="button-edit-profile"
                 >
