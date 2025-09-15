@@ -276,7 +276,30 @@ export default function CourseFormsManagement() {
   };
 
   const handleCreateWaiver = (data: { name: string; content: string; isActive: boolean; courseIds: string[] }) => {
-    waiverTemplateMutation.mutate(data);
+    if (!(user as any)?.id) {
+      toast({
+        title: "Error",
+        description: "User authentication required to create waiver templates.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Transform data to match schema requirements
+    const waiverData = {
+      name: data.name,
+      content: data.content,
+      isActive: data.isActive,
+      scope: 'course' as const, // Required field with valid value
+      courseIds: data.courseIds, // Array of course IDs
+      categoryIds: [], // Empty array for category scope (not used for course scope)
+      validityDays: 365, // Default validity period
+      requiresGuardian: false, // Default value
+      forceReSign: false, // Default value  
+      availableFields: ['studentName', 'courseName', 'date', 'instructorName', 'location'], // Default merge fields
+      createdBy: (user as any).id // Required audit field
+    };
+    waiverTemplateMutation.mutate(waiverData);
   };
 
   const handleAssignWaiver = (templateId: string, courseIds: string[]) => {
@@ -673,7 +696,7 @@ export default function CourseFormsManagement() {
                               {waiver.instanceCount} instance{waiver.instanceCount !== 1 ? 's' : ''}
                             </Badge>
                             <Badge variant="outline">
-                              {waiver.courseIds.length} course{waiver.courseIds.length !== 1 ? 's' : ''}
+                              {waiver.courseIds?.length || 0} course{(waiver.courseIds?.length || 0) !== 1 ? 's' : ''}
                             </Badge>
                             
                             <div className="flex items-center gap-1">
@@ -720,7 +743,7 @@ export default function CourseFormsManagement() {
                             {/* Assigned Courses */}
                             <div>
                               <h4 className="font-medium mb-3">Assigned Courses</h4>
-                              {waiver.courseIds.length === 0 ? (
+                              {(waiver.courseIds?.length || 0) === 0 ? (
                                 <div className="text-center py-4 border border-dashed rounded-lg">
                                   <p className="text-muted-foreground">
                                     No courses assigned. Use the course assignment feature to assign this waiver to courses.
@@ -728,7 +751,7 @@ export default function CourseFormsManagement() {
                                 </div>
                               ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                  {waiver.courseIds.map((courseId) => {
+                                  {(waiver.courseIds || []).map((courseId) => {
                                     const course = courses.find(c => c.id === courseId);
                                     return course ? (
                                       <div 
@@ -1148,7 +1171,7 @@ function AssignWaiverDialog({
   onAssign: (templateId: string, courseIds: string[]) => void;
 }) {
   const [showDialog, setShowDialog] = useState(false);
-  const [selectedCourses, setSelectedCourses] = useState<string[]>(waiver.courseIds);
+  const [selectedCourses, setSelectedCourses] = useState<string[]>(waiver.courseIds || []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
