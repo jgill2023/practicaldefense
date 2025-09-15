@@ -150,6 +150,7 @@ export function NotificationsManagement() {
       subject: '',
       content: '',
       isActive: true,
+      createdBy: (user as any)?.id || '',
     },
   });
 
@@ -350,16 +351,14 @@ export function NotificationsManagement() {
   };
 
   const handleSubmitTemplate = (data: TemplateForm) => {
-    console.log('🔥 handleSubmitTemplate CALLED!', data);
-    console.log('🔥 User ID:', (user as any)?.id);
     if (selectedTemplate) {
-      console.log('🔥 Updating existing template');
       updateTemplateMutation.mutate({ ...data, id: selectedTemplate.id });
     } else {
-      console.log('🔥 Creating new template');
-      // Add the createdBy field from current user
-      const templateData = { ...data, createdBy: (user as any)?.id || '' };
-      console.log('🔥 Final template data:', templateData);
+      // Ensure createdBy is set
+      const templateData = { 
+        ...data, 
+        createdBy: (user as any)?.id || data.createdBy || '' 
+      };
       createTemplateMutation.mutate(templateData);
     }
   };
@@ -770,7 +769,7 @@ export function NotificationsManagement() {
                               <SelectValue placeholder="Select a template" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="z-[100]">
                             {templates.map((template) => (
                               <SelectItem key={template.id} value={template.id}>
                                 {template.name} ({template.type})
@@ -797,7 +796,7 @@ export function NotificationsManagement() {
                               <SelectValue placeholder="Select recipient type" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="z-[100]">
                             <SelectItem value="individual">Individual Student</SelectItem>
                             <SelectItem value="course">All Students in Course</SelectItem>
                             <SelectItem value="all_students">All Students</SelectItem>
@@ -846,11 +845,7 @@ export function NotificationsManagement() {
             <form 
               id="template-form" 
               noValidate
-              onSubmit={(e) => {
-                console.log('🔥 FORM ONSUBMIT TRIGGERED!', e);
-                e.preventDefault();
-                templateForm.handleSubmit(handleSubmitTemplate)(e);
-              }}
+              onSubmit={templateForm.handleSubmit(handleSubmitTemplate)}
               className="space-y-4">
               <FormField
                 control={templateForm.control}
@@ -877,7 +872,7 @@ export function NotificationsManagement() {
                           <SelectValue placeholder="Select template type" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="z-[100]">
                         <SelectItem value="email">Email</SelectItem>
                         <SelectItem value="sms">SMS</SelectItem>
                       </SelectContent>
@@ -975,22 +970,6 @@ export function NotificationsManagement() {
                 <Button
                   type="submit"
                   disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
-                  onClick={(e) => {
-                    console.log('🔥 SAVE BUTTON CLICKED!', e.type);
-                    console.log('🔥 Button disabled?', e.currentTarget.disabled);
-                    console.log('🔥 Form values:', templateForm.getValues());
-                    console.log('🔥 Form errors:', templateForm.formState.errors);
-                    console.log('🔥 Form isValid:', templateForm.formState.isValid);
-                    console.log('🔥 Form isDirty:', templateForm.formState.isDirty);
-                    
-                    // Force validation and submission
-                    templateForm.trigger().then((isValid) => {
-                      console.log('🔥 Manual validation result:', isValid);
-                      if (!isValid) {
-                        console.log('🔥 Validation errors after trigger:', templateForm.formState.errors);
-                      }
-                    });
-                  }}
                   data-testid="button-save-template"
                 >
                   {createTemplateMutation.isPending || updateTemplateMutation.isPending ? (
@@ -1027,7 +1006,7 @@ export function NotificationsManagement() {
                           <SelectValue placeholder="Select a template" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="z-[100]">
                         {templates.map((template) => (
                           <SelectItem key={template.id} value={template.id}>
                             {template.name} ({template.type})
@@ -1051,7 +1030,7 @@ export function NotificationsManagement() {
                           <SelectValue placeholder="Select trigger event" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="z-[100]">
                         <SelectItem value="enrollment_created">Enrollment Created</SelectItem>
                         <SelectItem value="enrollment_confirmed">Enrollment Confirmed</SelectItem>
                         <SelectItem value="payment_completed">Payment Completed</SelectItem>
