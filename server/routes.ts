@@ -657,6 +657,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Course schedules for export selection
+  app.get('/api/instructor/course-schedules', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
+      }
+
+      const courses = await storage.getCoursesByInstructor(userId);
+      
+      // Format schedules for export selection
+      const schedules = courses
+        .flatMap(course => 
+          course.schedules
+            .filter(schedule => !schedule.deletedAt) // Only active schedules
+            .map(schedule => ({
+              id: schedule.id,
+              courseId: course.id,
+              courseTitle: course.title,
+              courseAbbreviation: course.abbreviation,
+              startDate: schedule.startDate,
+              endDate: schedule.endDate,
+              startTime: schedule.startTime,
+              endTime: schedule.endTime,
+              location: schedule.location,
+              maxSpots: schedule.maxSpots,
+              availableSpots: schedule.availableSpots,
+              enrollmentCount: schedule.maxSpots - schedule.availableSpots
+            }))
+        )
+        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+      res.json(schedules);
+    } catch (error: any) {
+      console.error("Error fetching course schedules:", error);
+      res.status(500).json({ message: "Failed to fetch course schedules" });
+    }
+  });
+
   // Course roster export routes
   app.get('/api/instructor/roster/export', isAuthenticated, async (req: any, res) => {
     try {
@@ -668,7 +709,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const format = req.query.format || 'excel';
-      const data = await storage.getRosterExportData(userId);
+      const scheduleId = req.query.scheduleId as string | undefined;
+      const data = await storage.getRosterExportData(userId, scheduleId);
 
       if (format === 'csv') {
         // Generate CSV
@@ -707,7 +749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
       } else if (format === 'excel') {
         const ExcelJS = await import('exceljs');
-        const workbook = new ExcelJS.Workbook();
+        const workbook = new ExcelJS.default.Workbook();
         
         // Summary sheet
         const summarySheet = workbook.addWorksheet('Summary');
@@ -769,7 +811,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(400).json({ message: "Unsupported format. Use 'csv' or 'excel'." });
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error exporting roster:", error);
       res.status(500).json({ message: "Failed to export roster" });
     }
@@ -810,7 +852,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const drive = google.drive({ version: 'v3', auth });
         
         // Get roster data
-        const data = await storage.getRosterExportData(userId);
+        const scheduleId = req.body.scheduleId as string | undefined;
+        const data = await storage.getRosterExportData(userId, scheduleId);
         const allRows = [...data.current, ...data.former];
         
         if (allRows.length === 0) {
@@ -847,6 +890,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         const spreadsheetId = createResponse.data.spreadsheetId;
+        if (!spreadsheetId) {
+          throw new Error('Failed to create spreadsheet - no ID returned');
+        }
         
         // Prepare data for the All Students sheet
         const headers = [
@@ -900,7 +946,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw googleError;
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating Google Sheets export:", error);
       res.status(500).json({ message: "Failed to create Google Sheets export" });
     }

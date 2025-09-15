@@ -114,6 +114,20 @@ export interface IStorage {
     current: any[];
     former: any[];
   }>;
+  getStudentsBySchedule(scheduleId: string, instructorId: string): Promise<{
+    current: any[];
+    former: any[];
+  }>;
+  getRosterExportData(instructorId: string, scheduleId?: string): Promise<{
+    current: any[];
+    former: any[];
+    summary: {
+      totalCurrentStudents: number;
+      totalFormerStudents: number;
+      totalCourses: number;
+      exportDate: string;
+    };
+  }>;
   
   // Draft enrollment operations for single-page registration
   initiateRegistration(data: {
@@ -1003,7 +1017,63 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getRosterExportData(instructorId: string): Promise<{
+  async getStudentsBySchedule(scheduleId: string, instructorId: string): Promise<{
+    current: any[];
+    former: any[];
+  }> {
+    // Get enrollments for the specific schedule
+    const scheduleEnrollments = await db
+      .select({
+        enrollment: enrollments,
+        student: users,
+        course: courses,
+        schedule: courseSchedules,
+      })
+      .from(enrollments)
+      .innerJoin(users, eq(enrollments.studentId, users.id))
+      .innerJoin(courses, eq(enrollments.courseId, courses.id))
+      .innerJoin(courseSchedules, eq(enrollments.scheduleId, courseSchedules.id))
+      .where(
+        and(
+          eq(enrollments.scheduleId, scheduleId),
+          eq(courses.instructorId, instructorId), // Ensure instructor owns the course
+          isNotNull(enrollments.studentId) // Only enrolled students
+        )
+      );
+
+    // Group students and their enrollments
+    const studentMap = new Map();
+    
+    scheduleEnrollments.forEach(({ enrollment, student, course, schedule }) => {
+      if (!studentMap.has(student.id)) {
+        studentMap.set(student.id, {
+          ...student,
+          enrollments: []
+        });
+      }
+      
+      studentMap.get(student.id).enrollments.push({
+        ...enrollment,
+        courseTitle: course.title,
+        courseAbbreviation: course.abbreviation,
+        scheduleDate: schedule.startDate,
+        scheduleStartTime: schedule.startTime,
+        scheduleEndTime: schedule.endTime,
+        category: course.category
+      });
+    });
+
+    const students = Array.from(studentMap.values());
+    
+    // For schedule-specific filtering, we consider all students as "current"
+    // since they're all enrolled in the specific schedule
+    return {
+      current: students,
+      former: [] // No former students for specific schedule exports
+    };
+  }
+
+  async getRosterExportData(instructorId: string, scheduleId?: string): Promise<{
     current: any[];
     former: any[];
     summary: {
@@ -1013,7 +1083,15 @@ export class DatabaseStorage implements IStorage {
       exportDate: string;
     };
   }> {
-    const studentsData = await this.getStudentsByInstructor(instructorId);
+    let studentsData;
+    
+    if (scheduleId) {
+      // Filter by specific schedule
+      studentsData = await this.getStudentsBySchedule(scheduleId, instructorId);
+    } else {
+      // Get all students for the instructor
+      studentsData = await this.getStudentsByInstructor(instructorId);
+    }
     
     // Flatten the data for export
     const flattenStudent = (student: any, category: 'current' | 'former') => {

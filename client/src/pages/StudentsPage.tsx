@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -49,10 +50,28 @@ interface StudentsData {
   former: Student[];
 }
 
+interface CourseSchedule {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  courseAbbreviation?: string;
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  location?: string;
+  maxSpots: number;
+  availableSpots: number;
+  enrollmentCount: number;
+}
+
 function StudentsPage() {
   const [activeTab, setActiveTab] = useState("current");
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'excel' | 'csv' | 'google-sheets'>('excel');
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string>('all');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -61,13 +80,25 @@ function StudentsPage() {
     queryKey: ['/api/students'],
   });
 
-  // Export handlers
+  // Query for course schedules
+  const { data: courseSchedules } = useQuery<CourseSchedule[]>({
+    queryKey: ['/api/instructor/course-schedules'],
+    enabled: showExportModal, // Only fetch when modal is open
+  });
+
+  // Export handlers  
+  const handleExportClick = (format: 'excel' | 'csv' | 'google-sheets') => {
+    setExportFormat(format);
+    setShowExportModal(true);
+  };
+
   const handleExport = async (format: 'excel' | 'csv') => {
     if (isExporting) return;
     
     setIsExporting(true);
     try {
-      const response = await fetch(`/api/instructor/roster/export?format=${format}`, {
+      const scheduleParam = selectedScheduleId !== 'all' ? `&scheduleId=${selectedScheduleId}` : '';
+      const response = await fetch(`/api/instructor/roster/export?format=${format}${scheduleParam}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -108,7 +139,8 @@ function StudentsPage() {
     
     setIsExporting(true);
     try {
-      const response = await apiRequest("POST", "/api/instructor/roster/google-sheets", {});
+      const requestBody = selectedScheduleId !== 'all' ? { scheduleId: selectedScheduleId } : {};
+      const response = await apiRequest("POST", "/api/instructor/roster/google-sheets", requestBody);
       const result = await response.json();
       
       if (result.action === 'setup_required') {
@@ -369,7 +401,7 @@ function StudentsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleExport('excel')}
+              onClick={() => handleExportClick('excel')}
               disabled={isExporting}
               data-testid="button-export-excel"
               className="min-w-0 flex-1 sm:flex-none"
@@ -384,7 +416,7 @@ function StudentsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleExport('csv')}
+              onClick={() => handleExportClick('csv')}
               disabled={isExporting}
               data-testid="button-export-csv"
               className="min-w-0 flex-1 sm:flex-none"
@@ -399,7 +431,7 @@ function StudentsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleGoogleSheetsExport()}
+              onClick={() => handleExportClick('google-sheets')}
               disabled={isExporting}
               data-testid="button-export-google-sheets"
               className="min-w-0 flex-1 sm:flex-none"
@@ -453,6 +485,61 @@ function StudentsPage() {
             </DialogTitle>
           </DialogHeader>
           {editingStudent && <EditStudentForm student={editingStudent} onClose={() => setEditingStudent(null)} />}
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Selection Modal */}
+      <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Export Course Roster</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Export Scope</label>
+              <Select value={selectedScheduleId} onValueChange={setSelectedScheduleId}>
+                <SelectTrigger data-testid="select-export-scope">
+                  <SelectValue placeholder="Select course schedule" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Current Students</SelectItem>
+                  {courseSchedules?.map((schedule) => (
+                    <SelectItem key={schedule.id} value={schedule.id}>
+                      {schedule.courseTitle} {schedule.courseAbbreviation ? `(${schedule.courseAbbreviation})` : ''} - {' '}
+                      {format(new Date(schedule.startDate), 'MMM d, yyyy')} at {schedule.startTime}
+                      {schedule.location ? ` - ${schedule.location}` : ''} ({schedule.enrollmentCount} students)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowExportModal(false)}
+              data-testid="button-cancel-export"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setShowExportModal(false);
+                if (exportFormat === 'google-sheets') {
+                  handleGoogleSheetsExport();
+                } else {
+                  handleExport(exportFormat as 'excel' | 'csv');
+                }
+              }}
+              disabled={isExporting}
+              data-testid="button-confirm-export"
+            >
+              {isExporting ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+              ) : null}
+              Export {exportFormat === 'google-sheets' ? 'Google Sheets' : exportFormat.toUpperCase()}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
