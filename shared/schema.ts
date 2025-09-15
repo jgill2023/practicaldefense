@@ -502,6 +502,93 @@ export const promoCodes = pgTable("promo_codes", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Notification Templates table for email and SMS templates
+export const notificationTemplates = pgTable("notification_templates", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 10 }).notNull(), // 'email' or 'sms'
+  category: varchar("category", { length: 50 }).notNull(), // 'course_specific', 'payment_notice', 'announcement', 'welcome', 'certificate', 'reminder'
+  subject: varchar("subject", { length: 500 }), // Only for email templates
+  content: text("content").notNull(), // HTML for email, plain text for SMS
+  variables: text("variables").array(), // Available variables like {{student_name}}, {{course_name}}
+  
+  // Course associations
+  courseId: uuid("course_id").references(() => courses.id), // null for global templates
+  scheduleId: uuid("schedule_id").references(() => courseSchedules.id), // null for course-wide templates
+  
+  // Template settings
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0), // For custom ordering
+  
+  // Audit fields
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+  updatedBy: varchar("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Notification Schedules table for automatic notifications
+export const notificationSchedules = pgTable("notification_schedules", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: uuid("template_id").notNull().references(() => notificationTemplates.id, { onDelete: 'cascade' }),
+  
+  // Trigger configuration
+  triggerEvent: varchar("trigger_event", { length: 50 }).notNull(), // 'registration', 'payment_received', 'payment_failed', 'course_approaching', 'course_cancelled', 'license_expiration'
+  triggerTiming: varchar("trigger_timing", { length: 20 }).notNull().default('immediate'), // 'immediate', 'delayed'
+  delayDays: integer("delay_days").default(0), // Days to delay (negative for before, positive for after)
+  delayHours: integer("delay_hours").default(0), // Additional hours delay
+  
+  // Scope configuration
+  courseId: uuid("course_id").references(() => courses.id), // null for global schedules
+  scheduleId: uuid("schedule_id").references(() => courseSchedules.id), // null for course-wide schedules
+  
+  // Settings
+  isActive: boolean("is_active").notNull().default(true),
+  sendEmail: boolean("send_email").notNull().default(true),
+  sendSms: boolean("send_sms").notNull().default(false),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Notification Logs table for tracking sent notifications
+export const notificationLogs = pgTable("notification_logs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: uuid("template_id").notNull().references(() => notificationTemplates.id),
+  scheduleId: uuid("schedule_id").references(() => notificationSchedules.id), // null for manual sends
+  
+  // Recipient information
+  recipientId: varchar("recipient_id").notNull().references(() => users.id),
+  recipientEmail: varchar("recipient_email", { length: 255 }),
+  recipientPhone: varchar("recipient_phone", { length: 20 }),
+  
+  // Message details
+  type: varchar("type", { length: 10 }).notNull(), // 'email' or 'sms'
+  subject: varchar("subject", { length: 500 }), // Email subject (after variable substitution)
+  content: text("content").notNull(), // Final message content (after variable substitution)
+  variables: jsonb("variables"), // Variables used for substitution
+  
+  // Delivery tracking
+  status: varchar("status", { length: 20 }).notNull().default('pending'), // 'pending', 'sent', 'delivered', 'failed', 'bounced'
+  deliveryAttempts: integer("delivery_attempts").notNull().default(0),
+  lastAttemptAt: timestamp("last_attempt_at"),
+  deliveredAt: timestamp("delivered_at"),
+  errorMessage: text("error_message"),
+  
+  // External service tracking
+  externalId: varchar("external_id", { length: 255 }), // SendGrid message ID, Twilio SID, etc.
+  externalStatus: varchar("external_status", { length: 50 }),
+  
+  // Context
+  enrollmentId: uuid("enrollment_id").references(() => enrollments.id), // Associated enrollment if applicable
+  courseId: uuid("course_id").references(() => courses.id), // Associated course if applicable
+  
+  // Audit
+  sentBy: varchar("sent_by").references(() => users.id), // null for automatic sends
+  sentAt: timestamp("sent_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Promo Code Redemptions table to track usage and enforce limits
 export const promoCodeRedemptions = pgTable("promo_code_redemptions", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -557,6 +644,71 @@ export const promoCodeRedemptionRelations = relations(promoCodeRedemptions, ({ o
   }),
 }));
 
+// Relations for notification system
+export const notificationTemplateRelations = relations(notificationTemplates, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [notificationTemplates.createdBy],
+    references: [users.id],
+  }),
+  updater: one(users, {
+    fields: [notificationTemplates.updatedBy],
+    references: [users.id],
+  }),
+  course: one(courses, {
+    fields: [notificationTemplates.courseId],
+    references: [courses.id],
+  }),
+  schedule: one(courseSchedules, {
+    fields: [notificationTemplates.scheduleId],
+    references: [courseSchedules.id],
+  }),
+  schedules: many(notificationSchedules),
+  logs: many(notificationLogs),
+}));
+
+export const notificationScheduleRelations = relations(notificationSchedules, ({ one, many }) => ({
+  template: one(notificationTemplates, {
+    fields: [notificationSchedules.templateId],
+    references: [notificationTemplates.id],
+  }),
+  course: one(courses, {
+    fields: [notificationSchedules.courseId],
+    references: [courses.id],
+  }),
+  schedule: one(courseSchedules, {
+    fields: [notificationSchedules.scheduleId],
+    references: [courseSchedules.id],
+  }),
+  logs: many(notificationLogs),
+}));
+
+export const notificationLogRelations = relations(notificationLogs, ({ one }) => ({
+  template: one(notificationTemplates, {
+    fields: [notificationLogs.templateId],
+    references: [notificationTemplates.id],
+  }),
+  schedule: one(notificationSchedules, {
+    fields: [notificationLogs.scheduleId],
+    references: [notificationSchedules.id],
+  }),
+  recipient: one(users, {
+    fields: [notificationLogs.recipientId],
+    references: [users.id],
+  }),
+  sender: one(users, {
+    fields: [notificationLogs.sentBy],
+    references: [users.id],
+  }),
+  enrollment: one(enrollments, {
+    fields: [notificationLogs.enrollmentId],
+    references: [enrollments.id],
+  }),
+  course: one(courses, {
+    fields: [notificationLogs.courseId],
+    references: [courses.id],
+  }),
+}));
+
 // Insert schemas for promo codes
 export const insertPromoCodeSchema = createInsertSchema(promoCodes).omit({
   id: true,
@@ -579,11 +731,68 @@ export const insertPromoCodeRedemptionSchema = createInsertSchema(promoCodeRedem
   createdAt: true,
 });
 
+// Insert schemas for notification system
+export const insertNotificationTemplateSchema = createInsertSchema(notificationTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationScheduleSchema = createInsertSchema(notificationSchedules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationLogSchema = createInsertSchema(notificationLogs).omit({
+  id: true,
+  sentAt: true,
+  createdAt: true,
+});
+
 // Types for promo codes
 export type InsertPromoCode = z.infer<typeof insertPromoCodeSchema>;
 export type PromoCode = typeof promoCodes.$inferSelect;
 export type InsertPromoCodeRedemption = z.infer<typeof insertPromoCodeRedemptionSchema>;
 export type PromoCodeRedemption = typeof promoCodeRedemptions.$inferSelect;
+
+// Types for notification system
+export type InsertNotificationTemplate = z.infer<typeof insertNotificationTemplateSchema>;
+export type NotificationTemplate = typeof notificationTemplates.$inferSelect;
+export type InsertNotificationSchedule = z.infer<typeof insertNotificationScheduleSchema>;
+export type NotificationSchedule = typeof notificationSchedules.$inferSelect;
+export type InsertNotificationLog = z.infer<typeof insertNotificationLogSchema>;
+export type NotificationLog = typeof notificationLogs.$inferSelect;
+
+// Extended types for notification system
+export type NotificationTemplateWithDetails = NotificationTemplate & {
+  creator: User;
+  course?: Course;
+  schedule?: CourseSchedule;
+  schedules: NotificationSchedule[];
+};
+
+export type NotificationScheduleWithDetails = NotificationSchedule & {
+  template: NotificationTemplate;
+  course?: Course;
+  schedule?: CourseSchedule;
+};
+
+export type NotificationLogWithDetails = NotificationLog & {
+  template: NotificationTemplate;
+  schedule?: NotificationSchedule;
+  recipient: User;
+  sender?: User;
+  enrollment?: Enrollment;
+  course?: Course;
+};
+
+// Notification enums and types
+export type NotificationType = 'email' | 'sms';
+export type NotificationCategory = 'course_specific' | 'payment_notice' | 'announcement' | 'welcome' | 'certificate' | 'reminder';
+export type TriggerEvent = 'registration' | 'payment_received' | 'payment_failed' | 'course_approaching' | 'course_cancelled' | 'license_expiration';
+export type TriggerTiming = 'immediate' | 'delayed';
+export type NotificationStatus = 'pending' | 'sent' | 'delivered' | 'failed' | 'bounced';
 
 // Extended types for promo codes
 export type PromoCodeWithDetails = PromoCode & {
