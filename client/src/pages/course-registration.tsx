@@ -112,7 +112,7 @@ const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: a
 export default function CourseRegistration() {
   const [, params] = useRoute("/course-registration/:id");
   const [, setLocation] = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   
   const [selectedSchedule, setSelectedSchedule] = useState<CourseSchedule | null>(null);
@@ -139,10 +139,46 @@ export default function CourseRegistration() {
     createAccount: !isAuthenticated, // Default to true if not authenticated
   });
 
+  // Helper function to format date for HTML date input (YYYY-MM-DD) - timezone-safe
+  const formatDateForInput = (dateValue: Date | string | null | undefined): string => {
+    if (!dateValue) return '';
+    
+    try {
+      // If already in YYYY-MM-DD format, return as-is
+      if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        return dateValue;
+      }
+      
+      // Convert to date and use UTC to avoid timezone shifts
+      const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+      if (isNaN(date.getTime())) return '';
+      
+      // Use toISOString and slice to get YYYY-MM-DD without timezone conversion
+      return date.toISOString().slice(0, 10);
+    } catch (error) {
+      return '';
+    }
+  };
+
   const { data: course, isLoading: courseLoading } = useQuery<CourseWithSchedules>({
     queryKey: ["/api/courses", params?.id],
     enabled: !!params?.id,
   });
+
+  // Auto-populate form fields for logged-in students
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: (user as any)?.firstName || '',
+        lastName: (user as any)?.lastName || '',
+        email: (user as any)?.email || '',
+        phone: (user as any)?.phone || '',
+        dateOfBirth: formatDateForInput((user as any)?.dateOfBirth) || '',
+        createAccount: false, // User is already authenticated
+      }));
+    }
+  }, [isAuthenticated, user]);
 
   // Calculate the payment amount based on the payment option
   const getPaymentAmount = (enrollment: any) => {
