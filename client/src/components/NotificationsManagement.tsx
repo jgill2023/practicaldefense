@@ -27,7 +27,9 @@ import {
   Eye,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { 
@@ -76,6 +78,15 @@ export function NotificationsManagement() {
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
+  
+  // Pagination state for logs
+  const [logsPage, setLogsPage] = useState(1);
+  const [logsFilters, setLogsFilters] = useState({
+    templateId: '',
+    type: '',
+    status: '',
+    recipientEmail: '',
+  });
 
   // Fetch notification templates
   const { data: templates = [], isLoading: templatesLoading } = useQuery<NotificationTemplate[]>({
@@ -89,11 +100,32 @@ export function NotificationsManagement() {
     retry: false,
   });
 
-  // Fetch notification logs
-  const { data: logs = [], isLoading: logsLoading } = useQuery<NotificationLog[]>({
-    queryKey: ['/api/admin/notification-logs'],
+  // Fetch notification logs with pagination
+  const { data: logsResponse, isLoading: logsLoading } = useQuery<{
+    data: NotificationLog[];
+    page: number;
+    limit: number;
+    total: number;
+  }>({
+    queryKey: ['/api/admin/notification-logs', logsPage, logsFilters],
+    queryFn: ({ queryKey }) => {
+      const [, page, filters] = queryKey;
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '10', // Show 10 logs per page
+        ...(filters.templateId && { templateId: filters.templateId }),
+        ...(filters.type && { type: filters.type }),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.recipientEmail && { recipientEmail: filters.recipientEmail }),
+      });
+      return fetch(`/api/admin/notification-logs?${params}`).then(res => res.json());
+    },
     retry: false,
   });
+
+  const logs = logsResponse?.data || [];
+  const totalLogs = logsResponse?.total || 0;
+  const totalPages = Math.ceil(totalLogs / 10);
 
   // Template form
   const templateForm = useForm<TemplateForm>({
@@ -388,7 +420,7 @@ export function NotificationsManagement() {
           </TabsTrigger>
           <TabsTrigger value="logs" className="flex items-center gap-2" data-testid="tab-logs">
             <Eye className="h-4 w-4" />
-            Logs ({logs.length})
+            Logs ({totalLogs})
           </TabsTrigger>
           <TabsTrigger value="send" className="flex items-center gap-2" data-testid="tab-send">
             <Send className="h-4 w-4" />
@@ -538,9 +570,81 @@ export function NotificationsManagement() {
         <TabsContent value="logs" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Notification Logs</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                <span>Notification Logs</span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {totalLogs} total logs
+                </span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Template</label>
+                  <select
+                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    value={logsFilters.templateId}
+                    onChange={(e) => {
+                      setLogsFilters(prev => ({ ...prev, templateId: e.target.value }));
+                      setLogsPage(1);
+                    }}
+                    data-testid="filter-template"
+                  >
+                    <option value="">All Templates</option>
+                    {templates.map(template => (
+                      <option key={template.id} value={template.id}>{template.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Type</label>
+                  <select
+                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    value={logsFilters.type}
+                    onChange={(e) => {
+                      setLogsFilters(prev => ({ ...prev, type: e.target.value }));
+                      setLogsPage(1);
+                    }}
+                    data-testid="filter-type"
+                  >
+                    <option value="">All Types</option>
+                    <option value="email">Email</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Status</label>
+                  <select
+                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    value={logsFilters.status}
+                    onChange={(e) => {
+                      setLogsFilters(prev => ({ ...prev, status: e.target.value }));
+                      setLogsPage(1);
+                    }}
+                    data-testid="filter-status"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="sent">Sent</option>
+                    <option value="failed">Failed</option>
+                    <option value="pending">Pending</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Recipient Email</label>
+                  <input
+                    type="email"
+                    className="w-full border rounded-md px-3 py-2 text-sm"
+                    placeholder="Filter by email..."
+                    value={logsFilters.recipientEmail}
+                    onChange={(e) => {
+                      setLogsFilters(prev => ({ ...prev, recipientEmail: e.target.value }));
+                      setLogsPage(1);
+                    }}
+                    data-testid="filter-email"
+                  />
+                </div>
+              </div>
+
               {logsLoading ? (
                 <div className="text-center py-8">Loading logs...</div>
               ) : logs.length === 0 ? (
@@ -548,47 +652,78 @@ export function NotificationsManagement() {
                   No notification logs found.
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {logs.map((log) => (
-                    <div
-                      key={log.id}
-                      className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold">Log {log.id.substring(0, 8)}</h3>
-                            <Badge variant={log.type === 'email' ? 'default' : 'secondary'}>
-                              {log.type === 'email' ? <Mail className="h-3 w-3 mr-1" /> : <MessageSquare className="h-3 w-3 mr-1" />}
-                              {log.type.toUpperCase()}
-                            </Badge>
-                            <Badge variant={
-                              log.status === 'sent' ? 'default' : 
-                              log.status === 'failed' ? 'destructive' : 
-                              'secondary'
-                            }>
-                              {log.status === 'sent' && <CheckCircle className="h-3 w-3 mr-1" />}
-                              {log.status === 'failed' && <XCircle className="h-3 w-3 mr-1" />}
-                              {log.status === 'pending' && <AlertCircle className="h-3 w-3 mr-1" />}
-                              {log.status.toUpperCase()}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-1">
-                            <strong>To:</strong> {log.recipientId} ({log.recipientEmail})
-                          </p>
-                          <p className="text-sm text-muted-foreground mb-1">
-                            <strong>Sent:</strong> {formatDateTime(log.sentAt)}
-                          </p>
-                          {log.errorMessage && (
-                            <p className="text-sm text-red-600">
-                              <strong>Error:</strong> {log.errorMessage}
+                <>
+                  <div className="space-y-4 mb-6">
+                    {logs.map((log) => (
+                      <div
+                        key={log.id}
+                        className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="font-semibold">Log {log.id.substring(0, 8)}</h3>
+                              <Badge variant={log.type === 'email' ? 'default' : 'secondary'}>
+                                {log.type === 'email' ? <Mail className="h-3 w-3 mr-1" /> : <MessageSquare className="h-3 w-3 mr-1" />}
+                                {log.type.toUpperCase()}
+                              </Badge>
+                              <Badge variant={
+                                log.status === 'sent' ? 'default' : 
+                                log.status === 'failed' ? 'destructive' : 
+                                'secondary'
+                              }>
+                                {log.status === 'sent' && <CheckCircle className="h-3 w-3 mr-1" />}
+                                {log.status === 'failed' && <XCircle className="h-3 w-3 mr-1" />}
+                                {log.status === 'pending' && <AlertCircle className="h-3 w-3 mr-1" />}
+                                {log.status.toUpperCase()}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-1">
+                              <strong>To:</strong> {log.recipientId} ({log.recipientEmail})
                             </p>
-                          )}
+                            <p className="text-sm text-muted-foreground mb-1">
+                              <strong>Sent:</strong> {formatDateTime(log.sentAt)}
+                            </p>
+                            {log.errorMessage && (
+                              <p className="text-sm text-red-600">
+                                <strong>Error:</strong> {log.errorMessage}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLogsPage(prev => Math.max(1, prev - 1))}
+                        disabled={logsPage === 1}
+                        data-testid="button-prev-page"
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setLogsPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={logsPage >= totalPages}
+                        data-testid="button-next-page"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
                     </div>
-                  ))}
-                </div>
+                    <span className="text-sm text-muted-foreground">
+                      Page {logsPage} of {totalPages} • Showing {logs.length} of {totalLogs} logs
+                    </span>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
