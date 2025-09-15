@@ -10,10 +10,11 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X } from "lucide-react";
@@ -46,6 +47,10 @@ const editProfileSchema = z.object({
   concealedCarryLicenseIssued: z.string().optional(),
   concealedCarryLicenseExpiration: z.string().optional(),
   preferredContactMethods: z.array(z.string()).optional(),
+  enableSmsNotifications: z.boolean().optional(),
+  enableSmsReminders: z.boolean().optional(),
+  enableSmsPaymentNotices: z.boolean().optional(),
+  enableSmsAnnouncements: z.boolean().optional(),
 });
 
 type EditProfileForm = z.infer<typeof editProfileSchema>;
@@ -215,6 +220,10 @@ function EditProfileDialog({ isOpen, onClose, user }: {
       concealedCarryLicenseIssued: formatDateForInput(user.concealedCarryLicenseIssued),
       concealedCarryLicenseExpiration: formatDateForInput(user.concealedCarryLicenseExpiration),
       preferredContactMethods: user.preferredContactMethods || [],
+      enableSmsNotifications: user.enableSmsNotifications ?? true,
+      enableSmsReminders: user.enableSmsReminders ?? true,
+      enableSmsPaymentNotices: user.enableSmsPaymentNotices ?? false,
+      enableSmsAnnouncements: user.enableSmsAnnouncements ?? false,
     },
   });
 
@@ -479,6 +488,111 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                   </FormItem>
                 )}
               />
+            </div>
+
+            {/* SMS Notification Preferences */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">SMS Notification Preferences</h3>
+              <div className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="enableSmsNotifications"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-medium">
+                          Enable SMS Notifications
+                        </FormLabel>
+                        <FormDescription>
+                          Master toggle for all SMS notifications
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-sms-notifications"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="enableSmsReminders"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-medium">
+                          SMS Course & License Reminders
+                        </FormLabel>
+                        <FormDescription>
+                          Receive SMS reminders for upcoming courses and license renewals
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={!form.watch("enableSmsNotifications")}
+                          data-testid="switch-sms-reminders"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="enableSmsPaymentNotices"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-medium">
+                          SMS Payment Notifications
+                        </FormLabel>
+                        <FormDescription>
+                          Receive SMS notifications for payment confirmations and failures
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={!form.watch("enableSmsNotifications")}
+                          data-testid="switch-sms-payment-notices"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="enableSmsAnnouncements"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-medium">
+                          SMS Announcements
+                        </FormLabel>
+                        <FormDescription>
+                          Receive SMS notifications for general announcements and updates
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={!form.watch("enableSmsNotifications")}
+                          data-testid="switch-sms-announcements"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             {/* Form Actions */}

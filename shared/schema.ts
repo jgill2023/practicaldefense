@@ -49,6 +49,11 @@ export const users = pgTable("users", {
   // 2-year refresher reminder (24 months after license issued date)
   refresherReminderDays: integer("refresher_reminder_days").default(60), // 30 or 60 days
   enableRefresherReminder: boolean("enable_refresher_reminder").default(false),
+  // SMS notification preferences
+  enableSmsNotifications: boolean("enable_sms_notifications").default(true), // Master SMS toggle
+  enableSmsReminders: boolean("enable_sms_reminders").default(true), // SMS for course/license reminders
+  enableSmsPaymentNotices: boolean("enable_sms_payment_notices").default(false), // SMS for payment updates
+  enableSmsAnnouncements: boolean("enable_sms_announcements").default(false), // SMS for general announcements
   role: varchar("role").notNull().default('student'), // 'student' or 'instructor'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
