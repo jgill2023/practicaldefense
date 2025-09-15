@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -150,9 +150,17 @@ export function NotificationsManagement() {
       subject: '',
       content: '',
       isActive: true,
-      createdBy: '',
+      createdBy: (user as any)?.id || '',
     },
   });
+
+  // Update createdBy when user loads
+  useEffect(() => {
+    if ((user as any)?.id && !templateForm.getValues('createdBy')) {
+      console.log('🔥 Setting createdBy field to user ID:', (user as any).id);
+      templateForm.setValue('createdBy', (user as any).id);
+    }
+  }, [(user as any)?.id, templateForm]);
 
   // Schedule form
   const scheduleForm = useForm<ScheduleForm>({
@@ -927,12 +935,15 @@ export function NotificationsManagement() {
                         theme="snow"
                         value={field.value || ''}
                         onChange={(value) => {
+                          console.log('🔥 ReactQuill onChange:', value);
                           field.onChange(value);
                           templateForm.setValue('content', value, { 
                             shouldDirty: true, 
                             shouldTouch: true, 
                             shouldValidate: true 
                           });
+                          // Force trigger validation
+                          templateForm.trigger('content');
                         }}
                         placeholder="Enter message content (you can use variables like {{firstName}}, {{courseName}}, etc.)"
                         style={{ minHeight: '120px' }}
