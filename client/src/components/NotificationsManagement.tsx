@@ -350,11 +350,16 @@ export function NotificationsManagement() {
   };
 
   const handleSubmitTemplate = (data: TemplateForm) => {
+    console.log('🔥 handleSubmitTemplate CALLED!', data);
+    console.log('🔥 User ID:', (user as any)?.id);
     if (selectedTemplate) {
+      console.log('🔥 Updating existing template');
       updateTemplateMutation.mutate({ ...data, id: selectedTemplate.id });
     } else {
+      console.log('🔥 Creating new template');
       // Add the createdBy field from current user
       const templateData = { ...data, createdBy: (user as any)?.id || '' };
+      console.log('🔥 Final template data:', templateData);
       createTemplateMutation.mutate(templateData);
     }
   };
@@ -841,7 +846,11 @@ export function NotificationsManagement() {
             <form 
               id="template-form" 
               noValidate
-              onSubmit={templateForm.handleSubmit(handleSubmitTemplate)}
+              onSubmit={(e) => {
+                console.log('🔥 FORM ONSUBMIT TRIGGERED!', e);
+                e.preventDefault();
+                templateForm.handleSubmit(handleSubmitTemplate)(e);
+              }}
               className="space-y-4">
               <FormField
                 control={templateForm.control}
@@ -966,6 +975,11 @@ export function NotificationsManagement() {
                 <Button
                   type="submit"
                   disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
+                  onClick={(e) => {
+                    console.log('🔥 SAVE BUTTON CLICKED!', e.type);
+                    console.log('🔥 Button disabled?', e.currentTarget.disabled);
+                    console.log('🔥 Form element:', document.getElementById('template-form'));
+                  }}
                   data-testid="button-save-template"
                 >
                   {createTemplateMutation.isPending || updateTemplateMutation.isPending ? (
