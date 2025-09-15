@@ -7,7 +7,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type User } from "@shared/schema";
+import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type User } from "@shared/schema";
 import "./types"; // Import type declarations
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -2144,6 +2144,377 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(500).json({ error: "Failed to send notification" });
+    }
+  });
+
+  // ==============================================================
+  // WAIVER MANAGEMENT API ROUTES
+  // ==============================================================
+
+  // Waiver Templates Routes (Admin only)
+  app.get("/api/admin/waiver-templates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      const { scope, courseId, isActive } = req.query;
+      const filters: any = {};
+      
+      if (scope) filters.scope = scope;
+      if (courseId) filters.courseId = courseId;
+      if (isActive !== undefined) filters.isActive = isActive === 'true';
+
+      const templates = await storage.getWaiverTemplates(filters);
+      res.json(templates);
+    } catch (error: any) {
+      console.error("Error fetching waiver templates:", error);
+      res.status(500).json({ error: "Failed to fetch waiver templates" });
+    }
+  });
+
+  app.get("/api/admin/waiver-templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      const template = await storage.getWaiverTemplate(id);
+      if (!template) {
+        return res.status(404).json({ error: "Waiver template not found" });
+      }
+
+      res.json(template);
+    } catch (error: any) {
+      console.error("Error fetching waiver template:", error);
+      res.status(500).json({ error: "Failed to fetch waiver template" });
+    }
+  });
+
+  app.post("/api/admin/waiver-templates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      // Validate request body
+      const templateData = {
+        ...insertWaiverTemplateSchema.parse(req.body),
+        createdBy: userId,
+        updatedBy: userId,
+      };
+
+      const template = await storage.createWaiverTemplate(templateData);
+      res.status(201).json(template);
+    } catch (error: any) {
+      console.error("Error creating waiver template:", error);
+      
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      
+      res.status(500).json({ error: "Failed to create waiver template" });
+    }
+  });
+
+  app.put("/api/admin/waiver-templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      // Validate request body
+      const updateData = {
+        ...req.body,
+        updatedBy: userId,
+      };
+
+      const template = await storage.updateWaiverTemplate(id, updateData);
+      res.json(template);
+    } catch (error: any) {
+      console.error("Error updating waiver template:", error);
+      res.status(500).json({ error: "Failed to update waiver template" });
+    }
+  });
+
+  app.delete("/api/admin/waiver-templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      await storage.deleteWaiverTemplate(id);
+      res.json({ message: "Waiver template deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting waiver template:", error);
+      res.status(500).json({ error: "Failed to delete waiver template" });
+    }
+  });
+
+  // Waiver Instances Routes
+  app.get("/api/waiver-instances/enrollment/:enrollmentId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { enrollmentId } = req.params;
+      
+      // Verify enrollment access (student owns enrollment or instructor owns course)
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ error: "Enrollment not found" });
+      }
+
+      const user = await storage.getUser(userId);
+      const isOwner = enrollment.studentId === userId;
+      
+      // Fetch course schedule and course to check instructor authorization
+      const courseSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
+      const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
+      const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
+      
+      if (!isOwner && !isInstructor) {
+        return res.status(403).json({ error: "Unauthorized: Access denied" });
+      }
+
+      const instances = await storage.getWaiverInstancesByEnrollment(enrollmentId);
+      res.json(instances);
+    } catch (error: any) {
+      console.error("Error fetching waiver instances:", error);
+      res.status(500).json({ error: "Failed to fetch waiver instances" });
+    }
+  });
+
+  app.get("/api/waiver-instances/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      const instance = await storage.getWaiverInstance(id);
+      if (!instance) {
+        return res.status(404).json({ error: "Waiver instance not found" });
+      }
+
+      // Verify access
+      const user = await storage.getUser(userId);
+      const isOwner = instance.enrollment.studentId === userId;
+      
+      // Fetch course schedule and course to check instructor authorization
+      const courseSchedule = await storage.getCourseSchedule(instance.enrollment.scheduleId);
+      const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
+      const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
+      
+      if (!isOwner && !isInstructor) {
+        return res.status(403).json({ error: "Unauthorized: Access denied" });
+      }
+
+      res.json(instance);
+    } catch (error: any) {
+      console.error("Error fetching waiver instance:", error);
+      res.status(500).json({ error: "Failed to fetch waiver instance" });
+    }
+  });
+
+  app.post("/api/waiver-instances", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Validate request body
+      const instanceData = insertWaiverInstanceSchema.parse(req.body);
+      
+      // Verify enrollment access
+      const enrollment = await storage.getEnrollment(instanceData.enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ error: "Enrollment not found" });
+      }
+
+      const user = await storage.getUser(userId);
+      const isOwner = enrollment.studentId === userId;
+      
+      // Fetch course schedule and course to check instructor authorization
+      const courseSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
+      const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
+      const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
+      
+      if (!isOwner && !isInstructor) {
+        return res.status(403).json({ error: "Unauthorized: Access denied" });
+      }
+
+      const instance = await storage.createWaiverInstance(instanceData);
+      res.status(201).json(instance);
+    } catch (error: any) {
+      console.error("Error creating waiver instance:", error);
+      
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      
+      res.status(500).json({ error: "Failed to create waiver instance" });
+    }
+  });
+
+  // Waiver Signatures Routes
+  app.post("/api/waiver-signatures", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Validate request body
+      const signatureData = insertWaiverSignatureSchema.parse(req.body);
+      
+      // Verify waiver instance access
+      const instance = await storage.getWaiverInstance(signatureData.instanceId);
+      if (!instance) {
+        return res.status(404).json({ error: "Waiver instance not found" });
+      }
+
+      // Only student who owns enrollment can sign
+      if (instance.enrollment.studentId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Only the enrolled student can sign" });
+      }
+
+      // Create signature and update instance status
+      if (!instance.enrollment.student) {
+        return res.status(400).json({ error: "Student information not found" });
+      }
+      
+      const signature = await storage.createWaiverSignature({
+        ...signatureData,
+        signerEmail: instance.enrollment.student.email || '',
+        signerName: `${instance.enrollment.student.firstName || ''} ${instance.enrollment.student.lastName || ''}`,
+      });
+
+      // Update instance status to 'signed'
+      await storage.updateWaiverInstance(instance.id, {
+        status: 'signed',
+        signedAt: new Date(),
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+      });
+
+      res.status(201).json(signature);
+    } catch (error: any) {
+      console.error("Error creating waiver signature:", error);
+      
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      
+      res.status(500).json({ error: "Failed to create waiver signature" });
+    }
+  });
+
+  // Waiver Utility Routes
+  app.post("/api/waiver-content/generate", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      const { templateId, enrollmentId } = req.body;
+      
+      if (!templateId || !enrollmentId) {
+        return res.status(400).json({ error: "templateId and enrollmentId are required" });
+      }
+
+      // Verify enrollment access
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ error: "Enrollment not found" });
+      }
+
+      const user = await storage.getUser(userId);
+      const isOwner = enrollment.studentId === userId;
+      
+      // Fetch course schedule and course to check instructor authorization
+      const courseSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
+      const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
+      const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
+      
+      if (!isOwner && !isInstructor) {
+        return res.status(403).json({ error: "Unauthorized: Access denied" });
+      }
+
+      const result = await storage.generateWaiverContent(templateId, enrollmentId);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error generating waiver content:", error);
+      res.status(500).json({ error: "Failed to generate waiver content" });
+    }
+  });
+
+  app.get("/api/waiver-requirements/:enrollmentId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { enrollmentId } = req.params;
+      
+      // Verify enrollment access
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ error: "Enrollment not found" });
+      }
+
+      const user = await storage.getUser(userId);
+      const isOwner = enrollment.studentId === userId;
+      
+      // Fetch course schedule and course to check instructor authorization
+      const courseSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
+      const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
+      const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
+      
+      if (!isOwner && !isInstructor) {
+        return res.status(403).json({ error: "Unauthorized: Access denied" });
+      }
+
+      const requirements = await storage.checkWaiverRequirements(enrollmentId);
+      res.json(requirements);
+    } catch (error: any) {
+      console.error("Error checking waiver requirements:", error);
+      res.status(500).json({ error: "Failed to check waiver requirements" });
+    }
+  });
+
+  // Waiver Compliance Reporting (Admin only)
+  app.get("/api/admin/waiver-compliance", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      const { courseId, startDate, endDate } = req.query;
+      
+      const filters: any = {};
+      if (courseId) filters.courseId = courseId;
+      if (startDate) filters.startDate = new Date(startDate as string);
+      if (endDate) filters.endDate = new Date(endDate as string);
+
+      const report = await storage.getWaiverComplianceReport(filters.courseId, filters.startDate, filters.endDate);
+      res.json(report);
+    } catch (error: any) {
+      console.error("Error generating compliance report:", error);
+      res.status(500).json({ error: "Failed to generate compliance report" });
     }
   });
 
