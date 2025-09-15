@@ -947,6 +947,71 @@ export type WaiverSignatureWithDetails = WaiverSignature & {
   instance: WaiverInstanceWithDetails;
 };
 
+// Prohibited words table for SHAFT-compliant content filtering
+export const prohibitedWords = pgTable("prohibited_words", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  word: varchar("word", { length: 255 }).notNull(),
+  category: varchar("category", { length: 50 }).notNull(), // 'sex', 'hate', 'alcohol', 'firearms', 'tobacco', 'variations'
+  isRegex: boolean("is_regex").default(false), // For pattern matching like l33t speak
+  isActive: boolean("is_active").default(true),
+  severity: varchar("severity", { length: 20 }).default('high'), // 'high', 'medium', 'low'
+  description: text("description"), // Context for why this word is prohibited
+  addedBy: varchar("added_by").references(() => users.id), // Super admin who added it
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Message audit log for SMS compliance tracking  
+export const messageAuditLog = pgTable("message_audit_log", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id),
+  messageContent: text("message_content").notNull(), // Original message content
+  intendedRecipients: text("intended_recipients").array(), // Phone numbers that were supposed to receive the message
+  recipientCount: integer("recipient_count").notNull().default(0),
+  messageType: varchar("message_type", { length: 50 }).notNull(), // 'course_reminder', 'payment_notice', 'announcement', etc.
+  status: varchar("status", { length: 20 }).notNull(), // 'sent', 'blocked', 'failed'
+  blockedReason: text("blocked_reason"), // If blocked, what prohibited content was found
+  prohibitedWords: text("prohibited_words").array(), // Specific words that triggered the block
+  twilioMessageSid: varchar("twilio_message_sid", { length: 255 }), // Twilio's message ID if sent
+  deliveryStatus: varchar("delivery_status", { length: 50 }), // 'delivered', 'undelivered', 'failed', 'pending'
+  errorMessage: text("error_message"), // Any error details
+  attemptedAt: timestamp("attempted_at").defaultNow(),
+  deliveredAt: timestamp("delivered_at"),
+});
+
+// Prohibited words insert schema
+export const insertProhibitedWordSchema = createInsertSchema(prohibitedWords).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+// Message audit log insert schema
+export const insertMessageAuditLogSchema = createInsertSchema(messageAuditLog).omit({ 
+  id: true, 
+  attemptedAt: true,
+  deliveredAt: true 
+});
+
+// Content filtering validation result type
+export type ContentValidationResult = {
+  isValid: boolean;
+  violations: Array<{
+    word: string;
+    category: string;
+    severity: string;
+    matchType: 'exact' | 'variation' | 'regex';
+  }>;
+  sanitizedMessage?: string;
+  blockedReason?: string;
+};
+
+// Types for the new tables
+export type ProhibitedWord = typeof prohibitedWords.$inferSelect;
+export type InsertProhibitedWord = z.infer<typeof insertProhibitedWordSchema>;
+export type MessageAuditLog = typeof messageAuditLog.$inferSelect;
+export type InsertMessageAuditLog = z.infer<typeof insertMessageAuditLogSchema>;
+
 // Waiver enums and types
 export type WaiverScope = 'global' | 'course' | 'category';
 export type WaiverStatus = 'pending' | 'signed' | 'expired' | 'cancelled';
