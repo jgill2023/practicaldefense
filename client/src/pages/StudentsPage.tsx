@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Users, Phone, Mail, Edit, Calendar, ArrowLeft, Eye } from "lucide-react";
+import { Users, Phone, Mail, Edit, Calendar, ArrowLeft, Eye, Download, FileSpreadsheet, FileText, Share2 } from "lucide-react";
 import { Link } from "wouter";
 import { format } from "date-fns";
 
@@ -59,6 +59,67 @@ function StudentsPage() {
   const { data: studentsData, isLoading, isError, error } = useQuery<StudentsData>({
     queryKey: ['/api/students'],
   });
+
+  // Export handlers
+  const handleExport = async (format: 'excel' | 'csv') => {
+    try {
+      const response = await fetch(`/api/instructor/roster/export?format=${format}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      // Create download link
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `course-roster-${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Export Successful",
+        description: `Course roster has been exported as ${format.toUpperCase()}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export course roster. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleGoogleSheetsExport = async () => {
+    try {
+      const response = await apiRequest("POST", "/api/instructor/roster/google-sheets", {});
+      const result = await response.json();
+      
+      if (result.action === 'setup_required') {
+        toast({
+          title: "Setup Required",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "Google Sheets Export",
+          description: "Google Sheets export has been initiated.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to create Google Sheets export. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -259,6 +320,47 @@ function StudentsPage() {
         <p className="text-muted-foreground">
           Manage student information, track course progress, and communicate with your students.
         </p>
+      </div>
+
+      {/* Export Section */}
+      <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold mb-1">Export Course Rosters</h3>
+            <p className="text-sm text-muted-foreground">
+              Download or share your course rosters in different formats
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('excel')}
+              data-testid="button-export-excel"
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Excel
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('csv')}
+              data-testid="button-export-csv"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleGoogleSheetsExport()}
+              data-testid="button-export-google-sheets"
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Google Sheets
+            </Button>
+          </div>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

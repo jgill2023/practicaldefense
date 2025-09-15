@@ -1002,6 +1002,60 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async getRosterExportData(instructorId: string): Promise<{
+    current: any[];
+    former: any[];
+    summary: {
+      totalCurrentStudents: number;
+      totalFormerStudents: number;
+      totalCourses: number;
+      exportDate: string;
+    };
+  }> {
+    const studentsData = await this.getStudentsByInstructor(instructorId);
+    
+    // Flatten the data for export
+    const flattenStudent = (student: any, category: 'current' | 'former') => {
+      return student.enrollments.map((enrollment: any) => ({
+        studentId: student.id,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        email: student.email,
+        phone: student.phone || '',
+        dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : '',
+        licenseExpiration: student.concealedCarryLicenseExpiration ? 
+          new Date(student.concealedCarryLicenseExpiration).toLocaleDateString() : '',
+        courseTitle: enrollment.courseTitle,
+        courseAbbreviation: enrollment.courseAbbreviation,
+        scheduleDate: new Date(enrollment.scheduleDate).toLocaleDateString(),
+        scheduleStartTime: enrollment.scheduleStartTime,
+        scheduleEndTime: enrollment.scheduleEndTime,
+        paymentStatus: enrollment.paymentStatus,
+        enrollmentStatus: enrollment.status || 'confirmed',
+        category: category,
+        registrationDate: enrollment.registrationDate ? 
+          new Date(enrollment.registrationDate).toLocaleDateString() : ''
+      }));
+    };
+
+    const currentFlat = studentsData.current.flatMap(student => flattenStudent(student, 'current'));
+    const formerFlat = studentsData.former.flatMap(student => flattenStudent(student, 'former'));
+    
+    const allCourses = new Set();
+    [...currentFlat, ...formerFlat].forEach(row => allCourses.add(row.courseTitle));
+
+    return {
+      current: currentFlat,
+      former: formerFlat,
+      summary: {
+        totalCurrentStudents: studentsData.current.length,
+        totalFormerStudents: studentsData.former.length,
+        totalCourses: allCourses.size,
+        exportDate: new Date().toISOString()
+      }
+    };
+  }
+
   // Draft enrollment operations for single-page registration
   async initiateRegistration(data: {
     courseId: string;

@@ -657,6 +657,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Course roster export routes
+  app.get('/api/instructor/roster/export', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const format = req.query.format || 'excel';
+      const data = await storage.getRosterExportData(userId);
+
+      if (format === 'csv') {
+        // Generate CSV
+        const headers = [
+          'Student ID', 'First Name', 'Last Name', 'Email', 'Phone', 
+          'Date of Birth', 'License Expiration', 'Course Title', 'Course Code',
+          'Schedule Date', 'Start Time', 'End Time', 'Payment Status', 
+          'Enrollment Status', 'Category', 'Registration Date'
+        ];
+        
+        const allRows = [...data.current, ...data.former];
+        const csvRows = [headers.join(',')];
+        
+        allRows.forEach(row => {
+          const values = [
+            row.studentId, row.firstName, row.lastName, row.email, row.phone,
+            row.dateOfBirth, row.licenseExpiration, row.courseTitle, row.courseAbbreviation,
+            row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime, 
+            row.paymentStatus, row.enrollmentStatus, row.category, row.registrationDate
+          ];
+          csvRows.push(values.map(v => `"${v}"`).join(','));
+        });
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="course-roster-${new Date().toISOString().split('T')[0]}.csv"`);
+        res.send(csvRows.join('\n'));
+        
+      } else if (format === 'excel') {
+        const ExcelJS = await import('exceljs');
+        const workbook = new ExcelJS.Workbook();
+        
+        // Summary sheet
+        const summarySheet = workbook.addWorksheet('Summary');
+        summarySheet.addRow(['Course Roster Export Summary']);
+        summarySheet.addRow(['Export Date', new Date().toLocaleDateString()]);
+        summarySheet.addRow(['Total Current Students', data.summary.totalCurrentStudents]);
+        summarySheet.addRow(['Total Former Students', data.summary.totalFormerStudents]);
+        summarySheet.addRow(['Total Courses', data.summary.totalCourses]);
+        
+        // Current students sheet
+        if (data.current.length > 0) {
+          const currentSheet = workbook.addWorksheet('Current Students');
+          const headers = [
+            'Student ID', 'First Name', 'Last Name', 'Email', 'Phone', 
+            'Date of Birth', 'License Expiration', 'Course Title', 'Course Code',
+            'Schedule Date', 'Start Time', 'End Time', 'Payment Status', 
+            'Enrollment Status', 'Registration Date'
+          ];
+          currentSheet.addRow(headers);
+          
+          data.current.forEach(row => {
+            currentSheet.addRow([
+              row.studentId, row.firstName, row.lastName, row.email, row.phone,
+              row.dateOfBirth, row.licenseExpiration, row.courseTitle, row.courseAbbreviation,
+              row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime, 
+              row.paymentStatus, row.enrollmentStatus, row.registrationDate
+            ]);
+          });
+        }
+        
+        // Former students sheet
+        if (data.former.length > 0) {
+          const formerSheet = workbook.addWorksheet('Former Students');
+          const headers = [
+            'Student ID', 'First Name', 'Last Name', 'Email', 'Phone', 
+            'Date of Birth', 'License Expiration', 'Course Title', 'Course Code',
+            'Schedule Date', 'Start Time', 'End Time', 'Payment Status', 
+            'Enrollment Status', 'Registration Date'
+          ];
+          formerSheet.addRow(headers);
+          
+          data.former.forEach(row => {
+            formerSheet.addRow([
+              row.studentId, row.firstName, row.lastName, row.email, row.phone,
+              row.dateOfBirth, row.licenseExpiration, row.courseTitle, row.courseAbbreviation,
+              row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime, 
+              row.paymentStatus, row.enrollmentStatus, row.registrationDate
+            ]);
+          });
+        }
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="course-roster-${new Date().toISOString().split('T')[0]}.xlsx"`);
+        
+        await workbook.xlsx.write(res);
+        res.end();
+        
+      } else {
+        res.status(400).json({ message: "Unsupported format. Use 'csv' or 'excel'." });
+      }
+      
+    } catch (error) {
+      console.error("Error exporting roster:", error);
+      res.status(500).json({ message: "Failed to export roster" });
+    }
+  });
+
+  // Google Sheets export route
+  app.post('/api/instructor/roster/google-sheets', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // This would require Google Sheets API setup
+      // For now, return placeholder response
+      res.json({ 
+        message: "Google Sheets integration not yet configured. Please contact administrator.",
+        action: "setup_required"
+      });
+      
+    } catch (error) {
+      console.error("Error creating Google Sheets export:", error);
+      res.status(500).json({ message: "Failed to create Google Sheets export" });
+    }
+  });
+
   // Instructor dashboard statistics
   app.get('/api/instructor/dashboard-stats', isAuthenticated, async (req: any, res) => {
     try {
