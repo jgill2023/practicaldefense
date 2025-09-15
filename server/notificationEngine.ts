@@ -1,5 +1,6 @@
 import { storage } from './storage';
 import { NotificationEmailService } from './emailService';
+import { NotificationSmsService } from './smsService';
 import { 
   type NotificationTemplateWithDetails, 
   type NotificationScheduleWithDetails,
@@ -212,7 +213,7 @@ export class NotificationEngine {
       // Check SMS opt-out for SMS notifications (placeholder - SMS preferences not in schema yet)
       if (template.type === 'sms') {
         // TODO: Add SMS preferences to user schema
-        console.log(`SMS sending not yet implemented for user ${recipient.id}`);
+        console.log(`SMS notification will be sent to user ${recipient.id}`);
       }
 
       // Build variables if not provided
@@ -285,9 +286,16 @@ export class NotificationEngine {
           // fromName: template.fromName, // Not in schema yet
         });
       } else if (template.type === 'sms') {
-        // TODO: Implement SMS sending with Twilio
-        console.log('SMS sending not yet implemented');
-        sendResult = { success: false, error: 'SMS not implemented' };
+        // Send SMS via Twilio with ultra-strict content filtering
+        if (!recipient.phone) {
+          sendResult = { success: false, error: 'Recipient phone number not available' };
+        } else {
+          sendResult = await NotificationSmsService.sendNotificationSms({
+            to: [recipient.phone],
+            message: processedContent,
+            instructorId: params.recipientId // Use recipientId as fallback for instructorId
+          });
+        }
       } else {
         sendResult = { success: false, error: 'Unknown notification type' };
       }

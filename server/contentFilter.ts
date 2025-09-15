@@ -80,7 +80,7 @@ export class ContentFilter {
     ]
   };
 
-  // Educational allowlist for legitimate firearms training terminology
+  // Educational allowlist for legitimate firearms training terminology (EMAIL ONLY)
   private static readonly EDUCATIONAL_ALLOWLIST = {
     firearms_training: [
       'gun safety', 'firearm safety', 'shooting range', 'target practice',
@@ -89,9 +89,22 @@ export class ContentFilter {
       'range rules', 'marksmanship', 'basic pistol', 'rifle training',
       'handgun training', 'ammunition safety', 'gun handling',
       'shooting fundamentals', 'firearms education', 'safety training',
-      'instructor certification', 'qualification course', 'proficiency test'
+      'instructor certification', 'qualification course', 'proficiency test',
+      'gun course', 'pistol course', 'rifle course', 'shooting course',
+      'gun class', 'pistol class', 'rifle class', 'shooting class',
+      'gun training', 'pistol training', 'safety class', 'training class',
+      'ccw class', 'ccw course', 'ccw training', 'ccw permit',
+      'defensive shooting', 'tactical training', 'range training'
     ]
   };
+
+  // Strict firearm tokens that are ALWAYS blocked for SMS regardless of context
+  private static readonly STRICT_FIREARM_TOKENS = [
+    'gun', 'guns', 'firearm', 'firearms', 'weapon', 'weapons', 
+    'ammo', 'ammunition', 'pistol', 'rifle', 'shotgun', 'handgun',
+    'caliber', 'magazine', 'clip', 'trigger', 'barrel', 'scope',
+    'holster', 'shooting', 'range', 'target practice'
+  ];
 
   // L33t speak translation map
   private static readonly LEET_SPEAK_MAP: { [key: string]: string } = {
@@ -133,13 +146,13 @@ export class ContentFilter {
       });
     });
 
-    // Add regex patterns for variation detection
+    // Add regex patterns for variation detection with negative lookbehind for educational content
     const variationPatterns = [
-      { word: '[g@4][u1!][n7]', category: 'firearms', description: 'Gun variations (g@n, g1n, etc.)' },
-      { word: '[a@4][m]+[o0][^\\s]*', category: 'firearms', description: 'Ammo variations' },
+      { word: '(?<!safety\\s)(?<!training\\s)(?<!handling\\s)(?<!course\\s)[g@4][u1!][n7](?!\\s+safety)(?!\\s+training)(?!\\s+course)(?!\\s+handling)', category: 'firearms', description: 'Gun variations (blocks g@n, g1n etc. but allows gun safety, gun training)' },
+      { word: '(?<!ammunition\\s)(?<!training\\s)[a@4][m]+[o0][^\\s]*(?!\\s+safety)', category: 'firearms', description: 'Ammo variations (allows ammo safety, ammunition training)' },
       { word: '[s$5][e3][x%]', category: 'sex', description: 'Sex variations (s3x, $ex, etc.)' },
       { word: '[a@4][l1][c][o0][h][o0][l1]', category: 'alcohol', description: 'Alcohol variations' },
-      { word: '[g@4][u1!][n7]\\s*[s$5][h][o0][t]', category: 'firearms', description: 'Gunshot variations' }
+      { word: '(?<!training\\s)(?<!range\\s)[g@4][u1!][n7]\\s*[s$5][h][o0][t](?!\\s+training)', category: 'firearms', description: 'Gunshot variations (allows training contexts)' }
     ];
 
     variationPatterns.forEach(pattern => {
@@ -164,10 +177,19 @@ export class ContentFilter {
   }
 
   /**
-   * Ultra-strict message validation with zero tolerance
-   * Blocks ALL prohibited content and variations
+   * Channel-aware message validation with different policies for SMS vs Email
+   * SMS: Ultra-strict blocking of ALL firearm terms regardless of context
+   * Email: Context-aware filtering that allows educational content
    */
-  async validateMessage(content: string, instructorId: string): Promise<ContentValidationResult> {
+  async validateMessage(
+    content: string, 
+    instructorId: string, 
+    options: {
+      channel?: 'sms' | 'email';
+      purpose?: 'educational' | 'marketing' | 'administrative';
+    } = {}
+  ): Promise<ContentValidationResult> {
+    const { channel = 'email', purpose = 'educational' } = options;
     const violations: Array<{
       word: string;
       category: string;
@@ -182,14 +204,56 @@ export class ContentFilter {
     // Get prohibited words (cached)
     const prohibitedWords = await this.getProhibitedWords();
     
+    // Channel-aware firearm filtering logic
+    const hasEducationalContext = channel === 'email' ? this.hasEducationalFirearmsContext(normalizedContent) : false;
+    
+    // For SMS: Check strict firearm tokens FIRST (blocks ALL firearm terms regardless of context)
+    if (channel === 'sms') {
+      for (const token of ContentFilter.STRICT_FIREARM_TOKENS) {
+        // Check exact matches and variations for each strict token
+        const firearmViolation = this.checkStrictFirearmToken(normalizedContent, leetDecoded, token);
+        if (firearmViolation) {
+          violations.push(firearmViolation);
+        }
+      }
+    }
+    
     // Check against all prohibited words
     for (const prohibitedWord of prohibitedWords) {
       if (!prohibitedWord.isActive) continue;
 
+      // Channel-specific firearm filtering
+      if (prohibitedWord.category === 'firearms') {
+        if (channel === 'sms') {
+          // SMS: Block ALL firearm terms regardless of context
+          const firearmViolation = this.checkFirearmViolation(normalizedContent, leetDecoded, prohibitedWord);
+          if (firearmViolation) {
+            violations.push(firearmViolation);
+          }
+          continue;
+        } else if (channel === 'email') {
+          // EMAIL: Context-aware filtering with educational allowlist
+          if (purpose === 'educational' && hasEducationalContext) {
+            continue; // Skip firearm filtering for educational email content
+          }
+          if (purpose === 'marketing') {
+            const firearmViolation = this.checkFirearmViolation(normalizedContent, leetDecoded, prohibitedWord);
+            if (firearmViolation) {
+              violations.push(firearmViolation);
+            }
+            continue;
+          }
+        }
+      }
+
       if (prohibitedWord.isRegex) {
-        // Regex pattern matching
+        // Enhanced regex pattern matching with educational exceptions
         const regex = new RegExp(prohibitedWord.word, 'gi');
         if (regex.test(normalizedContent) || regex.test(leetDecoded)) {
+          // For firearm regex patterns, check if it's in educational context
+          if (prohibitedWord.category === 'firearms' && hasEducationalContext) {
+            continue; // Skip this violation for educational content
+          }
           violations.push({
             word: prohibitedWord.word,
             category: prohibitedWord.category,
@@ -198,11 +262,15 @@ export class ContentFilter {
           });
         }
       } else {
-        // Exact and variation matching
+        // Exact and variation matching with educational exceptions
         const wordPattern = prohibitedWord.word.toLowerCase();
         
         // Check exact match
         if (normalizedContent.includes(wordPattern)) {
+          // For firearm terms, check educational context
+          if (prohibitedWord.category === 'firearms' && hasEducationalContext) {
+            continue;
+          }
           violations.push({
             word: prohibitedWord.word,
             category: prohibitedWord.category,
@@ -213,6 +281,9 @@ export class ContentFilter {
         
         // Check l33t speak decoded version
         if (leetDecoded.includes(wordPattern)) {
+          if (prohibitedWord.category === 'firearms' && hasEducationalContext) {
+            continue;
+          }
           violations.push({
             word: prohibitedWord.word,
             category: prohibitedWord.category,
@@ -225,6 +296,9 @@ export class ContentFilter {
         const escapedPattern = this.escapeRegExp(wordPattern).split('').join('[\\s\\-\\._\\*]*');
         const spacedRegex = new RegExp(escapedPattern, 'gi');
         if (spacedRegex.test(normalizedContent)) {
+          if (prohibitedWord.category === 'firearms' && hasEducationalContext) {
+            continue;
+          }
           violations.push({
             word: prohibitedWord.word,
             category: prohibitedWord.category,
@@ -305,9 +379,125 @@ export class ContentFilter {
   }
 
   /**
+   * Check if content contains educational firearms context
+   */
+  private hasEducationalFirearmsContext(normalizedContent: string): boolean {
+    const educationalTerms = ContentFilter.EDUCATIONAL_ALLOWLIST.firearms_training;
+    
+    // Check if any educational terms are present
+    for (const term of educationalTerms) {
+      if (normalizedContent.includes(term.toLowerCase())) {
+        return true;
+      }
+    }
+    
+    // Additional educational context indicators
+    const educationalContexts = [
+      'training', 'course', 'class', 'instruction', 'education', 'safety', 
+      'certification', 'permit', 'license', 'qualification', 'instructor',
+      'student', 'learn', 'teach', 'practice', 'range', 'rules', 'fundamentals',
+      'ccw', 'concealed carry', 'defensive', 'tactical', 'marksmanship',
+      'proficiency', 'examination', 'test', 'requirements', 'curriculum'
+    ];
+    
+    // Must have at least 2 educational context indicators for strong confidence
+    const contextMatches = educationalContexts.filter(context => normalizedContent.includes(context));
+    return contextMatches.length >= 2;
+  }
+
+  /**
+   * Check strict firearm token violations for SMS (blocks ALL firearm terms regardless of context)
+   */
+  private checkStrictFirearmToken(normalizedContent: string, leetDecoded: string, token: string): any | null {
+    // Check exact matches
+    if (normalizedContent.includes(token.toLowerCase()) || leetDecoded.includes(token.toLowerCase())) {
+      return {
+        word: token,
+        category: 'firearms',
+        severity: 'high',
+        matchType: 'strict_sms_block' as const
+      };
+    }
+
+    // Check spaced variations (g.u.n, g u n, g-u-n) with proper escaping
+    const escapedPattern = this.escapeRegExp(token).split('').join('[\\s\\-\\._\\*]*');
+    const spacedRegex = new RegExp(escapedPattern, 'gi');
+    if (spacedRegex.test(normalizedContent)) {
+      return {
+        word: token,
+        category: 'firearms',
+        severity: 'high',
+        matchType: 'strict_sms_block' as const
+      };
+    }
+
+    // Check l33t speak variations
+    const leetVariations = [
+      token.replace(/g/g, '[g@4]').replace(/u/g, '[u1!]').replace(/n/g, '[n7]'),
+      token.replace(/a/g, '[a@4]').replace(/e/g, '[e3]').replace(/i/g, '[i1!]').replace(/o/g, '[o0]').replace(/s/g, '[s5$]')
+    ];
+    
+    for (const variation of leetVariations) {
+      const variationRegex = new RegExp(variation, 'gi');
+      if (variationRegex.test(normalizedContent)) {
+        return {
+          word: token,
+          category: 'firearms', 
+          severity: 'high',
+          matchType: 'strict_sms_block' as const
+        };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Check firearm violations for marketing content
+   */
+  private checkFirearmViolation(normalizedContent: string, leetDecoded: string, prohibitedWord: any): any | null {
+    if (prohibitedWord.isRegex) {
+      const regex = new RegExp(prohibitedWord.word, 'gi');
+      if (regex.test(normalizedContent) || regex.test(leetDecoded)) {
+        return {
+          word: prohibitedWord.word,
+          category: prohibitedWord.category,
+          severity: prohibitedWord.severity,
+          matchType: 'regex' as const
+        };
+      }
+    } else {
+      const wordPattern = prohibitedWord.word.toLowerCase();
+      
+      if (normalizedContent.includes(wordPattern) || leetDecoded.includes(wordPattern)) {
+        return {
+          word: prohibitedWord.word,
+          category: prohibitedWord.category,
+          severity: prohibitedWord.severity,
+          matchType: 'exact' as const
+        };
+      }
+      
+      // Check spaced variations
+      const escapedPattern = this.escapeRegExp(wordPattern).split('').join('[\\s\\-\\._\\*]*');
+      const spacedRegex = new RegExp(escapedPattern, 'gi');
+      if (spacedRegex.test(normalizedContent)) {
+        return {
+          word: prohibitedWord.word,
+          category: prohibitedWord.category,
+          severity: prohibitedWord.severity,
+          matchType: 'variation' as const
+        };
+      }
+    }
+    
+    return null;
+  }
+
+  /**
    * Get prohibited words with caching
    */
-  private async getProhibitedWords(): Promise<any[]> {
+  private async getProhibitedWords(): Promise<ProhibitedWord[]> {
     const now = Date.now();
     if (now - this.lastCacheUpdate > this.CACHE_TTL || this.prohibitedWordsCache.size === 0) {
       const words = await storage.getActiveProhibitedWords();
