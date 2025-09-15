@@ -358,27 +358,28 @@ function StudentsPage() {
 
       {/* Export Section */}
       <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold mb-1">Export Course Rosters</h3>
             <p className="text-sm text-muted-foreground">
               Download or share your course rosters in different formats
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleExport('excel')}
               disabled={isExporting}
               data-testid="button-export-excel"
+              className="min-w-0 flex-1 sm:flex-none"
             >
               {isExporting ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1 sm:mr-2" />
               ) : (
-                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                <FileSpreadsheet className="h-4 w-4 mr-1 sm:mr-2" />
               )}
-              Excel
+              <span className="text-xs sm:text-sm">Excel</span>
             </Button>
             <Button
               variant="outline"
@@ -386,13 +387,14 @@ function StudentsPage() {
               onClick={() => handleExport('csv')}
               disabled={isExporting}
               data-testid="button-export-csv"
+              className="min-w-0 flex-1 sm:flex-none"
             >
               {isExporting ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1 sm:mr-2" />
               ) : (
-                <FileText className="h-4 w-4 mr-2" />
+                <FileText className="h-4 w-4 mr-1 sm:mr-2" />
               )}
-              CSV
+              <span className="text-xs sm:text-sm">CSV</span>
             </Button>
             <Button
               variant="outline"
@@ -400,13 +402,14 @@ function StudentsPage() {
               onClick={() => handleGoogleSheetsExport()}
               disabled={isExporting}
               data-testid="button-export-google-sheets"
+              className="min-w-0 flex-1 sm:flex-none"
             >
               {isExporting ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-1 sm:mr-2" />
               ) : (
-                <Share2 className="h-4 w-4 mr-2" />
+                <Share2 className="h-4 w-4 mr-1 sm:mr-2" />
               )}
-              Google Sheets
+              <span className="text-xs sm:text-sm">Google Sheets</span>
             </Button>
           </div>
         </div>

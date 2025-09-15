@@ -874,19 +874,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           requestBody: { values }
         });
         
-        // Make the spreadsheet publicly readable
-        await drive.permissions.create({
-          fileId: spreadsheetId,
-          requestBody: {
-            role: 'reader',
-            type: 'anyone'
-          }
-        });
+        // Keep the spreadsheet private (owner-only access)
+        // Note: The spreadsheet is accessible only to the service account owner
+        // Instructors can access via the returned URL if they have Google account permissions
         
         const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
         
         res.json({
-          message: "Google Sheets export created successfully!",
+          message: "Google Sheets export created successfully! Note: The spreadsheet is private and accessible only to the service account. You may need to request access or have the administrator share it with your Google account.",
           action: "success",
           spreadsheetUrl,
           spreadsheetId

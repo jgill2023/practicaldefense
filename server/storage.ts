@@ -312,6 +312,7 @@ export class DatabaseStorage implements IStorage {
           firstName: userData.firstName,
           lastName: userData.lastName,
           profileImageUrl: userData.profileImageUrl,
+          role: userData.role, // Allow role updates for existing users
           updatedAt: new Date(),
         },
       })
