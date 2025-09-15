@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -82,6 +83,7 @@ type OneTimeNotificationForm = z.infer<typeof oneTimeNotificationSchema>;
 
 export function NotificationsManagement() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"templates" | "schedules" | "logs" | "send">("templates");
   const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null);
@@ -348,13 +350,12 @@ export function NotificationsManagement() {
   };
 
   const handleSubmitTemplate = (data: TemplateForm) => {
-    console.log('🔥 handleSubmitTemplate called with:', data);
     if (selectedTemplate) {
-      console.log('🔥 Updating template');
       updateTemplateMutation.mutate({ ...data, id: selectedTemplate.id });
     } else {
-      console.log('🔥 Creating new template');
-      createTemplateMutation.mutate(data);
+      // Add the createdBy field from current user
+      const templateData = { ...data, createdBy: (user as any)?.id || '' };
+      createTemplateMutation.mutate(templateData);
     }
   };
 
@@ -827,20 +828,6 @@ export function NotificationsManagement() {
         </TabsContent>
       </Tabs>
 
-      {/* DEBUG TEST BUTTON */}
-      {isTemplateDialogOpen && (
-        <div className="fixed top-4 right-4 z-[2000] bg-red-500 text-white p-4 rounded">
-          <button 
-            onClick={() => {
-              console.log('🔥 TEST BUTTON WORKS!');
-              alert('Test button clicked!');
-            }}
-            className="bg-green-500 px-4 py-2 rounded text-white hover:bg-green-600"
-          >
-            🔥 TEST CLICK
-          </button>
-        </div>
-      )}
 
       {/* Template Create/Edit Dialog */}
       <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
@@ -971,36 +958,14 @@ export function NotificationsManagement() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    console.log('🔥 CANCEL clicked!');
-                    setIsTemplateDialogOpen(false);
-                  }}
+                  onClick={() => setIsTemplateDialogOpen(false)}
                   data-testid="button-cancel-template"
                 >
                   Cancel
                 </Button>
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                <Button
+                  type="submit"
                   disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
-                  onClick={() => {
-                    console.log('🔥 NATIVE BUTTON clicked!');
-                    console.log('🔥 Form values:', templateForm.getValues());
-                    console.log('🔥 Form errors:', templateForm.formState.errors);
-                    console.log('🔥 Form is valid:', templateForm.formState.isValid);
-                    
-                    // Try direct validation first
-                    templateForm.trigger().then((isValid) => {
-                      console.log('🔥 Validation result:', isValid);
-                      if (isValid) {
-                        console.log('🔥 About to call handleSubmitTemplate');
-                        const values = templateForm.getValues();
-                        handleSubmitTemplate(values);
-                      } else {
-                        console.log('🔥 Form validation failed');
-                      }
-                    });
-                  }}
                   data-testid="button-save-template"
                 >
                   {createTemplateMutation.isPending || updateTemplateMutation.isPending ? (
@@ -1008,7 +973,7 @@ export function NotificationsManagement() {
                   ) : (
                     selectedTemplate ? "Update Template" : "Save Template"
                   )}
-                </button>
+                </Button>
               </div>
             </form>
           </Form>
