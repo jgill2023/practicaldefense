@@ -7,7 +7,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField } from "@shared/schema";
+import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type User } from "@shared/schema";
 import "./types"; // Import type declarations
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -1791,6 +1791,359 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error validating promo code:", error);
       res.status(500).json({ error: "Failed to validate promo code: " + error.message });
+    }
+  });
+
+  // Notification Management API Endpoints for Admin Interface
+  
+  // Notification Templates Routes
+  app.get("/api/admin/notification-templates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      const templates = await storage.getNotificationTemplates();
+      res.json(templates);
+    } catch (error: any) {
+      console.error("Error fetching notification templates:", error);
+      res.status(500).json({ error: "Failed to fetch notification templates: " + error.message });
+    }
+  });
+
+  app.post("/api/admin/notification-templates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      // Validate request body with Zod
+      const validatedData = insertNotificationTemplateSchema.parse(req.body);
+      const templateData = {
+        ...validatedData,
+        createdBy: userId,
+        updatedBy: userId,
+      };
+      
+      const newTemplate = await storage.createNotificationTemplate(templateData);
+      res.status(201).json(newTemplate);
+    } catch (error: any) {
+      console.error("Error creating notification template:", error);
+      
+      // Handle Zod validation errors as 400 Bad Request
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      
+      res.status(500).json({ error: "Failed to create notification template" });
+    }
+  });
+
+  app.put("/api/admin/notification-templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      // Validate request body with Zod
+      const validatedData = insertNotificationTemplateSchema.partial().parse(req.body);
+      const updateData = {
+        ...validatedData,
+        updatedBy: userId,
+      };
+      
+      const updatedTemplate = await storage.updateNotificationTemplate(id, updateData);
+      res.json(updatedTemplate);
+    } catch (error: any) {
+      console.error("Error updating notification template:", error);
+      
+      // Handle Zod validation errors as 400 Bad Request
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      
+      res.status(500).json({ error: "Failed to update notification template" });
+    }
+  });
+
+  app.delete("/api/admin/notification-templates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      await storage.deleteNotificationTemplate(id);
+      res.json({ message: "Notification template deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting notification template:", error);
+      res.status(500).json({ error: "Failed to delete notification template: " + error.message });
+    }
+  });
+
+  // Notification Schedules Routes
+  app.get("/api/admin/notification-schedules", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      const schedules = await storage.getNotificationSchedules();
+      res.json(schedules);
+    } catch (error: any) {
+      console.error("Error fetching notification schedules:", error);
+      res.status(500).json({ error: "Failed to fetch notification schedules: " + error.message });
+    }
+  });
+
+  app.post("/api/admin/notification-schedules", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      // Validate request body with Zod
+      const scheduleData = insertNotificationScheduleSchema.parse(req.body);
+      
+      const newSchedule = await storage.createNotificationSchedule(scheduleData);
+      res.status(201).json(newSchedule);
+    } catch (error: any) {
+      console.error("Error creating notification schedule:", error);
+      
+      // Handle Zod validation errors as 400 Bad Request
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      
+      res.status(500).json({ error: "Failed to create notification schedule" });
+    }
+  });
+
+  app.put("/api/admin/notification-schedules/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      // Validate request body with Zod
+      const updateData = insertNotificationScheduleSchema.partial().parse(req.body);
+      
+      const updatedSchedule = await storage.updateNotificationSchedule(id, updateData);
+      res.json(updatedSchedule);
+    } catch (error: any) {
+      console.error("Error updating notification schedule:", error);
+      
+      // Handle Zod validation errors as 400 Bad Request
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      
+      res.status(500).json({ error: "Failed to update notification schedule" });
+    }
+  });
+
+  app.delete("/api/admin/notification-schedules/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      await storage.deleteNotificationSchedule(id);
+      res.json({ message: "Notification schedule deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting notification schedule:", error);
+      res.status(500).json({ error: "Failed to delete notification schedule: " + error.message });
+    }
+  });
+
+  // Notification Logs Routes
+  app.get("/api/admin/notification-logs", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      // Validate query parameters with Zod
+      const querySchema = z.object({
+        page: z.string().optional().default("1").transform(val => Math.max(1, parseInt(val) || 1)),
+        limit: z.string().optional().default("50").transform(val => Math.min(100, Math.max(1, parseInt(val) || 50))),
+        templateId: z.string().uuid().optional(),
+        type: z.enum(["email", "sms"]).optional(),
+        status: z.enum(["sent", "failed", "pending"]).optional(),
+        recipientEmail: z.string().email().optional().or(z.literal(""))
+      });
+
+      const { page, limit, templateId, type, status, recipientEmail } = querySchema.parse(req.query);
+      const offset = (page - 1) * limit;
+      
+      const filters = {
+        templateId,
+        type,
+        status,
+        recipientEmail: recipientEmail || undefined,
+        limit,
+        offset
+      };
+
+      const result = await storage.getNotificationLogs(filters);
+      res.json({
+        data: result.logs,
+        page,
+        limit,
+        total: result.total
+      });
+    } catch (error: any) {
+      console.error("Error fetching notification logs:", error);
+      
+      // Handle validation errors as 400 Bad Request
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      
+      res.status(500).json({ error: "Failed to fetch notification logs" });
+    }
+  });
+
+  // Send One-time Notification Route
+  app.post("/api/admin/send-notification", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      // Create and validate send notification schema
+      const sendNotificationSchema = z.object({
+        templateId: z.string().uuid("Valid template ID is required"),
+        recipientType: z.enum(["individual", "course", "all_students"]),
+        recipientId: z.string().uuid().optional(),
+        courseId: z.string().uuid().optional(),
+        customSubject: z.string().optional(),
+        customBody: z.string().optional(),
+      });
+
+      const { templateId, recipientType, recipientId, courseId, customSubject, customBody } = sendNotificationSchema.parse(req.body);
+
+      // Get the template
+      const template = await storage.getNotificationTemplate(templateId);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      let recipients: User[] = [];
+      
+      // Determine recipients based on type
+      if (recipientType === 'individual' && recipientId) {
+        const recipient = await storage.getUser(recipientId);
+        if (recipient) {
+          recipients = [recipient];
+        }
+      } else if (recipientType === 'course' && courseId) {
+        const enrollments = await storage.getEnrollmentsByCourse(courseId);
+        const userIds = enrollments.map(e => e.studentId).filter(Boolean) as string[];
+        recipients = await Promise.all(userIds.map(id => storage.getUser(id)));
+        recipients = recipients.filter(Boolean);
+      } else if (recipientType === 'all_students') {
+        recipients = await storage.getAllStudents();
+      }
+
+      if (recipients.length === 0) {
+        return res.status(400).json({ error: "No recipients found" });
+      }
+
+      // Send notification to each recipient
+      const results = await Promise.all(
+        recipients.map(async (recipient) => {
+          try {
+            const variables = {
+              firstName: recipient.firstName,
+              lastName: recipient.lastName,
+              email: recipient.email,
+            };
+
+            const subject = customSubject || template.subject;
+            const content = customBody || template.content;
+
+            const logData = {
+              templateId: template.id,
+              scheduleId: null, // Manual send
+              recipientId: recipient.id,
+              recipientEmail: recipient.email,
+              recipientPhone: recipient.phone,
+              type: template.type,
+              subject: subject,
+              content: content,
+              variables: variables,
+              status: 'sent',
+              sentAt: new Date(),
+              sentBy: userId,
+            };
+
+            return await storage.createNotificationLog(logData);
+          } catch (error) {
+            console.error(`Failed to send notification to ${recipient.email}:`, error);
+            return null;
+          }
+        })
+      );
+
+      const successful = results.filter(Boolean);
+      res.json({ 
+        message: "Notifications sent successfully", 
+        sent: successful.length,
+        total: recipients.length 
+      });
+    } catch (error: any) {
+      console.error("Error sending notification:", error);
+      
+      // Handle Zod validation errors as 400 Bad Request
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      
+      res.status(500).json({ error: "Failed to send notification" });
     }
   });
 

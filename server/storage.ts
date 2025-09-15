@@ -57,6 +57,7 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getAllStudents(): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, data: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>): Promise<User>;
   updateStudent(id: string, data: { phone?: string; concealedCarryLicenseExpiration?: string; concealedCarryLicenseIssued?: string; licenseExpirationReminderDays?: number; enableLicenseExpirationReminder?: boolean; refresherReminderDays?: number; enableRefresherReminder?: boolean; enableSmsNotifications?: boolean; enableSmsReminders?: boolean; enableSmsPaymentNotices?: boolean; enableSmsAnnouncements?: boolean }): Promise<User>;
@@ -229,8 +230,10 @@ export interface IStorage {
     courseId?: string;
     status?: string;
     type?: string;
+    recipientEmail?: string;
     limit?: number;
-  }): Promise<NotificationLogWithDetails[]>;
+    offset?: number;
+  }): Promise<{ logs: NotificationLogWithDetails[]; total: number }>;
   getNotificationLogsByEnrollment(enrollmentId: string): Promise<NotificationLogWithDetails[]>;
 }
 
@@ -244,6 +247,11 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
+  }
+
+  async getAllStudents(): Promise<User[]> {
+    const students = await db.select().from(users).where(eq(users.role, 'student'));
+    return students;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
@@ -2207,9 +2215,16 @@ export class DatabaseStorage implements IStorage {
     courseId?: string;
     status?: string;
     type?: string;
+    recipientEmail?: string;
     limit?: number;
-  }): Promise<NotificationLogWithDetails[]> {
-    let query = db
+    offset?: number;
+  }): Promise<{ logs: NotificationLogWithDetails[]; total: number }> {
+    let countQuery = db
+      .select({ count: sql<number>`count(*)` })
+      .from(notificationLogs)
+      .leftJoin(users, eq(notificationLogs.recipientId, users.id));
+    
+    let dataQuery = db
       .select()
       .from(notificationLogs)
       .leftJoin(notificationTemplates, eq(notificationLogs.templateId, notificationTemplates.id))
@@ -2224,23 +2239,36 @@ export class DatabaseStorage implements IStorage {
     if (filters.courseId) conditions.push(eq(notificationLogs.courseId, filters.courseId));
     if (filters.status) conditions.push(eq(notificationLogs.status, filters.status));
     if (filters.type) conditions.push(eq(notificationLogs.type, filters.type));
+    if (filters.recipientEmail) conditions.push(eq(users.email, filters.recipientEmail));
 
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      const whereCondition = and(...conditions);
+      countQuery = countQuery.where(whereCondition);
+      dataQuery = dataQuery.where(whereCondition);
     }
 
-    const logs = await query
-      .orderBy(desc(notificationLogs.createdAt))
-      .limit(filters.limit || 100);
+    // Get total count and data with pagination
+    const [countResult, logs] = await Promise.all([
+      countQuery,
+      dataQuery
+        .orderBy(desc(notificationLogs.createdAt))
+        .limit(filters.limit || 50)
+        .offset(filters.offset || 0)
+    ]);
 
-    return logs.map(log => ({
-      ...log.notification_logs,
-      template: log.notification_templates!,
-      schedule: log.notification_schedules || undefined,
-      recipient: log.users!,
-      enrollment: log.enrollments || undefined,
-      course: log.courses || undefined,
-    }));
+    const total = countResult[0]?.count || 0;
+    
+    return {
+      logs: logs.map(log => ({
+        ...log.notification_logs,
+        template: log.notification_templates!,
+        schedule: log.notification_schedules || undefined,
+        recipient: log.users!,
+        enrollment: log.enrollments || undefined,
+        course: log.courses || undefined,
+      })),
+      total
+    };
   }
 
   async getNotificationLogsByEnrollment(enrollmentId: string): Promise<NotificationLogWithDetails[]> {
