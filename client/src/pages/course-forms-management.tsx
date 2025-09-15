@@ -327,7 +327,7 @@ export default function CourseFormsManagement() {
           <div className="flex items-center gap-4 mb-4">
             <Button 
               variant="outline" 
-              onClick={() => window.location.href = '/instructor-portal'}
+              onClick={() => window.location.href = '/instructor-dashboard'}
               className="flex items-center gap-2"
               data-testid="button-back-to-dashboard"
             >
