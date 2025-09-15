@@ -10,6 +10,8 @@ import {
   studentFormResponses,
   promoCodes,
   promoCodeRedemptions,
+  prohibitedWords,
+  messageAuditLog,
   type User,
   type UpsertUser,
   type Category,
@@ -37,6 +39,10 @@ import {
   type InsertPromoCodeRedemption,
   type PromoCodeWithDetails,
   type PromoCodeValidationResult,
+  type ProhibitedWord,
+  type InsertProhibitedWord,
+  type MessageAuditLog,
+  type InsertMessageAuditLog,
   notificationTemplates,
   notificationSchedules,
   notificationLogs,
@@ -296,6 +302,19 @@ export interface IStorage {
     pendingWaivers: number;
     expiredWaivers: number;
     complianceRate: number;
+  }>;
+
+  // Content filtering and compliance operations
+  batchInsertProhibitedWords(words: InsertProhibitedWord[]): Promise<void>;
+  getActiveProhibitedWords(): Promise<ProhibitedWord[]>;
+  insertProhibitedWord(word: InsertProhibitedWord): Promise<ProhibitedWord>;
+  insertMessageAuditLog(log: InsertMessageAuditLog): Promise<MessageAuditLog>;
+  getMessageComplianceReport(dateFrom: Date, dateTo: Date): Promise<{
+    totalAttempts: number;
+    blockedAttempts: number;
+    sentMessages: number;
+    topViolations: Array<{ word: string; count: number; category: string }>;
+    instructorStats: Array<{ instructorId: string; attempts: number; blocked: number }>;
   }>;
 }
 
@@ -2204,19 +2223,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNotificationTemplates(courseId?: string): Promise<NotificationTemplateWithDetails[]> {
-    let query = db
+    const conditions = [eq(notificationTemplates.isActive, true)];
+    
+    if (courseId) {
+      conditions.push(eq(notificationTemplates.courseId, courseId));
+    }
+
+    const templates = await db
       .select()
       .from(notificationTemplates)
       .leftJoin(users, eq(notificationTemplates.createdBy, users.id))
       .leftJoin(courses, eq(notificationTemplates.courseId, courses.id))
       .leftJoin(courseSchedules, eq(notificationTemplates.scheduleId, courseSchedules.id))
-      .where(eq(notificationTemplates.isActive, true));
-
-    if (courseId) {
-      query = query.where(eq(notificationTemplates.courseId, courseId));
-    }
-
-    const templates = await query.orderBy(asc(notificationTemplates.sortOrder), asc(notificationTemplates.name));
+      .where(and(...conditions))
+      .orderBy(asc(notificationTemplates.sortOrder), asc(notificationTemplates.name));
 
     return templates.map(template => ({
       ...template.notification_templates,
@@ -2304,22 +2324,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNotificationSchedules(courseId?: string, scheduleId?: string): Promise<NotificationScheduleWithDetails[]> {
-    let query = db
+    const conditions = [eq(notificationSchedules.isActive, true)];
+    
+    if (courseId) {
+      conditions.push(eq(notificationSchedules.courseId, courseId));
+    }
+    if (scheduleId) {
+      conditions.push(eq(notificationSchedules.scheduleId, scheduleId));
+    }
+
+    const schedules = await db
       .select()
       .from(notificationSchedules)
       .leftJoin(notificationTemplates, eq(notificationSchedules.templateId, notificationTemplates.id))
       .leftJoin(courses, eq(notificationSchedules.courseId, courses.id))
       .leftJoin(courseSchedules, eq(notificationSchedules.scheduleId, courseSchedules.id))
-      .where(eq(notificationSchedules.isActive, true));
-
-    if (courseId) {
-      query = query.where(eq(notificationSchedules.courseId, courseId));
-    }
-    if (scheduleId) {
-      query = query.where(eq(notificationSchedules.scheduleId, scheduleId));
-    }
-
-    const schedules = await query.orderBy(asc(notificationTemplates.name));
+      .where(and(...conditions))
+      .orderBy(asc(notificationTemplates.name));
 
     return schedules.map(schedule => ({
       ...schedule.notification_schedules,
@@ -2422,19 +2443,37 @@ export class DatabaseStorage implements IStorage {
     if (filters.type) conditions.push(eq(notificationLogs.type, filters.type));
     if (filters.recipientEmail) conditions.push(eq(users.email, filters.recipientEmail));
 
-    if (conditions.length > 0) {
-      const whereCondition = and(...conditions);
+    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+    
+    countQuery = db
+      .select({ count: sql<number>`count(*)` })
+      .from(notificationLogs)
+      .leftJoin(users, eq(notificationLogs.recipientId, users.id));
+    
+    dataQuery = db
+      .select()
+      .from(notificationLogs)
+      .leftJoin(notificationTemplates, eq(notificationLogs.templateId, notificationTemplates.id))
+      .leftJoin(notificationSchedules, eq(notificationLogs.scheduleId, notificationSchedules.id))
+      .leftJoin(users, eq(notificationLogs.recipientId, users.id))
+      .leftJoin(enrollments, eq(notificationLogs.enrollmentId, enrollments.id))
+      .leftJoin(courses, eq(notificationLogs.courseId, courses.id));
+    
+    if (whereCondition) {
       countQuery = countQuery.where(whereCondition);
       dataQuery = dataQuery.where(whereCondition);
     }
 
-    // Get total count and data with pagination
+    // Apply pagination to dataQuery
+    dataQuery = dataQuery
+      .orderBy(desc(notificationLogs.createdAt))
+      .limit(filters.limit || 50)
+      .offset(filters.offset || 0);
+    
+    // Get total count and data
     const [countResult, logs] = await Promise.all([
-      countQuery,
-      dataQuery
-        .orderBy(desc(notificationLogs.createdAt))
-        .limit(filters.limit || 50)
-        .offset(filters.offset || 0)
+      countQuery.execute(),
+      dataQuery.execute()
     ]);
 
     const total = countResult[0]?.count || 0;
@@ -2582,10 +2621,23 @@ export class DatabaseStorage implements IStorage {
       where: eq(waiverTemplates.id, id),
       with: {
         creator: true,
+        updater: true,
         instances: true,
       },
     });
-    return template;
+    
+    if (!template) return undefined;
+    
+    // Calculate computed fields
+    const instanceCount = template.instances.length;
+    const signedCount = template.instances.filter(instance => instance.status === 'signed').length;
+    
+    return {
+      ...template,
+      updater: template.updater || undefined,
+      instanceCount,
+      signedCount,
+    };
   }
 
   async getWaiverTemplates(filters?: { scope?: string; courseId?: string; isActive?: boolean }): Promise<WaiverTemplateWithDetails[]> {
@@ -2602,13 +2654,27 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(waiverTemplates.isActive, filters.isActive));
     }
     
-    return await db.query.waiverTemplates.findMany({
+    const templates = await db.query.waiverTemplates.findMany({
       where: conditions.length > 0 ? and(...conditions) : undefined,
       with: {
         creator: true,
+        updater: true,
         instances: true,
       },
       orderBy: [asc(waiverTemplates.name)],
+    });
+    
+    // Add computed fields to each template
+    return templates.map(template => {
+      const instanceCount = template.instances.length;
+      const signedCount = template.instances.filter(instance => instance.status === 'signed').length;
+      
+      return {
+        ...template,
+        updater: template.updater || undefined,
+        instanceCount,
+        signedCount,
+      };
     });
   }
 
@@ -2639,7 +2705,8 @@ export class DatabaseStorage implements IStorage {
         enrollment: {
           with: {
             student: true,
-            courseSchedule: {
+            course: true,
+            schedule: {
               with: {
                 course: true,
               },
@@ -2660,7 +2727,8 @@ export class DatabaseStorage implements IStorage {
         enrollment: {
           with: {
             student: true,
-            courseSchedule: {
+            course: true,
+            schedule: {
               with: {
                 course: true,
               },
@@ -2681,7 +2749,8 @@ export class DatabaseStorage implements IStorage {
         enrollment: {
           with: {
             student: true,
-            courseSchedule: {
+            course: true,
+            schedule: {
               with: {
                 course: true,
               },
@@ -2702,7 +2771,8 @@ export class DatabaseStorage implements IStorage {
         enrollment: {
           with: {
             student: true,
-            courseSchedule: {
+            course: true,
+            schedule: {
               with: {
                 course: true,
               },
@@ -2744,12 +2814,12 @@ export class DatabaseStorage implements IStorage {
 
     // Merge template variables with enrollment data
     const mergedData = {
-      studentName: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
-      studentEmail: enrollment.student.email,
-      studentPhone: enrollment.student.phone,
-      courseName: enrollment.courseSchedule.course.title,
-      courseDate: enrollment.courseSchedule.startDate,
-      instructorName: `${enrollment.courseSchedule.course.instructor.firstName} ${enrollment.courseSchedule.course.instructor.lastName}`,
+      studentName: enrollment.student ? `${enrollment.student.firstName} ${enrollment.student.lastName}` : 'N/A',
+      studentEmail: enrollment.student?.email || 'N/A',
+      studentPhone: enrollment.student?.phone || 'N/A',
+      courseName: enrollment.course?.title || 'N/A',
+      courseDate: enrollment.schedule.startDate,
+      instructorName: 'N/A', // TODO: Fetch instructor details using instructorId
       currentDate: new Date().toLocaleDateString(),
     };
 
@@ -2771,14 +2841,14 @@ export class DatabaseStorage implements IStorage {
   }> {
     const instances = await this.getWaiverInstancesByEnrollment(enrollmentId);
     
-    const required = instances.filter(i => i.template.isRequired);
+    const required = instances; // All instances are considered required
     const signed = instances.filter(i => i.status === 'signed');
     const pending = instances.filter(i => i.status === 'pending');
     
-    // Check for expired waivers (if expirationDate exists and is past)
+    // Check for expired waivers (if expiresAt exists and is past)
     const now = new Date();
     const expired = instances.filter(i => 
-      i.expirationDate && new Date(i.expirationDate) < now
+      i.expiresAt && new Date(i.expiresAt) < now
     );
 
     return { required, signed, pending, expired };
@@ -2826,7 +2896,7 @@ export class DatabaseStorage implements IStorage {
     
     const now = new Date();
     const expiredWaivers = allInstances.filter(i => 
-      i.expirationDate && new Date(i.expirationDate) < now
+      i.expiresAt && new Date(i.expiresAt) < now
     ).length;
 
     const complianceRate = totalWaivers > 0 ? (signedWaivers / totalWaivers) * 100 : 0;
@@ -2837,6 +2907,91 @@ export class DatabaseStorage implements IStorage {
       pendingWaivers,
       expiredWaivers,
       complianceRate,
+    };
+  }
+
+  // Content filtering and compliance operations
+  async batchInsertProhibitedWords(words: InsertProhibitedWord[]): Promise<void> {
+    if (words.length === 0) return;
+    await db.insert(prohibitedWords).values(words);
+  }
+
+  async getActiveProhibitedWords(): Promise<ProhibitedWord[]> {
+    return await db
+      .select()
+      .from(prohibitedWords)
+      .where(eq(prohibitedWords.isActive, true))
+      .orderBy(asc(prohibitedWords.category), asc(prohibitedWords.word));
+  }
+
+  async insertProhibitedWord(word: InsertProhibitedWord): Promise<ProhibitedWord> {
+    const [row] = await db.insert(prohibitedWords).values(word).returning();
+    return row;
+  }
+
+  async insertMessageAuditLog(log: InsertMessageAuditLog): Promise<MessageAuditLog> {
+    const [row] = await db.insert(messageAuditLog).values(log).returning();
+    return row;
+  }
+
+  async getMessageComplianceReport(dateFrom: Date, dateTo: Date): Promise<{
+    totalAttempts: number;
+    blockedAttempts: number;
+    sentMessages: number;
+    topViolations: Array<{ word: string; count: number; category: string }>;
+    instructorStats: Array<{ instructorId: string; attempts: number; blocked: number }>;
+  }> {
+    // Get all audit logs in date range
+    const logs = await db
+      .select()
+      .from(messageAuditLog)
+      .where(
+        and(
+          sql`${messageAuditLog.attemptedAt} >= ${dateFrom}`,
+          sql`${messageAuditLog.attemptedAt} <= ${dateTo}`
+        )
+      );
+
+    const totalAttempts = logs.length;
+    const blockedAttempts = logs.filter(log => log.status === 'blocked').length;
+    const sentMessages = logs.filter(log => log.status === 'sent').length;
+
+    // Calculate top violations - flatten prohibited words arrays and count frequency
+    const violationCounts = new Map<string, { count: number; category: string }>();
+    logs.forEach(log => {
+      if (log.prohibitedWords && Array.isArray(log.prohibitedWords)) {
+        log.prohibitedWords.forEach(word => {
+          const current = violationCounts.get(word) || { count: 0, category: 'unknown' };
+          violationCounts.set(word, { count: current.count + 1, category: current.category });
+        });
+      }
+    });
+
+    const topViolations = Array.from(violationCounts.entries())
+      .map(([word, data]) => ({ word, count: data.count, category: data.category }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    // Calculate instructor statistics
+    const instructorCounts = new Map<string, { attempts: number; blocked: number }>();
+    logs.forEach(log => {
+      const current = instructorCounts.get(log.instructorId) || { attempts: 0, blocked: 0 };
+      instructorCounts.set(log.instructorId, {
+        attempts: current.attempts + 1,
+        blocked: current.blocked + (log.status === 'blocked' ? 1 : 0)
+      });
+    });
+
+    const instructorStats = Array.from(instructorCounts.entries())
+      .map(([instructorId, data]) => ({ instructorId, attempts: data.attempts, blocked: data.blocked }))
+      .sort((a, b) => b.blocked - a.blocked);
+
+    return {
+      totalAttempts,
+      blockedAttempts,
+      sentMessages,
+      topViolations,
+      instructorStats
     };
   }
 }
