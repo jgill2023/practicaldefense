@@ -1,12 +1,19 @@
 // Email service using SendGrid integration
 import { MailService } from '@sendgrid/mail';
 
-if (!process.env.SENDGRID_API_KEY) {
-  throw new Error("SENDGRID_API_KEY environment variable must be set");
-}
+// Lazy initialization to avoid server crash on startup
+let mailService: MailService | null = null;
 
-const mailService = new MailService();
-mailService.setApiKey(process.env.SENDGRID_API_KEY);
+function initializeMailService(): MailService {
+  if (!mailService) {
+    if (!process.env.SENDGRID_API_KEY) {
+      throw new Error("SENDGRID_API_KEY environment variable must be set for email sending");
+    }
+    mailService = new MailService();
+    mailService.setApiKey(process.env.SENDGRID_API_KEY);
+  }
+  return mailService;
+}
 
 interface EmailParams {
   to: string;
@@ -18,7 +25,8 @@ interface EmailParams {
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
-    await mailService.send({
+    const service = initializeMailService();
+    await service.send({
       to: params.to,
       from: params.from,
       subject: params.subject,
@@ -52,11 +60,21 @@ export class NotificationEmailService {
     error?: string;
   }> {
     try {
+      // Validate recipient emails
+      const validEmails = params.to.filter(email => email && email.trim().length > 0 && this.isValidEmail(email));
+      if (validEmails.length === 0) {
+        return {
+          success: false,
+          error: 'No valid recipient email addresses provided',
+        };
+      }
+
+      const service = initializeMailService();
       const fromEmail = params.fromEmail || this.DEFAULT_FROM_EMAIL;
       const fromName = params.fromName || this.DEFAULT_FROM_NAME;
 
-      const response = await mailService.send({
-        to: params.to,
+      const response = await service.send({
+        to: validEmails,
         from: {
           email: fromEmail,
           name: fromName,
@@ -70,12 +88,33 @@ export class NotificationEmailService {
         },
       });
 
+      // Enhanced logging with provider details
+      const messageId = response[0]?.headers?.['x-message-id'] as string | undefined;
+      console.log('Email sent successfully:', {
+        messageId,
+        to: validEmails,
+        subject: params.subject,
+        providerResponse: {
+          statusCode: response[0]?.statusCode,
+          headers: response[0]?.headers,
+        }
+      });
+
       return {
         success: true,
-        messageId: response[0]?.headers?.['x-message-id'] as string | undefined,
+        messageId,
       };
     } catch (error: any) {
-      console.error('Failed to send notification email:', error);
+      // Enhanced error logging with provider details
+      const errorDetails = {
+        message: error.message,
+        code: error.code,
+        statusCode: error.statusCode,
+        body: error.response?.body,
+        headers: error.response?.headers,
+      };
+      console.error('Failed to send notification email:', errorDetails);
+      
       return {
         success: false,
         error: error.message || 'Unknown email sending error',
@@ -92,5 +131,10 @@ export class NotificationEmailService {
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .trim();
+  }
+
+  private static isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
   }
 }
