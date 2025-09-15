@@ -978,7 +978,18 @@ export function NotificationsManagement() {
                   onClick={(e) => {
                     console.log('🔥 SAVE BUTTON CLICKED!', e.type);
                     console.log('🔥 Button disabled?', e.currentTarget.disabled);
-                    console.log('🔥 Form element:', document.getElementById('template-form'));
+                    console.log('🔥 Form values:', templateForm.getValues());
+                    console.log('🔥 Form errors:', templateForm.formState.errors);
+                    console.log('🔥 Form isValid:', templateForm.formState.isValid);
+                    console.log('🔥 Form isDirty:', templateForm.formState.isDirty);
+                    
+                    // Force validation and submission
+                    templateForm.trigger().then((isValid) => {
+                      console.log('🔥 Manual validation result:', isValid);
+                      if (!isValid) {
+                        console.log('🔥 Validation errors after trigger:', templateForm.formState.errors);
+                      }
+                    });
                   }}
                   data-testid="button-save-template"
                 >
