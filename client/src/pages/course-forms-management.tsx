@@ -73,7 +73,7 @@ export default function CourseFormsManagement() {
 
   // Fetch waiver templates
   const { data: waiverTemplates = [], isLoading: waiverTemplatesLoading } = useQuery<WaiverTemplateWithDetails[]>({
-    queryKey: ["/api/waiver-templates"],
+    queryKey: ["/api/admin/waiver-templates"],
   });
 
   // Form creation/update
@@ -166,7 +166,7 @@ export default function CourseFormsManagement() {
   // Waiver template creation/update
   const waiverTemplateMutation = useMutation({
     mutationFn: async (data: InsertWaiverTemplate) => {
-      const url = editingWaiver ? `/api/waiver-templates/${editingWaiver.id}` : "/api/waiver-templates";
+      const url = editingWaiver ? `/api/admin/waiver-templates/${editingWaiver.id}` : "/api/admin/waiver-templates";
       const method = editingWaiver ? "PATCH" : "POST";
       const response = await apiRequest(method, url, data);
       return response.json();
@@ -176,8 +176,8 @@ export default function CourseFormsManagement() {
         title: editingWaiver ? "Waiver Template Updated" : "Waiver Template Created",
         description: `Waiver template has been ${editingWaiver ? "updated" : "created"} successfully.`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/waiver-templates"] });
-      queryClient.refetchQueries({ queryKey: ["/api/waiver-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/waiver-templates"] });
+      queryClient.refetchQueries({ queryKey: ["/api/admin/waiver-templates"] });
       setShowCreateWaiverDialog(false);
       setEditingWaiver(null);
     },
@@ -193,15 +193,15 @@ export default function CourseFormsManagement() {
   // Delete waiver template
   const deleteWaiverTemplateMutation = useMutation({
     mutationFn: async (templateId: string) => {
-      await apiRequest("DELETE", `/api/waiver-templates/${templateId}`);
+      await apiRequest("DELETE", `/api/admin/waiver-templates/${templateId}`);
     },
     onSuccess: () => {
       toast({
         title: "Waiver Template Deleted",
         description: "Waiver template has been deleted successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/waiver-templates"] });
-      queryClient.refetchQueries({ queryKey: ["/api/waiver-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/waiver-templates"] });
+      queryClient.refetchQueries({ queryKey: ["/api/admin/waiver-templates"] });
     },
     onError: (error) => {
       toast({
@@ -215,7 +215,7 @@ export default function CourseFormsManagement() {
   // Assign waiver to course
   const assignWaiverMutation = useMutation({
     mutationFn: async (data: { templateId: string; courseIds: string[] }) => {
-      const response = await apiRequest("POST", `/api/waiver-templates/${data.templateId}/assign`, {
+      const response = await apiRequest("POST", `/api/admin/waiver-templates/${data.templateId}/assign`, {
         courseIds: data.courseIds
       });
       return response.json();
@@ -225,8 +225,8 @@ export default function CourseFormsManagement() {
         title: "Waiver Assigned",
         description: "Waiver template has been assigned to selected courses successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/waiver-templates"] });
-      queryClient.refetchQueries({ queryKey: ["/api/waiver-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/waiver-templates"] });
+      queryClient.refetchQueries({ queryKey: ["/api/admin/waiver-templates"] });
     },
     onError: (error) => {
       toast({
