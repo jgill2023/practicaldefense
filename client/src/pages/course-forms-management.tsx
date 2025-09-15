@@ -24,7 +24,9 @@ import {
   Users, 
   Settings, 
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  ArrowLeft,
+  Clipboard
 } from "lucide-react";
 import type { 
   CourseInformationFormWithFields, 
@@ -193,9 +195,20 @@ export default function CourseFormsManagement() {
     <Layout>
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = '/instructor-portal'}
+              className="flex items-center gap-2"
+              data-testid="button-back-to-dashboard"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          </div>
           <h1 className="text-3xl font-bold text-foreground mb-4">Course Information Forms</h1>
           <p className="text-muted-foreground">
-            Manage post-registration forms that students complete after enrolling in courses.
+            Manage post-registration forms and waivers that students complete after enrolling in courses.
           </p>
         </div>
 
@@ -204,6 +217,10 @@ export default function CourseFormsManagement() {
             <TabsTrigger value="manage" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Manage Forms
+            </TabsTrigger>
+            <TabsTrigger value="waivers" className="flex items-center gap-2">
+              <Clipboard className="h-4 w-4" />
+              Manage Waivers
             </TabsTrigger>
             <TabsTrigger value="responses" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -448,6 +465,20 @@ export default function CourseFormsManagement() {
                 )}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="waivers">
+            <Card>
+              <CardContent className="py-12">
+                <div className="text-center">
+                  <Clipboard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">Waiver Management</h3>
+                  <p className="text-muted-foreground">
+                    Create and manage digital waivers for your courses. Coming soon!
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="responses">

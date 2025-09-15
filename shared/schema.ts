@@ -792,6 +792,167 @@ export type NotificationLogWithDetails = NotificationLog & {
   course?: Course;
 };
 
+// Waiver Management Tables
+export const waiverTemplates = pgTable("waiver_templates", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 255 }).notNull(),
+  content: text("content").notNull(), // Rich text HTML content
+  version: integer("version").notNull().default(1),
+  
+  // Scope configuration
+  scope: varchar("scope", { length: 20 }).notNull().default('course'), // 'global', 'course', 'category'
+  courseIds: text("course_ids").array(), // Array of course IDs when scope is 'course'
+  categoryIds: text("category_ids").array(), // Array of category IDs when scope is 'category'
+  
+  // Waiver settings
+  validityDays: integer("validity_days").default(365), // How long waiver is valid (null = forever)
+  requiresGuardian: boolean("requires_guardian").notNull().default(false), // For minors
+  isActive: boolean("is_active").notNull().default(true),
+  forceReSign: boolean("force_re_sign").notNull().default(false), // Force re-sign on version update
+  
+  // Merge fields available for this template
+  availableFields: text("available_fields").array().default(sql`ARRAY['studentName', 'courseName', 'date', 'instructorName', 'location']`),
+  
+  // Audit fields
+  createdBy: varchar("created_by").notNull().references(() => users.id),
+  updatedBy: varchar("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const waiverInstances = pgTable("waiver_instances", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  enrollmentId: uuid("enrollment_id").notNull().references(() => enrollments.id, { onDelete: 'cascade' }),
+  templateId: uuid("template_id").notNull().references(() => waiverTemplates.id, { onDelete: 'restrict' }),
+  
+  // Status tracking
+  status: varchar("status", { length: 20 }).notNull().default('pending'), // 'pending', 'signed', 'expired', 'cancelled'
+  signerType: varchar("signer_type", { length: 20 }).notNull().default('student'), // 'student', 'guardian'
+  
+  // Compliance tracking
+  ipAddress: varchar("ip_address", { length: 45 }), // IPv6 compatible
+  userAgent: text("user_agent"),
+  signedAt: timestamp("signed_at"),
+  expiresAt: timestamp("expires_at"),
+  
+  // File storage
+  pdfUrl: varchar("pdf_url"), // URL to signed PDF
+  renderedContent: text("rendered_content"), // HTML after merge field substitution
+  
+  // Audit trail
+  auditTrail: jsonb("audit_trail"), // JSON array of events
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const waiverSignatures = pgTable("waiver_signatures", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instanceId: uuid("instance_id").notNull().references(() => waiverInstances.id, { onDelete: 'cascade' }),
+  
+  // Signer information
+  signerName: varchar("signer_name", { length: 255 }).notNull(),
+  signerEmail: varchar("signer_email", { length: 255 }).notNull(),
+  signerRole: varchar("signer_role", { length: 20 }).notNull().default('student'), // 'student', 'guardian'
+  
+  // Signature data
+  signatureData: text("signature_data").notNull(), // Base64 signature image
+  signatureMethod: varchar("signature_method", { length: 20 }).notNull().default('canvas'), // 'canvas', 'typed', 'uploaded'
+  
+  // Consent checkboxes and acknowledgments
+  consentCheckboxes: jsonb("consent_checkboxes"), // Array of checkbox confirmations
+  acknowledgementsCompleted: boolean("acknowledgements_completed").notNull().default(false),
+  
+  // Compliance data
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull(),
+  userAgent: text("user_agent").notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations for waiver system
+export const waiverTemplateRelations = relations(waiverTemplates, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [waiverTemplates.createdBy],
+    references: [users.id],
+  }),
+  updater: one(users, {
+    fields: [waiverTemplates.updatedBy],
+    references: [users.id],
+  }),
+  instances: many(waiverInstances),
+}));
+
+export const waiverInstanceRelations = relations(waiverInstances, ({ one, many }) => ({
+  enrollment: one(enrollments, {
+    fields: [waiverInstances.enrollmentId],
+    references: [enrollments.id],
+  }),
+  template: one(waiverTemplates, {
+    fields: [waiverInstances.templateId],
+    references: [waiverTemplates.id],
+  }),
+  signatures: many(waiverSignatures),
+}));
+
+export const waiverSignatureRelations = relations(waiverSignatures, ({ one }) => ({
+  instance: one(waiverInstances, {
+    fields: [waiverSignatures.instanceId],
+    references: [waiverInstances.id],
+  }),
+}));
+
+// Insert schemas for waiver system
+export const insertWaiverTemplateSchema = createInsertSchema(waiverTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertWaiverInstanceSchema = createInsertSchema(waiverInstances).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertWaiverSignatureSchema = createInsertSchema(waiverSignatures).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for waiver system
+export type InsertWaiverTemplate = z.infer<typeof insertWaiverTemplateSchema>;
+export type WaiverTemplate = typeof waiverTemplates.$inferSelect;
+export type InsertWaiverInstance = z.infer<typeof insertWaiverInstanceSchema>;
+export type WaiverInstance = typeof waiverInstances.$inferSelect;
+export type InsertWaiverSignature = z.infer<typeof insertWaiverSignatureSchema>;
+export type WaiverSignature = typeof waiverSignatures.$inferSelect;
+
+// Extended types for waiver system
+export type WaiverTemplateWithDetails = WaiverTemplate & {
+  creator: User;
+  updater?: User;
+  instanceCount: number;
+  signedCount: number;
+};
+
+export type WaiverInstanceWithDetails = WaiverInstance & {
+  template: WaiverTemplate;
+  enrollment: EnrollmentWithDetails;
+  signatures: WaiverSignature[];
+};
+
+export type WaiverSignatureWithDetails = WaiverSignature & {
+  instance: WaiverInstanceWithDetails;
+};
+
+// Waiver enums and types
+export type WaiverScope = 'global' | 'course' | 'category';
+export type WaiverStatus = 'pending' | 'signed' | 'expired' | 'cancelled';
+export type SignerType = 'student' | 'guardian';
+export type SignatureMethod = 'canvas' | 'typed' | 'uploaded';
+
 // Notification enums and types
 export type NotificationType = 'email' | 'sms';
 export type NotificationCategory = 'course_specific' | 'payment_notice' | 'announcement' | 'welcome' | 'certificate' | 'reminder';

@@ -1,0 +1,83 @@
+Goal: Add a Waiver Management section so instructors can create templates, collect legally valid e-signatures, and track waiver status per enrollment—with automated reminders.
+
+MVP Features
+
+Templates
+
+Create/edit waiver templates (rich text + merge fields like {{studentName}}, {{courseTitle}}, {{date}}).
+
+Versioning (v1, v2…). Option to force re-sign on new version.
+
+Scope to courses/categories or global; set validity window (e.g., 12 months).
+
+Required signers: student; optional guardian for minors.
+
+Signing Flow (Public)
+
+Link/QR from checkout, email/SMS, or roster.
+
+Consent → required checkboxes/initials → signature pad → review → submit.
+
+Success receipt + downloadable/email PDF.
+
+Tracking & Roster
+
+Status per enrollment: Signed / Missing / Expired with timestamps and signer.
+
+Actions: Copy link, resend link, view/download PDF, mark “received offline.”
+
+Exports: CSV of statuses; optional PDF bundle per class.
+
+Checkout Integration
+
+Require waiver before completion or allow “pending” with reminders.
+
+Auto-create waiver instance on enrollment.
+
+Reminders & Automation (Must-Have)
+
+Triggers
+
+After enrollment if waiver missing (immediate + follow-ups).
+
+Before event: 7 days, 3 days, 24 hours (configurable).
+
+Expiring soon: 30/7 days before waiver expiry.
+
+New version published with “force re-sign”: notify affected students.
+
+Channels & Templates
+
+Email (required), SMS (if enabled). Template editor with variables (e.g., {{waiverLink}}, {{eventDate}}, {{courseTitle}}).
+
+Scheduling
+
+Timezone-aware, quiet hours, rate-limited (max 1 reminder/day per signer per course), auto-stop when signed.
+
+Controls & Logs
+
+Toggle per rule, edit cadence, preview/test send.
+
+Message history per enrollment (sent, delivered, bounced).
+
+Manual override: “Resend now,” “Snooze 24h.”
+
+Compliance
+
+Store consent for SMS; include unsubscribe/STOP handling; audit trail for every send.
+
+Compliance & Storage
+
+Capture timestamp, IP, user agent, signer name, signature image, checkbox acknowledgements.
+
+Store rendered PDF and immutable audit log.
+
+Acceptance Criteria
+
+Publishing a scoped template shows “waiver required” at checkout.
+
+Enrollment auto-creates a waiver instance; automations send reminders on schedule until signed.
+
+Student completes mobile signing; PDF + audit stored; future reminders stop.
+
+Roster reflects real-time status; exports work; message log visible to admins.

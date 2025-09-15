@@ -49,6 +49,17 @@ import {
   type NotificationTemplateWithDetails,
   type NotificationScheduleWithDetails,
   type NotificationLogWithDetails,
+  waiverTemplates,
+  waiverInstances,
+  waiverSignatures,
+  type WaiverTemplate,
+  type InsertWaiverTemplate,
+  type WaiverInstance,
+  type InsertWaiverInstance,
+  type WaiverSignature,
+  type InsertWaiverSignature,
+  type WaiverTemplateWithDetails,
+  type WaiverInstanceWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, isNull, isNotNull, sql } from "drizzle-orm";
@@ -235,6 +246,43 @@ export interface IStorage {
     offset?: number;
   }): Promise<{ logs: NotificationLogWithDetails[]; total: number }>;
   getNotificationLogsByEnrollment(enrollmentId: string): Promise<NotificationLogWithDetails[]>;
+  
+  // Waiver Template operations
+  createWaiverTemplate(template: InsertWaiverTemplate): Promise<WaiverTemplate>;
+  updateWaiverTemplate(id: string, template: Partial<InsertWaiverTemplate>): Promise<WaiverTemplate>;
+  deleteWaiverTemplate(id: string): Promise<void>;
+  getWaiverTemplate(id: string): Promise<WaiverTemplateWithDetails | undefined>;
+  getWaiverTemplates(filters?: { scope?: string; courseId?: string; isActive?: boolean }): Promise<WaiverTemplateWithDetails[]>;
+  getWaiverTemplatesByCourse(courseId: string): Promise<WaiverTemplateWithDetails[]>;
+  
+  // Waiver Instance operations
+  createWaiverInstance(instance: InsertWaiverInstance): Promise<WaiverInstance>;
+  updateWaiverInstance(id: string, instance: Partial<InsertWaiverInstance>): Promise<WaiverInstance>;
+  getWaiverInstance(id: string): Promise<WaiverInstanceWithDetails | undefined>;
+  getWaiverInstancesByEnrollment(enrollmentId: string): Promise<WaiverInstanceWithDetails[]>;
+  getWaiverInstancesByTemplate(templateId: string): Promise<WaiverInstanceWithDetails[]>;
+  getWaiverInstancesByStatus(status: string): Promise<WaiverInstanceWithDetails[]>;
+  
+  // Waiver Signature operations  
+  createWaiverSignature(signature: InsertWaiverSignature): Promise<WaiverSignature>;
+  getWaiverSignature(id: string): Promise<WaiverSignature | undefined>;
+  getWaiverSignaturesByInstance(instanceId: string): Promise<WaiverSignature[]>;
+  
+  // Waiver utility methods
+  generateWaiverContent(templateId: string, enrollmentId: string): Promise<{ content: string; mergedData: any }>;
+  checkWaiverRequirements(enrollmentId: string): Promise<{
+    required: WaiverInstanceWithDetails[];
+    signed: WaiverInstanceWithDetails[];
+    pending: WaiverInstanceWithDetails[];
+    expired: WaiverInstanceWithDetails[];
+  }>;
+  getWaiverComplianceReport(courseId?: string, startDate?: Date, endDate?: Date): Promise<{
+    totalWaivers: number;
+    signedWaivers: number;
+    pendingWaivers: number;
+    expiredWaivers: number;
+    complianceRate: number;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2374,6 +2422,288 @@ export class DatabaseStorage implements IStorage {
       completedForms: completedFormIds.size,
       isComplete: missingForms.length === 0,
       missingForms,
+    };
+  }
+  
+  // Waiver Template operations
+  async createWaiverTemplate(template: InsertWaiverTemplate): Promise<WaiverTemplate> {
+    const [created] = await db.insert(waiverTemplates).values(template).returning();
+    return created;
+  }
+
+  async updateWaiverTemplate(id: string, template: Partial<InsertWaiverTemplate>): Promise<WaiverTemplate> {
+    const [updated] = await db
+      .update(waiverTemplates)
+      .set({ ...template, updatedAt: new Date() })
+      .where(eq(waiverTemplates.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteWaiverTemplate(id: string): Promise<void> {
+    await db.delete(waiverTemplates).where(eq(waiverTemplates.id, id));
+  }
+
+  async getWaiverTemplate(id: string): Promise<WaiverTemplateWithDetails | undefined> {
+    const [template] = await db.query.waiverTemplates.findMany({
+      where: eq(waiverTemplates.id, id),
+      with: {
+        creator: true,
+        instances: true,
+      },
+    });
+    return template;
+  }
+
+  async getWaiverTemplates(filters?: { scope?: string; courseId?: string; isActive?: boolean }): Promise<WaiverTemplateWithDetails[]> {
+    const conditions = [];
+    
+    if (filters?.scope) {
+      conditions.push(eq(waiverTemplates.scope, filters.scope));
+    }
+    if (filters?.courseId) {
+      // Use array contains operator for courseIds array
+      conditions.push(sql`${waiverTemplates.courseIds} @> ARRAY[${filters.courseId}]`);
+    }
+    if (filters?.isActive !== undefined) {
+      conditions.push(eq(waiverTemplates.isActive, filters.isActive));
+    }
+    
+    return await db.query.waiverTemplates.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      with: {
+        creator: true,
+        instances: true,
+      },
+      orderBy: [asc(waiverTemplates.name)],
+    });
+  }
+
+  async getWaiverTemplatesByCourse(courseId: string): Promise<WaiverTemplateWithDetails[]> {
+    return await this.getWaiverTemplates({ courseId, isActive: true });
+  }
+
+  // Waiver Instance operations
+  async createWaiverInstance(instance: InsertWaiverInstance): Promise<WaiverInstance> {
+    const [created] = await db.insert(waiverInstances).values(instance).returning();
+    return created;
+  }
+
+  async updateWaiverInstance(id: string, instance: Partial<InsertWaiverInstance>): Promise<WaiverInstance> {
+    const [updated] = await db
+      .update(waiverInstances)
+      .set({ ...instance, updatedAt: new Date() })
+      .where(eq(waiverInstances.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getWaiverInstance(id: string): Promise<WaiverInstanceWithDetails | undefined> {
+    const [instance] = await db.query.waiverInstances.findMany({
+      where: eq(waiverInstances.id, id),
+      with: {
+        template: true,
+        enrollment: {
+          with: {
+            student: true,
+            courseSchedule: {
+              with: {
+                course: true,
+              },
+            },
+          },
+        },
+        signatures: true,
+      },
+    });
+    return instance;
+  }
+
+  async getWaiverInstancesByEnrollment(enrollmentId: string): Promise<WaiverInstanceWithDetails[]> {
+    return await db.query.waiverInstances.findMany({
+      where: eq(waiverInstances.enrollmentId, enrollmentId),
+      with: {
+        template: true,
+        enrollment: {
+          with: {
+            student: true,
+            courseSchedule: {
+              with: {
+                course: true,
+              },
+            },
+          },
+        },
+        signatures: true,
+      },
+      orderBy: [desc(waiverInstances.createdAt)],
+    });
+  }
+
+  async getWaiverInstancesByTemplate(templateId: string): Promise<WaiverInstanceWithDetails[]> {
+    return await db.query.waiverInstances.findMany({
+      where: eq(waiverInstances.templateId, templateId),
+      with: {
+        template: true,
+        enrollment: {
+          with: {
+            student: true,
+            courseSchedule: {
+              with: {
+                course: true,
+              },
+            },
+          },
+        },
+        signatures: true,
+      },
+      orderBy: [desc(waiverInstances.createdAt)],
+    });
+  }
+
+  async getWaiverInstancesByStatus(status: string): Promise<WaiverInstanceWithDetails[]> {
+    return await db.query.waiverInstances.findMany({
+      where: eq(waiverInstances.status, status),
+      with: {
+        template: true,
+        enrollment: {
+          with: {
+            student: true,
+            courseSchedule: {
+              with: {
+                course: true,
+              },
+            },
+          },
+        },
+        signatures: true,
+      },
+      orderBy: [desc(waiverInstances.createdAt)],
+    });
+  }
+
+  // Waiver Signature operations
+  async createWaiverSignature(signature: InsertWaiverSignature): Promise<WaiverSignature> {
+    const [created] = await db.insert(waiverSignatures).values(signature).returning();
+    return created;
+  }
+
+  async getWaiverSignature(id: string): Promise<WaiverSignature | undefined> {
+    const [signature] = await db.select().from(waiverSignatures).where(eq(waiverSignatures.id, id));
+    return signature;
+  }
+
+  async getWaiverSignaturesByInstance(instanceId: string): Promise<WaiverSignature[]> {
+    return await db.select().from(waiverSignatures).where(eq(waiverSignatures.instanceId, instanceId));
+  }
+
+  // Waiver utility methods
+  async generateWaiverContent(templateId: string, enrollmentId: string): Promise<{ content: string; mergedData: any }> {
+    const template = await this.getWaiverTemplate(templateId);
+    if (!template) {
+      throw new Error('Waiver template not found');
+    }
+
+    const enrollment = await this.getEnrollment(enrollmentId);
+    if (!enrollment) {
+      throw new Error('Enrollment not found');
+    }
+
+    // Merge template variables with enrollment data
+    const mergedData = {
+      studentName: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+      studentEmail: enrollment.student.email,
+      studentPhone: enrollment.student.phone,
+      courseName: enrollment.courseSchedule.course.title,
+      courseDate: enrollment.courseSchedule.startDate,
+      instructorName: `${enrollment.courseSchedule.course.instructor.firstName} ${enrollment.courseSchedule.course.instructor.lastName}`,
+      currentDate: new Date().toLocaleDateString(),
+    };
+
+    // Simple template variable replacement
+    let content = template.content;
+    for (const [key, value] of Object.entries(mergedData)) {
+      const placeholder = `{{${key}}}`;
+      content = content.replace(new RegExp(placeholder, 'g'), String(value));
+    }
+
+    return { content, mergedData };
+  }
+
+  async checkWaiverRequirements(enrollmentId: string): Promise<{
+    required: WaiverInstanceWithDetails[];
+    signed: WaiverInstanceWithDetails[];
+    pending: WaiverInstanceWithDetails[];
+    expired: WaiverInstanceWithDetails[];
+  }> {
+    const instances = await this.getWaiverInstancesByEnrollment(enrollmentId);
+    
+    const required = instances.filter(i => i.template.isRequired);
+    const signed = instances.filter(i => i.status === 'signed');
+    const pending = instances.filter(i => i.status === 'pending');
+    
+    // Check for expired waivers (if expirationDate exists and is past)
+    const now = new Date();
+    const expired = instances.filter(i => 
+      i.expirationDate && new Date(i.expirationDate) < now
+    );
+
+    return { required, signed, pending, expired };
+  }
+
+  async getWaiverComplianceReport(courseId?: string, startDate?: Date, endDate?: Date): Promise<{
+    totalWaivers: number;
+    signedWaivers: number;
+    pendingWaivers: number;
+    expiredWaivers: number;
+    complianceRate: number;
+  }> {
+    const conditions = [];
+    
+    if (courseId) {
+      // Filter by course through enrollment relationship
+      const courseEnrollments = await db.query.enrollments.findMany({
+        where: eq(enrollments.courseId, courseId),
+        columns: { id: true },
+      });
+      const enrollmentIds = courseEnrollments.map(e => e.id);
+      
+      if (enrollmentIds.length === 0) {
+        return { totalWaivers: 0, signedWaivers: 0, pendingWaivers: 0, expiredWaivers: 0, complianceRate: 0 };
+      }
+    }
+    
+    if (startDate) {
+      conditions.push(sql`${waiverInstances.createdAt} >= ${startDate}`);
+    }
+    if (endDate) {
+      conditions.push(sql`${waiverInstances.createdAt} <= ${endDate}`);
+    }
+
+    const allInstances = await db.query.waiverInstances.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      with: {
+        template: true,
+      },
+    });
+
+    const totalWaivers = allInstances.length;
+    const signedWaivers = allInstances.filter(i => i.status === 'signed').length;
+    const pendingWaivers = allInstances.filter(i => i.status === 'pending').length;
+    
+    const now = new Date();
+    const expiredWaivers = allInstances.filter(i => 
+      i.expirationDate && new Date(i.expirationDate) < now
+    ).length;
+
+    const complianceRate = totalWaivers > 0 ? (signedWaivers / totalWaivers) * 100 : 0;
+
+    return {
+      totalWaivers,
+      signedWaivers,
+      pendingWaivers,
+      expiredWaivers,
+      complianceRate,
     };
   }
 }
