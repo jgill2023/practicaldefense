@@ -81,6 +81,12 @@ const oneTimeNotificationSchema = z.object({
 
 type OneTimeNotificationForm = z.infer<typeof oneTimeNotificationSchema>;
 
+// Utility function to strip HTML tags and get plain text
+const stripHtmlTags = (html: string): string => {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').trim();
+};
+
 export function NotificationsManagement() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -157,7 +163,6 @@ export function NotificationsManagement() {
   // Update createdBy when user loads
   useEffect(() => {
     if ((user as any)?.id && !templateForm.getValues('createdBy')) {
-      console.log('🔥 Setting createdBy field to user ID:', (user as any).id);
       templateForm.setValue('createdBy', (user as any).id);
     }
   }, [(user as any)?.id, templateForm]);
@@ -372,7 +377,6 @@ export function NotificationsManagement() {
         ...data, 
         createdBy: userId
       };
-      console.log('🔥 Final template data being sent:', templateData);
       createTemplateMutation.mutate(templateData);
     }
   };
@@ -502,7 +506,7 @@ export function NotificationsManagement() {
                             </p>
                           )}
                           <p className="text-sm text-muted-foreground line-clamp-2">
-                            {template.content}
+                            {stripHtmlTags(template.content)}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -881,21 +885,12 @@ export function NotificationsManagement() {
                   <FormItem>
                     <FormLabel>Type</FormLabel>
                     <Select 
-                      onValueChange={(value) => {
-                        console.log('🔥 DROPDOWN SELECTION CHANGED:', value);
-                        field.onChange(value);
-                      }} 
+                      onValueChange={field.onChange} 
                       value={field.value}
-                      onOpenChange={(open) => {
-                        console.log('🔥 DROPDOWN OPEN STATE:', open);
-                      }}
                     >
                       <FormControl>
                         <SelectTrigger 
                           data-testid="select-template-type"
-                          onClick={() => {
-                            console.log('🔥 DROPDOWN TRIGGER CLICKED!');
-                          }}
                         >
                           <SelectValue placeholder="Select template type" />
                         </SelectTrigger>
@@ -935,15 +930,12 @@ export function NotificationsManagement() {
                         theme="snow"
                         value={field.value || ''}
                         onChange={(value) => {
-                          console.log('🔥 ReactQuill onChange:', value);
                           field.onChange(value);
                           templateForm.setValue('content', value, { 
                             shouldDirty: true, 
                             shouldTouch: true, 
                             shouldValidate: true 
                           });
-                          // Force trigger validation
-                          templateForm.trigger('content');
                         }}
                         placeholder="Enter message content (you can use variables like {{firstName}}, {{courseName}}, etc.)"
                         style={{ minHeight: '120px' }}
@@ -1001,13 +993,6 @@ export function NotificationsManagement() {
                 <Button
                   type="submit"
                   disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
-                  onClick={() => {
-                    console.log('🔥 SAVE BUTTON CLICKED!');
-                    console.log('🔥 Form values:', templateForm.getValues());
-                    console.log('🔥 Form errors:', templateForm.formState.errors);
-                    console.log('🔥 User data:', user);
-                    console.log('🔥 Form valid?', templateForm.formState.isValid);
-                  }}
                   data-testid="button-save-template"
                 >
                   {createTemplateMutation.isPending || updateTemplateMutation.isPending ? (
