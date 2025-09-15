@@ -37,6 +37,18 @@ import {
   type InsertPromoCodeRedemption,
   type PromoCodeWithDetails,
   type PromoCodeValidationResult,
+  notificationTemplates,
+  notificationSchedules,
+  notificationLogs,
+  type NotificationTemplate,
+  type InsertNotificationTemplate,
+  type NotificationSchedule,
+  type InsertNotificationSchedule,
+  type NotificationLog,
+  type InsertNotificationLog,
+  type NotificationTemplateWithDetails,
+  type NotificationScheduleWithDetails,
+  type NotificationLogWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, isNull, isNotNull, sql } from "drizzle-orm";
@@ -189,6 +201,37 @@ export interface IStorage {
   // Promo code utility methods
   generatePromoCode(): Promise<string>;
   updatePromoCodeUsageCount(promoCodeId: string, increment: number): Promise<void>;
+  
+  // Notification Template operations
+  createNotificationTemplate(template: InsertNotificationTemplate): Promise<NotificationTemplate>;
+  updateNotificationTemplate(id: string, template: Partial<InsertNotificationTemplate>): Promise<NotificationTemplate>;
+  deleteNotificationTemplate(id: string): Promise<void>;
+  getNotificationTemplate(id: string): Promise<NotificationTemplateWithDetails | undefined>;
+  getNotificationTemplates(courseId?: string): Promise<NotificationTemplateWithDetails[]>;
+  getNotificationTemplatesByCategory(category: string): Promise<NotificationTemplateWithDetails[]>;
+  reorderNotificationTemplates(updates: {id: string; sortOrder: number}[]): Promise<void>;
+  
+  // Notification Schedule operations
+  createNotificationSchedule(schedule: InsertNotificationSchedule): Promise<NotificationSchedule>;
+  updateNotificationSchedule(id: string, schedule: Partial<InsertNotificationSchedule>): Promise<NotificationSchedule>;
+  deleteNotificationSchedule(id: string): Promise<void>;
+  getNotificationSchedule(id: string): Promise<NotificationScheduleWithDetails | undefined>;
+  getNotificationSchedules(courseId?: string, scheduleId?: string): Promise<NotificationScheduleWithDetails[]>;
+  getActiveNotificationSchedulesByEvent(event: string): Promise<NotificationScheduleWithDetails[]>;
+  
+  // Notification Log operations
+  createNotificationLog(log: InsertNotificationLog): Promise<NotificationLog>;
+  updateNotificationLog(id: string, log: Partial<InsertNotificationLog>): Promise<NotificationLog>;
+  getNotificationLog(id: string): Promise<NotificationLogWithDetails | undefined>;
+  getNotificationLogs(filters: {
+    recipientId?: string;
+    templateId?: string;
+    courseId?: string;
+    status?: string;
+    type?: string;
+    limit?: number;
+  }): Promise<NotificationLogWithDetails[]>;
+  getNotificationLogsByEnrollment(enrollmentId: string): Promise<NotificationLogWithDetails[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1925,6 +1968,301 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(promoCodes.id, promoCodeId));
+  }
+
+  // Notification Template operations
+  async createNotificationTemplate(template: InsertNotificationTemplate): Promise<NotificationTemplate> {
+    const [newTemplate] = await db
+      .insert(notificationTemplates)
+      .values(template)
+      .returning();
+    return newTemplate;
+  }
+
+  async updateNotificationTemplate(id: string, template: Partial<InsertNotificationTemplate>): Promise<NotificationTemplate> {
+    const [updatedTemplate] = await db
+      .update(notificationTemplates)
+      .set({ ...template, updatedAt: new Date() })
+      .where(eq(notificationTemplates.id, id))
+      .returning();
+    return updatedTemplate;
+  }
+
+  async deleteNotificationTemplate(id: string): Promise<void> {
+    await db
+      .delete(notificationTemplates)
+      .where(eq(notificationTemplates.id, id));
+  }
+
+  async getNotificationTemplate(id: string): Promise<NotificationTemplateWithDetails | undefined> {
+    const [template] = await db
+      .select()
+      .from(notificationTemplates)
+      .leftJoin(users, eq(notificationTemplates.createdBy, users.id))
+      .leftJoin(courses, eq(notificationTemplates.courseId, courses.id))
+      .leftJoin(courseSchedules, eq(notificationTemplates.scheduleId, courseSchedules.id))
+      .where(eq(notificationTemplates.id, id));
+
+    if (!template) return undefined;
+
+    return {
+      ...template.notification_templates,
+      creator: template.users!,
+      course: template.courses || undefined,
+      schedule: template.course_schedules || undefined,
+      schedules: [], // Will be populated if needed
+    };
+  }
+
+  async getNotificationTemplates(courseId?: string): Promise<NotificationTemplateWithDetails[]> {
+    let query = db
+      .select()
+      .from(notificationTemplates)
+      .leftJoin(users, eq(notificationTemplates.createdBy, users.id))
+      .leftJoin(courses, eq(notificationTemplates.courseId, courses.id))
+      .leftJoin(courseSchedules, eq(notificationTemplates.scheduleId, courseSchedules.id))
+      .where(eq(notificationTemplates.isActive, true));
+
+    if (courseId) {
+      query = query.where(eq(notificationTemplates.courseId, courseId));
+    }
+
+    const templates = await query.orderBy(asc(notificationTemplates.sortOrder), asc(notificationTemplates.name));
+
+    return templates.map(template => ({
+      ...template.notification_templates,
+      creator: template.users!,
+      course: template.courses || undefined,
+      schedule: template.course_schedules || undefined,
+      schedules: [], // Will be populated if needed
+    }));
+  }
+
+  async getNotificationTemplatesByCategory(category: string): Promise<NotificationTemplateWithDetails[]> {
+    const templates = await db
+      .select()
+      .from(notificationTemplates)
+      .leftJoin(users, eq(notificationTemplates.createdBy, users.id))
+      .leftJoin(courses, eq(notificationTemplates.courseId, courses.id))
+      .leftJoin(courseSchedules, eq(notificationTemplates.scheduleId, courseSchedules.id))
+      .where(and(
+        eq(notificationTemplates.category, category),
+        eq(notificationTemplates.isActive, true)
+      ))
+      .orderBy(asc(notificationTemplates.sortOrder), asc(notificationTemplates.name));
+
+    return templates.map(template => ({
+      ...template.notification_templates,
+      creator: template.users!,
+      course: template.courses || undefined,
+      schedule: template.course_schedules || undefined,
+      schedules: [], // Will be populated if needed
+    }));
+  }
+
+  async reorderNotificationTemplates(updates: {id: string; sortOrder: number}[]): Promise<void> {
+    await db.transaction(async (tx) => {
+      for (const update of updates) {
+        await tx
+          .update(notificationTemplates)
+          .set({ sortOrder: update.sortOrder, updatedAt: new Date() })
+          .where(eq(notificationTemplates.id, update.id));
+      }
+    });
+  }
+
+  // Notification Schedule operations
+  async createNotificationSchedule(schedule: InsertNotificationSchedule): Promise<NotificationSchedule> {
+    const [newSchedule] = await db
+      .insert(notificationSchedules)
+      .values(schedule)
+      .returning();
+    return newSchedule;
+  }
+
+  async updateNotificationSchedule(id: string, schedule: Partial<InsertNotificationSchedule>): Promise<NotificationSchedule> {
+    const [updatedSchedule] = await db
+      .update(notificationSchedules)
+      .set({ ...schedule, updatedAt: new Date() })
+      .where(eq(notificationSchedules.id, id))
+      .returning();
+    return updatedSchedule;
+  }
+
+  async deleteNotificationSchedule(id: string): Promise<void> {
+    await db
+      .delete(notificationSchedules)
+      .where(eq(notificationSchedules.id, id));
+  }
+
+  async getNotificationSchedule(id: string): Promise<NotificationScheduleWithDetails | undefined> {
+    const [schedule] = await db
+      .select()
+      .from(notificationSchedules)
+      .leftJoin(notificationTemplates, eq(notificationSchedules.templateId, notificationTemplates.id))
+      .leftJoin(courses, eq(notificationSchedules.courseId, courses.id))
+      .leftJoin(courseSchedules, eq(notificationSchedules.scheduleId, courseSchedules.id))
+      .where(eq(notificationSchedules.id, id));
+
+    if (!schedule) return undefined;
+
+    return {
+      ...schedule.notification_schedules,
+      template: schedule.notification_templates!,
+      course: schedule.courses || undefined,
+      schedule: schedule.course_schedules || undefined,
+    };
+  }
+
+  async getNotificationSchedules(courseId?: string, scheduleId?: string): Promise<NotificationScheduleWithDetails[]> {
+    let query = db
+      .select()
+      .from(notificationSchedules)
+      .leftJoin(notificationTemplates, eq(notificationSchedules.templateId, notificationTemplates.id))
+      .leftJoin(courses, eq(notificationSchedules.courseId, courses.id))
+      .leftJoin(courseSchedules, eq(notificationSchedules.scheduleId, courseSchedules.id))
+      .where(eq(notificationSchedules.isActive, true));
+
+    if (courseId) {
+      query = query.where(eq(notificationSchedules.courseId, courseId));
+    }
+    if (scheduleId) {
+      query = query.where(eq(notificationSchedules.scheduleId, scheduleId));
+    }
+
+    const schedules = await query.orderBy(asc(notificationTemplates.name));
+
+    return schedules.map(schedule => ({
+      ...schedule.notification_schedules,
+      template: schedule.notification_templates!,
+      course: schedule.courses || undefined,
+      schedule: schedule.course_schedules || undefined,
+    }));
+  }
+
+  async getActiveNotificationSchedulesByEvent(event: string): Promise<NotificationScheduleWithDetails[]> {
+    const schedules = await db
+      .select()
+      .from(notificationSchedules)
+      .leftJoin(notificationTemplates, eq(notificationSchedules.templateId, notificationTemplates.id))
+      .leftJoin(courses, eq(notificationSchedules.courseId, courses.id))
+      .leftJoin(courseSchedules, eq(notificationSchedules.scheduleId, courseSchedules.id))
+      .where(and(
+        eq(notificationSchedules.triggerEvent, event),
+        eq(notificationSchedules.isActive, true)
+      ));
+
+    return schedules.map(schedule => ({
+      ...schedule.notification_schedules,
+      template: schedule.notification_templates!,
+      course: schedule.courses || undefined,
+      schedule: schedule.course_schedules || undefined,
+    }));
+  }
+
+  // Notification Log operations
+  async createNotificationLog(log: InsertNotificationLog): Promise<NotificationLog> {
+    const [newLog] = await db
+      .insert(notificationLogs)
+      .values(log)
+      .returning();
+    return newLog;
+  }
+
+  async updateNotificationLog(id: string, log: Partial<InsertNotificationLog>): Promise<NotificationLog> {
+    const [updatedLog] = await db
+      .update(notificationLogs)
+      .set(log)
+      .where(eq(notificationLogs.id, id))
+      .returning();
+    return updatedLog;
+  }
+
+  async getNotificationLog(id: string): Promise<NotificationLogWithDetails | undefined> {
+    const [log] = await db
+      .select()
+      .from(notificationLogs)
+      .leftJoin(notificationTemplates, eq(notificationLogs.templateId, notificationTemplates.id))
+      .leftJoin(notificationSchedules, eq(notificationLogs.scheduleId, notificationSchedules.id))
+      .leftJoin(users, eq(notificationLogs.recipientId, users.id))
+      .leftJoin(enrollments, eq(notificationLogs.enrollmentId, enrollments.id))
+      .leftJoin(courses, eq(notificationLogs.courseId, courses.id))
+      .where(eq(notificationLogs.id, id));
+
+    if (!log) return undefined;
+
+    return {
+      ...log.notification_logs,
+      template: log.notification_templates!,
+      schedule: log.notification_schedules || undefined,
+      recipient: log.users!,
+      enrollment: log.enrollments || undefined,
+      course: log.courses || undefined,
+    };
+  }
+
+  async getNotificationLogs(filters: {
+    recipientId?: string;
+    templateId?: string;
+    courseId?: string;
+    status?: string;
+    type?: string;
+    limit?: number;
+  }): Promise<NotificationLogWithDetails[]> {
+    let query = db
+      .select()
+      .from(notificationLogs)
+      .leftJoin(notificationTemplates, eq(notificationLogs.templateId, notificationTemplates.id))
+      .leftJoin(notificationSchedules, eq(notificationLogs.scheduleId, notificationSchedules.id))
+      .leftJoin(users, eq(notificationLogs.recipientId, users.id))
+      .leftJoin(enrollments, eq(notificationLogs.enrollmentId, enrollments.id))
+      .leftJoin(courses, eq(notificationLogs.courseId, courses.id));
+
+    const conditions = [];
+    if (filters.recipientId) conditions.push(eq(notificationLogs.recipientId, filters.recipientId));
+    if (filters.templateId) conditions.push(eq(notificationLogs.templateId, filters.templateId));
+    if (filters.courseId) conditions.push(eq(notificationLogs.courseId, filters.courseId));
+    if (filters.status) conditions.push(eq(notificationLogs.status, filters.status));
+    if (filters.type) conditions.push(eq(notificationLogs.type, filters.type));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const logs = await query
+      .orderBy(desc(notificationLogs.createdAt))
+      .limit(filters.limit || 100);
+
+    return logs.map(log => ({
+      ...log.notification_logs,
+      template: log.notification_templates!,
+      schedule: log.notification_schedules || undefined,
+      recipient: log.users!,
+      enrollment: log.enrollments || undefined,
+      course: log.courses || undefined,
+    }));
+  }
+
+  async getNotificationLogsByEnrollment(enrollmentId: string): Promise<NotificationLogWithDetails[]> {
+    const logs = await db
+      .select()
+      .from(notificationLogs)
+      .leftJoin(notificationTemplates, eq(notificationLogs.templateId, notificationTemplates.id))
+      .leftJoin(notificationSchedules, eq(notificationLogs.scheduleId, notificationSchedules.id))
+      .leftJoin(users, eq(notificationLogs.recipientId, users.id))
+      .leftJoin(enrollments, eq(notificationLogs.enrollmentId, enrollments.id))
+      .leftJoin(courses, eq(notificationLogs.courseId, courses.id))
+      .where(eq(notificationLogs.enrollmentId, enrollmentId))
+      .orderBy(desc(notificationLogs.createdAt));
+
+    return logs.map(log => ({
+      ...log.notification_logs,
+      template: log.notification_templates!,
+      schedule: log.notification_schedules || undefined,
+      recipient: log.users!,
+      enrollment: log.enrollments || undefined,
+      course: log.courses || undefined,
+    }));
   }
 
   // Payment balance calculation
