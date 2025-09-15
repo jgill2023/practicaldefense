@@ -177,6 +177,7 @@ export default function CourseFormsManagement() {
         description: `Waiver template has been ${editingWaiver ? "updated" : "created"} successfully.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/waiver-templates"] });
+      queryClient.refetchQueries({ queryKey: ["/api/waiver-templates"] });
       setShowCreateWaiverDialog(false);
       setEditingWaiver(null);
     },
@@ -200,6 +201,7 @@ export default function CourseFormsManagement() {
         description: "Waiver template has been deleted successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/waiver-templates"] });
+      queryClient.refetchQueries({ queryKey: ["/api/waiver-templates"] });
     },
     onError: (error) => {
       toast({
@@ -224,6 +226,7 @@ export default function CourseFormsManagement() {
         description: "Waiver template has been assigned to selected courses successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/waiver-templates"] });
+      queryClient.refetchQueries({ queryKey: ["/api/waiver-templates"] });
     },
     onError: (error) => {
       toast({
@@ -1076,7 +1079,7 @@ function CreateWaiverDialog({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} noValidate className="space-y-6">
       <div>
         <Label htmlFor="waiver-name">Waiver Template Name *</Label>
         <Input
