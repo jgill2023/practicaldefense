@@ -952,6 +952,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Course roster view route (for dialog display)
+  app.get('/api/instructor/roster', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
+        return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
+      }
+
+      const scheduleId = req.query.scheduleId as string | undefined;
+      
+      if (!scheduleId) {
+        return res.status(400).json({ message: "Schedule ID is required" });
+      }
+
+      const data = await storage.getRosterExportData(userId, scheduleId);
+
+      // Calculate summary statistics for the specific schedule
+      const summary = {
+        totalEnrolled: data.current.length,
+        paidStudents: data.current.filter(s => s.paymentStatus === 'paid').length,
+        pendingPayments: data.current.filter(s => s.paymentStatus === 'pending').length,
+        totalRevenue: data.current
+          .filter(s => s.paymentStatus === 'paid')
+          .reduce((sum, s) => {
+            // Extract revenue from the enrollment data - this may need adjustment based on your data structure
+            return sum + (s.coursePrice || 0);
+          }, 0),
+        courseTitle: data.current[0]?.courseTitle || 'Unknown Course',
+        scheduleDate: data.current[0]?.scheduleDate || 'Unknown Date',
+        scheduleTime: data.current[0] ? `${data.current[0].scheduleStartTime} - ${data.current[0].scheduleEndTime}` : 'Unknown Time',
+        location: data.current[0]?.location || 'Unknown Location'
+      };
+
+      res.json({
+        current: data.current,
+        former: data.former,
+        summary
+      });
+      
+    } catch (error: any) {
+      console.error("Error fetching roster data:", error);
+      res.status(500).json({ message: "Failed to fetch roster data" });
+    }
+  });
+
   // Instructor dashboard statistics
   app.get('/api/instructor/dashboard-stats', isAuthenticated, async (req: any, res) => {
     try {
