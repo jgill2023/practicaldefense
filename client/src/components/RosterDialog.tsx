@@ -395,38 +395,38 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
                             )}
                             {student.paymentStatus === 'partial' && student.remainingBalance && student.remainingBalance > 0 && (
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 ml-2"
+                                variant="outline"
+                                size="sm"
+                                className="ml-2 h-8 w-8 border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-100 hover:border-orange-300"
                                 onClick={() => handleReminderClick(student)}
                                 title="Send payment reminder"
                                 data-testid={`button-payment-reminder-${student.studentId}`}
                               >
-                                <MessageSquare className="text-orange-600" />
+                                <MessageSquare className="h-4 w-4" />
                               </Button>
                             )}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1">
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 border-green-200 bg-green-50 text-green-600 hover:bg-green-100 hover:border-green-300"
                                 onClick={() => alert('Certificate management coming soon')}
                                 title="Issue/View Certificate"
                                 data-testid={`button-certificate-${student.studentId}`}
                               >
-                                <Award className="text-green-600" />
+                                <Award className="h-4 w-4" />
                               </Button>
                               <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300"
                                 onClick={() => handleRescheduleClick(student)}
                                 title="Reschedule Student"
                                 data-testid={`button-reschedule-${student.studentId}`}
                               >
-                                <RotateCcw className="text-blue-600" />
+                                <RotateCcw className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
