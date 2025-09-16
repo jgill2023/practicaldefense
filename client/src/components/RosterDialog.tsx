@@ -207,11 +207,13 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
             </div>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
+              className="h-7 w-7"
               onClick={onClose}
+              aria-label="Close"
               data-testid="button-close-roster"
             >
-              <X className="h-4 w-4" />
+              <X />
             </Button>
           </div>
         </DialogHeader>
@@ -394,13 +396,13 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
                             {student.paymentStatus === 'partial' && student.remainingBalance && student.remainingBalance > 0 && (
                               <Button
                                 variant="ghost"
-                                size="sm"
-                                className="ml-2 p-1 h-auto text-orange-600 hover:text-orange-800"
+                                size="icon"
+                                className="h-7 w-7 ml-2"
                                 onClick={() => handleReminderClick(student)}
                                 title="Send payment reminder"
                                 data-testid={`button-payment-reminder-${student.studentId}`}
                               >
-                                <MessageSquare className="h-3 w-3" />
+                                <MessageSquare className="text-orange-600" />
                               </Button>
                             )}
                           </TableCell>
@@ -408,23 +410,23 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
                             <div className="flex gap-1">
                               <Button
                                 variant="ghost"
-                                size="sm"
-                                className="p-1 h-auto"
+                                size="icon"
+                                className="h-7 w-7"
                                 onClick={() => alert('Certificate management coming soon')}
                                 title="Issue/View Certificate"
                                 data-testid={`button-certificate-${student.studentId}`}
                               >
-                                <Award className="h-4 w-4 text-green-600" />
+                                <Award className="text-green-600" />
                               </Button>
                               <Button
                                 variant="ghost"
-                                size="sm"
-                                className="p-1 h-auto"
+                                size="icon"
+                                className="h-7 w-7"
                                 onClick={() => handleRescheduleClick(student)}
                                 title="Reschedule Student"
                                 data-testid={`button-reschedule-${student.studentId}`}
                               >
-                                <RotateCcw className="h-4 w-4 text-blue-600" />
+                                <RotateCcw className="text-blue-600" />
                               </Button>
                             </div>
                           </TableCell>
