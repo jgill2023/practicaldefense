@@ -2860,6 +2860,349 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==========================================
+  // ROSTER NOTIFICATION & MANAGEMENT ENDPOINTS
+  // ==========================================
+
+  // Simple SMS notification for roster
+  app.post("/api/notifications/sms", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to send SMS notifications
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const { to, message, purpose = 'educational' } = req.body;
+
+      if (!to || !Array.isArray(to) || to.length === 0) {
+        return res.status(400).json({ error: "At least one phone number is required" });
+      }
+
+      if (!message || !message.trim()) {
+        return res.status(400).json({ error: "Message content is required" });
+      }
+
+      // Import SMS service
+      const { NotificationSmsService } = await import('./smsService');
+      
+      const result = await NotificationSmsService.sendNotificationSms({
+        to,
+        message: message.trim(),
+        instructorId: userId,
+        purpose,
+      });
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error sending SMS notification:", error);
+      res.status(500).json({ error: "Failed to send SMS notification" });
+    }
+  });
+
+  // Simple email notification for roster
+  app.post("/api/notifications/email", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to send email notifications
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const { to, subject, content, isHtml = false } = req.body;
+
+      if (!to || !Array.isArray(to) || to.length === 0) {
+        return res.status(400).json({ error: "At least one email address is required" });
+      }
+
+      if (!subject || !subject.trim()) {
+        return res.status(400).json({ error: "Email subject is required" });
+      }
+
+      if (!content || !content.trim()) {
+        return res.status(400).json({ error: "Email content is required" });
+      }
+
+      // Import email service
+      const { NotificationEmailService } = await import('./emailService');
+      
+      const result = await NotificationEmailService.sendNotificationEmail({
+        to,
+        subject: subject.trim(),
+        htmlContent: isHtml ? content.trim() : `<pre>${content.trim()}</pre>`,
+        textContent: isHtml ? undefined : content.trim(),
+        fromName: `${user.firstName} ${user.lastName} - ProTrain Academy`,
+      });
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error sending email notification:", error);
+      res.status(500).json({ error: "Failed to send email notification" });
+    }
+  });
+
+  // Payment reminder notification
+  app.post("/api/notifications/payment-reminder", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to send payment reminders
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const { method, subject, message, recipients, studentName, courseName, remainingBalance, scheduleDate } = req.body;
+
+      if (!method || !['email', 'sms', 'both'].includes(method)) {
+        return res.status(400).json({ error: "Valid method (email, sms, both) is required" });
+      }
+
+      if (!subject || !subject.trim()) {
+        return res.status(400).json({ error: "Subject is required" });
+      }
+
+      if (!message || !message.trim()) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      if (!recipients || (!recipients.email && !recipients.phone)) {
+        return res.status(400).json({ error: "At least one recipient contact method is required" });
+      }
+
+      const results: any = { success: true, results: [] };
+
+      // Send email if requested
+      if ((method === 'email' || method === 'both') && recipients.email) {
+        const { NotificationEmailService } = await import('./emailService');
+        
+        const emailResult = await NotificationEmailService.sendNotificationEmail({
+          to: [recipients.email],
+          subject: subject.trim(),
+          htmlContent: `<div style="font-family: Arial, sans-serif;">${message.trim().replace(/\n/g, '<br>')}</div>`,
+          textContent: message.trim(),
+          fromName: `${user.firstName} ${user.lastName} - ProTrain Academy`,
+        });
+
+        results.results.push({ method: 'email', ...emailResult });
+      }
+
+      // Send SMS if requested
+      if ((method === 'sms' || method === 'both') && recipients.phone) {
+        const { NotificationSmsService } = await import('./smsService');
+        
+        const smsResult = await NotificationSmsService.sendNotificationSms({
+          to: [recipients.phone],
+          message: message.trim(),
+          instructorId: userId,
+          purpose: 'administrative',
+        });
+
+        results.results.push({ method: 'sms', ...smsResult });
+      }
+
+      // Check if any method succeeded
+      const hasSuccess = results.results.some((r: any) => r.success);
+      if (!hasSuccess) {
+        results.success = false;
+        results.error = "All notification methods failed";
+      }
+
+      res.json(results);
+    } catch (error: any) {
+      console.error("Error sending payment reminder:", error);
+      res.status(500).json({ error: "Failed to send payment reminder" });
+    }
+  });
+
+  // Get detailed payment information for enrollment
+  app.get("/api/instructor/payment-details/:enrollmentId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { enrollmentId } = req.params;
+      
+      // Only allow instructors to view payment details
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      // Get enrollment and verify instructor has access
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ error: "Enrollment not found" });
+      }
+
+      // Get course schedule and course to verify instructor ownership
+      const schedule = await storage.getCourseSchedule(enrollment.scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ error: "Course schedule not found" });
+      }
+
+      const course = await storage.getCourse(schedule.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: You can only view payment details for your own courses" });
+      }
+
+      // Get payment balance info
+      const paymentBalance = await storage.getPaymentBalance(enrollmentId);
+      
+      const paymentDetails = {
+        enrollmentId: enrollment.id,
+        paymentStatus: enrollment.paymentStatus,
+        totalAmount: parseFloat(course.price),
+        amountPaid: paymentBalance.amountPaid || 0,
+        remainingBalance: paymentBalance.remainingBalance || 0,
+        paymentDate: enrollment.paymentDate,
+        courseName: course.title,
+        scheduleDate: schedule.startDate,
+        paymentHistory: paymentBalance.paymentHistory || [],
+      };
+
+      res.json(paymentDetails);
+    } catch (error: any) {
+      console.error("Error fetching payment details:", error);
+      res.status(500).json({ error: "Failed to fetch payment details" });
+    }
+  });
+
+  // Get available schedules for rescheduling
+  app.get("/api/instructor/available-schedules", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to view available schedules
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const { excludeEnrollmentId } = req.query;
+
+      // Get all course schedules for this instructor's courses that are in the future
+      const schedules = await storage.getInstructorAvailableSchedules(userId, excludeEnrollmentId as string);
+
+      res.json(schedules);
+    } catch (error: any) {
+      console.error("Error fetching available schedules:", error);
+      res.status(500).json({ error: "Failed to fetch available schedules" });
+    }
+  });
+
+  // Reschedule student to new schedule
+  app.patch("/api/instructor/enrollments/:enrollmentId/reschedule", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { enrollmentId } = req.params;
+      const { newScheduleId, notes } = req.body;
+      
+      // Only allow instructors to reschedule students
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      if (!newScheduleId) {
+        return res.status(400).json({ error: "New schedule ID is required" });
+      }
+
+      // Get enrollment and verify instructor has access
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ error: "Enrollment not found" });
+      }
+
+      // Verify instructor owns both current and new course schedules
+      const currentSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
+      const newSchedule = await storage.getCourseSchedule(newScheduleId);
+      
+      if (!currentSchedule || !newSchedule) {
+        return res.status(404).json({ error: "Course schedule not found" });
+      }
+
+      const currentCourse = await storage.getCourse(currentSchedule.courseId);
+      const newCourse = await storage.getCourse(newSchedule.courseId);
+
+      if (!currentCourse || !newCourse) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      if (currentCourse.instructorId !== userId || newCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: You can only reschedule students between your own courses" });
+      }
+
+      // Check if new schedule has available spots
+      const enrollmentCount = await storage.getScheduleEnrollmentCount(newScheduleId);
+      if (enrollmentCount >= newSchedule.maxSpots) {
+        return res.status(400).json({ error: "New schedule is full" });
+      }
+
+      // Update enrollment with new schedule
+      const updatedEnrollment = await storage.updateEnrollment(enrollmentId, {
+        scheduleId: newScheduleId,
+        courseId: newSchedule.courseId,
+        notes: notes || `Rescheduled from ${currentSchedule.startDate} to ${newSchedule.startDate}`,
+      });
+
+      res.json({ success: true, enrollment: updatedEnrollment });
+    } catch (error: any) {
+      console.error("Error rescheduling student:", error);
+      res.status(500).json({ error: "Failed to reschedule student" });
+    }
+  });
+
+  // Place student on hold (remove from schedule)
+  app.patch("/api/instructor/enrollments/:enrollmentId/hold", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { enrollmentId } = req.params;
+      const { notes } = req.body;
+      
+      // Only allow instructors to place students on hold
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      if (!notes || !notes.trim()) {
+        return res.status(400).json({ error: "Notes are required when placing a student on hold" });
+      }
+
+      // Get enrollment and verify instructor has access
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ error: "Enrollment not found" });
+      }
+
+      // Verify instructor owns the course
+      const schedule = await storage.getCourseSchedule(enrollment.scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ error: "Course schedule not found" });
+      }
+
+      const course = await storage.getCourse(schedule.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: You can only place students from your own courses on hold" });
+      }
+
+      // Update enrollment status to hold and clear schedule
+      const updatedEnrollment = await storage.updateEnrollment(enrollmentId, {
+        enrollmentStatus: 'hold',
+        notes: notes.trim(),
+        // Note: We keep the scheduleId but change status to indicate hold
+      });
+
+      res.json({ success: true, enrollment: updatedEnrollment });
+    } catch (error: any) {
+      console.error("Error placing student on hold:", error);
+      res.status(500).json({ error: "Failed to place student on hold" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -5,13 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Phone, Mail, Calendar, DollarSign, X, FileText, AlertCircle } from "lucide-react";
+import { Users, Phone, Mail, Calendar, DollarSign, X, FileText, AlertCircle, Award, RotateCcw, MessageSquare } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
+import { SmsNotificationModal } from "./SmsNotificationModal";
+import { EmailNotificationModal } from "./EmailNotificationModal";
+import { PaymentDetailsModal } from "./PaymentDetailsModal";
+import { PaymentReminderModal } from "./PaymentReminderModal";
+import { RescheduleModal } from "./RescheduleModal";
 
 interface RosterData {
   current: Array<{
     studentId: string;
+    enrollmentId: string;
     firstName: string;
     lastName: string;
     email: string;
@@ -28,6 +34,8 @@ interface RosterData {
     category: string;
     registrationDate: string;
     location: string;
+    remainingBalance?: number;
+    certificateIssued?: boolean;
   }>;
   former: Array<any>;
   summary: {
@@ -49,6 +57,13 @@ interface RosterDialogProps {
 }
 
 export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps) {
+  // Modal states
+  const [smsModal, setSmsModal] = useState<{ isOpen: boolean; studentName: string; phoneNumber: string }>({ isOpen: false, studentName: "", phoneNumber: "" });
+  const [emailModal, setEmailModal] = useState<{ isOpen: boolean; studentName: string; emailAddress: string }>({ isOpen: false, studentName: "", emailAddress: "" });
+  const [paymentModal, setPaymentModal] = useState<{ isOpen: boolean; studentId: string; studentName: string; enrollmentId: string }>({ isOpen: false, studentId: "", studentName: "", enrollmentId: "" });
+  const [reminderModal, setReminderModal] = useState<{ isOpen: boolean; studentName: string; studentEmail: string; studentPhone?: string; remainingBalance: number; courseName: string; scheduleDate: string }>({ isOpen: false, studentName: "", studentEmail: "", remainingBalance: 0, courseName: "", scheduleDate: "" });
+  const [rescheduleModal, setRescheduleModal] = useState<{ isOpen: boolean; studentId: string; studentName: string; enrollmentId: string; currentCourse: string; currentScheduleDate: string }>({ isOpen: false, studentId: "", studentName: "", enrollmentId: "", currentCourse: "", currentScheduleDate: "" });
+
   const { data: rosterData, isLoading, error } = useQuery<RosterData>({
     queryKey: ["/api/instructor/roster", scheduleId],
     queryFn: async () => {
@@ -59,17 +74,96 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
     enabled: !!scheduleId && isOpen,
   });
 
-  const getPaymentStatusBadge = (status: string) => {
+  const getPaymentStatusBadge = (status: string, remainingBalance?: number, onClick?: () => void) => {
+    const className = onClick ? "cursor-pointer hover:opacity-80" : "";
+    
     switch (status) {
       case 'paid':
-        return <Badge variant="default" className="bg-green-500 hover:bg-green-600">Paid</Badge>;
+        return (
+          <Badge 
+            variant="default" 
+            className={`bg-green-500 hover:bg-green-600 ${className}`}
+            onClick={onClick}
+          >
+            Paid
+          </Badge>
+        );
+      case 'partial':
+        return (
+          <Badge 
+            variant="secondary" 
+            className={`bg-yellow-500 hover:bg-yellow-600 text-white ${className}`}
+            onClick={onClick}
+          >
+            Partial (${remainingBalance ? `$${remainingBalance} due` : 'balance due'})
+          </Badge>
+        );
       case 'pending':
-        return <Badge variant="secondary" className="bg-yellow-500 hover:bg-yellow-600 text-white">Pending</Badge>;
+        return (
+          <Badge 
+            variant="secondary" 
+            className={`bg-orange-500 hover:bg-orange-600 text-white ${className}`}
+            onClick={onClick}
+          >
+            Pending
+          </Badge>
+        );
       case 'failed':
-        return <Badge variant="destructive">Failed</Badge>;
+        return (
+          <Badge 
+            variant="destructive" 
+            className={className}
+            onClick={onClick}
+          >
+            Failed
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return (
+          <Badge 
+            variant="outline" 
+            className={className}
+            onClick={onClick}
+          >
+            {status}
+          </Badge>
+        );
     }
+  };
+
+  const handleSmsClick = (studentName: string, phoneNumber: string) => {
+    setSmsModal({ isOpen: true, studentName, phoneNumber });
+  };
+
+  const handleEmailClick = (studentName: string, emailAddress: string) => {
+    setEmailModal({ isOpen: true, studentName, emailAddress });
+  };
+
+  const handlePaymentClick = (studentId: string, studentName: string, enrollmentId: string) => {
+    setPaymentModal({ isOpen: true, studentId, studentName, enrollmentId });
+  };
+
+  const handleReminderClick = (student: any) => {
+    setReminderModal({
+      isOpen: true,
+      studentName: `${student.firstName} ${student.lastName}`,
+      studentEmail: student.email,
+      studentPhone: student.phone,
+      remainingBalance: student.remainingBalance || 0,
+      courseName: student.courseTitle,
+      scheduleDate: formatDate(student.scheduleDate)
+    });
+  };
+
+  const handleRescheduleClick = (student: any) => {
+    setRescheduleModal({
+      isOpen: true,
+      studentId: student.studentId,
+      studentName: `${student.firstName} ${student.lastName}`,
+      enrollmentId: student.enrollmentId,
+      currentCourse: student.courseTitle,
+      currentScheduleDate: student.scheduleDate
+    });
   };
 
   const getEnrollmentStatusBadge = (status: string) => {
@@ -238,50 +332,49 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Contact</TableHead>
+                        <TableHead>Student Name</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Email</TableHead>
                         <TableHead>License Exp.</TableHead>
                         <TableHead>Payment Status</TableHead>
-                        <TableHead>Enrollment Status</TableHead>
-                        <TableHead>Registered</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {rosterData.current.map((student, index) => (
                         <TableRow key={`${student.studentId}-${index}`} data-testid={`row-student-${student.studentId}`}>
                           <TableCell>
-                            <div>
-                              <p className="font-medium" data-testid={`text-student-name-${student.studentId}`}>
-                                {student.firstName} {student.lastName}
-                              </p>
-                              <p className="text-sm text-muted-foreground" data-testid={`text-student-email-${student.studentId}`}>
-                                {student.email}
-                              </p>
-                            </div>
+                            <p className="font-medium" data-testid={`text-student-name-${student.studentId}`}>
+                              {student.firstName} {student.lastName}
+                            </p>
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
-                              {student.phone && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => window.open(`tel:${student.phone}`, '_self')}
-                                  title={`Call ${student.phone}`}
-                                  data-testid={`button-call-${student.studentId}`}
-                                >
-                                  <Phone className="h-4 w-4" />
-                                </Button>
-                              )}
+                            {student.phone ? (
                               <Button
-                                variant="ghost"
+                                variant="link"
                                 size="sm"
-                                onClick={() => window.open(`mailto:${student.email}?subject=Course%20Information`, '_blank')}
-                                title={`Email ${student.email}`}
-                                data-testid={`button-email-${student.studentId}`}
+                                className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800"
+                                onClick={() => handleSmsClick(`${student.firstName} ${student.lastName}`, student.phone!)}
+                                title={`Send SMS to ${student.phone}`}
+                                data-testid={`link-phone-${student.studentId}`}
                               >
-                                <Mail className="h-4 w-4" />
+                                {student.phone}
                               </Button>
-                            </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">Not provided</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="p-0 h-auto font-normal text-blue-600 hover:text-blue-800"
+                              onClick={() => handleEmailClick(`${student.firstName} ${student.lastName}`, student.email)}
+                              title={`Send email to ${student.email}`}
+                              data-testid={`link-email-${student.studentId}`}
+                            >
+                              {student.email}
+                            </Button>
                           </TableCell>
                           <TableCell>
                             {student.licenseExpiration ? (
@@ -293,15 +386,47 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
                             )}
                           </TableCell>
                           <TableCell data-testid={`badge-payment-${student.studentId}`}>
-                            {getPaymentStatusBadge(student.paymentStatus)}
-                          </TableCell>
-                          <TableCell data-testid={`badge-enrollment-${student.studentId}`}>
-                            {getEnrollmentStatusBadge(student.enrollmentStatus)}
+                            {getPaymentStatusBadge(
+                              student.paymentStatus, 
+                              student.remainingBalance,
+                              () => handlePaymentClick(student.studentId, `${student.firstName} ${student.lastName}`, student.enrollmentId)
+                            )}
+                            {student.paymentStatus === 'partial' && student.remainingBalance && student.remainingBalance > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="ml-2 p-1 h-auto text-orange-600 hover:text-orange-800"
+                                onClick={() => handleReminderClick(student)}
+                                title="Send payment reminder"
+                                data-testid={`button-payment-reminder-${student.studentId}`}
+                              >
+                                <MessageSquare className="h-3 w-3" />
+                              </Button>
+                            )}
                           </TableCell>
                           <TableCell>
-                            <span className="text-sm" data-testid={`text-registration-date-${student.studentId}`}>
-                              {formatDate(student.registrationDate)}
-                            </span>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-1 h-auto"
+                                onClick={() => alert('Certificate management coming soon')}
+                                title="Issue/View Certificate"
+                                data-testid={`button-certificate-${student.studentId}`}
+                              >
+                                <Award className="h-4 w-4 text-green-600" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-1 h-auto"
+                                onClick={() => handleRescheduleClick(student)}
+                                title="Reschedule Student"
+                                data-testid={`button-reschedule-${student.studentId}`}
+                              >
+                                <RotateCcw className="h-4 w-4 text-blue-600" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -312,6 +437,50 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
             </Card>
           </div>
         )}
+
+        {/* All Modals */}
+        <SmsNotificationModal
+          isOpen={smsModal.isOpen}
+          onClose={() => setSmsModal({ ...smsModal, isOpen: false })}
+          studentName={smsModal.studentName}
+          phoneNumber={smsModal.phoneNumber}
+        />
+
+        <EmailNotificationModal
+          isOpen={emailModal.isOpen}
+          onClose={() => setEmailModal({ ...emailModal, isOpen: false })}
+          studentName={emailModal.studentName}
+          emailAddress={emailModal.emailAddress}
+        />
+
+        <PaymentDetailsModal
+          isOpen={paymentModal.isOpen}
+          onClose={() => setPaymentModal({ ...paymentModal, isOpen: false })}
+          studentId={paymentModal.studentId}
+          studentName={paymentModal.studentName}
+          enrollmentId={paymentModal.enrollmentId}
+        />
+
+        <PaymentReminderModal
+          isOpen={reminderModal.isOpen}
+          onClose={() => setReminderModal({ ...reminderModal, isOpen: false })}
+          studentName={reminderModal.studentName}
+          studentEmail={reminderModal.studentEmail}
+          studentPhone={reminderModal.studentPhone}
+          remainingBalance={reminderModal.remainingBalance}
+          courseName={reminderModal.courseName}
+          scheduleDate={reminderModal.scheduleDate}
+        />
+
+        <RescheduleModal
+          isOpen={rescheduleModal.isOpen}
+          onClose={() => setRescheduleModal({ ...rescheduleModal, isOpen: false })}
+          studentId={rescheduleModal.studentId}
+          studentName={rescheduleModal.studentName}
+          enrollmentId={rescheduleModal.enrollmentId}
+          currentCourse={rescheduleModal.currentCourse}
+          currentScheduleDate={rescheduleModal.currentScheduleDate}
+        />
       </DialogContent>
     </Dialog>
   );
