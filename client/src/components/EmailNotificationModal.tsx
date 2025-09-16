@@ -188,20 +188,39 @@ export function EmailNotificationModal({
                 value={message}
                 onChange={setMessage}
                 placeholder="Enter your message..."
-                style={{ height: '200px' }}
+                style={{ height: '300px' }}
                 modules={{
                   toolbar: [
-                    [{ 'header': [1, 2, 3, false] }],
+                    [{ 'font': [] }],
+                    [{ 'size': ['small', false, 'large', 'huge'] }],
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
                     ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                     [{ 'color': [] }, { 'background': [] }],
-                    ['link'],
+                    [{ 'script': 'sub'}, { 'script': 'super' }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }, { 'list': 'check' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'direction': 'rtl' }],
+                    [{ 'align': [] }],
+                    ['link', 'image', 'video'],
+                    ['blockquote', 'code-block'],
                     ['clean']
-                  ]
+                  ],
+                  clipboard: {
+                    // toggle to add extra line breaks when pasting HTML:
+                    matchVisual: false,
+                  }
                 }}
+                formats={[
+                  'header', 'font', 'size',
+                  'bold', 'italic', 'underline', 'strike', 'blockquote',
+                  'list', 'bullet', 'indent',
+                  'link', 'image', 'video',
+                  'align', 'color', 'background',
+                  'script', 'code-block', 'direction'
+                ]}
               />
             </div>
-            <div className="h-12" /> {/* Spacer for Quill toolbar */}
+            <div className="h-16" /> {/* Increased spacer for larger Quill toolbar */}
           </div>
 
           {/* Action Buttons */}
