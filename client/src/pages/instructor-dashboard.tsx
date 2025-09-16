@@ -449,7 +449,7 @@ export default function InstructorDashboard() {
   };
 
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || (user as User)?.role !== 'instructor')) {
+    if (!isLoading && isAuthenticated && user && (user as User)?.role !== 'instructor') {
       toast({
         title: "Unauthorized",
         description: "You need instructor access to view this page. Redirecting...",
