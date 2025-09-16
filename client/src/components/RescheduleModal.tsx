@@ -88,10 +88,10 @@ export function RescheduleModal({
             : `${studentName} has been placed on the hold list`,
         });
         
-        // Invalidate relevant queries - include scheduleId to match RosterDialog query key
-        queryClient.invalidateQueries({ queryKey: ["/api/instructor/roster", currentScheduleId] });
-        // Also invalidate all roster queries as fallback
-        queryClient.invalidateQueries({ queryKey: ["/api/instructor/roster"] });
+        // Invalidate all roster queries to ensure fresh data
+        queryClient.invalidateQueries({ 
+          predicate: (query) => query.queryKey[0] === "/api/instructor/roster"
+        });
         queryClient.invalidateQueries({ queryKey: ["/api/instructor/enrollments"] });
         queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
         queryClient.invalidateQueries({ queryKey: ["/api/students"] });
