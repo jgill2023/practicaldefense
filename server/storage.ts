@@ -316,6 +316,9 @@ export interface IStorage {
     topViolations: Array<{ word: string; count: number; category: string }>;
     instructorStats: Array<{ instructorId: string; attempts: number; blocked: number }>;
   }>;
+  
+  // Roster and scheduling operations
+  getInstructorAvailableSchedules(instructorId: string, excludeEnrollmentId?: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1152,6 +1155,74 @@ export class DatabaseStorage implements IStorage {
         exportDate: new Date().toISOString()
       }
     };
+  }
+
+  async getInstructorAvailableSchedules(instructorId: string, excludeEnrollmentId?: string): Promise<any[]> {
+    const now = new Date();
+    
+    // Get the schedule ID to exclude if we have an enrollmentId
+    let excludeScheduleId: string | undefined;
+    if (excludeEnrollmentId) {
+      const [enrollment] = await db
+        .select({ scheduleId: enrollments.scheduleId })
+        .from(enrollments)
+        .where(eq(enrollments.id, excludeEnrollmentId));
+      excludeScheduleId = enrollment?.scheduleId;
+    }
+
+    // Get all active course schedules for this instructor's courses that are in the future
+    const availableSchedules = await db
+      .select({
+        id: courseSchedules.id,
+        courseId: courseSchedules.courseId,
+        courseTitle: courses.title,
+        startDate: courseSchedules.startDate,
+        endDate: courseSchedules.endDate,
+        startTime: courseSchedules.startTime,
+        endTime: courseSchedules.endTime,
+        location: courseSchedules.location,
+        maxSpots: courseSchedules.maxSpots,
+        enrolledCount: sql<number>`COALESCE(COUNT(${enrollments.id}), 0)`
+      })
+      .from(courseSchedules)
+      .leftJoin(courses, eq(courseSchedules.courseId, courses.id))
+      .leftJoin(enrollments, and(
+        eq(enrollments.scheduleId, courseSchedules.id),
+        eq(enrollments.status, 'confirmed')
+      ))
+      .where(and(
+        eq(courses.instructorId, instructorId),
+        eq(courses.isDeleted, false),
+        eq(courseSchedules.isDeleted, false),
+        gte(courseSchedules.startDate, now.toISOString().split('T')[0]), // Future dates only
+        excludeScheduleId ? ne(courseSchedules.id, excludeScheduleId) : undefined
+      ))
+      .groupBy(
+        courseSchedules.id,
+        courseSchedules.courseId,
+        courses.title,
+        courseSchedules.startDate,
+        courseSchedules.endDate,
+        courseSchedules.startTime,
+        courseSchedules.endTime,
+        courseSchedules.location,
+        courseSchedules.maxSpots
+      )
+      .orderBy(courseSchedules.startDate, courseSchedules.startTime);
+
+    // Calculate available spots and format response
+    return availableSchedules.map(schedule => ({
+      id: schedule.id,
+      courseId: schedule.courseId,
+      courseTitle: schedule.courseTitle,
+      startDate: schedule.startDate,
+      endDate: schedule.endDate,
+      startTime: schedule.startTime,
+      endTime: schedule.endTime,
+      location: schedule.location,
+      maxSpots: schedule.maxSpots,
+      availableSpots: Math.max(0, schedule.maxSpots - schedule.enrolledCount)
+    }));
   }
 
   // Draft enrollment operations for single-page registration
