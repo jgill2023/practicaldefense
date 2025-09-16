@@ -48,6 +48,7 @@ interface Student {
 interface StudentsData {
   current: Student[];
   former: Student[];
+  held: Student[];
 }
 
 interface CourseSchedule {
@@ -450,12 +451,20 @@ function StudentsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="current" data-testid="tab-current-students">
             Current Students
             {studentsData?.current && studentsData.current.length > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {studentsData.current.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="held" data-testid="tab-held-students">
+            Held Students
+            {studentsData?.held && studentsData.held.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {studentsData.held.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -471,6 +480,10 @@ function StudentsPage() {
 
         <TabsContent value="current" className="space-y-4" data-testid="content-current-students">
           {renderStudentsTable(studentsData?.current || [], "current")}
+        </TabsContent>
+
+        <TabsContent value="held" className="space-y-4" data-testid="content-held-students">
+          {renderStudentsTable(studentsData?.held || [], "held")}
         </TabsContent>
 
         <TabsContent value="former" className="space-y-4" data-testid="content-former-students">

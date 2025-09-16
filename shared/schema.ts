@@ -147,7 +147,7 @@ export const enrollments = pgTable("enrollments", {
   studentId: varchar("student_id").references(() => users.id), // Nullable for draft enrollments
   courseId: uuid("course_id").notNull().references(() => courses.id),
   scheduleId: uuid("schedule_id").notNull().references(() => courseSchedules.id),
-  status: varchar("status").notNull().default('initiated'), // 'initiated', 'pending', 'confirmed', 'completed', 'cancelled'
+  status: varchar("status").notNull().default('initiated'), // 'initiated', 'pending', 'confirmed', 'completed', 'cancelled', 'hold'
   paymentStatus: varchar("payment_status").notNull().default('pending'), // 'pending', 'paid', 'failed'
   paymentOption: varchar("payment_option").notNull().default('full'), // 'full' or 'deposit'
   paymentIntentId: varchar("payment_intent_id"),

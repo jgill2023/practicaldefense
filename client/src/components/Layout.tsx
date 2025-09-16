@@ -63,6 +63,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             Dashboard
                           </Button>
                         </Link>
+                        <Link href="/students">
+                          <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-students">
+                            Students
+                          </Button>
+                        </Link>
                         <Link href="/student-portal">
                           <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-dashboard">
                             Student Dashboard
@@ -129,6 +134,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           <Link href="/instructor-dashboard" className="block">
                             <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard-mobile">
                               Dashboard
+                            </Button>
+                          </Link>
+                          <Link href="/students" className="block">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-students-mobile">
+                              Students
                             </Button>
                           </Link>
                           <Link href="/student-portal" className="block">

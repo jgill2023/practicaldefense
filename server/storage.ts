@@ -68,7 +68,7 @@ import {
   type WaiverInstanceWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, isNull, isNotNull, sql } from "drizzle-orm";
+import { eq, and, or, desc, asc, isNull, isNotNull, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -119,6 +119,7 @@ export interface IStorage {
   getStudentsByInstructor(instructorId: string): Promise<{
     current: any[];
     former: any[];
+    held: any[];
   }>;
   getStudentsBySchedule(scheduleId: string, instructorId: string): Promise<{
     current: any[];
@@ -888,8 +889,9 @@ export class DatabaseStorage implements IStorage {
   async getStudentsByInstructor(instructorId: string): Promise<{
     current: any[];
     former: any[];
+    held: any[];
   }> {
-    // Get all completed enrollments for instructor's courses (confirmed enrollments with paid status only)
+    // Get all enrollments for instructor's courses (confirmed enrollments with paid status, plus held students)
     const enrollmentList = await db.query.enrollments.findMany({
       with: {
         course: true,
@@ -897,8 +899,10 @@ export class DatabaseStorage implements IStorage {
         student: true,
       },
       where: and(
-        eq(enrollments.status, 'confirmed'),
-        eq(enrollments.paymentStatus, 'paid')
+        or(
+          and(eq(enrollments.status, 'confirmed'), eq(enrollments.paymentStatus, 'paid')),
+          eq(enrollments.status, 'hold')
+        )
       ),
       orderBy: desc(enrollments.createdAt),
     });
@@ -917,9 +921,10 @@ export class DatabaseStorage implements IStorage {
 
     const now = new Date();
 
-    // Separate enrollments by course timing
+    // Separate enrollments by course timing and status
     const currentEnrollments: any[] = []; // Students enrolled in upcoming courses
     const formerEnrollments: any[] = [];  // Students who have taken past courses
+    const heldEnrollments: any[] = [];    // Students on hold
 
     for (const enrollment of instructorEnrollments) {
       const scheduleEndDate = new Date(enrollment.schedule.endDate);
@@ -934,8 +939,14 @@ export class DatabaseStorage implements IStorage {
         paymentStatus: enrollment.paymentStatus,
       };
 
-      // Categorize: current = upcoming courses, former = completed courses
-      if (scheduleEndDate < now) {
+      // Categorize: held = on hold status, current = upcoming courses, former = completed courses
+      if (enrollment.status === 'hold') {
+        // Held: student is on hold
+        heldEnrollments.push({
+          ...enrollment,
+          enrollmentData,
+        });
+      } else if (scheduleEndDate < now) {
         // Former: course has ended
         formerEnrollments.push({
           ...enrollment,
@@ -1036,6 +1047,7 @@ export class DatabaseStorage implements IStorage {
     return {
       current: processEnrollments(currentEnrollments, true),
       former: processEnrollments(formerEnrollments, false),
+      held: processEnrollments(heldEnrollments, false),
     };
   }
 
@@ -1160,17 +1172,32 @@ export class DatabaseStorage implements IStorage {
   async getInstructorAvailableSchedules(instructorId: string, excludeEnrollmentId?: string): Promise<any[]> {
     const now = new Date();
     
-    // Get the schedule ID to exclude if we have an enrollmentId
+    // Get the schedule ID and current course category to exclude if we have an enrollmentId
     let excludeScheduleId: string | undefined;
+    let currentCourseCategory: string | undefined;
+    
     if (excludeEnrollmentId) {
-      const [enrollment] = await db
-        .select({ scheduleId: enrollments.scheduleId })
+      // Get enrollment with course details to determine category
+      const [enrollmentWithCourse] = await db
+        .select({ 
+          scheduleId: enrollments.scheduleId,
+          courseId: enrollments.courseId,
+          categoryId: courses.categoryId,
+          category: courses.category
+        })
         .from(enrollments)
+        .leftJoin(courses, eq(enrollments.courseId, courses.id))
         .where(eq(enrollments.id, excludeEnrollmentId));
-      excludeScheduleId = enrollment?.scheduleId;
+      
+      if (enrollmentWithCourse) {
+        excludeScheduleId = enrollmentWithCourse.scheduleId;
+        // Use categoryId if available, otherwise fall back to category string
+        currentCourseCategory = enrollmentWithCourse.categoryId || enrollmentWithCourse.category;
+      }
     }
 
     // Get all active course schedules for this instructor's courses that are in the future
+    // and of the same category if we're filtering by category
     const availableSchedules = await db
       .select({
         id: courseSchedules.id,
@@ -1195,7 +1222,13 @@ export class DatabaseStorage implements IStorage {
         eq(courses.isDeleted, false),
         eq(courseSchedules.isDeleted, false),
         gte(courseSchedules.startDate, now.toISOString().split('T')[0]), // Future dates only
-        excludeScheduleId ? ne(courseSchedules.id, excludeScheduleId) : undefined
+        excludeScheduleId ? ne(courseSchedules.id, excludeScheduleId) : undefined,
+        // Filter by same category if we have one
+        currentCourseCategory ? 
+          (currentCourseCategory.length === 36 ? // UUID format check
+            eq(courses.categoryId, currentCourseCategory) :
+            eq(courses.category, currentCourseCategory)
+          ) : undefined
       ))
       .groupBy(
         courseSchedules.id,

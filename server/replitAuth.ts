@@ -76,14 +76,34 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  await storage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
-    role: 'student',
-  });
+  // Validate role against allowlist - only allow student or instructor
+  const validRoles = ['student', 'instructor'] as const;
+  const claimRole = claims["role"];
+  const role = validRoles.includes(claimRole) ? claimRole : 'student';
+
+  // Check if user already exists
+  const existingUser = await storage.getUser(claims["sub"]);
+  
+  if (existingUser) {
+    // For existing users, only update profile info, NOT role
+    // This prevents privilege escalation on subsequent logins
+    await storage.updateUser(claims["sub"], {
+      email: claims["email"],
+      firstName: claims["first_name"],
+      lastName: claims["last_name"],
+      profileImageUrl: claims["profile_image_url"],
+    });
+  } else {
+    // For new users, set the validated role
+    await storage.upsertUser({
+      id: claims["sub"],
+      email: claims["email"],
+      firstName: claims["first_name"],
+      lastName: claims["last_name"],
+      profileImageUrl: claims["profile_image_url"],
+      role: role,
+    });
+  }
 }
 
 export async function setupAuth(app: Express) {
