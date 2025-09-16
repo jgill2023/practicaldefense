@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Mail, Send, Info, X } from "lucide-react";
+import { Mail, Send, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 interface EmailNotificationModalProps {
   isOpen: boolean;
@@ -26,8 +26,27 @@ export function EmailNotificationModal({
 }: EmailNotificationModalProps) {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const [isHtml, setIsHtml] = useState(false);
+  const [isHtml, setIsHtml] = useState(true);
+  const quillRef = useRef<ReactQuill>(null);
   const { toast } = useToast();
+
+  // Available variables for email templates
+  const variables = [
+    { key: "student.firstName", label: "Student First Name", value: studentName.split(' ')[0] || studentName },
+    { key: "student.lastName", label: "Student Last Name", value: studentName.split(' ').slice(1).join(' ') || "" },
+    { key: "course.name", label: "Course Name", value: "Course Name" },
+    { key: "schedule.startDate", label: "Schedule Date", value: "Schedule Date" }
+  ];
+
+  // Function to insert variable into editor
+  const insertVariable = (variable: string) => {
+    if (quillRef.current) {
+      const editor = quillRef.current.getEditor();
+      const cursorPosition = editor.getSelection()?.index || editor.getLength();
+      editor.insertText(cursorPosition, `{{ ${variable} }}`, 'user');
+      editor.setSelection(cursorPosition + variable.length + 6); // Position cursor after inserted text
+    }
+  };
 
   const sendEmailMutation = useMutation({
     mutationFn: async (data: { subject: string; message: string; emailAddress: string; isHtml: boolean }) => {
@@ -103,7 +122,7 @@ export function EmailNotificationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <Mail className="h-5 w-5 text-primary" />
@@ -114,51 +133,34 @@ export function EmailNotificationModal({
         <div className="space-y-4">
           {/* Student Info */}
           <div className="p-3 bg-muted rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium" data-testid="text-student-name">
-                  {studentName}
-                </p>
-                <p className="text-sm text-muted-foreground" data-testid="text-email-address">
-                  {emailAddress}
-                </p>
-              </div>
-              <Badge variant="outline" className="text-xs">
-                Educational Content
-              </Badge>
+            <div>
+              <p className="font-medium" data-testid="text-student-name">
+                {studentName}
+              </p>
+              <p className="text-sm text-muted-foreground" data-testid="text-email-address">
+                {emailAddress}
+              </p>
             </div>
           </div>
 
-          {/* Content Type Selection */}
+          {/* Available Variables */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Content Format</Label>
-            <div className="flex gap-2">
-              <Button
-                variant={!isHtml ? "default" : "outline"}
-                size="sm"
-                onClick={() => setIsHtml(false)}
-                data-testid="button-format-text"
-              >
-                Plain Text
-              </Button>
-              <Button
-                variant={isHtml ? "default" : "outline"}
-                size="sm"
-                onClick={() => setIsHtml(true)}
-                data-testid="button-format-html"
-              >
-                HTML
-              </Button>
+            <Label className="text-sm font-medium">Available Variables (Click to Insert)</Label>
+            <div className="flex flex-wrap gap-2">
+              {variables.map((variable) => (
+                <Button
+                  key={variable.key}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertVariable(variable.key)}
+                  className="text-xs h-7"
+                  data-testid={`button-variable-${variable.key.replace('.', '-')}`}
+                >
+                  {`{{ ${variable.key} }}`}
+                </Button>
+              ))}
             </div>
           </div>
-
-          {/* Content Filtering Info */}
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              Email content filtering allows educational firearm training content. SMS may block this same content.
-            </AlertDescription>
-          </Alert>
 
           {/* Subject Input */}
           <div className="space-y-2">
@@ -179,28 +181,28 @@ export function EmailNotificationModal({
             <Label htmlFor="message" className="text-sm font-medium">
               Message <span className="text-destructive">*</span>
             </Label>
-            <Textarea
-              id="message"
-              placeholder={isHtml ? "Enter your HTML message..." : "Enter your message..."}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="min-h-[120px]"
-              data-testid="textarea-email-message"
-            />
-            {isHtml && (
-              <p className="text-xs text-muted-foreground">
-                You can use HTML tags like &lt;b&gt;, &lt;i&gt;, &lt;p&gt;, &lt;br&gt;, etc.
-              </p>
-            )}
+            <div className="border rounded-md" data-testid="rich-text-editor">
+              <ReactQuill
+                ref={quillRef}
+                theme="snow"
+                value={message}
+                onChange={setMessage}
+                placeholder="Enter your message..."
+                style={{ height: '200px' }}
+                modules={{
+                  toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    ['link'],
+                    ['clean']
+                  ]
+                }}
+              />
+            </div>
+            <div className="h-12" /> {/* Spacer for Quill toolbar */}
           </div>
-
-          {/* Template Variables Info */}
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              <strong>Available variables:</strong> {"{"}{"{"} student.firstName {"}"}{"}"}, {"{"}{"{"} student.lastName {"}"}{"}"}, {"{"}{"{"} course.name {"}"}{"}"}, {"{"}{"{"} schedule.startDate {"}"}{"}"}
-            </AlertDescription>
-          </Alert>
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-2 pt-4">
