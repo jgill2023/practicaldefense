@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Users, Phone, Mail, Edit, Calendar, ArrowLeft, Eye, Download, FileSpreadsheet, FileText, Share2 } from "lucide-react";
+import { Users, Phone, Mail, Edit, Calendar, ArrowLeft, Eye, Download, FileSpreadsheet, FileText, Share2, UserPen } from "lucide-react";
 import { Link } from "wouter";
 import { format } from "date-fns";
 
@@ -94,7 +94,7 @@ function StudentsPage() {
 
   const handleExport = async (format: 'excel' | 'csv') => {
     if (isExporting) return;
-    
+
     setIsExporting(true);
     try {
       const scheduleParam = selectedScheduleId !== 'all' ? `&scheduleId=${selectedScheduleId}` : '';
@@ -136,13 +136,13 @@ function StudentsPage() {
 
   const handleGoogleSheetsExport = async () => {
     if (isExporting) return;
-    
+
     setIsExporting(true);
     try {
       const requestBody = selectedScheduleId !== 'all' ? { scheduleId: selectedScheduleId } : {};
       const response = await apiRequest("POST", "/api/instructor/roster/google-sheets", requestBody);
       const result = await response.json();
-      
+
       if (result.action === 'setup_required') {
         toast({
           title: "Setup Required",
@@ -319,17 +319,28 @@ function StudentsPage() {
                     {index === 0 && (
                       <TableCell rowSpan={student.enrollments.length}>
                         <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingStudent(student)}
+                            title={`Edit ${student.firstName} ${student.lastName}`}
+                            data-testid={`button-edit-${student.id}`}
+                          >
+                            <UserPen className="h-4 w-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => {/* TODO: Implement student profile view */}}
                             title={`View ${student.firstName} ${student.lastName}'s profile`}
                             data-testid={`button-view-profile-${student.id}`}
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4 mr-2" />
+                            View
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             disabled={!student.phone}
                             onClick={() => student.phone && window.open(`tel:${student.phone}`, '_self')}
@@ -338,23 +349,14 @@ function StudentsPage() {
                           >
                             <Phone className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => window.open(`mailto:${student.email}?subject=Training%20Information`, '_blank')}
                             title={`Email ${student.email}`}
                             data-testid={`button-email-${student.id}`}
                           >
                             <Mail className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setEditingStudent(student)}
-                            title={`Edit ${student.firstName} ${student.lastName}`}
-                            data-testid={`button-edit-${student.id}`}
-                          >
-                            <Edit className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -380,7 +382,7 @@ function StudentsPage() {
           </Button>
         </Link>
       </div>
-      
+
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Students Management</h1>
         <p className="text-muted-foreground">
