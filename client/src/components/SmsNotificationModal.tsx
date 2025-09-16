@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MessageSquare, Send, AlertTriangle, CheckCircle, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -24,15 +23,13 @@ export function SmsNotificationModal({
   phoneNumber 
 }: SmsNotificationModalProps) {
   const [message, setMessage] = useState("");
-  const [purpose, setPurpose] = useState<'educational' | 'administrative' | 'marketing'>('educational');
   const { toast } = useToast();
 
   const sendSmsMutation = useMutation({
-    mutationFn: async (data: { message: string; phoneNumber: string; purpose: string }) => {
+    mutationFn: async (data: { message: string; phoneNumber: string }) => {
       const response = await apiRequest("POST", "/api/notifications/sms", {
         to: [data.phoneNumber],
-        message: data.message,
-        purpose: data.purpose
+        message: data.message
       });
       return response.json();
     },
@@ -88,8 +85,7 @@ export function SmsNotificationModal({
 
     sendSmsMutation.mutate({
       message: message.trim(),
-      phoneNumber,
-      purpose
+      phoneNumber
     });
   };
 
@@ -110,36 +106,13 @@ export function SmsNotificationModal({
         <div className="space-y-4">
           {/* Student Info */}
           <div className="p-3 bg-muted rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium" data-testid="text-student-name">
-                  {studentName}
-                </p>
-                <p className="text-sm text-muted-foreground" data-testid="text-phone-number">
-                  {phoneNumber}
-                </p>
-              </div>
-              <Badge variant="outline" className="text-xs">
-                {purpose.charAt(0).toUpperCase() + purpose.slice(1)}
-              </Badge>
-            </div>
-          </div>
-
-          {/* Purpose Selection */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Message Purpose</Label>
-            <div className="flex gap-2">
-              {(['educational', 'administrative', 'marketing'] as const).map((p) => (
-                <Button
-                  key={p}
-                  variant={purpose === p ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setPurpose(p)}
-                  data-testid={`button-purpose-${p}`}
-                >
-                  {p.charAt(0).toUpperCase() + p.slice(1)}
-                </Button>
-              ))}
+            <div>
+              <p className="font-medium" data-testid="text-student-name">
+                {studentName}
+              </p>
+              <p className="text-sm text-muted-foreground" data-testid="text-phone-number">
+                {phoneNumber}
+              </p>
             </div>
           </div>
 
