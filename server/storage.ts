@@ -125,6 +125,7 @@ export interface IStorage {
     current: any[];
     former: any[];
   }>;
+  getScheduleEnrollmentCount(scheduleId: string): Promise<number>;
   getRosterExportData(instructorId: string, scheduleId?: string): Promise<{
     current: any[];
     former: any[];
@@ -1105,6 +1106,22 @@ export class DatabaseStorage implements IStorage {
       current: students,
       former: [] // No former students for specific schedule exports
     };
+  }
+
+  async getScheduleEnrollmentCount(scheduleId: string): Promise<number> {
+    const result = await db
+      .select({
+        count: sql<number>`COALESCE(COUNT(${enrollments.id}), 0)`
+      })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.scheduleId, scheduleId),
+          eq(enrollments.status, 'confirmed')
+        )
+      );
+    
+    return result[0]?.count || 0;
   }
 
   async getRosterExportData(instructorId: string, scheduleId?: string): Promise<{
