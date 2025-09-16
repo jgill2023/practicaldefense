@@ -101,19 +101,9 @@ export function SmsNotificationModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <MessageSquare className="h-5 w-5 text-primary" />
-              <DialogTitle>Send SMS Notification</DialogTitle>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              data-testid="button-close-sms-modal"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center gap-3">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            <DialogTitle>Send SMS Notification</DialogTitle>
           </div>
         </DialogHeader>
 

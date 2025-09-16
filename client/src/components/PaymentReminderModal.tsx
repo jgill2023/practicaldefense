@@ -219,19 +219,9 @@ ProTrain Academy`
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <DollarSign className="h-5 w-5 text-primary" />
-              <DialogTitle>Send Payment Reminder</DialogTitle>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              data-testid="button-close-payment-reminder"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center gap-3">
+            <DollarSign className="h-5 w-5 text-primary" />
+            <DialogTitle>Send Payment Reminder</DialogTitle>
           </div>
         </DialogHeader>
 

@@ -153,19 +153,9 @@ export function RescheduleModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-primary" />
-              <DialogTitle>Reschedule Student</DialogTitle>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              data-testid="button-close-reschedule"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center gap-3">
+            <Calendar className="h-5 w-5 text-primary" />
+            <DialogTitle>Reschedule Student</DialogTitle>
           </div>
         </DialogHeader>
 

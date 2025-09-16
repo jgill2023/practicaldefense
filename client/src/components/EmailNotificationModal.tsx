@@ -105,19 +105,9 @@ export function EmailNotificationModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Mail className="h-5 w-5 text-primary" />
-              <DialogTitle>Send Email Notification</DialogTitle>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              data-testid="button-close-email-modal"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center gap-3">
+            <Mail className="h-5 w-5 text-primary" />
+            <DialogTitle>Send Email Notification</DialogTitle>
           </div>
         </DialogHeader>
 
