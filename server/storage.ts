@@ -1220,9 +1220,9 @@ export class DatabaseStorage implements IStorage {
       ))
       .where(and(
         eq(courses.instructorId, instructorId),
-        eq(courses.isDeleted, false),
-        eq(courseSchedules.isDeleted, false),
-        gte(courseSchedules.startDate, now.toISOString().split('T')[0]), // Future dates only
+        isNull(courses.deletedAt),
+        isNull(courseSchedules.deletedAt),
+        gte(courseSchedules.startDate, now.toISOString()), // Future dates only
         excludeScheduleId ? ne(courseSchedules.id, excludeScheduleId) : undefined,
         // Filter by same category if we have one
         currentCourseCategory ? 
