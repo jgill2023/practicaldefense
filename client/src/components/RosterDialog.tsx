@@ -200,21 +200,9 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-primary" />
-              <DialogTitle className="text-xl">Course Roster</DialogTitle>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={onClose}
-              aria-label="Close"
-              data-testid="button-close-roster"
-            >
-              <X />
-            </Button>
+          <div className="flex items-center gap-3">
+            <Users className="h-5 w-5 text-primary" />
+            <DialogTitle className="text-xl">Course Roster</DialogTitle>
           </div>
         </DialogHeader>
 
