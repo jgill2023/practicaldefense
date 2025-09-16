@@ -3191,7 +3191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update enrollment status to hold and clear schedule
       const updatedEnrollment = await storage.updateEnrollment(enrollmentId, {
-        enrollmentStatus: 'hold',
+        status: 'hold',
         notes: notes.trim(),
         // Note: We keep the scheduleId but change status to indicate hold
       });
