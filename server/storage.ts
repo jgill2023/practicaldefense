@@ -68,7 +68,7 @@ import {
   type WaiverInstanceWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, asc, isNull, isNotNull, sql } from "drizzle-orm";
+import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne } from "drizzle-orm";
 
 export interface IStorage {
   // User operations

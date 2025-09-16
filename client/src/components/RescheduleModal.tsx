@@ -92,6 +92,7 @@ export function RescheduleModal({
         queryClient.invalidateQueries({ queryKey: ["/api/instructor/roster"] });
         queryClient.invalidateQueries({ queryKey: ["/api/instructor/enrollments"] });
         queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/students"] });
         
         onClose();
       } else {
