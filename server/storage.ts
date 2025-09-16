@@ -1131,6 +1131,7 @@ export class DatabaseStorage implements IStorage {
     const flattenStudent = (student: any, category: 'current' | 'former') => {
       return student.enrollments.map((enrollment: any) => ({
         studentId: student.id,
+        enrollmentId: enrollment.id,
         firstName: student.firstName,
         lastName: student.lastName,
         email: student.email,
