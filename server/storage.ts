@@ -1072,7 +1072,8 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(enrollments.scheduleId, scheduleId),
           eq(courses.instructorId, instructorId), // Ensure instructor owns the course
-          isNotNull(enrollments.studentId) // Only enrolled students
+          isNotNull(enrollments.studentId), // Only enrolled students
+          ne(enrollments.status, 'hold') // Exclude students on hold
         )
       );
 
