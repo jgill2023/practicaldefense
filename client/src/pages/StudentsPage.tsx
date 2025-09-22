@@ -14,8 +14,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Users, Phone, Mail, Edit, Calendar, ArrowLeft, Eye, Download, FileSpreadsheet, FileText, Share2, UserPen } from "lucide-react";
+import { Users, Phone, Mail, Edit, Calendar, ArrowLeft, Eye, Download, FileSpreadsheet, FileText, Share2, UserPen, MessageSquare, Shuffle } from "lucide-react";
 import { Link } from "wouter";
+import { EmailNotificationModal } from "@/components/EmailNotificationModal";
+import { SmsNotificationModal } from "@/components/SmsNotificationModal";
+import { RescheduleModal } from "@/components/RescheduleModal";
 import { format } from "date-fns";
 
 // Edit student form schema
@@ -73,6 +76,13 @@ function StudentsPage() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportFormat, setExportFormat] = useState<'excel' | 'csv' | 'google-sheets'>('excel');
   const [selectedScheduleId, setSelectedScheduleId] = useState<string>('all');
+  
+  // Notification modal states
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [smsModalOpen, setSmsModalOpen] = useState(false);
+  const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
+  const [selectedStudentForNotification, setSelectedStudentForNotification] = useState<Student | null>(null);
+  const [selectedEnrollmentForReschedule, setSelectedEnrollmentForReschedule] = useState<{student: Student, enrollment: any} | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -264,14 +274,34 @@ function StudentsPage() {
                       <TableCell rowSpan={student.enrollments.length} className="font-medium">
                         <div>
                           <p className="font-semibold">{student.firstName} {student.lastName}</p>
-                          <p className="text-sm text-muted-foreground">{student.email}</p>
+                          <button
+                            onClick={() => {
+                              setSelectedStudentForNotification(student);
+                              setEmailModalOpen(true);
+                            }}
+                            className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
+                            title={`Send email to ${student.email}`}
+                            data-testid={`link-email-${student.id}`}
+                          >
+                            {student.email}
+                          </button>
                         </div>
                       </TableCell>
                     )}
                     {index === 0 && (
                       <TableCell rowSpan={student.enrollments.length}>
                         {student.phone ? (
-                          <span className="text-sm">{student.phone}</span>
+                          <button
+                            onClick={() => {
+                              setSelectedStudentForNotification(student);
+                              setSmsModalOpen(true);
+                            }}
+                            className="text-sm text-green-600 hover:text-green-800 hover:underline cursor-pointer transition-colors"
+                            title={`Send SMS to ${student.phone}`}
+                            data-testid={`link-sms-${student.id}`}
+                          >
+                            {student.phone}
+                          </button>
                         ) : (
                           <span className="text-sm text-muted-foreground">No phone</span>
                         )}
@@ -317,9 +347,9 @@ function StudentsPage() {
                         )}
                       </TableCell>
                     )}
-                    {index === 0 && (
-                      <TableCell rowSpan={student.enrollments.length}>
-                        <div className="flex space-x-2">
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        {index === 0 && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -330,38 +360,22 @@ function StudentsPage() {
                             <UserPen className="h-4 w-4 mr-2" />
                             Edit
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {/* TODO: Implement student profile view */}}
-                            title={`View ${student.firstName} ${student.lastName}'s profile`}
-                            data-testid={`button-view-profile-${student.id}`}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={!student.phone}
-                            onClick={() => student.phone && window.open(`tel:${student.phone}`, '_self')}
-                            title={student.phone ? `Call ${student.phone}` : 'No phone number available'}
-                            data-testid={`button-text-${student.id}`}
-                          >
-                            <Phone className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(`mailto:${student.email}?subject=Training%20Information`, '_blank')}
-                            title={`Email ${student.email}`}
-                            data-testid={`button-email-${student.id}`}
-                          >
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    )}
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedEnrollmentForReschedule({ student, enrollment });
+                            setRescheduleModalOpen(true);
+                          }}
+                          title={category === 'former' ? `Re-enroll ${student.firstName} ${student.lastName}` : `Reschedule ${student.firstName} ${student.lastName}`}
+                          data-testid={`button-reschedule-${student.id}-${enrollment.id}`}
+                        >
+                          <Shuffle className="h-4 w-4 mr-2" />
+                          {category === 'former' ? 'Re-enroll' : 'Reschedule'}
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -557,6 +571,44 @@ function StudentsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Email Notification Modal */}
+      <EmailNotificationModal
+        isOpen={emailModalOpen}
+        onClose={() => {
+          setEmailModalOpen(false);
+          setSelectedStudentForNotification(null);
+        }}
+        studentName={selectedStudentForNotification ? `${selectedStudentForNotification.firstName} ${selectedStudentForNotification.lastName}` : ''}
+        emailAddress={selectedStudentForNotification?.email || ''}
+      />
+
+      {/* SMS Notification Modal */}
+      <SmsNotificationModal
+        isOpen={smsModalOpen}
+        onClose={() => {
+          setSmsModalOpen(false);
+          setSelectedStudentForNotification(null);
+        }}
+        studentName={selectedStudentForNotification ? `${selectedStudentForNotification.firstName} ${selectedStudentForNotification.lastName}` : ''}
+        phoneNumber={selectedStudentForNotification?.phone || ''}
+      />
+
+      {/* Reschedule Modal */}
+      {selectedEnrollmentForReschedule && (
+        <RescheduleModal
+          isOpen={rescheduleModalOpen}
+          onClose={() => {
+            setRescheduleModalOpen(false);
+            setSelectedEnrollmentForReschedule(null);
+          }}
+          studentId={selectedEnrollmentForReschedule.student.id}
+          studentName={`${selectedEnrollmentForReschedule.student.firstName} ${selectedEnrollmentForReschedule.student.lastName}`}
+          enrollmentId={selectedEnrollmentForReschedule.enrollment.id}
+          currentCourse={selectedEnrollmentForReschedule.enrollment.courseTitle}
+          currentScheduleDate={selectedEnrollmentForReschedule.enrollment.scheduleDate}
+        />
+      )}
     </div>
   );
 }
