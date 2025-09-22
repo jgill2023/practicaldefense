@@ -150,7 +150,7 @@ export class NotificationSmsService {
 
       // Send messages with rate limiting
       for (let i = 0; i < validPhoneNumbers.length; i++) {
-        const phoneNumber = validPhoneNumbers[i];
+        const phoneNumber = this.formatPhoneNumber(validPhoneNumbers[i]);
         
         try {
           const response = await client.messages.create({

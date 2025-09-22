@@ -2905,6 +2905,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check SMS delivery status
+  app.get("/api/notifications/sms/:messageSid/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to check SMS status
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const { messageSid } = req.params;
+      
+      if (!messageSid) {
+        return res.status(400).json({ error: "Message SID is required" });
+      }
+
+      // Import SMS service
+      const { NotificationSmsService } = await import('./smsService');
+      
+      const status = await NotificationSmsService.getMessageStatus(messageSid);
+      res.json(status);
+    } catch (error: any) {
+      console.error("Error checking SMS status:", error);
+      res.status(500).json({ error: "Failed to check SMS status" });
+    }
+  });
+
   // Simple email notification for roster
   app.post("/api/notifications/email", isAuthenticated, async (req: any, res) => {
     try {
