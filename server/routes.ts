@@ -3141,10 +3141,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "New schedule is full" });
       }
 
-      // Update enrollment with new schedule
+      // Update enrollment with new schedule and set status to confirmed
       const updatedEnrollment = await storage.updateEnrollment(enrollmentId, {
         scheduleId: newScheduleId,
         courseId: newSchedule.courseId,
+        status: 'confirmed', // Set status to confirmed so student appears in current list
         notes: notes || `Rescheduled from ${currentSchedule.startDate} to ${newSchedule.startDate}`,
       });
 
