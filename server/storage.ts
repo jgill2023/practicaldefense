@@ -1216,51 +1216,95 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Get all active course schedules for this instructor's courses that are in the future
-    // and of the same category if we're filtering by category
-    const availableSchedules = await db
-      .select({
-        id: courseSchedules.id,
-        courseId: courseSchedules.courseId,
-        courseTitle: courses.title,
-        startDate: courseSchedules.startDate,
-        endDate: courseSchedules.endDate,
-        startTime: courseSchedules.startTime,
-        endTime: courseSchedules.endTime,
-        location: courseSchedules.location,
-        maxSpots: courseSchedules.maxSpots,
-        enrolledCount: sql<number>`COALESCE(COUNT(${enrollments.id}), 0)`
-      })
-      .from(courseSchedules)
-      .leftJoin(courses, eq(courseSchedules.courseId, courses.id))
-      .leftJoin(enrollments, and(
-        eq(enrollments.scheduleId, courseSchedules.id),
-        eq(enrollments.status, 'confirmed')
-      ))
-      .where(and(
-        eq(courses.instructorId, instructorId),
-        isNull(courses.deletedAt),
-        isNull(courseSchedules.deletedAt),
-        gte(courseSchedules.startDate, now), // Future dates only
-        excludeScheduleId ? ne(courseSchedules.id, excludeScheduleId) : undefined,
-        // Filter by same category if we have one
-        currentCourseCategory ? 
-          (currentCourseCategory.length === 36 ? // UUID format check
+    // First try to get schedules from the same category
+    let availableSchedules = [];
+    
+    if (currentCourseCategory) {
+      availableSchedules = await db
+        .select({
+          id: courseSchedules.id,
+          courseId: courseSchedules.courseId,
+          courseTitle: courses.title,
+          startDate: courseSchedules.startDate,
+          endDate: courseSchedules.endDate,
+          startTime: courseSchedules.startTime,
+          endTime: courseSchedules.endTime,
+          location: courseSchedules.location,
+          maxSpots: courseSchedules.maxSpots,
+          enrolledCount: sql<number>`COALESCE(COUNT(${enrollments.id}), 0)`
+        })
+        .from(courseSchedules)
+        .leftJoin(courses, eq(courseSchedules.courseId, courses.id))
+        .leftJoin(enrollments, and(
+          eq(enrollments.scheduleId, courseSchedules.id),
+          eq(enrollments.status, 'confirmed')
+        ))
+        .where(and(
+          eq(courses.instructorId, instructorId),
+          isNull(courses.deletedAt),
+          isNull(courseSchedules.deletedAt),
+          gte(courseSchedules.startDate, now), // Future dates only
+          excludeScheduleId ? ne(courseSchedules.id, excludeScheduleId) : undefined,
+          // Filter by same category
+          currentCourseCategory.length === 36 ? // UUID format check
             eq(courses.categoryId, currentCourseCategory) :
             eq(courses.category, currentCourseCategory)
-          ) : undefined
-      ))
-      .groupBy(
-        courseSchedules.id,
-        courseSchedules.courseId,
-        courses.title,
-        courseSchedules.startDate,
-        courseSchedules.endDate,
-        courseSchedules.startTime,
-        courseSchedules.endTime,
-        courseSchedules.location,
-        courseSchedules.maxSpots
-      )
-      .orderBy(courseSchedules.startDate, courseSchedules.startTime);
+        ))
+        .groupBy(
+          courseSchedules.id,
+          courseSchedules.courseId,
+          courses.title,
+          courseSchedules.startDate,
+          courseSchedules.endDate,
+          courseSchedules.startTime,
+          courseSchedules.endTime,
+          courseSchedules.location,
+          courseSchedules.maxSpots
+        )
+        .orderBy(courseSchedules.startDate, courseSchedules.startTime);
+    }
+    
+    // If no same-category schedules found, fall back to all available schedules
+    if (availableSchedules.length === 0) {
+      availableSchedules = await db
+        .select({
+          id: courseSchedules.id,
+          courseId: courseSchedules.courseId,
+          courseTitle: courses.title,
+          startDate: courseSchedules.startDate,
+          endDate: courseSchedules.endDate,
+          startTime: courseSchedules.startTime,
+          endTime: courseSchedules.endTime,
+          location: courseSchedules.location,
+          maxSpots: courseSchedules.maxSpots,
+          enrolledCount: sql<number>`COALESCE(COUNT(${enrollments.id}), 0)`
+        })
+        .from(courseSchedules)
+        .leftJoin(courses, eq(courseSchedules.courseId, courses.id))
+        .leftJoin(enrollments, and(
+          eq(enrollments.scheduleId, courseSchedules.id),
+          eq(enrollments.status, 'confirmed')
+        ))
+        .where(and(
+          eq(courses.instructorId, instructorId),
+          isNull(courses.deletedAt),
+          isNull(courseSchedules.deletedAt),
+          gte(courseSchedules.startDate, now), // Future dates only
+          excludeScheduleId ? ne(courseSchedules.id, excludeScheduleId) : undefined
+        ))
+        .groupBy(
+          courseSchedules.id,
+          courseSchedules.courseId,
+          courses.title,
+          courseSchedules.startDate,
+          courseSchedules.endDate,
+          courseSchedules.startTime,
+          courseSchedules.endTime,
+          courseSchedules.location,
+          courseSchedules.maxSpots
+        )
+        .orderBy(courseSchedules.startDate, courseSchedules.startTime);
+    }
 
     // Calculate available spots and format response
     return availableSchedules.map(schedule => ({
