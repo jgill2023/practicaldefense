@@ -1,5 +1,5 @@
 // SMS service using Twilio integration with ultra-strict content filtering
-import { Twilio } from 'twilio';
+import Twilio from 'twilio';
 import { contentFilter } from './contentFilter';
 
 // Lazy initialization to avoid server crash on startup
