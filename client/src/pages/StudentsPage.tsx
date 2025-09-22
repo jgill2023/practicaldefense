@@ -19,6 +19,7 @@ import { Link } from "wouter";
 import { EmailNotificationModal } from "@/components/EmailNotificationModal";
 import { SmsNotificationModal } from "@/components/SmsNotificationModal";
 import { RescheduleModal } from "@/components/RescheduleModal";
+import { CrossEnrollmentModal } from "@/components/CrossEnrollmentModal";
 import { format } from "date-fns";
 
 // Edit student form schema
@@ -81,8 +82,10 @@ function StudentsPage() {
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [smsModalOpen, setSmsModalOpen] = useState(false);
   const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
+  const [crossEnrollmentModalOpen, setCrossEnrollmentModalOpen] = useState(false);
   const [selectedStudentForNotification, setSelectedStudentForNotification] = useState<Student | null>(null);
   const [selectedEnrollmentForReschedule, setSelectedEnrollmentForReschedule] = useState<{student: Student, enrollment: any} | null>(null);
+  const [selectedStudentForCrossEnrollment, setSelectedStudentForCrossEnrollment] = useState<Student | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -361,6 +364,21 @@ function StudentsPage() {
                             Edit
                           </Button>
                         )}
+                        {index === 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedStudentForCrossEnrollment(student);
+                              setCrossEnrollmentModalOpen(true);
+                            }}
+                            title={`Enroll ${student.firstName} ${student.lastName} in another course`}
+                            data-testid={`button-enroll-course-${student.id}`}
+                          >
+                            <Users className="h-4 w-4 mr-2" />
+                            Enroll in Course
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -607,6 +625,19 @@ function StudentsPage() {
           enrollmentId={selectedEnrollmentForReschedule.enrollment.id}
           currentCourse={selectedEnrollmentForReschedule.enrollment.courseTitle}
           currentScheduleDate={selectedEnrollmentForReschedule.enrollment.scheduleDate}
+        />
+      )}
+
+      {/* Cross-Enrollment Modal */}
+      {selectedStudentForCrossEnrollment && (
+        <CrossEnrollmentModal
+          isOpen={crossEnrollmentModalOpen}
+          onClose={() => {
+            setCrossEnrollmentModalOpen(false);
+            setSelectedStudentForCrossEnrollment(null);
+          }}
+          studentId={selectedStudentForCrossEnrollment.id}
+          studentName={`${selectedStudentForCrossEnrollment.firstName} ${selectedStudentForCrossEnrollment.lastName}`}
         />
       )}
     </div>

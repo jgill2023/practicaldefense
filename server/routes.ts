@@ -5,6 +5,9 @@ import Stripe from "stripe";
 import { z } from "zod";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { db } from "./db";
+import { enrollments } from "@shared/schema";
+import { eq, and, inArray } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type User } from "@shared/schema";
@@ -3201,6 +3204,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error placing student on hold:", error);
       res.status(500).json({ error: "Failed to place student on hold" });
+    }
+  });
+
+  // Cross-enroll student into additional courses
+  app.post("/api/instructor/enrollments", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { studentId, scheduleId, notes } = req.body;
+      
+      // Only allow instructors to cross-enroll students
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      if (!studentId || !scheduleId) {
+        return res.status(400).json({ error: "Student ID and schedule ID are required" });
+      }
+
+      // Verify the student exists
+      const student = await storage.getUser(studentId);
+      if (!student || student.role !== 'student') {
+        return res.status(404).json({ error: "Student not found" });
+      }
+
+      // Verify the schedule exists and belongs to instructor
+      const schedule = await storage.getCourseSchedule(scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ error: "Course schedule not found" });
+      }
+
+      const course = await storage.getCourse(schedule.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: You can only enroll students in your own courses" });
+      }
+
+      // Check if student is already enrolled in this schedule
+      const existingEnrollment = await db.query.enrollments.findFirst({
+        where: and(
+          eq(enrollments.studentId, studentId),
+          eq(enrollments.scheduleId, scheduleId),
+          inArray(enrollments.status, ['confirmed', 'initiated', 'pending', 'hold'])
+        )
+      });
+
+      if (existingEnrollment) {
+        return res.status(400).json({ error: "Student is already enrolled in this course schedule" });
+      }
+
+      // Check if schedule has available spots
+      const enrollmentCount = await storage.getScheduleEnrollmentCount(scheduleId);
+      if (enrollmentCount >= schedule.maxSpots) {
+        return res.status(400).json({ error: "Course schedule is full" });
+      }
+
+      // Create the enrollment
+      const enrollmentData = {
+        studentId,
+        courseId: schedule.courseId,
+        scheduleId,
+        status: 'confirmed' as const,
+        paymentStatus: 'paid' as const, // Instructor enrollments are marked as paid
+        paymentOption: 'full' as const,
+        notes: notes || `Cross-enrolled by instructor`,
+        registrationDate: new Date(),
+        confirmationDate: new Date(),
+      };
+
+      const [newEnrollment] = await db
+        .insert(enrollments)
+        .values(enrollmentData)
+        .returning();
+
+      res.json({ success: true, enrollment: newEnrollment });
+    } catch (error: any) {
+      console.error("Error cross-enrolling student:", error);
+      res.status(500).json({ error: "Failed to cross-enroll student" });
     }
   });
 
