@@ -572,6 +572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate request body
       const updateSchema = z.object({
+        email: z.string().email().optional(),
         phone: z.string().optional(),
         concealedCarryLicenseExpiration: z.string().optional(),
         concealedCarryLicenseIssued: z.string().optional(),
