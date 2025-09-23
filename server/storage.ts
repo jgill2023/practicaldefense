@@ -77,7 +77,7 @@ export interface IStorage {
   getAllStudents(): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, data: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>): Promise<User>;
-  updateStudent(id: string, data: { phone?: string; concealedCarryLicenseExpiration?: string; concealedCarryLicenseIssued?: string; licenseExpirationReminderDays?: number; enableLicenseExpirationReminder?: boolean; refresherReminderDays?: number; enableRefresherReminder?: boolean; enableSmsNotifications?: boolean; enableSmsReminders?: boolean; enableSmsPaymentNotices?: boolean; enableSmsAnnouncements?: boolean }): Promise<User>;
+  updateStudent(id: string, data: { email?: string; phone?: string; concealedCarryLicenseExpiration?: string; concealedCarryLicenseIssued?: string; licenseExpirationReminderDays?: number; enableLicenseExpirationReminder?: boolean; refresherReminderDays?: number; enableRefresherReminder?: boolean; enableSmsNotifications?: boolean; enableSmsReminders?: boolean; enableSmsPaymentNotices?: boolean; enableSmsAnnouncements?: boolean }): Promise<User>;
   
   // Category operations
   createCategory(category: InsertCategory): Promise<Category>;
@@ -384,6 +384,10 @@ export class DatabaseStorage implements IStorage {
     enableLicenseExpirationReminder?: boolean;
     refresherReminderDays?: number;
     enableRefresherReminder?: boolean;
+    enableSmsNotifications?: boolean;
+    enableSmsReminders?: boolean;
+    enableSmsPaymentNotices?: boolean;
+    enableSmsAnnouncements?: boolean;
   }): Promise<User> {
     const updateData: any = {
       updatedAt: new Date(),
@@ -423,6 +427,22 @@ export class DatabaseStorage implements IStorage {
 
     if (data.enableRefresherReminder !== undefined) {
       updateData.enableRefresherReminder = data.enableRefresherReminder;
+    }
+
+    if (data.enableSmsNotifications !== undefined) {
+      updateData.enableSmsNotifications = data.enableSmsNotifications;
+    }
+
+    if (data.enableSmsReminders !== undefined) {
+      updateData.enableSmsReminders = data.enableSmsReminders;
+    }
+
+    if (data.enableSmsPaymentNotices !== undefined) {
+      updateData.enableSmsPaymentNotices = data.enableSmsPaymentNotices;
+    }
+
+    if (data.enableSmsAnnouncements !== undefined) {
+      updateData.enableSmsAnnouncements = data.enableSmsAnnouncements;
     }
 
     const [user] = await db
