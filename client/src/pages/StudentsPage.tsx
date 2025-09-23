@@ -24,6 +24,7 @@ import { format } from "date-fns";
 
 // Edit student form schema
 const editStudentSchema = z.object({
+  email: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
   phone: z.string().optional(),
   concealedCarryLicenseExpiration: z.string().optional(),
 });
@@ -652,6 +653,7 @@ function EditStudentForm({ student, onClose }: { student: Student; onClose: () =
   const form = useForm<EditStudentFormData>({
     resolver: zodResolver(editStudentSchema),
     defaultValues: {
+      email: student.email || "",
       phone: student.phone || "",
       concealedCarryLicenseExpiration: student.concealedCarryLicenseExpiration 
         ? new Date(student.concealedCarryLicenseExpiration).toISOString().split('T')[0] 
