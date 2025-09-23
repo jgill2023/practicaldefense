@@ -376,6 +376,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateStudent(id: string, data: { 
+    email?: string;
     phone?: string; 
     concealedCarryLicenseExpiration?: string;
     concealedCarryLicenseIssued?: string;
@@ -387,6 +388,10 @@ export class DatabaseStorage implements IStorage {
     const updateData: any = {
       updatedAt: new Date(),
     };
+
+    if (data.email !== undefined) {
+      updateData.email = data.email;
+    }
 
     if (data.phone !== undefined) {
       updateData.phone = data.phone;
