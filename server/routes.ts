@@ -2933,6 +2933,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug Twilio account info (instructors only)
+  app.get("/api/debug/twilio-info", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to check account info
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      // Import SMS service
+      const { NotificationSmsService } = await import('./smsService');
+      
+      const accountInfo = await NotificationSmsService.getAccountInfo();
+      const envInfo = {
+        hasSid: !!process.env.TWILIO_ACCOUNT_SID,
+        hasToken: !!process.env.TWILIO_AUTH_TOKEN,
+        hasPhone: !!process.env.TWILIO_PHONE_NUMBER,
+        phoneNumber: process.env.TWILIO_PHONE_NUMBER, // Safe to show this
+      };
+      
+      res.json({
+        environment: envInfo,
+        account: accountInfo
+      });
+    } catch (error: any) {
+      console.error("Error checking Twilio account:", error);
+      res.status(500).json({ error: "Failed to check Twilio account" });
+    }
+  });
+
   // Simple email notification for roster
   app.post("/api/notifications/email", isAuthenticated, async (req: any, res) => {
     try {
