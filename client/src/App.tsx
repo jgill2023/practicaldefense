@@ -13,6 +13,7 @@ import { StudentsPage } from "@/pages/StudentsPage";
 import CourseRegistration from "@/pages/course-registration";
 import Checkout from "@/pages/checkout";
 import PromoCodesPage from "@/pages/promo-codes";
+import CommunicationsDashboardPage from "@/pages/communications-dashboard";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -39,6 +40,7 @@ function Router() {
           <Route path="/student-portal" component={StudentPortal} />
           <Route path="/students" component={StudentsPage} />
           <Route path="/promo-codes" component={PromoCodesPage} />
+          <Route path="/communications" component={CommunicationsDashboardPage} />
         </>
       )}
       <Route component={NotFound} />
