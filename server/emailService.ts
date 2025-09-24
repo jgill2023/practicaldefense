@@ -10,14 +10,6 @@ function initializeMailService(): MailService {
     if (!apiKey) {
       throw new Error("SENDGRID_API_KEY environment variable must be set for email sending");
     }
-    
-    // Debug logging (without exposing the actual key)
-    console.log('Initializing SendGrid with API key:', {
-      keyLength: apiKey.length,
-      keyPrefix: apiKey.substring(0, 6),
-      hasKey: !!apiKey
-    });
-    
     mailService = new MailService();
     mailService.setApiKey(apiKey);
   }
@@ -123,6 +115,7 @@ export class NotificationEmailService {
         headers: error.response?.headers,
       };
       console.error('Failed to send notification email:', errorDetails);
+      
       
       return {
         success: false,
