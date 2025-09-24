@@ -6,9 +6,18 @@ let mailService: MailService | null = null;
 
 function initializeMailService(): MailService {
   if (!mailService) {
-    const apiKey = process.env.SENDGRID_API_KEY;
+    const apiKey = process.env.SENDGRIP_API_KEY_WebApp;
+    
+    // Debug logging to check environment variable
+    console.log('Checking SendGrid API key:', {
+      hasEnvVar: !!apiKey,
+      keyLength: apiKey?.length || 0,
+      keyPrefix: apiKey?.substring(0, 6) || 'undefined',
+      allEnvVars: Object.keys(process.env).filter(key => key.includes('SENDGRID') || key.includes('SENDGRIP'))
+    });
+    
     if (!apiKey) {
-      throw new Error("SENDGRID_API_KEY environment variable must be set for email sending");
+      throw new Error("SENDGRIP_API_KEY_WebApp environment variable must be set for email sending");
     }
     mailService = new MailService();
     mailService.setApiKey(apiKey);
