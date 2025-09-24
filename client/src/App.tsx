@@ -15,6 +15,8 @@ import Checkout from "@/pages/checkout";
 import PromoCodesPage from "@/pages/promo-codes";
 import CommunicationsDashboardPage from "@/pages/communications-dashboard";
 import Reports from "@/pages/reports";
+import ScheduleList from "@/pages/schedule-list";
+import ScheduleCalendar from "@/pages/schedule-calendar";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -33,6 +35,8 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/course-registration/:id" component={CourseRegistration} />
       <Route path="/checkout" component={Checkout} />
+      <Route path="/schedule-list" component={ScheduleList} />
+      <Route path="/schedule-calendar" component={ScheduleCalendar} />
       {isAuthenticated && (
         <>
           <Route path="/instructor-dashboard" component={InstructorDashboard} />

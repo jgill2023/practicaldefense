@@ -4,7 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunicationCounts } from "@/hooks/useCommunicationCounts";
-import { Shield, Tag, Users, Star, Menu, X } from "lucide-react";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
+import { Shield, Tag, Users, Star, Menu, X, Calendar, List } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuth();
@@ -79,8 +87,32 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
             {/* Navigation and login aligned to the right */}
             <div className="flex items-center space-x-8">
-              <nav className="hidden md:flex space-x-8">
-                <a href="#schedule" className="text-primary-foreground hover:text-accent transition-colors">Schedule</a>
+              <nav className="hidden md:flex items-center space-x-8">
+                <NavigationMenu>
+                  <NavigationMenuList>
+                    <NavigationMenuItem>
+                      <NavigationMenuTrigger className="text-primary-foreground hover:text-accent bg-transparent border-none data-[state=open]:bg-accent/20">
+                        Schedule
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <div className="w-48 p-2">
+                          <Link href="/schedule-list">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-schedule-list">
+                              <List className="h-4 w-4" />
+                              <span>List View</span>
+                            </NavigationMenuLink>
+                          </Link>
+                          <Link href="/schedule-calendar">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-schedule-calendar">
+                              <Calendar className="h-4 w-4" />
+                              <span>Calendar View</span>
+                            </NavigationMenuLink>
+                          </Link>
+                        </div>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  </NavigationMenuList>
+                </NavigationMenu>
                 <Link href="/#courses" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-courses">
                   Courses
                 </Link>
