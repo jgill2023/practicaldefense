@@ -49,6 +49,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-student-dashboard">
                   Student Dashboard
                 </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-xs"
+                  onClick={handleLogout}
+                  data-testid="button-logout-secondary"
+                >
+                  Logout
+                </Button>
               </nav>
             </div>
           </div>
@@ -83,22 +92,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
               {/* Desktop auth buttons */}
               <div className="hidden md:flex items-center space-x-4">
-                {!isAuthenticated ? (
+                {!isAuthenticated && (
                   <Button 
                     className="bg-accent text-accent-foreground hover:bg-accent/90"
                     onClick={() => window.location.href = '/api/login'}
                     data-testid="button-login"
                   >
                     Login
-                  </Button>
-                ) : (
-                  <Button 
-                    variant="outline" 
-                    className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary"
-                    onClick={handleLogout}
-                    data-testid="button-logout"
-                  >
-                    Logout
                   </Button>
                 )}
               </div>
