@@ -57,8 +57,8 @@ export interface NotificationEmailParams {
 }
 
 export class NotificationEmailService {
-  private static readonly DEFAULT_FROM_EMAIL = 'noreply@protrainacademy.com';
-  private static readonly DEFAULT_FROM_NAME = 'ProTrain Academy';
+  private static readonly DEFAULT_FROM_EMAIL = 'jeremy@abqconcealedcarry.com';
+  private static readonly DEFAULT_FROM_NAME = 'Jeremy - ProTrain Academy';
 
   static async sendNotificationEmail(params: NotificationEmailParams): Promise<{
     success: boolean;
