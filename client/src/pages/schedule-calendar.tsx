@@ -47,6 +47,18 @@ export default function ScheduleCalendar() {
   const [priceFilter, setPriceFilter] = useState("all");
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
+  // Helper function to safely get category name
+  const getCategoryName = (category: any): string => {
+    if (!category) return 'General';
+    // If it's a string (old format), return it
+    if (typeof category === 'string') return category || 'General';
+    // If it's an object (new format), return the name
+    if (typeof category === 'object' && 'name' in category) {
+      return (category as any).name as string;
+    }
+    return 'General';
+  };
+
   // Fetch courses with schedules
   const { data: courses = [], isLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/courses"],
@@ -82,7 +94,7 @@ export default function ScheduleCalendar() {
 
             // Category filter
             if (categoryFilter !== "all") {
-              includeEvent = includeEvent && course.category === categoryFilter;
+              includeEvent = includeEvent && getCategoryName(course.category) === categoryFilter;
             }
 
             // Price filter
@@ -150,17 +162,17 @@ export default function ScheduleCalendar() {
 
   // Custom event style function
   const eventStyleGetter = (event: CalendarEvent) => {
-    const category = event.resource.courseCategory;
+    const categoryName = getCategoryName(event.resource.courseCategory).toLowerCase();
     let backgroundColor = '#3174ad'; // Default blue
     
     // Color code by category (you can customize these colors)
-    if (category.toLowerCase().includes('concealed')) {
+    if (categoryName.includes('concealed')) {
       backgroundColor = '#f59e0b'; // Amber
-    } else if (category.toLowerCase().includes('defensive')) {
+    } else if (categoryName.includes('defensive')) {
       backgroundColor = '#ef4444'; // Red
-    } else if (category.toLowerCase().includes('tactical')) {
+    } else if (categoryName.includes('tactical')) {
       backgroundColor = '#10b981'; // Green
-    } else if (category.toLowerCase().includes('basic')) {
+    } else if (categoryName.includes('basic')) {
       backgroundColor = '#8b5cf6'; // Purple
     }
 
@@ -324,7 +336,7 @@ export default function ScheduleCalendar() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Badge variant="secondary">
-                    {selectedEvent.resource.courseCategory}
+                    {getCategoryName(selectedEvent.resource.courseCategory)}
                   </Badge>
                   <div className="flex items-center text-lg font-bold">
                     <DollarSign className="h-4 w-4" />

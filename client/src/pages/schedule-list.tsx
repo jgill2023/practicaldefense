@@ -17,6 +17,18 @@ export default function ScheduleList() {
   const [priceFilter, setPriceFilter] = useState("all");
   const [sortBy, setSortBy] = useState("date");
 
+  // Helper function to safely get category name
+  const getCategoryName = (category: any): string => {
+    if (!category) return 'General';
+    // If it's a string (old format), return it
+    if (typeof category === 'string') return category || 'General';
+    // If it's an object (new format), return the name
+    if (typeof category === 'object' && 'name' in category) {
+      return (category as any).name as string;
+    }
+    return 'General';
+  };
+
   // Fetch courses with schedules
   const { data: courses = [], isLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/courses"],
@@ -67,7 +79,7 @@ export default function ScheduleList() {
 
     // Category filter
     if (categoryFilter !== "all") {
-      filtered = filtered.filter(schedule => schedule.courseCategory === categoryFilter);
+      filtered = filtered.filter(schedule => getCategoryName(schedule.courseCategory) === categoryFilter);
     }
 
     // Price filter
@@ -244,7 +256,7 @@ export default function ScheduleList() {
                           )}
                         </div>
                         <Badge variant="secondary" className="ml-4">
-                          {schedule.courseCategory}
+                          {getCategoryName(schedule.courseCategory)}
                         </Badge>
                       </div>
                       
