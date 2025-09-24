@@ -278,9 +278,10 @@ export function CommunicationsDashboard() {
         return sectionFiltered.filter(c => c.isFlagged);
       case "sent":
         return sectionFiltered.filter(c => c.direction === 'outbound');
-      case "all":
+      case "inbox":
+      case "all": // Keep "all" for backward compatibility during transition
       default:
-        return sectionFiltered;
+        return sectionFiltered.filter(c => c.direction === 'inbound'); // Only show inbound messages in inbox
     }
   };
 
@@ -288,7 +289,8 @@ export function CommunicationsDashboard() {
   const getEmailCounts = () => {
     const emailData = communicationsData?.data.filter(c => c.type === 'email') || [];
     return {
-      all: emailData.length,
+      inbox: emailData.filter(c => c.direction === 'inbound').length, // Only inbound messages in inbox
+      all: emailData.filter(c => c.direction === 'inbound').length, // Alias for inbox during transition
       unread: emailData.filter(c => !c.isRead).length,
       sent: emailData.filter(c => c.direction === 'outbound').length,
       flagged: emailData.filter(c => c.isFlagged).length
@@ -298,7 +300,8 @@ export function CommunicationsDashboard() {
   const getSMSCounts = () => {
     const smsData = communicationsData?.data.filter(c => c.type === 'sms') || [];
     return {
-      all: smsData.length,
+      inbox: smsData.filter(c => c.direction === 'inbound').length, // Only inbound messages in inbox
+      all: smsData.filter(c => c.direction === 'inbound').length, // Alias for inbox during transition
       unread: smsData.filter(c => !c.isRead).length,
       sent: smsData.filter(c => c.direction === 'outbound').length,
       flagged: smsData.filter(c => c.isFlagged).length
