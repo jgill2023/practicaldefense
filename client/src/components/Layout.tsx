@@ -20,6 +20,41 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background font-noto-sans">
+      {/* Secondary Menu Bar for Logged In Users - Desktop Only */}
+      {isAuthenticated && (
+        <div className="hidden md:block bg-muted/50 border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-center h-10">
+              <nav className="flex items-center space-x-6">
+                <Link href="/instructor-dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-dashboard">
+                  Dashboard
+                </Link>
+                <Link href="/students" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-students">
+                  Students
+                </Link>
+                <Link href="/communications" className="text-sm font-medium text-foreground hover:text-primary transition-colors relative" data-testid="link-secondary-communication">
+                  Communication
+                  {counts.unread > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
+                    >
+                      {counts.unread > 99 ? '99+' : counts.unread}
+                    </Badge>
+                  )}
+                </Link>
+                <Link href="/reports" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-reports">
+                  Reports
+                </Link>
+                <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-student-dashboard">
+                  Student Dashboard
+                </Link>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Navigation */}
       <header className="bg-primary shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,54 +92,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     Login
                   </Button>
                 ) : (
-                  <>
-                    {(user as any)?.role === 'instructor' ? (
-                      <>
-                        <Link href="/instructor-dashboard">
-                          <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard">
-                            Dashboard
-                          </Button>
-                        </Link>
-                        <Link href="/students">
-                          <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-students">
-                            Students
-                          </Button>
-                        </Link>
-                        <Link href="/communications">
-                          <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary relative" data-testid="link-communications">
-                            Communications
-                            {counts.unread > 0 && (
-                              <Badge 
-                                variant="destructive" 
-                                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-[20px]"
-                              >
-                                {counts.unread > 99 ? '99+' : counts.unread}
-                              </Badge>
-                            )}
-                          </Button>
-                        </Link>
-                        <Link href="/student-portal">
-                          <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-dashboard">
-                            Student Dashboard
-                          </Button>
-                        </Link>
-                      </>
-                    ) : (
-                      <Link href="/student-portal">
-                        <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-portal">
-                          My Portal
-                        </Button>
-                      </Link>
-                    )}
-                    <Button 
-                      variant="outline" 
-                      className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary"
-                      onClick={handleLogout}
-                      data-testid="button-logout"
-                    >
-                      Logout
-                    </Button>
-                  </>
+                  <Button 
+                    variant="outline" 
+                    className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary"
+                    onClick={handleLogout}
+                    data-testid="button-logout"
+                  >
+                    Logout
+                  </Button>
                 )}
               </div>
 

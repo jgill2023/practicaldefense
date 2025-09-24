@@ -14,6 +14,7 @@ import CourseRegistration from "@/pages/course-registration";
 import Checkout from "@/pages/checkout";
 import PromoCodesPage from "@/pages/promo-codes";
 import CommunicationsDashboardPage from "@/pages/communications-dashboard";
+import Reports from "@/pages/reports";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -41,6 +42,7 @@ function Router() {
           <Route path="/students" component={StudentsPage} />
           <Route path="/promo-codes" component={PromoCodesPage} />
           <Route path="/communications" component={CommunicationsDashboardPage} />
+          <Route path="/reports" component={Reports} />
         </>
       )}
       <Route component={NotFound} />
