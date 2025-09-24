@@ -110,9 +110,16 @@ export default function ScheduleCalendar() {
             }
 
             if (includeEvent) {
+              // Helper function to create local date without timezone offset issues
+              const createLocalDate = (dateInput: string | Date) => {
+                const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+                // Adjust for timezone offset to ensure local date interpretation
+                return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+              };
+
               // Create start and end dates for the calendar event
-              const startDate = new Date(schedule.startDate);
-              const endDate = schedule.endDate ? new Date(schedule.endDate) : new Date(schedule.startDate);
+              const startDate = createLocalDate(schedule.startDate);
+              const endDate = schedule.endDate ? createLocalDate(schedule.endDate) : createLocalDate(schedule.startDate);
               
               // If it's a single day event, set the end to be later the same day
               if (startDate.toDateString() === endDate.toDateString()) {
