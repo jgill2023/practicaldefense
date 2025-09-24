@@ -69,7 +69,9 @@ interface Filters {
 }
 
 export function CommunicationsDashboard() {
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeSection, setActiveSection] = useState("email");
+  const [activeEmailTab, setActiveEmailTab] = useState("all");
+  const [activeSMSTab, setActiveSMSTab] = useState("all");
   const [filters, setFilters] = useState<Filters>({
     page: 1,
     limit: 50
@@ -205,7 +207,7 @@ export function CommunicationsDashboard() {
 
     // Only show notifications for genuinely new data (not filter-based or user-driven changes)
     // Only compare totals for the "all" view to avoid filter-based false positives
-    if (activeTab === "all" && filters.page === 1 && !filters.search && !filters.type && !filters.direction && !filters.isRead && !filters.isFlagged) {
+    if ((activeEmailTab === "all" || activeSMSTab === "all") && filters.page === 1 && !filters.search && !filters.type && !filters.direction && !filters.isRead && !filters.isFlagged) {
       // Check for new messages in unfiltered view
       if (lastTotalCount !== null && currentTotal > lastTotalCount) {
         const newCount = currentTotal - lastTotalCount;
@@ -245,7 +247,7 @@ export function CommunicationsDashboard() {
     setLastTotalCount(currentTotal);
     setLastUnreadCount(currentUnread);
     setLastFlaggedCount(currentFlagged);
-  }, [communicationsData, lastTotalCount, lastUnreadCount, lastFlaggedCount, filters, activeTab, toast]);
+  }, [communicationsData, lastTotalCount, lastUnreadCount, lastFlaggedCount, filters, activeEmailTab, activeSMSTab, toast]);
 
   // Handle filter changes
   const updateFilters = (newFilters: Partial<Filters>) => {
@@ -261,22 +263,46 @@ export function CommunicationsDashboard() {
     setSearchTerm("");
   };
 
-  // Get filtered communications based on active tab
-  const getFilteredCommunications = () => {
+  // Get filtered communications based on active section and tab
+  const getFilteredCommunications = (section: string, tab: string) => {
     if (!communicationsData?.data) return [];
     
-    switch (activeTab) {
+    // First filter by section (email/sms)
+    let sectionFiltered = communicationsData.data.filter(c => c.type === section);
+    
+    // Then filter by tab
+    switch (tab) {
       case "unread":
-        return communicationsData.data.filter(c => !c.isRead);
+        return sectionFiltered.filter(c => !c.isRead);
       case "flagged":
-        return communicationsData.data.filter(c => c.isFlagged);
-      case "email":
-        return communicationsData.data.filter(c => c.type === 'email');
-      case "sms":
-        return communicationsData.data.filter(c => c.type === 'sms');
+        return sectionFiltered.filter(c => c.isFlagged);
+      case "sent":
+        return sectionFiltered.filter(c => c.direction === 'outbound');
+      case "all":
       default:
-        return communicationsData.data;
+        return sectionFiltered;
     }
+  };
+
+  // Get counts for each section and tab
+  const getEmailCounts = () => {
+    const emailData = communicationsData?.data.filter(c => c.type === 'email') || [];
+    return {
+      all: emailData.length,
+      unread: emailData.filter(c => !c.isRead).length,
+      sent: emailData.filter(c => c.direction === 'outbound').length,
+      flagged: emailData.filter(c => c.isFlagged).length
+    };
+  };
+
+  const getSMSCounts = () => {
+    const smsData = communicationsData?.data.filter(c => c.type === 'sms') || [];
+    return {
+      all: smsData.length,
+      unread: smsData.filter(c => !c.isRead).length,
+      sent: smsData.filter(c => c.direction === 'outbound').length,
+      flagged: smsData.filter(c => c.isFlagged).length
+    };
   };
 
   // Render communications table
@@ -510,7 +536,11 @@ export function CommunicationsDashboard() {
     );
   }
 
-  const filteredCommunications = getFilteredCommunications();
+  const emailCounts = getEmailCounts();
+  const smsCounts = getSMSCounts();
+  const currentSectionData = activeSection === 'email' 
+    ? getFilteredCommunications('email', activeEmailTab)
+    : getFilteredCommunications('sms', activeSMSTab);
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -593,69 +623,113 @@ export function CommunicationsDashboard() {
         </CardContent>
       </Card>
 
-      {/* Tabs for different views */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="all" data-testid="tab-all-communications">
-            All
-            {communicationsData?.total && (
-              <Badge variant="secondary" className="ml-2">
-                {communicationsData.total}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="unread" data-testid="tab-unread-communications">
-            Unread
-            {communicationsData?.data && (
-              <Badge variant="secondary" className="ml-2">
-                {communicationsData.data.filter(c => !c.isRead).length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="flagged" data-testid="tab-flagged-communications">
-            Flagged
-            {communicationsData?.data && (
-              <Badge variant="secondary" className="ml-2">
-                {communicationsData.data.filter(c => c.isFlagged).length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="email" data-testid="tab-email-communications">
+      {/* Main sections for Email and SMS */}
+      <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="email" data-testid="tab-section-email" className="text-lg">
+            <Mail className="h-5 w-5 mr-2" />
             Email
-            {communicationsData?.data && (
-              <Badge variant="secondary" className="ml-2">
-                {communicationsData.data.filter(c => c.type === 'email').length}
-              </Badge>
-            )}
+            <Badge variant="secondary" className="ml-2">
+              {emailCounts.all}
+            </Badge>
           </TabsTrigger>
-          <TabsTrigger value="sms" data-testid="tab-sms-communications">
+          <TabsTrigger value="sms" data-testid="tab-section-sms" className="text-lg">
+            <MessageSquare className="h-5 w-5 mr-2" />
             SMS
-            {communicationsData?.data && (
-              <Badge variant="secondary" className="ml-2">
-                {communicationsData.data.filter(c => c.type === 'sms').length}
-              </Badge>
-            )}
+            <Badge variant="secondary" className="ml-2">
+              {smsCounts.all}
+            </Badge>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="space-y-4" data-testid="content-all-communications">
-          {renderCommunicationsTable(filteredCommunications)}
+        {/* Email Section */}
+        <TabsContent value="email" className="space-y-4" data-testid="content-section-email">
+          <Tabs value={activeEmailTab} onValueChange={setActiveEmailTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="all" data-testid="tab-email-all">
+                All
+                <Badge variant="secondary" className="ml-2">
+                  {emailCounts.all}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="unread" data-testid="tab-email-unread">
+                Unread
+                <Badge variant="secondary" className="ml-2">
+                  {emailCounts.unread}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="sent" data-testid="tab-email-sent">
+                Sent
+                <Badge variant="secondary" className="ml-2">
+                  {emailCounts.sent}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="flagged" data-testid="tab-email-flagged">
+                Flagged
+                <Badge variant="secondary" className="ml-2">
+                  {emailCounts.flagged}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all" className="space-y-4" data-testid="content-email-all">
+              {renderCommunicationsTable(getFilteredCommunications('email', 'all'))}
+            </TabsContent>
+            <TabsContent value="unread" className="space-y-4" data-testid="content-email-unread">
+              {renderCommunicationsTable(getFilteredCommunications('email', 'unread'))}
+            </TabsContent>
+            <TabsContent value="sent" className="space-y-4" data-testid="content-email-sent">
+              {renderCommunicationsTable(getFilteredCommunications('email', 'sent'))}
+            </TabsContent>
+            <TabsContent value="flagged" className="space-y-4" data-testid="content-email-flagged">
+              {renderCommunicationsTable(getFilteredCommunications('email', 'flagged'))}
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
-        <TabsContent value="unread" className="space-y-4" data-testid="content-unread-communications">
-          {renderCommunicationsTable(filteredCommunications)}
-        </TabsContent>
+        {/* SMS Section */}
+        <TabsContent value="sms" className="space-y-4" data-testid="content-section-sms">
+          <Tabs value={activeSMSTab} onValueChange={setActiveSMSTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="all" data-testid="tab-sms-all">
+                All
+                <Badge variant="secondary" className="ml-2">
+                  {smsCounts.all}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="unread" data-testid="tab-sms-unread">
+                Unread
+                <Badge variant="secondary" className="ml-2">
+                  {smsCounts.unread}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="sent" data-testid="tab-sms-sent">
+                Sent
+                <Badge variant="secondary" className="ml-2">
+                  {smsCounts.sent}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="flagged" data-testid="tab-sms-flagged">
+                Flagged
+                <Badge variant="secondary" className="ml-2">
+                  {smsCounts.flagged}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="flagged" className="space-y-4" data-testid="content-flagged-communications">
-          {renderCommunicationsTable(filteredCommunications)}
-        </TabsContent>
-
-        <TabsContent value="email" className="space-y-4" data-testid="content-email-communications">
-          {renderCommunicationsTable(filteredCommunications)}
-        </TabsContent>
-
-        <TabsContent value="sms" className="space-y-4" data-testid="content-sms-communications">
-          {renderCommunicationsTable(filteredCommunications)}
+            <TabsContent value="all" className="space-y-4" data-testid="content-sms-all">
+              {renderCommunicationsTable(getFilteredCommunications('sms', 'all'))}
+            </TabsContent>
+            <TabsContent value="unread" className="space-y-4" data-testid="content-sms-unread">
+              {renderCommunicationsTable(getFilteredCommunications('sms', 'unread'))}
+            </TabsContent>
+            <TabsContent value="sent" className="space-y-4" data-testid="content-sms-sent">
+              {renderCommunicationsTable(getFilteredCommunications('sms', 'sent'))}
+            </TabsContent>
+            <TabsContent value="flagged" className="space-y-4" data-testid="content-sms-flagged">
+              {renderCommunicationsTable(getFilteredCommunications('sms', 'flagged'))}
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
 
