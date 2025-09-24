@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -76,6 +76,14 @@ export function CommunicationsDashboard() {
   });
   const [searchTerm, setSearchTerm] = useState("");
   
+  // Real-time notification state
+  const [lastTotalCount, setLastTotalCount] = useState<number | null>(null);
+  const [lastUnreadCount, setLastUnreadCount] = useState<number | null>(null);
+  const [lastFlaggedCount, setLastFlaggedCount] = useState<number | null>(null);
+  const hasMountedRef = useRef(false);
+  const lastFiltersRef = useRef<string>('');
+  const suppressNotificationsRef = useRef(false);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -96,17 +104,22 @@ export function CommunicationsDashboard() {
     return `/api/communications?${params.toString()}`;
   };
 
-  // Query for communications data
+  // Query for communications data with background refetching
   const { data: communicationsData, isLoading, isError, error, refetch } = useQuery<CommunicationsData>({
     queryKey: buildQueryKey(filters),
     queryFn: () => fetch(buildQueryUrl(filters), { credentials: 'include' }).then(res => res.json()),
+    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchIntervalInBackground: true, // Continue refetching when tab is not focused
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
   });
 
   // Mutations for status changes
   const markAsReadMutation = useMutation({
     mutationFn: (id: string) => apiRequest(`/api/communications/${id}/read`, { method: 'PATCH' }),
     onSuccess: () => {
+      suppressNotificationsRef.current = true;
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/communications/counts'] });
       toast({ title: "Success", description: "Message marked as read" });
     },
     onError: () => {
@@ -117,7 +130,9 @@ export function CommunicationsDashboard() {
   const markAsUnreadMutation = useMutation({
     mutationFn: (id: string) => apiRequest(`/api/communications/${id}/unread`, { method: 'PATCH' }),
     onSuccess: () => {
+      suppressNotificationsRef.current = true;
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/communications/counts'] });
       toast({ title: "Success", description: "Message marked as unread" });
     },
     onError: () => {
@@ -129,7 +144,9 @@ export function CommunicationsDashboard() {
     mutationFn: ({ id, note }: { id: string; note?: string }) => 
       apiRequest(`/api/communications/${id}/flag`, { method: 'PATCH', body: { note } }),
     onSuccess: () => {
+      suppressNotificationsRef.current = true;
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/communications/counts'] });
       toast({ title: "Success", description: "Message flagged for follow-up" });
     },
     onError: () => {
@@ -140,13 +157,95 @@ export function CommunicationsDashboard() {
   const unflagMutation = useMutation({
     mutationFn: (id: string) => apiRequest(`/api/communications/${id}/unflag`, { method: 'PATCH' }),
     onSuccess: () => {
+      suppressNotificationsRef.current = true;
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/communications/counts'] });
       toast({ title: "Success", description: "Message unflagged" });
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to unflag message", variant: "destructive" });
     }
   });
+
+  // Handle real-time notifications when data changes
+  useEffect(() => {
+    if (!communicationsData) {
+      return;
+    }
+
+    const currentFiltersKey = JSON.stringify(filters);
+    const currentTotal = communicationsData.total;
+    const currentUnread = communicationsData.data.filter(c => !c.isRead).length;
+    const currentFlagged = communicationsData.data.filter(c => c.isFlagged).length;
+
+    // Check if this is the first load or if filters changed
+    const isFirstLoad = !hasMountedRef.current;
+    const filtersChanged = lastFiltersRef.current !== currentFiltersKey;
+    
+    if (isFirstLoad || filtersChanged) {
+      // Reset tracking values without notifications
+      setLastTotalCount(currentTotal);
+      setLastUnreadCount(currentUnread);
+      setLastFlaggedCount(currentFlagged);
+      lastFiltersRef.current = currentFiltersKey;
+      hasMountedRef.current = true;
+      suppressNotificationsRef.current = false; // Clear suppression flag
+      return;
+    }
+
+    // Check if notifications should be suppressed (from user actions)
+    if (suppressNotificationsRef.current) {
+      // Update counts but don't show notifications
+      setLastTotalCount(currentTotal);
+      setLastUnreadCount(currentUnread);
+      setLastFlaggedCount(currentFlagged);
+      suppressNotificationsRef.current = false; // Clear suppression flag
+      return;
+    }
+
+    // Only show notifications for genuinely new data (not filter-based or user-driven changes)
+    // Only compare totals for the "all" view to avoid filter-based false positives
+    if (activeTab === "all" && filters.page === 1 && !filters.search && !filters.type && !filters.direction && !filters.isRead && !filters.isFlagged) {
+      // Check for new messages in unfiltered view
+      if (lastTotalCount !== null && currentTotal > lastTotalCount) {
+        const newCount = currentTotal - lastTotalCount;
+        toast({
+          title: "New Messages",
+          description: `${newCount} new communication${newCount === 1 ? '' : 's'} received`,
+          duration: 5000,
+        });
+      }
+
+      // Check for new unread messages in unfiltered view
+      if (lastUnreadCount !== null && currentUnread > lastUnreadCount) {
+        const newUnread = currentUnread - lastUnreadCount;
+        if (newUnread > 0) {
+          toast({
+            title: "New Unread Messages",
+            description: `${newUnread} new unread message${newUnread === 1 ? '' : 's'}`,
+            duration: 5000,
+          });
+        }
+      }
+
+      // Check for new flagged messages in unfiltered view
+      if (lastFlaggedCount !== null && currentFlagged > lastFlaggedCount) {
+        const newFlagged = currentFlagged - lastFlaggedCount;
+        if (newFlagged > 0) {
+          toast({
+            title: "New Flagged Messages", 
+            description: `${newFlagged} message${newFlagged === 1 ? '' : 's'} flagged for follow-up`,
+            duration: 5000,
+          });
+        }
+      }
+    }
+
+    // Update tracking values
+    setLastTotalCount(currentTotal);
+    setLastUnreadCount(currentUnread);
+    setLastFlaggedCount(currentFlagged);
+  }, [communicationsData, lastTotalCount, lastUnreadCount, lastFlaggedCount, filters, activeTab, toast]);
 
   // Handle filter changes
   const updateFilters = (newFilters: Partial<Filters>) => {

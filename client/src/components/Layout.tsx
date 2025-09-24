@@ -3,12 +3,14 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useCommunicationCounts } from "@/hooks/useCommunicationCounts";
 import { Shield, Tag, Users, Star, Menu, X } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { counts } = useCommunicationCounts();
 
 
 
@@ -69,8 +71,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           </Button>
                         </Link>
                         <Link href="/communications">
-                          <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-communications">
+                          <Button variant="outline" className="border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary relative" data-testid="link-communications">
                             Communications
+                            {counts.unread > 0 && (
+                              <Badge 
+                                variant="destructive" 
+                                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-[20px]"
+                              >
+                                {counts.unread > 99 ? '99+' : counts.unread}
+                              </Badge>
+                            )}
                           </Button>
                         </Link>
                         <Link href="/student-portal">
@@ -147,8 +157,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             </Button>
                           </Link>
                           <Link href="/communications" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-communications-mobile">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary relative" data-testid="link-communications-mobile">
                               Communications
+                              {counts.unread > 0 && (
+                                <Badge 
+                                  variant="destructive" 
+                                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-[20px]"
+                                >
+                                  {counts.unread > 99 ? '99+' : counts.unread}
+                                </Badge>
+                              )}
                             </Button>
                           </Link>
                           <Link href="/student-portal" className="block">
