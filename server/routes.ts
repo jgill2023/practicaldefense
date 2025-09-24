@@ -3543,6 +3543,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==============================================================
+  // SMS MANAGEMENT API ROUTES
+  // ==============================================================
+
+  // Import Twilio SMS service
+  const { twilioSMSService, sendSMSSchema } = await import('./twilioService');
+
+  // Get SMS inbox (received messages)
+  app.get("/api/sms/inbox", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access SMS features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const { limit, from, status } = req.query;
+      const filters: any = {};
+      if (limit) filters.limit = parseInt(limit);
+      if (from) filters.from = from;
+      if (status) filters.status = status;
+
+      const messages = await twilioSMSService.getInboxMessages(filters);
+      res.json({
+        messages,
+        total: messages.length
+      });
+    } catch (error: any) {
+      console.error("Error fetching SMS inbox:", error);
+      res.status(500).json({ error: "Failed to fetch SMS inbox: " + error.message });
+    }
+  });
+
+  // Get all SMS messages
+  app.get("/api/sms/messages", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access SMS features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const { limit, direction, from, to, status } = req.query;
+      const filters: any = {};
+      if (limit) filters.limit = parseInt(limit);
+      if (direction) filters.direction = direction;
+      if (from) filters.from = from;
+      if (to) filters.to = to;
+      if (status) filters.status = status;
+
+      const messages = await twilioSMSService.getMessages(filters);
+      res.json({
+        messages,
+        total: messages.length
+      });
+    } catch (error: any) {
+      console.error("Error fetching SMS messages:", error);
+      res.status(500).json({ error: "Failed to fetch SMS messages: " + error.message });
+    }
+  });
+
+  // Get SMS message by SID
+  app.get("/api/sms/messages/:sid", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { sid } = req.params;
+      
+      // Only allow instructors to access SMS features
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const message = await twilioSMSService.getMessage(sid);
+      if (!message) {
+        return res.status(404).json({ error: "Message not found" });
+      }
+
+      res.json(message);
+    } catch (error: any) {
+      console.error("Error fetching SMS message:", error);
+      res.status(500).json({ error: "Failed to fetch SMS message: " + error.message });
+    }
+  });
+
+  // Send SMS message
+  app.post("/api/sms/send", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to send SMS
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const validatedData = sendSMSSchema.parse(req.body);
+      const message = await twilioSMSService.sendSMS(validatedData);
+
+      res.json({
+        success: true,
+        message: message,
+        messageSid: message.sid
+      });
+    } catch (error: any) {
+      console.error("Error sending SMS:", error);
+      
+      // Handle Zod validation errors as 400 Bad Request
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      
+      res.status(500).json({ error: "Failed to send SMS: " + error.message });
+    }
+  });
+
+  // Get SMS statistics
+  app.get("/api/sms/stats", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access SMS stats
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const stats = await twilioSMSService.getMessageStats();
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Error fetching SMS stats:", error);
+      res.status(500).json({ error: "Failed to fetch SMS statistics: " + error.message });
+    }
+  });
+
+  // Get contacts for SMS (students and instructors with phone numbers)
+  app.get("/api/sms/contacts", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access contacts
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const { search, role: filterRole } = req.query;
+      
+      // Get all users with phone numbers
+      let contacts = await storage.getAllStudents();
+      
+      // Filter by role if specified
+      if (filterRole && filterRole !== 'all') {
+        contacts = contacts.filter(contact => contact.role === filterRole);
+      }
+      
+      // Filter out contacts without phone numbers
+      contacts = contacts.filter(contact => contact.phone);
+      
+      // Search filter
+      if (search) {
+        const searchLower = search.toString().toLowerCase();
+        contacts = contacts.filter(contact => 
+          `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchLower) ||
+          contact.email?.toLowerCase().includes(searchLower) ||
+          contact.phone?.includes(search.toString())
+        );
+      }
+
+      // Format contacts for SMS use
+      const formattedContacts = contacts.map(contact => ({
+        id: contact.id,
+        name: `${contact.firstName} ${contact.lastName}`,
+        email: contact.email,
+        phone: contact.phone,
+        role: contact.role,
+      }));
+
+      res.json({
+        contacts: formattedContacts,
+        total: formattedContacts.length
+      });
+    } catch (error: any) {
+      console.error("Error fetching SMS contacts:", error);
+      res.status(500).json({ error: "Failed to fetch SMS contacts: " + error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

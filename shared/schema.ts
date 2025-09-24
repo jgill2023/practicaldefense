@@ -54,6 +54,8 @@ export const users = pgTable("users", {
   enableSmsReminders: boolean("enable_sms_reminders").default(true), // SMS for course/license reminders
   enableSmsPaymentNotices: boolean("enable_sms_payment_notices").default(false), // SMS for payment updates
   enableSmsAnnouncements: boolean("enable_sms_announcements").default(false), // SMS for general announcements
+  // Instructor-specific settings
+  replyToEmail: varchar("reply_to_email"), // Custom reply-to email for instructor communications
   role: varchar("role").notNull().default('student'), // 'student' or 'instructor'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -515,6 +517,7 @@ export const notificationTemplates = pgTable("notification_templates", {
   category: varchar("category", { length: 50 }).notNull(), // 'course_specific', 'payment_notice', 'announcement', 'welcome', 'certificate', 'reminder'
   subject: varchar("subject", { length: 500 }), // Only for email templates
   content: text("content").notNull(), // HTML for email, plain text for SMS
+  replyToEmail: varchar("reply_to_email"), // Custom reply-to email for this template
   variables: text("variables").array(), // Available variables like {{student_name}}, {{course_name}}
   
   // Course associations

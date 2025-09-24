@@ -69,9 +69,9 @@ interface Filters {
 }
 
 export function CommunicationsDashboard() {
-  const [activeSection, setActiveSection] = useState("email");
-  const [activeEmailTab, setActiveEmailTab] = useState("all");
-  const [activeSMSTab, setActiveSMSTab] = useState("all");
+  const [activeSection, setActiveSection] = useState("email-templates");
+  const [activeEmailTab, setActiveEmailTab] = useState("templates");
+  const [activeSMSTab, setActiveSMSTab] = useState("contacts");
   const [filters, setFilters] = useState<Filters>({
     page: 1,
     limit: 50
@@ -626,111 +626,226 @@ export function CommunicationsDashboard() {
         </CardContent>
       </Card>
 
-      {/* Main sections for Email and SMS */}
+      {/* Main sections for Email Templates and SMS Management */}
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="email" data-testid="tab-section-email" className="text-lg">
+          <TabsTrigger value="email-templates" data-testid="tab-section-email-templates" className="text-lg">
             <Mail className="h-5 w-5 mr-2" />
-            Email
-            <Badge variant="secondary" className="ml-2">
-              {emailCounts.all}
-            </Badge>
+            Email Templates
           </TabsTrigger>
-          <TabsTrigger value="sms" data-testid="tab-section-sms" className="text-lg">
+          <TabsTrigger value="sms-management" data-testid="tab-section-sms-management" className="text-lg">
             <MessageSquare className="h-5 w-5 mr-2" />
-            SMS
-            <Badge variant="secondary" className="ml-2">
-              {smsCounts.all}
-            </Badge>
+            SMS Management
           </TabsTrigger>
         </TabsList>
 
-        {/* Email Section */}
-        <TabsContent value="email" className="space-y-4" data-testid="content-section-email">
-          <Tabs value={activeEmailTab} onValueChange={setActiveEmailTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="all" data-testid="tab-email-all">
-                All
-                <Badge variant="secondary" className="ml-2">
-                  {emailCounts.all}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="unread" data-testid="tab-email-unread">
-                Unread
-                <Badge variant="secondary" className="ml-2">
-                  {emailCounts.unread}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="sent" data-testid="tab-email-sent">
-                Sent
-                <Badge variant="secondary" className="ml-2">
-                  {emailCounts.sent}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="flagged" data-testid="tab-email-flagged">
-                Flagged
-                <Badge variant="secondary" className="ml-2">
-                  {emailCounts.flagged}
-                </Badge>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="all" className="space-y-4" data-testid="content-email-all">
-              {renderCommunicationsTable(getFilteredCommunications('email', 'all'))}
-            </TabsContent>
-            <TabsContent value="unread" className="space-y-4" data-testid="content-email-unread">
-              {renderCommunicationsTable(getFilteredCommunications('email', 'unread'))}
-            </TabsContent>
-            <TabsContent value="sent" className="space-y-4" data-testid="content-email-sent">
-              {renderCommunicationsTable(getFilteredCommunications('email', 'sent'))}
-            </TabsContent>
-            <TabsContent value="flagged" className="space-y-4" data-testid="content-email-flagged">
-              {renderCommunicationsTable(getFilteredCommunications('email', 'flagged'))}
-            </TabsContent>
-          </Tabs>
+        {/* Email Templates Section */}
+        <TabsContent value="email-templates" className="space-y-4" data-testid="content-section-email-templates">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Mail className="h-5 w-5" />
+                <span>Email Templates</span>
+                <Button size="sm" data-testid="button-create-email-template">
+                  Create Template
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                Manage email templates for automated course notifications and reminders. Each template can have a custom reply-to email address.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center">
+                    <Mail className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="font-medium mb-2">Course Registration Confirmation</h3>
+                    <p className="text-sm text-muted-foreground mb-4">Sent when students register for courses</p>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" data-testid="button-edit-template">Edit</Button>
+                      <Button variant="outline" size="sm" data-testid="button-preview-template">Preview</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-dashed">
+                  <CardContent className="p-6 text-center">
+                    <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="font-medium mb-2">Course Reminder</h3>
+                    <p className="text-sm text-muted-foreground mb-4">Sent 24 hours before course starts</p>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" data-testid="button-edit-template">Edit</Button>
+                      <Button variant="outline" size="sm" data-testid="button-preview-template">Preview</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* SMS Section */}
-        <TabsContent value="sms" className="space-y-4" data-testid="content-section-sms">
+        {/* SMS Management Section */}
+        <TabsContent value="sms-management" className="space-y-4" data-testid="content-section-sms-management">
           <Tabs value={activeSMSTab} onValueChange={setActiveSMSTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="all" data-testid="tab-sms-all">
-                All
-                <Badge variant="secondary" className="ml-2">
-                  {smsCounts.all}
-                </Badge>
+              <TabsTrigger value="contacts" data-testid="tab-sms-contacts">
+                <User className="h-4 w-4 mr-2" />
+                Contacts
               </TabsTrigger>
-              <TabsTrigger value="unread" data-testid="tab-sms-unread">
-                Unread
-                <Badge variant="secondary" className="ml-2">
-                  {smsCounts.unread}
-                </Badge>
+              <TabsTrigger value="templates" data-testid="tab-sms-templates">
+                <Book className="h-4 w-4 mr-2" />
+                Templates
               </TabsTrigger>
-              <TabsTrigger value="sent" data-testid="tab-sms-sent">
-                Sent
-                <Badge variant="secondary" className="ml-2">
-                  {smsCounts.sent}
-                </Badge>
+              <TabsTrigger value="inbox" data-testid="tab-sms-inbox">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Inbox
               </TabsTrigger>
-              <TabsTrigger value="flagged" data-testid="tab-sms-flagged">
-                Flagged
-                <Badge variant="secondary" className="ml-2">
-                  {smsCounts.flagged}
-                </Badge>
+              <TabsTrigger value="compose" data-testid="tab-sms-compose">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Compose
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="all" className="space-y-4" data-testid="content-sms-all">
-              {renderCommunicationsTable(getFilteredCommunications('sms', 'all'))}
+            {/* SMS Contacts Tab */}
+            <TabsContent value="contacts" className="space-y-4" data-testid="content-sms-contacts">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center space-x-2">
+                      <User className="h-5 w-5" />
+                      <span>Contact Management</span>
+                    </span>
+                    <Button size="sm" data-testid="button-add-contact">
+                      Add Contact
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-4">
+                      <Input placeholder="Search contacts..." className="flex-1" data-testid="input-search-contacts" />
+                      <Select>
+                        <SelectTrigger data-testid="select-contact-filter">
+                          <SelectValue placeholder="Filter by group" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Contacts</SelectItem>
+                          <SelectItem value="students">Students</SelectItem>
+                          <SelectItem value="instructors">Instructors</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="text-center py-8 text-muted-foreground">
+                      <User className="h-12 w-12 mx-auto mb-4" />
+                      <p>Contact management will display student and instructor phone numbers for SMS notifications.</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
-            <TabsContent value="unread" className="space-y-4" data-testid="content-sms-unread">
-              {renderCommunicationsTable(getFilteredCommunications('sms', 'unread'))}
+
+            {/* SMS Templates Tab */}
+            <TabsContent value="templates" className="space-y-4" data-testid="content-sms-templates">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center space-x-2">
+                      <Book className="h-5 w-5" />
+                      <span>SMS Templates</span>
+                    </span>
+                    <Button size="sm" data-testid="button-create-sms-template">
+                      Create Template
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4" />
+                    <p>Create and manage SMS templates for course notifications and reminders.</p>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
-            <TabsContent value="sent" className="space-y-4" data-testid="content-sms-sent">
-              {renderCommunicationsTable(getFilteredCommunications('sms', 'sent'))}
+
+            {/* SMS Inbox Tab */}
+            <TabsContent value="inbox" className="space-y-4" data-testid="content-sms-inbox">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center space-x-2">
+                      <MessageSquare className="h-5 w-5" />
+                      <span>SMS Inbox</span>
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <Select>
+                        <SelectTrigger data-testid="select-inbox-filter">
+                          <SelectValue placeholder="All Messages" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Messages</SelectItem>
+                          <SelectItem value="unread">Unread</SelectItem>
+                          <SelectItem value="flagged">Flagged</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button variant="outline" size="sm" data-testid="button-refresh-inbox">
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4" />
+                    <p>SMS messages will be retrieved directly from Twilio and displayed here.</p>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
-            <TabsContent value="flagged" className="space-y-4" data-testid="content-sms-flagged">
-              {renderCommunicationsTable(getFilteredCommunications('sms', 'flagged'))}
+
+            {/* SMS Compose Tab */}
+            <TabsContent value="compose" className="space-y-4" data-testid="content-sms-compose">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <MessageSquare className="h-5 w-5" />
+                    <span>Compose SMS</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Recipient</label>
+                    <Select>
+                      <SelectTrigger data-testid="select-recipient">
+                        <SelectValue placeholder="Select recipient" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="individual">Individual Contact</SelectItem>
+                        <SelectItem value="group">Notification Group</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Message</label>
+                    <textarea 
+                      className="w-full p-3 border rounded-md resize-none"
+                      rows={4}
+                      placeholder="Type your message here..."
+                      data-testid="textarea-sms-message"
+                    />
+                    <div className="text-right text-sm text-muted-foreground mt-1">
+                      0/160 characters
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" data-testid="button-save-draft">Save Draft</Button>
+                    <Button data-testid="button-send-sms">Send Message</Button>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </TabsContent>
