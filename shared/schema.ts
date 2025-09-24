@@ -979,6 +979,63 @@ export const messageAuditLog = pgTable("message_audit_log", {
   deliveredAt: timestamp("delivered_at"),
 });
 
+// Communications table for tracking all emails and text messages
+export const communications = pgTable("communications", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Communication type and direction
+  type: varchar("type", { length: 10 }).notNull(), // 'email' or 'sms'
+  direction: varchar("direction", { length: 10 }).notNull(), // 'outbound' or 'inbound'
+  
+  // Participants
+  fromAddress: varchar("from_address", { length: 255 }), // Email from address or SMS from number
+  toAddress: varchar("to_address", { length: 255 }).notNull(), // Email to address or SMS to number
+  
+  // Message content
+  subject: varchar("subject", { length: 500 }), // Email subject (null for SMS)
+  content: text("content").notNull(), // Message body
+  htmlContent: text("html_content"), // HTML version for emails
+  
+  // User associations
+  userId: varchar("user_id").references(() => users.id), // Associated student/instructor
+  enrollmentId: uuid("enrollment_id").references(() => enrollments.id), // Related enrollment if applicable
+  courseId: uuid("course_id").references(() => courses.id), // Related course if applicable
+  
+  // Status tracking
+  isRead: boolean("is_read").notNull().default(false), // Has the message been read/viewed
+  isFlagged: boolean("is_flagged").notNull().default(false), // Flagged for follow-up
+  flagNote: text("flag_note"), // Optional note when flagged
+  
+  // Delivery tracking
+  deliveryStatus: varchar("delivery_status", { length: 50 }).default('pending'), // 'pending', 'sent', 'delivered', 'failed', 'bounced'
+  externalMessageId: varchar("external_message_id", { length: 255 }), // SendGrid message ID or Twilio SID
+  errorMessage: text("error_message"), // Any delivery error details
+  
+  // Timestamps
+  sentAt: timestamp("sent_at"),
+  deliveredAt: timestamp("delivered_at"),
+  readAt: timestamp("read_at"), // When marked as read
+  flaggedAt: timestamp("flagged_at"), // When flagged
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Communications relations
+export const communicationsRelations = relations(communications, ({ one }) => ({
+  user: one(users, {
+    fields: [communications.userId],
+    references: [users.id],
+  }),
+  enrollment: one(enrollments, {
+    fields: [communications.enrollmentId],
+    references: [enrollments.id],
+  }),
+  course: one(courses, {
+    fields: [communications.courseId],
+    references: [courses.id],
+  }),
+}));
+
 // Prohibited words insert schema
 export const insertProhibitedWordSchema = createInsertSchema(prohibitedWords).omit({ 
   id: true, 
@@ -991,6 +1048,15 @@ export const insertMessageAuditLogSchema = createInsertSchema(messageAuditLog).o
   id: true, 
   attemptedAt: true,
   deliveredAt: true 
+});
+
+// Communications insert schema
+export const insertCommunicationSchema = createInsertSchema(communications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  readAt: true,
+  flaggedAt: true,
 });
 
 // Content filtering validation result type
@@ -1011,6 +1077,8 @@ export type ProhibitedWord = typeof prohibitedWords.$inferSelect;
 export type InsertProhibitedWord = z.infer<typeof insertProhibitedWordSchema>;
 export type MessageAuditLog = typeof messageAuditLog.$inferSelect;
 export type InsertMessageAuditLog = z.infer<typeof insertMessageAuditLogSchema>;
+export type Communication = typeof communications.$inferSelect;
+export type InsertCommunication = z.infer<typeof insertCommunicationSchema>;
 
 // Waiver enums and types
 export type WaiverScope = 'global' | 'course' | 'category';
@@ -1037,6 +1105,13 @@ export type PromoCodeRedemptionWithDetails = PromoCodeRedemption & {
   promoCode: PromoCode;
   user: User;
   enrollment?: EnrollmentWithDetails;
+};
+
+// Extended type for communications with relations
+export type CommunicationWithDetails = Communication & {
+  user?: User;
+  enrollment?: EnrollmentWithDetails;
+  course?: Course;
 };
 
 // Promo code validation result type
