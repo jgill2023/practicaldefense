@@ -1,6 +1,7 @@
 // SMS service using Twilio integration with ultra-strict content filtering
 import Twilio from 'twilio';
 import { contentFilter } from './contentFilter';
+import { storage } from './storage';
 
 // Lazy initialization to avoid server crash on startup
 let twilioClient: Twilio | null = null;
@@ -30,6 +31,8 @@ interface SmsParams {
   body: string;
   from?: string;
   mediaUrl?: string[];
+  instructorId?: string; // Optional instructor context for attribution
+  purpose?: 'educational' | 'marketing' | 'administrative'; // Optional purpose for analytics
 }
 
 export async function sendSms(params: SmsParams): Promise<{
@@ -47,6 +50,29 @@ export async function sendSms(params: SmsParams): Promise<{
       body: params.body,
       mediaUrl: params.mediaUrl,
     });
+
+    // Log communication to database with optional instructor context
+    try {
+      await storage.createCommunication({
+        type: 'sms',
+        direction: 'outbound',
+        purpose: params.purpose || null, // Include purpose if provided for analytics/filtering
+        fromAddress: fromNumber,
+        toAddress: params.to,
+        subject: null, // SMS doesn't have subjects
+        content: params.body,
+        htmlContent: null, // SMS is plain text only
+        deliveryStatus: 'sent',
+        externalMessageId: response.sid,
+        sentAt: new Date(),
+        userId: params.instructorId || null, // Include instructorId if provided for attribution
+        enrollmentId: null, // Will be resolved in API layer if enrollment context is available
+        courseId: null, // Will be resolved in API layer if course context is available
+      });
+    } catch (logError) {
+      console.error('Failed to log SMS communication:', logError);
+      // Don't fail the SMS send if logging fails
+    }
 
     return {
       success: true,
@@ -178,6 +204,29 @@ export class NotificationSmsService {
               priceUnit: response.priceUnit,
             }
           });
+
+          // Log communication to database with full instructor context
+          try {
+            await storage.createCommunication({
+              type: 'sms',
+              direction: 'outbound',
+              purpose: params.purpose || 'educational', // Capture the purpose for analytics/filtering
+              fromAddress: fromNumber,
+              toAddress: phoneNumber,
+              subject: null, // SMS doesn't have subjects
+              content: params.message,
+              htmlContent: null, // SMS is plain text only
+              deliveryStatus: 'sent',
+              externalMessageId: response.sid,
+              sentAt: new Date(),
+              userId: params.instructorId, // Map instructorId to userId for attribution
+              enrollmentId: null, // Will be resolved in API layer if enrollment context is available
+              courseId: null, // Will be resolved in API layer if course context is available
+            });
+          } catch (logError) {
+            console.error('Failed to log SMS communication:', logError);
+            // Don't fail the SMS send if logging fails
+          }
 
           // Rate limiting - add delay between messages except for the last one
           if (i < validPhoneNumbers.length - 1) {

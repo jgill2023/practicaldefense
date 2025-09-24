@@ -3345,6 +3345,204 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==============================================================
+  // COMMUNICATIONS DASHBOARD API ROUTES
+  // ==============================================================
+
+  // Get communications with filtering and search
+  app.get("/api/communications", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Only allow instructors to access communications dashboard
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      // Validate query parameters with Zod
+      const querySchema = z.object({
+        page: z.string().optional().default("1").transform(val => Math.max(1, parseInt(val) || 1)),
+        limit: z.string().optional().default("50").transform(val => Math.min(100, Math.max(1, parseInt(val) || 50))),
+        type: z.enum(["email", "sms"]).optional(),
+        direction: z.enum(["inbound", "outbound"]).optional(),
+        isRead: z.string().optional().transform(val => val === 'true' ? true : val === 'false' ? false : undefined),
+        isFlagged: z.string().optional().transform(val => val === 'true' ? true : val === 'false' ? false : undefined),
+        search: z.string().optional(),
+        userId: z.string().optional(),
+        courseId: z.string().uuid().optional(),
+        enrollmentId: z.string().uuid().optional()
+      });
+
+      const { page, limit, type, direction, isRead, isFlagged, search, userId: filterUserId, courseId, enrollmentId } = querySchema.parse(req.query);
+      const offset = (page - 1) * limit;
+      
+      const filters = {
+        type,
+        direction,
+        isRead,
+        isFlagged,
+        search,
+        userId: filterUserId,
+        courseId,
+        enrollmentId,
+        limit,
+        offset
+      };
+
+      const result = await storage.getCommunications(filters);
+      res.json({
+        data: result.communications,
+        page,
+        limit,
+        total: result.total
+      });
+    } catch (error: any) {
+      console.error("Error fetching communications:", error);
+      
+      // Handle validation errors as 400 Bad Request
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      
+      res.status(500).json({ error: "Failed to fetch communications" });
+    }
+  });
+
+  // Get single communication by ID
+  app.get("/api/communications/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      // Only allow instructors to access communications
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const communication = await storage.getCommunication(id);
+      if (!communication) {
+        return res.status(404).json({ error: "Communication not found" });
+      }
+
+      res.json(communication);
+    } catch (error: any) {
+      console.error("Error fetching communication:", error);
+      res.status(500).json({ error: "Failed to fetch communication" });
+    }
+  });
+
+  // Mark communication as read
+  app.patch("/api/communications/:id/read", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      // Only allow instructors to manage communications
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const communication = await storage.markCommunicationAsRead(id);
+      res.json(communication);
+    } catch (error: any) {
+      console.error("Error marking communication as read:", error);
+      
+      if (error.message === 'Communication not found') {
+        return res.status(404).json({ error: "Communication not found" });
+      }
+      
+      res.status(500).json({ error: "Failed to mark communication as read" });
+    }
+  });
+
+  // Mark communication as unread
+  app.patch("/api/communications/:id/unread", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      // Only allow instructors to manage communications
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const communication = await storage.markCommunicationAsUnread(id);
+      res.json(communication);
+    } catch (error: any) {
+      console.error("Error marking communication as unread:", error);
+      
+      if (error.message === 'Communication not found') {
+        return res.status(404).json({ error: "Communication not found" });
+      }
+      
+      res.status(500).json({ error: "Failed to mark communication as unread" });
+    }
+  });
+
+  // Flag communication for follow-up
+  app.patch("/api/communications/:id/flag", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      // Only allow instructors to manage communications
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      // Validate request body
+      const flagSchema = z.object({
+        note: z.string().optional()
+      });
+
+      const { note } = flagSchema.parse(req.body);
+      const communication = await storage.flagCommunication(id, note);
+      res.json(communication);
+    } catch (error: any) {
+      console.error("Error flagging communication:", error);
+      
+      if (error.message === 'Communication not found') {
+        return res.status(404).json({ error: "Communication not found" });
+      }
+      
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+      
+      res.status(500).json({ error: "Failed to flag communication" });
+    }
+  });
+
+  // Unflag communication
+  app.patch("/api/communications/:id/unflag", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { id } = req.params;
+      
+      // Only allow instructors to manage communications
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const communication = await storage.unflagCommunication(id);
+      res.json(communication);
+    } catch (error: any) {
+      console.error("Error unflagging communication:", error);
+      
+      if (error.message === 'Communication not found') {
+        return res.status(404).json({ error: "Communication not found" });
+      }
+      
+      res.status(500).json({ error: "Failed to unflag communication" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

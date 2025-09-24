@@ -986,6 +986,7 @@ export const communications = pgTable("communications", {
   // Communication type and direction
   type: varchar("type", { length: 10 }).notNull(), // 'email' or 'sms'
   direction: varchar("direction", { length: 10 }).notNull(), // 'outbound' or 'inbound'
+  purpose: varchar("purpose", { length: 20 }), // 'educational', 'marketing', 'administrative', etc.
   
   // Participants
   fromAddress: varchar("from_address", { length: 255 }), // Email from address or SMS from number
