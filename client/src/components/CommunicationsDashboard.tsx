@@ -551,14 +551,14 @@ export function CommunicationsDashboard() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <Select
-                value={filters.type || ""}
-                onValueChange={(value) => updateFilters({ type: value as 'email' | 'sms' | undefined })}
+                value={filters.type || "all"}
+                onValueChange={(value) => updateFilters({ type: value === 'all' ? undefined : value as 'email' | 'sms' })}
               >
                 <SelectTrigger data-testid="select-type-filter">
                   <SelectValue placeholder="All Types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="email">Email Only</SelectItem>
                   <SelectItem value="sms">SMS Only</SelectItem>
                 </SelectContent>
@@ -567,14 +567,14 @@ export function CommunicationsDashboard() {
             
             <div className="flex-1">
               <Select
-                value={filters.direction || ""}
-                onValueChange={(value) => updateFilters({ direction: value as 'inbound' | 'outbound' | undefined })}
+                value={filters.direction || "all"}
+                onValueChange={(value) => updateFilters({ direction: value === 'all' ? undefined : value as 'inbound' | 'outbound' })}
               >
                 <SelectTrigger data-testid="select-direction-filter">
                   <SelectValue placeholder="All Directions" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Directions</SelectItem>
+                  <SelectItem value="all">All Directions</SelectItem>
                   <SelectItem value="outbound">Outbound</SelectItem>
                   <SelectItem value="inbound">Inbound</SelectItem>
                 </SelectContent>
