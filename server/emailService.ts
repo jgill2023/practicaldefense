@@ -1,5 +1,6 @@
 // Email service using SendGrid integration
 import { MailService } from '@sendgrid/mail';
+import { storage } from './storage';
 
 // Lazy initialization to avoid server crash on startup
 let mailService: MailService | null = null;
@@ -38,7 +39,31 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       emailData.text = params.text;
     }
     
-    await service.send(emailData);
+    const response = await service.send(emailData);
+    
+    // Log communication to database
+    try {
+      const messageId = response[0]?.headers?.['x-message-id'] as string | undefined;
+      await storage.createCommunication({
+        type: 'email',
+        direction: 'outbound',
+        fromAddress: params.from,
+        toAddress: params.to,
+        subject: params.subject,
+        content: params.text || (params.html ? params.html.replace(/<[^>]*>/g, '').trim() : ''),
+        htmlContent: params.html || undefined,
+        deliveryStatus: 'sent',
+        externalMessageId: messageId,
+        sentAt: new Date(),
+        userId: null, // Will be resolved in API layer if user context is available
+        enrollmentId: null, // Will be resolved in API layer if enrollment context is available
+        courseId: null, // Will be resolved in API layer if course context is available
+      });
+    } catch (logError) {
+      console.error('Failed to log email communication:', logError);
+      // Don't fail the email send if logging fails
+    }
+    
     return true;
   } catch (error) {
     console.error('SendGrid email error:', error);
@@ -105,6 +130,30 @@ export class NotificationEmailService {
           headers: response[0]?.headers,
         }
       });
+
+      // Log communications to database for each recipient
+      for (const recipientEmail of validEmails) {
+        try {
+          await storage.createCommunication({
+            type: 'email',
+            direction: 'outbound',
+            fromAddress: fromEmail,
+            toAddress: recipientEmail,
+            subject: params.subject,
+            content: params.textContent || this.stripHtml(params.htmlContent),
+            htmlContent: params.htmlContent,
+            deliveryStatus: 'sent',
+            externalMessageId: messageId,
+            sentAt: new Date(),
+            userId: null, // Will be resolved in API layer if user context is available
+            enrollmentId: null, // Will be resolved in API layer if enrollment context is available
+            courseId: null, // Will be resolved in API layer if course context is available
+          });
+        } catch (logError) {
+          console.error('Failed to log email communication:', logError);
+          // Don't fail the email send if logging fails
+        }
+      }
 
       return {
         success: true,

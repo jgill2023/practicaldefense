@@ -12,6 +12,7 @@ import {
   promoCodeRedemptions,
   prohibitedWords,
   messageAuditLog,
+  communications,
   type User,
   type UpsertUser,
   type Category,
@@ -43,6 +44,9 @@ import {
   type InsertProhibitedWord,
   type MessageAuditLog,
   type InsertMessageAuditLog,
+  type Communication,
+  type InsertCommunication,
+  type CommunicationWithDetails,
   notificationTemplates,
   notificationSchedules,
   notificationLogs,
@@ -321,6 +325,27 @@ export interface IStorage {
   
   // Roster and scheduling operations
   getInstructorAvailableSchedules(instructorId: string, excludeEnrollmentId?: string): Promise<any[]>;
+  
+  // Communications tracking operations
+  createCommunication(communication: InsertCommunication): Promise<Communication>;
+  updateCommunication(id: string, communication: Partial<InsertCommunication>): Promise<Communication>;
+  getCommunication(id: string): Promise<CommunicationWithDetails | undefined>;
+  getCommunications(filters: {
+    userId?: string;
+    courseId?: string;
+    enrollmentId?: string;
+    type?: 'email' | 'sms';
+    direction?: 'inbound' | 'outbound';
+    isRead?: boolean;
+    isFlagged?: boolean;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ communications: CommunicationWithDetails[]; total: number }>;
+  markCommunicationAsRead(id: string): Promise<Communication>;
+  markCommunicationAsUnread(id: string): Promise<Communication>;
+  flagCommunication(id: string, note?: string): Promise<Communication>;
+  unflagCommunication(id: string): Promise<Communication>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3185,6 +3210,206 @@ export class DatabaseStorage implements IStorage {
       topViolations,
       instructorStats
     };
+  }
+
+  // Communications tracking operations
+  async createCommunication(communication: InsertCommunication): Promise<Communication> {
+    const [newCommunication] = await db
+      .insert(communications)
+      .values(communication)
+      .returning();
+    return newCommunication;
+  }
+
+  async updateCommunication(id: string, communication: Partial<InsertCommunication>): Promise<Communication> {
+    const [updatedCommunication] = await db
+      .update(communications)
+      .set({ ...communication, updatedAt: new Date() })
+      .where(eq(communications.id, id))
+      .returning();
+    
+    if (!updatedCommunication) {
+      throw new Error('Communication not found');
+    }
+    
+    return updatedCommunication;
+  }
+
+  async getCommunication(id: string): Promise<CommunicationWithDetails | undefined> {
+    const communication = await db.query.communications.findFirst({
+      where: eq(communications.id, id),
+      with: {
+        user: true,
+        enrollment: {
+          with: {
+            student: true,
+            course: true,
+            schedule: true,
+          },
+        },
+        course: true,
+      },
+    });
+    return communication;
+  }
+
+  async getCommunications(filters: {
+    userId?: string;
+    courseId?: string;
+    enrollmentId?: string;
+    type?: 'email' | 'sms';
+    direction?: 'inbound' | 'outbound';
+    isRead?: boolean;
+    isFlagged?: boolean;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ communications: CommunicationWithDetails[]; total: number }> {
+    const conditions = [];
+
+    if (filters.userId) {
+      conditions.push(eq(communications.userId, filters.userId));
+    }
+    if (filters.courseId) {
+      conditions.push(eq(communications.courseId, filters.courseId));
+    }
+    if (filters.enrollmentId) {
+      conditions.push(eq(communications.enrollmentId, filters.enrollmentId));
+    }
+    if (filters.type) {
+      conditions.push(eq(communications.type, filters.type));
+    }
+    if (filters.direction) {
+      conditions.push(eq(communications.direction, filters.direction));
+    }
+    if (filters.isRead !== undefined) {
+      conditions.push(eq(communications.isRead, filters.isRead));
+    }
+    if (filters.isFlagged !== undefined) {
+      conditions.push(eq(communications.isFlagged, filters.isFlagged));
+    }
+
+    // Add full-text search functionality
+    if (filters.search && filters.search.trim()) {
+      const searchTerm = `%${filters.search.trim()}%`;
+      conditions.push(
+        or(
+          sql`${communications.subject} ILIKE ${searchTerm}`,
+          sql`${communications.content} ILIKE ${searchTerm}`,
+          sql`${communications.fromAddress} ILIKE ${searchTerm}`,
+          sql`${communications.toAddress} ILIKE ${searchTerm}`
+        )
+      );
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Get total count
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(communications)
+      .where(whereClause);
+
+    // Get communications with relations and explicit ordering
+    const communicationList = await db.query.communications.findMany({
+      where: whereClause,
+      with: {
+        user: true,
+        enrollment: {
+          with: {
+            student: true,
+            course: true,
+            schedule: true,
+          },
+        },
+        course: true,
+      },
+      orderBy: [
+        desc(sql`COALESCE(${communications.sentAt}, ${communications.createdAt})`),
+        desc(communications.createdAt)
+      ],
+      limit: filters.limit || 50,
+      offset: filters.offset || 0,
+    });
+
+    return {
+      communications: communicationList,
+      total: count,
+    };
+  }
+
+  async markCommunicationAsRead(id: string): Promise<Communication> {
+    const [updatedCommunication] = await db
+      .update(communications)
+      .set({ 
+        isRead: true, 
+        readAt: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(eq(communications.id, id))
+      .returning();
+    
+    if (!updatedCommunication) {
+      throw new Error('Communication not found');
+    }
+    
+    return updatedCommunication;
+  }
+
+  async markCommunicationAsUnread(id: string): Promise<Communication> {
+    const [updatedCommunication] = await db
+      .update(communications)
+      .set({ 
+        isRead: false, 
+        readAt: null,
+        updatedAt: new Date() 
+      })
+      .where(eq(communications.id, id))
+      .returning();
+    
+    if (!updatedCommunication) {
+      throw new Error('Communication not found');
+    }
+    
+    return updatedCommunication;
+  }
+
+  async flagCommunication(id: string, note?: string): Promise<Communication> {
+    const [updatedCommunication] = await db
+      .update(communications)
+      .set({ 
+        isFlagged: true, 
+        flagNote: note,
+        flaggedAt: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(eq(communications.id, id))
+      .returning();
+    
+    if (!updatedCommunication) {
+      throw new Error('Communication not found');
+    }
+    
+    return updatedCommunication;
+  }
+
+  async unflagCommunication(id: string): Promise<Communication> {
+    const [updatedCommunication] = await db
+      .update(communications)
+      .set({ 
+        isFlagged: false, 
+        flagNote: null,
+        flaggedAt: null,
+        updatedAt: new Date() 
+      })
+      .where(eq(communications.id, id))
+      .returning();
+    
+    if (!updatedCommunication) {
+      throw new Error('Communication not found');
+    }
+    
+    return updatedCommunication;
   }
 }
 
