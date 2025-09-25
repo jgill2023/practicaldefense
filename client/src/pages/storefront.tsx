@@ -255,11 +255,6 @@ export default function Storefront() {
                         <span className="text-lg font-bold" data-testid={`product-price-${product.id}`}>
                           ${Number(product.basePrice || product.price || 0).toFixed(2)}
                         </span>
-                        {product.category && (
-                          <Badge variant="outline" className="text-xs">
-                            {product.category.name}
-                          </Badge>
-                        )}
                       </div>
                       
                       {/* Tags */}
