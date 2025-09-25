@@ -261,7 +261,7 @@ export default function ProductManagement() {
     activeProducts: products.filter(p => p.status === 'active').length,
     totalCategories: categories.length,
     averagePrice: products.length > 0 
-      ? (products.reduce((sum, p) => sum + p.basePrice, 0) / products.length).toFixed(2)
+      ? (products.reduce((sum, p) => sum + (p.basePrice || p.price || 0), 0) / products.length).toFixed(2)
       : '0.00',
   };
 
@@ -394,7 +394,7 @@ export default function ProductManagement() {
                             </Button>
                           </div>
                         </div>
-                        <p className="text-lg font-bold" data-testid={`product-price-${product.id}`}>${product.basePrice.toFixed(2)}</p>
+                        <p className="text-lg font-bold" data-testid={`product-price-${product.id}`}>${(product.basePrice || product.price || 0).toFixed(2)}</p>
                         <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <span className={`px-2 py-1 rounded-full text-xs ${
