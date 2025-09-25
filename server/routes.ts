@@ -3952,11 +3952,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             // Create product category if it doesn't exist
             let categoryId = null;
-            const categories = await storage.getCategories();
+            const categories = await storage.getProductCategories();
             let printfulCategory = categories.find(c => c.name === 'Printful Products');
             
             if (!printfulCategory) {
-              printfulCategory = await storage.createCategory({
+              printfulCategory = await storage.createProductCategory({
                 name: 'Printful Products',
                 slug: 'printful-products',
                 description: 'Products imported from Printful',
