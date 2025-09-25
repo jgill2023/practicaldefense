@@ -10,7 +10,7 @@ import { enrollments } from "@shared/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type User } from "@shared/schema";
+import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type User } from "@shared/schema";
 import "./types"; // Import type declarations
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -3732,6 +3732,342 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error fetching SMS contacts:", error);
       res.status(500).json({ error: "Failed to fetch SMS contacts: " + error.message });
+    }
+  });
+
+  // E-COMMERCE API ROUTES
+
+  // Product Categories Routes
+  app.get('/api/product-categories', async (req, res) => {
+    try {
+      const categories = await storage.getProductCategories();
+      res.json(categories);
+    } catch (error: any) {
+      console.error("Error fetching product categories:", error);
+      res.status(500).json({ error: "Failed to fetch product categories: " + error.message });
+    }
+  });
+
+  app.get('/api/product-categories/:id', async (req, res) => {
+    try {
+      const category = await storage.getProductCategory(req.params.id);
+      if (!category) {
+        return res.status(404).json({ error: "Product category not found" });
+      }
+      res.json(category);
+    } catch (error: any) {
+      console.error("Error fetching product category:", error);
+      res.status(500).json({ error: "Failed to fetch product category: " + error.message });
+    }
+  });
+
+  app.post('/api/product-categories', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== 'instructor') {
+        return res.status(403).json({ error: "Only instructors can create product categories" });
+      }
+
+      const validatedData = insertProductCategorySchema.parse(req.body);
+      const category = await storage.createProductCategory(validatedData);
+      res.status(201).json(category);
+    } catch (error: any) {
+      console.error("Error creating product category:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid product category data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create product category: " + error.message });
+    }
+  });
+
+  app.put('/api/product-categories/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== 'instructor') {
+        return res.status(403).json({ error: "Only instructors can update product categories" });
+      }
+
+      const validatedData = insertProductCategorySchema.partial().parse(req.body);
+      const category = await storage.updateProductCategory(req.params.id, validatedData);
+      res.json(category);
+    } catch (error: any) {
+      console.error("Error updating product category:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid product category data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update product category: " + error.message });
+    }
+  });
+
+  app.delete('/api/product-categories/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== 'instructor') {
+        return res.status(403).json({ error: "Only instructors can delete product categories" });
+      }
+
+      await storage.deleteProductCategory(req.params.id);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Error deleting product category:", error);
+      res.status(500).json({ error: "Failed to delete product category: " + error.message });
+    }
+  });
+
+  // Products Routes
+  app.get('/api/products', async (req, res) => {
+    try {
+      const { category } = req.query;
+      let products;
+      
+      if (category) {
+        products = await storage.getProductsByCategory(category.toString());
+      } else {
+        products = await storage.getProducts();
+      }
+      
+      res.json(products);
+    } catch (error: any) {
+      console.error("Error fetching products:", error);
+      res.status(500).json({ error: "Failed to fetch products: " + error.message });
+    }
+  });
+
+  app.get('/api/products/:id', async (req, res) => {
+    try {
+      const product = await storage.getProduct(req.params.id);
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+      res.json(product);
+    } catch (error: any) {
+      console.error("Error fetching product:", error);
+      res.status(500).json({ error: "Failed to fetch product: " + error.message });
+    }
+  });
+
+  app.post('/api/products', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== 'instructor') {
+        return res.status(403).json({ error: "Only instructors can create products" });
+      }
+
+      const validatedData = insertProductSchema.parse({
+        ...req.body,
+        createdBy: user.id,
+      });
+      
+      const product = await storage.createProduct(validatedData);
+      res.status(201).json(product);
+    } catch (error: any) {
+      console.error("Error creating product:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid product data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create product: " + error.message });
+    }
+  });
+
+  app.put('/api/products/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== 'instructor') {
+        return res.status(403).json({ error: "Only instructors can update products" });
+      }
+
+      const validatedData = insertProductSchema.partial().parse({
+        ...req.body,
+        updatedBy: user.id,
+      });
+      
+      const product = await storage.updateProduct(req.params.id, validatedData);
+      res.json(product);
+    } catch (error: any) {
+      console.error("Error updating product:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid product data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update product: " + error.message });
+    }
+  });
+
+  app.delete('/api/products/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== 'instructor') {
+        return res.status(403).json({ error: "Only instructors can delete products" });
+      }
+
+      await storage.deleteProduct(req.params.id);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Error deleting product:", error);
+      res.status(500).json({ error: "Failed to delete product: " + error.message });
+    }
+  });
+
+  // Product Variants Routes
+  app.get('/api/products/:productId/variants', async (req, res) => {
+    try {
+      const variants = await storage.getProductVariants(req.params.productId);
+      res.json(variants);
+    } catch (error: any) {
+      console.error("Error fetching product variants:", error);
+      res.status(500).json({ error: "Failed to fetch product variants: " + error.message });
+    }
+  });
+
+  app.post('/api/products/:productId/variants', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== 'instructor') {
+        return res.status(403).json({ error: "Only instructors can create product variants" });
+      }
+
+      const validatedData = insertProductVariantSchema.parse({
+        ...req.body,
+        productId: req.params.productId,
+      });
+      
+      const variant = await storage.createProductVariant(validatedData);
+      res.status(201).json(variant);
+    } catch (error: any) {
+      console.error("Error creating product variant:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid product variant data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create product variant: " + error.message });
+    }
+  });
+
+  // Shopping Cart Routes
+  app.get('/api/cart', async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub; // May be null for guest users
+      const sessionId = req.sessionID;
+      
+      const cartItems = await storage.getCartItems(userId, sessionId);
+      res.json(cartItems);
+    } catch (error: any) {
+      console.error("Error fetching cart items:", error);
+      res.status(500).json({ error: "Failed to fetch cart items: " + error.message });
+    }
+  });
+
+  app.post('/api/cart', async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub; // May be null for guest users
+      const sessionId = req.sessionID;
+      
+      const cartItemSchema = z.object({
+        productId: z.string().uuid(),
+        variantId: z.string().uuid().optional(),
+        quantity: z.number().int().min(1).default(1),
+        customization: z.object({}).optional(),
+        priceAtTime: z.number(),
+      });
+
+      const validatedData = cartItemSchema.parse(req.body);
+      
+      const cartItem = await storage.addToCart({
+        ...validatedData,
+        userId: userId || null,
+        sessionId: userId ? null : sessionId,
+      });
+      
+      res.status(201).json(cartItem);
+    } catch (error: any) {
+      console.error("Error adding to cart:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid cart item data", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to add to cart: " + error.message });
+    }
+  });
+
+  app.put('/api/cart/:id', async (req: any, res) => {
+    try {
+      const quantitySchema = z.object({
+        quantity: z.number().int().min(1),
+      });
+
+      const { quantity } = quantitySchema.parse(req.body);
+      const cartItem = await storage.updateCartItem(req.params.id, quantity);
+      res.json(cartItem);
+    } catch (error: any) {
+      console.error("Error updating cart item:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid quantity", details: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update cart item: " + error.message });
+    }
+  });
+
+  app.delete('/api/cart/:id', async (req: any, res) => {
+    try {
+      await storage.removeFromCart(req.params.id);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Error removing from cart:", error);
+      res.status(500).json({ error: "Failed to remove from cart: " + error.message });
+    }
+  });
+
+  app.delete('/api/cart', async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const sessionId = req.sessionID;
+      
+      await storage.clearCart(userId, sessionId);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Error clearing cart:", error);
+      res.status(500).json({ error: "Failed to clear cart: " + error.message });
+    }
+  });
+
+  // E-commerce Orders Routes
+  app.get('/api/ecommerce-orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      let orders;
+      if (user?.role === 'instructor') {
+        // Instructors can see all orders
+        orders = await storage.getEcommerceOrders();
+      } else {
+        // Students can only see their own orders
+        orders = await storage.getEcommerceOrders(userId);
+      }
+      
+      res.json(orders);
+    } catch (error: any) {
+      console.error("Error fetching e-commerce orders:", error);
+      res.status(500).json({ error: "Failed to fetch orders: " + error.message });
+    }
+  });
+
+  app.get('/api/ecommerce-orders/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      const order = await storage.getEcommerceOrder(req.params.id);
+      
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      
+      // Check authorization
+      if (user?.role !== 'instructor' && order.userId !== userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      res.json(order);
+    } catch (error: any) {
+      console.error("Error fetching e-commerce order:", error);
+      res.status(500).json({ error: "Failed to fetch order: " + error.message });
     }
   });
 

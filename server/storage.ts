@@ -13,6 +13,13 @@ import {
   prohibitedWords,
   messageAuditLog,
   communications,
+  // E-commerce tables
+  productCategories,
+  products,
+  productVariants,
+  cartItems,
+  ecommerceOrders,
+  ecommerceOrderItems,
   type User,
   type UpsertUser,
   type Category,
@@ -47,6 +54,23 @@ import {
   type Communication,
   type InsertCommunication,
   type CommunicationWithDetails,
+  // E-commerce types
+  type ProductCategory,
+  type InsertProductCategory,
+  type Product,
+  type InsertProduct,
+  type ProductVariant,
+  type InsertProductVariant,
+  type CartItem,
+  type InsertCartItem,
+  type EcommerceOrder,
+  type InsertEcommerceOrder,
+  type EcommerceOrderItem,
+  type InsertEcommerceOrderItem,
+  type ProductWithDetails,
+  type ProductCategoryWithProducts,
+  type CartItemWithDetails,
+  type EcommerceOrderWithDetails,
   notificationTemplates,
   notificationSchedules,
   notificationLogs,
@@ -346,6 +370,47 @@ export interface IStorage {
   markCommunicationAsUnread(id: string): Promise<Communication>;
   flagCommunication(id: string, note?: string): Promise<Communication>;
   unflagCommunication(id: string): Promise<Communication>;
+
+  // E-commerce operations
+  // Product Categories
+  createProductCategory(category: InsertProductCategory): Promise<ProductCategory>;
+  updateProductCategory(id: string, category: Partial<InsertProductCategory>): Promise<ProductCategory>;
+  deleteProductCategory(id: string): Promise<void>;
+  getProductCategory(id: string): Promise<ProductCategory | undefined>;
+  getProductCategories(): Promise<ProductCategoryWithProducts[]>;
+  
+  // Products
+  createProduct(product: InsertProduct): Promise<Product>;
+  updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product>;
+  deleteProduct(id: string): Promise<void>;
+  getProduct(id: string): Promise<ProductWithDetails | undefined>;
+  getProducts(): Promise<ProductWithDetails[]>;
+  getProductsByCategory(categoryId: string): Promise<ProductWithDetails[]>;
+  
+  // Product Variants
+  createProductVariant(variant: InsertProductVariant): Promise<ProductVariant>;
+  updateProductVariant(id: string, variant: Partial<InsertProductVariant>): Promise<ProductVariant>;
+  deleteProductVariant(id: string): Promise<void>;
+  getProductVariant(id: string): Promise<ProductVariant | undefined>;
+  getProductVariants(productId: string): Promise<ProductVariant[]>;
+  
+  // Shopping Cart
+  addToCart(item: InsertCartItem): Promise<CartItem>;
+  updateCartItem(id: string, quantity: number): Promise<CartItem>;
+  removeFromCart(id: string): Promise<void>;
+  getCartItems(userId?: string, sessionId?: string): Promise<CartItemWithDetails[]>;
+  clearCart(userId?: string, sessionId?: string): Promise<void>;
+  
+  // E-commerce Orders
+  createEcommerceOrder(order: InsertEcommerceOrder): Promise<EcommerceOrder>;
+  updateEcommerceOrder(id: string, order: Partial<InsertEcommerceOrder>): Promise<EcommerceOrder>;
+  getEcommerceOrder(id: string): Promise<EcommerceOrderWithDetails | undefined>;
+  getEcommerceOrders(userId?: string): Promise<EcommerceOrderWithDetails[]>;
+  
+  // E-commerce Order Items
+  createEcommerceOrderItem(item: InsertEcommerceOrderItem): Promise<EcommerceOrderItem>;
+  updateEcommerceOrderItem(id: string, item: Partial<InsertEcommerceOrderItem>): Promise<EcommerceOrderItem>;
+  getEcommerceOrderItems(orderId: string): Promise<EcommerceOrderItem[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3410,6 +3475,315 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updatedCommunication;
+  }
+
+  // E-commerce operations implementation
+  
+  // Product Categories
+  async createProductCategory(category: InsertProductCategory): Promise<ProductCategory> {
+    const [created] = await db.insert(productCategories).values(category).returning();
+    return created;
+  }
+
+  async updateProductCategory(id: string, category: Partial<InsertProductCategory>): Promise<ProductCategory> {
+    const [updated] = await db
+      .update(productCategories)
+      .set({ ...category, updatedAt: new Date() })
+      .where(eq(productCategories.id, id))
+      .returning();
+    
+    if (!updated) {
+      throw new Error('Product category not found');
+    }
+    
+    return updated;
+  }
+
+  async deleteProductCategory(id: string): Promise<void> {
+    await db.delete(productCategories).where(eq(productCategories.id, id));
+  }
+
+  async getProductCategory(id: string): Promise<ProductCategory | undefined> {
+    return db.query.productCategories.findFirst({
+      where: eq(productCategories.id, id),
+    });
+  }
+
+  async getProductCategories(): Promise<ProductCategoryWithProducts[]> {
+    return db.query.productCategories.findMany({
+      with: {
+        products: {
+          where: eq(products.status, 'active'),
+        },
+        children: true,
+        parent: true,
+      },
+      orderBy: [asc(productCategories.sortOrder), asc(productCategories.name)],
+    });
+  }
+
+  // Products
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const [created] = await db.insert(products).values(product).returning();
+    return created;
+  }
+
+  async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product> {
+    const [updated] = await db
+      .update(products)
+      .set({ ...product, updatedAt: new Date() })
+      .where(eq(products.id, id))
+      .returning();
+    
+    if (!updated) {
+      throw new Error('Product not found');
+    }
+    
+    return updated;
+  }
+
+  async deleteProduct(id: string): Promise<void> {
+    await db.delete(products).where(eq(products.id, id));
+  }
+
+  async getProduct(id: string): Promise<ProductWithDetails | undefined> {
+    return db.query.products.findFirst({
+      where: eq(products.id, id),
+      with: {
+        category: true,
+        variants: {
+          orderBy: [asc(productVariants.sortOrder), asc(productVariants.name)],
+        },
+        createdByUser: true,
+        updatedByUser: true,
+      },
+    });
+  }
+
+  async getProducts(): Promise<ProductWithDetails[]> {
+    return db.query.products.findMany({
+      with: {
+        category: true,
+        variants: {
+          orderBy: [asc(productVariants.sortOrder), asc(productVariants.name)],
+        },
+        createdByUser: true,
+        updatedByUser: true,
+      },
+      orderBy: [desc(products.featured), asc(products.sortOrder), asc(products.name)],
+    });
+  }
+
+  async getProductsByCategory(categoryId: string): Promise<ProductWithDetails[]> {
+    return db.query.products.findMany({
+      where: eq(products.categoryId, categoryId),
+      with: {
+        category: true,
+        variants: {
+          orderBy: [asc(productVariants.sortOrder), asc(productVariants.name)],
+        },
+        createdByUser: true,
+        updatedByUser: true,
+      },
+      orderBy: [desc(products.featured), asc(products.sortOrder), asc(products.name)],
+    });
+  }
+
+  // Product Variants
+  async createProductVariant(variant: InsertProductVariant): Promise<ProductVariant> {
+    const [created] = await db.insert(productVariants).values(variant).returning();
+    return created;
+  }
+
+  async updateProductVariant(id: string, variant: Partial<InsertProductVariant>): Promise<ProductVariant> {
+    const [updated] = await db
+      .update(productVariants)
+      .set({ ...variant, updatedAt: new Date() })
+      .where(eq(productVariants.id, id))
+      .returning();
+    
+    if (!updated) {
+      throw new Error('Product variant not found');
+    }
+    
+    return updated;
+  }
+
+  async deleteProductVariant(id: string): Promise<void> {
+    await db.delete(productVariants).where(eq(productVariants.id, id));
+  }
+
+  async getProductVariant(id: string): Promise<ProductVariant | undefined> {
+    return db.query.productVariants.findFirst({
+      where: eq(productVariants.id, id),
+    });
+  }
+
+  async getProductVariants(productId: string): Promise<ProductVariant[]> {
+    return db.query.productVariants.findMany({
+      where: eq(productVariants.productId, productId),
+      orderBy: [asc(productVariants.sortOrder), asc(productVariants.name)],
+    });
+  }
+
+  // Shopping Cart
+  async addToCart(item: InsertCartItem): Promise<CartItem> {
+    // Check if item already exists in cart, if so update quantity
+    const existingItem = await db.query.cartItems.findFirst({
+      where: and(
+        eq(cartItems.productId, item.productId),
+        item.variantId ? eq(cartItems.variantId, item.variantId) : isNull(cartItems.variantId),
+        item.userId ? eq(cartItems.userId, item.userId) : isNull(cartItems.userId),
+        item.sessionId ? eq(cartItems.sessionId, item.sessionId) : isNull(cartItems.sessionId)
+      ),
+    });
+
+    if (existingItem) {
+      return this.updateCartItem(existingItem.id, existingItem.quantity + item.quantity);
+    }
+
+    const [created] = await db.insert(cartItems).values(item).returning();
+    return created;
+  }
+
+  async updateCartItem(id: string, quantity: number): Promise<CartItem> {
+    const [updated] = await db
+      .update(cartItems)
+      .set({ quantity, updatedAt: new Date() })
+      .where(eq(cartItems.id, id))
+      .returning();
+    
+    if (!updated) {
+      throw new Error('Cart item not found');
+    }
+    
+    return updated;
+  }
+
+  async removeFromCart(id: string): Promise<void> {
+    await db.delete(cartItems).where(eq(cartItems.id, id));
+  }
+
+  async getCartItems(userId?: string, sessionId?: string): Promise<CartItemWithDetails[]> {
+    const whereConditions = [];
+    
+    if (userId) {
+      whereConditions.push(eq(cartItems.userId, userId));
+    } else if (sessionId) {
+      whereConditions.push(eq(cartItems.sessionId, sessionId));
+    } else {
+      return []; // Must provide either userId or sessionId
+    }
+
+    return db.query.cartItems.findMany({
+      where: and(...whereConditions),
+      with: {
+        product: {
+          with: {
+            category: true,
+          },
+        },
+        variant: true,
+        user: true,
+      },
+      orderBy: [desc(cartItems.createdAt)],
+    });
+  }
+
+  async clearCart(userId?: string, sessionId?: string): Promise<void> {
+    const whereConditions = [];
+    
+    if (userId) {
+      whereConditions.push(eq(cartItems.userId, userId));
+    } else if (sessionId) {
+      whereConditions.push(eq(cartItems.sessionId, sessionId));
+    } else {
+      return; // Must provide either userId or sessionId
+    }
+
+    await db.delete(cartItems).where(and(...whereConditions));
+  }
+
+  // E-commerce Orders
+  async createEcommerceOrder(order: InsertEcommerceOrder): Promise<EcommerceOrder> {
+    const [created] = await db.insert(ecommerceOrders).values(order).returning();
+    return created;
+  }
+
+  async updateEcommerceOrder(id: string, order: Partial<InsertEcommerceOrder>): Promise<EcommerceOrder> {
+    const [updated] = await db
+      .update(ecommerceOrders)
+      .set({ ...order, updatedAt: new Date() })
+      .where(eq(ecommerceOrders.id, id))
+      .returning();
+    
+    if (!updated) {
+      throw new Error('E-commerce order not found');
+    }
+    
+    return updated;
+  }
+
+  async getEcommerceOrder(id: string): Promise<EcommerceOrderWithDetails | undefined> {
+    return db.query.ecommerceOrders.findFirst({
+      where: eq(ecommerceOrders.id, id),
+      with: {
+        items: {
+          with: {
+            product: true,
+            variant: true,
+          },
+          orderBy: [asc(ecommerceOrderItems.createdAt)],
+        },
+        user: true,
+      },
+    });
+  }
+
+  async getEcommerceOrders(userId?: string): Promise<EcommerceOrderWithDetails[]> {
+    const whereConditions = userId ? [eq(ecommerceOrders.userId, userId)] : [];
+
+    return db.query.ecommerceOrders.findMany({
+      where: userId ? eq(ecommerceOrders.userId, userId) : undefined,
+      with: {
+        items: {
+          with: {
+            product: true,
+            variant: true,
+          },
+          orderBy: [asc(ecommerceOrderItems.createdAt)],
+        },
+        user: true,
+      },
+      orderBy: [desc(ecommerceOrders.createdAt)],
+    });
+  }
+
+  // E-commerce Order Items
+  async createEcommerceOrderItem(item: InsertEcommerceOrderItem): Promise<EcommerceOrderItem> {
+    const [created] = await db.insert(ecommerceOrderItems).values(item).returning();
+    return created;
+  }
+
+  async updateEcommerceOrderItem(id: string, item: Partial<InsertEcommerceOrderItem>): Promise<EcommerceOrderItem> {
+    const [updated] = await db
+      .update(ecommerceOrderItems)
+      .set({ ...item, updatedAt: new Date() })
+      .where(eq(ecommerceOrderItems.id, id))
+      .returning();
+    
+    if (!updated) {
+      throw new Error('E-commerce order item not found');
+    }
+    
+    return updated;
+  }
+
+  async getEcommerceOrderItems(orderId: string): Promise<EcommerceOrderItem[]> {
+    return db.query.ecommerceOrderItems.findMany({
+      where: eq(ecommerceOrderItems.orderId, orderId),
+      orderBy: [asc(ecommerceOrderItems.createdAt)],
+    });
   }
 }
 

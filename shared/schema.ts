@@ -1172,3 +1172,381 @@ export type AccountCreation = z.infer<typeof accountCreationSchema>;
 export type InitiateRegistration = z.infer<typeof initiateRegistrationSchema>;
 export type PaymentIntentRequest = z.infer<typeof paymentIntentRequestSchema>;
 export type ConfirmEnrollment = z.infer<typeof confirmEnrollmentSchema>;
+
+// E-COMMERCE TABLES
+
+// Product categories for e-commerce
+export const productCategories = pgTable("product_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 100 }).unique().notNull(),
+  description: text("description"),
+  parentId: varchar("parent_id").references(() => productCategories.id),
+  imageUrl: varchar("image_url"),
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Products table - main product catalog
+export const products = pgTable("products", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  shortDescription: varchar("short_description", { length: 500 }),
+  sku: varchar("sku", { length: 100 }).unique().notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  salePrice: decimal("sale_price", { precision: 10, scale: 2 }),
+  
+  // Product type and fulfillment
+  productType: varchar("product_type", { length: 20 }).notNull(), // 'physical', 'digital', 'service'
+  fulfillmentType: varchar("fulfillment_type", { length: 20 }).notNull(), // 'printful', 'download', 'manual'
+  
+  // Printful integration
+  printfulProductId: integer("printful_product_id"),
+  printfulSyncVariantId: integer("printful_sync_variant_id"),
+  designTemplateUrl: varchar("design_template_url"),
+  mockupImageUrl: varchar("mockup_image_url"),
+  
+  // Digital product settings
+  downloadUrl: varchar("download_url"), // For digital products
+  downloadLimit: integer("download_limit"), // Max downloads per purchase
+  downloadExpireDays: integer("download_expire_days"), // Days until download expires
+  
+  // Inventory and shipping
+  trackInventory: boolean("track_inventory").default(false),
+  stockQuantity: integer("stock_quantity"),
+  lowStockThreshold: integer("low_stock_threshold").default(5),
+  weight: decimal("weight", { precision: 8, scale: 2 }), // in pounds
+  
+  // SEO and organization
+  slug: varchar("slug", { length: 255 }).unique(),
+  categoryId: varchar("category_id").references(() => productCategories.id),
+  tags: text("tags").array(),
+  
+  // Images
+  primaryImageUrl: varchar("primary_image_url"),
+  imageUrls: text("image_urls").array(), // Array of additional image URLs
+  
+  // Status and visibility
+  status: varchar("status", { length: 20 }).default('draft'), // 'draft', 'active', 'inactive'
+  featured: boolean("featured").default(false),
+  sortOrder: integer("sort_order").default(0),
+  
+  // Audit fields
+  createdBy: varchar("created_by").references(() => users.id),
+  updatedBy: varchar("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Product variants (sizes, colors, etc.)
+export const productVariants = pgTable("product_variants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: 'cascade' }),
+  name: varchar("name", { length: 100 }).notNull(),
+  sku: varchar("sku", { length: 100 }).unique().notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }),
+  salePrice: decimal("sale_price", { precision: 10, scale: 2 }),
+  
+  // Variant attributes (size, color, etc.)
+  attributes: jsonb("attributes"), // {size: "XL", color: "Blue", material: "Cotton"}
+  
+  // Printful specific
+  printfulVariantId: integer("printful_variant_id"),
+  
+  // Inventory
+  stockQuantity: integer("stock_quantity").default(0),
+  weight: decimal("weight", { precision: 8, scale: 2 }),
+  
+  // Images
+  imageUrl: varchar("image_url"),
+  
+  // Status
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Shopping cart for guest and logged-in users
+export const cartItems = pgTable("cart_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id), // Null for guest users
+  sessionId: varchar("session_id"), // For guest users
+  productId: varchar("product_id").notNull().references(() => products.id),
+  variantId: varchar("variant_id").references(() => productVariants.id),
+  quantity: integer("quantity").notNull().default(1),
+  customization: jsonb("customization"), // For personalized items
+  priceAtTime: decimal("price_at_time", { precision: 10, scale: 2 }).notNull(), // Price when added to cart
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// E-commerce orders
+export const ecommerceOrders = pgTable("ecommerce_orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderNumber: varchar("order_number", { length: 50 }).unique().notNull(),
+  userId: varchar("user_id").references(() => users.id), // Null for guest orders
+  
+  // Customer information
+  customerEmail: varchar("customer_email").notNull(),
+  customerPhone: varchar("customer_phone"),
+  customerFirstName: varchar("customer_first_name").notNull(),
+  customerLastName: varchar("customer_last_name").notNull(),
+  
+  // Billing address
+  billingAddress: jsonb("billing_address").notNull(), // {name, address1, address2, city, state, zip, country}
+  
+  // Shipping address
+  shippingAddress: jsonb("shipping_address"), // Same structure as billing
+  
+  // Order totals
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default('0'),
+  shippingAmount: decimal("shipping_amount", { precision: 10, scale: 2 }).default('0'),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default('0'),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  
+  // Payment information
+  paymentStatus: varchar("payment_status").default('pending'), // 'pending', 'paid', 'failed', 'refunded', 'partially_refunded'
+  paymentMethod: varchar("payment_method"), // 'stripe', 'paypal', etc.
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  
+  // Order status and fulfillment
+  status: varchar("status").default('pending'), // 'pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'
+  fulfillmentStatus: varchar("fulfillment_status").default('pending'), // 'pending', 'processing', 'fulfilled', 'partial'
+  
+  // Printful integration
+  printfulOrderId: varchar("printful_order_id"),
+  printfulStatus: varchar("printful_status"),
+  
+  // Shipping information
+  shippingCarrier: varchar("shipping_carrier"),
+  trackingNumber: varchar("tracking_number"),
+  trackingUrl: varchar("tracking_url"),
+  
+  // Applied discounts
+  promoCodesApplied: text("promo_codes_applied").array(),
+  
+  // Order notes
+  customerNotes: text("customer_notes"),
+  internalNotes: text("internal_notes"),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  paidAt: timestamp("paid_at"),
+  shippedAt: timestamp("shipped_at"),
+  deliveredAt: timestamp("delivered_at"),
+  cancelledAt: timestamp("cancelled_at"),
+});
+
+// E-commerce order items
+export const ecommerceOrderItems = pgTable("ecommerce_order_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull().references(() => ecommerceOrders.id, { onDelete: 'cascade' }),
+  productId: varchar("product_id").notNull().references(() => products.id),
+  variantId: varchar("variant_id").references(() => productVariants.id),
+  
+  // Item details at time of purchase (snapshot for historical accuracy)
+  productName: varchar("product_name").notNull(),
+  productSku: varchar("product_sku").notNull(),
+  variantName: varchar("variant_name"),
+  variantAttributes: jsonb("variant_attributes"),
+  
+  // Pricing and quantity
+  quantity: integer("quantity").notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  
+  // Customization and fulfillment
+  customization: jsonb("customization"), // Custom designs, text, etc.
+  fulfillmentStatus: varchar("fulfillment_status").default('pending'), // 'pending', 'processing', 'fulfilled', 'failed'
+  
+  // Integration tracking
+  printfulOrderId: varchar("printful_order_id"), // Printful order ID for this item
+  downloadToken: varchar("download_token"), // For digital products
+  downloadCount: integer("download_count").default(0),
+  downloadExpiresAt: timestamp("download_expires_at"),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// E-commerce relations
+export const productCategoriesRelations = relations(productCategories, ({ one, many }) => ({
+  parent: one(productCategories, {
+    fields: [productCategories.parentId],
+    references: [productCategories.id],
+  }),
+  children: many(productCategories),
+  products: many(products),
+}));
+
+export const productsRelations = relations(products, ({ one, many }) => ({
+  category: one(productCategories, {
+    fields: [products.categoryId],
+    references: [productCategories.id],
+  }),
+  createdByUser: one(users, {
+    fields: [products.createdBy],
+    references: [users.id],
+  }),
+  updatedByUser: one(users, {
+    fields: [products.updatedBy],
+    references: [users.id],
+  }),
+  variants: many(productVariants),
+  cartItems: many(cartItems),
+  orderItems: many(ecommerceOrderItems),
+}));
+
+export const productVariantsRelations = relations(productVariants, ({ one, many }) => ({
+  product: one(products, {
+    fields: [productVariants.productId],
+    references: [products.id],
+  }),
+  cartItems: many(cartItems),
+  orderItems: many(ecommerceOrderItems),
+}));
+
+export const cartItemsRelations = relations(cartItems, ({ one }) => ({
+  user: one(users, {
+    fields: [cartItems.userId],
+    references: [users.id],
+  }),
+  product: one(products, {
+    fields: [cartItems.productId],
+    references: [products.id],
+  }),
+  variant: one(productVariants, {
+    fields: [cartItems.variantId],
+    references: [productVariants.id],
+  }),
+}));
+
+export const ecommerceOrdersRelations = relations(ecommerceOrders, ({ one, many }) => ({
+  user: one(users, {
+    fields: [ecommerceOrders.userId],
+    references: [users.id],
+  }),
+  items: many(ecommerceOrderItems),
+}));
+
+export const ecommerceOrderItemsRelations = relations(ecommerceOrderItems, ({ one }) => ({
+  order: one(ecommerceOrders, {
+    fields: [ecommerceOrderItems.orderId],
+    references: [ecommerceOrders.id],
+  }),
+  product: one(products, {
+    fields: [ecommerceOrderItems.productId],
+    references: [products.id],
+  }),
+  variant: one(productVariants, {
+    fields: [ecommerceOrderItems.variantId],
+    references: [productVariants.id],
+  }),
+}));
+
+// E-commerce insert schemas
+export const insertProductCategorySchema = createInsertSchema(productCategories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProductVariantSchema = createInsertSchema(productVariants).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCartItemSchema = createInsertSchema(cartItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEcommerceOrderSchema = createInsertSchema(ecommerceOrders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  paidAt: true,
+  shippedAt: true,
+  deliveredAt: true,
+  cancelledAt: true,
+});
+
+export const insertEcommerceOrderItemSchema = createInsertSchema(ecommerceOrderItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// E-commerce types
+export type InsertProductCategory = z.infer<typeof insertProductCategorySchema>;
+export type ProductCategory = typeof productCategories.$inferSelect;
+
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type Product = typeof products.$inferSelect;
+
+export type InsertProductVariant = z.infer<typeof insertProductVariantSchema>;
+export type ProductVariant = typeof productVariants.$inferSelect;
+
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+export type CartItem = typeof cartItems.$inferSelect;
+
+export type InsertEcommerceOrder = z.infer<typeof insertEcommerceOrderSchema>;
+export type EcommerceOrder = typeof ecommerceOrders.$inferSelect;
+
+export type InsertEcommerceOrderItem = z.infer<typeof insertEcommerceOrderItemSchema>;
+export type EcommerceOrderItem = typeof ecommerceOrderItems.$inferSelect;
+
+// Extended types with relations
+export type ProductWithDetails = Product & {
+  category?: ProductCategory;
+  variants: ProductVariant[];
+  createdByUser?: User;
+  updatedByUser?: User;
+};
+
+export type ProductCategoryWithProducts = ProductCategory & {
+  products: Product[];
+  children: ProductCategory[];
+  parent?: ProductCategory;
+};
+
+export type CartItemWithDetails = CartItem & {
+  product: Product;
+  variant?: ProductVariant;
+  user?: User;
+};
+
+export type EcommerceOrderWithDetails = EcommerceOrder & {
+  items: EcommerceOrderItemWithDetails[];
+  user?: User;
+};
+
+export type EcommerceOrderItemWithDetails = EcommerceOrderItem & {
+  product: Product;
+  variant?: ProductVariant;
+  order: EcommerceOrder;
+};
+
+// E-commerce enums
+export type ProductType = 'physical' | 'digital' | 'service';
+export type FulfillmentType = 'printful' | 'download' | 'manual';
+export type ProductStatus = 'draft' | 'active' | 'inactive';
+export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
+export type FulfillmentStatus = 'pending' | 'processing' | 'fulfilled' | 'failed' | 'partial';
