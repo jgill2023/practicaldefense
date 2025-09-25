@@ -3910,6 +3910,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sync products from Printful
+  app.post('/api/products/sync-printful', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.user.claims.sub);
+      if (user?.role !== 'instructor') {
+        return res.status(403).json({ error: "Only instructors can sync products from Printful" });
+      }
+
+      console.log("Starting Printful product sync...");
+      
+      // Import the printfulService
+      const { printfulService } = await import('../printfulService');
+      
+      let syncResults = {
+        productsProcessed: 0,
+        variantsProcessed: 0,
+        errors: []
+      };
+
+      try {
+        // Fetch products from Printful
+        const printfulProducts = await printfulService.getProducts();
+        console.log(`Found ${printfulProducts.length} products in Printful store`);
+
+        for (const printfulProduct of printfulProducts) {
+          try {
+            // Skip ignored products
+            if (printfulProduct.is_ignored) {
+              continue;
+            }
+
+            // Check if product already exists in our database
+            const existingProducts = await storage.getProducts();
+            const existingProduct = existingProducts.find(p => p.printfulProductId === printfulProduct.id.toString());
+
+            if (existingProduct) {
+              console.log(`Product ${printfulProduct.name} already exists, skipping...`);
+              continue;
+            }
+
+            // Create product category if it doesn't exist
+            let categoryId = null;
+            const categories = await storage.getCategories();
+            let printfulCategory = categories.find(c => c.name === 'Printful Products');
+            
+            if (!printfulCategory) {
+              printfulCategory = await storage.createCategory({
+                name: 'Printful Products',
+                slug: 'printful-products',
+                description: 'Products imported from Printful',
+                isActive: true,
+                sortOrder: 999,
+              });
+            }
+            categoryId = printfulCategory.id;
+
+            // Create the product in our database
+            const newProduct = await storage.createProduct({
+              name: printfulProduct.name,
+              slug: printfulProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+              description: `Imported from Printful - ${printfulProduct.name}`,
+              categoryId: categoryId,
+              basePrice: 0, // Will be updated with variant prices
+              compareAtPrice: null,
+              costPerItem: 0,
+              trackQuantity: false,
+              quantity: 0,
+              sku: printfulProduct.external_id || `printful-${printfulProduct.id}`,
+              barcode: null,
+              weight: null,
+              weightUnit: 'kg',
+              status: 'active',
+              visibility: 'public',
+              tags: ['printful'],
+              seoTitle: printfulProduct.name,
+              seoDescription: printfulProduct.name,
+              images: printfulProduct.thumbnail_url ? [printfulProduct.thumbnail_url] : [],
+              printfulProductId: printfulProduct.id.toString(),
+              printfulSyncVariantId: null,
+              createdBy: user.id,
+              updatedBy: user.id,
+            });
+
+            syncResults.productsProcessed++;
+            console.log(`Created product: ${newProduct.name}`);
+
+            // Fetch and create variants for this product
+            try {
+              const printfulVariants = await printfulService.getSyncVariants(printfulProduct.id);
+              console.log(`Found ${printfulVariants.length} variants for product ${printfulProduct.name}`);
+
+              let lowestPrice = Infinity;
+
+              for (const printfulVariant of printfulVariants) {
+                try {
+                  if (printfulVariant.is_ignored || printfulVariant.is_discontinued) {
+                    continue;
+                  }
+
+                  const price = parseFloat(printfulVariant.retail_price || '0');
+                  if (price < lowestPrice) {
+                    lowestPrice = price;
+                  }
+
+                  // Create variant in our database
+                  await storage.createProductVariant({
+                    productId: newProduct.id,
+                    name: printfulVariant.name,
+                    sku: printfulVariant.sku,
+                    price: price,
+                    compareAtPrice: null,
+                    costPerItem: 0,
+                    trackQuantity: false,
+                    quantity: 0,
+                    weight: null,
+                    weightUnit: 'kg',
+                    options: printfulVariant.options ? JSON.stringify(printfulVariant.options) : null,
+                    images: printfulVariant.files && printfulVariant.files.length > 0 ? 
+                      [printfulVariant.files[0].preview_url || printfulVariant.files[0].url] : [],
+                    printfulSyncVariantId: printfulVariant.id.toString(),
+                    printfulVariantId: printfulVariant.variant_id.toString(),
+                  });
+
+                  syncResults.variantsProcessed++;
+                } catch (variantError) {
+                  console.error(`Error creating variant ${printfulVariant.name}:`, variantError);
+                  syncResults.errors.push(`Variant ${printfulVariant.name}: ${variantError.message}`);
+                }
+              }
+
+              // Update product base price with the lowest variant price
+              if (lowestPrice !== Infinity) {
+                await storage.updateProduct(newProduct.id, {
+                  basePrice: lowestPrice,
+                  updatedBy: user.id,
+                });
+              }
+
+            } catch (variantError) {
+              console.error(`Error fetching variants for product ${printfulProduct.name}:`, variantError);
+              syncResults.errors.push(`Product ${printfulProduct.name} variants: ${variantError.message}`);
+            }
+
+          } catch (productError) {
+            console.error(`Error processing product ${printfulProduct.name}:`, productError);
+            syncResults.errors.push(`Product ${printfulProduct.name}: ${productError.message}`);
+          }
+        }
+
+        console.log("Printful sync completed:", syncResults);
+        res.json({
+          message: "Printful sync completed",
+          results: syncResults
+        });
+
+      } catch (printfulError) {
+        console.error("Error fetching from Printful:", printfulError);
+        return res.status(500).json({ 
+          error: "Failed to fetch products from Printful", 
+          details: printfulError.message 
+        });
+      }
+
+    } catch (error: any) {
+      console.error("Error syncing Printful products:", error);
+      res.status(500).json({ error: "Failed to sync Printful products: " + error.message });
+    }
+  });
+
   // Product Variants Routes
   app.get('/api/products/:productId/variants', async (req, res) => {
     try {
