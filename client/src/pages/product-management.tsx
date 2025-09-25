@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Layout } from "@/components/Layout";
 import { Trash2, Edit, Plus, Package, Tag, ShoppingCart, DollarSign, Download } from "lucide-react";
 import type { ProductWithDetails, ProductCategory, ProductCategoryWithProducts } from "@shared/schema";
 
@@ -266,7 +267,8 @@ export default function ProductManagement() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6" data-testid="product-management-page">
+    <Layout>
+      <div className="container mx-auto py-6 space-y-6" data-testid="product-management-page">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -778,6 +780,7 @@ export default function ProductManagement() {
           </Form>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </Layout>
   );
 }
