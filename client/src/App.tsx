@@ -10,6 +10,7 @@ import CourseManagement from "@/pages/course-management";
 import CourseFormsManagement from "@/pages/course-forms-management";
 import ProductManagement from "@/pages/product-management";
 import Storefront from "@/pages/storefront";
+import CartPage from "@/pages/cart";
 import StudentPortal from "@/pages/student-portal";
 import { StudentsPage } from "@/pages/StudentsPage";
 import CourseRegistration from "@/pages/course-registration";
@@ -36,6 +37,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Landing} />
       <Route path="/store" component={Storefront} />
+      <Route path="/cart" component={CartPage} />
       <Route path="/course-registration/:id" component={CourseRegistration} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/schedule-list" component={ScheduleList} />
