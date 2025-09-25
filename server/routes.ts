@@ -3941,9 +3941,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               continue;
             }
 
-            // Check if product already exists in our database
+            // Check if product already exists in our database by Printful ID or SKU
             const existingProducts = await storage.getProducts();
-            const existingProduct = existingProducts.find(p => p.printfulProductId === printfulProduct.id.toString());
+            const printfulProductSku = printfulProduct.external_id || `printful-${printfulProduct.id}`;
+            const existingProduct = existingProducts.find(p => 
+              p.printfulProductId === printfulProduct.id.toString() || 
+              p.sku === printfulProductSku
+            );
             
             let productToUpdate = existingProduct;
 
@@ -3991,6 +3995,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             // Fetch the real prices from Printful variants
             try {
+              console.log(`Fetching variants for Printful product ID: ${printfulProduct.id} (${printfulProduct.name})`);
               const printfulVariants = await printfulService.getSyncVariants(printfulProduct.id);
               console.log(`Found ${printfulVariants.length} variants for product ${printfulProduct.name}`);
 
@@ -4007,8 +4012,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     lowestPrice = price;
                   }
 
-                  // Only create variant if product was newly created (not existing)
-                  if (!existingProduct) {
+                  // Check if variant already exists for this product
+                  const existingVariants = await storage.getProductVariants(productToUpdate.id);
+                  const existingVariant = existingVariants.find(v => v.printfulSyncVariantId === printfulVariant.id.toString());
+                  
+                  if (!existingVariant) {
                     await storage.createProductVariant({
                       productId: productToUpdate.id,
                       name: printfulVariant.name,
@@ -4045,7 +4053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
 
             } catch (variantError) {
-              console.error(`Error fetching variants for product ${printfulProduct.name}:`, variantError);
+              console.error(`Error fetching variants for product ${printfulProduct.name} (ID: ${printfulProduct.id}):`, variantError);
               syncResults.errors.push(`Product ${printfulProduct.name} variants: ${variantError.message}`);
             }
 
