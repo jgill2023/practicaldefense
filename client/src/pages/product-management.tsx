@@ -226,7 +226,7 @@ export default function ProductManagement() {
       name: product.name,
       description: product.description || "",
       shortDescription: product.shortDescription || "",
-      basePrice: product.basePrice.toString(),
+      basePrice: (product.basePrice || product.price || 0).toString(),
       categoryId: product.categoryId,
       sku: product.sku,
       status: product.status,

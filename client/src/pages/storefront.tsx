@@ -233,7 +233,7 @@ export default function Storefront() {
                       )}
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold" data-testid={`product-price-${product.id}`}>
-                          ${product.basePrice.toFixed(2)}
+                          ${Number(product.basePrice || product.price || 0).toFixed(2)}
                         </span>
                         {product.category && (
                           <Badge variant="outline" className="text-xs">
@@ -298,7 +298,7 @@ export default function Storefront() {
                 {/* Product Details */}
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-2xl font-bold">${selectedProduct.basePrice.toFixed(2)}</h3>
+                    <h3 className="text-2xl font-bold">${Number(selectedProduct.basePrice || selectedProduct.price || 0).toFixed(2)}</h3>
                     <p className="text-sm text-muted-foreground">SKU: {selectedProduct.sku}</p>
                   </div>
                   
@@ -359,7 +359,7 @@ export default function Storefront() {
                     data-testid="button-add-to-cart-dialog"
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Add to Cart - ${selectedProduct.basePrice.toFixed(2)}
+                    Add to Cart - ${Number(selectedProduct.basePrice || selectedProduct.price || 0).toFixed(2)}
                   </Button>
                 </div>
               </div>
