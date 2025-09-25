@@ -14,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Edit, Plus, Package, Tag, ShoppingCart, DollarSign } from "lucide-react";
+import { Trash2, Edit, Plus, Package, Tag, ShoppingCart, DollarSign, Download } from "lucide-react";
 import type { ProductWithDetails, ProductCategory, ProductCategoryWithProducts } from "@shared/schema";
 
 const productCategorySchema = z.object({
@@ -171,6 +171,26 @@ export default function ProductManagement() {
     },
   });
 
+  // Printful sync mutation
+  const syncPrintfulMutation = useMutation({
+    mutationFn: () => apiRequest('/api/products/sync-printful', { method: 'POST' }),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/product-categories'] });
+      toast({ 
+        title: "Printful sync completed", 
+        description: `Processed ${data.results.productsProcessed} products and ${data.results.variantsProcessed} variants`
+      });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error syncing Printful products", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    },
+  });
+
   // Event handlers
   const handleCreateCategory = () => {
     setEditingCategory(null);
@@ -249,6 +269,15 @@ export default function ProductManagement() {
           <p className="text-muted-foreground">Manage your store products and categories</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            onClick={() => syncPrintfulMutation.mutate()} 
+            variant="secondary" 
+            disabled={syncPrintfulMutation.isPending}
+            data-testid="button-sync-printful"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {syncPrintfulMutation.isPending ? "Syncing..." : "Sync Printful"}
+          </Button>
           <Button onClick={handleCreateCategory} variant="outline" data-testid="button-create-category">
             <Tag className="w-4 h-4 mr-2" />
             New Category
