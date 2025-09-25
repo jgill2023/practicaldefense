@@ -173,7 +173,7 @@ export default function ProductManagement() {
 
   // Printful sync mutation
   const syncPrintfulMutation = useMutation({
-    mutationFn: () => apiRequest('/api/products/sync-printful', { method: 'POST' }),
+    mutationFn: () => apiRequest('POST', '/api/products/sync-printful'),
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       queryClient.invalidateQueries({ queryKey: ['/api/product-categories'] });

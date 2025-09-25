@@ -3921,7 +3921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Starting Printful product sync...");
       
       // Import the printfulService
-      const { printfulService } = await import('../printfulService');
+      const { printfulService } = await import('./printfulService');
       
       let syncResults = {
         productsProcessed: 0,
@@ -4065,8 +4065,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           results: syncResults
         });
 
-      } catch (printfulError) {
+      } catch (printfulError: any) {
         console.error("Error fetching from Printful:", printfulError);
+        
+        // Handle specific Printful API errors with user-friendly messages
+        if (printfulError.message && printfulError.message.includes("Manual Order / API platform")) {
+          return res.status(400).json({
+            error: "Printful Store Configuration",
+            message: "Your Printful store is configured for automatic platform integration (e.g., Shopify, Etsy). To use the API sync feature, you need to change your store to 'Manual Order / API' mode in your Printful dashboard.",
+            details: printfulError.message
+          });
+        }
+        
+        if (printfulError.status === 401 || printfulError.message?.includes("Unauthorized")) {
+          return res.status(401).json({
+            error: "Printful API Authentication Failed",
+            message: "Please check your Printful API key configuration.",
+            details: printfulError.message
+          });
+        }
+        
         return res.status(500).json({ 
           error: "Failed to fetch products from Printful", 
           details: printfulError.message 
