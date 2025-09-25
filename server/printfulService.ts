@@ -180,14 +180,16 @@ export class PrintfulError extends Error {
 
 export class PrintfulService {
   private readonly baseUrl = 'https://api.printful.com';
-  private readonly apiKey: string;
+  private readonly apiKey: string | null;
 
   constructor() {
-    const apiKey = process.env.PRINTFUL_API_KEY;
-    if (!apiKey) {
-      throw new Error('PRINTFUL_API_KEY environment variable is required');
+    this.apiKey = process.env.PRINTFUL_API_KEY || null;
+  }
+
+  private ensureApiKey(): void {
+    if (!this.apiKey) {
+      throw new Error('PRINTFUL_API_KEY environment variable is required for Printful operations');
     }
-    this.apiKey = apiKey;
   }
 
   private async makeRequest<T>(
@@ -197,6 +199,8 @@ export class PrintfulService {
       body?: any;
     } = {}
   ): Promise<T> {
+    this.ensureApiKey(); // Check API key before making requests
+    
     const { method = 'GET', body } = options;
     
     const url = `${this.baseUrl}${endpoint}`;

@@ -76,17 +76,23 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
+  console.log("upsertUser called with claims:", claims);
+  
   // Validate role against allowlist - only allow student or instructor
   const validRoles = ['student', 'instructor'] as const;
   const claimRole = claims["role"];
   const role = validRoles.includes(claimRole) ? claimRole : 'student';
+  
+  console.log("upsertUser - claimRole:", claimRole, "validated role:", role);
 
   // Check if user already exists
   const existingUser = await storage.getUser(claims["sub"]);
+  console.log("upsertUser - existingUser:", existingUser);
   
   if (existingUser) {
     // For existing users, only update profile info, NOT role
     // This prevents privilege escalation on subsequent logins
+    console.log("upsertUser - updating existing user");
     await storage.updateUser(claims["sub"], {
       email: claims["email"],
       firstName: claims["first_name"],
@@ -95,7 +101,7 @@ async function upsertUser(
     });
   } else {
     // For new users, set the validated role
-    await storage.upsertUser({
+    console.log("upsertUser - creating new user with data:", {
       id: claims["sub"],
       email: claims["email"],
       firstName: claims["first_name"],
@@ -103,6 +109,20 @@ async function upsertUser(
       profileImageUrl: claims["profile_image_url"],
       role: role,
     });
+    try {
+      const result = await storage.upsertUser({
+        id: claims["sub"],
+        email: claims["email"],
+        firstName: claims["first_name"],
+        lastName: claims["last_name"],
+        profileImageUrl: claims["profile_image_url"],
+        role: role,
+      });
+      console.log("upsertUser - created user result:", result);
+    } catch (error) {
+      console.error("upsertUser - error creating user:", error);
+      throw error;
+    }
   }
 }
 

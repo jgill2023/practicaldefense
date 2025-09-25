@@ -28,15 +28,15 @@ const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   description: z.string().optional(),
   shortDescription: z.string().optional(),
-  basePrice: z.number().min(0, "Price must be non-negative"),
+  basePrice: z.string().min(1, "Price is required").refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Price must be a valid non-negative number"),
   categoryId: z.string().uuid("Please select a category"),
   sku: z.string().min(1, "SKU is required"),
   status: z.enum(["active", "inactive", "draft"]).default("active"),
   featured: z.boolean().default(false),
   images: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]),
-  sortOrder: z.number().int().min(0).default(0),
-  printfulProductId: z.number().optional(),
+  sortOrder: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Sort order must be a valid non-negative number").default("0"),
+  printfulProductId: z.string().optional().refine((val) => !val || (!isNaN(Number(val)) && Number(val) > 0), "Printful Product ID must be a valid positive number"),
 });
 
 type ProductCategoryFormData = z.infer<typeof productCategorySchema>;
@@ -76,14 +76,14 @@ export default function ProductManagement() {
       name: "",
       description: "",
       shortDescription: "",
-      basePrice: 0,
+      basePrice: "0",
       categoryId: "",
       sku: "",
       status: "active",
       featured: false,
       images: [],
       tags: [],
-      sortOrder: 0,
+      sortOrder: "0",
     },
   });
 
@@ -201,15 +201,15 @@ export default function ProductManagement() {
       name: product.name,
       description: product.description || "",
       shortDescription: product.shortDescription || "",
-      basePrice: product.basePrice,
+      basePrice: product.basePrice.toString(),
       categoryId: product.categoryId,
       sku: product.sku,
       status: product.status,
       featured: product.featured || false,
       images: product.images || [],
       tags: product.tags || [],
-      sortOrder: product.sortOrder || 0,
-      printfulProductId: product.printfulProductId || undefined,
+      sortOrder: (product.sortOrder || 0).toString(),
+      printfulProductId: product.printfulProductId?.toString() || "",
     });
     setProductDialogOpen(true);
   };
@@ -631,7 +631,6 @@ export default function ProductManagement() {
                           step="0.01"
                           placeholder="0.00" 
                           {...field}
-                          onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                           data-testid="input-product-price"
                         />
                       </FormControl>
@@ -698,7 +697,6 @@ export default function ProductManagement() {
                           type="number" 
                           placeholder="0" 
                           {...field}
-                          onChange={e => field.onChange(parseInt(e.target.value) || 0)}
                           data-testid="input-product-sort-order"
                         />
                       </FormControl>
@@ -717,7 +715,6 @@ export default function ProductManagement() {
                           type="number" 
                           placeholder="Optional" 
                           {...field}
-                          onChange={e => field.onChange(parseInt(e.target.value) || undefined)}
                           data-testid="input-product-printful-id"
                         />
                       </FormControl>
