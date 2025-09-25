@@ -33,7 +33,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="sticky top-0 z-50">
         {/* Secondary Menu Bar for Logged In Users - Desktop Only */}
         {isAuthenticated && (
-          <div className="hidden md:block bg-muted border-b">
+          <div className="hidden md:block bg-gray-100 dark:bg-gray-800 border-b">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-center h-10">
                 <nav className="flex items-center space-x-6">

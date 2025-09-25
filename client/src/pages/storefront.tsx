@@ -257,21 +257,6 @@ export default function Storefront() {
                         </span>
                       </div>
                       
-                      {/* Tags */}
-                      {product.tags && product.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {product.tags.slice(0, 3).map((tag, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                          {product.tags.length > 3 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{product.tags.length - 3}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
 
                       {/* Add to Cart Button */}
                       <Button
