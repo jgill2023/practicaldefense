@@ -19,6 +19,7 @@ export default function Storefront() {
   const [sortBy, setSortBy] = useState<string>("name");
   const [selectedProduct, setSelectedProduct] = useState<ProductWithDetails | null>(null);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   const { addToCart, isAddingToCart } = useCart();
 
@@ -187,9 +188,26 @@ export default function Storefront() {
             {filteredProducts.map((product: ProductWithDetails) => (
               <Card key={product.id} className="group hover:shadow-lg transition-shadow">
                 <CardContent className="p-0">
-                  {/* Product Image Placeholder */}
-                  <div className="aspect-square bg-muted rounded-t-lg flex items-center justify-center relative overflow-hidden">
-                    <Package className="w-12 h-12 text-muted-foreground" />
+                  {/* Product Image */}
+                  <div className="aspect-square bg-muted rounded-t-lg relative overflow-hidden">
+                    {product.primaryImageUrl && !failedImages.has(product.id) ? (
+                      <img 
+                        src={product.primaryImageUrl} 
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        width="300"
+                        height="300"
+                        onError={() => {
+                          setFailedImages(prev => new Set(prev).add(product.id));
+                        }}
+                      />
+                    ) : (
+                      /* Fallback placeholder */
+                      <div className="w-full h-full bg-muted rounded-t-lg flex items-center justify-center">
+                        <Package className="w-12 h-12 text-muted-foreground" />
+                      </div>
+                    )}
                     {product.featured && (
                       <Badge className="absolute top-2 left-2" variant="secondary">
                         <Star className="w-3 h-3 mr-1" />
