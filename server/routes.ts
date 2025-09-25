@@ -4128,24 +4128,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Shopping Cart Routes
-  app.get('/api/cart', async (req: any, res) => {
+  app.get('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub; // May be null for guest users
       const sessionId = req.sessionID;
       
+      console.log("GET /api/cart - userId:", userId, "sessionId:", sessionId);
+      
       // Use same logic as POST route: if userId exists, don't use sessionId
       const cartItems = await storage.getCartItems(userId, userId ? null : sessionId);
-      res.json(cartItems);
+      
+      console.log("GET /api/cart - found items:", cartItems.length);
+      
+      // Convert priceAtTime from string to number for frontend compatibility
+      const formattedCartItems = cartItems.map(item => ({
+        ...item,
+        priceAtTime: Number(item.priceAtTime)
+      }));
+      
+      res.json(formattedCartItems);
     } catch (error: any) {
       console.error("Error fetching cart items:", error);
       res.status(500).json({ error: "Failed to fetch cart items: " + error.message });
     }
   });
 
-  app.post('/api/cart', async (req: any, res) => {
+  app.post('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub; // May be null for guest users
       const sessionId = req.sessionID;
+      
+      console.log("POST /api/cart - userId:", userId, "sessionId:", sessionId);
       
       const cartItemSchema = z.object({
         productId: z.string().uuid(),
@@ -4163,6 +4176,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sessionId: userId ? null : sessionId,
       });
       
+      console.log("POST /api/cart - created item with userId:", cartItem.userId, "sessionId:", cartItem.sessionId);
+      
       res.status(201).json(cartItem);
     } catch (error: any) {
       console.error("Error adding to cart:", error);
@@ -4173,7 +4188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/cart/:id', async (req: any, res) => {
+  app.put('/api/cart/:id', isAuthenticated, async (req: any, res) => {
     try {
       const quantitySchema = z.object({
         quantity: z.number().int().min(1),
@@ -4191,7 +4206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/cart/:id', async (req: any, res) => {
+  app.delete('/api/cart/:id', isAuthenticated, async (req: any, res) => {
     try {
       await storage.removeFromCart(req.params.id);
       res.status(204).send();
@@ -4201,7 +4216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/cart', async (req: any, res) => {
+  app.delete('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const sessionId = req.sessionID;
