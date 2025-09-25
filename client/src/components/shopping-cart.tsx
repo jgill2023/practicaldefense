@@ -156,9 +156,24 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
                   <Card key={item.id}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        {/* Product Image Placeholder */}
-                        <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
-                          <Package className="w-6 h-6 text-muted-foreground" />
+                        {/* Product Image */}
+                        <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                          {item.product.primaryImageUrl ? (
+                            <img 
+                              src={item.product.primaryImageUrl} 
+                              alt={item.product.name}
+                              className="w-full h-full object-cover rounded-lg"
+                              loading="lazy"
+                              onError={(e) => {
+                                // Replace failed image with placeholder
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                (e.target as HTMLImageElement).nextElementSibling!.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div className={`w-full h-full flex items-center justify-center ${item.product.primaryImageUrl ? 'hidden' : ''}`}>
+                            <Package className="w-6 h-6 text-muted-foreground" />
+                          </div>
                         </div>
                         
                         {/* Product Details */}
