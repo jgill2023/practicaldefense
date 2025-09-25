@@ -58,6 +58,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-student-dashboard">
                   Student Dashboard
                 </Link>
+                <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-products">
+                  Products
+                </Link>
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -119,7 +122,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
                 <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors">About Us</a>
                 <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors">Resources</a>
-                <a href="#our-store" className="text-primary-foreground hover:text-accent transition-colors">Our Store</a>
+                <Link href="/store" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-store">Our Store</Link>
                 <a href="#contact-us" className="text-primary-foreground hover:text-accent transition-colors">Contact Us</a>
               </nav>
 
@@ -193,7 +196,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
                 <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors py-2">About Us</a>
                 <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors py-2">Resources</a>
-                <a href="#our-store" className="text-primary-foreground hover:text-accent transition-colors py-2">Our Store</a>
+                <Link href="/store" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-store-mobile">Our Store</Link>
                 <a href="#contact-us" className="text-primary-foreground hover:text-accent transition-colors py-2">Contact Us</a>
                 
                 {/* Mobile auth buttons */}
@@ -236,6 +239,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           <Link href="/student-portal" className="block">
                             <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-dashboard-mobile">
                               Student Dashboard
+                            </Button>
+                          </Link>
+                          <Link href="/product-management" className="block">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-products-mobile">
+                              Products
                             </Button>
                           </Link>
                         </>
