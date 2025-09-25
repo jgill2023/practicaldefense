@@ -3944,11 +3944,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Check if product already exists in our database
             const existingProducts = await storage.getProducts();
             const existingProduct = existingProducts.find(p => p.printfulProductId === printfulProduct.id.toString());
-
-            if (existingProduct) {
-              console.log(`Product ${printfulProduct.name} already exists, skipping...`);
-              continue;
-            }
+            
+            let productToUpdate = existingProduct;
 
             // Create product category if it doesn't exist
             let categoryId = null;
@@ -3966,29 +3963,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             categoryId = printfulCategory.id;
 
-            // Create the product in our database
-            const newProduct = await storage.createProduct({
-              name: printfulProduct.name,
-              slug: printfulProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-              description: `Imported from Printful - ${printfulProduct.name}`,
-              categoryId: categoryId,
-              sku: printfulProduct.external_id || `printful-${printfulProduct.id}`,
-              price: '1.00', // Set to $1 initially, will be updated with variant prices
-              productType: 'physical',
-              fulfillmentType: 'printful',
-              printfulProductId: printfulProduct.id,
-              primaryImageUrl: printfulProduct.thumbnail_url,
-              imageUrls: printfulProduct.thumbnail_url ? [printfulProduct.thumbnail_url] : [],
-              tags: ['printful'],
-              status: 'active',
-              createdBy: user.id,
-              updatedBy: user.id,
-            });
+            if (!existingProduct) {
+              // Create the product in our database
+              productToUpdate = await storage.createProduct({
+                name: printfulProduct.name,
+                slug: printfulProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+                description: `Imported from Printful - ${printfulProduct.name}`,
+                categoryId: categoryId,
+                sku: printfulProduct.external_id || `printful-${printfulProduct.id}`,
+                price: '1.00', // Set to $1 initially, will be updated with variant prices
+                productType: 'physical',
+                fulfillmentType: 'printful',
+                printfulProductId: printfulProduct.id,
+                primaryImageUrl: printfulProduct.thumbnail_url,
+                imageUrls: printfulProduct.thumbnail_url ? [printfulProduct.thumbnail_url] : [],
+                tags: ['printful'],
+                status: 'active',
+                createdBy: user.id,
+                updatedBy: user.id,
+              });
+              console.log(`Created product: ${productToUpdate.name}`);
+            } else {
+              console.log(`Updating existing product: ${existingProduct.name}`);
+            }
 
             syncResults.productsProcessed++;
-            console.log(`Created product: ${newProduct.name}`);
 
-            // Fetch and create variants for this product
+            // Fetch the real prices from Printful variants
             try {
               const printfulVariants = await printfulService.getSyncVariants(printfulProduct.id);
               console.log(`Found ${printfulVariants.length} variants for product ${printfulProduct.name}`);
@@ -4002,42 +4003,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
 
                   const price = parseFloat(printfulVariant.retail_price || '0');
-                  if (price < lowestPrice) {
+                  if (price < lowestPrice && price > 0) {
                     lowestPrice = price;
                   }
 
-                  // Create variant in our database
-                  await storage.createProductVariant({
-                    productId: newProduct.id,
-                    name: printfulVariant.name,
-                    sku: printfulVariant.sku,
-                    price: price,
-                    compareAtPrice: null,
-                    costPerItem: 0,
-                    trackQuantity: false,
-                    quantity: 0,
-                    weight: null,
-                    weightUnit: 'kg',
-                    options: printfulVariant.options ? JSON.stringify(printfulVariant.options) : null,
-                    images: printfulVariant.files && printfulVariant.files.length > 0 ? 
-                      [printfulVariant.files[0].preview_url || printfulVariant.files[0].url] : [],
-                    printfulSyncVariantId: printfulVariant.id.toString(),
-                    printfulVariantId: printfulVariant.variant_id.toString(),
-                  });
+                  // Only create variant if product was newly created (not existing)
+                  if (!existingProduct) {
+                    await storage.createProductVariant({
+                      productId: productToUpdate.id,
+                      name: printfulVariant.name,
+                      sku: printfulVariant.sku,
+                      price: price,
+                      compareAtPrice: null,
+                      costPerItem: 0,
+                      trackQuantity: false,
+                      quantity: 0,
+                      weight: null,
+                      weightUnit: 'kg',
+                      options: printfulVariant.options ? JSON.stringify(printfulVariant.options) : null,
+                      images: printfulVariant.files && printfulVariant.files.length > 0 ? 
+                        [printfulVariant.files[0].preview_url || printfulVariant.files[0].url] : [],
+                      printfulSyncVariantId: printfulVariant.id.toString(),
+                      printfulVariantId: printfulVariant.variant_id.toString(),
+                    });
+                  }
 
                   syncResults.variantsProcessed++;
                 } catch (variantError) {
-                  console.error(`Error creating variant ${printfulVariant.name}:`, variantError);
+                  console.error(`Error processing variant ${printfulVariant.name}:`, variantError);
                   syncResults.errors.push(`Variant ${printfulVariant.name}: ${variantError.message}`);
                 }
               }
 
-              // Update product base price with the lowest variant price
-              if (lowestPrice !== Infinity) {
-                await storage.updateProduct(newProduct.id, {
-                  basePrice: lowestPrice,
+              // Update product with the real price from Printful
+              if (lowestPrice !== Infinity && lowestPrice > 0) {
+                await storage.updateProduct(productToUpdate.id, {
+                  price: lowestPrice.toFixed(2),
                   updatedBy: user.id,
                 });
+                console.log(`Updated product ${printfulProduct.name} price to $${lowestPrice.toFixed(2)}`);
               }
 
             } catch (variantError) {
