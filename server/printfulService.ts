@@ -183,7 +183,8 @@ export class PrintfulService {
   private readonly apiKey: string | null;
 
   constructor() {
-    this.apiKey = process.env.PRINTFUL_API_KEY || null;
+    // Try the new API key first, then fall back to the old one
+    this.apiKey = process.env.PRINTFUL_API_KEY_NEW || process.env.PRINTFUL_API_KEY || null;
   }
 
   private ensureApiKey(): void {
