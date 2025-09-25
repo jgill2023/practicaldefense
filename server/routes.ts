@@ -4133,7 +4133,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user?.claims?.sub; // May be null for guest users
       const sessionId = req.sessionID;
       
-      const cartItems = await storage.getCartItems(userId, sessionId);
+      // Use same logic as POST route: if userId exists, don't use sessionId
+      const cartItems = await storage.getCartItems(userId, userId ? null : sessionId);
       res.json(cartItems);
     } catch (error: any) {
       console.error("Error fetching cart items:", error);

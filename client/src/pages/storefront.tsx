@@ -75,7 +75,7 @@ export default function Storefront() {
       productId: product.id,
       variantId: variant?.id,
       quantity: 1,
-      priceAtTime: variant?.price || product.basePrice,
+      priceAtTime: Number(variant?.price || product.basePrice || product.price || 0),
     });
     
     toast({
