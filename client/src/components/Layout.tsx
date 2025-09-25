@@ -29,55 +29,57 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background font-noto-sans">
-      {/* Secondary Menu Bar for Logged In Users - Desktop Only */}
-      {isAuthenticated && (
-        <div className="hidden md:block bg-muted/50 border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-center h-10">
-              <nav className="flex items-center space-x-6">
-                <Link href="/instructor-dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-dashboard">
-                  Dashboard
-                </Link>
-                <Link href="/students" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-students">
-                  Students
-                </Link>
-                <Link href="/communications" className="text-sm font-medium text-foreground hover:text-primary transition-colors relative" data-testid="link-secondary-communication">
-                  Communication
-                  {counts.unread > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
-                    >
-                      {counts.unread > 99 ? '99+' : counts.unread}
-                    </Badge>
-                  )}
-                </Link>
-                <Link href="/reports" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-reports">
-                  Reports
-                </Link>
-                <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-student-dashboard">
-                  Student Dashboard
-                </Link>
-                <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-products">
-                  Products
-                </Link>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="text-xs"
-                  onClick={handleLogout}
-                  data-testid="button-logout-secondary"
-                >
-                  Logout
-                </Button>
-              </nav>
+      {/* Navigation Container - Sticky at top */}
+      <div className="sticky top-0 z-50">
+        {/* Secondary Menu Bar for Logged In Users - Desktop Only */}
+        {isAuthenticated && (
+          <div className="hidden md:block bg-muted/50 border-b">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-center h-10">
+                <nav className="flex items-center space-x-6">
+                  <Link href="/instructor-dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-dashboard">
+                    Dashboard
+                  </Link>
+                  <Link href="/students" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-students">
+                    Students
+                  </Link>
+                  <Link href="/communications" className="text-sm font-medium text-foreground hover:text-primary transition-colors relative" data-testid="link-secondary-communication">
+                    Communication
+                    {counts.unread > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
+                      >
+                        {counts.unread > 99 ? '99+' : counts.unread}
+                      </Badge>
+                    )}
+                  </Link>
+                  <Link href="/reports" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-reports">
+                    Reports
+                  </Link>
+                  <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-student-dashboard">
+                    Student Dashboard
+                  </Link>
+                  <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-products">
+                    Products
+                  </Link>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="text-xs"
+                    onClick={handleLogout}
+                    data-testid="button-logout-secondary"
+                  >
+                    Logout
+                  </Button>
+                </nav>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Header Navigation */}
-      <header className="bg-primary shadow-lg sticky top-0 z-50">
+        {/* Header Navigation */}
+        <header className="bg-primary shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Company name aligned to the left */}
@@ -270,6 +272,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           )}
         </div>
       </header>
+      </div>
 
       {/* Main Content */}
       <main>{children}</main>

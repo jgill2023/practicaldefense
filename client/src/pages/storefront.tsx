@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ShoppingCartComponent, useCart } from "@/components/shopping-cart";
 import { useToast } from "@/hooks/use-toast";
+import { Layout } from "@/components/Layout";
 import { Search, Filter, Package, Star, ShoppingCart, Eye } from "lucide-react";
 import type { ProductWithDetails, ProductCategoryWithProducts } from "@shared/schema";
 
@@ -88,7 +89,8 @@ export default function Storefront() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-6" data-testid="storefront-page">
+    <Layout>
+      <div className="container mx-auto py-6 space-y-6" data-testid="storefront-page">
       {/* Header with Cart */}
       <div className="flex justify-between items-center">
         <div>
@@ -367,6 +369,7 @@ export default function Storefront() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </Layout>
   );
 }

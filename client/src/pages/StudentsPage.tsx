@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Layout } from "@/components/Layout";
 import { Users, Phone, Mail, Edit, Calendar, ArrowLeft, Eye, Download, FileSpreadsheet, FileText, Share2, UserPen, MessageSquare, Shuffle } from "lucide-react";
 import { Link } from "wouter";
 import { EmailNotificationModal } from "@/components/EmailNotificationModal";
@@ -406,7 +407,8 @@ function StudentsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <Layout>
+      <div className="max-w-7xl mx-auto p-6">
       {/* Back to Dashboard Link */}
       <div className="mb-6">
         <Link href="/instructor-dashboard">
@@ -641,7 +643,8 @@ function StudentsPage() {
           studentName={`${selectedStudentForCrossEnrollment.firstName} ${selectedStudentForCrossEnrollment.lastName}`}
         />
       )}
-    </div>
+      </div>
+    </Layout>
   );
 }
 
