@@ -39,7 +39,7 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
   // Update cart item quantity
   const updateQuantityMutation = useMutation({
     mutationFn: ({ id, quantity }: { id: string; quantity: number }) =>
-      apiRequest(`/api/cart/${id}`, { method: 'PUT', body: { quantity } }),
+      apiRequest('PUT', `/api/cart/${id}`, { quantity }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
     },
@@ -54,7 +54,7 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
 
   // Remove item from cart
   const removeItemMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/cart/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/cart/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
       toast({ title: "Item removed from cart" });
@@ -70,7 +70,7 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
 
   // Clear entire cart
   const clearCartMutation = useMutation({
-    mutationFn: () => apiRequest('/api/cart', { method: 'DELETE' }),
+    mutationFn: () => apiRequest('DELETE', '/api/cart'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
       toast({ title: "Cart cleared" });
@@ -303,7 +303,7 @@ export function useCart() {
       quantity?: number;
       priceAtTime: number;
       customization?: any;
-    }) => apiRequest('/api/cart', { method: 'POST', body: item }),
+    }) => apiRequest('POST', '/api/cart', item),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
     },
