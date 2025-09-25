@@ -8,6 +8,8 @@ import Landing from "@/pages/landing";
 import InstructorDashboard from "@/pages/instructor-dashboard";
 import CourseManagement from "@/pages/course-management";
 import CourseFormsManagement from "@/pages/course-forms-management";
+import ProductManagement from "@/pages/product-management";
+import Storefront from "@/pages/storefront";
 import StudentPortal from "@/pages/student-portal";
 import { StudentsPage } from "@/pages/StudentsPage";
 import CourseRegistration from "@/pages/course-registration";
@@ -33,6 +35,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/store" component={Storefront} />
       <Route path="/course-registration/:id" component={CourseRegistration} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/schedule-list" component={ScheduleList} />
@@ -42,6 +45,7 @@ function Router() {
           <Route path="/instructor-dashboard" component={InstructorDashboard} />
           <Route path="/course-management" component={CourseManagement} />
           <Route path="/course-forms-management" component={CourseFormsManagement} />
+          <Route path="/product-management" component={ProductManagement} />
           <Route path="/student-portal" component={StudentPortal} />
           <Route path="/students" component={StudentsPage} />
           <Route path="/promo-codes" component={PromoCodesPage} />
