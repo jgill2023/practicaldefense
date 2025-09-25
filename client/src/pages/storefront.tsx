@@ -279,7 +279,7 @@ export default function Storefront() {
 
       {/* Product Detail Dialog */}
       <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
-        <DialogContent className="max-w-2xl" data-testid="product-detail-dialog">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="product-detail-dialog">
           {selectedProduct && (
             <>
               <DialogHeader>
@@ -291,8 +291,23 @@ export default function Storefront() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Product Image */}
-                <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-                  <Package className="w-24 h-24 text-muted-foreground" />
+                <div className="aspect-square bg-muted rounded-lg overflow-hidden">
+                  {selectedProduct.primaryImageUrl ? (
+                    <img 
+                      src={selectedProduct.primaryImageUrl} 
+                      alt={selectedProduct.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        // Show fallback if image fails to load
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling!.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className={`w-full h-full flex items-center justify-center ${selectedProduct.primaryImageUrl ? 'hidden' : ''}`}>
+                    <Package className="w-24 h-24 text-muted-foreground" />
+                  </div>
                 </div>
                 
                 {/* Product Details */}
