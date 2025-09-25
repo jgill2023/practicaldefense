@@ -91,7 +91,7 @@ export default function ProductManagement() {
   // Category mutations
   const createCategoryMutation = useMutation({
     mutationFn: (data: ProductCategoryFormData) => 
-      apiRequest('/api/product-categories', { method: 'POST', body: data }),
+      apiRequest('POST', '/api/product-categories', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/product-categories'] });
       setCategoryDialogOpen(false);
@@ -106,7 +106,7 @@ export default function ProductManagement() {
 
   const updateCategoryMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: ProductCategoryFormData }) =>
-      apiRequest(`/api/product-categories/${id}`, { method: 'PUT', body: data }),
+      apiRequest('PUT', `/api/product-categories/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/product-categories'] });
       setCategoryDialogOpen(false);
@@ -120,7 +120,7 @@ export default function ProductManagement() {
   });
 
   const deleteCategoryMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/product-categories/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/product-categories/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/product-categories'] });
       toast({ title: "Category deleted successfully" });
@@ -133,7 +133,7 @@ export default function ProductManagement() {
   // Product mutations
   const createProductMutation = useMutation({
     mutationFn: (data: ProductFormData) => 
-      apiRequest('/api/products', { method: 'POST', body: data }),
+      apiRequest('POST', '/api/products', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       setProductDialogOpen(false);
@@ -148,7 +148,7 @@ export default function ProductManagement() {
 
   const updateProductMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: ProductFormData }) =>
-      apiRequest(`/api/products/${id}`, { method: 'PUT', body: data }),
+      apiRequest('PUT', `/api/products/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       setProductDialogOpen(false);
@@ -162,7 +162,7 @@ export default function ProductManagement() {
   });
 
   const deleteProductMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/products/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/products/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       toast({ title: "Product deleted successfully" });
