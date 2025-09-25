@@ -3972,7 +3972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               slug: printfulProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
               description: `Imported from Printful - ${printfulProduct.name}`,
               categoryId: categoryId,
-              basePrice: 0, // Will be updated with variant prices
+              basePrice: 1, // Set to $1 initially, will be updated with variant prices
               compareAtPrice: null,
               costPerItem: 0,
               trackQuantity: false,

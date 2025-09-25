@@ -177,9 +177,14 @@ export default function ProductManagement() {
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
       queryClient.invalidateQueries({ queryKey: ['/api/product-categories'] });
+      const results = data?.results || data || {};
+      const productsProcessed = results.productsProcessed || 0;
+      const variantsProcessed = results.variantsProcessed || 0;
+      const errors = results.errors || [];
+      
       toast({ 
         title: "Printful sync completed", 
-        description: `Processed ${data.results.productsProcessed} products and ${data.results.variantsProcessed} variants`
+        description: `Processed ${productsProcessed} products and ${variantsProcessed} variants${errors.length > 0 ? ` (${errors.length} errors)` : ''}`
       });
     },
     onError: (error: any) => {
