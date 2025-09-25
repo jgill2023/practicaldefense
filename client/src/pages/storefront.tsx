@@ -91,7 +91,7 @@ export default function Storefront() {
 
   return (
     <Layout>
-      <div className="container mx-auto py-6 space-y-6" data-testid="storefront-page">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-6" data-testid="storefront-page">
       {/* Header with Cart */}
       <div className="flex justify-between items-center">
         <div>
