@@ -12,12 +12,13 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Shield, Tag, Users, Star, Menu, X, Calendar, List } from "lucide-react";
+import { Shield, Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileScheduleOpen, setIsMobileScheduleOpen] = useState(false);
   const { counts } = useCommunicationCounts();
 
 
@@ -150,7 +151,43 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {isMobileMenuOpen && (
             <div className="md:hidden border-t border-primary-foreground/20 py-4">
               <nav className="flex flex-col space-y-2">
-                <a href="#schedule" className="text-primary-foreground hover:text-accent transition-colors py-2">Schedule</a>
+                {/* Mobile Schedule with submenu */}
+                <div>
+                  <button 
+                    onClick={() => setIsMobileScheduleOpen(!isMobileScheduleOpen)}
+                    className="flex items-center justify-between w-full text-left text-primary-foreground hover:text-accent transition-colors py-2"
+                    data-testid="button-mobile-schedule"
+                  >
+                    <span>Schedule</span>
+                    {isMobileScheduleOpen ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </button>
+                  {isMobileScheduleOpen && (
+                    <div className="pl-4 py-2 space-y-2 border-l-2 border-primary-foreground/20">
+                      <Link 
+                        href="/schedule-list" 
+                        className="flex items-center space-x-2 text-primary-foreground/80 hover:text-accent transition-colors py-1"
+                        data-testid="link-schedule-list-mobile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <List className="h-4 w-4" />
+                        <span>List View</span>
+                      </Link>
+                      <Link 
+                        href="/schedule-calendar" 
+                        className="flex items-center space-x-2 text-primary-foreground/80 hover:text-accent transition-colors py-1"
+                        data-testid="link-schedule-calendar-mobile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Calendar className="h-4 w-4" />
+                        <span>Calendar View</span>
+                      </Link>
+                    </div>
+                  )}
+                </div>
                 <Link href="/#courses" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-courses-mobile">
                   Courses
                 </Link>
