@@ -16,7 +16,6 @@ import {
   Phone, 
   Mail, 
   MapPin, 
-  Clock, 
   MessageSquare, 
   GraduationCap, 
   Users, 
@@ -166,32 +165,6 @@ export default function ContactPage() {
               </CardContent>
             </Card>
 
-            {/* Business Hours */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Clock className="mr-2 h-5 w-5" />
-                  Business Hours
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Monday - Friday</span>
-                  <span className="font-medium">9:00 AM - 6:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Saturday</span>
-                  <span className="font-medium">8:00 AM - 4:00 PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Sunday</span>
-                  <span className="font-medium">By Appointment</span>
-                </div>
-                <div className="pt-2 text-sm text-muted-foreground">
-                  <p>Training sessions available evenings and weekends by arrangement.</p>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Quick Help Cards */}
             <div className="grid grid-cols-2 gap-4">
