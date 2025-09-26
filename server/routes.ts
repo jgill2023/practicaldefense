@@ -4281,6 +4281,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Contact form submission endpoint
+  app.post("/api/contact", async (req, res) => {
+    try {
+      const { firstName, lastName, email, phone, inquiryType, subject, message, preferredContact } = req.body;
+
+      // Validate required fields
+      if (!firstName || !lastName || !email || !inquiryType || !subject || !message) {
+        return res.status(400).json({ error: "All required fields must be filled" });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: "Please provide a valid email address" });
+      }
+
+      // Import email service
+      const { NotificationEmailService } = await import('./emailService');
+      
+      // Create email content
+      const emailContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1f2937;">New Contact Form Submission</h2>
+          
+          <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #374151; margin-top: 0;">Contact Information</h3>
+            <p><strong>Name:</strong> ${firstName} ${lastName}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ''}
+            <p><strong>Preferred Contact:</strong> ${preferredContact || 'Email'}</p>
+          </div>
+          
+          <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #374151; margin-top: 0;">Inquiry Details</h3>
+            <p><strong>Type:</strong> ${inquiryType}</p>
+            <p><strong>Subject:</strong> ${subject}</p>
+          </div>
+          
+          <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #374151; margin-top: 0;">Message</h3>
+            <p style="white-space: pre-wrap;">${message}</p>
+          </div>
+          
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+          <p style="color: #6b7280; font-size: 14px;">
+            This message was sent through the Practical Defense Training contact form.
+            Please respond to ${email} or call ${phone || 'the provided email'} based on their preferred contact method.
+          </p>
+        </div>
+      `;
+
+      // Send email notification to admin
+      const result = await NotificationEmailService.sendNotificationEmail({
+        to: ['jeremy@abqconcealedcarry.com'],
+        subject: `Contact Form: ${subject}`,
+        htmlContent: emailContent,
+        textContent: `
+New Contact Form Submission
+
+Name: ${firstName} ${lastName}
+Email: ${email}
+Phone: ${phone || 'Not provided'}
+Inquiry Type: ${inquiryType}
+Subject: ${subject}
+
+Message:
+${message}
+
+Please respond to ${email} based on their preferred contact method: ${preferredContact || 'Email'}
+        `,
+      });
+
+      if (result.success) {
+        // Send confirmation email to user
+        const confirmationContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #1f2937;">Thank You for Contacting Practical Defense Training</h2>
+            
+            <p>Dear ${firstName},</p>
+            
+            <p>Thank you for reaching out to us. We have received your message and will get back to you within 24 hours.</p>
+            
+            <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #374151; margin-top: 0;">Your Message Summary</h3>
+              <p><strong>Subject:</strong> ${subject}</p>
+              <p><strong>Inquiry Type:</strong> ${inquiryType}</p>
+              <p><strong>Preferred Contact Method:</strong> ${preferredContact || 'Email'}</p>
+            </div>
+            
+            <p>If you have any urgent questions, please feel free to call us at <strong>(505) 944-5247</strong>.</p>
+            
+            <p>Best regards,<br>
+            <strong>Jeremy Gill</strong><br>
+            Practical Defense Training<br>
+            jeremy@abqconcealedcarry.com<br>
+            (505) 944-5247</p>
+          </div>
+        `;
+
+        await NotificationEmailService.sendNotificationEmail({
+          to: [email],
+          subject: 'Thank you for contacting Practical Defense Training',
+          htmlContent: confirmationContent,
+          textContent: `
+Dear ${firstName},
+
+Thank you for reaching out to us. We have received your message and will get back to you within 24 hours.
+
+Your Message Summary:
+Subject: ${subject}
+Inquiry Type: ${inquiryType}
+Preferred Contact Method: ${preferredContact || 'Email'}
+
+If you have any urgent questions, please feel free to call us at (505) 944-5247.
+
+Best regards,
+Jeremy Gill
+Practical Defense Training
+jeremy@abqconcealedcarry.com
+(505) 944-5247
+          `,
+        });
+
+        res.json({ 
+          success: true, 
+          message: "Your message has been sent successfully. We'll get back to you within 24 hours." 
+        });
+      } else {
+        console.error("Failed to send contact form email:", result.error);
+        res.status(500).json({ 
+          error: "Failed to send your message. Please try again or contact us directly." 
+        });
+      }
+    } catch (error: any) {
+      console.error("Contact form submission error:", error);
+      res.status(500).json({ 
+        error: "An error occurred while sending your message. Please try again." 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

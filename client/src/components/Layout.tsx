@@ -125,7 +125,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors">About Us</a>
                 <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors">Resources</a>
                 <Link href="/store" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-store">Our Store</Link>
-                <a href="#contact-us" className="text-primary-foreground hover:text-accent transition-colors">Contact Us</a>
+                <Link href="/contact" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-contact">Contact Us</Link>
               </nav>
 
               {/* Desktop auth buttons */}
@@ -199,7 +199,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors py-2">About Us</a>
                 <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors py-2">Resources</a>
                 <Link href="/store" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-store-mobile">Our Store</Link>
-                <a href="#contact-us" className="text-primary-foreground hover:text-accent transition-colors py-2">Contact Us</a>
+                <Link href="/contact" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
                 
                 {/* Mobile auth buttons */}
                 <div className="border-t border-primary-foreground/20 mt-2 pt-2 space-y-2">
@@ -302,7 +302,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <h4 className="font-semibold">Support</h4>
               <div className="space-y-2 text-primary-foreground/80">
                 <a href="#" className="block hover:text-accent transition-colors">Help Center</a>
-                <a href="#" className="block hover:text-accent transition-colors">Contact Support</a>
+                <Link href="/contact" className="block hover:text-accent transition-colors" data-testid="link-contact-support">Contact Support</Link>
                 <a href="#" className="block hover:text-accent transition-colors">Privacy Policy</a>
                 <a href="#" className="block hover:text-accent transition-colors">Terms of Service</a>
               </div>
@@ -313,15 +313,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="space-y-2 text-primary-foreground/80">
                 <div className="flex items-center space-x-2">
                   <span>📞</span>
-                  <span>(555) 123-4567</span>
+                  <span>(505) 944-5247</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span>✉️</span>
-                  <span>info@elitetacticaltraining.com</span>
+                  <span>jeremy@abqconcealedcarry.com</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span>📍</span>
-                  <span>Local Range Facility - Call for Location</span>
+                  <span>Albuquerque, New Mexico</span>
                 </div>
               </div>
             </div>
