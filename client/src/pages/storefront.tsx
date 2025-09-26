@@ -18,6 +18,7 @@ export default function Storefront() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("name");
   const [selectedProduct, setSelectedProduct] = useState<ProductWithDetails | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
@@ -35,7 +36,7 @@ export default function Storefront() {
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter((product: ProductWithDetails) => {
+    let filtered = (products as ProductWithDetails[]).filter((product: ProductWithDetails) => {
       // Only show active products
       if (product.status !== 'active') return false;
       
@@ -58,9 +59,9 @@ export default function Storefront() {
     filtered.sort((a: ProductWithDetails, b: ProductWithDetails) => {
       switch (sortBy) {
         case 'price-low':
-          return a.price - b.price;
+          return Number(a.price) - Number(b.price);
         case 'price-high':
-          return b.price - a.price;
+          return Number(b.price) - Number(a.price);
         case 'name':
         default:
           return a.name.localeCompare(b.name);
@@ -86,8 +87,14 @@ export default function Storefront() {
 
   const handleProductClick = (product: ProductWithDetails) => {
     setSelectedProduct(product);
+    setSelectedVariant(null); // Reset selected variant when opening new product
     setProductDialogOpen(true);
   };
+
+  const handleVariantSelect = (variant: any) => {
+    setSelectedVariant(variant);
+  };
+
 
   return (
     <Layout>
@@ -130,7 +137,7 @@ export default function Storefront() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category: ProductCategoryWithProducts) => (
+                {(categories as ProductCategoryWithProducts[]).map((category: ProductCategoryWithProducts) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name} ({category.products?.length || 0})
                   </SelectItem>
@@ -301,7 +308,7 @@ export default function Storefront() {
                       onError={(e) => {
                         // Show fallback if image fails to load
                         (e.target as HTMLImageElement).style.display = 'none';
-                        (e.target as HTMLImageElement).nextElementSibling!.style.display = 'flex';
+                        ((e.target as HTMLImageElement).nextElementSibling as HTMLElement)!.style.display = 'flex';
                       }}
                     />
                   ) : null}
@@ -351,14 +358,13 @@ export default function Storefront() {
                         {selectedProduct.variants.map((variant) => (
                           <Button
                             key={variant.id}
-                            variant="outline"
+                            variant={selectedVariant?.id === variant.id ? "default" : "outline"}
                             className="w-full justify-between"
-                            onClick={() => handleAddToCart(selectedProduct, variant)}
-                            disabled={isAddingToCart}
-                            data-testid={`button-add-variant-${variant.id}`}
+                            onClick={() => handleVariantSelect(variant)}
+                            data-testid={`button-select-variant-${variant.id}`}
                           >
                             <span>{variant.name}</span>
-                            <span>${(variant.price || selectedProduct.price).toFixed(2)}</span>
+                            <span>${Number(variant.price || selectedProduct.price).toFixed(2)}</span>
                           </Button>
                         ))}
                       </div>
@@ -369,12 +375,15 @@ export default function Storefront() {
                   <Button
                     className="w-full"
                     size="lg"
-                    onClick={() => handleAddToCart(selectedProduct)}
-                    disabled={isAddingToCart}
+                    onClick={() => handleAddToCart(selectedProduct, selectedVariant)}
+                    disabled={isAddingToCart || (selectedProduct.variants && selectedProduct.variants.length > 0 && !selectedVariant)}
                     data-testid="button-add-to-cart-dialog"
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Add to Cart - ${Number(selectedProduct.price || 0).toFixed(2)}
+                    {selectedProduct.variants && selectedProduct.variants.length > 0 && !selectedVariant
+                      ? "Select an option first"
+                      : `Add to Cart - $${Number(selectedVariant?.price || selectedProduct.price || 0).toFixed(2)}`
+                    }
                   </Button>
                 </div>
               </div>
