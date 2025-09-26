@@ -85,6 +85,16 @@ export default function Storefront() {
     });
   };
 
+  const handleAddToCartFromCard = (product: ProductWithDetails) => {
+    // If product has variants, open modal to let user choose
+    if (product.variants && product.variants.length > 0) {
+      handleProductClick(product);
+    } else {
+      // No variants, add directly to cart
+      handleAddToCart(product);
+    }
+  };
+
   const handleProductClick = (product: ProductWithDetails) => {
     setSelectedProduct(product);
     setSelectedVariant(null); // Reset selected variant when opening new product
@@ -234,7 +244,7 @@ export default function Storefront() {
                       </Button>
                       <Button
                         size="sm"
-                        onClick={() => handleAddToCart(product)}
+                        onClick={() => handleAddToCartFromCard(product)}
                         disabled={isAddingToCart}
                         data-testid={`button-add-to-cart-${product.id}`}
                       >
@@ -268,7 +278,7 @@ export default function Storefront() {
                       {/* Add to Cart Button */}
                       <Button
                         className="w-full mt-4"
-                        onClick={() => handleAddToCart(product)}
+                        onClick={() => handleAddToCartFromCard(product)}
                         disabled={isAddingToCart}
                         data-testid={`button-add-to-cart-full-${product.id}`}
                       >
