@@ -76,7 +76,7 @@ We're excited to have you join us for this training. Please complete your paymen
 If you have any questions or need assistance with payment, feel free to reach out!
 
 Best regards,
-ProTrain Academy Team`
+Practical Defense Training Team`
         };
       case 'professional':
         return {
@@ -95,7 +95,7 @@ Please submit your payment by the course date to maintain your enrollment. You c
 For any payment-related inquiries, please contact our office.
 
 Sincerely,
-ProTrain Academy Administration`
+Practical Defense Training Administration`
         };
       case 'urgent':
         return {
@@ -111,7 +111,7 @@ Your enrollment may be cancelled if payment is not received promptly. Please sub
 
 Contact us immediately if you need assistance.
 
-ProTrain Academy`
+Practical Defense Training`
         };
       default:
         return { subject: '', message: '' };

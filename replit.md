@@ -1,6 +1,6 @@
 # Overview
 
-ProTrain Academy is a professional firearms training management platform built as a full-stack web application. The system enables instructors to manage courses, schedules, and student enrollments while providing students with a comprehensive portal to browse, register for, and track their training progress. The platform includes integrated payment processing via Stripe, secure document management for training waivers and certificates, advanced student management with license tracking, payment balance monitoring, and form completion status tracking.
+Practical Defense Training is a professional firearms training management platform built as a full-stack web application. The system enables instructors to manage courses, schedules, and student enrollments while providing students with a comprehensive portal to browse, register for, and track their training progress. The platform includes integrated payment processing via Stripe, secure document management for training waivers and certificates, advanced student management with license tracking, payment balance monitoring, and form completion status tracking.
 
 # Recent Changes
 

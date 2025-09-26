@@ -3002,7 +3002,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subject: subject.trim(),
         htmlContent: isHtml ? content.trim() : `<pre>${content.trim()}</pre>`,
         textContent: isHtml ? undefined : content.trim(),
-        fromName: `${user.firstName} ${user.lastName} - ProTrain Academy`,
+        fromName: `${user.firstName} ${user.lastName} - Practical Defense Training`,
       });
 
       res.json(result);
@@ -3052,7 +3052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subject: subject.trim(),
           htmlContent: `<div style="font-family: Arial, sans-serif;">${message.trim().replace(/\n/g, '<br>')}</div>`,
           textContent: message.trim(),
-          fromName: `${user.firstName} ${user.lastName} - ProTrain Academy`,
+          fromName: `${user.firstName} ${user.lastName} - Practical Defense Training`,
         });
 
         results.results.push({ method: 'email', ...emailResult });

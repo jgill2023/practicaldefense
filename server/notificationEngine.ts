@@ -59,10 +59,10 @@ export interface NotificationVariables {
 
 export class NotificationEngine {
   private static readonly SYSTEM_VARIABLES = {
-    companyName: 'ProTrain Academy',
+    companyName: 'Practical Defense Training',
     companyPhone: '(555) 123-4567',
-    companyEmail: 'info@protrainacademy.com',
-    website: 'protrainacademy.com',
+    companyEmail: 'info@practicaldefensetraining.com',
+    website: 'practicaldefensetraining.com',
     currentDate: new Date().toLocaleDateString()
   };
 

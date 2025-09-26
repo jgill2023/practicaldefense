@@ -1039,7 +1039,7 @@ function CreateWaiverDialog({
   const [waiverData, setWaiverData] = useState({
     name: waiver?.name || '',
     content: waiver?.content || `<h2>LIABILITY WAIVER AND RELEASE AGREEMENT</h2>
-<p>I, the undersigned participant, acknowledge that I am voluntarily participating in firearms training activities offered by ProTrain Academy.</p>
+<p>I, the undersigned participant, acknowledge that I am voluntarily participating in firearms training activities offered by Practical Defense Training.</p>
 <h3>Acknowledgment of Risk</h3>
 <p>I understand and acknowledge that:</p>
 <ul>
@@ -1050,7 +1050,7 @@ function CreateWaiverDialog({
 <h3>Release and Waiver</h3>
 <p>In consideration for being permitted to participate, I hereby:</p>
 <ul>
-<li>Release, waive, and discharge ProTrain Academy from all claims</li>
+<li>Release, waive, and discharge Practical Defense Training from all claims</li>
 <li>Agree to indemnify and hold harmless the training facility</li>
 <li>Acknowledge this agreement is binding on my heirs and assigns</li>
 </ul>
