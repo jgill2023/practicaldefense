@@ -752,7 +752,10 @@ export class DatabaseStorage implements IStorage {
 
   async getCourses(): Promise<CourseWithSchedules[]> {
     const courseList = await db.query.courses.findMany({
-      where: eq(courses.isActive, true),
+      where: and(
+        eq(courses.isActive, true),
+        isNull(courses.deletedAt)
+      ),
       with: {
         schedules: {
           with: {
