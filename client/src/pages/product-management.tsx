@@ -803,10 +803,13 @@ export default function ProductManagement() {
                             }}
                             onComplete={(result) => {
                               if (result.successful.length > 0) {
-                                const uploadUrl = result.successful[0].uploadURL;
-                                // Extract the public URL from the upload URL
-                                const publicUrl = uploadUrl.split('?')[0];
-                                field.onChange(publicUrl);
+                                const uploadResult = result.successful[0];
+                                const uploadUrl = uploadResult.uploadURL || uploadResult.url;
+                                if (uploadUrl && typeof uploadUrl === 'string') {
+                                  // Extract the public URL from the upload URL (remove query parameters)
+                                  const publicUrl = uploadUrl.split('?')[0];
+                                  field.onChange(publicUrl);
+                                }
                               }
                             }}
                             buttonClassName="w-full"
