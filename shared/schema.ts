@@ -457,6 +457,48 @@ export type StudentFormResponseWithDetails = StudentFormResponse & {
 
 export type FormFieldType = 'text' | 'email' | 'phone' | 'select' | 'checkbox' | 'textarea' | 'date' | 'number';
 
+// Course Notifications table for users who want to be notified about upcoming courses
+export const courseNotifications = pgTable("course_notifications", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id), // Optional - null for non-logged-in users
+  email: varchar("email", { length: 255 }).notNull(),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  phone: varchar("phone", { length: 20 }),
+  courseType: varchar("course_type", { length: 255 }).notNull(), // e.g., "2-day defensive handgun"
+  courseCategory: varchar("course_category", { length: 100 }), // e.g., "defensive handgun", "concealed carry"
+  notificationSent: boolean("notification_sent").notNull().default(false),
+  sentAt: timestamp("sent_at"),
+  isActive: boolean("is_active").notNull().default(true), // Allow users to unsubscribe
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Relations for course notifications
+export const courseNotificationsRelations = relations(courseNotifications, ({ one }) => ({
+  user: one(users, {
+    fields: [courseNotifications.userId],
+    references: [users.id],
+  }),
+}));
+
+// Insert schema for course notifications
+export const insertCourseNotificationSchema = createInsertSchema(courseNotifications).omit({
+  id: true,
+  notificationSent: true,
+  sentAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for course notifications
+export type InsertCourseNotification = z.infer<typeof insertCourseNotificationSchema>;
+export type CourseNotification = typeof courseNotifications.$inferSelect;
+
+export type CourseNotificationWithUser = CourseNotification & {
+  user?: User;
+};
+
 // Promo Codes table for discount/coupon functionality
 export const promoCodes = pgTable("promo_codes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),

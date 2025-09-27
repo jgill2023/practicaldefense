@@ -16,14 +16,17 @@ import {
   ArrowRight,
   DollarSign,
   BookOpen,
-  Crosshair
+  Crosshair,
+  Bell
 } from "lucide-react";
 import type { CourseWithSchedules } from "@shared/schema";
 import { RegistrationModal } from "@/components/RegistrationModal";
+import { CourseNotificationModal } from "@/components/CourseNotificationModal";
 
 export default function DefensiveHandgunPage() {
   const [selectedCourse, setSelectedCourse] = useState<CourseWithSchedules | null>(null);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   // Fetch defensive handgun courses
   const { data: courses = [], isLoading } = useQuery<CourseWithSchedules[]>({
@@ -51,9 +54,27 @@ export default function DefensiveHandgunPage() {
     );
   });
 
+  // Check if there are any 2-day defensive handgun courses with available schedules
+  const twoDayCoursesWithSchedules = defensiveHandgunCourses.filter(course => 
+    (course.title.toLowerCase().includes('2-day') || 
+     course.title.toLowerCase().includes('two day')) &&
+    course.schedules && 
+    course.schedules.length > 0 &&
+    course.schedules.some(schedule => 
+      schedule.availableSpots > 0 && 
+      new Date(schedule.startDate) > new Date()
+    )
+  );
+
+  const hasTwoDayCoursesAvailable = twoDayCoursesWithSchedules.length > 0;
+
   const handleCourseSelect = (course: CourseWithSchedules) => {
     setSelectedCourse(course);
     setShowRegistrationModal(true);
+  };
+
+  const handleNotificationRequest = () => {
+    setShowNotificationModal(true);
   };
 
   // Course specifications for 1-day course
@@ -244,21 +265,30 @@ export default function DefensiveHandgunPage() {
                   </div>
 
                   <div className="pt-4">
-                    <Button 
-                      onClick={() => {
-                        // Try to find a 2-day defensive handgun course or use the first available
-                        const course = defensiveHandgunCourses.find(c => 
-                          c.title.toLowerCase().includes('2-day') || 
-                          c.title.toLowerCase().includes('two day')
-                        ) || defensiveHandgunCourses[0] || courses[0];
-                        if (course) handleCourseSelect(course);
-                      }}
-                      className="w-full"
-                      data-testid="button-register-2day"
-                    >
-                      Register for 2-Day Course
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
+                    {hasTwoDayCoursesAvailable ? (
+                      <Button 
+                        onClick={() => {
+                          // Find the first available 2-day defensive handgun course
+                          const course = twoDayCoursesWithSchedules[0];
+                          if (course) handleCourseSelect(course);
+                        }}
+                        className="w-full"
+                        data-testid="button-register-2day"
+                      >
+                        Register for 2-Day Course
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={handleNotificationRequest}
+                        variant="outline"
+                        className="w-full"
+                        data-testid="button-notify-2day"
+                      >
+                        <Bell className="w-4 h-4 mr-2" />
+                        Notify Me About Upcoming Courses
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -306,6 +336,14 @@ export default function DefensiveHandgunPage() {
             }}
           />
         )}
+
+        {/* Course Notification Modal */}
+        <CourseNotificationModal
+          isOpen={showNotificationModal}
+          onClose={() => setShowNotificationModal(false)}
+          courseType="2-day defensive handgun"
+          courseCategory="defensive handgun"
+        />
       </div>
     </Layout>
   );

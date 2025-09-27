@@ -10,7 +10,7 @@ import { enrollments } from "@shared/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type User } from "@shared/schema";
+import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
 import "./types"; // Import type declarations
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -2089,6 +2089,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error deleting form field:", error);
       res.status(500).json({ message: "Error deleting form field: " + error.message });
+    }
+  });
+
+  // Course Notification routes
+  app.post("/api/course-notifications", async (req, res) => {
+    try {
+      const validatedData = insertCourseNotificationSchema.parse(req.body);
+      
+      // Check if user is authenticated and get their info if available
+      let userId = null;
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user?.claims?.sub || null;
+      }
+
+      // Add userId to the notification data if available
+      const notificationData = {
+        ...validatedData,
+        userId
+      };
+
+      const notification = await storage.createCourseNotification(notificationData);
+      res.status(201).json(notification);
+    } catch (error: any) {
+      console.error("Error creating course notification:", error);
+      res.status(500).json({ message: "Error creating course notification: " + error.message });
+    }
+  });
+
+  // Get course notifications (for instructors)
+  app.get("/api/course-notifications", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const { courseType } = req.query;
+      const notifications = await storage.getCourseNotifications(courseType as string);
+      res.json(notifications);
+    } catch (error: any) {
+      console.error("Error fetching course notifications:", error);
+      res.status(500).json({ message: "Error fetching course notifications: " + error.message });
     }
   });
 

@@ -20,6 +20,7 @@ import {
   cartItems,
   ecommerceOrders,
   ecommerceOrderItems,
+  courseNotifications,
   type User,
   type UpsertUser,
   type Category,
@@ -71,6 +72,9 @@ import {
   type ProductCategoryWithProducts,
   type CartItemWithDetails,
   type EcommerceOrderWithDetails,
+  type CourseNotification,
+  type InsertCourseNotification,
+  type CourseNotificationWithUser,
   notificationTemplates,
   notificationSchedules,
   notificationLogs,
@@ -411,6 +415,12 @@ export interface IStorage {
   createEcommerceOrderItem(item: InsertEcommerceOrderItem): Promise<EcommerceOrderItem>;
   updateEcommerceOrderItem(id: string, item: Partial<InsertEcommerceOrderItem>): Promise<EcommerceOrderItem>;
   getEcommerceOrderItems(orderId: string): Promise<EcommerceOrderItem[]>;
+  
+  // Course Notifications
+  createCourseNotification(notification: InsertCourseNotification): Promise<CourseNotification>;
+  getCourseNotifications(courseType?: string): Promise<CourseNotificationWithUser[]>;
+  updateCourseNotification(id: string, notification: Partial<InsertCourseNotification>): Promise<CourseNotification>;
+  deleteCourseNotification(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3787,6 +3797,47 @@ export class DatabaseStorage implements IStorage {
       where: eq(ecommerceOrderItems.orderId, orderId),
       orderBy: [asc(ecommerceOrderItems.createdAt)],
     });
+  }
+
+  // Course Notifications operations
+  async createCourseNotification(notification: InsertCourseNotification): Promise<CourseNotification> {
+    const [result] = await db
+      .insert(courseNotifications)
+      .values(notification)
+      .returning();
+    return result;
+  }
+
+  async getCourseNotifications(courseType?: string): Promise<CourseNotificationWithUser[]> {
+    const whereConditions = courseType 
+      ? eq(courseNotifications.courseType, courseType)
+      : undefined;
+
+    return db.query.courseNotifications.findMany({
+      where: whereConditions,
+      with: {
+        user: true,
+      },
+      orderBy: [desc(courseNotifications.createdAt)],
+    });
+  }
+
+  async updateCourseNotification(id: string, notification: Partial<InsertCourseNotification>): Promise<CourseNotification> {
+    const [result] = await db
+      .update(courseNotifications)
+      .set({
+        ...notification,
+        updatedAt: new Date(),
+      })
+      .where(eq(courseNotifications.id, id))
+      .returning();
+    return result;
+  }
+
+  async deleteCourseNotification(id: string): Promise<void> {
+    await db
+      .delete(courseNotifications)
+      .where(eq(courseNotifications.id, id));
   }
 }
 
