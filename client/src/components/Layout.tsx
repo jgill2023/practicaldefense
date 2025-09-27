@@ -12,13 +12,14 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Shield, Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight } from "lucide-react";
+import { Shield, Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, GraduationCap, User, Bell, MessageSquare } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileScheduleOpen, setIsMobileScheduleOpen] = useState(false);
+  const [isMobileCoursesOpen, setIsMobileCoursesOpen] = useState(false);
   const { counts } = useCommunicationCounts();
 
 
@@ -117,14 +118,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         </div>
                       </NavigationMenuContent>
                     </NavigationMenuItem>
+                    <NavigationMenuItem>
+                      <NavigationMenuTrigger className="text-primary-foreground hover:text-accent bg-transparent border-none data-[state=open]:bg-accent/20">
+                        Courses
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <div className="w-48 p-2">
+                          <Link href="/#courses">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-courses">
+                              <GraduationCap className="h-4 w-4" />
+                              <span>All Courses</span>
+                            </NavigationMenuLink>
+                          </Link>
+                          <Link href="/concealed-carry">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-concealed-carry">
+                              <Shield className="h-4 w-4" />
+                              <span>Concealed Carry</span>
+                            </NavigationMenuLink>
+                          </Link>
+                        </div>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
                   </NavigationMenuList>
                 </NavigationMenu>
-                <Link href="/#courses" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-courses">
-                  Courses
-                </Link>
-                <Link href="/concealed-carry" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-concealed-carry">
-                  Concealed Carry
-                </Link>
                 <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors">About Us</a>
                 <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors">Resources</a>
                 <Link href="/store" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-store">Our Store</Link>
@@ -196,12 +212,43 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                   )}
                 </div>
-                <Link href="/#courses" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-courses-mobile">
-                  Courses
-                </Link>
-                <Link href="/concealed-carry" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-concealed-carry-mobile" onClick={() => setIsMobileMenuOpen(false)}>
-                  Concealed Carry
-                </Link>
+                {/* Mobile Courses with submenu */}
+                <div>
+                  <button 
+                    onClick={() => setIsMobileCoursesOpen(!isMobileCoursesOpen)}
+                    className="flex items-center justify-between w-full text-left text-primary-foreground hover:text-accent transition-colors py-2"
+                    data-testid="button-mobile-courses"
+                  >
+                    <span>Courses</span>
+                    {isMobileCoursesOpen ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </button>
+                  {isMobileCoursesOpen && (
+                    <div className="pl-4 py-2 space-y-2 border-l-2 border-primary-foreground/20">
+                      <Link 
+                        href="/#courses" 
+                        className="flex items-center space-x-2 text-primary-foreground/80 hover:text-accent transition-colors py-1"
+                        data-testid="link-courses-mobile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <GraduationCap className="h-4 w-4" />
+                        <span>All Courses</span>
+                      </Link>
+                      <Link 
+                        href="/concealed-carry" 
+                        className="flex items-center space-x-2 text-primary-foreground/80 hover:text-accent transition-colors py-1"
+                        data-testid="link-concealed-carry-mobile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Shield className="h-4 w-4" />
+                        <span>Concealed Carry</span>
+                      </Link>
+                    </div>
+                  )}
+                </div>
                 <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors py-2">About Us</a>
                 <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors py-2">Resources</a>
                 <Link href="/store" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-store-mobile">Our Store</Link>
