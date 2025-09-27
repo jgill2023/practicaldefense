@@ -139,7 +139,7 @@ export default function ConcealedCarryPage() {
         </section>
 
         {/* Course Specifications */}
-        <section className="py-16 bg-background" id="course-details">
+        <section className="pt-16 pb-8 bg-background" id="course-details">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-xl md:text-2xl font-medium mb-4">Course Overview</h2>
@@ -193,7 +193,7 @@ export default function ConcealedCarryPage() {
         </section>
 
         {/* Course Types Section */}
-        <section className="py-16 bg-secondary/30" id="course-types">
+        <section className="pt-8 pb-16 bg-secondary/30" id="course-types">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-xl md:text-2xl font-medium mb-4">Choose Your Course Type</h2>
