@@ -15,7 +15,8 @@ import { z } from "zod";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/Layout";
-import { Trash2, Edit, Plus, Package, Tag, ShoppingCart, DollarSign, Download } from "lucide-react";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import { Trash2, Edit, Plus, Package, Tag, ShoppingCart, DollarSign, Download, Upload, X } from "lucide-react";
 import type { ProductWithDetails, ProductCategory, ProductCategoryWithProducts } from "@shared/schema";
 
 const productCategorySchema = z.object({
@@ -27,16 +28,19 @@ const productCategorySchema = z.object({
 
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
-  description: z.string().optional(),
+  description: z.string().min(1, "Description is required"),
   shortDescription: z.string().optional(),
-  basePrice: z.string().min(1, "Price is required").refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Price must be a valid non-negative number"),
+  price: z.string().min(1, "Price is required").refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Price must be a valid non-negative number"),
   categoryId: z.string().uuid("Please select a category"),
   sku: z.string().min(1, "SKU is required"),
+  productType: z.enum(["physical", "digital", "service"]).default("physical"),
+  fulfillmentType: z.enum(["printful", "download", "manual"]).default("manual"),
   status: z.enum(["active", "inactive", "draft"]).default("active"),
   featured: z.boolean().default(false),
-  images: z.array(z.string()).default([]),
+  primaryImageUrl: z.string().optional(),
+  imageUrls: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]),
-  sortOrder: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Sort order must be a valid non-negative number").default("0"),
+  sortOrder: z.number().int().min(0).default(0),
   printfulProductId: z.string().optional().refine((val) => !val || (!isNaN(Number(val)) && Number(val) > 0), "Printful Product ID must be a valid positive number"),
 });
 
@@ -77,14 +81,17 @@ export default function ProductManagement() {
       name: "",
       description: "",
       shortDescription: "",
-      basePrice: "0",
+      price: "0",
       categoryId: "",
       sku: "",
+      productType: "physical",
+      fulfillmentType: "manual",
       status: "active",
       featured: false,
-      images: [],
+      primaryImageUrl: "",
+      imageUrls: [],
       tags: [],
-      sortOrder: "0",
+      sortOrder: 0,
     },
   });
 
@@ -227,14 +234,17 @@ export default function ProductManagement() {
       name: product.name,
       description: product.description || "",
       shortDescription: product.shortDescription || "",
-      basePrice: (product.basePrice || product.price || 0).toString(),
+      price: (product.price || 0).toString(),
       categoryId: product.categoryId,
       sku: product.sku,
+      productType: product.productType || "physical",
+      fulfillmentType: product.fulfillmentType || "manual",
       status: product.status,
       featured: product.featured || false,
-      images: product.images || [],
+      primaryImageUrl: product.primaryImageUrl || "",
+      imageUrls: product.imageUrls || [],
       tags: product.tags || [],
-      sortOrder: (product.sortOrder || 0).toString(),
+      sortOrder: product.sortOrder || 0,
       printfulProductId: product.printfulProductId?.toString() || "",
     });
     setProductDialogOpen(true);
@@ -249,10 +259,17 @@ export default function ProductManagement() {
   };
 
   const onProductSubmit = (data: ProductFormData) => {
+    // Transform data to match backend schema
+    const transformedData = {
+      ...data,
+      price: data.price, // Keep as string for decimal conversion
+      sortOrder: Number(data.sortOrder), // Convert to number
+    };
+    
     if (editingProduct) {
-      updateProductMutation.mutate({ id: editingProduct.id, data });
+      updateProductMutation.mutate({ id: editingProduct.id, data: transformedData });
     } else {
-      createProductMutation.mutate(data);
+      createProductMutation.mutate(transformedData);
     }
   };
 
@@ -262,7 +279,7 @@ export default function ProductManagement() {
     activeProducts: products.filter(p => p.status === 'active').length,
     totalCategories: categories.length,
     averagePrice: products.length > 0 
-      ? (products.reduce((sum, p) => sum + Number(p.basePrice || p.price || 0), 0) / products.length).toFixed(2)
+      ? (products.reduce((sum, p) => sum + Number(p.price || 0), 0) / products.length).toFixed(2)
       : '0.00',
   };
 
@@ -396,7 +413,7 @@ export default function ProductManagement() {
                             </Button>
                           </div>
                         </div>
-                        <p className="text-lg font-bold" data-testid={`product-price-${product.id}`}>${Number(product.basePrice || product.price || 0).toFixed(2)}</p>
+                        <p className="text-lg font-bold" data-testid={`product-price-${product.id}`}>${Number(product.price || 0).toFixed(2)}</p>
                         <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <span className={`px-2 py-1 rounded-full text-xs ${
@@ -657,7 +674,7 @@ export default function ProductManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={productForm.control}
-                  name="basePrice"
+                  name="price"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Price</FormLabel>
@@ -699,6 +716,111 @@ export default function ProductManagement() {
                   )}
                 />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={productForm.control}
+                  name="productType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Product Type</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-product-type">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="physical">Physical</SelectItem>
+                          <SelectItem value="digital">Digital</SelectItem>
+                          <SelectItem value="service">Service</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={productForm.control}
+                  name="fulfillmentType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fulfillment Type</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-fulfillment-type">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="printful">Printful</SelectItem>
+                          <SelectItem value="download">Download</SelectItem>
+                          <SelectItem value="manual">Manual</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="space-y-4">
+                <FormField
+                  control={productForm.control}
+                  name="primaryImageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Primary Product Image</FormLabel>
+                      <FormControl>
+                        <div className="space-y-4">
+                          {field.value && (
+                            <div className="relative inline-block">
+                              <img 
+                                src={field.value} 
+                                alt="Product" 
+                                className="w-32 h-32 object-cover rounded-lg border"
+                                data-testid="product-primary-image-preview"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="absolute -top-2 -right-2 w-6 h-6 p-0"
+                                onClick={() => field.onChange("")}
+                                data-testid="button-remove-primary-image"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
+                          <ObjectUploader
+                            maxNumberOfFiles={1}
+                            maxFileSize={5242880} // 5MB
+                            onGetUploadParameters={async () => {
+                              const response = await apiRequest('POST', '/api/objects/upload');
+                              return { 
+                                method: 'PUT' as const, 
+                                url: response.uploadURL 
+                              };
+                            }}
+                            onComplete={(result) => {
+                              if (result.successful.length > 0) {
+                                const uploadUrl = result.successful[0].uploadURL;
+                                // Extract the public URL from the upload URL
+                                const publicUrl = uploadUrl.split('?')[0];
+                                field.onChange(publicUrl);
+                              }
+                            }}
+                            buttonClassName="w-full"
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload Product Image
+                          </ObjectUploader>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <div className="grid grid-cols-3 gap-4">
                 <FormField
                   control={productForm.control}
@@ -733,6 +855,8 @@ export default function ProductManagement() {
                           type="number" 
                           placeholder="0" 
                           {...field}
+                          onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                          value={field.value.toString()}
                           data-testid="input-product-sort-order"
                         />
                       </FormControl>
