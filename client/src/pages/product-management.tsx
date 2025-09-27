@@ -41,7 +41,7 @@ const productSchema = z.object({
   imageUrls: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]),
   sortOrder: z.number().int().min(0).default(0),
-  printfulProductId: z.string().optional().refine((val) => !val || (!isNaN(Number(val)) && Number(val) > 0), "Printful Product ID must be a valid positive number"),
+  printfulProductId: z.number().int().positive().optional().nullable(),
 });
 
 type ProductCategoryFormData = z.infer<typeof productCategorySchema>;
@@ -878,7 +878,8 @@ export default function ProductManagement() {
                         <Input 
                           type="number" 
                           placeholder="Optional" 
-                          {...field}
+                          onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) || null : null)}
+                          value={field.value?.toString() || ''}
                           data-testid="input-product-printful-id"
                         />
                       </FormControl>
