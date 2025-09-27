@@ -12,7 +12,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Shield, Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, GraduationCap, User, Bell, MessageSquare, Globe } from "lucide-react";
+import { Shield, Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, GraduationCap, User, Bell, MessageSquare, Globe, Crosshair } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuth();
@@ -142,6 +142,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                               <span>Online Concealed Carry</span>
                             </NavigationMenuLink>
                           </Link>
+                          <Link href="/defensive-handgun">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-defensive-handgun">
+                              <Crosshair className="h-4 w-4" />
+                              <span>Defensive Handgun</span>
+                            </NavigationMenuLink>
+                          </Link>
                         </div>
                       </NavigationMenuContent>
                     </NavigationMenuItem>
@@ -260,6 +266,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       >
                         <Globe className="h-4 w-4" />
                         <span>Online Concealed Carry</span>
+                      </Link>
+                      <Link 
+                        href="/defensive-handgun" 
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
+                        data-testid="link-defensive-handgun-mobile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Crosshair className="h-4 w-4" />
+                        <span>Defensive Handgun</span>
                       </Link>
                     </div>
                   )}
