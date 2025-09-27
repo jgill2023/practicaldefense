@@ -389,6 +389,21 @@ export default function ProductManagement() {
                   {products.map((product) => (
                     <Card key={product.id} className="relative">
                       <CardContent className="p-4">
+                        {/* Product Image Thumbnail */}
+                        {product.primaryImageUrl && (
+                          <div className="mb-3">
+                            <img 
+                              src={product.primaryImageUrl} 
+                              alt={product.name}
+                              className="w-full h-32 object-cover rounded-lg border"
+                              data-testid={`product-image-${product.id}`}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex-1">
                             <h3 className="font-semibold" data-testid={`product-name-${product.id}`}>{product.name}</h3>
