@@ -1538,6 +1538,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Product image upload endpoint
+  app.put("/api/product-images", isAuthenticated, async (req: any, res) => {
+    if (!req.body.productImageURL) {
+      return res.status(400).json({ error: "productImageURL is required" });
+    }
+
+    const userId = req.user?.claims?.sub;
+
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        req.body.productImageURL,
+        {
+          owner: userId,
+          visibility: "public", // Product images should be publicly viewable
+        },
+      );
+
+      res.status(200).json({
+        objectPath: objectPath,
+      });
+    } catch (error) {
+      console.error("Error setting product image:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Dashboard statistics endpoint
   app.get("/api/instructor/dashboard-stats", isAuthenticated, async (req: any, res) => {
     try {

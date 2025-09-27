@@ -66,6 +66,12 @@ export function ObjectUploader({
     setIsUploading(true);
     try {
       const { url } = await onGetUploadParameters();
+      
+      if (!url) {
+        alert('Failed to get upload URL. Please try again.');
+        return;
+      }
+      
       const response = await fetch(url, {
         method: 'PUT',
         body: file,
@@ -75,8 +81,10 @@ export function ObjectUploader({
       });
 
       if (response.ok) {
+        // Extract the storage URL from the upload URL by removing query parameters
+        const storageURL = url.split('?')[0];
         onComplete?.({
-          successful: [{ uploadURL: url }]
+          successful: [{ uploadURL: storageURL }]
         });
       } else {
         alert('Upload failed. Please try again.');

@@ -817,15 +817,45 @@ export default function ProductManagement() {
                                 url: response.uploadURL 
                               };
                             }}
-                            onComplete={(result) => {
-                              if (result.successful.length > 0) {
-                                const uploadResult = result.successful[0];
-                                const uploadUrl = uploadResult.uploadURL || uploadResult.url;
-                                if (uploadUrl && typeof uploadUrl === 'string') {
-                                  // Extract the public URL from the upload URL (remove query parameters)
-                                  const publicUrl = uploadUrl.split('?')[0];
-                                  field.onChange(publicUrl);
+                            onComplete={async (result) => {
+                              if (result.successful && result.successful.length > 0) {
+                                const uploadURL = result.successful[0].uploadURL;
+                                
+                                if (uploadURL) {
+                                  try {
+                                    // Set ACL permissions and get public URL
+                                    const response = await apiRequest("PUT", "/api/product-images", {
+                                      productImageURL: uploadURL,
+                                    });
+                                    
+                                    // Set the publicly accessible image URL
+                                    field.onChange(response.objectPath);
+                                    
+                                    toast({
+                                      title: "Image Uploaded",
+                                      description: "Product image has been uploaded successfully.",
+                                    });
+                                  } catch (error) {
+                                    console.error('Upload processing error:', error);
+                                    toast({
+                                      title: "Upload Error", 
+                                      description: "Failed to process uploaded image. Please try again.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                } else {
+                                  toast({
+                                    title: "Upload Error",
+                                    description: "Upload completed but no URL received.",
+                                    variant: "destructive",
+                                  });
                                 }
+                              } else {
+                                toast({
+                                  title: "Upload Failed",
+                                  description: "No files were successfully uploaded.",
+                                  variant: "destructive",
+                                });
                               }
                             }}
                             buttonClassName="w-full"
