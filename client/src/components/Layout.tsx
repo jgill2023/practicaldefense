@@ -199,7 +199,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <div className="pl-4 py-2 space-y-2 border-l-2 border-primary-foreground/20">
                       <Link 
                         href="/schedule-list" 
-                        className="flex items-center space-x-2 text-primary-foreground/80 hover:text-accent transition-colors py-1"
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
                         data-testid="link-schedule-list-mobile"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
@@ -208,7 +208,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       </Link>
                       <Link 
                         href="/schedule-calendar" 
-                        className="flex items-center space-x-2 text-primary-foreground/80 hover:text-accent transition-colors py-1"
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
                         data-testid="link-schedule-calendar-mobile"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
@@ -236,7 +236,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <div className="pl-4 py-2 space-y-2 border-l-2 border-primary-foreground/20">
                       <Link 
                         href="/#courses" 
-                        className="flex items-center space-x-2 text-primary-foreground/80 hover:text-accent transition-colors py-1"
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
                         data-testid="link-courses-mobile"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
@@ -245,7 +245,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       </Link>
                       <Link 
                         href="/concealed-carry" 
-                        className="flex items-center space-x-2 text-primary-foreground/80 hover:text-accent transition-colors py-1"
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
                         data-testid="link-concealed-carry-mobile"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
@@ -254,7 +254,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       </Link>
                       <Link 
                         href="/online-concealed-carry" 
-                        className="flex items-center space-x-2 text-primary-foreground/80 hover:text-accent transition-colors py-1"
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
                         data-testid="link-online-concealed-carry-mobile"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
