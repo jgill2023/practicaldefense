@@ -122,6 +122,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/#courses" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-courses">
                   Courses
                 </Link>
+                <Link href="/concealed-carry" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-concealed-carry">
+                  Concealed Carry
+                </Link>
                 <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors">About Us</a>
                 <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors">Resources</a>
                 <Link href="/store" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-store">Our Store</Link>
@@ -195,6 +198,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 <Link href="/#courses" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-courses-mobile">
                   Courses
+                </Link>
+                <Link href="/concealed-carry" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-concealed-carry-mobile" onClick={() => setIsMobileMenuOpen(false)}>
+                  Concealed Carry
                 </Link>
                 <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors py-2">About Us</a>
                 <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors py-2">Resources</a>

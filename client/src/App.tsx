@@ -21,6 +21,7 @@ import Reports from "@/pages/reports";
 import ScheduleList from "@/pages/schedule-list";
 import ScheduleCalendar from "@/pages/schedule-calendar";
 import ContactPage from "@/pages/contact";
+import ConcealedCarryPage from "@/pages/concealed-carry";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/store" component={Storefront} />
       <Route path="/cart" component={CartPage} />
       <Route path="/contact" component={ContactPage} />
+      <Route path="/concealed-carry" component={ConcealedCarryPage} />
       <Route path="/course-registration/:id" component={CourseRegistration} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/schedule-list" component={ScheduleList} />

@@ -1,0 +1,473 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useLocation } from "wouter";
+import { Layout } from "@/components/Layout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Clock, 
+  Calendar, 
+  Users, 
+  MapPin, 
+  Target, 
+  GraduationCap, 
+  Shield, 
+  CheckCircle,
+  ArrowRight,
+  DollarSign,
+  BookOpen,
+  Award
+} from "lucide-react";
+import type { CourseWithSchedules } from "@shared/schema";
+import { RegistrationModal } from "@/components/RegistrationModal";
+
+export default function ConcealedCarryPage() {
+  const [, setLocation] = useLocation();
+  const [selectedCourse, setSelectedCourse] = useState<CourseWithSchedules | null>(null);
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+
+  // Fetch concealed carry courses
+  const { data: courses = [], isLoading } = useQuery<CourseWithSchedules[]>({
+    queryKey: ["/api/courses"],
+  });
+
+  // Filter for concealed carry courses
+  const concealedCarryCourses = courses.filter(course => 
+    course.title.toLowerCase().includes('concealed') || 
+    course.category?.toLowerCase().includes('concealed') ||
+    course.title.toLowerCase().includes('ccw')
+  );
+
+  // Find specific course types
+  const initialCourse = concealedCarryCourses.find(course => 
+    course.title.toLowerCase().includes('initial') ||
+    (!course.title.toLowerCase().includes('renewal') && !course.title.toLowerCase().includes('refresher'))
+  );
+  const renewalCourse = concealedCarryCourses.find(course => 
+    course.title.toLowerCase().includes('renewal')
+  );
+  const refresherCourse = concealedCarryCourses.find(course => 
+    course.title.toLowerCase().includes('refresher')
+  );
+
+  const handleCourseSelect = (course: CourseWithSchedules) => {
+    setSelectedCourse(course);
+    setShowRegistrationModal(true);
+  };
+
+  const courseFeatures = [
+    "Comprehensive 15-hour training program",
+    "Hands-on instruction with S.I.R.T. training pistols",
+    "Live fire range training and qualification", 
+    "Defensive shooting fundamentals",
+    "Concealment techniques and presentation",
+    "Legal knowledge and responsibility",
+    "New Mexico state certification"
+  ];
+
+  const courseSpecs = [
+    { icon: DollarSign, label: "Course Fee", value: "$165" },
+    { icon: Clock, label: "Total Time", value: "9:00 am to 5:00 pm" },
+    { icon: BookOpen, label: "Classroom", value: "12 Hours" },
+    { icon: Target, label: "Range Time", value: "3 Hours" },
+    { icon: Users, label: "Required Rounds", value: "25 Rounds" }
+  ];
+
+  return (
+    <Layout>
+      <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
+        {/* Hero Section */}
+        <section className="bg-primary text-primary-foreground py-16 md:py-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <div className="flex justify-center mb-6">
+                <Badge variant="secondary" className="px-4 py-2 text-lg">
+                  <Shield className="w-5 h-5 mr-2" />
+                  New Mexico Concealed Carry Course
+                </Badge>
+              </div>
+              
+              <h1 className="text-4xl md:text-6xl font-bold mb-6" data-testid="text-hero-title">
+                New Mexico Concealed Carry Course
+              </h1>
+              
+              <div className="max-w-4xl mx-auto">
+                <p className="text-xl md:text-2xl mb-8 leading-relaxed">
+                  Practical Defense Training, LLC offers straightforward firearms training, with a focus and emphasis on New Mexico concealed carry training. One of the few courses which preaches and teaches <strong>practical over "tacti-cool"</strong>; bringing reliable and effective firearms training to the responsibly armed citizen.
+                </p>
+                
+                <p className="text-lg md:text-xl mb-8">
+                  Students will gain the knowledge and skills necessary to legally and responsibly carry a concealed handgun in the State of New Mexico and those States with whom New Mexico shares reciprocity with.
+                </p>
+                
+                <div className="bg-primary-foreground/10 rounded-lg p-6 mb-8">
+                  <p className="text-xl font-semibold mb-2">
+                    Your firearms training should be <span className="text-accent">SAFE</span>, <span className="text-accent">FUN</span>, and <span className="text-accent">PRACTICAL</span>.
+                  </p>
+                  <p className="text-lg">
+                    Your safety and protection begins with <strong><em>you</em></strong>. It's <em>your</em> life. It's <em>your</em> safety and protection. It's <strong>your</strong> responsibility.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    size="lg" 
+                    className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8 py-4"
+                    onClick={() => document.getElementById('course-types')?.scrollIntoView({ behavior: 'smooth' })}
+                    data-testid="button-register-now"
+                  >
+                    Register Now
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary text-lg px-8 py-4"
+                    onClick={() => document.getElementById('course-details')?.scrollIntoView({ behavior: 'smooth' })}
+                    data-testid="button-learn-more"
+                  >
+                    Learn More
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Course Specifications */}
+        <section className="py-16 bg-background" id="course-details">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Course Overview</h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                Comprehensive training designed to prepare you for safe and legal concealed carry
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-5 gap-6 mb-12">
+              {courseSpecs.map((spec, index) => (
+                <Card key={index} className="text-center">
+                  <CardContent className="pt-6">
+                    <spec.icon className="w-10 h-10 mx-auto mb-4 text-primary" />
+                    <h3 className="font-semibold mb-2">{spec.label}</h3>
+                    <p className="text-2xl font-bold text-primary">{spec.value}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Course Description */}
+            <Card className="mb-12">
+              <CardHeader>
+                <CardTitle className="flex items-center text-2xl">
+                  <GraduationCap className="w-6 h-6 mr-3" />
+                  Course Description
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-lg leading-relaxed">
+                  Our New Mexico Concealed Carry Course is one of the most comprehensive and fun concealed carry courses in the state. Our students receive hours of hands-on handgun training, both in the classroom and on the range.
+                </p>
+                <p className="text-lg leading-relaxed">
+                  In the classroom you will use <strong>S.I.R.T. training pistols</strong> to work on your basic handgun and defensive shooting fundamentals, as well as presenting the handgun from concealment.
+                </p>
+                
+                <Separator className="my-6" />
+                
+                <h4 className="text-xl font-semibold mb-4">What You'll Learn:</h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {courseFeatures.map((feature, index) => (
+                    <div key={index} className="flex items-start">
+                      <CheckCircle className="w-5 h-5 text-green-500 mt-1 mr-3 flex-shrink-0" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* Course Types Section */}
+        <section className="py-16 bg-secondary/30" id="course-types">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Choose Your Course Type</h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                Select the appropriate course based on your current certification status
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {/* Initial Course */}
+              <Card className="relative overflow-hidden border-2 hover:border-primary transition-colors">
+                <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-center py-2">
+                  <Badge variant="secondary" className="bg-primary-foreground text-primary">
+                    Most Popular
+                  </Badge>
+                </div>
+                <CardHeader className="pt-12">
+                  <CardTitle className="text-2xl text-center">Initial 2-Day Course</CardTitle>
+                  <div className="text-center">
+                    <span className="text-4xl font-bold text-primary">$165</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <span>Saturday and Sunday</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <span>9:00 AM - 5:00 PM</span>
+                    </div>
+                    <div className="flex items-center">
+                      <BookOpen className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <span>12 Hours Classroom</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Target className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <span>3 Hours Range Time</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Users className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <span>25 Rounds Required</span>
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-2">
+                    <h4 className="font-semibold">Perfect for:</h4>
+                    <ul className="text-sm space-y-1 text-muted-foreground">
+                      <li>• First-time concealed carry applicants</li>
+                      <li>• New Mexico residents seeking CCW license</li>
+                      <li>• Complete beginners to firearm training</li>
+                    </ul>
+                  </div>
+                  
+                  <Button 
+                    className="w-full mt-6" 
+                    size="lg"
+                    onClick={() => initialCourse && handleCourseSelect(initialCourse)}
+                    disabled={!initialCourse}
+                    data-testid="button-register-initial"
+                  >
+                    {initialCourse ? 'Register for Initial Course' : 'Coming Soon'}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* 4-Year Renewal */}
+              <Card className="border-2 hover:border-primary transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-center">4-Year Renewal</CardTitle>
+                  <div className="text-center">
+                    <span className="text-4xl font-bold text-primary">$86</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <span>Single Day Course</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <span>Reduced Hours</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Award className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <span>Renewal Certification</span>
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-2">
+                    <h4 className="font-semibold">Perfect for:</h4>
+                    <ul className="text-sm space-y-1 text-muted-foreground">
+                      <li>• Current CCW license holders</li>
+                      <li>• 4-year renewal requirement</li>
+                      <li>• Experienced concealed carriers</li>
+                    </ul>
+                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-6" 
+                    size="lg"
+                    onClick={() => renewalCourse && handleCourseSelect(renewalCourse)}
+                    disabled={!renewalCourse}
+                    data-testid="button-register-renewal"
+                  >
+                    {renewalCourse ? 'Register for Renewal' : 'Coming Soon'}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* 2-Year Refresher */}
+              <Card className="border-2 hover:border-primary transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-center">2-Year Refresher</CardTitle>
+                  <div className="text-center">
+                    <span className="text-4xl font-bold text-primary">$56</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <span>Half Day Course</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <span>Condensed Format</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Award className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <span>Skills Refresher</span>
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-2">
+                    <h4 className="font-semibold">Perfect for:</h4>
+                    <ul className="text-sm space-y-1 text-muted-foreground">
+                      <li>• 2-year refresher requirement</li>
+                      <li>• Skills update and review</li>
+                      <li>• Maintaining proficiency</li>
+                    </ul>
+                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-6" 
+                    size="lg"
+                    onClick={() => refresherCourse && handleCourseSelect(refresherCourse)}
+                    disabled={!refresherCourse}
+                    data-testid="button-register-refresher"
+                  >
+                    {refresherCourse ? 'Register for Refresher' : 'Coming Soon'}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Additional Information */}
+            <Card className="mt-12">
+              <CardContent className="pt-6">
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                      <Shield className="w-5 h-5 mr-2" />
+                      Training Philosophy
+                    </h3>
+                    <p className="mb-4">
+                      Our approach focuses on practical, real-world applications rather than flashy tactics that don't serve the average concealed carrier. We emphasize:
+                    </p>
+                    <ul className="space-y-2">
+                      <li className="flex items-start">
+                        <CheckCircle className="w-4 h-4 text-green-500 mt-1 mr-2 flex-shrink-0" />
+                        Safe handling and storage practices
+                      </li>
+                      <li className="flex items-start">
+                        <CheckCircle className="w-4 h-4 text-green-500 mt-1 mr-2 flex-shrink-0" />
+                        Legal responsibilities and limitations
+                      </li>
+                      <li className="flex items-start">
+                        <CheckCircle className="w-4 h-4 text-green-500 mt-1 mr-2 flex-shrink-0" />
+                        Practical defensive techniques
+                      </li>
+                      <li className="flex items-start">
+                        <CheckCircle className="w-4 h-4 text-green-500 mt-1 mr-2 flex-shrink-0" />
+                        Confidence through competence
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                      <MapPin className="w-5 h-5 mr-2" />
+                      Course Locations
+                    </h3>
+                    <p className="mb-4">
+                      We conduct training at various locations throughout New Mexico to serve students statewide:
+                    </p>
+                    <ul className="space-y-2">
+                      <li>• <strong>Albuquerque</strong> - Primary training location</li>
+                      <li>• <strong>Socorro</strong> - Monthly sessions</li>
+                      <li>• <strong>Angel Fire</strong> - Seasonal training</li>
+                      <li>• <strong>Farmington</strong> - Quarterly sessions</li>
+                    </ul>
+                    <p className="mt-4 text-sm text-muted-foreground">
+                      Specific venue details provided after registration confirmation.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* Call to Action */}
+        <section className="bg-primary text-primary-foreground py-16">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              Ready to Start Your Concealed Carry Journey?
+            </h2>
+            <p className="text-xl mb-8 leading-relaxed">
+              Join hundreds of New Mexico residents who have received their concealed carry training through Practical Defense Training. Professional instruction, practical skills, and the confidence you need.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8 py-4"
+                onClick={() => document.getElementById('course-types')?.scrollIntoView({ behavior: 'smooth' })}
+                data-testid="button-cta-register"
+              >
+                Choose Your Course
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Link href="/contact">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary text-lg px-8 py-4"
+                  data-testid="button-cta-contact"
+                >
+                  Have Questions?
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="mt-12 pt-8 border-t border-primary-foreground/20">
+              <p className="text-sm opacity-90">
+                Questions? Call <strong>(505) 944-5247</strong> or email{" "}
+                <a href="mailto:jeremy@abqconcealedcarry.com" className="underline">
+                  jeremy@abqconcealedcarry.com
+                </a>
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* Registration Modal */}
+      {selectedCourse && (
+        <RegistrationModal
+          course={selectedCourse}
+          isOpen={showRegistrationModal}
+          onClose={() => {
+            setShowRegistrationModal(false);
+            setSelectedCourse(null);
+          }}
+        />
+      )}
+    </Layout>
+  );
+}
