@@ -606,7 +606,7 @@ export default function ProductManagement() {
 
       {/* Product Dialog */}
       <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
-        <DialogContent className="max-w-2xl" data-testid="product-dialog">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="product-dialog">
           <DialogHeader>
             <DialogTitle>
               {editingProduct ? "Edit Product" : "Create Product"}
@@ -615,8 +615,9 @@ export default function ProductManagement() {
               {editingProduct ? "Update product information" : "Add a new product to your store"}
             </DialogDescription>
           </DialogHeader>
-          <Form {...productForm}>
-            <form onSubmit={productForm.handleSubmit(onProductSubmit)} className="space-y-4">
+          <div className="overflow-y-auto max-h-[70vh]">
+            <Form {...productForm}>
+              <form onSubmit={productForm.handleSubmit(onProductSubmit)} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={productForm.control}
@@ -905,6 +906,7 @@ export default function ProductManagement() {
               </div>
             </form>
           </Form>
+          </div>
         </DialogContent>
       </Dialog>
       </div>
