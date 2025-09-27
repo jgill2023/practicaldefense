@@ -216,7 +216,7 @@ export default function ProductManagement() {
     categoryForm.reset({
       name: category.name,
       description: category.description || "",
-      parentId: category.parentId || "",
+      parentId: category.parentId || "none",
       sortOrder: category.sortOrder || 0,
     });
     setCategoryDialogOpen(true);
@@ -251,10 +251,16 @@ export default function ProductManagement() {
   };
 
   const onCategorySubmit = (data: ProductCategoryFormData) => {
+    // Convert "none" to null for parentId
+    const processedData = {
+      ...data,
+      parentId: data.parentId === "none" ? null : data.parentId
+    };
+    
     if (editingCategory) {
-      updateCategoryMutation.mutate({ id: editingCategory.id, data });
+      updateCategoryMutation.mutate({ id: editingCategory.id, data: processedData });
     } else {
-      createCategoryMutation.mutate(data);
+      createCategoryMutation.mutate(processedData);
     }
   };
 
@@ -564,7 +570,7 @@ export default function ProductManagement() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">No parent category</SelectItem>
+                        <SelectItem value="none">No parent category</SelectItem>
                         {categories
                           .filter(c => c.id !== editingCategory?.id)
                           .map((category) => (
