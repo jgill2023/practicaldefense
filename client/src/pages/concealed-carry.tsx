@@ -112,24 +112,24 @@ export default function ConcealedCarryPage() {
                 </Badge>
               </div>
               
-              <h1 className="text-3xl md:text-4xl font-semibold mb-6" data-testid="text-hero-title">
+              <h1 className="text-2xl md:text-3xl font-medium mb-6" data-testid="text-hero-title">
                 New Mexico Concealed Carry Course
               </h1>
               
               <div className="max-w-6xl mx-auto">
-                <p className="text-lg md:text-xl mb-8 leading-relaxed">
+                <p className="text-base md:text-lg mb-8 leading-relaxed">
                   Practical Defense Training, LLC offers straightforward firearms training, with a focus and emphasis on New Mexico concealed carry training. One of the few courses which preaches and teaches <strong>practical over "tacti-cool"</strong>; bringing reliable and effective firearms training to the responsibly armed citizen.
                 </p>
                 
-                <p className="text-base md:text-lg mb-8">
+                <p className="text-sm md:text-base mb-8">
                   Students will gain the knowledge and skills necessary to legally and responsibly carry a concealed handgun in the State of New Mexico and those States with whom New Mexico shares reciprocity with.
                 </p>
                 
                 <div className="bg-primary-foreground/10 rounded-lg p-6 mb-8">
-                  <p className="text-lg font-medium mb-2">
-                    Your firearms training should be <span className="text-accent">SAFE</span>, <span className="text-accent">FUN</span>, and <span className="text-accent">PRACTICAL</span>.
+                  <p className="text-base font-normal mb-2">
+                    Your firearms training should be <strong>SAFE</strong>, <strong>FUN</strong>, and <strong>PRACTICAL</strong>.
                   </p>
-                  <p className="text-base">
+                  <p className="text-sm">
                     Your safety and protection begins with <strong><em>you</em></strong>. It's <em>your</em> life. It's <em>your</em> safety and protection. It's <strong>your</strong> responsibility.
                   </p>
                 </div>
@@ -142,8 +142,8 @@ export default function ConcealedCarryPage() {
         <section className="py-16 bg-background" id="course-details">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-2xl md:text-3xl font-semibold mb-4">Course Overview</h2>
-              <p className="text-base text-muted-foreground max-w-3xl mx-auto">
+              <h2 className="text-xl md:text-2xl font-medium mb-4">Course Overview</h2>
+              <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
                 Comprehensive training designed to prepare you for safe and legal concealed carry
               </p>
             </div>
@@ -163,22 +163,22 @@ export default function ConcealedCarryPage() {
             {/* Course Description */}
             <Card className="mb-12">
               <CardHeader>
-                <CardTitle className="flex items-center text-xl">
-                  <GraduationCap className="w-5 h-5 mr-3" />
+                <CardTitle className="flex items-center text-lg">
+                  <GraduationCap className="w-4 h-4 mr-3" />
                   Course Description
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-base leading-relaxed">
+                <p className="text-sm leading-relaxed">
                   Our New Mexico Concealed Carry Course is one of the most comprehensive and fun concealed carry courses in the state. Our students receive hours of hands-on handgun training, both in the classroom and on the range.
                 </p>
-                <p className="text-base leading-relaxed">
+                <p className="text-sm leading-relaxed">
                   In the classroom you will use <strong>S.I.R.T. training pistols</strong> to work on your basic handgun and defensive shooting fundamentals, as well as presenting the handgun from concealment.
                 </p>
                 
                 <Separator className="my-6" />
                 
-                <h4 className="text-lg font-medium mb-4">What You'll Learn:</h4>
+                <h4 className="text-base font-medium mb-4">What You'll Learn:</h4>
                 <div className="grid md:grid-cols-2 gap-4">
                   {courseFeatures.map((feature, index) => (
                     <div key={index} className="flex items-start">
@@ -196,8 +196,8 @@ export default function ConcealedCarryPage() {
         <section className="py-16 bg-secondary/30" id="course-types">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-2xl md:text-3xl font-semibold mb-4">Choose Your Course Type</h2>
-              <p className="text-base text-muted-foreground max-w-3xl mx-auto">
+              <h2 className="text-xl md:text-2xl font-medium mb-4">Choose Your Course Type</h2>
+              <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
                 Select the appropriate course based on your current certification status
               </p>
             </div>
@@ -211,9 +211,9 @@ export default function ConcealedCarryPage() {
                   </Badge>
                 </div>
                 <CardHeader className="pt-12">
-                  <CardTitle className="text-xl text-center">Initial 2-Day Course</CardTitle>
+                  <CardTitle className="text-lg text-center">Initial 2-Day Course</CardTitle>
                   <div className="text-center">
-                    <span className="text-3xl font-semibold text-primary">$165</span>
+                    <span className="text-2xl font-medium text-primary">$165</span>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -223,16 +223,8 @@ export default function ConcealedCarryPage() {
                       <span>Saturday and Sunday</span>
                     </div>
                     <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
-                      <span>9:00 AM - 5:00 PM</span>
-                    </div>
-                    <div className="flex items-center">
-                      <BookOpen className="w-4 h-4 mr-2 text-muted-foreground" />
-                      <span>12 Hours Classroom</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Target className="w-4 h-4 mr-2 text-muted-foreground" />
-                      <span>3 Hours Range Time</span>
+                      <Shield className="w-4 h-4 mr-2 text-muted-foreground" />
+                      <span>NM DPS Approved</span>
                     </div>
                     <div className="flex items-center">
                       <Users className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -269,20 +261,20 @@ export default function ConcealedCarryPage() {
               {/* 4-Year Renewal */}
               <Card className="border-2 hover:border-primary transition-colors">
                 <CardHeader>
-                  <CardTitle className="text-xl text-center">4-Year Renewal</CardTitle>
+                  <CardTitle className="text-lg text-center">4-Year Renewal</CardTitle>
                   <div className="text-center">
-                    <span className="text-3xl font-semibold text-primary">$86</span>
+                    <span className="text-2xl font-medium text-primary">$86</span>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex items-center">
                       <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
-                      <span>Single Day Course</span>
+                      <span>Half Day</span>
                     </div>
                     <div className="flex items-center">
                       <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
-                      <span>Reduced Hours</span>
+                      <span>4 Hours</span>
                     </div>
                     <div className="flex items-center">
                       <Award className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -320,20 +312,16 @@ export default function ConcealedCarryPage() {
               {/* 2-Year Refresher */}
               <Card className="border-2 hover:border-primary transition-colors">
                 <CardHeader>
-                  <CardTitle className="text-xl text-center">2-Year Refresher</CardTitle>
+                  <CardTitle className="text-lg text-center">2-Year Refresher</CardTitle>
                   <div className="text-center">
-                    <span className="text-3xl font-semibold text-primary">$56</span>
+                    <span className="text-2xl font-medium text-primary">$56</span>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
-                      <span>Half Day Course</span>
-                    </div>
-                    <div className="flex items-center">
                       <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
-                      <span>Condensed Format</span>
+                      <span>2 Hours</span>
                     </div>
                     <div className="flex items-center">
                       <Award className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -375,10 +363,10 @@ export default function ConcealedCarryPage() {
         {/* Call to Action */}
         <section className="bg-primary text-primary-foreground py-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-2xl md:text-3xl font-semibold mb-6">
+            <h2 className="text-xl md:text-2xl font-medium mb-6">
               Ready to Start Your Concealed Carry Journey?
             </h2>
-            <p className="text-lg mb-8 leading-relaxed">
+            <p className="text-base mb-8 leading-relaxed">
               Join hundreds of New Mexico residents who have received their concealed carry training through Practical Defense Training. Professional instruction, practical skills, and the confidence you need.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
