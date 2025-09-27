@@ -33,12 +33,27 @@ export default function ConcealedCarryPage() {
     queryKey: ["/api/courses"],
   });
 
+  // Helper function to safely get category name
+  const getCategoryName = (category: any): string => {
+    if (!category) return '';
+    // If it's a string (old format), return it
+    if (typeof category === 'string') return category;
+    // If it's an object (new format), return the name
+    if (typeof category === 'object' && 'name' in category) {
+      return (category as any).name as string;
+    }
+    return '';
+  };
+
   // Filter for concealed carry courses
-  const concealedCarryCourses = courses.filter(course => 
-    course.title.toLowerCase().includes('concealed') || 
-    course.category?.toLowerCase().includes('concealed') ||
-    course.title.toLowerCase().includes('ccw')
-  );
+  const concealedCarryCourses = courses.filter(course => {
+    const categoryName = getCategoryName(course.category);
+    return (
+      course.title.toLowerCase().includes('concealed') || 
+      categoryName.toLowerCase().includes('concealed') ||
+      course.title.toLowerCase().includes('ccw')
+    );
+  });
 
   // Find specific course types
   const initialCourse = concealedCarryCourses.find(course => 
