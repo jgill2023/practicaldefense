@@ -98,7 +98,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
-                      <NavigationMenuTrigger className="text-primary-foreground hover:text-accent bg-transparent border-none data-[state=open]:bg-accent/20">
+                      <NavigationMenuTrigger className="text-base text-primary-foreground hover:text-accent bg-transparent border-none data-[state=open]:bg-accent/20">
                         Schedule
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
@@ -119,7 +119,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       </NavigationMenuContent>
                     </NavigationMenuItem>
                     <NavigationMenuItem>
-                      <NavigationMenuTrigger className="text-primary-foreground hover:text-accent bg-transparent border-none data-[state=open]:bg-accent/20">
+                      <NavigationMenuTrigger className="text-base text-primary-foreground hover:text-accent bg-transparent border-none data-[state=open]:bg-accent/20">
                         Courses
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
@@ -141,10 +141,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </NavigationMenuItem>
                   </NavigationMenuList>
                 </NavigationMenu>
-                <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors">About Us</a>
-                <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors">Resources</a>
-                <Link href="/store" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-store">Our Store</Link>
-                <Link href="/contact" className="text-primary-foreground hover:text-accent transition-colors" data-testid="link-contact">Contact Us</Link>
+                <a href="#about-us" className="text-base text-primary-foreground hover:text-accent transition-colors">About Us</a>
+                <a href="#resources" className="text-base text-primary-foreground hover:text-accent transition-colors">Resources</a>
+                <Link href="/store" className="text-base text-primary-foreground hover:text-accent transition-colors" data-testid="link-store">Our Store</Link>
+                <Link href="/contact" className="text-base text-primary-foreground hover:text-accent transition-colors" data-testid="link-contact">Contact Us</Link>
               </nav>
 
               {/* Desktop auth buttons */}
