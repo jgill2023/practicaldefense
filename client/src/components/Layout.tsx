@@ -12,7 +12,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Shield, Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, GraduationCap, User, Bell, MessageSquare } from "lucide-react";
+import { Shield, Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, GraduationCap, User, Bell, MessageSquare, Globe } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuth();
@@ -123,7 +123,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         Courses
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
-                        <div className="w-48 p-2">
+                        <div className="w-56 p-2">
                           <Link href="/#courses">
                             <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-courses">
                               <GraduationCap className="h-4 w-4" />
@@ -134,6 +134,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-concealed-carry">
                               <Shield className="h-4 w-4" />
                               <span>Concealed Carry</span>
+                            </NavigationMenuLink>
+                          </Link>
+                          <Link href="/online-concealed-carry">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-online-concealed-carry">
+                              <Globe className="h-4 w-4" />
+                              <span>Online Concealed Carry</span>
                             </NavigationMenuLink>
                           </Link>
                         </div>
@@ -245,6 +251,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       >
                         <Shield className="h-4 w-4" />
                         <span>Concealed Carry</span>
+                      </Link>
+                      <Link 
+                        href="/online-concealed-carry" 
+                        className="flex items-center space-x-2 text-primary-foreground/80 hover:text-accent transition-colors py-1"
+                        data-testid="link-online-concealed-carry-mobile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Globe className="h-4 w-4" />
+                        <span>Online Concealed Carry</span>
                       </Link>
                     </div>
                   )}
