@@ -818,9 +818,10 @@ export default function ProductManagement() {
                             maxFileSize={5242880} // 5MB
                             onGetUploadParameters={async () => {
                               const response = await apiRequest('POST', '/api/objects/upload');
+                              const data = await response.json();
                               return { 
                                 method: 'PUT' as const, 
-                                url: response.uploadURL 
+                                url: data.uploadURL 
                               };
                             }}
                             onComplete={async (result) => {
@@ -833,9 +834,10 @@ export default function ProductManagement() {
                                     const response = await apiRequest("PUT", "/api/product-images", {
                                       productImageURL: uploadURL,
                                     });
+                                    const data = await response.json();
                                     
                                     // Set the publicly accessible image URL
-                                    field.onChange(response.objectPath);
+                                    field.onChange(data.objectPath);
                                     
                                     toast({
                                       title: "Image Uploaded",
