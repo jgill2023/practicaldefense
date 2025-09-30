@@ -654,6 +654,8 @@ export function CommunicationsDashboard() {
   // Group SMS messages into conversations by phone number
   interface Conversation {
     phoneNumber: string;
+    studentName: string;
+    recentCourseInfo: string;
     messages: Communication[];
     lastMessage: Communication;
     unreadCount: number;
@@ -673,8 +675,26 @@ export function CommunicationsDashboard() {
     // Convert to array and sort each conversation by date
     const conversations: Conversation[] = Array.from(conversationMap.entries()).map(([phoneNumber, messages]) => {
       const sorted = messages.sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+      
+      // Get student name from the most recent message with user data
+      const messageWithUser = sorted.find(m => m.user);
+      const user = messageWithUser?.user;
+      const studentName = user ? `${user.firstName} ${user.lastName}` : phoneNumber;
+      
+      // Get most recent course info from enrollment data
+      let recentCourseInfo = '';
+      if (messageWithUser?.enrollment?.course && messageWithUser?.enrollment?.schedule) {
+        const course = messageWithUser.enrollment.course;
+        const schedule = messageWithUser.enrollment.schedule;
+        const abbreviation = course.abbreviation || course.name.substring(0, 3).toUpperCase();
+        const scheduleDate = format(new Date(schedule.startDate), 'MMM d');
+        recentCourseInfo = `${scheduleDate} ${abbreviation}`;
+      }
+      
       return {
         phoneNumber,
+        studentName,
+        recentCourseInfo,
         messages: sorted,
         lastMessage: sorted[0],
         unreadCount: sorted.filter(m => !m.isRead && m.direction === 'inbound').length
@@ -1209,10 +1229,17 @@ export function CommunicationsDashboard() {
                               data-testid={`conversation-${conversation.phoneNumber}`}
                             >
                               <div className="flex items-start justify-between mb-1">
-                                <div className="font-medium text-sm truncate flex-1">
-                                  {conversation.phoneNumber}
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-sm truncate">
+                                    {conversation.studentName}
+                                  </div>
+                                  {conversation.recentCourseInfo && (
+                                    <div className="text-xs text-muted-foreground truncate">
+                                      {conversation.recentCourseInfo}
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="text-xs text-muted-foreground ml-2">
+                                <div className="text-xs text-muted-foreground ml-2 flex-shrink-0">
                                   {format(new Date(conversation.lastMessage.sentAt), 'MMM d')}
                                 </div>
                               </div>
@@ -1239,7 +1266,16 @@ export function CommunicationsDashboard() {
                           {/* Thread Header */}
                           <div className="p-4 border-b bg-muted/30">
                             <div className="flex items-center justify-between">
-                              <h3 className="font-semibold">{selectedConversation}</h3>
+                              <div>
+                                <h3 className="font-semibold">
+                                  {getSMSConversations().find(c => c.phoneNumber === selectedConversation)?.studentName || selectedConversation}
+                                </h3>
+                                {getSMSConversations().find(c => c.phoneNumber === selectedConversation)?.recentCourseInfo && (
+                                  <div className="text-xs text-muted-foreground">
+                                    {getSMSConversations().find(c => c.phoneNumber === selectedConversation)?.recentCourseInfo}
+                                  </div>
+                                )}
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="sm"

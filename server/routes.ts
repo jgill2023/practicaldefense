@@ -6,7 +6,7 @@ import { z } from "zod";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
-import { enrollments } from "@shared/schema";
+import { enrollments, smsBroadcastMessages } from "@shared/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
