@@ -4056,6 +4056,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteSmsList(id: string): Promise<void> {
+    // Delete related records first to avoid foreign key constraint errors
+    
+    // Delete all broadcast deliveries for broadcasts in this list
+    const broadcasts = await db
+      .select({ id: smsBroadcastMessages.id })
+      .from(smsBroadcastMessages)
+      .where(eq(smsBroadcastMessages.listId, id));
+    
+    for (const broadcast of broadcasts) {
+      await db
+        .delete(smsBroadcastDeliveries)
+        .where(eq(smsBroadcastDeliveries.broadcastId, broadcast.id));
+    }
+    
+    // Delete all broadcasts for this list
+    await db
+      .delete(smsBroadcastMessages)
+      .where(eq(smsBroadcastMessages.listId, id));
+    
+    // Delete all list members
+    await db
+      .delete(smsListMembers)
+      .where(eq(smsListMembers.listId, id));
+    
+    // Finally delete the list itself
     await db
       .delete(smsLists)
       .where(eq(smsLists.id, id));
