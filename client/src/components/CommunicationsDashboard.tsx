@@ -117,7 +117,7 @@ export function CommunicationsDashboard() {
 
   // Mutations for status changes
   const markAsReadMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/communications/${id}/read`, { method: 'PATCH' }),
+    mutationFn: (id: string) => apiRequest('PATCH', `/api/communications/${id}/read`),
     onSuccess: () => {
       suppressNotificationsRef.current = true;
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
@@ -130,7 +130,7 @@ export function CommunicationsDashboard() {
   });
 
   const markAsUnreadMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/communications/${id}/unread`, { method: 'PATCH' }),
+    mutationFn: (id: string) => apiRequest('PATCH', `/api/communications/${id}/unread`),
     onSuccess: () => {
       suppressNotificationsRef.current = true;
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
@@ -144,7 +144,7 @@ export function CommunicationsDashboard() {
 
   const flagMutation = useMutation({
     mutationFn: ({ id, note }: { id: string; note?: string }) => 
-      apiRequest(`/api/communications/${id}/flag`, { method: 'PATCH', body: { note } }),
+      apiRequest('PATCH', `/api/communications/${id}/flag`, { note }),
     onSuccess: () => {
       suppressNotificationsRef.current = true;
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
@@ -157,7 +157,7 @@ export function CommunicationsDashboard() {
   });
 
   const unflagMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/communications/${id}/unflag`, { method: 'PATCH' }),
+    mutationFn: (id: string) => apiRequest('PATCH', `/api/communications/${id}/unflag`),
     onSuccess: () => {
       suppressNotificationsRef.current = true;
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
