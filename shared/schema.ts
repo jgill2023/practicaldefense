@@ -1253,6 +1253,9 @@ export const insertSmsBroadcastMessageSchema = createInsertSchema(smsBroadcastMe
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  scheduledFor: z.union([z.date(), z.string().transform(str => str ? new Date(str) : null), z.null()]).optional(),
+  sentAt: z.union([z.date(), z.string().transform(str => str ? new Date(str) : null), z.null()]).optional(),
 });
 
 export const insertSmsBroadcastDeliverySchema = createInsertSchema(smsBroadcastDeliveries).omit({

@@ -395,12 +395,6 @@ export function CommunicationsDashboard() {
   const createBroadcastMutation = useMutation({
     mutationFn: ({ listId, data }: { listId: string; data: any }) =>
       apiRequest('POST', `/api/sms-lists/${listId}/broadcasts`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
-      toast({ title: "Success", description: "Broadcast saved successfully" });
-      setIsComposerOpen(false);
-      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [], scheduledFor: "", isScheduled: false });
-    },
     onError: (error: any) => {
       toast({
         title: "Error",
@@ -630,7 +624,7 @@ export function CommunicationsDashboard() {
 
   // Get counts for each section and tab
   const getEmailCounts = () => {
-    const emailData = communicationsData?.data.filter(c => c.type === 'email') || [];
+    const emailData = (communicationsData?.data || []).filter(c => c.type === 'email');
     return {
       inbox: emailData.filter(c => c.direction === 'inbound').length, // Only inbound messages in inbox
       all: emailData.filter(c => c.direction === 'inbound').length, // Alias for inbox during transition
@@ -641,7 +635,7 @@ export function CommunicationsDashboard() {
   };
 
   const getSMSCounts = () => {
-    const smsData = communicationsData?.data.filter(c => c.type === 'sms') || [];
+    const smsData = (communicationsData?.data || []).filter(c => c.type === 'sms');
     return {
       inbox: smsData.filter(c => c.direction === 'inbound').length, // Only inbound messages in inbox
       all: smsData.filter(c => c.direction === 'inbound').length, // Alias for inbox during transition
@@ -662,7 +656,7 @@ export function CommunicationsDashboard() {
   }
 
   const getSMSConversations = (): Conversation[] => {
-    const smsData = communicationsData?.data.filter(c => c.type === 'sms') || [];
+    const smsData = (communicationsData?.data || []).filter(c => c.type === 'sms');
     const conversationMap = new Map<string, Communication[]>();
 
     // Group messages by phone number (use the "other" party's number)
@@ -2968,7 +2962,7 @@ export function CommunicationsDashboard() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
+                onClick={async () => {
                   if (!broadcastForm.messageContent.trim()) {
                     toast({
                       title: "Error",
@@ -2979,18 +2973,28 @@ export function CommunicationsDashboard() {
                   }
                   
                   if (selectedListId) {
-                    createBroadcastMutation.mutate({
-                      listId: selectedListId,
-                      data: {
-                        subject: broadcastForm.subject || null,
-                        messageContent: broadcastForm.messageContent,
-                        messagePlain: broadcastForm.messagePlain,
-                        dynamicTags: broadcastForm.dynamicTags,
-                        attachmentUrls: broadcastForm.attachmentUrls,
-                        scheduledFor: broadcastForm.isScheduled && broadcastForm.scheduledFor ? new Date(broadcastForm.scheduledFor).toISOString() : null,
-                        status: 'draft'
-                      }
-                    });
+                    try {
+                      await createBroadcastMutation.mutateAsync({
+                        listId: selectedListId,
+                        data: {
+                          subject: broadcastForm.subject || null,
+                          messageContent: broadcastForm.messageContent,
+                          messagePlain: broadcastForm.messagePlain,
+                          dynamicTags: broadcastForm.dynamicTags,
+                          attachmentUrls: broadcastForm.attachmentUrls,
+                          scheduledFor: broadcastForm.isScheduled && broadcastForm.scheduledFor ? new Date(broadcastForm.scheduledFor).toISOString() : null,
+                          status: 'draft'
+                        }
+                      });
+                      
+                      // Success - manually handle
+                      queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+                      toast({ title: "Success", description: "Draft saved successfully" });
+                      setIsComposerOpen(false);
+                      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [], scheduledFor: "", isScheduled: false });
+                    } catch (error) {
+                      // Error already handled by mutation onError
+                    }
                   }
                 }}
                 disabled={createBroadcastMutation.isPending || !broadcastForm.messageContent.trim()}
@@ -3082,9 +3086,17 @@ export function CommunicationsDashboard() {
             </Button>
             <Button
               onClick={async () => {
-                if (!selectedListId) return;
+                if (!selectedListId) {
+                  console.log('[DEBUG] No selectedListId, returning');
+                  return;
+                }
 
                 try {
+                  console.log('[DEBUG] Creating broadcast with data:', {
+                    listId: selectedListId,
+                    scheduledFor: broadcastForm.isScheduled && broadcastForm.scheduledFor ? new Date(broadcastForm.scheduledFor).toISOString() : null
+                  });
+                  
                   // First create/save the broadcast
                   const result = await createBroadcastMutation.mutateAsync({
                     listId: selectedListId,
@@ -3099,9 +3111,13 @@ export function CommunicationsDashboard() {
                     }
                   });
 
+                  console.log('[DEBUG] Broadcast created, result:', result);
+
                   // Then send it (or schedule it)
                   if (result?.id) {
-                    await sendBroadcastMutation.mutateAsync(result.id);
+                    console.log('[DEBUG] Sending broadcast with ID:', result.id);
+                    const sendResult = await sendBroadcastMutation.mutateAsync(result.id);
+                    console.log('[DEBUG] Send result:', sendResult);
                     
                     // Success - manually close dialogs and reset form
                     queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
@@ -3114,9 +3130,11 @@ export function CommunicationsDashboard() {
                     setIsSendConfirmOpen(false);
                     setIsComposerOpen(false);
                     setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [], scheduledFor: "", isScheduled: false });
+                  } else {
+                    console.log('[DEBUG] No result.id found, result:', result);
                   }
                 } catch (error: any) {
-                  console.error('Error sending broadcast:', error);
+                  console.error('[DEBUG] Error in send broadcast:', error);
                   toast({
                     title: "Error",
                     description: error?.message || "Failed to send broadcast",

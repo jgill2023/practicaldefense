@@ -4,6 +4,15 @@ Practical Defense Training is a professional firearms training management platfo
 
 # Recent Changes
 
+## September 30, 2025 - SMS Broadcast UX Improvements
+- Added template button for broadcast message content (right-aligned with label)
+- Fixed broadcast dialog closure to properly close after successful send/schedule
+- Fixed broadcast status updates - broadcasts now correctly transition from draft to scheduled/sent
+- Enhanced datetime picker with 5-minute interval steps (step="300")
+- Improved schema validation to accept ISO date strings for scheduledFor field
+- Fixed null safety issues in communications data filtering functions
+- Removed premature onSuccess callbacks to prevent dialog closure before send completion
+
 ## September 2024 - SMS Communication System Enhancements
 - Enhanced broadcast scheduling with date/time picker supporting 5-minute intervals
 - Implemented background scheduler that automatically sends scheduled broadcasts at designated times
