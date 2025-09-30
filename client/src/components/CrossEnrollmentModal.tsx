@@ -140,29 +140,29 @@ export function CrossEnrollmentModal({ isOpen, onClose, studentId, studentName }
                       value={schedule.id}
                       data-testid={`option-schedule-${schedule.id}`}
                     >
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{schedule.courseTitle}</span>
+                      <div className="flex flex-col gap-1 py-1 min-w-0 w-full">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-medium text-sm truncate">{schedule.courseTitle}</span>
                           {isNearFull && (
-                            <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded">
-                              {schedule.availableSpots} spots left
+                            <span className="text-xs bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded whitespace-nowrap flex-shrink-0">
+                              {schedule.availableSpots} left
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {format(new Date(schedule.startDate), 'MMM d, yyyy')} at {schedule.startTime}
+                            <Calendar className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{format(new Date(schedule.startDate), 'MMM d, yyyy')} at {schedule.startTime}</span>
                           </div>
                           {schedule.location && (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {schedule.location}
+                            <div className="flex items-center gap-1 min-w-0">
+                              <MapPin className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{schedule.location}</span>
                             </div>
                           )}
                           <div className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {schedule.availableSpots}/{schedule.maxSpots} available
+                            <Users className="h-3 w-3 flex-shrink-0" />
+                            <span>{schedule.availableSpots}/{schedule.maxSpots} available</span>
                           </div>
                         </div>
                       </div>
