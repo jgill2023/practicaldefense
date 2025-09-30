@@ -3086,16 +3086,22 @@ export function CommunicationsDashboard() {
             </Button>
             <Button
               onClick={async () => {
+                console.log('[BROADCAST DEBUG] Confirm button clicked');
+                console.log('[BROADCAST DEBUG] selectedListId:', selectedListId);
+                console.log('[BROADCAST DEBUG] broadcastForm:', broadcastForm);
+                
                 if (!selectedListId) {
-                  console.log('[DEBUG] No selectedListId, returning');
+                  console.log('[BROADCAST DEBUG] No selectedListId, showing error');
+                  toast({
+                    title: "Error",
+                    description: "No list selected",
+                    variant: "destructive"
+                  });
                   return;
                 }
 
                 try {
-                  console.log('[DEBUG] Creating broadcast with data:', {
-                    listId: selectedListId,
-                    scheduledFor: broadcastForm.isScheduled && broadcastForm.scheduledFor ? new Date(broadcastForm.scheduledFor).toISOString() : null
-                  });
+                  console.log('[BROADCAST DEBUG] Starting broadcast creation...');
                   
                   // First create/save the broadcast
                   const result = await createBroadcastMutation.mutateAsync({
@@ -3111,30 +3117,40 @@ export function CommunicationsDashboard() {
                     }
                   });
 
-                  console.log('[DEBUG] Broadcast created, result:', result);
+                  console.log('[BROADCAST DEBUG] Broadcast created:', result);
 
                   // Then send it (or schedule it)
                   if (result?.id) {
-                    console.log('[DEBUG] Sending broadcast with ID:', result.id);
+                    console.log('[BROADCAST DEBUG] Calling send for broadcast:', result.id);
                     const sendResult = await sendBroadcastMutation.mutateAsync(result.id);
-                    console.log('[DEBUG] Send result:', sendResult);
+                    console.log('[BROADCAST DEBUG] Send completed:', sendResult);
                     
                     // Success - manually close dialogs and reset form
-                    queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+                    await queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+                    
                     toast({ 
                       title: "Success", 
                       description: broadcastForm.isScheduled && broadcastForm.scheduledFor 
                         ? "Broadcast scheduled successfully" 
                         : "Broadcast sent successfully" 
                     });
+                    
+                    console.log('[BROADCAST DEBUG] Closing dialogs and resetting form...');
                     setIsSendConfirmOpen(false);
                     setIsComposerOpen(false);
                     setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [], scheduledFor: "", isScheduled: false });
+                    console.log('[BROADCAST DEBUG] All done!');
                   } else {
-                    console.log('[DEBUG] No result.id found, result:', result);
+                    console.error('[BROADCAST DEBUG] No broadcast ID in result:', result);
+                    toast({
+                      title: "Error",
+                      description: "Failed to create broadcast - no ID returned",
+                      variant: "destructive"
+                    });
                   }
                 } catch (error: any) {
-                  console.error('[DEBUG] Error in send broadcast:', error);
+                  console.error('[BROADCAST DEBUG] Error occurred:', error);
+                  console.error('[BROADCAST DEBUG] Error stack:', error?.stack);
                   toast({
                     title: "Error",
                     description: error?.message || "Failed to send broadcast",
