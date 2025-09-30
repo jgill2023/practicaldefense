@@ -184,7 +184,7 @@ export function CommunicationsDashboard() {
       suppressNotificationsRef.current = true;
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/communications/counts'] });
-      toast({ title: "Success", description: "Message marked as read" });
+      // No toast notification for marking as read (silent operation)
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to mark message as read", variant: "destructive" });
