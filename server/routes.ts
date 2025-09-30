@@ -10,7 +10,7 @@ import { enrollments } from "@shared/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
+import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, insertCourseNotificationSignupSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
 import "./types"; // Import type declarations
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -337,6 +337,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating course schedule:", error);
       res.status(500).json({ message: "Failed to create course schedule" });
+    }
+  });
+
+  // Course notification signup routes
+  // Public endpoint for students to sign up for course notifications
+  app.post('/api/courses/:courseId/notification-signup', async (req: any, res) => {
+    try {
+      const courseId = req.params.courseId;
+      
+      // Verify course exists and is active
+      const course = await storage.getCourse(courseId);
+      if (!course || !course.isActive) {
+        return res.status(404).json({ message: "Course not found or inactive" });
+      }
+
+      const validatedData = insertCourseNotificationSignupSchema.parse({
+        ...req.body,
+        courseId,
+      });
+
+      const signup = await storage.createCourseNotificationSignup(validatedData);
+      res.status(201).json({ 
+        success: true,
+        message: "Successfully signed up for notifications",
+        signup
+      });
+    } catch (error) {
+      console.error("Error creating notification signup:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to sign up for notifications" });
+    }
+  });
+
+  // Get notification signups for a course (instructor only)
+  app.get('/api/instructor/courses/:courseId/notification-signups', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const courseId = req.params.courseId;
+      
+      // Verify instructor has access to this course
+      const course = await storage.getCourse(courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const signups = await storage.getCourseNotificationSignups(courseId);
+      res.json(signups);
+    } catch (error) {
+      console.error("Error fetching notification signups:", error);
+      res.status(500).json({ message: "Failed to fetch notification signups" });
+    }
+  });
+
+  // Delete notification signup (instructor only)
+  app.delete('/api/instructor/notification-signups/:signupId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      await storage.deleteCourseNotificationSignup(req.params.signupId);
+      res.json({ success: true, message: "Notification signup deleted" });
+    } catch (error) {
+      console.error("Error deleting notification signup:", error);
+      res.status(500).json({ message: "Failed to delete notification signup" });
     }
   });
 
