@@ -4,6 +4,14 @@ Practical Defense Training is a professional firearms training management platfo
 
 # Recent Changes
 
+## September 2024 - SMS Communication System Enhancements
+- Enhanced broadcast scheduling with date/time picker supporting 5-minute intervals
+- Implemented background scheduler that automatically sends scheduled broadcasts at designated times
+- Updated inbox display to show student names and course enrollment info instead of phone numbers
+- Improved Add Students modal with real-time search filtering by name or email
+- Changed terminology from "members" to "students" throughout the SMS interface for clarity
+- Fixed OIDC authentication to properly update user roles from claims for existing users
+
 ## December 2024 - Enhanced Student Management System
 - Added comprehensive license management with automatic expiration warnings
 - Implemented payment balance tracking and form completion status monitoring  
