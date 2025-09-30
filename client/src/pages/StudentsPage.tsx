@@ -314,13 +314,8 @@ function StudentsPage() {
                     )}
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <Badge 
-                            variant="secondary" 
-                            className="text-sm font-medium border"
-                          >
-                            {enrollment.courseAbbreviation}
-                          </Badge>
+                        <div className="font-medium text-sm">
+                          {enrollment.courseTitle}
                         </div>
                         <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                           <Calendar className="h-3 w-3" />
