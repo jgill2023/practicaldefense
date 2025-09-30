@@ -695,7 +695,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const studentsData = await storage.getStudentsByInstructor(userId);
-      res.json(studentsData);
+      
+      // Flatten the students data for the Add Students modal
+      const allStudents = [...studentsData.current, ...studentsData.former, ...studentsData.held];
+      
+      // Remove duplicates by student ID and map to simplified format
+      const uniqueStudents = Array.from(
+        new Map(allStudents.map(student => [student.id, {
+          id: student.id,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          email: student.email,
+          phone: student.phone
+        }])).values()
+      );
+      
+      res.json(uniqueStudents);
     } catch (error) {
       console.error("Error fetching students data:", error);
       res.status(500).json({ message: "Failed to fetch students data" });
@@ -5457,7 +5472,7 @@ jeremy@abqconcealedcarry.com
       }
 
       // Only allow updating specific fields
-      const allowedFields = ['subject', 'messageContent', 'messageHtml', 'messagePlain', 'attachmentUrls', 'dynamicTags'];
+      const allowedFields = ['subject', 'messageContent', 'messageHtml', 'messagePlain', 'attachmentUrls', 'dynamicTags', 'scheduledFor'];
       const updateData: any = {};
       
       for (const field of allowedFields) {
@@ -5548,7 +5563,26 @@ jeremy@abqconcealedcarry.com
         return res.status(400).json({ message: "No members with valid phone numbers found" });
       }
 
-      // Update broadcast status to 'sending'
+      // Check if message is scheduled for later
+      if (broadcast.scheduledFor) {
+        const scheduledTime = new Date(broadcast.scheduledFor);
+        const now = new Date();
+        
+        // If scheduled for future, mark as scheduled and return
+        if (scheduledTime > now) {
+          const updatedBroadcast = await storage.updateSmsBroadcastMessage(req.params.broadcastId, {
+            status: 'scheduled',
+            totalRecipients: membersWithPhone.length,
+          });
+          
+          return res.json({
+            ...updatedBroadcast,
+            message: `Broadcast scheduled for ${scheduledTime.toLocaleString()}`
+          });
+        }
+      }
+
+      // Update broadcast status to 'sending' (for immediate sends)
       await storage.updateSmsBroadcastMessage(req.params.broadcastId, {
         status: 'sending',
         totalRecipients: membersWithPhone.length,
@@ -5673,6 +5707,121 @@ jeremy@abqconcealedcarry.com
       res.status(500).json({ message: "Failed to fetch deliveries" });
     }
   });
+
+  // Background scheduler for sending scheduled broadcasts
+  const checkScheduledBroadcasts = async () => {
+    try {
+      // Get all scheduled broadcasts
+      const scheduledBroadcasts = await db
+        .select()
+        .from(smsBroadcastMessages)
+        .where(eq(smsBroadcastMessages.status, 'scheduled'));
+
+      const now = new Date();
+
+      for (const broadcast of scheduledBroadcasts) {
+        // Check if it's time to send
+        if (broadcast.scheduledFor && new Date(broadcast.scheduledFor) <= now) {
+          console.log(`Sending scheduled broadcast ${broadcast.id} (scheduled for ${broadcast.scheduledFor})`);
+          
+          try {
+            // Get list members
+            const members = await storage.getSmsListMembers(broadcast.listId);
+            const membersWithPhone = members.filter(m => m.user.phone && m.user.phone.trim() !== '');
+
+            if (membersWithPhone.length === 0) {
+              console.log(`Broadcast ${broadcast.id} has no valid recipients, marking as failed`);
+              await storage.updateSmsBroadcastMessage(broadcast.id, {
+                status: 'failed',
+              });
+              continue;
+            }
+
+            // Update broadcast status to 'sending'
+            await storage.updateSmsBroadcastMessage(broadcast.id, {
+              status: 'sending',
+              totalRecipients: membersWithPhone.length,
+            });
+
+            // Helper function to replace dynamic tags
+            const replaceDynamicTags = (message: string, member: any): string => {
+              let personalizedMessage = message;
+              personalizedMessage = personalizedMessage.replace(/\{\{firstName\}\}/g, member.user.firstName || '');
+              personalizedMessage = personalizedMessage.replace(/\{\{lastName\}\}/g, member.user.lastName || '');
+              personalizedMessage = personalizedMessage.replace(/\{\{email\}\}/g, member.user.email || '');
+              return personalizedMessage;
+            };
+
+            // Send messages
+            let successCount = 0;
+            let failureCount = 0;
+
+            const sendPromises = membersWithPhone.map(async (member) => {
+              try {
+                const personalizedMessage = replaceDynamicTags(broadcast.messagePlain, member);
+                
+                const delivery = await storage.createSmsBroadcastDelivery({
+                  broadcastId: broadcast.id,
+                  userId: member.userId,
+                  phoneNumber: member.user.phone!,
+                  personalizedMessage,
+                  status: 'pending',
+                });
+
+                const smsResult = await sendSms({
+                  to: member.user.phone!,
+                  body: personalizedMessage,
+                  instructorId: broadcast.instructorId,
+                  purpose: 'educational',
+                });
+
+                if (smsResult.success) {
+                  await storage.updateSmsBroadcastDelivery(delivery.id, {
+                    status: 'sent',
+                    twilioMessageSid: smsResult.messageSid,
+                    sentAt: new Date(),
+                  });
+                  successCount++;
+                } else {
+                  await storage.updateSmsBroadcastDelivery(delivery.id, {
+                    status: 'failed',
+                    errorMessage: smsResult.error,
+                  });
+                  failureCount++;
+                }
+              } catch (error: any) {
+                console.error(`Error sending SMS to ${member.user.phone}:`, error);
+                failureCount++;
+              }
+            });
+
+            await Promise.all(sendPromises);
+
+            // Update broadcast with final stats
+            await storage.updateSmsBroadcastMessage(broadcast.id, {
+              status: 'sent',
+              successCount,
+              failureCount,
+              sentAt: new Date(),
+            });
+
+            console.log(`Successfully sent scheduled broadcast ${broadcast.id} (${successCount} success, ${failureCount} failed)`);
+          } catch (error) {
+            console.error(`Error processing scheduled broadcast ${broadcast.id}:`, error);
+            await storage.updateSmsBroadcastMessage(broadcast.id, {
+              status: 'failed',
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking scheduled broadcasts:', error);
+    }
+  };
+
+  // Run scheduler every minute
+  setInterval(checkScheduledBroadcasts, 60 * 1000);
+  console.log('Scheduled broadcast checker started (runs every minute)');
 
   const httpServer = createServer(app);
   return httpServer;

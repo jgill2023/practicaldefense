@@ -112,11 +112,12 @@ export function CommunicationsDashboard() {
   
   // List detail view state
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
-  const [activeListTab, setActiveListTab] = useState<"members" | "broadcasts" | "details">("members");
-  const [memberSearchTerm, setMemberSearchTerm] = useState("");
-  const [isAddMembersDialogOpen, setIsAddMembersDialogOpen] = useState(false);
-  const [selectedMembersToAdd, setSelectedMembersToAdd] = useState<string[]>([]);
-  const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
+  const [activeListTab, setActiveListTab] = useState<"students" | "broadcasts" | "details">("students");
+  const [studentSearchTerm, setStudentSearchTerm] = useState("");
+  const [isAddStudentsDialogOpen, setIsAddStudentsDialogOpen] = useState(false);
+  const [selectedStudentsToAdd, setSelectedStudentsToAdd] = useState<string[]>([]);
+  const [studentToRemove, setStudentToRemove] = useState<string | null>(null);
+  const [addStudentSearchTerm, setAddStudentSearchTerm] = useState("");
   const [isEditListDialogOpen, setIsEditListDialogOpen] = useState(false);
   const [isDeleteListDialogOpen, setIsDeleteListDialogOpen] = useState(false);
   const [editListName, setEditListName] = useState("");
@@ -132,7 +133,9 @@ export function CommunicationsDashboard() {
     messageContent: "",
     messagePlain: "",
     dynamicTags: [] as string[],
-    attachmentUrls: [] as string[]
+    attachmentUrls: [] as string[],
+    scheduledFor: "" as string,
+    isScheduled: false
   });
   const [isSendConfirmOpen, setIsSendConfirmOpen] = useState(false);
   const messageContentRef = useRef<HTMLTextAreaElement>(null);
@@ -247,20 +250,20 @@ export function CommunicationsDashboard() {
     }
   });
 
-  // Query for SMS Lists with member counts
+  // Query for SMS Lists with student counts
   const { data: smsLists, isLoading: isLoadingLists } = useQuery<Array<SmsList & { memberCount: number }>>({
     queryKey: ['/api/sms-lists'],
     enabled: activeSMSTab === 'lists',
   });
 
-  // Query for list details with members and broadcasts
+  // Query for list details with students and broadcasts
   const { data: listDetails, isLoading: isLoadingDetails } = useQuery({
     queryKey: ['/api/sms-lists', selectedListId],
     enabled: !!selectedListId,
   });
 
-  // Query for list members
-  const { data: listMembers, isLoading: isLoadingMembers } = useQuery({
+  // Query for list students
+  const { data: listStudents, isLoading: isLoadingStudents } = useQuery({
     queryKey: ['/api/sms-lists', selectedListId, 'members'],
     enabled: !!selectedListId,
   });
@@ -272,9 +275,9 @@ export function CommunicationsDashboard() {
   });
 
   // Query for available students to add
-  const { data: availableStudents, isLoading: isLoadingStudents } = useQuery({
+  const { data: availableStudents, isLoading: isLoadingAvailableStudents } = useQuery({
     queryKey: ['/api/students'],
-    enabled: isAddMembersDialogOpen,
+    enabled: isAddStudentsDialogOpen,
   });
 
   // Create list mutation
@@ -351,38 +354,38 @@ export function CommunicationsDashboard() {
     }
   });
 
-  // Add members mutation
-  const addMembersMutation = useMutation({
+  // Add students mutation
+  const addStudentsMutation = useMutation({
     mutationFn: ({ listId, userIds }: { listId: string; userIds: string[] }) =>
       apiRequest('POST', `/api/sms-lists/${listId}/members`, { userIds }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
-      toast({ title: "Success", description: "Members added successfully" });
-      setIsAddMembersDialogOpen(false);
-      setSelectedMembersToAdd([]);
+      toast({ title: "Success", description: "Students added successfully" });
+      setIsAddStudentsDialogOpen(false);
+      setSelectedStudentsToAdd([]);
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error?.message || "Failed to add members",
+        description: error?.message || "Failed to add students",
         variant: "destructive"
       });
     }
   });
 
-  // Remove member mutation
-  const removeMemberMutation = useMutation({
+  // Remove student mutation
+  const removeStudentMutation = useMutation({
     mutationFn: ({ listId, userId }: { listId: string; userId: string }) =>
       apiRequest('DELETE', `/api/sms-lists/${listId}/members/${userId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
-      toast({ title: "Success", description: "Member removed successfully" });
-      setMemberToRemove(null);
+      toast({ title: "Success", description: "Student removed successfully" });
+      setStudentToRemove(null);
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error?.message || "Failed to remove member",
+        description: error?.message || "Failed to remove student",
         variant: "destructive"
       });
     }
@@ -396,7 +399,7 @@ export function CommunicationsDashboard() {
       queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
       toast({ title: "Success", description: "Broadcast saved successfully" });
       setIsComposerOpen(false);
-      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [] });
+      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [], scheduledFor: "", isScheduled: false });
     },
     onError: (error: any) => {
       toast({
@@ -414,7 +417,7 @@ export function CommunicationsDashboard() {
       queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
       toast({ title: "Success", description: "Broadcast updated successfully" });
       setIsComposerOpen(false);
-      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [] });
+      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [], scheduledFor: "", isScheduled: false });
     },
     onError: (error: any) => {
       toast({
@@ -433,7 +436,7 @@ export function CommunicationsDashboard() {
       toast({ title: "Success", description: "Broadcast sent successfully" });
       setIsSendConfirmOpen(false);
       setIsComposerOpen(false);
-      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [] });
+      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [], scheduledFor: "", isScheduled: false });
     },
     onError: (error: any) => {
       toast({
@@ -1557,7 +1560,7 @@ export function CommunicationsDashboard() {
                                 size="icon"
                                 onClick={() => {
                                   setSelectedListId(null);
-                                  setActiveListTab("members");
+                                  setActiveListTab("students");
                                 }}
                                 data-testid="button-back-to-lists"
                               >
@@ -1634,7 +1637,7 @@ export function CommunicationsDashboard() {
                                   <div>
                                     <p className="text-sm text-muted-foreground">Total Contacts</p>
                                     <p className="text-2xl font-bold" data-testid="stat-total-contacts">
-                                      {listMembers?.length || 0}
+                                      {listStudents?.length || 0}
                                     </p>
                                   </div>
                                 </div>
@@ -1683,8 +1686,8 @@ export function CommunicationsDashboard() {
                         <Tabs value={activeListTab} onValueChange={(v: any) => setActiveListTab(v)}>
                           <CardHeader>
                             <TabsList className="grid w-full max-w-md grid-cols-3">
-                              <TabsTrigger value="members" data-testid="tab-members">
-                                Members
+                              <TabsTrigger value="students" data-testid="tab-students">
+                                Students
                               </TabsTrigger>
                               <TabsTrigger value="broadcasts" data-testid="tab-broadcasts">
                                 Broadcasts
@@ -1696,44 +1699,44 @@ export function CommunicationsDashboard() {
                           </CardHeader>
                           
                           <CardContent>
-                            {/* Members Tab */}
-                            <TabsContent value="members" className="mt-0 space-y-4" data-testid="content-members">
+                            {/* Students Tab */}
+                            <TabsContent value="students" className="mt-0 space-y-4" data-testid="content-students">
                               <div className="flex items-center justify-between">
                                 <div className="relative flex-1 max-w-sm">
                                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                   <Input
-                                    placeholder="Search members..."
-                                    value={memberSearchTerm}
-                                    onChange={(e) => setMemberSearchTerm(e.target.value)}
+                                    placeholder="Search students..."
+                                    value={studentSearchTerm}
+                                    onChange={(e) => setStudentSearchTerm(e.target.value)}
                                     className="pl-9"
-                                    data-testid="input-search-members"
+                                    data-testid="input-search-students"
                                   />
                                 </div>
                                 <Button
-                                  onClick={() => setIsAddMembersDialogOpen(true)}
-                                  data-testid="button-add-members"
+                                  onClick={() => setIsAddStudentsDialogOpen(true)}
+                                  data-testid="button-add-students"
                                 >
                                   <UserPlus className="h-4 w-4 mr-2" />
-                                  Add Members
+                                  Add Students
                                 </Button>
                               </div>
 
-                              {isLoadingMembers ? (
+                              {isLoadingStudents ? (
                                 <div className="space-y-3">
                                   {[1, 2, 3].map((i) => (
                                     <div key={i} className="h-16 bg-muted rounded animate-pulse"></div>
                                   ))}
                                 </div>
-                              ) : !listMembers || listMembers.length === 0 ? (
+                              ) : !listStudents || listStudents.length === 0 ? (
                                 <div className="text-center py-12">
                                   <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                                  <h3 className="text-lg font-medium text-muted-foreground mb-2">No Members</h3>
+                                  <h3 className="text-lg font-medium text-muted-foreground mb-2">No Students</h3>
                                   <p className="text-sm text-muted-foreground mb-4">
-                                    Add members to this list to start broadcasting messages
+                                    Add students to this list to start broadcasting messages
                                   </p>
-                                  <Button onClick={() => setIsAddMembersDialogOpen(true)} data-testid="button-add-first-member">
+                                  <Button onClick={() => setIsAddStudentsDialogOpen(true)} data-testid="button-add-first-student">
                                     <UserPlus className="h-4 w-4 mr-2" />
-                                    Add Members
+                                    Add Students
                                   </Button>
                                 </div>
                               ) : (
@@ -1751,37 +1754,37 @@ export function CommunicationsDashboard() {
                                       </tr>
                                     </thead>
                                     <tbody>
-                                      {listMembers
-                                        .filter((member: any) => 
-                                          !memberSearchTerm ||
-                                          member.user?.name?.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
-                                          member.user?.email?.toLowerCase().includes(memberSearchTerm.toLowerCase())
+                                      {listStudents
+                                        .filter((student: any) => 
+                                          !studentSearchTerm ||
+                                          student.user?.name?.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
+                                          student.user?.email?.toLowerCase().includes(studentSearchTerm.toLowerCase())
                                         )
-                                        .map((member: any, idx: number) => (
+                                        .map((student: any, idx: number) => (
                                           <tr
-                                            key={member.id}
+                                            key={student.id}
                                             className="border-t hover:bg-muted/50"
-                                            data-testid={`row-member-${idx}`}
+                                            data-testid={`row-student-${idx}`}
                                           >
                                             <td className="p-3">
-                                              <div className="font-medium" data-testid={`text-member-name-${idx}`}>
-                                                {member.user?.name || "Unknown"}
+                                              <div className="font-medium" data-testid={`text-student-name-${idx}`}>
+                                                {student.user?.name || "Unknown"}
                                               </div>
                                             </td>
-                                            <td className="p-3 text-sm text-muted-foreground" data-testid={`text-member-email-${idx}`}>
-                                              {member.user?.email || "-"}
+                                            <td className="p-3 text-sm text-muted-foreground" data-testid={`text-student-email-${idx}`}>
+                                              {student.user?.email || "-"}
                                             </td>
-                                            <td className="p-3 text-sm text-muted-foreground" data-testid={`text-member-phone-${idx}`}>
-                                              {member.user?.phoneNumber || "-"}
+                                            <td className="p-3 text-sm text-muted-foreground" data-testid={`text-student-phone-${idx}`}>
+                                              {student.user?.phoneNumber || "-"}
                                             </td>
-                                            <td className="p-3 text-sm" data-testid={`text-member-added-${idx}`}>
-                                              {format(new Date(member.createdAt), "MMM d, yyyy")}
+                                            <td className="p-3 text-sm" data-testid={`text-student-added-${idx}`}>
+                                              {format(new Date(student.createdAt), "MMM d, yyyy")}
                                             </td>
-                                            <td className="p-3 text-sm" data-testid={`text-member-added-by-${idx}`}>
-                                              {member.addedByUser?.name || "System"}
+                                            <td className="p-3 text-sm" data-testid={`text-student-added-by-${idx}`}>
+                                              {student.addedByUser?.name || "System"}
                                             </td>
                                             <td className="p-3">
-                                              {member.autoAdded && (
+                                              {student.autoAdded && (
                                                 <Badge variant="secondary" className="text-xs" data-testid={`badge-auto-added-${idx}`}>
                                                   Auto-added
                                                 </Badge>
@@ -1791,12 +1794,12 @@ export function CommunicationsDashboard() {
                                               <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => setMemberToRemove(member.userId)}
+                                                onClick={() => setStudentToRemove(student.userId)}
                                                 disabled={
-                                                  (listDetails.listType === 'course_schedule' && member.autoAdded) ||
-                                                  removeMemberMutation.isPending
+                                                  (listDetails.listType === 'course_schedule' && student.autoAdded) ||
+                                                  removeStudentMutation.isPending
                                                 }
-                                                data-testid={`button-remove-member-${idx}`}
+                                                data-testid={`button-remove-student-${idx}`}
                                               >
                                                 <UserMinus className="h-4 w-4 mr-1" />
                                                 Remove
@@ -1818,7 +1821,7 @@ export function CommunicationsDashboard() {
                                   onClick={() => {
                                     setComposerMode('create');
                                     setSelectedBroadcastId(null);
-                                    setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [] });
+                                    setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [], scheduledFor: "", isScheduled: false });
                                     setIsComposerOpen(true);
                                   }}
                                   data-testid="button-new-broadcast"
@@ -1845,7 +1848,7 @@ export function CommunicationsDashboard() {
                                     onClick={() => {
                                       setComposerMode('create');
                                       setSelectedBroadcastId(null);
-                                      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [] });
+                                      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [], scheduledFor: "", isScheduled: false });
                                       setIsComposerOpen(true);
                                     }}
                                     data-testid="button-create-first-broadcast"
@@ -2269,18 +2272,18 @@ export function CommunicationsDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Members Dialog */}
-      <Dialog open={isAddMembersDialogOpen} onOpenChange={setIsAddMembersDialogOpen}>
-        <DialogContent className="max-w-2xl" data-testid="dialog-add-members">
+      {/* Add Students Dialog */}
+      <Dialog open={isAddStudentsDialogOpen} onOpenChange={setIsAddStudentsDialogOpen}>
+        <DialogContent className="max-w-2xl" data-testid="dialog-add-students">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <UserPlus className="h-5 w-5" />
-              <span>Add Members to List</span>
+              <span>Add Students to List</span>
             </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
-            {isLoadingStudents ? (
+            {isLoadingAvailableStudents ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="h-12 bg-muted rounded animate-pulse"></div>
@@ -2291,11 +2294,28 @@ export function CommunicationsDashboard() {
                 <p className="text-sm text-muted-foreground">
                   Select students to add to this list
                 </p>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name or email..."
+                    value={addStudentSearchTerm}
+                    onChange={(e) => setAddStudentSearchTerm(e.target.value)}
+                    className="pl-9"
+                    data-testid="input-search-add-students"
+                  />
+                </div>
                 <div className="border rounded-lg max-h-96 overflow-y-auto">
                   {availableStudents
                     .filter((student: any) => 
-                      !listMembers?.some((member: any) => member.userId === student.id)
+                      !listStudents?.some((s: any) => s.userId === student.id)
                     )
+                    .filter((student: any) => {
+                      if (!addStudentSearchTerm) return true;
+                      const searchLower = addStudentSearchTerm.toLowerCase();
+                      const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
+                      return fullName.includes(searchLower) || 
+                             student.email?.toLowerCase().includes(searchLower);
+                    })
                     .map((student: any, idx: number) => (
                       <div
                         key={student.id}
@@ -2304,12 +2324,12 @@ export function CommunicationsDashboard() {
                       >
                         <input
                           type="checkbox"
-                          checked={selectedMembersToAdd.includes(student.id)}
+                          checked={selectedStudentsToAdd.includes(student.id)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedMembersToAdd([...selectedMembersToAdd, student.id]);
+                              setSelectedStudentsToAdd([...selectedStudentsToAdd, student.id]);
                             } else {
-                              setSelectedMembersToAdd(selectedMembersToAdd.filter(id => id !== student.id));
+                              setSelectedStudentsToAdd(selectedStudentsToAdd.filter(id => id !== student.id));
                             }
                           }}
                           className="h-4 w-4"
@@ -2332,7 +2352,7 @@ export function CommunicationsDashboard() {
                     ))}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {selectedMembersToAdd.length} member{selectedMembersToAdd.length !== 1 ? 's' : ''} selected
+                  {selectedStudentsToAdd.length} student{selectedStudentsToAdd.length !== 1 ? 's' : ''} selected
                 </div>
               </>
             ) : (
@@ -2349,67 +2369,68 @@ export function CommunicationsDashboard() {
             <Button
               variant="outline"
               onClick={() => {
-                setIsAddMembersDialogOpen(false);
-                setSelectedMembersToAdd([]);
+                setIsAddStudentsDialogOpen(false);
+                setSelectedStudentsToAdd([]);
+                setAddStudentSearchTerm("");
               }}
-              data-testid="button-cancel-add-members"
+              data-testid="button-cancel-add-students"
             >
               Cancel
             </Button>
             <Button
               onClick={() => {
-                if (selectedListId && selectedMembersToAdd.length > 0) {
-                  addMembersMutation.mutate({
+                if (selectedListId && selectedStudentsToAdd.length > 0) {
+                  addStudentsMutation.mutate({
                     listId: selectedListId,
-                    userIds: selectedMembersToAdd
+                    userIds: selectedStudentsToAdd
                   });
                 }
               }}
-              disabled={selectedMembersToAdd.length === 0 || addMembersMutation.isPending}
-              data-testid="button-submit-add-members"
+              disabled={selectedStudentsToAdd.length === 0 || addStudentsMutation.isPending}
+              data-testid="button-submit-add-students"
             >
-              {addMembersMutation.isPending ? "Adding..." : `Add ${selectedMembersToAdd.length} Member${selectedMembersToAdd.length !== 1 ? 's' : ''}`}
+              {addStudentsMutation.isPending ? "Adding..." : `Add ${selectedStudentsToAdd.length} Student${selectedStudentsToAdd.length !== 1 ? 's' : ''}`}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Remove Member Confirmation Dialog */}
-      <Dialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
-        <DialogContent className="max-w-md" data-testid="dialog-remove-member">
+      {/* Remove Student Confirmation Dialog */}
+      <Dialog open={!!studentToRemove} onOpenChange={(open) => !open && setStudentToRemove(null)}>
+        <DialogContent className="max-w-md" data-testid="dialog-remove-student">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <UserMinus className="h-5 w-5" />
-              <span>Remove Member</span>
+              <span>Remove Student</span>
             </DialogTitle>
           </DialogHeader>
           
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to remove this member from the list? This action cannot be undone.
+            Are you sure you want to remove this student from the list? This action cannot be undone.
           </p>
 
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setMemberToRemove(null)}
-              data-testid="button-cancel-remove-member"
+              onClick={() => setStudentToRemove(null)}
+              data-testid="button-cancel-remove-student"
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={() => {
-                if (selectedListId && memberToRemove) {
-                  removeMemberMutation.mutate({
+                if (selectedListId && studentToRemove) {
+                  removeStudentMutation.mutate({
                     listId: selectedListId,
-                    userId: memberToRemove
+                    userId: studentToRemove
                   });
                 }
               }}
-              disabled={removeMemberMutation.isPending}
-              data-testid="button-confirm-remove-member"
+              disabled={removeStudentMutation.isPending}
+              data-testid="button-confirm-remove-student"
             >
-              {removeMemberMutation.isPending ? "Removing..." : "Remove Member"}
+              {removeStudentMutation.isPending ? "Removing..." : "Remove Student"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2429,11 +2450,11 @@ export function CommunicationsDashboard() {
             <p className="text-sm text-muted-foreground">
               Are you sure you want to delete this list? This action cannot be undone.
             </p>
-            {listMembers && listMembers.length > 0 && (
+            {listStudents && listStudents.length > 0 && (
               <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded">
                 <p className="text-sm text-amber-800 dark:text-amber-200">
-                  <strong>Warning:</strong> This list has {listMembers.length} member{listMembers.length !== 1 ? 's' : ''}. 
-                  All members will be removed from the list.
+                  <strong>Warning:</strong> This list has {listStudents.length} student{listStudents.length !== 1 ? 's' : ''}. 
+                  All students will be removed from the list.
                 </p>
               </div>
             )}
@@ -2814,6 +2835,47 @@ export function CommunicationsDashboard() {
               </div>
             </div>
 
+            {/* Scheduling Section */}
+            <div>
+              <div className="flex items-center space-x-2 mb-3">
+                <input
+                  type="checkbox"
+                  id="schedule-checkbox"
+                  checked={broadcastForm.isScheduled}
+                  onChange={(e) => setBroadcastForm(prev => ({
+                    ...prev,
+                    isScheduled: e.target.checked,
+                    scheduledFor: e.target.checked ? prev.scheduledFor : ""
+                  }))}
+                  className="h-4 w-4 rounded border-gray-300"
+                  data-testid="checkbox-schedule-broadcast"
+                />
+                <label htmlFor="schedule-checkbox" className="text-sm font-medium cursor-pointer">
+                  Schedule for later
+                </label>
+              </div>
+              
+              {broadcastForm.isScheduled && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Send Date & Time
+                  </label>
+                  <Input
+                    type="datetime-local"
+                    value={broadcastForm.scheduledFor}
+                    onChange={(e) => setBroadcastForm(prev => ({ ...prev, scheduledFor: e.target.value }))}
+                    step="300"
+                    min={new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16)}
+                    className="w-full"
+                    data-testid="input-scheduled-datetime"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Time intervals are in 5-minute increments. Minimum 5 minutes from now.
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Message Preview Section */}
             {broadcastForm.messageContent && (
               <div>
@@ -2845,7 +2907,7 @@ export function CommunicationsDashboard() {
               variant="outline"
               onClick={() => {
                 setIsComposerOpen(false);
-                setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [] });
+                setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [], scheduledFor: "", isScheduled: false });
               }}
               data-testid="button-cancel-composer"
             >
@@ -2874,6 +2936,7 @@ export function CommunicationsDashboard() {
                         messagePlain: broadcastForm.messagePlain,
                         dynamicTags: broadcastForm.dynamicTags,
                         attachmentUrls: broadcastForm.attachmentUrls,
+                        scheduledFor: broadcastForm.isScheduled && broadcastForm.scheduledFor ? new Date(broadcastForm.scheduledFor).toISOString() : null,
                         status: 'draft'
                       }
                     });
@@ -2921,7 +2984,9 @@ export function CommunicationsDashboard() {
           <div className="space-y-4">
             <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded">
               <p className="text-sm text-amber-800 dark:text-amber-200 font-medium mb-2">
-                ⚠️ You are about to send this message to all list members
+                {broadcastForm.isScheduled && broadcastForm.scheduledFor
+                  ? `⏰ You are about to schedule this message for ${new Date(broadcastForm.scheduledFor).toLocaleString()}`
+                  : '⚠️ You are about to send this message to all list students'}
               </p>
               <p className="text-xs text-amber-700 dark:text-amber-300">
                 This action cannot be undone. Make sure your message is correct before proceeding.
@@ -2931,7 +2996,7 @@ export function CommunicationsDashboard() {
             <div>
               <label className="text-sm font-medium text-muted-foreground">Recipients</label>
               <p className="text-2xl font-bold" data-testid="text-recipient-count">
-                {listMembers?.length || 0} members
+                {listStudents?.length || 0} students
               </p>
             </div>
 
@@ -2947,10 +3012,10 @@ export function CommunicationsDashboard() {
             <div>
               <label className="text-sm font-medium text-muted-foreground">Estimated Cost</label>
               <p className="text-sm mt-1">
-                ${((listMembers?.length || 0) * getCharacterCount(broadcastForm.messageContent).messages * 0.0079).toFixed(2)}
+                ${((listStudents?.length || 0) * getCharacterCount(broadcastForm.messageContent).messages * 0.0079).toFixed(2)}
                 {' '}
                 <span className="text-muted-foreground">
-                  ({listMembers?.length || 0} recipients × {getCharacterCount(broadcastForm.messageContent).messages} message{getCharacterCount(broadcastForm.messageContent).messages !== 1 ? 's' : ''} × $0.0079/msg)
+                  ({listStudents?.length || 0} recipients × {getCharacterCount(broadcastForm.messageContent).messages} message{getCharacterCount(broadcastForm.messageContent).messages !== 1 ? 's' : ''} × $0.0079/msg)
                 </span>
               </p>
             </div>
@@ -2978,11 +3043,12 @@ export function CommunicationsDashboard() {
                       messagePlain: broadcastForm.messagePlain,
                       dynamicTags: broadcastForm.dynamicTags,
                       attachmentUrls: broadcastForm.attachmentUrls,
+                      scheduledFor: broadcastForm.isScheduled && broadcastForm.scheduledFor ? new Date(broadcastForm.scheduledFor).toISOString() : null,
                       status: 'draft'
                     }
                   });
 
-                  // Then send it
+                  // Then send it (or schedule it)
                   if (result?.id) {
                     await sendBroadcastMutation.mutateAsync(result.id);
                   }
@@ -2994,11 +3060,11 @@ export function CommunicationsDashboard() {
               data-testid="button-confirm-send"
             >
               {sendBroadcastMutation.isPending || createBroadcastMutation.isPending ? (
-                "Sending..."
+                broadcastForm.isScheduled && broadcastForm.scheduledFor ? "Scheduling..." : "Sending..."
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-2" />
-                  Confirm & Send
+                  {broadcastForm.isScheduled && broadcastForm.scheduledFor ? "Confirm & Schedule" : "Confirm & Send"}
                 </>
               )}
             </Button>
