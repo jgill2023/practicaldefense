@@ -84,6 +84,7 @@ export function CommunicationsDashboard() {
   const [selectedMessage, setSelectedMessage] = useState<Communication | null>(null);
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   
   // Real-time notification state
   const [lastTotalCount, setLastTotalCount] = useState<number | null>(null);
@@ -332,6 +333,52 @@ export function CommunicationsDashboard() {
       sent: smsData.filter(c => c.direction === 'outbound').length,
       flagged: smsData.filter(c => c.isFlagged).length
     };
+  };
+
+  // Group SMS messages into conversations by phone number
+  interface Conversation {
+    phoneNumber: string;
+    messages: Communication[];
+    lastMessage: Communication;
+    unreadCount: number;
+  }
+
+  const getSMSConversations = (): Conversation[] => {
+    const smsData = communicationsData?.data.filter(c => c.type === 'sms') || [];
+    const conversationMap = new Map<string, Communication[]>();
+
+    // Group messages by phone number (use the "other" party's number)
+    smsData.forEach(msg => {
+      const phoneNumber = msg.direction === 'inbound' ? msg.fromAddress : msg.toAddress;
+      const existing = conversationMap.get(phoneNumber) || [];
+      conversationMap.set(phoneNumber, [...existing, msg]);
+    });
+
+    // Convert to array and sort each conversation by date
+    const conversations: Conversation[] = Array.from(conversationMap.entries()).map(([phoneNumber, messages]) => {
+      const sorted = messages.sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+      return {
+        phoneNumber,
+        messages: sorted,
+        lastMessage: sorted[0],
+        unreadCount: sorted.filter(m => !m.isRead && m.direction === 'inbound').length
+      };
+    });
+
+    // Sort conversations by most recent message
+    return conversations.sort((a, b) => 
+      new Date(b.lastMessage.sentAt).getTime() - new Date(a.lastMessage.sentAt).getTime()
+    );
+  };
+
+  const getConversationMessages = (phoneNumber: string): Communication[] => {
+    const smsData = communicationsData?.data.filter(c => c.type === 'sms') || [];
+    return smsData
+      .filter(msg => 
+        (msg.direction === 'inbound' && msg.fromAddress === phoneNumber) ||
+        (msg.direction === 'outbound' && msg.toAddress === phoneNumber)
+      )
+      .sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
   };
 
   // Render communications table
@@ -814,9 +861,164 @@ export function CommunicationsDashboard() {
               </Card>
             </TabsContent>
 
-            {/* SMS Inbox Tab */}
+            {/* SMS Inbox Tab - Threaded Conversations */}
             <TabsContent value="inbox" className="space-y-4" data-testid="content-sms-inbox">
-              {renderCommunicationsTable(getFilteredCommunications('sms', 'inbox'))}
+              <Card className="h-[600px]">
+                <CardContent className="p-0 h-full">
+                  <div className="flex h-full">
+                    {/* Conversation List */}
+                    <div className="w-1/3 border-r flex flex-col">
+                      <div className="p-4 border-b">
+                        <h3 className="font-semibold text-lg">Messages</h3>
+                      </div>
+                      <div className="flex-1 overflow-y-auto">
+                        {getSMSConversations().length === 0 ? (
+                          <div className="flex flex-col items-center justify-center h-full p-4 text-center text-muted-foreground">
+                            <MessageSquare className="h-12 w-12 mb-3 opacity-50" />
+                            <p className="text-sm">No conversations yet</p>
+                            <p className="text-xs mt-1">Messages will appear here</p>
+                          </div>
+                        ) : (
+                          getSMSConversations().map((conversation) => (
+                            <div
+                              key={conversation.phoneNumber}
+                              onClick={() => setSelectedConversation(conversation.phoneNumber)}
+                              className={`p-4 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
+                                selectedConversation === conversation.phoneNumber ? 'bg-muted' : ''
+                              }`}
+                              data-testid={`conversation-${conversation.phoneNumber}`}
+                            >
+                              <div className="flex items-start justify-between mb-1">
+                                <div className="font-medium text-sm truncate flex-1">
+                                  {conversation.phoneNumber}
+                                </div>
+                                <div className="text-xs text-muted-foreground ml-2">
+                                  {format(new Date(conversation.lastMessage.sentAt), 'MMM d')}
+                                </div>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <div className="text-sm text-muted-foreground truncate flex-1">
+                                  {conversation.lastMessage.content}
+                                </div>
+                                {conversation.unreadCount > 0 && (
+                                  <Badge variant="default" className="ml-2 h-5 min-w-[20px] rounded-full">
+                                    {conversation.unreadCount}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Conversation Thread */}
+                    <div className="flex-1 flex flex-col">
+                      {selectedConversation ? (
+                        <>
+                          {/* Thread Header */}
+                          <div className="p-4 border-b bg-muted/30">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-semibold">{selectedConversation}</h3>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const messages = getConversationMessages(selectedConversation);
+                                  const unreadMessages = messages.filter(m => !m.isRead && m.direction === 'inbound');
+                                  unreadMessages.forEach(msg => markAsReadMutation.mutate(msg.id));
+                                }}
+                                data-testid="button-mark-all-read"
+                              >
+                                Mark all read
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Messages */}
+                          <div className="flex-1 overflow-y-auto p-4 space-y-3" data-testid="conversation-messages">
+                            {getConversationMessages(selectedConversation).map((msg, index) => (
+                              <div
+                                key={msg.id}
+                                className={`flex ${msg.direction === 'outbound' ? 'justify-end' : 'justify-start'}`}
+                              >
+                                <div
+                                  className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                                    msg.direction === 'outbound'
+                                      ? 'bg-blue-500 text-white rounded-br-sm'
+                                      : 'bg-muted text-foreground rounded-bl-sm'
+                                  }`}
+                                  data-testid={`message-${msg.id}`}
+                                >
+                                  <div className="text-sm break-words">{msg.content}</div>
+                                  <div className={`text-xs mt-1 ${
+                                    msg.direction === 'outbound' ? 'text-blue-100' : 'text-muted-foreground'
+                                  }`}>
+                                    {format(new Date(msg.sentAt), 'h:mm a')}
+                                    {msg.direction === 'inbound' && !msg.isRead && (
+                                      <span className="ml-2 font-medium">New</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Reply Input */}
+                          <div className="p-4 border-t bg-background">
+                            <div className="flex space-x-2">
+                              <Textarea
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                                placeholder="Type a message..."
+                                className="flex-1 resize-none min-h-[44px] max-h-[120px]"
+                                rows={1}
+                                data-testid="input-reply-message"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    if (replyText.trim() && !sendReplyMutation.isPending) {
+                                      sendReplyMutation.mutate({
+                                        to: selectedConversation,
+                                        body: replyText.trim()
+                                      });
+                                    }
+                                  }
+                                }}
+                              />
+                              <Button
+                                onClick={() => {
+                                  if (replyText.trim()) {
+                                    sendReplyMutation.mutate({
+                                      to: selectedConversation,
+                                      body: replyText.trim()
+                                    });
+                                  }
+                                }}
+                                disabled={!replyText.trim() || sendReplyMutation.isPending}
+                                data-testid="button-send-message"
+                              >
+                                <Send className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1 text-right">
+                              {replyText.length}/160 characters
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                          <div className="text-center">
+                            <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                            <p className="text-lg font-medium">Select a conversation</p>
+                            <p className="text-sm">Choose a message from the list to view the thread</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* SMS Compose Tab */}
