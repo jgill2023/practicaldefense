@@ -664,8 +664,7 @@ function EditStudentForm({ student, onClose }: { student: Student; onClose: () =
           ? new Date(data.concealedCarryLicenseExpiration).toISOString() 
           : undefined,
       };
-      const response = await apiRequest("PATCH", `/api/students/${student.id}`, updateData);
-      return response.json();
+      return await apiRequest("PATCH", `/api/students/${student.id}`, updateData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/students'] });
