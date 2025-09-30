@@ -4,6 +4,16 @@ Practical Defense Training is a professional firearms training management platfo
 
 # Recent Changes
 
+## September 30, 2025 - Student Dashboard Remaining Balance Feature
+- Replaced Progress tile with Remaining Balance tile on student dashboard
+- Added clickable tile that opens Outstanding Balance modal when balance > 0
+- Modal displays all courses with outstanding payment balances
+- Each course shows title, date, and remaining amount
+- Clicking balance amount or "Pay Remaining Balance" button navigates to checkout
+- Added bulk payment balance endpoint: GET /api/student/payment-balances
+- Improved payment status badges in Students Management page to be clickable
+- Payment Details Modal now opens when clicking status badges on instructor dashboard
+
 ## September 30, 2025 - SMS Broadcast UX Improvements
 - Added template button for broadcast message content (right-aligned with label)
 - Fixed broadcast dialog closure to properly close after successful send/schedule

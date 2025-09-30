@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X } from "lucide-react";
+import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign } from "lucide-react";
 import { Calendar, Clock, FileText, Download, BookOpen, Award } from "lucide-react";
 import type { EnrollmentWithDetails, User } from "@shared/schema";
 
@@ -626,6 +626,7 @@ export default function StudentPortal() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isRemainingBalanceModalOpen, setIsRemainingBalanceModalOpen] = useState(false);
 
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/student/enrollments"],
@@ -688,6 +689,39 @@ export default function StudentPortal() {
   const completionRate = enrollments.length > 0 
     ? Math.round((completedEnrollments.length / enrollments.length) * 100)
     : 0;
+
+  // Query to get payment balances for all enrollments
+  const enrollmentIds = enrollments.map(e => e.id);
+  const { data: paymentBalances = [] } = useQuery<Array<{ enrollmentId: string; hasRemainingBalance: boolean; remainingBalance: number }>>({
+    queryKey: ['/api/student/payment-balances', enrollmentIds.join(',')],
+    queryFn: async () => {
+      if (enrollmentIds.length === 0) return [];
+      const response = await fetch(`/api/student/payment-balances?enrollmentIds=${enrollmentIds.join(',')}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch payment balances');
+      return response.json();
+    },
+    enabled: enrollmentIds.length > 0,
+    retry: false,
+  });
+
+  // Calculate total remaining balance
+  const totalRemainingBalance = paymentBalances.reduce((sum, balance) => {
+    return sum + (balance.hasRemainingBalance ? balance.remainingBalance : 0);
+  }, 0);
+
+  // Get enrollments with remaining balances
+  const enrollmentsWithBalance = enrollments.filter(enrollment => {
+    const balance = paymentBalances.find(b => b.enrollmentId === enrollment.id);
+    return balance && balance.hasRemainingBalance;
+  }).map(enrollment => {
+    const balance = paymentBalances.find(b => b.enrollmentId === enrollment.id);
+    return {
+      ...enrollment,
+      remainingBalance: balance?.remainingBalance || 0
+    };
+  });
 
   return (
     <Layout>
@@ -787,14 +821,22 @@ export default function StudentPortal() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => totalRemainingBalance > 0 && setIsRemainingBalanceModalOpen(true)}
+            data-testid="card-remaining-balance"
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Progress</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Remaining Balance</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-secondary mb-2" data-testid="text-completion-rate">{completionRate}%</div>
-              <Progress value={completionRate} className="h-2" />
+              <div className={`text-3xl font-bold mb-2 ${totalRemainingBalance > 0 ? 'text-amber-600' : 'text-success'}`} data-testid="text-remaining-balance">
+                ${totalRemainingBalance.toFixed(2)}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {totalRemainingBalance > 0 ? `${enrollmentsWithBalance.length} course${enrollmentsWithBalance.length !== 1 ? 's' : ''} pending` : 'All paid'}
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -986,6 +1028,73 @@ export default function StudentPortal() {
           </Card>
         </div>
       </div>
+
+      {/* Remaining Balance Modal */}
+      <Dialog open={isRemainingBalanceModalOpen} onOpenChange={setIsRemainingBalanceModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Outstanding Balance</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 text-amber-600" />
+                  <span className="font-medium text-amber-900 dark:text-amber-100">Total Remaining Balance</span>
+                </div>
+                <span className="text-2xl font-bold text-amber-600" data-testid="text-modal-total-balance">
+                  ${totalRemainingBalance.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm text-muted-foreground">Courses with Outstanding Balances</h3>
+              {enrollmentsWithBalance.map((enrollment) => (
+                <div 
+                  key={enrollment.id} 
+                  className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                  data-testid={`balance-item-${enrollment.id}`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h4 className="font-semibold text-card-foreground">{enrollment.course.title}</h4>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        <div className="flex items-center">
+                          <Calendar className="mr-1 h-3 w-3" />
+                          {new Date(enrollment.schedule.startDate).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <button
+                        onClick={() => {
+                          window.location.href = `/checkout?enrollmentId=${enrollment.id}`;
+                        }}
+                        className="text-2xl font-bold text-amber-600 hover:text-amber-700 transition-colors cursor-pointer"
+                        data-testid={`button-balance-amount-${enrollment.id}`}
+                      >
+                        ${enrollment.remainingBalance.toFixed(2)}
+                      </button>
+                      <div className="text-xs text-muted-foreground">remaining</div>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => {
+                      window.location.href = `/checkout?enrollmentId=${enrollment.id}`;
+                    }}
+                    className="w-full"
+                    data-testid={`button-pay-balance-${enrollment.id}`}
+                  >
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Pay Remaining Balance
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Profile Dialog */}
       {user && (

@@ -785,6 +785,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk payment balance tracking for student dashboard
+  app.get('/api/student/payment-balances', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const enrollmentIds = req.query.enrollmentIds as string;
+      
+      if (!enrollmentIds) {
+        return res.json([]);
+      }
+
+      const ids = enrollmentIds.split(',').filter(id => id.trim());
+      const balances = await Promise.all(
+        ids.map(async (enrollmentId) => {
+          try {
+            const enrollment = await storage.getEnrollment(enrollmentId);
+            if (!enrollment || enrollment.studentId !== userId) {
+              return null;
+            }
+            
+            const paymentBalance = await storage.getPaymentBalance(enrollmentId);
+            return {
+              enrollmentId,
+              ...paymentBalance
+            };
+          } catch (error) {
+            console.error(`Error fetching balance for enrollment ${enrollmentId}:`, error);
+            return null;
+          }
+        })
+      );
+
+      res.json(balances.filter(b => b !== null));
+    } catch (error) {
+      console.error("Error fetching payment balances:", error);
+      res.status(500).json({ message: "Failed to fetch payment balances" });
+    }
+  });
+
   // Form completion status tracking
   app.get('/api/enrollments/:enrollmentId/form-completion', isAuthenticated, async (req: any, res) => {
     try {
