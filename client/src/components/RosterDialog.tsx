@@ -68,8 +68,7 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
     queryKey: ["/api/instructor/roster", scheduleId],
     queryFn: async () => {
       if (!scheduleId) return null;
-      const response = await apiRequest("GET", `/api/instructor/roster?scheduleId=${scheduleId}`);
-      return response.json();
+      return await apiRequest("GET", `/api/instructor/roster?scheduleId=${scheduleId}`);
     },
     enabled: !!scheduleId && isOpen,
   });
