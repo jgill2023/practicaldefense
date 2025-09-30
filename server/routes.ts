@@ -5870,6 +5870,54 @@ jeremy@abqconcealedcarry.com
   setInterval(checkScheduledBroadcasts, 60 * 1000);
   console.log('Scheduled broadcast checker started (runs every minute)');
 
+  // Object Storage Upload URL endpoint
+  app.post('/api/object-storage/upload-url', isAuthenticated, async (req: any, res) => {
+    try {
+      const { directory, filename } = req.body;
+      
+      if (!directory || !filename) {
+        return res.status(400).json({ message: "Directory and filename are required" });
+      }
+
+      const bucketId = process.env.PUBLIC_OBJECT_SEARCH_PATHS?.split(',')[0]?.split('/')[1];
+      if (!bucketId) {
+        return res.status(500).json({ message: "Object storage not configured" });
+      }
+
+      const objectPath = `/${bucketId}/${directory}/${filename}`;
+      
+      // Parse object path manually: /<bucket_name>/<object_name>
+      const parts = objectPath.slice(1).split('/');
+      const bucketName = parts[0];
+      const objectName = parts.slice(1).join('/');
+
+      const REPLIT_SIDECAR_ENDPOINT = process.env.REPLIT_SIDECAR_ENDPOINT || "http://0.0.0.0:1106";
+
+      const request = {
+        bucket_name: bucketName,
+        object_name: objectName,
+        method: 'PUT',
+        expires_at: new Date(Date.now() + 900 * 1000).toISOString(),
+      };
+
+      const response = await fetch(`${REPLIT_SIDECAR_ENDPOINT}/object-storage/signed-object-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to sign object URL: ${response.status}`);
+      }
+
+      const { signed_url } = await response.json();
+      res.json({ url: signed_url });
+    } catch (error: any) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ message: "Failed to generate upload URL: " + error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

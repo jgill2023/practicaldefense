@@ -52,6 +52,7 @@ import type { SmsList } from "@db/schema";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/useAuth";
 
 // Types for communication data
 interface Communication {
@@ -95,6 +96,7 @@ interface Filters {
 }
 
 export function CommunicationsDashboard() {
+  const { user } = useAuth();
   const [activeSection, setActiveSection] = useState("sms-management");
   const [activeEmailTab, setActiveEmailTab] = useState("templates");
   const [activeSMSTab, setActiveSMSTab] = useState<"inbox" | "compose" | "contacts" | "templates" | "lists">("inbox");
@@ -131,6 +133,7 @@ export function CommunicationsDashboard() {
   const [isCreateTemplateDialogOpen, setIsCreateTemplateDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [templateContent, setTemplateContent] = useState("");
+  const [templateCategory, setTemplateCategory] = useState("announcement");
   const [templateImageUrl, setTemplateImageUrl] = useState<string | null>(null);
   const quillRef = useRef<ReactQuill>(null);
   
@@ -269,13 +272,28 @@ export function CommunicationsDashboard() {
   });
 
   const createTemplateMutation = useMutation({
-    mutationFn: ({ name, content, imageUrl, type }: { name: string; content: string; imageUrl: string | null; type: 'sms' }) =>
-      apiRequest('POST', '/api/admin/notification-templates', { name, content, imageUrl, type }),
+    mutationFn: ({ name, content, imageUrl, type, category, createdBy }: { 
+      name: string; 
+      content: string; 
+      imageUrl: string | null; 
+      type: 'sms'; 
+      category: string;
+      createdBy: string;
+    }) =>
+      apiRequest('POST', '/api/admin/notification-templates', { 
+        name, 
+        content, 
+        imageUrl, 
+        type, 
+        category,
+        createdBy 
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/notification-templates'] });
       toast({ title: "Success", description: "SMS template created successfully" });
       setTemplateName("");
       setTemplateContent("");
+      setTemplateCategory("announcement");
       setTemplateImageUrl(null);
       setIsCreateTemplateDialogOpen(false);
     },
@@ -3237,19 +3255,67 @@ export function CommunicationsDashboard() {
           </DialogHeader>
           
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="template-name">Template Name</Label>
-              <Input
-                id="template-name"
-                placeholder="e.g., Course Reminder, Payment Notice"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                data-testid="input-template-name"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="template-name">Template Name</Label>
+                <Input
+                  id="template-name"
+                  placeholder="e.g., Course Reminder, Payment Notice"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  data-testid="input-template-name"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="template-category">Category</Label>
+                <Select value={templateCategory} onValueChange={setTemplateCategory}>
+                  <SelectTrigger id="template-category" data-testid="select-template-category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="announcement">Announcement</SelectItem>
+                    <SelectItem value="reminder">Reminder</SelectItem>
+                    <SelectItem value="payment_notice">Payment Notice</SelectItem>
+                    <SelectItem value="course_specific">Course Specific</SelectItem>
+                    <SelectItem value="welcome">Welcome</SelectItem>
+                    <SelectItem value="certificate">Certificate</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div>
-              <Label>Message Content</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Message Content</Label>
+                <div className="flex gap-1">
+                  {[
+                    { label: 'First Name', value: '{{ student.firstName }}' },
+                    { label: 'Last Name', value: '{{ student.lastName }}' },
+                    { label: 'Course', value: '{{ course.name }}' },
+                    { label: 'Date', value: '{{ schedule.date }}' },
+                  ].map((variable) => (
+                    <Button
+                      key={variable.value}
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        if (quillRef.current) {
+                          const editor = quillRef.current.getEditor();
+                          const cursorPosition = editor.getSelection()?.index || editor.getLength();
+                          editor.insertText(cursorPosition, variable.value, 'user');
+                          editor.setSelection(cursorPosition + variable.value.length);
+                        }
+                      }}
+                      data-testid={`button-insert-${variable.label.toLowerCase().replace(' ', '-')}`}
+                    >
+                      {variable.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
               <div className="border rounded-md">
                 <ReactQuill
                   ref={quillRef}
@@ -3268,7 +3334,7 @@ export function CommunicationsDashboard() {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                You can use variables like {`{{ student.firstName }}, {{ course.name }}, {{ schedule.date }}`}
+                Click the buttons above to insert variables into your template
               </p>
             </div>
 
@@ -3283,6 +3349,7 @@ export function CommunicationsDashboard() {
                       className="max-w-xs rounded border"
                     />
                     <Button
+                      type="button"
                       size="sm"
                       variant="destructive"
                       className="absolute top-2 right-2"
@@ -3293,12 +3360,25 @@ export function CommunicationsDashboard() {
                   </div>
                 ) : (
                   <ObjectUploader
-                    directory="public"
-                    onUploadComplete={(url) => setTemplateImageUrl(url)}
-                    accept="image/*"
-                    buttonText="Upload Image"
-                    buttonIcon={<ImageIcon className="h-4 w-4 mr-2" />}
-                  />
+                    onGetUploadParameters={async () => {
+                      const response = await apiRequest('POST', '/api/object-storage/upload-url', {
+                        directory: 'public',
+                        filename: `template-${Date.now()}.png`
+                      });
+                      return {
+                        method: 'PUT' as const,
+                        url: response.url
+                      };
+                    }}
+                    onComplete={(result) => {
+                      if (result.successful && result.successful[0]) {
+                        setTemplateImageUrl(result.successful[0].uploadURL);
+                      }
+                    }}
+                  >
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    Upload Image
+                  </ObjectUploader>
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -3309,11 +3389,13 @@ export function CommunicationsDashboard() {
 
           <DialogFooter>
             <Button
+              type="button"
               variant="outline"
               onClick={() => {
                 setIsCreateTemplateDialogOpen(false);
                 setTemplateName("");
                 setTemplateContent("");
+                setTemplateCategory("announcement");
                 setTemplateImageUrl(null);
               }}
               data-testid="button-cancel-template"
@@ -3321,6 +3403,7 @@ export function CommunicationsDashboard() {
               Cancel
             </Button>
             <Button
+              type="button"
               onClick={() => {
                 if (!templateName.trim()) {
                   toast({
@@ -3338,11 +3421,21 @@ export function CommunicationsDashboard() {
                   });
                   return;
                 }
+                if (!user?.id) {
+                  toast({
+                    title: "Authentication Error",
+                    description: "Please log in to create templates",
+                    variant: "destructive"
+                  });
+                  return;
+                }
                 createTemplateMutation.mutate({
                   name: templateName,
                   content: templateContent,
                   imageUrl: templateImageUrl,
-                  type: 'sms'
+                  type: 'sms',
+                  category: templateCategory,
+                  createdBy: user.id
                 });
               }}
               disabled={createTemplateMutation.isPending}
