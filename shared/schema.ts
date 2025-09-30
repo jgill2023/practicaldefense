@@ -1595,3 +1595,74 @@ export type ProductStatus = 'draft' | 'active' | 'inactive';
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
 export type FulfillmentStatus = 'pending' | 'processing' | 'fulfilled' | 'failed' | 'partial';
+
+// Course notification signups table
+export const courseNotificationSignups = pgTable("course_notification_signups", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  courseId: uuid("course_id").notNull().references(() => courses.id),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 20 }),
+  preferredChannel: varchar("preferred_channel", { length: 20 }).default('email'), // 'email', 'sms', 'both'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Course notification delivery logs table
+export const courseNotificationDeliveryLogs = pgTable("course_notification_delivery_logs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  signupId: uuid("signup_id").notNull().references(() => courseNotificationSignups.id),
+  scheduleId: uuid("schedule_id").notNull().references(() => courseSchedules.id),
+  channel: varchar("channel", { length: 20 }).notNull(), // 'email' or 'sms'
+  status: varchar("status", { length: 20 }).notNull(), // 'sent', 'failed', 'pending'
+  errorMessage: text("error_message"),
+  sentAt: timestamp("sent_at").defaultNow(),
+});
+
+// Relations for notification signups
+export const courseNotificationSignupsRelations = relations(courseNotificationSignups, ({ one, many }) => ({
+  course: one(courses, {
+    fields: [courseNotificationSignups.courseId],
+    references: [courses.id],
+  }),
+  deliveryLogs: many(courseNotificationDeliveryLogs),
+}));
+
+export const courseNotificationDeliveryLogsRelations = relations(courseNotificationDeliveryLogs, ({ one }) => ({
+  signup: one(courseNotificationSignups, {
+    fields: [courseNotificationDeliveryLogs.signupId],
+    references: [courseNotificationSignups.id],
+  }),
+  schedule: one(courseSchedules, {
+    fields: [courseNotificationDeliveryLogs.scheduleId],
+    references: [courseSchedules.id],
+  }),
+}));
+
+// Insert schemas
+export const insertCourseNotificationSignupSchema = createInsertSchema(courseNotificationSignups).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCourseNotificationDeliveryLogSchema = createInsertSchema(courseNotificationDeliveryLogs).omit({
+  id: true,
+  sentAt: true,
+});
+
+// Types
+export type InsertCourseNotificationSignup = z.infer<typeof insertCourseNotificationSignupSchema>;
+export type CourseNotificationSignup = typeof courseNotificationSignups.$inferSelect;
+
+export type InsertCourseNotificationDeliveryLog = z.infer<typeof insertCourseNotificationDeliveryLogSchema>;
+export type CourseNotificationDeliveryLog = typeof courseNotificationDeliveryLogs.$inferSelect;
+
+// Extended types with relations
+export type CourseNotificationSignupWithDetails = CourseNotificationSignup & {
+  course?: Course;
+  deliveryLogs?: CourseNotificationDeliveryLog[];
+};
+
+// Notification enums
+export type NotificationChannel = 'email' | 'sms' | 'both';
+export type NotificationDeliveryStatus = 'sent' | 'failed' | 'pending';
