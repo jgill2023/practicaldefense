@@ -5588,6 +5588,24 @@ jeremy@abqconcealedcarry.com
         totalRecipients: membersWithPhone.length,
       });
 
+      // Helper function to format phone number to E.164 format
+      const formatPhoneNumber = (phone: string): string => {
+        let formatted = phone.replace(/[\s\-\(\)\.]/g, ''); // Remove formatting
+        
+        // Add country code if missing (assuming US +1)
+        if (!formatted.startsWith('+')) {
+          if (formatted.length === 10) {
+            formatted = '+1' + formatted;
+          } else if (formatted.length === 11 && formatted.startsWith('1')) {
+            formatted = '+' + formatted;
+          } else {
+            formatted = '+' + formatted;
+          }
+        }
+        
+        return formatted;
+      };
+
       // Helper function to replace dynamic tags
       const replaceDynamicTags = (message: string, member: any): string => {
         let personalizedMessage = message;
@@ -5612,18 +5630,21 @@ jeremy@abqconcealedcarry.com
           // Personalize message
           const personalizedMessage = replaceDynamicTags(broadcast.messagePlain, member);
           
+          // Format phone number to E.164 format for consistency
+          const formattedPhone = formatPhoneNumber(member.user.phone!);
+          
           // Create delivery record with pending status
           const delivery = await storage.createSmsBroadcastDelivery({
             broadcastId: req.params.broadcastId,
             userId: member.userId,
-            phoneNumber: member.user.phone!,
+            phoneNumber: formattedPhone,
             personalizedMessage,
             status: 'pending',
           });
 
           // Send SMS - use student's userId for proper conversation threading
           const smsResult = await sendSms({
-            to: member.user.phone!,
+            to: formattedPhone,
             body: personalizedMessage,
             instructorId: userId,
             studentId: member.userId, // Add studentId for proper threading
