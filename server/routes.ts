@@ -11,6 +11,7 @@ import { eq, and, inArray } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, insertCourseNotificationSignupSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
+import { CourseNotificationEngine } from "./notificationEngine";
 import "./types"; // Import type declarations
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -333,6 +334,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const schedule = await storage.createCourseSchedule(validatedData);
+      
+      // Send notifications to all signups asynchronously (don't block response)
+      CourseNotificationEngine.notifySignupsForSchedule(schedule.id, schedule, course)
+        .then((result) => {
+          console.log(`Notification results for schedule ${schedule.id}:`, {
+            emailSent: result.emailSent,
+            emailFailed: result.emailFailed,
+            smsSent: result.smsSent,
+            smsFailed: result.smsFailed,
+            errors: result.errors
+          });
+        })
+        .catch((error) => {
+          console.error('Error sending notifications:', error);
+        });
+      
       res.status(201).json(schedule);
     } catch (error) {
       console.error("Error creating course schedule:", error);
