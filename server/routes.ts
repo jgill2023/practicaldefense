@@ -3720,6 +3720,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = sendSMSSchema.parse(req.body);
       const message = await twilioSMSService.sendSMS(validatedData);
 
+      // Save the outbound message to the database
+      await storage.createCommunication({
+        type: 'sms',
+        direction: 'outbound',
+        fromAddress: message.from,
+        toAddress: message.to,
+        subject: null,
+        content: message.body,
+        htmlContent: null,
+        deliveryStatus: message.status,
+        isRead: true, // Outbound messages are considered "read" by default
+        isFlagged: false,
+        flagNote: null,
+        sentAt: message.dateSent || message.dateCreated,
+        readAt: null,
+        flaggedAt: null,
+        purpose: null,
+        userId: userId,
+        courseId: null,
+        enrollmentId: null
+      });
+
       res.json({
         success: true,
         message: message,
