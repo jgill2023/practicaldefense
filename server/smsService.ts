@@ -32,6 +32,7 @@ interface SmsParams {
   from?: string;
   mediaUrl?: string[];
   instructorId?: string; // Optional instructor context for attribution
+  studentId?: string; // Optional student ID for proper conversation threading
   purpose?: 'educational' | 'marketing' | 'administrative'; // Optional purpose for analytics
 }
 
@@ -51,7 +52,7 @@ export async function sendSms(params: SmsParams): Promise<{
       mediaUrl: params.mediaUrl,
     });
 
-    // Log communication to database with optional instructor context
+    // Log communication to database with proper userId for threading
     try {
       await storage.createCommunication({
         type: 'sms',
@@ -65,7 +66,7 @@ export async function sendSms(params: SmsParams): Promise<{
         deliveryStatus: 'sent',
         externalMessageId: response.sid,
         sentAt: new Date(),
-        userId: params.instructorId || null, // Include instructorId if provided for attribution
+        userId: params.studentId || params.instructorId || null, // Use studentId for proper threading, fallback to instructorId
         enrollmentId: null, // Will be resolved in API layer if enrollment context is available
         courseId: null, // Will be resolved in API layer if course context is available
       });

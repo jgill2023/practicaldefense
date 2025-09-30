@@ -659,9 +659,13 @@ export function CommunicationsDashboard() {
     const smsData = (communicationsData?.data || []).filter(c => c.type === 'sms');
     const conversationMap = new Map<string, Communication[]>();
 
+    // Normalize phone number by removing all non-digits
+    const normalizePhone = (phone: string) => phone.replace(/\D/g, '');
+
     // Group messages by phone number (use the "other" party's number)
     smsData.forEach(msg => {
-      const phoneNumber = msg.direction === 'inbound' ? msg.fromAddress : msg.toAddress;
+      const rawPhoneNumber = msg.direction === 'inbound' ? msg.fromAddress : msg.toAddress;
+      const phoneNumber = normalizePhone(rawPhoneNumber);
       const existing = conversationMap.get(phoneNumber) || [];
       conversationMap.set(phoneNumber, [...existing, msg]);
     });
@@ -703,10 +707,13 @@ export function CommunicationsDashboard() {
 
   const getConversationMessages = (phoneNumber: string): Communication[] => {
     const smsData = communicationsData?.data.filter(c => c.type === 'sms') || [];
+    const normalizePhone = (phone: string) => phone.replace(/\D/g, '');
+    const normalizedPhone = normalizePhone(phoneNumber);
+    
     return smsData
       .filter(msg => 
-        (msg.direction === 'inbound' && msg.fromAddress === phoneNumber) ||
-        (msg.direction === 'outbound' && msg.toAddress === phoneNumber)
+        (msg.direction === 'inbound' && normalizePhone(msg.fromAddress) === normalizedPhone) ||
+        (msg.direction === 'outbound' && normalizePhone(msg.toAddress) === normalizedPhone)
       )
       .sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
   };

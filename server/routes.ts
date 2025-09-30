@@ -5621,11 +5621,12 @@ jeremy@abqconcealedcarry.com
             status: 'pending',
           });
 
-          // Send SMS
+          // Send SMS - use student's userId for proper conversation threading
           const smsResult = await sendSms({
             to: member.user.phone!,
             body: personalizedMessage,
             instructorId: userId,
+            studentId: member.userId, // Add studentId for proper threading
             purpose: 'educational',
           });
 
