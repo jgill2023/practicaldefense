@@ -1031,11 +1031,11 @@ export default function StudentPortal() {
 
       {/* Remaining Balance Modal */}
       <Dialog open={isRemainingBalanceModalOpen} onOpenChange={setIsRemainingBalanceModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Outstanding Balance</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto pr-2">
             <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
