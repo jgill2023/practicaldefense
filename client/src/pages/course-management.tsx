@@ -384,7 +384,7 @@ export default function CourseManagement() {
           resource: {
             course,
             schedule,
-            enrollmentCount: schedule.enrollments?.length || 0,
+            enrollmentCount: schedule.enrollments?.filter((e: any) => e.status !== 'hold').length || 0,
             waitlistCount: schedule.waitlistEntries?.length || 0,
           }
         };

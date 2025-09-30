@@ -564,7 +564,7 @@ export default function InstructorDashboard() {
               ? `${schedule.startTime.slice(0,5)} - ${schedule.endTime.slice(0,5)}`
               : '-';
 
-            const scheduleEnrollments = enrollments.filter(e => e.scheduleId === schedule.id);
+            const scheduleEnrollments = enrollments.filter(e => e.scheduleId === schedule.id && e.status !== 'hold');
             const enrollmentCount = scheduleEnrollments.length;
             const spotsLeft = schedule.availableSpots;
 
