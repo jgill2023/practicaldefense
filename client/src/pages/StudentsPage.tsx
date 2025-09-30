@@ -21,6 +21,7 @@ import { EmailNotificationModal } from "@/components/EmailNotificationModal";
 import { SmsNotificationModal } from "@/components/SmsNotificationModal";
 import { RescheduleModal } from "@/components/RescheduleModal";
 import { CrossEnrollmentModal } from "@/components/CrossEnrollmentModal";
+import { PaymentDetailsModal } from "@/components/PaymentDetailsModal";
 import { format } from "date-fns";
 
 // Phone number formatting utility
@@ -109,6 +110,8 @@ function StudentsPage() {
   const [selectedStudentForNotification, setSelectedStudentForNotification] = useState<Student | null>(null);
   const [selectedEnrollmentForReschedule, setSelectedEnrollmentForReschedule] = useState<{student: Student, enrollment: any} | null>(null);
   const [selectedStudentForCrossEnrollment, setSelectedStudentForCrossEnrollment] = useState<Student | null>(null);
+  const [paymentDetailsModalOpen, setPaymentDetailsModalOpen] = useState(false);
+  const [selectedEnrollmentForPayment, setSelectedEnrollmentForPayment] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -347,11 +350,16 @@ function StudentsPage() {
                         <Badge 
                           variant={enrollment.paymentStatus === 'paid' ? 'default' : 
                                    enrollment.paymentStatus === 'pending' ? 'secondary' : 'destructive'}
-                          className={`text-xs ${
+                          className={`text-xs cursor-pointer hover:opacity-80 transition-opacity ${
                             enrollment.paymentStatus === 'paid' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
                             enrollment.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
                             ''
                           }`}
+                          onClick={() => {
+                            setSelectedEnrollmentForPayment(enrollment.id);
+                            setPaymentDetailsModalOpen(true);
+                          }}
+                          data-testid={`badge-payment-status-${enrollment.id}`}
                         >
                           {enrollment.paymentStatus}
                         </Badge>
@@ -654,6 +662,18 @@ function StudentsPage() {
           }}
           studentId={selectedStudentForCrossEnrollment.id}
           studentName={`${selectedStudentForCrossEnrollment.firstName} ${selectedStudentForCrossEnrollment.lastName}`}
+        />
+      )}
+
+      {/* Payment Details Modal */}
+      {selectedEnrollmentForPayment && (
+        <PaymentDetailsModal
+          isOpen={paymentDetailsModalOpen}
+          onClose={() => {
+            setPaymentDetailsModalOpen(false);
+            setSelectedEnrollmentForPayment(null);
+          }}
+          enrollmentId={selectedEnrollmentForPayment}
         />
       )}
       </div>
