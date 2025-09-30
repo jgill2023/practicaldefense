@@ -283,10 +283,26 @@ export function CommunicationsDashboard() {
   });
 
   // Query for available students to add
-  const { data: availableStudents, isLoading: isLoadingAvailableStudents } = useQuery({
+  const { data: studentsData, isLoading: isLoadingAvailableStudents } = useQuery({
     queryKey: ['/api/students'],
     enabled: isAddStudentsDialogOpen,
   });
+
+  // Flatten students data for the Add Students modal
+  const availableStudents = studentsData ? [
+    ...(studentsData.current || []),
+    ...(studentsData.former || []),
+    ...(studentsData.held || [])
+  ].filter((student, index, self) => 
+    // Remove duplicates by student ID
+    index === self.findIndex(s => s.id === student.id)
+  ).map(student => ({
+    id: student.id,
+    firstName: student.firstName,
+    lastName: student.lastName,
+    email: student.email,
+    phone: student.phone
+  })) : [];
 
   // Create list mutation
   const createListMutation = useMutation({

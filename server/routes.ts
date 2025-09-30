@@ -696,21 +696,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const studentsData = await storage.getStudentsByInstructor(userId);
       
-      // Flatten the students data for the Add Students modal
-      const allStudents = [...studentsData.current, ...studentsData.former, ...studentsData.held];
-      
-      // Remove duplicates by student ID and map to simplified format
-      const uniqueStudents = Array.from(
-        new Map(allStudents.map(student => [student.id, {
-          id: student.id,
-          firstName: student.firstName,
-          lastName: student.lastName,
-          email: student.email,
-          phone: student.phone
-        }])).values()
-      );
-      
-      res.json(uniqueStudents);
+      // Return the full structured data for Students Management page
+      res.json(studentsData);
     } catch (error) {
       console.error("Error fetching students data:", error);
       res.status(500).json({ message: "Failed to fetch students data" });
