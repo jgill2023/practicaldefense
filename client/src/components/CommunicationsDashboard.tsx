@@ -73,9 +73,9 @@ interface Filters {
 }
 
 export function CommunicationsDashboard() {
-  const [activeSection, setActiveSection] = useState("email-templates");
+  const [activeSection, setActiveSection] = useState("sms-management");
   const [activeEmailTab, setActiveEmailTab] = useState("templates");
-  const [activeSMSTab, setActiveSMSTab] = useState("contacts");
+  const [activeSMSTab, setActiveSMSTab] = useState("inbox");
   const [filters, setFilters] = useState<Filters>({
     page: 1,
     limit: 50
@@ -718,16 +718,16 @@ export function CommunicationsDashboard() {
         </CardContent>
       </Card>
 
-      {/* Main sections for Email Templates and SMS Management */}
+      {/* Main sections for SMS Management and Email Templates */}
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="email-templates" data-testid="tab-section-email-templates" className="text-lg">
-            <Mail className="h-5 w-5 mr-2" />
-            Email Templates
-          </TabsTrigger>
           <TabsTrigger value="sms-management" data-testid="tab-section-sms-management" className="text-lg">
             <MessageSquare className="h-5 w-5 mr-2" />
             SMS Management
+          </TabsTrigger>
+          <TabsTrigger value="email-templates" data-testid="tab-section-email-templates" className="text-lg">
+            <Mail className="h-5 w-5 mr-2" />
+            Email Templates
           </TabsTrigger>
         </TabsList>
 
@@ -781,14 +781,6 @@ export function CommunicationsDashboard() {
         <TabsContent value="sms-management" className="space-y-4" data-testid="content-section-sms-management">
           <Tabs value={activeSMSTab} onValueChange={setActiveSMSTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="contacts" data-testid="tab-sms-contacts">
-                <User className="h-4 w-4 mr-2" />
-                Contacts
-              </TabsTrigger>
-              <TabsTrigger value="templates" data-testid="tab-sms-templates">
-                <Book className="h-4 w-4 mr-2" />
-                Templates
-              </TabsTrigger>
               <TabsTrigger value="inbox" data-testid="tab-sms-inbox">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Inbox
@@ -796,6 +788,14 @@ export function CommunicationsDashboard() {
               <TabsTrigger value="compose" data-testid="tab-sms-compose">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Compose
+              </TabsTrigger>
+              <TabsTrigger value="contacts" data-testid="tab-sms-contacts">
+                <User className="h-4 w-4 mr-2" />
+                Contacts
+              </TabsTrigger>
+              <TabsTrigger value="templates" data-testid="tab-sms-templates">
+                <Book className="h-4 w-4 mr-2" />
+                Templates
               </TabsTrigger>
             </TabsList>
 
