@@ -177,8 +177,8 @@ export function CommunicationsDashboard() {
   });
 
   const sendReplyMutation = useMutation({
-    mutationFn: ({ to, message }: { to: string; message: string }) =>
-      apiRequest('POST', '/api/sms/send', { to, message }),
+    mutationFn: ({ to, body }: { to: string; body: string }) =>
+      apiRequest('POST', '/api/sms/send', { to, body }),
     onSuccess: () => {
       suppressNotificationsRef.current = true;
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
@@ -993,7 +993,7 @@ export function CommunicationsDashboard() {
                   if (selectedMessage && replyText.trim()) {
                     sendReplyMutation.mutate({
                       to: selectedMessage.fromAddress,
-                      message: replyText.trim()
+                      body: replyText.trim()
                     });
                   }
                 }}
