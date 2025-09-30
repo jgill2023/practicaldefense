@@ -24,7 +24,7 @@ export function useCommunicationCounts() {
       
       return {
         total: data.total || 0,
-        unread: data.data?.filter((c: any) => !c.isRead).length || 0,
+        unread: data.data?.filter((c: any) => c.direction === 'inbound' && !c.isRead).length || 0,
         flagged: data.data?.filter((c: any) => c.isFlagged).length || 0,
       };
     },
