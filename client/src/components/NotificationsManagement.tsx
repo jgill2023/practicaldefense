@@ -32,7 +32,8 @@ import {
   XCircle,
   AlertCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Users
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { 
@@ -45,6 +46,7 @@ import {
   insertNotificationScheduleSchema 
 } from "@shared/schema";
 import { z } from "zod";
+import { CourseNotificationSignups } from "./CourseNotificationSignups";
 
 // Template form schema
 const templateFormSchema = insertNotificationTemplateSchema.extend({
@@ -91,7 +93,7 @@ export function NotificationsManagement() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"templates" | "schedules" | "logs" | "send">("templates");
+  const [activeTab, setActiveTab] = useState<"templates" | "schedules" | "logs" | "send" | "signups">("templates");
   const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null);
   const [selectedSchedule, setSelectedSchedule] = useState<NotificationSchedule | null>(null);
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
@@ -446,7 +448,7 @@ export function NotificationsManagement() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
-        <TabsList className="grid w-fit grid-cols-4">
+        <TabsList className="grid w-fit grid-cols-5">
           <TabsTrigger value="templates" className="flex items-center gap-2" data-testid="tab-templates">
             <Mail className="h-4 w-4" />
             Templates ({templates.length})
@@ -458,6 +460,10 @@ export function NotificationsManagement() {
           <TabsTrigger value="logs" className="flex items-center gap-2" data-testid="tab-logs">
             <Eye className="h-4 w-4" />
             Logs ({totalLogs})
+          </TabsTrigger>
+          <TabsTrigger value="signups" className="flex items-center gap-2" data-testid="tab-signups">
+            <Users className="h-4 w-4" />
+            Course Signups
           </TabsTrigger>
           <TabsTrigger value="send" className="flex items-center gap-2" data-testid="tab-send">
             <Send className="h-4 w-4" />
@@ -847,6 +853,11 @@ export function NotificationsManagement() {
               </Form>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Course Signups Tab */}
+        <TabsContent value="signups" className="mt-6">
+          <CourseNotificationSignups />
         </TabsContent>
       </Tabs>
 
