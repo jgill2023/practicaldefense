@@ -40,8 +40,13 @@ import {
   CheckCircle,
   XCircle,
   BarChart3,
-  Tag
+  Tag,
+  Paperclip,
+  X,
+  FileText,
+  Image as ImageIcon
 } from "lucide-react";
+import { ObjectUploader } from "@/components/ObjectUploader";
 import { format } from "date-fns";
 import type { SmsList } from "@db/schema";
 
@@ -126,7 +131,8 @@ export function CommunicationsDashboard() {
     subject: "",
     messageContent: "",
     messagePlain: "",
-    dynamicTags: [] as string[]
+    dynamicTags: [] as string[],
+    attachmentUrls: [] as string[]
   });
   const [isSendConfirmOpen, setIsSendConfirmOpen] = useState(false);
   const messageContentRef = useRef<HTMLTextAreaElement>(null);
@@ -390,7 +396,7 @@ export function CommunicationsDashboard() {
       queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
       toast({ title: "Success", description: "Broadcast saved successfully" });
       setIsComposerOpen(false);
-      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [] });
+      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [] });
     },
     onError: (error: any) => {
       toast({
@@ -408,7 +414,7 @@ export function CommunicationsDashboard() {
       queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
       toast({ title: "Success", description: "Broadcast updated successfully" });
       setIsComposerOpen(false);
-      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [] });
+      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [] });
     },
     onError: (error: any) => {
       toast({
@@ -427,7 +433,7 @@ export function CommunicationsDashboard() {
       toast({ title: "Success", description: "Broadcast sent successfully" });
       setIsSendConfirmOpen(false);
       setIsComposerOpen(false);
-      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [] });
+      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [] });
     },
     onError: (error: any) => {
       toast({
@@ -1812,7 +1818,7 @@ export function CommunicationsDashboard() {
                                   onClick={() => {
                                     setComposerMode('create');
                                     setSelectedBroadcastId(null);
-                                    setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [] });
+                                    setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [] });
                                     setIsComposerOpen(true);
                                   }}
                                   data-testid="button-new-broadcast"
@@ -1839,7 +1845,7 @@ export function CommunicationsDashboard() {
                                     onClick={() => {
                                       setComposerMode('create');
                                       setSelectedBroadcastId(null);
-                                      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [] });
+                                      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [] });
                                       setIsComposerOpen(true);
                                     }}
                                     data-testid="button-create-first-broadcast"
@@ -1888,6 +1894,14 @@ export function CommunicationsDashboard() {
                                               {broadcast.totalRecipients || 0} recipients
                                             </span>
                                           </div>
+                                          {broadcast.attachmentUrls && broadcast.attachmentUrls.length > 0 && (
+                                            <div className="flex items-center space-x-1">
+                                              <Paperclip className="h-3 w-3" />
+                                              <span data-testid={`text-broadcast-attachments-${idx}`}>
+                                                {broadcast.attachmentUrls.length} attachment{broadcast.attachmentUrls.length !== 1 ? 's' : ''}
+                                              </span>
+                                            </div>
+                                          )}
                                           {broadcast.successCount !== undefined && (
                                             <>
                                               <div className="flex items-center space-x-1">
@@ -2688,6 +2702,118 @@ export function CommunicationsDashboard() {
               )}
             </div>
 
+            {/* Attachments Section */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Attachments (Optional)
+              </label>
+              <p className="text-xs text-muted-foreground mb-3">
+                Attach images or documents to share with recipients
+              </p>
+              
+              <div className="space-y-3">
+                {/* Upload Button */}
+                {broadcastForm.attachmentUrls.length < 5 && (
+                  <ObjectUploader
+                    maxNumberOfFiles={1}
+                    maxFileSize={10485760}
+                    onGetUploadParameters={async () => {
+                      const response = await fetch('/api/objects/upload', {
+                        method: 'POST',
+                        credentials: 'include',
+                      });
+                      
+                      if (!response.ok) {
+                        throw new Error('Failed to get upload URL');
+                      }
+                      
+                      const data = await response.json();
+                      return {
+                        method: 'PUT' as const,
+                        url: data.uploadUrl,
+                      };
+                    }}
+                    onComplete={(result) => {
+                      if (result.successful && result.successful.length > 0) {
+                        const uploadedUrl = result.successful[0].uploadURL;
+                        setBroadcastForm(prev => ({
+                          ...prev,
+                          attachmentUrls: [...prev.attachmentUrls, uploadedUrl]
+                        }));
+                        toast({
+                          title: "Success",
+                          description: "File uploaded successfully",
+                        });
+                      }
+                    }}
+                    data-testid="button-add-attachment"
+                  >
+                    Add Attachment
+                  </ObjectUploader>
+                )}
+                
+                {/* Attached Files List */}
+                {broadcastForm.attachmentUrls.length > 0 && (
+                  <div className="space-y-2" data-testid="list-attachments">
+                    {broadcastForm.attachmentUrls.map((url, index) => {
+                      const filename = url.split('/').pop()?.split('?')[0] || 'file';
+                      const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
+                      
+                      return (
+                        <Card key={index} className="p-3">
+                          <div className="flex items-center space-x-3">
+                            {isImage ? (
+                              <div className="flex-shrink-0 w-12 h-12 rounded overflow-hidden bg-muted">
+                                <img
+                                  src={url}
+                                  alt={filename}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex-shrink-0 w-12 h-12 rounded bg-muted flex items-center justify-center">
+                                <FileText className="h-6 w-6 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">
+                                {filename}
+                              </p>
+                              {isImage && (
+                                <Badge variant="secondary" className="text-xs mt-1">
+                                  <ImageIcon className="h-3 w-3 mr-1" />
+                                  Image
+                                </Badge>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setBroadcastForm(prev => ({
+                                  ...prev,
+                                  attachmentUrls: prev.attachmentUrls.filter((_, i) => i !== index)
+                                }));
+                              }}
+                              data-testid={`button-remove-attachment-${index}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {broadcastForm.attachmentUrls.length >= 5 && (
+                  <p className="text-xs text-muted-foreground">
+                    Maximum of 5 attachments reached
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Message Preview Section */}
             {broadcastForm.messageContent && (
               <div>
@@ -2719,7 +2845,7 @@ export function CommunicationsDashboard() {
               variant="outline"
               onClick={() => {
                 setIsComposerOpen(false);
-                setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [] });
+                setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [] });
               }}
               data-testid="button-cancel-composer"
             >
@@ -2747,6 +2873,7 @@ export function CommunicationsDashboard() {
                         messageContent: broadcastForm.messageContent,
                         messagePlain: broadcastForm.messagePlain,
                         dynamicTags: broadcastForm.dynamicTags,
+                        attachmentUrls: broadcastForm.attachmentUrls,
                         status: 'draft'
                       }
                     });
@@ -2850,6 +2977,7 @@ export function CommunicationsDashboard() {
                       messageContent: broadcastForm.messageContent,
                       messagePlain: broadcastForm.messagePlain,
                       dynamicTags: broadcastForm.dynamicTags,
+                      attachmentUrls: broadcastForm.attachmentUrls,
                       status: 'draft'
                     }
                   });
