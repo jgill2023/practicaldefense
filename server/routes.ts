@@ -350,6 +350,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Error sending notifications:', error);
         });
       
+      // Automatically create SMS list for this schedule (synchronous to ensure it exists before enrollments)
+      try {
+        const formatDate = (dateString: string | Date) => {
+          const date = new Date(dateString);
+          return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+        };
+
+        const listName = `${course.title} - ${formatDate(schedule.startDate)}`;
+        const listDescription = `Auto-generated list for ${course.title} scheduled on ${formatDate(schedule.startDate)}`;
+
+        await storage.createSmsList({
+          name: listName,
+          listType: 'course_schedule',
+          scheduleId: schedule.id,
+          instructorId: course.instructorId,
+          description: listDescription,
+          isActive: true,
+        });
+
+        console.log(`Successfully created SMS list for schedule ${schedule.id}: ${listName}`);
+      } catch (error) {
+        console.error(`Error creating SMS list for schedule ${schedule.id}:`, error);
+      }
+      
       res.status(201).json(schedule);
     } catch (error) {
       console.error("Error creating course schedule:", error);
@@ -591,6 +619,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentIntentId,
         studentInfo,
       });
+
+      // Auto-add student to SMS list for this schedule (fire-and-forget)
+      if (finalizedEnrollment.status === 'confirmed' && finalizedEnrollment.studentId) {
+        (async () => {
+          try {
+            const smsList = await storage.getSmsListBySchedule(finalizedEnrollment.scheduleId);
+            
+            if (smsList) {
+              const isAlreadyMember = await storage.checkSmsListMembership(smsList.id, finalizedEnrollment.studentId);
+              
+              if (!isAlreadyMember) {
+                const course = await storage.getCourse(finalizedEnrollment.courseId);
+                await storage.addSmsListMember({
+                  listId: smsList.id,
+                  userId: finalizedEnrollment.studentId,
+                  addedBy: course?.instructorId || finalizedEnrollment.studentId,
+                  autoAdded: true,
+                  notes: 'Auto-added from enrollment',
+                });
+                
+                console.log(`Successfully added student ${finalizedEnrollment.studentId} to SMS list ${smsList.id}`);
+              } else {
+                console.log(`Student ${finalizedEnrollment.studentId} already in SMS list ${smsList.id}`);
+              }
+            } else {
+              console.log(`No SMS list found for schedule ${finalizedEnrollment.scheduleId}`);
+            }
+          } catch (error) {
+            console.error(`Error auto-adding student to SMS list for enrollment ${enrollmentId}:`, error);
+          }
+        })();
+      }
 
       res.status(200).json(finalizedEnrollment);
     } catch (error) {
@@ -3540,6 +3600,51 @@ Practical Defense Training`;
         notes: notes || `Rescheduled from ${currentSchedule.startDate} to ${newSchedule.startDate}`,
       });
 
+      // Auto-add student to SMS list for the new schedule (fire-and-forget)
+      if (updatedEnrollment.status === 'confirmed' && updatedEnrollment.studentId) {
+        (async () => {
+          try {
+            const smsList = await storage.getSmsListBySchedule(newScheduleId);
+            
+            if (smsList) {
+              const isAlreadyMember = await storage.checkSmsListMembership(smsList.id, updatedEnrollment.studentId);
+              
+              if (!isAlreadyMember) {
+                await storage.addSmsListMember({
+                  listId: smsList.id,
+                  userId: updatedEnrollment.studentId,
+                  addedBy: userId,
+                  autoAdded: true,
+                  notes: 'Auto-added from rescheduling',
+                });
+                
+                console.log(`Successfully added student ${updatedEnrollment.studentId} to SMS list ${smsList.id} after reschedule`);
+              }
+            } else {
+              console.log(`No SMS list found for schedule ${newScheduleId}`);
+            }
+          } catch (error) {
+            console.error(`Error auto-adding student to SMS list after reschedule:`, error);
+          }
+        })();
+        
+        // Remove student from old schedule's SMS list
+        (async () => {
+          try {
+            const oldSmsList = await storage.getSmsListBySchedule(enrollment.scheduleId);
+            
+            if (oldSmsList) {
+              await storage.removeSmsListMemberByUserAndList(oldSmsList.id, updatedEnrollment.studentId);
+              console.log(`Successfully removed student ${updatedEnrollment.studentId} from old SMS list ${oldSmsList.id} after reschedule`);
+            } else {
+              console.log(`No SMS list found for old schedule ${enrollment.scheduleId}`);
+            }
+          } catch (error) {
+            console.error(`Error removing student from old SMS list after reschedule:`, error);
+          }
+        })();
+      }
+
       res.json({ success: true, enrollment: updatedEnrollment });
     } catch (error: any) {
       console.error("Error rescheduling student:", error);
@@ -3664,6 +3769,35 @@ Practical Defense Training`;
         .insert(enrollments)
         .values(enrollmentData)
         .returning();
+
+      // Auto-add student to SMS list for this schedule (fire-and-forget)
+      if (newEnrollment.status === 'confirmed' && newEnrollment.studentId) {
+        (async () => {
+          try {
+            const smsList = await storage.getSmsListBySchedule(newEnrollment.scheduleId);
+            
+            if (smsList) {
+              const isAlreadyMember = await storage.checkSmsListMembership(smsList.id, newEnrollment.studentId);
+              
+              if (!isAlreadyMember) {
+                await storage.addSmsListMember({
+                  listId: smsList.id,
+                  userId: newEnrollment.studentId,
+                  addedBy: userId,
+                  autoAdded: true,
+                  notes: 'Auto-added from instructor cross-enrollment',
+                });
+                
+                console.log(`Successfully added student ${newEnrollment.studentId} to SMS list ${smsList.id}`);
+              }
+            } else {
+              console.log(`No SMS list found for schedule ${newEnrollment.scheduleId}`);
+            }
+          } catch (error) {
+            console.error(`Error auto-adding student to SMS list for enrollment ${newEnrollment.id}:`, error);
+          }
+        })();
+      }
 
       res.json({ success: true, enrollment: newEnrollment });
     } catch (error: any) {

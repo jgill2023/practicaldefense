@@ -1126,6 +1126,180 @@ export type InsertMessageAuditLog = z.infer<typeof insertMessageAuditLogSchema>;
 export type Communication = typeof communications.$inferSelect;
 export type InsertCommunication = z.infer<typeof insertCommunicationSchema>;
 
+// SMS Lists - for managing broadcast messaging lists
+export const smsLists = pgTable("sms_lists", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  listType: varchar("list_type", { length: 50 }).notNull(), // 'custom' or 'course_schedule'
+  scheduleId: uuid("schedule_id").references(() => courseSchedules.id).unique(), // For auto-generated course lists - unique to prevent duplicates
+  instructorId: varchar("instructor_id").notNull().references(() => users.id),
+  tags: text("tags").array(), // Custom tags for the list
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const smsListMembers = pgTable("sms_list_members", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  listId: uuid("list_id").notNull().references(() => smsLists.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  addedBy: varchar("added_by").notNull().references(() => users.id), // Who added this member
+  autoAdded: boolean("auto_added").default(false), // True if auto-added from enrollment
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const smsBroadcastMessages = pgTable("sms_broadcast_messages", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  listId: uuid("list_id").notNull().references(() => smsLists.id),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id),
+  subject: varchar("subject", { length: 255 }), // For display/tracking
+  messageContent: text("message_content").notNull(), // Rich text content
+  messageHtml: text("message_html"), // HTML version if rich text
+  messagePlain: text("message_plain").notNull(), // Plain text version for SMS
+  templateId: uuid("template_id"), // If loaded from template
+  attachmentUrls: text("attachment_urls").array(), // URLs of attached files/images
+  dynamicTags: jsonb("dynamic_tags"), // Tags used for personalization
+  scheduledFor: timestamp("scheduled_for"), // For future sends
+  status: varchar("status", { length: 50 }).notNull(), // 'draft', 'sending', 'sent', 'failed'
+  totalRecipients: integer("total_recipients").default(0),
+  successCount: integer("success_count").default(0),
+  failureCount: integer("failure_count").default(0),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const smsBroadcastDeliveries = pgTable("sms_broadcast_deliveries", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  broadcastId: uuid("broadcast_id").notNull().references(() => smsBroadcastMessages.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
+  personalizedMessage: text("personalized_message").notNull(), // Message with replaced tags
+  twilioMessageSid: varchar("twilio_message_sid", { length: 255 }), // Twilio's message ID
+  status: varchar("status", { length: 50 }).notNull(), // 'pending', 'sent', 'delivered', 'failed', 'undelivered'
+  errorMessage: text("error_message"),
+  sentAt: timestamp("sent_at"),
+  deliveredAt: timestamp("delivered_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// SMS Lists relations
+export const smsListsRelations = relations(smsLists, ({ one, many }) => ({
+  schedule: one(courseSchedules, {
+    fields: [smsLists.scheduleId],
+    references: [courseSchedules.id],
+  }),
+  instructor: one(users, {
+    fields: [smsLists.instructorId],
+    references: [users.id],
+  }),
+  members: many(smsListMembers),
+  broadcasts: many(smsBroadcastMessages),
+}));
+
+export const smsListMembersRelations = relations(smsListMembers, ({ one }) => ({
+  list: one(smsLists, {
+    fields: [smsListMembers.listId],
+    references: [smsLists.id],
+  }),
+  user: one(users, {
+    fields: [smsListMembers.userId],
+    references: [users.id],
+  }),
+  addedByUser: one(users, {
+    fields: [smsListMembers.addedBy],
+    references: [users.id],
+  }),
+}));
+
+export const smsBroadcastMessagesRelations = relations(smsBroadcastMessages, ({ one, many }) => ({
+  list: one(smsLists, {
+    fields: [smsBroadcastMessages.listId],
+    references: [smsLists.id],
+  }),
+  instructor: one(users, {
+    fields: [smsBroadcastMessages.instructorId],
+    references: [users.id],
+  }),
+  deliveries: many(smsBroadcastDeliveries),
+}));
+
+export const smsBroadcastDeliveriesRelations = relations(smsBroadcastDeliveries, ({ one }) => ({
+  broadcast: one(smsBroadcastMessages, {
+    fields: [smsBroadcastDeliveries.broadcastId],
+    references: [smsBroadcastMessages.id],
+  }),
+  user: one(users, {
+    fields: [smsBroadcastDeliveries.userId],
+    references: [users.id],
+  }),
+}));
+
+// SMS Lists insert schemas
+export const insertSmsListSchema = createInsertSchema(smsLists).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSmsListMemberSchema = createInsertSchema(smsListMembers).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSmsBroadcastMessageSchema = createInsertSchema(smsBroadcastMessages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSmsBroadcastDeliverySchema = createInsertSchema(smsBroadcastDeliveries).omit({
+  id: true,
+  createdAt: true,
+});
+
+// SMS Lists types
+export type SmsList = typeof smsLists.$inferSelect;
+export type InsertSmsList = z.infer<typeof insertSmsListSchema>;
+export type SmsListMember = typeof smsListMembers.$inferSelect;
+export type InsertSmsListMember = z.infer<typeof insertSmsListMemberSchema>;
+export type SmsBroadcastMessage = typeof smsBroadcastMessages.$inferSelect;
+export type InsertSmsBroadcastMessage = z.infer<typeof insertSmsBroadcastMessageSchema>;
+export type SmsBroadcastDelivery = typeof smsBroadcastDeliveries.$inferSelect;
+export type InsertSmsBroadcastDelivery = z.infer<typeof insertSmsBroadcastDeliverySchema>;
+
+// Extended types for SMS Lists with relations
+export type SmsListWithDetails = SmsList & {
+  schedule?: CourseSchedule;
+  instructor: User;
+  members: SmsListMemberWithUser[];
+  broadcasts: SmsBroadcastMessage[];
+};
+
+export type SmsListMemberWithUser = SmsListMember & {
+  user: User;
+  addedByUser: User;
+  list: SmsList;
+};
+
+export type SmsBroadcastMessageWithDetails = SmsBroadcastMessage & {
+  list: SmsList;
+  instructor: User;
+  deliveries: SmsBroadcastDelivery[];
+};
+
+export type SmsBroadcastDeliveryWithDetails = SmsBroadcastDelivery & {
+  broadcast: SmsBroadcastMessage;
+  user: User;
+};
+
+// SMS broadcast status types
+export type SmsBroadcastStatus = 'draft' | 'sending' | 'sent' | 'failed';
+export type SmsDeliveryStatus = 'pending' | 'sent' | 'delivered' | 'failed' | 'undelivered';
+export type SmsListType = 'custom' | 'course_schedule';
+
 // Waiver enums and types
 export type WaiverScope = 'global' | 'course' | 'category';
 export type WaiverStatus = 'pending' | 'signed' | 'expired' | 'cancelled';

@@ -105,6 +105,22 @@ import {
   type CourseNotificationDeliveryLog,
   type InsertCourseNotificationDeliveryLog,
   type CourseNotificationSignupWithDetails,
+  smsLists,
+  smsListMembers,
+  smsBroadcastMessages,
+  smsBroadcastDeliveries,
+  type SmsList,
+  type InsertSmsList,
+  type SmsListMember,
+  type InsertSmsListMember,
+  type SmsBroadcastMessage,
+  type InsertSmsBroadcastMessage,
+  type SmsBroadcastDelivery,
+  type InsertSmsBroadcastDelivery,
+  type SmsListWithDetails,
+  type SmsListMemberWithUser,
+  type SmsBroadcastMessageWithDetails,
+  type SmsBroadcastDeliveryWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne } from "drizzle-orm";
@@ -436,6 +452,43 @@ export interface IStorage {
   getCourseNotifications(courseType?: string): Promise<CourseNotificationWithUser[]>;
   updateCourseNotification(id: string, notification: Partial<InsertCourseNotification>): Promise<CourseNotification>;
   deleteCourseNotification(id: string): Promise<void>;
+
+  // SMS Lists Methods
+  createSmsList(data: InsertSmsList): Promise<SmsList>;
+  getSmsList(id: string): Promise<SmsList | undefined>;
+  getSmsListsByInstructor(instructorId: string): Promise<SmsList[]>;
+  getSmsListBySchedule(scheduleId: string): Promise<SmsList | undefined>;
+  updateSmsList(id: string, data: Partial<InsertSmsList>): Promise<SmsList>;
+  deleteSmsList(id: string): Promise<void>;
+  searchSmsLists(instructorId: string, query: string): Promise<SmsList[]>;
+
+  // SMS List Members Methods
+  addSmsListMember(data: InsertSmsListMember): Promise<SmsListMember>;
+  addSmsListMembers(members: InsertSmsListMember[]): Promise<SmsListMember[]>;
+  getSmsListMembers(listId: string): Promise<SmsListMemberWithUser[]>;
+  getSmsListMembersByUser(userId: string): Promise<SmsListMemberWithUser[]>;
+  removeSmsListMember(id: string): Promise<void>;
+  removeSmsListMemberByUserAndList(listId: string, userId: string): Promise<void>;
+  checkSmsListMembership(listId: string, userId: string): Promise<boolean>;
+
+  // SMS Broadcast Messages Methods
+  createSmsBroadcastMessage(data: InsertSmsBroadcastMessage): Promise<SmsBroadcastMessage>;
+  getSmsBroadcastMessage(id: string): Promise<SmsBroadcastMessage | undefined>;
+  getSmsBroadcastsByList(listId: string): Promise<SmsBroadcastMessage[]>;
+  updateSmsBroadcastMessage(id: string, data: Partial<InsertSmsBroadcastMessage>): Promise<SmsBroadcastMessage>;
+  deleteSmsBroadcastMessage(id: string): Promise<void>;
+
+  // SMS Broadcast Deliveries Methods
+  createSmsBroadcastDelivery(data: InsertSmsBroadcastDelivery): Promise<SmsBroadcastDelivery>;
+  createSmsBroadcastDeliveries(deliveries: InsertSmsBroadcastDelivery[]): Promise<SmsBroadcastDelivery[]>;
+  getSmsBroadcastDeliveries(broadcastId: string): Promise<SmsBroadcastDeliveryWithDetails[]>;
+  getSmsBroadcastDelivery(id: string): Promise<SmsBroadcastDelivery | undefined>;
+  updateSmsBroadcastDelivery(id: string, data: Partial<InsertSmsBroadcastDelivery>): Promise<SmsBroadcastDelivery>;
+  getDeliveriesByUser(userId: string): Promise<SmsBroadcastDeliveryWithDetails[]>;
+
+  // SMS Helper Methods
+  getSmsListWithDetails(id: string): Promise<SmsListWithDetails | undefined>;
+  getSmsBroadcastWithDeliveryStats(id: string): Promise<SmsBroadcastMessageWithDetails | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3937,6 +3990,335 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(courseNotifications)
       .where(eq(courseNotifications.id, id));
+  }
+
+  // SMS Lists Methods
+  async createSmsList(data: InsertSmsList): Promise<SmsList> {
+    const [list] = await db
+      .insert(smsLists)
+      .values(data)
+      .returning();
+    
+    if (!list) {
+      throw new Error('Failed to create SMS list');
+    }
+    
+    return list;
+  }
+
+  async getSmsList(id: string): Promise<SmsList | undefined> {
+    const [list] = await db
+      .select()
+      .from(smsLists)
+      .where(eq(smsLists.id, id));
+    
+    return list;
+  }
+
+  async getSmsListsByInstructor(instructorId: string): Promise<SmsList[]> {
+    return db
+      .select()
+      .from(smsLists)
+      .where(and(
+        eq(smsLists.instructorId, instructorId),
+        eq(smsLists.isActive, true)
+      ))
+      .orderBy(desc(smsLists.createdAt));
+  }
+
+  async getSmsListBySchedule(scheduleId: string): Promise<SmsList | undefined> {
+    const [list] = await db
+      .select()
+      .from(smsLists)
+      .where(and(
+        eq(smsLists.scheduleId, scheduleId),
+        eq(smsLists.listType, 'course_schedule')
+      ));
+    
+    return list;
+  }
+
+  async updateSmsList(id: string, data: Partial<InsertSmsList>): Promise<SmsList> {
+    const [list] = await db
+      .update(smsLists)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(smsLists.id, id))
+      .returning();
+    
+    if (!list) {
+      throw new Error('SMS list not found');
+    }
+    
+    return list;
+  }
+
+  async deleteSmsList(id: string): Promise<void> {
+    await db
+      .delete(smsLists)
+      .where(eq(smsLists.id, id));
+  }
+
+  async searchSmsLists(instructorId: string, query: string): Promise<SmsList[]> {
+    return db
+      .select()
+      .from(smsLists)
+      .where(and(
+        eq(smsLists.instructorId, instructorId),
+        eq(smsLists.isActive, true),
+        or(
+          sql`${smsLists.name} ILIKE ${`%${query}%`}`,
+          sql`${smsLists.description} ILIKE ${`%${query}%`}`,
+          sql`${query} = ANY(${smsLists.tags})`
+        )
+      ))
+      .orderBy(desc(smsLists.createdAt));
+  }
+
+  // SMS List Members Methods
+  async addSmsListMember(data: InsertSmsListMember): Promise<SmsListMember> {
+    const [member] = await db
+      .insert(smsListMembers)
+      .values(data)
+      .returning();
+    
+    if (!member) {
+      throw new Error('Failed to add SMS list member');
+    }
+    
+    return member;
+  }
+
+  async addSmsListMembers(members: InsertSmsListMember[]): Promise<SmsListMember[]> {
+    if (members.length === 0) {
+      return [];
+    }
+    
+    return db
+      .insert(smsListMembers)
+      .values(members)
+      .returning();
+  }
+
+  async getSmsListMembers(listId: string): Promise<SmsListMemberWithUser[]> {
+    return db.query.smsListMembers.findMany({
+      where: eq(smsListMembers.listId, listId),
+      with: {
+        user: true,
+        addedByUser: true,
+        list: true,
+      },
+      orderBy: [desc(smsListMembers.createdAt)],
+    });
+  }
+
+  async getSmsListMembersByUser(userId: string): Promise<SmsListMemberWithUser[]> {
+    return db.query.smsListMembers.findMany({
+      where: eq(smsListMembers.userId, userId),
+      with: {
+        user: true,
+        addedByUser: true,
+        list: true,
+      },
+      orderBy: [desc(smsListMembers.createdAt)],
+    });
+  }
+
+  async removeSmsListMember(id: string): Promise<void> {
+    await db
+      .delete(smsListMembers)
+      .where(eq(smsListMembers.id, id));
+  }
+
+  async removeSmsListMemberByUserAndList(listId: string, userId: string): Promise<void> {
+    await db
+      .delete(smsListMembers)
+      .where(and(
+        eq(smsListMembers.listId, listId),
+        eq(smsListMembers.userId, userId)
+      ));
+  }
+
+  async checkSmsListMembership(listId: string, userId: string): Promise<boolean> {
+    const [member] = await db
+      .select()
+      .from(smsListMembers)
+      .where(and(
+        eq(smsListMembers.listId, listId),
+        eq(smsListMembers.userId, userId)
+      ))
+      .limit(1);
+    
+    return !!member;
+  }
+
+  // SMS Broadcast Messages Methods
+  async createSmsBroadcastMessage(data: InsertSmsBroadcastMessage): Promise<SmsBroadcastMessage> {
+    const [message] = await db
+      .insert(smsBroadcastMessages)
+      .values(data)
+      .returning();
+    
+    if (!message) {
+      throw new Error('Failed to create SMS broadcast message');
+    }
+    
+    return message;
+  }
+
+  async getSmsBroadcastMessage(id: string): Promise<SmsBroadcastMessage | undefined> {
+    const [message] = await db
+      .select()
+      .from(smsBroadcastMessages)
+      .where(eq(smsBroadcastMessages.id, id));
+    
+    return message;
+  }
+
+  async getSmsBroadcastsByList(listId: string): Promise<SmsBroadcastMessage[]> {
+    return db
+      .select()
+      .from(smsBroadcastMessages)
+      .where(eq(smsBroadcastMessages.listId, listId))
+      .orderBy(desc(smsBroadcastMessages.createdAt));
+  }
+
+  async updateSmsBroadcastMessage(id: string, data: Partial<InsertSmsBroadcastMessage>): Promise<SmsBroadcastMessage> {
+    const [message] = await db
+      .update(smsBroadcastMessages)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(smsBroadcastMessages.id, id))
+      .returning();
+    
+    if (!message) {
+      throw new Error('SMS broadcast message not found');
+    }
+    
+    return message;
+  }
+
+  async deleteSmsBroadcastMessage(id: string): Promise<void> {
+    await db
+      .delete(smsBroadcastMessages)
+      .where(eq(smsBroadcastMessages.id, id));
+  }
+
+  // SMS Broadcast Deliveries Methods
+  async createSmsBroadcastDelivery(data: InsertSmsBroadcastDelivery): Promise<SmsBroadcastDelivery> {
+    const [delivery] = await db
+      .insert(smsBroadcastDeliveries)
+      .values(data)
+      .returning();
+    
+    if (!delivery) {
+      throw new Error('Failed to create SMS broadcast delivery');
+    }
+    
+    return delivery;
+  }
+
+  async createSmsBroadcastDeliveries(deliveries: InsertSmsBroadcastDelivery[]): Promise<SmsBroadcastDelivery[]> {
+    if (deliveries.length === 0) {
+      return [];
+    }
+    
+    return db
+      .insert(smsBroadcastDeliveries)
+      .values(deliveries)
+      .returning();
+  }
+
+  async getSmsBroadcastDeliveries(broadcastId: string): Promise<SmsBroadcastDeliveryWithDetails[]> {
+    return db.query.smsBroadcastDeliveries.findMany({
+      where: eq(smsBroadcastDeliveries.broadcastId, broadcastId),
+      with: {
+        broadcast: true,
+        user: true,
+      },
+      orderBy: [desc(smsBroadcastDeliveries.createdAt)],
+    });
+  }
+
+  async getSmsBroadcastDelivery(id: string): Promise<SmsBroadcastDelivery | undefined> {
+    const [delivery] = await db
+      .select()
+      .from(smsBroadcastDeliveries)
+      .where(eq(smsBroadcastDeliveries.id, id));
+    
+    return delivery;
+  }
+
+  async updateSmsBroadcastDelivery(id: string, data: Partial<InsertSmsBroadcastDelivery>): Promise<SmsBroadcastDelivery> {
+    const [delivery] = await db
+      .update(smsBroadcastDeliveries)
+      .set(data)
+      .where(eq(smsBroadcastDeliveries.id, id))
+      .returning();
+    
+    if (!delivery) {
+      throw new Error('SMS broadcast delivery not found');
+    }
+    
+    return delivery;
+  }
+
+  async getDeliveriesByUser(userId: string): Promise<SmsBroadcastDeliveryWithDetails[]> {
+    return db.query.smsBroadcastDeliveries.findMany({
+      where: eq(smsBroadcastDeliveries.userId, userId),
+      with: {
+        broadcast: true,
+        user: true,
+      },
+      orderBy: [desc(smsBroadcastDeliveries.createdAt)],
+    });
+  }
+
+  // SMS Helper Methods
+  async getSmsListWithDetails(id: string): Promise<SmsListWithDetails | undefined> {
+    const list = await db.query.smsLists.findFirst({
+      where: eq(smsLists.id, id),
+      with: {
+        schedule: true,
+        instructor: true,
+        members: {
+          with: {
+            user: true,
+            addedByUser: true,
+          },
+        },
+        broadcasts: true,
+      },
+    });
+    
+    if (!list) {
+      return undefined;
+    }
+    
+    return {
+      ...list,
+      members: list.members.map(m => ({
+        ...m,
+        list: list,
+      })),
+    };
+  }
+
+  async getSmsBroadcastWithDeliveryStats(id: string): Promise<SmsBroadcastMessageWithDetails | undefined> {
+    const broadcast = await db.query.smsBroadcastMessages.findFirst({
+      where: eq(smsBroadcastMessages.id, id),
+      with: {
+        list: true,
+        instructor: true,
+        deliveries: true,
+      },
+    });
+    
+    return broadcast;
   }
 }
 
