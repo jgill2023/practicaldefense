@@ -49,6 +49,9 @@ import {
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { format } from "date-fns";
 import type { SmsList } from "@db/schema";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+import { Label } from "@/components/ui/label";
 
 // Types for communication data
 interface Communication {
@@ -123,6 +126,13 @@ export function CommunicationsDashboard() {
   const [editListName, setEditListName] = useState("");
   const [editListDescription, setEditListDescription] = useState("");
   const [editListTags, setEditListTags] = useState("");
+  
+  // SMS Template state
+  const [isCreateTemplateDialogOpen, setIsCreateTemplateDialogOpen] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [templateContent, setTemplateContent] = useState("");
+  const [templateImageUrl, setTemplateImageUrl] = useState<string | null>(null);
+  const quillRef = useRef<ReactQuill>(null);
   
   // Broadcast composer state
   const [isComposerOpen, setIsComposerOpen] = useState(false);
@@ -253,6 +263,26 @@ export function CommunicationsDashboard() {
       toast({ 
         title: "Error", 
         description: error?.message || "Failed to send reply", 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const createTemplateMutation = useMutation({
+    mutationFn: ({ name, content, imageUrl, type }: { name: string; content: string; imageUrl: string | null; type: 'sms' }) =>
+      apiRequest('POST', '/api/admin/notification-templates', { name, content, imageUrl, type }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/notification-templates'] });
+      toast({ title: "Success", description: "SMS template created successfully" });
+      setTemplateName("");
+      setTemplateContent("");
+      setTemplateImageUrl(null);
+      setIsCreateTemplateDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to create template", 
         variant: "destructive" 
       });
     }
@@ -1212,7 +1242,11 @@ export function CommunicationsDashboard() {
                       <Book className="h-5 w-5" />
                       <span>SMS Templates</span>
                     </span>
-                    <Button size="sm" data-testid="button-create-sms-template">
+                    <Button 
+                      size="sm" 
+                      onClick={() => setIsCreateTemplateDialogOpen(true)}
+                      data-testid="button-create-sms-template"
+                    >
                       Create Template
                     </Button>
                   </CardTitle>
@@ -3188,6 +3222,141 @@ export function CommunicationsDashboard() {
                 <>
                   <Send className="h-4 w-4 mr-2" />
                   {broadcastForm.isScheduled && broadcastForm.scheduledFor ? "Confirm & Schedule" : "Confirm & Send"}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create SMS Template Dialog */}
+      <Dialog open={isCreateTemplateDialogOpen} onOpenChange={setIsCreateTemplateDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create SMS Template</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="template-name">Template Name</Label>
+              <Input
+                id="template-name"
+                placeholder="e.g., Course Reminder, Payment Notice"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                data-testid="input-template-name"
+              />
+            </div>
+
+            <div>
+              <Label>Message Content</Label>
+              <div className="border rounded-md">
+                <ReactQuill
+                  ref={quillRef}
+                  value={templateContent}
+                  onChange={setTemplateContent}
+                  theme="snow"
+                  placeholder="Write your SMS template message..."
+                  modules={{
+                    toolbar: [
+                      ['bold', 'italic', 'underline'],
+                      ['link'],
+                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                      ['clean']
+                    ]
+                  }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                You can use variables like {`{{ student.firstName }}, {{ course.name }}, {{ schedule.date }}`}
+              </p>
+            </div>
+
+            <div>
+              <Label>Image Attachment (Optional)</Label>
+              <div className="mt-2">
+                {templateImageUrl ? (
+                  <div className="relative inline-block">
+                    <img 
+                      src={templateImageUrl} 
+                      alt="Template" 
+                      className="max-w-xs rounded border"
+                    />
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="absolute top-2 right-2"
+                      onClick={() => setTemplateImageUrl(null)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <ObjectUploader
+                    directory="public"
+                    onUploadComplete={(url) => setTemplateImageUrl(url)}
+                    accept="image/*"
+                    buttonText="Upload Image"
+                    buttonIcon={<ImageIcon className="h-4 w-4 mr-2" />}
+                  />
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Upload an image to include in your SMS template (PNG, JPG, GIF)
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsCreateTemplateDialogOpen(false);
+                setTemplateName("");
+                setTemplateContent("");
+                setTemplateImageUrl(null);
+              }}
+              data-testid="button-cancel-template"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!templateName.trim()) {
+                  toast({
+                    title: "Template Name Required",
+                    description: "Please enter a name for your template",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                if (!templateContent.trim()) {
+                  toast({
+                    title: "Content Required",
+                    description: "Please enter message content for your template",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                createTemplateMutation.mutate({
+                  name: templateName,
+                  content: templateContent,
+                  imageUrl: templateImageUrl,
+                  type: 'sms'
+                });
+              }}
+              disabled={createTemplateMutation.isPending}
+              data-testid="button-save-template"
+            >
+              {createTemplateMutation.isPending ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-transparent border-t-current rounded-full mr-2" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Create Template
                 </>
               )}
             </Button>
