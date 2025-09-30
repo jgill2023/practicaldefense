@@ -31,7 +31,16 @@ import {
   List,
   Calendar,
   Users,
-  Plus
+  Plus,
+  ArrowLeft,
+  Edit,
+  Trash2,
+  UserPlus,
+  UserMinus,
+  CheckCircle,
+  XCircle,
+  BarChart3,
+  Tag
 } from "lucide-react";
 import { format } from "date-fns";
 import type { SmsList } from "@db/schema";
@@ -95,6 +104,32 @@ export function CommunicationsDashboard() {
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  
+  // List detail view state
+  const [selectedListId, setSelectedListId] = useState<string | null>(null);
+  const [activeListTab, setActiveListTab] = useState<"members" | "broadcasts" | "details">("members");
+  const [memberSearchTerm, setMemberSearchTerm] = useState("");
+  const [isAddMembersDialogOpen, setIsAddMembersDialogOpen] = useState(false);
+  const [selectedMembersToAdd, setSelectedMembersToAdd] = useState<string[]>([]);
+  const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
+  const [isEditListDialogOpen, setIsEditListDialogOpen] = useState(false);
+  const [isDeleteListDialogOpen, setIsDeleteListDialogOpen] = useState(false);
+  const [editListName, setEditListName] = useState("");
+  const [editListDescription, setEditListDescription] = useState("");
+  const [editListTags, setEditListTags] = useState("");
+  
+  // Broadcast composer state
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [composerMode, setComposerMode] = useState<'create' | 'edit'>('create');
+  const [selectedBroadcastId, setSelectedBroadcastId] = useState<string | null>(null);
+  const [broadcastForm, setBroadcastForm] = useState({
+    subject: "",
+    messageContent: "",
+    messagePlain: "",
+    dynamicTags: [] as string[]
+  });
+  const [isSendConfirmOpen, setIsSendConfirmOpen] = useState(false);
+  const messageContentRef = useRef<HTMLTextAreaElement>(null);
   
   // Real-time notification state
   const [lastTotalCount, setLastTotalCount] = useState<number | null>(null);
@@ -212,6 +247,30 @@ export function CommunicationsDashboard() {
     enabled: activeSMSTab === 'lists',
   });
 
+  // Query for list details with members and broadcasts
+  const { data: listDetails, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ['/api/sms-lists', selectedListId],
+    enabled: !!selectedListId,
+  });
+
+  // Query for list members
+  const { data: listMembers, isLoading: isLoadingMembers } = useQuery({
+    queryKey: ['/api/sms-lists', selectedListId, 'members'],
+    enabled: !!selectedListId,
+  });
+
+  // Query for list broadcasts
+  const { data: listBroadcasts, isLoading: isLoadingBroadcasts } = useQuery({
+    queryKey: ['/api/sms-lists', selectedListId, 'broadcasts'],
+    enabled: !!selectedListId,
+  });
+
+  // Query for available students to add
+  const { data: availableStudents, isLoading: isLoadingStudents } = useQuery({
+    queryKey: ['/api/students'],
+    enabled: isAddMembersDialogOpen,
+  });
+
   // Create list mutation
   const createListMutation = useMutation({
     mutationFn: (data: { name: string; description?: string; tags?: string[] }) =>
@@ -232,6 +291,217 @@ export function CommunicationsDashboard() {
       });
     }
   });
+
+  // Update list mutation
+  const updateListMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { name?: string; description?: string; tags?: string[] } }) =>
+      apiRequest('PATCH', `/api/sms-lists/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+      toast({ title: "Success", description: "List updated successfully" });
+      setIsEditListDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to update list",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Delete list mutation
+  const deleteListMutation = useMutation({
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/sms-lists/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+      toast({ title: "Success", description: "List deleted successfully" });
+      setIsDeleteListDialogOpen(false);
+      setSelectedListId(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to delete list",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Toggle list active status mutation
+  const toggleListActiveMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
+      apiRequest('PATCH', `/api/sms-lists/${id}`, { isActive }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+      toast({ title: "Success", description: "List status updated" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to update list status",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Add members mutation
+  const addMembersMutation = useMutation({
+    mutationFn: ({ listId, userIds }: { listId: string; userIds: string[] }) =>
+      apiRequest('POST', `/api/sms-lists/${listId}/members`, { userIds }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+      toast({ title: "Success", description: "Members added successfully" });
+      setIsAddMembersDialogOpen(false);
+      setSelectedMembersToAdd([]);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to add members",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Remove member mutation
+  const removeMemberMutation = useMutation({
+    mutationFn: ({ listId, userId }: { listId: string; userId: string }) =>
+      apiRequest('DELETE', `/api/sms-lists/${listId}/members/${userId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+      toast({ title: "Success", description: "Member removed successfully" });
+      setMemberToRemove(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to remove member",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Broadcast mutations
+  const createBroadcastMutation = useMutation({
+    mutationFn: ({ listId, data }: { listId: string; data: any }) =>
+      apiRequest('POST', `/api/sms-lists/${listId}/broadcasts`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+      toast({ title: "Success", description: "Broadcast saved successfully" });
+      setIsComposerOpen(false);
+      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to save broadcast",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const updateBroadcastMutation = useMutation({
+    mutationFn: ({ broadcastId, data }: { broadcastId: string; data: any }) =>
+      apiRequest('PATCH', `/api/broadcasts/${broadcastId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+      toast({ title: "Success", description: "Broadcast updated successfully" });
+      setIsComposerOpen(false);
+      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to update broadcast",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const sendBroadcastMutation = useMutation({
+    mutationFn: (broadcastId: string) =>
+      apiRequest('POST', `/api/broadcasts/${broadcastId}/send`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+      toast({ title: "Success", description: "Broadcast sent successfully" });
+      setIsSendConfirmOpen(false);
+      setIsComposerOpen(false);
+      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to send broadcast",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Helper functions for broadcast composer
+  const insertTagAtCursor = (tag: string) => {
+    if (!messageContentRef.current) return;
+    
+    const textarea = messageContentRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = broadcastForm.messageContent;
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+    const newText = before + tag + after;
+    
+    setBroadcastForm(prev => ({ ...prev, messageContent: newText }));
+    
+    // Set cursor position after inserted tag
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + tag.length, start + tag.length);
+    }, 0);
+  };
+
+  const extractDynamicTags = (content: string): string[] => {
+    const tagRegex = /\{\{(\w+)\}\}/g;
+    const matches = content.match(tagRegex) || [];
+    return [...new Set(matches)]; // Remove duplicates
+  };
+
+  const getPreviewMessage = (content: string): string => {
+    const sampleData: { [key: string]: string } = {
+      '{{firstName}}': 'John',
+      '{{lastName}}': 'Doe',
+      '{{email}}': 'john.doe@example.com',
+      '{{courseName}}': 'Defensive Handgun Course',
+      '{{scheduleDate}}': 'Jan 15, 2025'
+    };
+    
+    let preview = content;
+    Object.entries(sampleData).forEach(([tag, value]) => {
+      preview = preview.replace(new RegExp(tag, 'g'), value);
+    });
+    return preview;
+  };
+
+  const getCharacterCount = (text: string) => {
+    const count = text.length;
+    if (count <= 160) {
+      return { count, messages: 1, color: 'text-green-600' };
+    } else if (count <= 320) {
+      return { count, messages: 2, color: 'text-yellow-600' };
+    } else {
+      return { count, messages: Math.ceil(count / 153), color: 'text-red-600' };
+    }
+  };
+
+  // Update messagePlain and dynamicTags when messageContent changes
+  useEffect(() => {
+    const plainText = broadcastForm.messageContent; // For SMS, just use plain text
+    const tags = extractDynamicTags(broadcastForm.messageContent);
+    setBroadcastForm(prev => ({ 
+      ...prev, 
+      messagePlain: plainText,
+      dynamicTags: tags 
+    }));
+  }, [broadcastForm.messageContent]);
 
   // Handle real-time notifications when data changes
   useEffect(() => {
@@ -1108,23 +1378,24 @@ export function CommunicationsDashboard() {
 
             {/* SMS Lists Tab */}
             <TabsContent value="lists" className="space-y-4" data-testid="content-sms-lists">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center space-x-2">
-                      <List className="h-5 w-5" />
-                      <span>SMS Lists</span>
-                    </CardTitle>
-                    <Button 
-                      onClick={() => setIsCreateListDialogOpen(true)}
-                      data-testid="button-create-list"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create List
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              {!selectedListId ? (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center space-x-2">
+                        <List className="h-5 w-5" />
+                        <span>SMS Lists</span>
+                      </CardTitle>
+                      <Button 
+                        onClick={() => setIsCreateListDialogOpen(true)}
+                        data-testid="button-create-list"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create List
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                   {/* Search Bar */}
                   <div className="flex items-center space-x-2">
                     <div className="relative flex-1">
@@ -1182,6 +1453,7 @@ export function CommunicationsDashboard() {
                           <Card 
                             key={list.id} 
                             className="hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={() => setSelectedListId(list.id)}
                             data-testid={`card-list-${list.id}`}
                           >
                             <CardContent className="p-6">
@@ -1254,8 +1526,491 @@ export function CommunicationsDashboard() {
                         ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              ) : (
+                // List Detail View
+                <div className="space-y-4">
+                  {isLoadingDetails ? (
+                    <Card className="animate-pulse">
+                      <CardContent className="p-6">
+                        <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
+                        <div className="h-4 bg-muted rounded w-2/3 mb-2"></div>
+                        <div className="h-4 bg-muted rounded w-1/2"></div>
+                      </CardContent>
+                    </Card>
+                  ) : listDetails && (
+                    <>
+                      {/* Header Section */}
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center space-x-3">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedListId(null);
+                                  setActiveListTab("members");
+                                }}
+                                data-testid="button-back-to-lists"
+                              >
+                                <ArrowLeft className="h-4 w-4" />
+                              </Button>
+                              <div>
+                                <h2 className="text-2xl font-bold" data-testid="text-list-detail-name">
+                                  {listDetails.name}
+                                </h2>
+                                {listDetails.description && (
+                                  <p className="text-muted-foreground mt-1" data-testid="text-list-detail-description">
+                                    {listDetails.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              {listDetails.listType === 'custom' && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setEditListName(listDetails.name);
+                                      setEditListDescription(listDetails.description || "");
+                                      setEditListTags(listDetails.tags?.join(", ") || "");
+                                      setIsEditListDialogOpen(true);
+                                    }}
+                                    data-testid="button-edit-list"
+                                  >
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setIsDeleteListDialogOpen(true)}
+                                    data-testid="button-delete-list"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </Button>
+                                </>
+                              )}
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-muted-foreground">Active:</span>
+                                <Button
+                                  variant={listDetails.isActive ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => {
+                                    toggleListActiveMutation.mutate({
+                                      id: listDetails.id,
+                                      isActive: !listDetails.isActive
+                                    });
+                                  }}
+                                  disabled={toggleListActiveMutation.isPending}
+                                  data-testid="button-toggle-active"
+                                >
+                                  {listDetails.isActive ? "Active" : "Inactive"}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Stats Cards */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <Card>
+                              <CardContent className="p-4">
+                                <div className="flex items-center space-x-3">
+                                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded">
+                                    <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Total Contacts</p>
+                                    <p className="text-2xl font-bold" data-testid="stat-total-contacts">
+                                      {listMembers?.length || 0}
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
+                            <Card>
+                              <CardContent className="p-4">
+                                <div className="flex items-center space-x-3">
+                                  <div className="p-2 bg-green-100 dark:bg-green-900 rounded">
+                                    <BarChart3 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Total Broadcasts</p>
+                                    <p className="text-2xl font-bold" data-testid="stat-total-broadcasts">
+                                      {listBroadcasts?.length || 0}
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            
+                            <Card>
+                              <CardContent className="p-4">
+                                <div className="flex items-center space-x-3">
+                                  <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded">
+                                    <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Last Broadcast</p>
+                                    <p className="text-sm font-medium" data-testid="stat-last-broadcast">
+                                      {listBroadcasts && listBroadcasts.length > 0
+                                        ? format(new Date(listBroadcasts[0].sentAt || listBroadcasts[0].createdAt), "MMM d, yyyy")
+                                        : "Never"}
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Tabbed Content */}
+                      <Card>
+                        <Tabs value={activeListTab} onValueChange={(v: any) => setActiveListTab(v)}>
+                          <CardHeader>
+                            <TabsList className="grid w-full max-w-md grid-cols-3">
+                              <TabsTrigger value="members" data-testid="tab-members">
+                                Members
+                              </TabsTrigger>
+                              <TabsTrigger value="broadcasts" data-testid="tab-broadcasts">
+                                Broadcasts
+                              </TabsTrigger>
+                              <TabsTrigger value="details" data-testid="tab-details">
+                                Details
+                              </TabsTrigger>
+                            </TabsList>
+                          </CardHeader>
+                          
+                          <CardContent>
+                            {/* Members Tab */}
+                            <TabsContent value="members" className="mt-0 space-y-4" data-testid="content-members">
+                              <div className="flex items-center justify-between">
+                                <div className="relative flex-1 max-w-sm">
+                                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    placeholder="Search members..."
+                                    value={memberSearchTerm}
+                                    onChange={(e) => setMemberSearchTerm(e.target.value)}
+                                    className="pl-9"
+                                    data-testid="input-search-members"
+                                  />
+                                </div>
+                                <Button
+                                  onClick={() => setIsAddMembersDialogOpen(true)}
+                                  data-testid="button-add-members"
+                                >
+                                  <UserPlus className="h-4 w-4 mr-2" />
+                                  Add Members
+                                </Button>
+                              </div>
+
+                              {isLoadingMembers ? (
+                                <div className="space-y-3">
+                                  {[1, 2, 3].map((i) => (
+                                    <div key={i} className="h-16 bg-muted rounded animate-pulse"></div>
+                                  ))}
+                                </div>
+                              ) : !listMembers || listMembers.length === 0 ? (
+                                <div className="text-center py-12">
+                                  <Users className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                                  <h3 className="text-lg font-medium text-muted-foreground mb-2">No Members</h3>
+                                  <p className="text-sm text-muted-foreground mb-4">
+                                    Add members to this list to start broadcasting messages
+                                  </p>
+                                  <Button onClick={() => setIsAddMembersDialogOpen(true)} data-testid="button-add-first-member">
+                                    <UserPlus className="h-4 w-4 mr-2" />
+                                    Add Members
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="border rounded-lg overflow-hidden">
+                                  <table className="w-full">
+                                    <thead className="bg-muted">
+                                      <tr>
+                                        <th className="text-left p-3 text-sm font-medium">Name</th>
+                                        <th className="text-left p-3 text-sm font-medium">Email</th>
+                                        <th className="text-left p-3 text-sm font-medium">Phone</th>
+                                        <th className="text-left p-3 text-sm font-medium">Date Added</th>
+                                        <th className="text-left p-3 text-sm font-medium">Added By</th>
+                                        <th className="text-left p-3 text-sm font-medium">Type</th>
+                                        <th className="text-right p-3 text-sm font-medium">Actions</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {listMembers
+                                        .filter((member: any) => 
+                                          !memberSearchTerm ||
+                                          member.user?.name?.toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
+                                          member.user?.email?.toLowerCase().includes(memberSearchTerm.toLowerCase())
+                                        )
+                                        .map((member: any, idx: number) => (
+                                          <tr
+                                            key={member.id}
+                                            className="border-t hover:bg-muted/50"
+                                            data-testid={`row-member-${idx}`}
+                                          >
+                                            <td className="p-3">
+                                              <div className="font-medium" data-testid={`text-member-name-${idx}`}>
+                                                {member.user?.name || "Unknown"}
+                                              </div>
+                                            </td>
+                                            <td className="p-3 text-sm text-muted-foreground" data-testid={`text-member-email-${idx}`}>
+                                              {member.user?.email || "-"}
+                                            </td>
+                                            <td className="p-3 text-sm text-muted-foreground" data-testid={`text-member-phone-${idx}`}>
+                                              {member.user?.phoneNumber || "-"}
+                                            </td>
+                                            <td className="p-3 text-sm" data-testid={`text-member-added-${idx}`}>
+                                              {format(new Date(member.createdAt), "MMM d, yyyy")}
+                                            </td>
+                                            <td className="p-3 text-sm" data-testid={`text-member-added-by-${idx}`}>
+                                              {member.addedByUser?.name || "System"}
+                                            </td>
+                                            <td className="p-3">
+                                              {member.autoAdded && (
+                                                <Badge variant="secondary" className="text-xs" data-testid={`badge-auto-added-${idx}`}>
+                                                  Auto-added
+                                                </Badge>
+                                              )}
+                                            </td>
+                                            <td className="p-3 text-right">
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setMemberToRemove(member.userId)}
+                                                disabled={
+                                                  (listDetails.listType === 'course_schedule' && member.autoAdded) ||
+                                                  removeMemberMutation.isPending
+                                                }
+                                                data-testid={`button-remove-member-${idx}`}
+                                              >
+                                                <UserMinus className="h-4 w-4 mr-1" />
+                                                Remove
+                                              </Button>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
+                            </TabsContent>
+
+                            {/* Broadcasts Tab */}
+                            <TabsContent value="broadcasts" className="mt-0 space-y-4" data-testid="content-broadcasts">
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold">Broadcasts</h3>
+                                <Button
+                                  onClick={() => {
+                                    setComposerMode('create');
+                                    setSelectedBroadcastId(null);
+                                    setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [] });
+                                    setIsComposerOpen(true);
+                                  }}
+                                  data-testid="button-new-broadcast"
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  New Broadcast
+                                </Button>
+                              </div>
+
+                              {isLoadingBroadcasts ? (
+                                <div className="space-y-3">
+                                  {[1, 2, 3].map((i) => (
+                                    <div key={i} className="h-24 bg-muted rounded animate-pulse"></div>
+                                  ))}
+                                </div>
+                              ) : !listBroadcasts || listBroadcasts.length === 0 ? (
+                                <div className="text-center py-12">
+                                  <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                                  <h3 className="text-lg font-medium text-muted-foreground mb-2">No Broadcasts</h3>
+                                  <p className="text-sm text-muted-foreground mb-4">
+                                    No broadcast messages have been sent to this list yet
+                                  </p>
+                                  <Button
+                                    onClick={() => {
+                                      setComposerMode('create');
+                                      setSelectedBroadcastId(null);
+                                      setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [] });
+                                      setIsComposerOpen(true);
+                                    }}
+                                    data-testid="button-create-first-broadcast"
+                                  >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Create Your First Broadcast
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  {listBroadcasts.map((broadcast: any, idx: number) => (
+                                    <Card key={broadcast.id} data-testid={`card-broadcast-${idx}`}>
+                                      <CardContent className="p-4">
+                                        <div className="flex items-start justify-between mb-2">
+                                          <div className="flex-1">
+                                            <h4 className="font-semibold" data-testid={`text-broadcast-subject-${idx}`}>
+                                              {broadcast.subject || "Broadcast Message"}
+                                            </h4>
+                                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2" data-testid={`text-broadcast-preview-${idx}`}>
+                                              {broadcast.messagePlain}
+                                            </p>
+                                          </div>
+                                          <Badge
+                                            variant={
+                                              broadcast.status === 'sent' ? 'default' :
+                                              broadcast.status === 'sending' ? 'secondary' :
+                                              broadcast.status === 'failed' ? 'destructive' :
+                                              'outline'
+                                            }
+                                            data-testid={`badge-broadcast-status-${idx}`}
+                                          >
+                                            {broadcast.status}
+                                          </Badge>
+                                        </div>
+                                        
+                                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                                          <div className="flex items-center space-x-1">
+                                            <Clock className="h-3 w-3" />
+                                            <span data-testid={`text-broadcast-date-${idx}`}>
+                                              {format(new Date(broadcast.sentAt || broadcast.createdAt), "MMM d, yyyy h:mm a")}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center space-x-1">
+                                            <Users className="h-3 w-3" />
+                                            <span data-testid={`text-broadcast-recipients-${idx}`}>
+                                              {broadcast.totalRecipients || 0} recipients
+                                            </span>
+                                          </div>
+                                          {broadcast.successCount !== undefined && (
+                                            <>
+                                              <div className="flex items-center space-x-1">
+                                                <CheckCircle className="h-3 w-3 text-green-600" />
+                                                <span data-testid={`text-broadcast-success-${idx}`}>
+                                                  {broadcast.successCount} sent
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center space-x-1">
+                                                <XCircle className="h-3 w-3 text-red-600" />
+                                                <span data-testid={`text-broadcast-failed-${idx}`}>
+                                                  {broadcast.failedCount} failed
+                                                </span>
+                                              </div>
+                                            </>
+                                          )}
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  ))}
+                                </div>
+                              )}
+                            </TabsContent>
+
+                            {/* Details Tab */}
+                            <TabsContent value="details" className="mt-0 space-y-4" data-testid="content-details">
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="text-sm font-medium text-muted-foreground">List Type</label>
+                                  <div className="mt-1">
+                                    {listDetails.listType === 'course_schedule' ? (
+                                      <Badge variant="outline" data-testid="badge-detail-type">
+                                        <Calendar className="h-3 w-3 mr-1" />
+                                        Course Schedule
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" data-testid="badge-detail-type">
+                                        Custom
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="text-sm font-medium text-muted-foreground">Created</label>
+                                  <p className="mt-1" data-testid="text-detail-created">
+                                    {format(new Date(listDetails.createdAt), "MMMM d, yyyy 'at' h:mm a")}
+                                  </p>
+                                </div>
+
+                                {listDetails.updatedAt && (
+                                  <div>
+                                    <label className="text-sm font-medium text-muted-foreground">Last Updated</label>
+                                    <p className="mt-1" data-testid="text-detail-updated">
+                                      {format(new Date(listDetails.updatedAt), "MMMM d, yyyy 'at' h:mm a")}
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <label className="text-sm font-medium text-muted-foreground">Tags</label>
+                                    {listDetails.listType === 'custom' && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          setEditListTags(listDetails.tags?.join(", ") || "");
+                                          setIsEditListDialogOpen(true);
+                                        }}
+                                        data-testid="button-edit-tags"
+                                      >
+                                        <Edit className="h-3 w-3 mr-1" />
+                                        Edit Tags
+                                      </Button>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {listDetails.tags && listDetails.tags.length > 0 ? (
+                                      listDetails.tags.map((tag: string, idx: number) => (
+                                        <Badge key={idx} variant="secondary" data-testid={`badge-detail-tag-${idx}`}>
+                                          <Tag className="h-3 w-3 mr-1" />
+                                          {tag}
+                                        </Badge>
+                                      ))
+                                    ) : (
+                                      <p className="text-sm text-muted-foreground">No tags</p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {listDetails.listType === 'course_schedule' && listDetails.schedule && (
+                                  <div>
+                                    <label className="text-sm font-medium text-muted-foreground">Associated Course Schedule</label>
+                                    <Card className="mt-2">
+                                      <CardContent className="p-4">
+                                        <div className="space-y-2">
+                                          <div>
+                                            <span className="text-sm font-medium">Course:</span>
+                                            <span className="text-sm ml-2" data-testid="text-detail-course">
+                                              {listDetails.schedule.course?.name || "Unknown"}
+                                            </span>
+                                          </div>
+                                          <div>
+                                            <span className="text-sm font-medium">Schedule:</span>
+                                            <span className="text-sm ml-2" data-testid="text-detail-schedule">
+                                              {format(new Date(listDetails.schedule.startDate), "MMM d")} - {format(new Date(listDetails.schedule.endDate), "MMM d, yyyy")}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  </div>
+                                )}
+                              </div>
+                            </TabsContent>
+                          </CardContent>
+                        </Tabs>
+                      </Card>
+                    </>
+                  )}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </TabsContent>
@@ -1495,6 +2250,629 @@ export function CommunicationsDashboard() {
               data-testid="button-submit-create-list"
             >
               {createListMutation.isPending ? "Creating..." : "Create List"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Members Dialog */}
+      <Dialog open={isAddMembersDialogOpen} onOpenChange={setIsAddMembersDialogOpen}>
+        <DialogContent className="max-w-2xl" data-testid="dialog-add-members">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <UserPlus className="h-5 w-5" />
+              <span>Add Members to List</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {isLoadingStudents ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 bg-muted rounded animate-pulse"></div>
+                ))}
+              </div>
+            ) : availableStudents && availableStudents.length > 0 ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Select students to add to this list
+                </p>
+                <div className="border rounded-lg max-h-96 overflow-y-auto">
+                  {availableStudents
+                    .filter((student: any) => 
+                      !listMembers?.some((member: any) => member.userId === student.id)
+                    )
+                    .map((student: any, idx: number) => (
+                      <div
+                        key={student.id}
+                        className="flex items-center space-x-3 p-3 border-b last:border-b-0 hover:bg-muted"
+                        data-testid={`row-available-student-${idx}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedMembersToAdd.includes(student.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedMembersToAdd([...selectedMembersToAdd, student.id]);
+                            } else {
+                              setSelectedMembersToAdd(selectedMembersToAdd.filter(id => id !== student.id));
+                            }
+                          }}
+                          className="h-4 w-4"
+                          data-testid={`checkbox-student-${idx}`}
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium" data-testid={`text-student-name-${idx}`}>
+                            {student.firstName} {student.lastName}
+                          </div>
+                          <div className="text-sm text-muted-foreground" data-testid={`text-student-email-${idx}`}>
+                            {student.email}
+                          </div>
+                        </div>
+                        {student.phone && (
+                          <div className="text-sm text-muted-foreground" data-testid={`text-student-phone-${idx}`}>
+                            {student.phone}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {selectedMembersToAdd.length} member{selectedMembersToAdd.length !== 1 ? 's' : ''} selected
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                <p className="text-sm text-muted-foreground">
+                  No available students to add
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAddMembersDialogOpen(false);
+                setSelectedMembersToAdd([]);
+              }}
+              data-testid="button-cancel-add-members"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedListId && selectedMembersToAdd.length > 0) {
+                  addMembersMutation.mutate({
+                    listId: selectedListId,
+                    userIds: selectedMembersToAdd
+                  });
+                }
+              }}
+              disabled={selectedMembersToAdd.length === 0 || addMembersMutation.isPending}
+              data-testid="button-submit-add-members"
+            >
+              {addMembersMutation.isPending ? "Adding..." : `Add ${selectedMembersToAdd.length} Member${selectedMembersToAdd.length !== 1 ? 's' : ''}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Member Confirmation Dialog */}
+      <Dialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
+        <DialogContent className="max-w-md" data-testid="dialog-remove-member">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <UserMinus className="h-5 w-5" />
+              <span>Remove Member</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to remove this member from the list? This action cannot be undone.
+          </p>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setMemberToRemove(null)}
+              data-testid="button-cancel-remove-member"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (selectedListId && memberToRemove) {
+                  removeMemberMutation.mutate({
+                    listId: selectedListId,
+                    userId: memberToRemove
+                  });
+                }
+              }}
+              disabled={removeMemberMutation.isPending}
+              data-testid="button-confirm-remove-member"
+            >
+              {removeMemberMutation.isPending ? "Removing..." : "Remove Member"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete List Confirmation Dialog */}
+      <Dialog open={isDeleteListDialogOpen} onOpenChange={setIsDeleteListDialogOpen}>
+        <DialogContent className="max-w-md" data-testid="dialog-delete-list">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Trash2 className="h-5 w-5" />
+              <span>Delete List</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to delete this list? This action cannot be undone.
+            </p>
+            {listMembers && listMembers.length > 0 && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  <strong>Warning:</strong> This list has {listMembers.length} member{listMembers.length !== 1 ? 's' : ''}. 
+                  All members will be removed from the list.
+                </p>
+              </div>
+            )}
+            {listBroadcasts && listBroadcasts.length > 0 && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  <strong>Note:</strong> This list has {listBroadcasts.length} broadcast{listBroadcasts.length !== 1 ? 's' : ''}. 
+                  Broadcast history will be preserved but will no longer be associated with this list.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteListDialogOpen(false)}
+              data-testid="button-cancel-delete-list"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (selectedListId) {
+                  deleteListMutation.mutate(selectedListId);
+                }
+              }}
+              disabled={deleteListMutation.isPending}
+              data-testid="button-confirm-delete-list"
+            >
+              {deleteListMutation.isPending ? "Deleting..." : "Delete List"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit List Dialog */}
+      <Dialog open={isEditListDialogOpen} onOpenChange={setIsEditListDialogOpen}>
+        <DialogContent className="max-w-md" data-testid="dialog-edit-list">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Edit className="h-5 w-5" />
+              <span>Edit List</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                List Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                placeholder="Enter list name..."
+                value={editListName}
+                onChange={(e) => setEditListName(e.target.value)}
+                data-testid="input-edit-list-name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Description
+              </label>
+              <Textarea
+                placeholder="Enter list description..."
+                value={editListDescription}
+                onChange={(e) => setEditListDescription(e.target.value)}
+                rows={3}
+                className="resize-none"
+                data-testid="textarea-edit-list-description"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Tags (comma-separated)
+              </label>
+              <Input
+                placeholder="e.g., students, instructors, advanced"
+                value={editListTags}
+                onChange={(e) => setEditListTags(e.target.value)}
+                data-testid="input-edit-list-tags"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Separate multiple tags with commas
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditListDialogOpen(false);
+                setEditListName("");
+                setEditListDescription("");
+                setEditListTags("");
+              }}
+              data-testid="button-cancel-edit-list"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!editListName.trim()) {
+                  toast({
+                    title: "Validation Error",
+                    description: "List name is required",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+
+                const tags = editListTags
+                  .split(',')
+                  .map(t => t.trim())
+                  .filter(t => t.length > 0);
+
+                if (selectedListId) {
+                  updateListMutation.mutate({
+                    id: selectedListId,
+                    data: {
+                      name: editListName.trim(),
+                      description: editListDescription.trim() || undefined,
+                      tags: tags.length > 0 ? tags : undefined
+                    }
+                  });
+                }
+              }}
+              disabled={!editListName.trim() || updateListMutation.isPending}
+              data-testid="button-submit-edit-list"
+            >
+              {updateListMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Broadcast Composer Dialog */}
+      <Dialog open={isComposerOpen} onOpenChange={setIsComposerOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" data-testid="dialog-broadcast-composer">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Send className="h-5 w-5" />
+              <span>{composerMode === 'create' ? 'Create Broadcast Message' : 'Edit Broadcast'}</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Subject Field */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Subject (Optional)
+              </label>
+              <Input
+                placeholder="For tracking purposes only - not sent in SMS"
+                value={broadcastForm.subject}
+                onChange={(e) => setBroadcastForm(prev => ({ ...prev, subject: e.target.value }))}
+                data-testid="input-broadcast-subject"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Subject is for your reference only and won't be included in the SMS
+              </p>
+            </div>
+
+            {/* Dynamic Tags Section */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Insert Dynamic Tags
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertTagAtCursor('{{firstName}}')}
+                  data-testid="button-tag-firstname"
+                >
+                  <Tag className="h-3 w-3 mr-1" />
+                  First Name
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertTagAtCursor('{{lastName}}')}
+                  data-testid="button-tag-lastname"
+                >
+                  <Tag className="h-3 w-3 mr-1" />
+                  Last Name
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => insertTagAtCursor('{{email}}')}
+                  data-testid="button-tag-email"
+                >
+                  <Tag className="h-3 w-3 mr-1" />
+                  Email
+                </Button>
+                {listDetails?.listType === 'course_schedule' && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertTagAtCursor('{{courseName}}')}
+                      data-testid="button-tag-coursename"
+                    >
+                      <Tag className="h-3 w-3 mr-1" />
+                      Course Name
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => insertTagAtCursor('{{scheduleDate}}')}
+                      data-testid="button-tag-scheduledate"
+                    >
+                      <Tag className="h-3 w-3 mr-1" />
+                      Schedule Date
+                    </Button>
+                  </>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Click a tag to insert it at the cursor position. Tags will be replaced with actual values when sending.
+              </p>
+            </div>
+
+            {/* Message Content Field */}
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Message Content <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                ref={messageContentRef}
+                placeholder="Type your message here... Use the tags above to personalize your message."
+                value={broadcastForm.messageContent}
+                onChange={(e) => setBroadcastForm(prev => ({ ...prev, messageContent: e.target.value }))}
+                rows={6}
+                className="resize-none"
+                data-testid="textarea-broadcast-message"
+              />
+              
+              {/* Character Counter */}
+              <div className="flex items-center justify-between mt-2">
+                <div className={`text-sm font-medium ${getCharacterCount(broadcastForm.messageContent).color}`}>
+                  {getCharacterCount(broadcastForm.messageContent).count} characters
+                  {' • '}
+                  {getCharacterCount(broadcastForm.messageContent).messages} message{getCharacterCount(broadcastForm.messageContent).messages !== 1 ? 's' : ''}
+                </div>
+                {getCharacterCount(broadcastForm.messageContent).count > 160 && (
+                  <Badge variant="secondary" className="text-xs">
+                    SMS will be split into multiple messages
+                  </Badge>
+                )}
+              </div>
+              
+              {getCharacterCount(broadcastForm.messageContent).count > 320 && (
+                <p className="text-xs text-red-600 mt-1">
+                  ⚠️ Message is quite long. Consider shortening it for better deliverability.
+                </p>
+              )}
+            </div>
+
+            {/* Message Preview Section */}
+            {broadcastForm.messageContent && (
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Preview (with sample data)
+                </label>
+                <div className="p-4 bg-muted rounded-lg border border-border" data-testid="preview-broadcast-message">
+                  <p className="text-sm whitespace-pre-wrap">
+                    {getPreviewMessage(broadcastForm.messageContent)}
+                  </p>
+                </div>
+                {broadcastForm.dynamicTags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    <span className="text-xs text-muted-foreground">Tags used:</span>
+                    {broadcastForm.dynamicTags.map((tag, idx) => (
+                      <Badge key={idx} variant="outline" className="text-xs" data-testid={`badge-used-tag-${idx}`}>
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex items-center justify-between sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsComposerOpen(false);
+                setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [] });
+              }}
+              data-testid="button-cancel-composer"
+            >
+              Cancel
+            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (!broadcastForm.messageContent.trim()) {
+                    toast({
+                      title: "Error",
+                      description: "Message content cannot be empty",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  
+                  if (selectedListId) {
+                    createBroadcastMutation.mutate({
+                      listId: selectedListId,
+                      data: {
+                        subject: broadcastForm.subject || null,
+                        messageContent: broadcastForm.messageContent,
+                        messagePlain: broadcastForm.messagePlain,
+                        dynamicTags: broadcastForm.dynamicTags,
+                        status: 'draft'
+                      }
+                    });
+                  }
+                }}
+                disabled={createBroadcastMutation.isPending || !broadcastForm.messageContent.trim()}
+                data-testid="button-save-draft"
+              >
+                {createBroadcastMutation.isPending ? "Saving..." : "Save Draft"}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  if (!broadcastForm.messageContent.trim()) {
+                    toast({
+                      title: "Error",
+                      description: "Message content cannot be empty",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  setIsSendConfirmOpen(true);
+                }}
+                disabled={!broadcastForm.messageContent.trim()}
+                data-testid="button-send-broadcast"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Send Broadcast
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Confirmation Dialog */}
+      <Dialog open={isSendConfirmOpen} onOpenChange={setIsSendConfirmOpen}>
+        <DialogContent className="max-w-md" data-testid="dialog-send-confirmation">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Send className="h-5 w-5" />
+              <span>Confirm Send Broadcast</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded">
+              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium mb-2">
+                ⚠️ You are about to send this message to all list members
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                This action cannot be undone. Make sure your message is correct before proceeding.
+              </p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Recipients</label>
+              <p className="text-2xl font-bold" data-testid="text-recipient-count">
+                {listMembers?.length || 0} members
+              </p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Message Preview</label>
+              <div className="mt-2 p-3 bg-muted rounded border border-border" data-testid="preview-send-message">
+                <p className="text-sm whitespace-pre-wrap">
+                  {getPreviewMessage(broadcastForm.messageContent)}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Estimated Cost</label>
+              <p className="text-sm mt-1">
+                ${((listMembers?.length || 0) * getCharacterCount(broadcastForm.messageContent).messages * 0.0079).toFixed(2)}
+                {' '}
+                <span className="text-muted-foreground">
+                  ({listMembers?.length || 0} recipients × {getCharacterCount(broadcastForm.messageContent).messages} message{getCharacterCount(broadcastForm.messageContent).messages !== 1 ? 's' : ''} × $0.0079/msg)
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsSendConfirmOpen(false)}
+              data-testid="button-cancel-send"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!selectedListId) return;
+
+                try {
+                  // First create/save the broadcast
+                  const result = await createBroadcastMutation.mutateAsync({
+                    listId: selectedListId,
+                    data: {
+                      subject: broadcastForm.subject || null,
+                      messageContent: broadcastForm.messageContent,
+                      messagePlain: broadcastForm.messagePlain,
+                      dynamicTags: broadcastForm.dynamicTags,
+                      status: 'draft'
+                    }
+                  });
+
+                  // Then send it
+                  if (result?.id) {
+                    await sendBroadcastMutation.mutateAsync(result.id);
+                  }
+                } catch (error) {
+                  console.error('Error sending broadcast:', error);
+                }
+              }}
+              disabled={sendBroadcastMutation.isPending || createBroadcastMutation.isPending}
+              data-testid="button-confirm-send"
+            >
+              {sendBroadcastMutation.isPending || createBroadcastMutation.isPending ? (
+                "Sending..."
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Confirm & Send
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
