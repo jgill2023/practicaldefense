@@ -53,19 +53,17 @@ export function PaymentDetailsModal({
   const { data: paymentDetails, isLoading, error } = useQuery<PaymentDetails>({
     queryKey: ["/api/instructor/payment-details", enrollmentId],
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/instructor/payment-details/${enrollmentId}`);
-      return response.json();
+      return await apiRequest("GET", `/api/instructor/payment-details/${enrollmentId}`);
     },
     enabled: !!enrollmentId && isOpen,
   });
 
   const sendSMSReminderMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/instructor/send-payment-reminder", {
+      return await apiRequest("POST", "/api/instructor/send-payment-reminder", {
         enrollmentId,
         method: "sms",
       });
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -84,11 +82,10 @@ export function PaymentDetailsModal({
 
   const sendEmailReminderMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/instructor/send-payment-reminder", {
+      return await apiRequest("POST", "/api/instructor/send-payment-reminder", {
         enrollmentId,
         method: "email",
       });
-      return response.json();
     },
     onSuccess: () => {
       toast({
