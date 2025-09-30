@@ -3811,6 +3811,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Twilio SMS Webhook Endpoint - Receives incoming SMS messages
   app.post("/api/sms/webhook", async (req, res) => {
+    console.log("=== WEBHOOK CALLED ===");
+    console.log("Request body:", JSON.stringify(req.body, null, 2));
+    console.log("Request headers:", JSON.stringify(req.headers, null, 2));
+    
     try {
       // Twilio sends webhook data as form-urlencoded
       const {
@@ -3825,7 +3829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         FromCountry
       } = req.body;
 
-      console.log("Incoming SMS webhook received:", {
+      console.log("Incoming SMS webhook - parsed data:", {
         sid: MessageSid,
         from: From,
         to: To,
@@ -3833,11 +3837,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         numMedia: NumMedia
       });
 
+      if (!MessageSid || !From || !To) {
+        console.error("Missing required fields in webhook data");
+        res.type('text/xml');
+        return res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
+      }
+
       // Try to find the user by phone number
+      console.log("Looking for matching user...");
       const users = await storage.getAllStudents();
+      console.log(`Found ${users.length} users in database`);
+      
       const matchingUser = users.find(u => 
         u.phone && u.phone.replace(/\D/g, '') === From.replace(/\D/g, '')
       );
+      console.log("Matching user:", matchingUser ? `Found: ${matchingUser.id}` : 'Not found');
 
       // Save the incoming SMS to the communications table
       const communicationData = {
@@ -3860,19 +3874,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isFlagged: false,
       };
 
+      console.log("Saving communication to database...");
       const savedCommunication = await storage.createCommunication(communicationData);
 
-      console.log("Incoming SMS saved to communications:", {
+      console.log("✓ SMS saved successfully:", {
         id: savedCommunication.id,
         from: From,
-        userId: matchingUser?.id || 'no matching user'
+        to: To,
+        content: Body,
+        userId: matchingUser?.id || 'no user'
       });
 
       // Respond to Twilio with TwiML (optional - empty response is fine)
       res.type('text/xml');
       res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
     } catch (error: any) {
-      console.error("Error processing SMS webhook:", error);
+      console.error("!!! Error processing SMS webhook:", error);
+      console.error("Error stack:", error.stack);
       
       // Still respond with 200 to Twilio to prevent retries
       res.type('text/xml');
