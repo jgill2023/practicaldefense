@@ -771,37 +771,7 @@ export function CommunicationsDashboard() {
 
             {/* SMS Inbox Tab */}
             <TabsContent value="inbox" className="space-y-4" data-testid="content-sms-inbox">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span className="flex items-center space-x-2">
-                      <MessageSquare className="h-5 w-5" />
-                      <span>SMS Inbox</span>
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <Select>
-                        <SelectTrigger data-testid="select-inbox-filter">
-                          <SelectValue placeholder="All Messages" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Messages</SelectItem>
-                          <SelectItem value="unread">Unread</SelectItem>
-                          <SelectItem value="flagged">Flagged</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button variant="outline" size="sm" data-testid="button-refresh-inbox">
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-muted-foreground">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-4" />
-                    <p>SMS messages will be retrieved directly from Twilio and displayed here.</p>
-                  </div>
-                </CardContent>
-              </Card>
+              {renderCommunicationsTable(getFilteredCommunications('sms', 'inbox'))}
             </TabsContent>
 
             {/* SMS Compose Tab */}
