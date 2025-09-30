@@ -4268,9 +4268,9 @@ Practical Defense Training`;
         return res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
       }
 
-      // Try to find the user by phone number
+      // Try to find the user by phone number (search ALL users, not just students)
       console.log("Looking for matching user...");
-      const users = await storage.getAllStudents();
+      const users = await storage.getAllUsers();
       console.log(`Found ${users.length} users in database`);
       
       const matchingUser = users.find(u => 
