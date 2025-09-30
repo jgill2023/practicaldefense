@@ -10,7 +10,8 @@ import { enrollments } from "@shared/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, insertCourseNotificationSignupSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
+import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, insertCourseNotificationSignupSchema, insertSmsListSchema, insertSmsListMemberSchema, insertSmsBroadcastMessageSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
+import { sendSms } from "./smsService";
 import { CourseNotificationEngine } from "./notificationEngine";
 import "./types"; // Import type declarations
 
@@ -4988,6 +4989,688 @@ jeremy@abqconcealedcarry.com
       res.status(500).json({ 
         error: "An error occurred while sending your message. Please try again." 
       });
+    }
+  });
+
+  // SMS Lists Management Routes (Instructor-protected)
+  
+  // 1. GET /api/sms-lists - Get all lists for authenticated instructor
+  app.get('/api/sms-lists', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const lists = await storage.getSmsListsByInstructor(userId);
+      
+      // Add member counts to each list
+      const listsWithCounts = await Promise.all(
+        lists.map(async (list) => {
+          const members = await storage.getSmsListMembers(list.id);
+          return {
+            ...list,
+            memberCount: members.length,
+          };
+        })
+      );
+
+      res.json(listsWithCounts);
+    } catch (error) {
+      console.error("Error fetching SMS lists:", error);
+      res.status(500).json({ message: "Failed to fetch SMS lists" });
+    }
+  });
+
+  // 2. GET /api/sms-lists/:listId - Get single list with full details
+  app.get('/api/sms-lists/:listId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const list = await storage.getSmsListWithDetails(req.params.listId);
+      
+      if (!list) {
+        return res.status(404).json({ message: "SMS list not found" });
+      }
+
+      // Verify ownership
+      if (list.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You do not own this list." });
+      }
+
+      res.json(list);
+    } catch (error) {
+      console.error("Error fetching SMS list details:", error);
+      res.status(500).json({ message: "Failed to fetch SMS list details" });
+    }
+  });
+
+  // 3. POST /api/sms-lists - Create a new custom list
+  app.post('/api/sms-lists', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Validate and ensure listType is 'custom' and instructorId matches
+      const validatedData = insertSmsListSchema.parse({
+        ...req.body,
+        listType: 'custom',
+        instructorId: userId,
+        scheduleId: null, // Custom lists don't have schedules
+      });
+
+      const list = await storage.createSmsList(validatedData);
+      res.status(201).json(list);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error creating SMS list:", error);
+      res.status(500).json({ message: "Failed to create SMS list" });
+    }
+  });
+
+  // 4. PATCH /api/sms-lists/:listId - Update list details
+  app.patch('/api/sms-lists/:listId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Verify list exists and ownership
+      const existingList = await storage.getSmsList(req.params.listId);
+      
+      if (!existingList) {
+        return res.status(404).json({ message: "SMS list not found" });
+      }
+
+      if (existingList.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You do not own this list." });
+      }
+
+      // Only allow updating specific fields
+      const allowedFields = ['name', 'description', 'tags', 'isActive'];
+      const updateData: any = {};
+      
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "No valid fields to update" });
+      }
+
+      const updatedList = await storage.updateSmsList(req.params.listId, updateData);
+      res.json(updatedList);
+    } catch (error) {
+      console.error("Error updating SMS list:", error);
+      res.status(500).json({ message: "Failed to update SMS list" });
+    }
+  });
+
+  // 5. DELETE /api/sms-lists/:listId - Delete a list
+  app.delete('/api/sms-lists/:listId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Verify list exists and ownership
+      const existingList = await storage.getSmsList(req.params.listId);
+      
+      if (!existingList) {
+        return res.status(404).json({ message: "SMS list not found" });
+      }
+
+      if (existingList.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You do not own this list." });
+      }
+
+      // Only allow deleting custom lists
+      if (existingList.listType !== 'custom') {
+        return res.status(400).json({ 
+          message: "Cannot delete course schedule lists. Only custom lists can be deleted." 
+        });
+      }
+
+      await storage.deleteSmsList(req.params.listId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting SMS list:", error);
+      res.status(500).json({ message: "Failed to delete SMS list" });
+    }
+  });
+
+  // 6. GET /api/sms-lists/:listId/members - Get all members of a list
+  app.get('/api/sms-lists/:listId/members', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Verify list exists and ownership
+      const list = await storage.getSmsList(req.params.listId);
+      
+      if (!list) {
+        return res.status(404).json({ message: "SMS list not found" });
+      }
+
+      if (list.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You do not own this list." });
+      }
+
+      const members = await storage.getSmsListMembers(req.params.listId);
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching SMS list members:", error);
+      res.status(500).json({ message: "Failed to fetch SMS list members" });
+    }
+  });
+
+  // 7. POST /api/sms-lists/:listId/members - Add member(s) to list
+  app.post('/api/sms-lists/:listId/members', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Verify list exists and ownership
+      const list = await storage.getSmsList(req.params.listId);
+      
+      if (!list) {
+        return res.status(404).json({ message: "SMS list not found" });
+      }
+
+      if (list.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You do not own this list." });
+      }
+
+      // Accept single userId or array of userIds
+      const { userId: singleUserId, userIds } = req.body;
+      
+      if (!singleUserId && !userIds) {
+        return res.status(400).json({ message: "userId or userIds is required" });
+      }
+
+      const userIdsToAdd = singleUserId ? [singleUserId] : userIds;
+      
+      if (!Array.isArray(userIdsToAdd) || userIdsToAdd.length === 0) {
+        return res.status(400).json({ message: "Invalid user IDs provided" });
+      }
+
+      // Check for duplicates and prepare members to add
+      const membersToAdd = [];
+      const alreadyMembers = [];
+      
+      for (const userIdToAdd of userIdsToAdd) {
+        const isMember = await storage.checkSmsListMembership(req.params.listId, userIdToAdd);
+        
+        if (isMember) {
+          alreadyMembers.push(userIdToAdd);
+        } else {
+          membersToAdd.push({
+            listId: req.params.listId,
+            userId: userIdToAdd,
+            addedBy: userId,
+            autoAdded: false,
+          });
+        }
+      }
+
+      // Add members
+      const addedMembers = membersToAdd.length > 0 
+        ? await storage.addSmsListMembers(membersToAdd)
+        : [];
+
+      res.json({
+        added: addedMembers,
+        alreadyMembers: alreadyMembers,
+        message: `Successfully added ${addedMembers.length} member(s). ${alreadyMembers.length} already in list.`,
+      });
+    } catch (error) {
+      console.error("Error adding SMS list members:", error);
+      res.status(500).json({ message: "Failed to add members to SMS list" });
+    }
+  });
+
+  // 8. DELETE /api/sms-lists/:listId/members/:userId - Remove member from list
+  app.delete('/api/sms-lists/:listId/members/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const instructorId = req.user.claims.sub;
+      const user = await storage.getUser(instructorId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const { listId, userId } = req.params;
+
+      // Verify list exists and ownership
+      const list = await storage.getSmsList(listId);
+      
+      if (!list) {
+        return res.status(404).json({ message: "SMS list not found" });
+      }
+
+      if (list.instructorId !== instructorId) {
+        return res.status(403).json({ message: "Access denied. You do not own this list." });
+      }
+
+      // For course schedule lists, don't allow removing auto-added members
+      if (list.listType === 'course_schedule') {
+        const members = await storage.getSmsListMembers(listId);
+        const member = members.find(m => m.userId === userId);
+        
+        if (member && member.autoAdded) {
+          return res.status(400).json({ 
+            message: "Cannot remove auto-added members from course schedule lists" 
+          });
+        }
+      }
+
+      await storage.removeSmsListMemberByUserAndList(listId, userId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing SMS list member:", error);
+      res.status(500).json({ message: "Failed to remove member from SMS list" });
+    }
+  });
+
+  // 9. GET /api/sms-lists/search?q=query - Search lists by name/tags
+  app.get('/api/sms-lists/search', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const query = req.query.q as string;
+      
+      if (!query || query.trim() === '') {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+
+      const lists = await storage.searchSmsLists(userId, query.trim());
+      res.json(lists);
+    } catch (error) {
+      console.error("Error searching SMS lists:", error);
+      res.status(500).json({ message: "Failed to search SMS lists" });
+    }
+  });
+
+  // SMS Broadcast Messages Routes (Instructor-protected)
+
+  // 1. GET /api/sms-lists/:listId/broadcasts - Get all broadcast messages for a list
+  app.get('/api/sms-lists/:listId/broadcasts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Verify list exists and ownership
+      const list = await storage.getSmsList(req.params.listId);
+      
+      if (!list) {
+        return res.status(404).json({ message: "SMS list not found" });
+      }
+
+      if (list.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You do not own this list." });
+      }
+
+      const broadcasts = await storage.getSmsBroadcastsByList(req.params.listId);
+      res.json(broadcasts);
+    } catch (error) {
+      console.error("Error fetching broadcasts:", error);
+      res.status(500).json({ message: "Failed to fetch broadcasts" });
+    }
+  });
+
+  // 2. GET /api/broadcasts/:broadcastId - Get single broadcast with full details
+  app.get('/api/broadcasts/:broadcastId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const broadcast = await storage.getSmsBroadcastWithDeliveryStats(req.params.broadcastId);
+      
+      if (!broadcast) {
+        return res.status(404).json({ message: "Broadcast not found" });
+      }
+
+      // Verify ownership through list
+      const list = await storage.getSmsList(broadcast.listId);
+      
+      if (!list || list.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You do not own this broadcast." });
+      }
+
+      res.json(broadcast);
+    } catch (error) {
+      console.error("Error fetching broadcast:", error);
+      res.status(500).json({ message: "Failed to fetch broadcast" });
+    }
+  });
+
+  // 3. POST /api/sms-lists/:listId/broadcasts - Create new broadcast (draft)
+  app.post('/api/sms-lists/:listId/broadcasts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Verify list exists and ownership
+      const list = await storage.getSmsList(req.params.listId);
+      
+      if (!list) {
+        return res.status(404).json({ message: "SMS list not found" });
+      }
+
+      if (list.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You do not own this list." });
+      }
+
+      // Validate and create broadcast
+      const validatedData = insertSmsBroadcastMessageSchema.parse({
+        ...req.body,
+        listId: req.params.listId,
+        instructorId: userId,
+        status: 'draft',
+        totalRecipients: 0,
+        successCount: 0,
+        failureCount: 0,
+      });
+
+      const broadcast = await storage.createSmsBroadcastMessage(validatedData);
+      res.status(201).json(broadcast);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error creating broadcast:", error);
+      res.status(500).json({ message: "Failed to create broadcast" });
+    }
+  });
+
+  // 4. PATCH /api/broadcasts/:broadcastId - Update broadcast message
+  app.patch('/api/broadcasts/:broadcastId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Verify broadcast exists
+      const broadcast = await storage.getSmsBroadcastMessage(req.params.broadcastId);
+      
+      if (!broadcast) {
+        return res.status(404).json({ message: "Broadcast not found" });
+      }
+
+      // Verify ownership
+      if (broadcast.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You do not own this broadcast." });
+      }
+
+      // Only allow updating drafts
+      if (broadcast.status !== 'draft') {
+        return res.status(400).json({ message: "Only draft broadcasts can be updated" });
+      }
+
+      // Only allow updating specific fields
+      const allowedFields = ['subject', 'messageContent', 'messageHtml', 'messagePlain', 'attachmentUrls', 'dynamicTags'];
+      const updateData: any = {};
+      
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "No valid fields to update" });
+      }
+
+      const updatedBroadcast = await storage.updateSmsBroadcastMessage(req.params.broadcastId, updateData);
+      res.json(updatedBroadcast);
+    } catch (error) {
+      console.error("Error updating broadcast:", error);
+      res.status(500).json({ message: "Failed to update broadcast" });
+    }
+  });
+
+  // 5. DELETE /api/broadcasts/:broadcastId - Delete a broadcast
+  app.delete('/api/broadcasts/:broadcastId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Verify broadcast exists
+      const broadcast = await storage.getSmsBroadcastMessage(req.params.broadcastId);
+      
+      if (!broadcast) {
+        return res.status(404).json({ message: "Broadcast not found" });
+      }
+
+      // Verify ownership
+      if (broadcast.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You do not own this broadcast." });
+      }
+
+      // Only allow deleting drafts
+      if (broadcast.status !== 'draft') {
+        return res.status(400).json({ message: "Only draft broadcasts can be deleted" });
+      }
+
+      await storage.deleteSmsBroadcastMessage(req.params.broadcastId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting broadcast:", error);
+      res.status(500).json({ message: "Failed to delete broadcast" });
+    }
+  });
+
+  // 6. POST /api/broadcasts/:broadcastId/send - Send broadcast to all list members
+  app.post('/api/broadcasts/:broadcastId/send', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Get broadcast
+      const broadcast = await storage.getSmsBroadcastMessage(req.params.broadcastId);
+      
+      if (!broadcast) {
+        return res.status(404).json({ message: "Broadcast not found" });
+      }
+
+      // Verify ownership
+      if (broadcast.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You do not own this broadcast." });
+      }
+
+      // Only allow sending drafts
+      if (broadcast.status !== 'draft') {
+        return res.status(400).json({ message: "Only draft broadcasts can be sent" });
+      }
+
+      // Get list members
+      const members = await storage.getSmsListMembers(broadcast.listId);
+      const membersWithPhone = members.filter(m => m.user.phone && m.user.phone.trim() !== '');
+
+      if (membersWithPhone.length === 0) {
+        return res.status(400).json({ message: "No members with valid phone numbers found" });
+      }
+
+      // Update broadcast status to 'sending'
+      await storage.updateSmsBroadcastMessage(req.params.broadcastId, {
+        status: 'sending',
+        totalRecipients: membersWithPhone.length,
+      });
+
+      // Helper function to replace dynamic tags
+      const replaceDynamicTags = (message: string, member: any): string => {
+        let personalizedMessage = message;
+        
+        // Replace common tags
+        personalizedMessage = personalizedMessage.replace(/\{\{firstName\}\}/g, member.user.firstName || '');
+        personalizedMessage = personalizedMessage.replace(/\{\{lastName\}\}/g, member.user.lastName || '');
+        personalizedMessage = personalizedMessage.replace(/\{\{email\}\}/g, member.user.email || '');
+        
+        // Add more tag replacements as needed (courseName, etc.)
+        
+        return personalizedMessage;
+      };
+
+      // Send messages asynchronously (fire-and-forget)
+      let successCount = 0;
+      let failureCount = 0;
+
+      // Process sends in the background but track results
+      const sendPromises = membersWithPhone.map(async (member) => {
+        try {
+          // Personalize message
+          const personalizedMessage = replaceDynamicTags(broadcast.messagePlain, member);
+          
+          // Create delivery record with pending status
+          const delivery = await storage.createSmsBroadcastDelivery({
+            broadcastId: req.params.broadcastId,
+            userId: member.userId,
+            phoneNumber: member.user.phone!,
+            personalizedMessage,
+            status: 'pending',
+          });
+
+          // Send SMS
+          const smsResult = await sendSms({
+            to: member.user.phone!,
+            body: personalizedMessage,
+            instructorId: userId,
+            purpose: 'educational',
+          });
+
+          // Update delivery record based on result
+          if (smsResult.success) {
+            await storage.updateSmsBroadcastDelivery(delivery.id, {
+              status: 'sent',
+              twilioMessageSid: smsResult.messageSid,
+              sentAt: new Date(),
+            });
+            successCount++;
+          } else {
+            await storage.updateSmsBroadcastDelivery(delivery.id, {
+              status: 'failed',
+              errorMessage: smsResult.error,
+            });
+            failureCount++;
+          }
+        } catch (error: any) {
+          console.error(`Error sending SMS to ${member.user.phone}:`, error);
+          failureCount++;
+        }
+      });
+
+      // Wait for all sends to complete
+      await Promise.all(sendPromises);
+
+      // Update broadcast with final stats
+      const updatedBroadcast = await storage.updateSmsBroadcastMessage(req.params.broadcastId, {
+        status: 'sent',
+        successCount,
+        failureCount,
+        sentAt: new Date(),
+      });
+
+      res.json(updatedBroadcast);
+    } catch (error) {
+      console.error("Error sending broadcast:", error);
+      
+      // Try to update broadcast status to failed
+      try {
+        await storage.updateSmsBroadcastMessage(req.params.broadcastId, {
+          status: 'failed',
+        });
+      } catch (updateError) {
+        console.error("Error updating broadcast status to failed:", updateError);
+      }
+      
+      res.status(500).json({ message: "Failed to send broadcast" });
+    }
+  });
+
+  // 7. GET /api/broadcasts/:broadcastId/deliveries - Get delivery status for a broadcast
+  app.get('/api/broadcasts/:broadcastId/deliveries', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Verify broadcast exists
+      const broadcast = await storage.getSmsBroadcastMessage(req.params.broadcastId);
+      
+      if (!broadcast) {
+        return res.status(404).json({ message: "Broadcast not found" });
+      }
+
+      // Verify ownership
+      if (broadcast.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You do not own this broadcast." });
+      }
+
+      const deliveries = await storage.getSmsBroadcastDeliveries(req.params.broadcastId);
+      res.json(deliveries);
+    } catch (error) {
+      console.error("Error fetching deliveries:", error);
+      res.status(500).json({ message: "Failed to fetch deliveries" });
     }
   });
 

@@ -27,9 +27,14 @@ import {
   User,
   Book,
   Send,
-  Reply
+  Reply,
+  List,
+  Calendar,
+  Users,
+  Plus
 } from "lucide-react";
 import { format } from "date-fns";
+import type { SmsList } from "@db/schema";
 
 // Types for communication data
 interface Communication {
@@ -75,7 +80,12 @@ interface Filters {
 export function CommunicationsDashboard() {
   const [activeSection, setActiveSection] = useState("sms-management");
   const [activeEmailTab, setActiveEmailTab] = useState("templates");
-  const [activeSMSTab, setActiveSMSTab] = useState("inbox");
+  const [activeSMSTab, setActiveSMSTab] = useState<"inbox" | "compose" | "contacts" | "templates" | "lists">("inbox");
+  const [isCreateListDialogOpen, setIsCreateListDialogOpen] = useState(false);
+  const [listSearchTerm, setListSearchTerm] = useState("");
+  const [newListName, setNewListName] = useState("");
+  const [newListDescription, setNewListDescription] = useState("");
+  const [newListTags, setNewListTags] = useState("");
   const [filters, setFilters] = useState<Filters>({
     page: 1,
     limit: 50
@@ -192,6 +202,33 @@ export function CommunicationsDashboard() {
         title: "Error", 
         description: error?.message || "Failed to send reply", 
         variant: "destructive" 
+      });
+    }
+  });
+
+  // Query for SMS Lists with member counts
+  const { data: smsLists, isLoading: isLoadingLists } = useQuery<Array<SmsList & { memberCount: number }>>({
+    queryKey: ['/api/sms-lists'],
+    enabled: activeSMSTab === 'lists',
+  });
+
+  // Create list mutation
+  const createListMutation = useMutation({
+    mutationFn: (data: { name: string; description?: string; tags?: string[] }) =>
+      apiRequest('POST', '/api/sms-lists', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+      toast({ title: "Success", description: "SMS list created successfully" });
+      setIsCreateListDialogOpen(false);
+      setNewListName("");
+      setNewListDescription("");
+      setNewListTags("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to create SMS list",
+        variant: "destructive"
       });
     }
   });
@@ -780,7 +817,7 @@ export function CommunicationsDashboard() {
         {/* SMS Management Section */}
         <TabsContent value="sms-management" className="space-y-4" data-testid="content-section-sms-management">
           <Tabs value={activeSMSTab} onValueChange={setActiveSMSTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="inbox" data-testid="tab-sms-inbox">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Inbox
@@ -788,6 +825,10 @@ export function CommunicationsDashboard() {
               <TabsTrigger value="compose" data-testid="tab-sms-compose">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Compose
+              </TabsTrigger>
+              <TabsTrigger value="lists" data-testid="tab-sms-lists">
+                <List className="h-4 w-4 mr-2" />
+                Lists
               </TabsTrigger>
               <TabsTrigger value="contacts" data-testid="tab-sms-contacts">
                 <User className="h-4 w-4 mr-2" />
@@ -1064,6 +1105,158 @@ export function CommunicationsDashboard() {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {/* SMS Lists Tab */}
+            <TabsContent value="lists" className="space-y-4" data-testid="content-sms-lists">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center space-x-2">
+                      <List className="h-5 w-5" />
+                      <span>SMS Lists</span>
+                    </CardTitle>
+                    <Button 
+                      onClick={() => setIsCreateListDialogOpen(true)}
+                      data-testid="button-create-list"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create List
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Search Bar */}
+                  <div className="flex items-center space-x-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search lists by name..."
+                        value={listSearchTerm}
+                        onChange={(e) => setListSearchTerm(e.target.value)}
+                        className="pl-9"
+                        data-testid="input-search-lists"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Loading State */}
+                  {isLoadingLists && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {[1, 2, 3].map((i) => (
+                        <Card key={i} className="animate-pulse">
+                          <CardContent className="p-6">
+                            <div className="h-4 bg-muted rounded w-3/4 mb-3"></div>
+                            <div className="h-3 bg-muted rounded w-1/2 mb-2"></div>
+                            <div className="h-3 bg-muted rounded w-2/3"></div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {!isLoadingLists && (!smsLists || smsLists.length === 0) && (
+                    <div className="text-center py-12">
+                      <List className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                      <h3 className="text-lg font-medium text-muted-foreground mb-2">No SMS Lists</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Create your first SMS list to start organizing contacts for broadcast messaging
+                      </p>
+                      <Button onClick={() => setIsCreateListDialogOpen(true)} data-testid="button-create-first-list">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Your First List
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Lists Grid */}
+                  {!isLoadingLists && smsLists && smsLists.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {smsLists
+                        .filter(list => 
+                          !listSearchTerm || 
+                          list.name.toLowerCase().includes(listSearchTerm.toLowerCase()) ||
+                          list.description?.toLowerCase().includes(listSearchTerm.toLowerCase())
+                        )
+                        .map((list) => (
+                          <Card 
+                            key={list.id} 
+                            className="hover:shadow-md transition-shadow cursor-pointer"
+                            data-testid={`card-list-${list.id}`}
+                          >
+                            <CardContent className="p-6">
+                              {/* List Header */}
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center space-x-2">
+                                  <List className="h-5 w-5 text-primary" />
+                                  <h3 className="font-semibold text-lg truncate" data-testid={`text-list-name-${list.id}`}>
+                                    {list.name}
+                                  </h3>
+                                </div>
+                                {list.isActive ? (
+                                  <Badge variant="default" className="text-xs" data-testid={`badge-active-${list.id}`}>
+                                    Active
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="text-xs" data-testid={`badge-inactive-${list.id}`}>
+                                    Inactive
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Description */}
+                              {list.description && (
+                                <p className="text-sm text-muted-foreground mb-3 line-clamp-2" data-testid={`text-description-${list.id}`}>
+                                  {list.description}
+                                </p>
+                              )}
+
+                              {/* Contact Count */}
+                              <div className="flex items-center space-x-2 mb-3">
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm font-medium" data-testid={`text-member-count-${list.id}`}>
+                                  {list.memberCount || 0} {list.memberCount === 1 ? 'contact' : 'contacts'}
+                                </span>
+                              </div>
+
+                              {/* List Type Badge */}
+                              <div className="mb-3">
+                                {list.listType === 'course_schedule' ? (
+                                  <Badge variant="outline" className="text-xs" data-testid={`badge-type-${list.id}`}>
+                                    <Calendar className="h-3 w-3 mr-1" />
+                                    Course Schedule
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-xs" data-testid={`badge-type-${list.id}`}>
+                                    Custom
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Tags */}
+                              {list.tags && list.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mb-3">
+                                  {list.tags.map((tag, idx) => (
+                                    <Badge key={idx} variant="secondary" className="text-xs" data-testid={`badge-tag-${list.id}-${idx}`}>
+                                      {tag}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Date Created */}
+                              <div className="text-xs text-muted-foreground flex items-center space-x-1" data-testid={`text-created-${list.id}`}>
+                                <Clock className="h-3 w-3" />
+                                <span>Created {format(new Date(list.createdAt), "MMM d, yyyy")}</span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </TabsContent>
       </Tabs>
@@ -1206,6 +1399,103 @@ export function CommunicationsDashboard() {
                 {sendReplyMutation.isPending ? "Sending..." : "Send Reply"}
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create List Dialog */}
+      <Dialog open={isCreateListDialogOpen} onOpenChange={setIsCreateListDialogOpen}>
+        <DialogContent className="max-w-md" data-testid="dialog-create-list">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <List className="h-5 w-5" />
+              <span>Create New SMS List</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                List Name <span className="text-red-500">*</span>
+              </label>
+              <Input
+                placeholder="Enter list name..."
+                value={newListName}
+                onChange={(e) => setNewListName(e.target.value)}
+                data-testid="input-list-name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Description
+              </label>
+              <Textarea
+                placeholder="Enter list description..."
+                value={newListDescription}
+                onChange={(e) => setNewListDescription(e.target.value)}
+                rows={3}
+                className="resize-none"
+                data-testid="textarea-list-description"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Tags (comma-separated)
+              </label>
+              <Input
+                placeholder="e.g., students, instructors, advanced"
+                value={newListTags}
+                onChange={(e) => setNewListTags(e.target.value)}
+                data-testid="input-list-tags"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Separate multiple tags with commas
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsCreateListDialogOpen(false);
+                setNewListName("");
+                setNewListDescription("");
+                setNewListTags("");
+              }}
+              data-testid="button-cancel-create-list"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!newListName.trim()) {
+                  toast({
+                    title: "Validation Error",
+                    description: "List name is required",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+
+                const tags = newListTags
+                  .split(',')
+                  .map(t => t.trim())
+                  .filter(t => t.length > 0);
+
+                createListMutation.mutate({
+                  name: newListName.trim(),
+                  description: newListDescription.trim() || undefined,
+                  tags: tags.length > 0 ? tags : undefined
+                });
+              }}
+              disabled={!newListName.trim() || createListMutation.isPending}
+              data-testid="button-submit-create-list"
+            >
+              {createListMutation.isPending ? "Creating..." : "Create List"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
