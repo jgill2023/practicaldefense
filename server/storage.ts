@@ -98,6 +98,13 @@ import {
   type InsertWaiverSignature,
   type WaiverTemplateWithDetails,
   type WaiverInstanceWithDetails,
+  courseNotificationSignups,
+  courseNotificationDeliveryLogs,
+  type CourseNotificationSignup,
+  type InsertCourseNotificationSignup,
+  type CourseNotificationDeliveryLog,
+  type InsertCourseNotificationDeliveryLog,
+  type CourseNotificationSignupWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne } from "drizzle-orm";
@@ -353,6 +360,14 @@ export interface IStorage {
   
   // Roster and scheduling operations
   getInstructorAvailableSchedules(instructorId: string, excludeEnrollmentId?: string): Promise<any[]>;
+  
+  // Course notification signup operations
+  createCourseNotificationSignup(signup: InsertCourseNotificationSignup): Promise<CourseNotificationSignup>;
+  getCourseNotificationSignups(courseId: string): Promise<CourseNotificationSignupWithDetails[]>;
+  getCourseNotificationSignupsBySchedule(scheduleId: string): Promise<CourseNotificationSignupWithDetails[]>;
+  deleteCourseNotificationSignup(id: string): Promise<void>;
+  logNotificationDelivery(log: InsertCourseNotificationDeliveryLog): Promise<CourseNotificationDeliveryLog>;
+  getNotificationDeliveryLogs(signupId: string): Promise<CourseNotificationDeliveryLog[]>;
   
   // Communications tracking operations
   createCommunication(communication: InsertCommunication): Promise<Communication>;
@@ -1441,6 +1456,86 @@ export class DatabaseStorage implements IStorage {
       maxSpots: schedule.maxSpots,
       availableSpots: Math.max(0, schedule.maxSpots - schedule.enrolledCount)
     }));
+  }
+
+  // Course notification signup operations
+  async createCourseNotificationSignup(signup: InsertCourseNotificationSignup): Promise<CourseNotificationSignup> {
+    const [newSignup] = await db
+      .insert(courseNotificationSignups)
+      .values(signup)
+      .returning();
+    return newSignup;
+  }
+
+  async getCourseNotificationSignups(courseId: string): Promise<CourseNotificationSignupWithDetails[]> {
+    const signups = await db.query.courseNotificationSignups.findMany({
+      where: eq(courseNotificationSignups.courseId, courseId),
+      with: {
+        course: true,
+        deliveryLogs: true,
+      },
+      orderBy: desc(courseNotificationSignups.createdAt),
+    });
+    return signups;
+  }
+
+  async getCourseNotificationSignupsBySchedule(scheduleId: string): Promise<CourseNotificationSignupWithDetails[]> {
+    // Get the course ID from the schedule
+    const schedule = await db.query.courseSchedules.findFirst({
+      where: eq(courseSchedules.id, scheduleId),
+    });
+
+    if (!schedule) {
+      return [];
+    }
+
+    // Get all signups for this course that haven't been notified about this schedule yet
+    const signups = await db
+      .select({
+        id: courseNotificationSignups.id,
+        courseId: courseNotificationSignups.courseId,
+        firstName: courseNotificationSignups.firstName,
+        lastName: courseNotificationSignups.lastName,
+        email: courseNotificationSignups.email,
+        phone: courseNotificationSignups.phone,
+        preferredChannel: courseNotificationSignups.preferredChannel,
+        createdAt: courseNotificationSignups.createdAt,
+      })
+      .from(courseNotificationSignups)
+      .leftJoin(
+        courseNotificationDeliveryLogs,
+        and(
+          eq(courseNotificationDeliveryLogs.signupId, courseNotificationSignups.id),
+          eq(courseNotificationDeliveryLogs.scheduleId, scheduleId)
+        )
+      )
+      .where(
+        and(
+          eq(courseNotificationSignups.courseId, schedule.courseId),
+          isNull(courseNotificationDeliveryLogs.id) // Only get signups that haven't been notified for this schedule
+        )
+      );
+
+    return signups as CourseNotificationSignupWithDetails[];
+  }
+
+  async deleteCourseNotificationSignup(id: string): Promise<void> {
+    await db.delete(courseNotificationSignups).where(eq(courseNotificationSignups.id, id));
+  }
+
+  async logNotificationDelivery(log: InsertCourseNotificationDeliveryLog): Promise<CourseNotificationDeliveryLog> {
+    const [newLog] = await db
+      .insert(courseNotificationDeliveryLogs)
+      .values(log)
+      .returning();
+    return newLog;
+  }
+
+  async getNotificationDeliveryLogs(signupId: string): Promise<CourseNotificationDeliveryLog[]> {
+    return await db.query.courseNotificationDeliveryLogs.findMany({
+      where: eq(courseNotificationDeliveryLogs.signupId, signupId),
+      orderBy: desc(courseNotificationDeliveryLogs.sentAt),
+    });
   }
 
   // Draft enrollment operations for single-page registration
