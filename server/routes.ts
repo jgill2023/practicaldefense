@@ -3157,6 +3157,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send payment reminder for specific enrollment
+  app.post("/api/instructor/send-payment-reminder", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { enrollmentId, method } = req.body;
+      
+      // Only allow instructors to send payment reminders
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      if (!method || !['email', 'sms'].includes(method)) {
+        return res.status(400).json({ error: "Valid method (email or sms) is required" });
+      }
+
+      if (!enrollmentId) {
+        return res.status(400).json({ error: "Enrollment ID is required" });
+      }
+
+      // Get enrollment and verify instructor has access
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ error: "Enrollment not found" });
+      }
+
+      // Get course schedule and course to verify instructor ownership
+      const schedule = await storage.getCourseSchedule(enrollment.scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ error: "Course schedule not found" });
+      }
+
+      const course = await storage.getCourse(schedule.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: You can only send payment reminders for your own courses" });
+      }
+
+      // Get student information from the enrollment record (not from client)
+      const studentId = enrollment.studentId;
+      const student = await storage.getUser(studentId);
+      if (!student) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+
+      // Get payment balance info
+      const paymentBalance = await storage.getPaymentBalance(enrollmentId);
+      const remainingBalance = paymentBalance.remainingBalance || 0;
+
+      if (remainingBalance <= 0) {
+        return res.status(400).json({ error: "No outstanding balance for this enrollment" });
+      }
+
+      const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+        }).format(amount);
+      };
+
+      const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+      };
+
+      const studentName = `${student.firstName} ${student.lastName}`;
+      const courseName = course.title;
+      const scheduleDate = formatDate(schedule.startDate);
+      const totalAmount = formatCurrency(parseFloat(course.price));
+      const amountPaid = formatCurrency(paymentBalance.amountPaid || 0);
+      const remainingBalanceFormatted = formatCurrency(remainingBalance);
+
+      // Prepare message content
+      const subject = `Payment Reminder: ${courseName}`;
+      const message = `Hello ${studentName},
+
+This is a friendly reminder about your outstanding balance for ${courseName}.
+
+Course Details:
+- Course: ${courseName}
+- Schedule: ${scheduleDate}
+- Total Amount: ${totalAmount}
+- Amount Paid: ${amountPaid}
+- Remaining Balance: ${remainingBalanceFormatted}
+
+Please complete your payment at your earliest convenience.
+
+If you have any questions, please don't hesitate to reach out.
+
+Best regards,
+${user.firstName} ${user.lastName}
+Practical Defense Training`;
+
+      let result;
+
+      // Send via SMS
+      if (method === 'sms') {
+        if (!student.phone) {
+          return res.status(400).json({ error: "Student does not have a phone number on file" });
+        }
+
+        const { NotificationSmsService } = await import('./smsService');
+        
+        // Shorter message for SMS
+        const smsMessage = `Payment Reminder: You have a remaining balance of ${remainingBalanceFormatted} for ${courseName} on ${scheduleDate}. Total: ${totalAmount}, Paid: ${amountPaid}. Please complete your payment soon. - ${user.firstName} ${user.lastName}`;
+        
+        result = await NotificationSmsService.sendNotificationSms({
+          to: [student.phone],
+          message: smsMessage,
+          instructorId: userId,
+          purpose: 'administrative',
+        });
+      }
+
+      // Send via Email
+      if (method === 'email') {
+        if (!student.email) {
+          return res.status(400).json({ error: "Student does not have an email address on file" });
+        }
+
+        const { NotificationEmailService } = await import('./emailService');
+        
+        const htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Payment Reminder</h2>
+            <p>Hello ${studentName},</p>
+            <p>This is a friendly reminder about your outstanding balance for <strong>${courseName}</strong>.</p>
+            
+            <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #555;">Course Details:</h3>
+              <p style="margin: 5px 0;"><strong>Course:</strong> ${courseName}</p>
+              <p style="margin: 5px 0;"><strong>Schedule:</strong> ${scheduleDate}</p>
+              <p style="margin: 5px 0;"><strong>Total Amount:</strong> ${totalAmount}</p>
+              <p style="margin: 5px 0; color: #16a34a;"><strong>Amount Paid:</strong> ${amountPaid}</p>
+              <p style="margin: 5px 0; color: #dc2626;"><strong>Remaining Balance:</strong> ${remainingBalanceFormatted}</p>
+            </div>
+            
+            <p>Please complete your payment at your earliest convenience.</p>
+            <p>If you have any questions, please don't hesitate to reach out.</p>
+            
+            <p style="margin-top: 30px;">Best regards,<br>
+            ${user.firstName} ${user.lastName}<br>
+            <em>Practical Defense Training</em></p>
+          </div>
+        `;
+        
+        result = await NotificationEmailService.sendNotificationEmail({
+          to: [student.email],
+          subject: subject,
+          htmlContent: htmlContent,
+          textContent: message,
+          fromName: `${user.firstName} ${user.lastName} - Practical Defense Training`,
+        });
+      }
+
+      res.json({ success: true, result });
+    } catch (error: any) {
+      console.error("Error sending payment reminder:", error);
+      res.status(500).json({ error: "Failed to send payment reminder" });
+    }
+  });
+
   // Get detailed payment information for enrollment
   app.get("/api/instructor/payment-details/:enrollmentId", isAuthenticated, async (req: any, res) => {
     try {

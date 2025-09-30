@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, DollarSign, Calendar, Tag, AlertCircle, X } from "lucide-react";
+import { CreditCard, DollarSign, Calendar, Tag, AlertCircle, X, MessageSquare, Mail } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 interface PaymentDetailsModalProps {
   isOpen: boolean;
@@ -47,6 +48,8 @@ export function PaymentDetailsModal({
   studentName,
   enrollmentId 
 }: PaymentDetailsModalProps) {
+  const { toast } = useToast();
+  
   const { data: paymentDetails, isLoading, error } = useQuery<PaymentDetails>({
     queryKey: ["/api/instructor/payment-details", enrollmentId],
     queryFn: async () => {
@@ -54,6 +57,52 @@ export function PaymentDetailsModal({
       return response.json();
     },
     enabled: !!enrollmentId && isOpen,
+  });
+
+  const sendSMSReminderMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/instructor/send-payment-reminder", {
+        enrollmentId,
+        method: "sms",
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "SMS Reminder Sent",
+        description: "Payment reminder has been sent via text message.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to Send SMS",
+        description: "Unable to send SMS reminder. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const sendEmailReminderMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/instructor/send-payment-reminder", {
+        enrollmentId,
+        method: "email",
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Email Reminder Sent",
+        description: "Payment reminder has been sent via email.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Failed to Send Email",
+        description: "Unable to send email reminder. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const formatCurrency = (amount: number) => {
@@ -250,18 +299,47 @@ export function PaymentDetailsModal({
               </Card>
             )}
 
-            {/* Balance Due Notice */}
+            {/* Balance Due Notice with Reminder Options */}
             {paymentDetails.remainingBalance > 0 && (
               <Card className="border-yellow-200 bg-yellow-50">
                 <CardContent className="pt-6">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-yellow-600" />
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-yellow-600" />
+                      <div>
+                        <p className="font-medium text-yellow-800">Outstanding Balance</p>
+                        <p className="text-sm text-yellow-700">
+                          Student has a remaining balance of {formatCurrency(paymentDetails.remainingBalance)}
+                        </p>
+                      </div>
+                    </div>
+                    <Separator className="bg-yellow-200" />
                     <div>
-                      <p className="font-medium text-yellow-800">Outstanding Balance</p>
-                      <p className="text-sm text-yellow-700">
-                        Student has a remaining balance of {formatCurrency(paymentDetails.remainingBalance)}. 
-                        Consider sending a payment reminder.
-                      </p>
+                      <p className="text-sm font-medium text-yellow-800 mb-3">Send Payment Reminder:</p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => sendSMSReminderMutation.mutate()}
+                          disabled={sendSMSReminderMutation.isPending}
+                          className="bg-white hover:bg-yellow-100"
+                          data-testid="button-send-sms-reminder"
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          {sendSMSReminderMutation.isPending ? "Sending..." : "Send SMS"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => sendEmailReminderMutation.mutate()}
+                          disabled={sendEmailReminderMutation.isPending}
+                          className="bg-white hover:bg-yellow-100"
+                          data-testid="button-send-email-reminder"
+                        >
+                          <Mail className="h-4 w-4 mr-2" />
+                          {sendEmailReminderMutation.isPending ? "Sending..." : "Send Email"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
