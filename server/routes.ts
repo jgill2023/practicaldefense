@@ -3359,12 +3359,12 @@ Practical Defense Training`;
         enrollmentId: enrollment.id,
         paymentStatus: enrollment.paymentStatus,
         totalAmount: parseFloat(course.price),
-        amountPaid: paymentBalance.amountPaid || 0,
+        amountPaid: paymentBalance.paidAmount || 0,
         remainingBalance: paymentBalance.remainingBalance || 0,
         paymentDate: enrollment.paymentDate,
         courseName: course.title,
         scheduleDate: schedule.startDate,
-        paymentHistory: paymentBalance.paymentHistory || [],
+        paymentHistory: [],
       };
 
       res.json(paymentDetails);
