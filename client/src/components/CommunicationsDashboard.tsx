@@ -2725,9 +2725,24 @@ export function CommunicationsDashboard() {
 
             {/* Message Content Field */}
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Message Content <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">
+                  Message Content <span className="text-red-500">*</span>
+                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const template = "Hi {{firstName}}, this is a reminder about your upcoming course on {{scheduleDate}}. Please let us know if you have any questions!";
+                    setBroadcastForm(prev => ({ ...prev, messageContent: template }));
+                  }}
+                  data-testid="button-use-template"
+                >
+                  <FileText className="h-3 w-3 mr-1" />
+                  Use Template
+                </Button>
+              </div>
               <Textarea
                 ref={messageContentRef}
                 placeholder="Type your message here... Use the tags above to personalize your message."
@@ -3087,9 +3102,26 @@ export function CommunicationsDashboard() {
                   // Then send it (or schedule it)
                   if (result?.id) {
                     await sendBroadcastMutation.mutateAsync(result.id);
+                    
+                    // Success - manually close dialogs and reset form
+                    queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
+                    toast({ 
+                      title: "Success", 
+                      description: broadcastForm.isScheduled && broadcastForm.scheduledFor 
+                        ? "Broadcast scheduled successfully" 
+                        : "Broadcast sent successfully" 
+                    });
+                    setIsSendConfirmOpen(false);
+                    setIsComposerOpen(false);
+                    setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [], scheduledFor: "", isScheduled: false });
                   }
-                } catch (error) {
+                } catch (error: any) {
                   console.error('Error sending broadcast:', error);
+                  toast({
+                    title: "Error",
+                    description: error?.message || "Failed to send broadcast",
+                    variant: "destructive"
+                  });
                 }
               }}
               disabled={sendBroadcastMutation.isPending || createBroadcastMutation.isPending}
