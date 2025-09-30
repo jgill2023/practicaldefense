@@ -42,11 +42,10 @@ const CheckoutForm = ({ enrollment }: { enrollment: EnrollmentWithDetails }) => 
 
   const confirmEnrollmentMutation = useMutation({
     mutationFn: async ({ enrollmentId, paymentIntentId }: { enrollmentId: string; paymentIntentId: string }) => {
-      const response = await apiRequest("POST", "/api/confirm-enrollment", {
+      return await apiRequest("POST", "/api/confirm-enrollment", {
         enrollmentId,
         paymentIntentId,
       });
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -170,13 +169,11 @@ export default function Checkout() {
     setPromoError(null);
 
     try {
-      const response = await apiRequest("POST", "/api/validate-promo-code", {
+      const validation = await apiRequest("POST", "/api/validate-promo-code", {
         code: promoCode.trim(),
         courseId: enrollment.courseId,
         amount: getPaymentAmount(enrollment),
       });
-      
-      const validation = await response.json();
 
       if (validation.isValid) {
         setPromoCodeApplied(promoCode.trim());
@@ -222,12 +219,11 @@ export default function Checkout() {
     if (!enrollment) return;
 
     try {
-      const response = await apiRequest("POST", "/api/create-payment-intent", {
+      const data = await apiRequest("POST", "/api/create-payment-intent", {
         enrollmentId: enrollment.id,
         promoCode: appliedPromoCode || undefined,
       });
       
-      const data = await response.json();
       setClientSecret(data.clientSecret);
       setTaxInfo({
         originalAmount: data.originalAmount,
