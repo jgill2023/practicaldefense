@@ -484,3 +484,381 @@ export class NotificationEngine {
     };
   }
 }
+
+// Course notification signup engine
+import { sendSms } from './smsService';
+import type { CourseNotificationSignup, Course } from '@shared/schema';
+
+interface CourseNotificationResult {
+  success: boolean;
+  emailSent: number;
+  emailFailed: number;
+  smsSent: number;
+  smsFailed: number;
+  errors: string[];
+}
+
+export class CourseNotificationEngine {
+  /**
+   * Send notifications to all signups for a specific course schedule
+   */
+  static async notifySignupsForSchedule(
+    scheduleId: string,
+    schedule: CourseSchedule,
+    course: Course
+  ): Promise<CourseNotificationResult> {
+    const result: CourseNotificationResult = {
+      success: true,
+      emailSent: 0,
+      emailFailed: 0,
+      smsSent: 0,
+      smsFailed: 0,
+      errors: [],
+    };
+
+    try {
+      // Get all signups for this course that haven't been notified about this schedule yet
+      const signups = await storage.getCourseNotificationSignupsBySchedule(scheduleId);
+
+      if (signups.length === 0) {
+        console.log(`No signups to notify for schedule ${scheduleId}`);
+        return result;
+      }
+
+      console.log(`Sending notifications to ${signups.length} signups for schedule ${scheduleId}`);
+
+      // Group signups by preferred channel
+      const emailSignups = signups.filter(s => 
+        s.preferredChannel === 'email' || s.preferredChannel === 'both'
+      );
+      const smsSignups = signups.filter(s => 
+        s.preferredChannel === 'sms' || s.preferredChannel === 'both'
+      );
+
+      // Send email notifications
+      if (emailSignups.length > 0) {
+        const emailResults = await this.sendEmailNotifications(
+          emailSignups,
+          schedule,
+          course,
+          scheduleId
+        );
+        result.emailSent = emailResults.sent;
+        result.emailFailed = emailResults.failed;
+        result.errors.push(...emailResults.errors);
+      }
+
+      // Send SMS notifications
+      if (smsSignups.length > 0) {
+        const smsResults = await this.sendSmsNotifications(
+          smsSignups,
+          schedule,
+          course,
+          scheduleId
+        );
+        result.smsSent = smsResults.sent;
+        result.smsFailed = smsResults.failed;
+        result.errors.push(...smsResults.errors);
+      }
+
+      result.success = result.emailFailed === 0 && result.smsFailed === 0;
+      return result;
+    } catch (error: any) {
+      console.error('Error in course notification engine:', error);
+      result.success = false;
+      result.errors.push(error.message || 'Unknown error in notification engine');
+      return result;
+    }
+  }
+
+  /**
+   * Send email notifications to signups
+   */
+  private static async sendEmailNotifications(
+    signups: CourseNotificationSignup[],
+    schedule: CourseSchedule,
+    course: Course,
+    scheduleId: string
+  ): Promise<{ sent: number; failed: number; errors: string[] }> {
+    const result = { sent: 0, failed: 0, errors: [] as string[] };
+
+    try {
+      const emailAddresses = signups.map(s => s.email);
+      const subject = `New ${course.title} Course Scheduled!`;
+      
+      const htmlContent = this.generateEmailContent(schedule, course);
+      const textContent = this.generateTextContent(schedule, course);
+
+      const emailResult = await NotificationEmailService.sendNotificationEmail({
+        to: emailAddresses,
+        subject,
+        htmlContent,
+        textContent,
+      });
+
+      if (emailResult.success) {
+        result.sent = signups.length;
+        
+        // Log successful delivery for each signup
+        for (const signup of signups) {
+          try {
+            await storage.logNotificationDelivery({
+              signupId: signup.id,
+              scheduleId: scheduleId,
+              channel: 'email',
+              status: 'sent',
+              errorMessage: undefined,
+            });
+          } catch (logError: any) {
+            console.error('Failed to log email delivery:', logError);
+          }
+        }
+      } else {
+        result.failed = signups.length;
+        result.errors.push(`Email sending failed: ${emailResult.error}`);
+        
+        // Log failed delivery for each signup
+        for (const signup of signups) {
+          try {
+            await storage.logNotificationDelivery({
+              signupId: signup.id,
+              scheduleId: scheduleId,
+              channel: 'email',
+              status: 'failed',
+              errorMessage: emailResult.error || 'Unknown error',
+            });
+          } catch (logError: any) {
+            console.error('Failed to log email delivery failure:', logError);
+          }
+        }
+      }
+    } catch (error: any) {
+      result.failed = signups.length;
+      result.errors.push(`Email notification error: ${error.message}`);
+    }
+
+    return result;
+  }
+
+  /**
+   * Send SMS notifications to signups
+   */
+  private static async sendSmsNotifications(
+    signups: CourseNotificationSignup[],
+    schedule: CourseSchedule,
+    course: Course,
+    scheduleId: string
+  ): Promise<{ sent: number; failed: number; errors: string[] }> {
+    const result = { sent: 0, failed: 0, errors: [] as string[] };
+
+    // Filter signups with valid phone numbers
+    const signupsWithPhone = signups.filter(s => s.phone && s.phone.trim().length > 0);
+    
+    if (signupsWithPhone.length === 0) {
+      return result;
+    }
+
+    try {
+      const smsMessage = this.generateSmsContent(schedule, course);
+
+      // Send SMS to each recipient individually to track delivery per signup
+      for (const signup of signupsWithPhone) {
+        try {
+          const smsResult = await sendSms({
+            to: signup.phone!,
+            body: smsMessage,
+            purpose: 'educational',
+          });
+
+          if (smsResult.success) {
+            result.sent++;
+            
+            // Log successful delivery
+            await storage.logNotificationDelivery({
+              signupId: signup.id,
+              scheduleId: scheduleId,
+              channel: 'sms',
+              status: 'sent',
+              errorMessage: undefined,
+            });
+          } else {
+            result.failed++;
+            result.errors.push(`SMS failed for ${signup.phone}: ${smsResult.error}`);
+            
+            // Log failed delivery
+            await storage.logNotificationDelivery({
+              signupId: signup.id,
+              scheduleId: scheduleId,
+              channel: 'sms',
+              status: 'failed',
+              errorMessage: smsResult.error || 'Unknown error',
+            });
+          }
+        } catch (error: any) {
+          result.failed++;
+          result.errors.push(`SMS error for ${signup.phone}: ${error.message}`);
+          
+          // Log failed delivery
+          try {
+            await storage.logNotificationDelivery({
+              signupId: signup.id,
+              scheduleId: scheduleId,
+              channel: 'sms',
+              status: 'failed',
+              errorMessage: error.message || 'Unknown error',
+            });
+          } catch (logError: any) {
+            console.error('Failed to log SMS delivery failure:', logError);
+          }
+        }
+      }
+    } catch (error: any) {
+      result.failed = signupsWithPhone.length;
+      result.errors.push(`SMS notification error: ${error.message}`);
+    }
+
+    return result;
+  }
+
+  /**
+   * Generate HTML email content for course schedule notification
+   */
+  private static generateEmailContent(schedule: CourseSchedule, course: Course): string {
+    const startDate = new Date(schedule.startDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    const startTime = this.formatTime(schedule.startTime);
+    const endTime = this.formatTime(schedule.endTime);
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #2c3e50; color: white; padding: 20px; text-align: center; }
+          .content { background-color: #f9f9f9; padding: 30px; margin-top: 20px; border-radius: 5px; }
+          .course-title { font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 15px; }
+          .detail-row { margin: 10px 0; }
+          .detail-label { font-weight: bold; color: #555; }
+          .cta-button { 
+            display: inline-block; 
+            background-color: #e74c3c; 
+            color: white; 
+            padding: 12px 30px; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            margin-top: 20px;
+            font-weight: bold;
+          }
+          .footer { text-align: center; margin-top: 30px; color: #777; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>New Course Available!</h1>
+          </div>
+          <div class="content">
+            <div class="course-title">${course.title}</div>
+            <p>Great news! A new session of the course you're interested in has been scheduled.</p>
+            
+            <div class="detail-row">
+              <span class="detail-label">Date:</span> ${startDate}
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Time:</span> ${startTime} - ${endTime}
+            </div>
+            ${schedule.location ? `
+            <div class="detail-row">
+              <span class="detail-label">Location:</span> ${schedule.location}
+            </div>
+            ` : ''}
+            <div class="detail-row">
+              <span class="detail-label">Available Spots:</span> ${schedule.availableSpots} / ${schedule.maxSpots}
+            </div>
+            
+            <p style="margin-top: 20px;">
+              <strong>Don't miss this opportunity!</strong> Spots fill up quickly, so register today to secure your place.
+            </p>
+            
+            <div style="text-align: center;">
+              <a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://example.com'}" class="cta-button">
+                Register Now
+              </a>
+            </div>
+          </div>
+          <div class="footer">
+            <p>You're receiving this email because you signed up to be notified about ${course.title}.</p>
+            <p>Practical Defense Training | jeremy@abqconcealedcarry.com</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Generate plain text email content for course schedule notification
+   */
+  private static generateTextContent(schedule: CourseSchedule, course: Course): string {
+    const startDate = new Date(schedule.startDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    const startTime = this.formatTime(schedule.startTime);
+    const endTime = this.formatTime(schedule.endTime);
+
+    return `
+New Course Available: ${course.title}
+
+Great news! A new session of the course you're interested in has been scheduled.
+
+Date: ${startDate}
+Time: ${startTime} - ${endTime}
+${schedule.location ? `Location: ${schedule.location}\n` : ''}Available Spots: ${schedule.availableSpots} / ${schedule.maxSpots}
+
+Don't miss this opportunity! Spots fill up quickly, so register today to secure your place.
+
+Register at: ${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://example.com'}
+
+---
+You're receiving this email because you signed up to be notified about ${course.title}.
+Practical Defense Training | jeremy@abqconcealedcarry.com
+    `.trim();
+  }
+
+  /**
+   * Generate SMS content for course schedule notification
+   */
+  private static generateSmsContent(schedule: CourseSchedule, course: Course): string {
+    const startDate = new Date(schedule.startDate).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+
+    const startTime = this.formatTime(schedule.startTime);
+
+    // Keep SMS concise due to character limits
+    return `New ${course.title} scheduled for ${startDate} at ${startTime}. ${schedule.availableSpots} spots available. Register at ${process.env.REPLIT_DOMAINS?.split(',')[0] || 'abqconcealedcarry.com'}`;
+  }
+
+  /**
+   * Format time from HH:MM:SS to more readable format
+   */
+  private static formatTime(time: string): string {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${displayHour}:${minutes} ${ampm}`;
+  }
+}
