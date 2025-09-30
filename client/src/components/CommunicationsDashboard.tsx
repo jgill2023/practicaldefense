@@ -234,8 +234,16 @@ export function CommunicationsDashboard() {
   const sendReplyMutation = useMutation({
     mutationFn: ({ to, body }: { to: string; body: string }) =>
       apiRequest('POST', '/api/sms/send', { to, body }),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       suppressNotificationsRef.current = true;
+      
+      // Auto-mark all unread inbound messages as read when replying
+      if (selectedConversation) {
+        const messages = getConversationMessages(selectedConversation);
+        const unreadMessages = messages.filter(m => !m.isRead && m.direction === 'inbound');
+        unreadMessages.forEach(msg => markAsReadMutation.mutate(msg.id));
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
       toast({ title: "Success", description: "Reply sent successfully" });
       setReplyText("");
@@ -1223,7 +1231,13 @@ export function CommunicationsDashboard() {
                           getSMSConversations().map((conversation) => (
                             <div
                               key={conversation.phoneNumber}
-                              onClick={() => setSelectedConversation(conversation.phoneNumber)}
+                              onClick={() => {
+                                setSelectedConversation(conversation.phoneNumber);
+                                // Auto-mark all unread inbound messages as read when clicking into conversation
+                                const messages = getConversationMessages(conversation.phoneNumber);
+                                const unreadMessages = messages.filter(m => !m.isRead && m.direction === 'inbound');
+                                unreadMessages.forEach(msg => markAsReadMutation.mutate(msg.id));
+                              }}
                               className={`p-4 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
                                 selectedConversation === conversation.phoneNumber ? 'bg-muted' : ''
                               }`}
