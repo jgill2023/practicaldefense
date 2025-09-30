@@ -264,11 +264,11 @@ function StudentsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>License Expiration</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="w-[200px]">Name</TableHead>
+                <TableHead className="w-[140px]">Phone</TableHead>
+                <TableHead className="w-[280px]">Course</TableHead>
+                <TableHead className="w-[160px]">License Expiration</TableHead>
+                <TableHead className="w-[120px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -357,8 +357,7 @@ function StudentsPage() {
                             title={`Edit ${student.firstName} ${student.lastName}`}
                             data-testid={`button-edit-${student.id}`}
                           >
-                            <UserPen className="h-4 w-4 mr-2" />
-                            Edit
+                            <UserPen className="h-4 w-4" />
                           </Button>
                         )}
                         {index === 0 && (
@@ -372,8 +371,7 @@ function StudentsPage() {
                             title={`Enroll ${student.firstName} ${student.lastName} in another course`}
                             data-testid={`button-enroll-course-${student.id}`}
                           >
-                            <Users className="h-4 w-4 mr-2" />
-                            Enroll in Course
+                            <Users className="h-4 w-4" />
                           </Button>
                         )}
                         <Button
@@ -386,8 +384,7 @@ function StudentsPage() {
                           title={category === 'former' ? `Re-enroll ${student.firstName} ${student.lastName}` : `Reschedule ${student.firstName} ${student.lastName}`}
                           data-testid={`button-reschedule-${student.id}-${enrollment.id}`}
                         >
-                          <Shuffle className="h-4 w-4 mr-2" />
-                          {category === 'former' ? 'Re-enroll' : 'Reschedule'}
+                          <Shuffle className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
