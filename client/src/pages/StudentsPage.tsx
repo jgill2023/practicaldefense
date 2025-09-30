@@ -23,6 +23,27 @@ import { RescheduleModal } from "@/components/RescheduleModal";
 import { CrossEnrollmentModal } from "@/components/CrossEnrollmentModal";
 import { format } from "date-fns";
 
+// Phone number formatting utility
+function formatPhoneNumber(phone: string | undefined | null): string {
+  if (!phone) return '';
+  
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, '');
+  
+  // Format as (###) ###-####
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  
+  // If 11 digits and starts with 1, remove the 1 and format
+  if (digits.length === 11 && digits[0] === '1') {
+    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+  
+  // Return original if not standard format
+  return phone;
+}
+
 // Edit student form schema
 const editStudentSchema = z.object({
   email: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
@@ -305,7 +326,7 @@ function StudentsPage() {
                             title={`Send SMS to ${student.phone}`}
                             data-testid={`link-sms-${student.id}`}
                           >
-                            {student.phone}
+                            {formatPhoneNumber(student.phone)}
                           </button>
                         ) : (
                           <span className="text-sm text-muted-foreground">No phone</span>
@@ -658,8 +679,12 @@ function EditStudentForm({ student, onClose }: { student: Student; onClose: () =
 
   const updateStudentMutation = useMutation({
     mutationFn: async (data: EditStudentFormData) => {
+      // Clean phone number - remove all non-digit characters
+      const cleanedPhone = data.phone ? data.phone.replace(/\D/g, '') : data.phone;
+      
       const updateData = {
         ...data,
+        phone: cleanedPhone,
         concealedCarryLicenseExpiration: data.concealedCarryLicenseExpiration 
           ? new Date(data.concealedCarryLicenseExpiration).toISOString() 
           : undefined,
