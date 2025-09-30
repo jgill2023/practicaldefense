@@ -815,8 +815,8 @@ export function CommunicationsDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="flex items-center space-x-4">
-                      <Input placeholder="Search contacts..." className="flex-1" data-testid="input-search-contacts" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Input placeholder="Search contacts..." className="md:col-span-2" data-testid="input-search-contacts" />
                       <Select>
                         <SelectTrigger data-testid="select-contact-filter">
                           <SelectValue placeholder="Filter by group" />
