@@ -90,14 +90,15 @@ async function upsertUser(
   console.log("upsertUser - existingUser:", existingUser);
   
   if (existingUser) {
-    // For existing users, only update profile info, NOT role
-    // This prevents privilege escalation on subsequent logins
+    // For existing users, update profile info and role from OIDC claims
+    // OIDC claims are trusted source of truth for authentication
     console.log("upsertUser - updating existing user");
     await storage.updateUser(claims["sub"], {
       email: claims["email"],
       firstName: claims["first_name"],
       lastName: claims["last_name"],
       profileImageUrl: claims["profile_image_url"],
+      role: role,
     });
   } else {
     // For new users, set the validated role
