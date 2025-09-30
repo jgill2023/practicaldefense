@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -23,7 +25,9 @@ import {
   RefreshCw,
   Clock,
   User,
-  Book
+  Book,
+  Send,
+  Reply
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -77,6 +81,9 @@ export function CommunicationsDashboard() {
     limit: 50
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedMessage, setSelectedMessage] = useState<Communication | null>(null);
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [replyText, setReplyText] = useState("");
   
   // Real-time notification state
   const [lastTotalCount, setLastTotalCount] = useState<number | null>(null);
@@ -166,6 +173,25 @@ export function CommunicationsDashboard() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to unflag message", variant: "destructive" });
+    }
+  });
+
+  const sendReplyMutation = useMutation({
+    mutationFn: ({ to, message }: { to: string; message: string }) =>
+      apiRequest('POST', '/api/sms/send', { to, message }),
+    onSuccess: () => {
+      suppressNotificationsRef.current = true;
+      queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
+      toast({ title: "Success", description: "Reply sent successfully" });
+      setReplyText("");
+      setIsMessageDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to send reply", 
+        variant: "destructive" 
+      });
     }
   });
 
@@ -448,6 +474,25 @@ export function CommunicationsDashboard() {
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-1">
+                      {communication.type === 'sms' && communication.direction === 'inbound' && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedMessage(communication);
+                            setIsMessageDialogOpen(true);
+                            if (!communication.isRead) {
+                              markAsReadMutation.mutate(communication.id);
+                            }
+                          }}
+                          title="View and reply"
+                          data-testid={`button-view-reply-${communication.id}`}
+                        >
+                          <Reply className="h-4 w-4 mr-1" />
+                          Reply
+                        </Button>
+                      )}
+                      
                       {communication.isRead ? (
                         <Button
                           variant="outline"
@@ -845,6 +890,123 @@ export function CommunicationsDashboard() {
           </Button>
         </div>
       )}
+
+      {/* Message Reply Dialog */}
+      <Dialog open={isMessageDialogOpen} onOpenChange={setIsMessageDialogOpen}>
+        <DialogContent className="max-w-2xl" data-testid="dialog-message-reply">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <MessageSquare className="h-5 w-5" />
+              <span>Message Details & Reply</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedMessage && (
+            <div className="space-y-4">
+              {/* Message Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Original Message</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <div className="text-sm text-muted-foreground">From:</div>
+                      <div className="font-medium" data-testid="text-message-from">
+                        {selectedMessage.fromAddress}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      {selectedMessage.direction === 'inbound' ? (
+                        <ArrowDownLeft className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <ArrowUpRight className="h-4 w-4 text-blue-500" />
+                      )}
+                      <Badge variant="outline" className="text-xs">
+                        {selectedMessage.type.toUpperCase()}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground">Received:</div>
+                    <div className="text-sm" data-testid="text-message-date">
+                      {format(new Date(selectedMessage.sentAt), "MMMM d, yyyy 'at' h:mm a")}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground">Message:</div>
+                    <div 
+                      className="p-3 bg-muted rounded-lg text-sm" 
+                      data-testid="text-message-content"
+                    >
+                      {selectedMessage.content}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Reply Form */}
+              {selectedMessage.direction === 'inbound' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Send Reply</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Reply to: {selectedMessage.fromAddress}
+                      </label>
+                      <Textarea
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="Type your reply here..."
+                        rows={4}
+                        data-testid="textarea-reply-message"
+                        className="resize-none"
+                      />
+                      <div className="text-right text-sm text-muted-foreground mt-1">
+                        {replyText.length}/160 characters
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsMessageDialogOpen(false);
+                setReplyText("");
+              }}
+              data-testid="button-cancel-reply"
+            >
+              Close
+            </Button>
+            {selectedMessage?.direction === 'inbound' && (
+              <Button
+                onClick={() => {
+                  if (selectedMessage && replyText.trim()) {
+                    sendReplyMutation.mutate({
+                      to: selectedMessage.fromAddress,
+                      message: replyText.trim()
+                    });
+                  }
+                }}
+                disabled={!replyText.trim() || sendReplyMutation.isPending}
+                data-testid="button-send-reply"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {sendReplyMutation.isPending ? "Sending..." : "Send Reply"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
