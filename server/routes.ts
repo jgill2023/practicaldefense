@@ -3809,6 +3809,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Twilio SMS Webhook Endpoint - Receives incoming SMS messages
+  app.post("/api/sms/webhook", async (req, res) => {
+    try {
+      // Twilio sends webhook data as form-urlencoded
+      const {
+        MessageSid,
+        From,
+        To,
+        Body,
+        NumMedia,
+        MediaUrl0,
+        FromCity,
+        FromState,
+        FromCountry
+      } = req.body;
+
+      console.log("Incoming SMS webhook received:", {
+        sid: MessageSid,
+        from: From,
+        to: To,
+        body: Body,
+        numMedia: NumMedia
+      });
+
+      // Try to find the user by phone number
+      const users = await storage.getAllStudents();
+      const matchingUser = users.find(u => 
+        u.phone && u.phone.replace(/\D/g, '') === From.replace(/\D/g, '')
+      );
+
+      // Save the incoming SMS to the communications table
+      const communicationData = {
+        type: 'sms' as const,
+        direction: 'inbound' as const,
+        fromAddress: From,
+        toAddress: To,
+        subject: null,
+        content: Body || '',
+        htmlContent: null,
+        userId: matchingUser?.id || null,
+        enrollmentId: null,
+        courseId: null,
+        purpose: 'general',
+        deliveryStatus: 'delivered',
+        externalMessageId: MessageSid,
+        sentAt: new Date(),
+        deliveredAt: new Date(),
+        isRead: false,
+        isFlagged: false,
+      };
+
+      const savedCommunication = await storage.createCommunication(communicationData);
+
+      console.log("Incoming SMS saved to communications:", {
+        id: savedCommunication.id,
+        from: From,
+        userId: matchingUser?.id || 'no matching user'
+      });
+
+      // Respond to Twilio with TwiML (optional - empty response is fine)
+      res.type('text/xml');
+      res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
+    } catch (error: any) {
+      console.error("Error processing SMS webhook:", error);
+      
+      // Still respond with 200 to Twilio to prevent retries
+      res.type('text/xml');
+      res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
+    }
+  });
+
   // E-COMMERCE API ROUTES
 
   // Product Categories Routes
