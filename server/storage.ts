@@ -2824,16 +2824,26 @@ export class DatabaseStorage implements IStorage {
     const depositAmount = enrollment.course.depositAmount ? parseFloat(enrollment.course.depositAmount) : 0;
     
     let paidAmount = 0;
-    let remainingBalance = 0;
+    let remainingBalance = coursePrice;
     
     if (enrollment.paymentStatus === 'paid') {
       if (enrollment.paymentOption === 'deposit') {
+        // Deposit paid, remaining balance due
         paidAmount = depositAmount;
         remainingBalance = coursePrice - depositAmount;
       } else {
+        // Full payment completed
         paidAmount = coursePrice;
         remainingBalance = 0;
       }
+    } else if (enrollment.paymentStatus === 'partial') {
+      // Partial payment made (usually deposit)
+      paidAmount = depositAmount;
+      remainingBalance = coursePrice - depositAmount;
+    } else if (enrollment.paymentStatus === 'pending') {
+      // No payment made yet
+      paidAmount = 0;
+      remainingBalance = coursePrice;
     }
     
     return {
