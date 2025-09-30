@@ -1020,19 +1020,13 @@ export class DatabaseStorage implements IStorage {
     former: any[];
     held: any[];
   }> {
-    // Get all enrollments for instructor's courses (confirmed enrollments with paid status, plus held students)
+    // Get all enrollments for instructor's courses (all statuses)
     const enrollmentList = await db.query.enrollments.findMany({
       with: {
         course: true,
         schedule: true,
         student: true,
       },
-      where: and(
-        or(
-          and(eq(enrollments.status, 'confirmed'), eq(enrollments.paymentStatus, 'paid')),
-          eq(enrollments.status, 'hold')
-        )
-      ),
       orderBy: desc(enrollments.createdAt),
     });
 
