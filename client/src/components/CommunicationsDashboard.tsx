@@ -190,6 +190,12 @@ export function CommunicationsDashboard() {
     refetchOnWindowFocus: true, // Refetch when user returns to tab
   });
 
+  // Query for SMS templates
+  const { data: smsTemplates } = useQuery({
+    queryKey: ['/api/admin/notification-templates'],
+    enabled: user?.role === 'instructor',
+  });
+
   // Mutations for status changes
   const markAsReadMutation = useMutation({
     mutationFn: (id: string) => apiRequest('PATCH', `/api/communications/${id}/read`),
@@ -580,7 +586,7 @@ export function CommunicationsDashboard() {
 
   // Handle real-time notifications when data changes
   useEffect(() => {
-    if (!communicationsData) {
+    if (!communicationsData || !communicationsData.data) {
       return;
     }
 
@@ -1270,10 +1276,60 @@ export function CommunicationsDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center py-8 text-muted-foreground">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-4" />
-                    <p>Create and manage SMS templates for course notifications and reminders.</p>
-                  </div>
+                  {!smsTemplates || smsTemplates.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <MessageSquare className="h-12 w-12 mx-auto mb-4" />
+                      <p>Create and manage SMS templates for course notifications and reminders.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {smsTemplates.map((template: any) => (
+                        <div
+                          key={template.id}
+                          className="flex items-start justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                          data-testid={`template-${template.id}`}
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold">{template.name}</h3>
+                              <Badge variant="secondary" className="text-xs">
+                                {template.category}
+                              </Badge>
+                            </div>
+                            <div 
+                              className="text-sm text-muted-foreground prose prose-sm max-w-none"
+                              dangerouslySetInnerHTML={{ __html: template.content }}
+                            />
+                            {template.imageUrl && (
+                              <div className="mt-2">
+                                <img 
+                                  src={template.imageUrl} 
+                                  alt={template.name}
+                                  className="max-w-[200px] max-h-[200px] object-contain rounded"
+                                />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              data-testid={`button-edit-template-${template.id}`}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              data-testid={`button-delete-template-${template.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
