@@ -90,16 +90,22 @@ async function upsertUser(
   console.log("upsertUser - existingUser:", existingUser);
   
   if (existingUser) {
-    // For existing users, update profile info and role from OIDC claims
-    // OIDC claims are trusted source of truth for authentication
+    // For existing users, update profile info
+    // Only update role if explicitly provided in claims, otherwise preserve existing role
     console.log("upsertUser - updating existing user");
-    await storage.updateUser(claims["sub"], {
+    const updateData: any = {
       email: claims["email"],
       firstName: claims["first_name"],
       lastName: claims["last_name"],
       profileImageUrl: claims["profile_image_url"],
-      role: role,
-    });
+    };
+    
+    // Only update role if it's explicitly provided in the claims
+    if (claimRole && validRoles.includes(claimRole)) {
+      updateData.role = role;
+    }
+    
+    await storage.updateUser(claims["sub"], updateData);
   } else {
     // For new users, set the validated role
     console.log("upsertUser - creating new user with data:", {
