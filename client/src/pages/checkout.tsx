@@ -20,25 +20,12 @@ if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
 }
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-const CheckoutForm = ({ enrollment }: { enrollment: EnrollmentWithDetails }) => {
+const CheckoutForm = ({ enrollment, totalAmount }: { enrollment: EnrollmentWithDetails; totalAmount: number }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
-
-  // Calculate the payment amount based on the payment option
-  const getPaymentAmount = (enrollment: any) => {
-    if (!enrollment) return 0;
-    
-    const coursePrice = parseFloat(enrollment.course.price);
-    const depositAmount = enrollment.course.depositAmount ? parseFloat(enrollment.course.depositAmount) : null;
-    
-    if (enrollment.paymentOption === 'deposit' && depositAmount) {
-      return depositAmount;
-    }
-    return coursePrice;
-  };
 
   const confirmEnrollmentMutation = useMutation({
     mutationFn: async ({ enrollmentId, paymentIntentId }: { enrollmentId: string; paymentIntentId: string }) => {
@@ -120,7 +107,7 @@ const CheckoutForm = ({ enrollment }: { enrollment: EnrollmentWithDetails }) => 
         ) : (
           <>
             <CreditCard className="mr-2 h-4 w-4" />
-            Complete Payment - ${getPaymentAmount(enrollment)}
+            Complete Payment - ${totalAmount.toFixed(2)}
           </>
         )}
       </Button>
@@ -461,7 +448,10 @@ export default function Checkout() {
                 }
               }}
             >
-              <CheckoutForm enrollment={enrollment} />
+              <CheckoutForm 
+                enrollment={enrollment} 
+                totalAmount={taxInfo?.total || getPaymentAmount(enrollment)}
+              />
             </Elements>
           </CardContent>
         </Card>
