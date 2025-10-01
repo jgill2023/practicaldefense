@@ -1986,19 +1986,21 @@ export function CommunicationsDashboard() {
                                         <th className="text-left p-3 text-sm font-medium">Name</th>
                                         <th className="text-left p-3 text-sm font-medium">Email</th>
                                         <th className="text-left p-3 text-sm font-medium">Phone</th>
-                                        <th className="text-left p-3 text-sm font-medium">Date Added</th>
-                                        <th className="text-left p-3 text-sm font-medium">Added By</th>
-                                        <th className="text-left p-3 text-sm font-medium">Type</th>
                                         <th className="text-right p-3 text-sm font-medium">Actions</th>
                                       </tr>
                                     </thead>
                                     <tbody>
                                       {listStudents
-                                        .filter((student: any) => 
-                                          !studentSearchTerm ||
-                                          student.user?.name?.toLowerCase().includes(studentSearchTerm.toLowerCase()) ||
-                                          student.user?.email?.toLowerCase().includes(studentSearchTerm.toLowerCase())
-                                        )
+                                        .filter((student: any) => {
+                                          if (!studentSearchTerm) return true;
+                                          const searchLower = studentSearchTerm.toLowerCase();
+                                          const firstName = student.user?.firstName?.toLowerCase() || '';
+                                          const lastName = student.user?.lastName?.toLowerCase() || '';
+                                          const fullName = `${firstName} ${lastName}`.trim();
+                                          const email = student.user?.email?.toLowerCase() || '';
+                                          
+                                          return fullName.includes(searchLower) || email.includes(searchLower);
+                                        })
                                         .map((student: any, idx: number) => (
                                           <tr
                                             key={student.id}
@@ -2007,27 +2009,16 @@ export function CommunicationsDashboard() {
                                           >
                                             <td className="p-3">
                                               <div className="font-medium" data-testid={`text-student-name-${idx}`}>
-                                                {student.user?.name || "Unknown"}
+                                                {student.user?.firstName && student.user?.lastName 
+                                                  ? `${student.user.firstName} ${student.user.lastName}`
+                                                  : student.user?.email || "Unknown"}
                                               </div>
                                             </td>
                                             <td className="p-3 text-sm text-muted-foreground" data-testid={`text-student-email-${idx}`}>
                                               {student.user?.email || "-"}
                                             </td>
                                             <td className="p-3 text-sm text-muted-foreground" data-testid={`text-student-phone-${idx}`}>
-                                              {student.user?.phoneNumber || "-"}
-                                            </td>
-                                            <td className="p-3 text-sm" data-testid={`text-student-added-${idx}`}>
-                                              {format(new Date(student.createdAt), "MMM d, yyyy")}
-                                            </td>
-                                            <td className="p-3 text-sm" data-testid={`text-student-added-by-${idx}`}>
-                                              {student.addedByUser?.name || "System"}
-                                            </td>
-                                            <td className="p-3">
-                                              {student.autoAdded && (
-                                                <Badge variant="secondary" className="text-xs" data-testid={`badge-auto-added-${idx}`}>
-                                                  Auto-added
-                                                </Badge>
-                                              )}
+                                              {student.user?.phone || "-"}
                                             </td>
                                             <td className="p-3 text-right">
                                               <Button
