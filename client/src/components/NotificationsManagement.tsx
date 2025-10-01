@@ -864,7 +864,7 @@ export function NotificationsManagement() {
 
       {/* Template Create/Edit Dialog */}
       <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
-        <DialogContent className="max-w-2xl" style={{zIndex: 50}}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" style={{zIndex: 50}}>
           <DialogHeader>
             <DialogTitle>
               {selectedTemplate ? 'Edit Template' : 'Create New Template'}
