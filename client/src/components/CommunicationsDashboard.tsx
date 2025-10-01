@@ -131,6 +131,7 @@ export function CommunicationsDashboard() {
   
   // SMS Template state
   const [isCreateTemplateDialogOpen, setIsCreateTemplateDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<any>(null);
   const [templateName, setTemplateName] = useState("");
   const [templateContent, setTemplateContent] = useState("");
   const [templateCategory, setTemplateCategory] = useState("announcement");
@@ -301,12 +302,62 @@ export function CommunicationsDashboard() {
       setTemplateContent("");
       setTemplateCategory("announcement");
       setTemplateImageUrl(null);
+      setEditingTemplate(null);
       setIsCreateTemplateDialogOpen(false);
     },
     onError: (error: any) => {
       toast({ 
         title: "Error", 
         description: error?.message || "Failed to create template", 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const updateTemplateMutation = useMutation({
+    mutationFn: ({ id, name, content, imageUrl, category }: { 
+      id: string;
+      name: string; 
+      content: string; 
+      imageUrl: string | null; 
+      category: string;
+    }) =>
+      apiRequest('PUT', `/api/admin/notification-templates/${id}`, { 
+        name, 
+        content, 
+        imageUrl, 
+        category
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/notification-templates'] });
+      toast({ title: "Success", description: "SMS template updated successfully" });
+      setTemplateName("");
+      setTemplateContent("");
+      setTemplateCategory("announcement");
+      setTemplateImageUrl(null);
+      setEditingTemplate(null);
+      setIsCreateTemplateDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to update template", 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const deleteTemplateMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiRequest('DELETE', `/api/admin/notification-templates/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/notification-templates'] });
+      toast({ title: "Success", description: "SMS template deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to delete template", 
         variant: "destructive" 
       });
     }
@@ -1314,6 +1365,14 @@ export function CommunicationsDashboard() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => {
+                                setEditingTemplate(template);
+                                setTemplateName(template.name);
+                                setTemplateContent(template.content);
+                                setTemplateCategory(template.category);
+                                setTemplateImageUrl(template.imageUrl);
+                                setIsCreateTemplateDialogOpen(true);
+                              }}
                               data-testid={`button-edit-template-${template.id}`}
                             >
                               <Edit className="h-4 w-4" />
@@ -1321,6 +1380,11 @@ export function CommunicationsDashboard() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => {
+                                if (confirm('Are you sure you want to delete this template?')) {
+                                  deleteTemplateMutation.mutate(template.id);
+                                }
+                              }}
                               data-testid={`button-delete-template-${template.id}`}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -3303,11 +3367,20 @@ export function CommunicationsDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Create SMS Template Dialog */}
-      <Dialog open={isCreateTemplateDialogOpen} onOpenChange={setIsCreateTemplateDialogOpen}>
+      {/* Create/Edit SMS Template Dialog */}
+      <Dialog open={isCreateTemplateDialogOpen} onOpenChange={(open) => {
+        setIsCreateTemplateDialogOpen(open);
+        if (!open) {
+          setEditingTemplate(null);
+          setTemplateName("");
+          setTemplateContent("");
+          setTemplateCategory("announcement");
+          setTemplateImageUrl(null);
+        }
+      }}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create SMS Template</DialogTitle>
+            <DialogTitle>{editingTemplate ? 'Edit SMS Template' : 'Create SMS Template'}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
@@ -3477,7 +3550,7 @@ export function CommunicationsDashboard() {
                   });
                   return;
                 }
-                if (!user?.id) {
+                if (!user?.id && !editingTemplate) {
                   toast({
                     title: "Authentication Error",
                     description: "Please log in to create templates",
@@ -3485,27 +3558,38 @@ export function CommunicationsDashboard() {
                   });
                   return;
                 }
-                createTemplateMutation.mutate({
-                  name: templateName,
-                  content: templateContent,
-                  imageUrl: templateImageUrl,
-                  type: 'sms',
-                  category: templateCategory,
-                  createdBy: user.id
-                });
+                
+                if (editingTemplate) {
+                  updateTemplateMutation.mutate({
+                    id: editingTemplate.id,
+                    name: templateName,
+                    content: templateContent,
+                    imageUrl: templateImageUrl,
+                    category: templateCategory
+                  });
+                } else {
+                  createTemplateMutation.mutate({
+                    name: templateName,
+                    content: templateContent,
+                    imageUrl: templateImageUrl,
+                    type: 'sms',
+                    category: templateCategory,
+                    createdBy: user.id
+                  });
+                }
               }}
-              disabled={createTemplateMutation.isPending}
+              disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
               data-testid="button-save-template"
             >
-              {createTemplateMutation.isPending ? (
+              {(createTemplateMutation.isPending || updateTemplateMutation.isPending) ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-transparent border-t-current rounded-full mr-2" />
-                  Creating...
+                  {editingTemplate ? 'Updating...' : 'Creating...'}
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Create Template
+                  {editingTemplate ? 'Update Template' : 'Create Template'}
                 </>
               )}
             </Button>
