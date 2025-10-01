@@ -4,6 +4,13 @@ Practical Defense Training is a professional firearms training management platfo
 
 # Recent Changes
 
+## October 1, 2025 - Email Template Button Navigation Fix
+- Fixed non-functional Email Template buttons in Communications Dashboard
+- "Manage Templates" button now navigates to Course Management > Notifications tab
+- Edit and Preview buttons on template cards now redirect to full template management
+- Updated student list display to show firstName + lastName instead of concatenated name
+- Fixed JSON parsing error when removing students from SMS lists (204 No Content handling)
+
 ## September 30, 2025 - Student Dashboard Remaining Balance Feature
 - Replaced Progress tile with Remaining Balance tile on student dashboard
 - Added clickable tile that opens Outstanding Balance modal when balance > 0

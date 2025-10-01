@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -97,6 +98,7 @@ interface Filters {
 
 export function CommunicationsDashboard() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState("sms-management");
   const [activeEmailTab, setActiveEmailTab] = useState("templates");
   const [activeSMSTab, setActiveSMSTab] = useState<"inbox" | "compose" | "contacts" | "templates" | "lists">("inbox");
@@ -1201,11 +1203,17 @@ export function CommunicationsDashboard() {
         <TabsContent value="email-templates" className="space-y-4" data-testid="content-section-email-templates">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Mail className="h-5 w-5" />
-                <span>Email Templates</span>
-                <Button size="sm" data-testid="button-create-email-template">
-                  Create Template
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Mail className="h-5 w-5" />
+                  <span>Email Templates</span>
+                </div>
+                <Button 
+                  size="sm" 
+                  onClick={() => setLocation("/course-management?tab=notifications")}
+                  data-testid="button-create-email-template"
+                >
+                  Manage Templates
                 </Button>
               </CardTitle>
             </CardHeader>
@@ -1220,9 +1228,25 @@ export function CommunicationsDashboard() {
                     <Mail className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <h3 className="font-medium mb-2">Course Registration Confirmation</h3>
                     <p className="text-sm text-muted-foreground mb-4">Sent when students register for courses</p>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" data-testid="button-edit-template">Edit</Button>
-                      <Button variant="outline" size="sm" data-testid="button-preview-template">Preview</Button>
+                    <div className="flex space-x-2 justify-center">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setLocation("/course-management?tab=notifications")}
+                        data-testid="button-edit-template-registration"
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setLocation("/course-management?tab=notifications")}
+                        data-testid="button-preview-template-registration"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Preview
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -1232,9 +1256,25 @@ export function CommunicationsDashboard() {
                     <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <h3 className="font-medium mb-2">Course Reminder</h3>
                     <p className="text-sm text-muted-foreground mb-4">Sent 24 hours before course starts</p>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" data-testid="button-edit-template">Edit</Button>
-                      <Button variant="outline" size="sm" data-testid="button-preview-template">Preview</Button>
+                    <div className="flex space-x-2 justify-center">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setLocation("/course-management?tab=notifications")}
+                        data-testid="button-edit-template-reminder"
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setLocation("/course-management?tab=notifications")}
+                        data-testid="button-preview-template-reminder"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Preview
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
