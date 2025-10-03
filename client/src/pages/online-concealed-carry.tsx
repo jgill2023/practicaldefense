@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Layout } from "@/components/Layout";
 import { 
   Calendar, 
   Clock, 
@@ -189,9 +190,10 @@ export function OnlineConcealedCarryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="bg-primary text-primary-foreground py-12">
+    <Layout>
+      <div className="min-h-screen bg-background">
+        {/* Hero Section */}
+        <section className="bg-primary text-primary-foreground py-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <Badge variant="secondary" className="mb-4 bg-accent text-accent-foreground">
@@ -420,16 +422,17 @@ export function OnlineConcealedCarryPage() {
       </section>
 
       {/* Registration Modal */}
-      {selectedCourse && (
-        <RegistrationModal
-          isOpen={showModal}
-          onClose={() => {
-            setShowModal(false);
-            setSelectedCourse(null);
-          }}
-          course={selectedCourse}
-        />
-      )}
-    </div>
+        {selectedCourse && (
+          <RegistrationModal
+            isOpen={showModal}
+            onClose={() => {
+              setShowModal(false);
+              setSelectedCourse(null);
+            }}
+            course={selectedCourse}
+          />
+        )}
+      </div>
+    </Layout>
   );
 }
