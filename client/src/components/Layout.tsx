@@ -153,10 +153,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </NavigationMenuItem>
                   </NavigationMenuList>
                 </NavigationMenu>
-                <a href="#about-us" className="text-base text-primary-foreground hover:text-accent transition-colors">About Us</a>
-                <a href="#resources" className="text-base text-primary-foreground hover:text-accent transition-colors">Resources</a>
-                <Link href="/store" className="text-base text-primary-foreground hover:text-accent transition-colors" data-testid="link-store">Our Store</Link>
-                <Link href="/contact" className="text-base text-primary-foreground hover:text-accent transition-colors" data-testid="link-contact">Contact Us</Link>
+                <a href="#about-us" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors">About Us</a>
+                <a href="#resources" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors">Resources</a>
+                <Link href="/store" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors" data-testid="link-store">Our Store</Link>
+                <Link href="/contact" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors" data-testid="link-contact">Contact Us</Link>
               </nav>
 
               {/* Desktop auth buttons */}
