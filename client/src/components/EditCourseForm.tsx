@@ -135,8 +135,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
     try {
       console.log('Getting upload parameters...');
       setIsUploadingImage(true);
-      const response = await apiRequest("POST", "/api/objects/upload");
-      const data = await response.json();
+      const data = await apiRequest("POST", "/api/objects/upload");
       console.log('Upload parameters received:', data);
       return {
         method: 'PUT' as const,
