@@ -159,10 +159,9 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
         try {
           // Update the course image and set ACL policy
           console.log('Setting course image ACL...');
-          const response = await apiRequest("PUT", "/api/course-images", {
+          const data = await apiRequest("PUT", "/api/course-images", {
             courseImageURL: uploadURL,
           });
-          const data = await response.json();
           console.log('ACL response:', data);
 
           // Set the uploaded image URL for preview and form
