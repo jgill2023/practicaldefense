@@ -126,6 +126,8 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
   });
 
   const onSubmit = (data: CourseFormData) => {
+    console.log('Form submitted with data:', data);
+    console.log('Form errors:', form.formState.errors);
     updateCourseMutation.mutate(data);
   };
 
