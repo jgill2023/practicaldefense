@@ -525,6 +525,12 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
               type="submit" 
               disabled={updateCourseMutation.isPending}
               data-testid="button-update-course"
+              onClick={(e) => {
+                console.log('Update Course button clicked');
+                console.log('Form state:', form.formState);
+                console.log('Form values:', form.getValues());
+                console.log('Form errors:', form.formState.errors);
+              }}
             >
               <Edit className="mr-2 h-4 w-4" />
               {updateCourseMutation.isPending ? "Updating..." : "Update Course"}
