@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ObjectUploader } from "@/components/ObjectUploader";
-import { Edit, FileText, ImageIcon } from "lucide-react";
+import { Edit, FileText, ImageIcon, Target } from "lucide-react";
 import type { CourseWithSchedules, Category } from "@shared/schema";
 import type { UploadResult } from "@uppy/core";
 
