@@ -84,7 +84,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       price: course.price.toString(),
       depositAmount: course.depositAmount ? course.depositAmount.toString() : "",
       duration: course.duration,
-      category: course.category,
+      category: typeof course.category === 'string' ? course.category : (course.category as any)?.name || "",
       classroomTime: course.classroomTime || "",
       rangeTime: course.rangeTime || "",
       rounds: course.rounds || 0,
@@ -126,44 +126,34 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
   });
 
   const onSubmit = (data: CourseFormData) => {
-    console.log('Form submitted with data:', data);
-    console.log('Form errors:', form.formState.errors);
     updateCourseMutation.mutate(data);
   };
 
   // Handle image upload
   const handleGetUploadParameters = async () => {
     try {
-      console.log('Getting upload parameters...');
       setIsUploadingImage(true);
       const data = await apiRequest("POST", "/api/objects/upload");
-      console.log('Upload parameters received:', data);
       return {
         method: 'PUT' as const,
         url: data.uploadURL,
       };
     } catch (error) {
-      console.error('Error getting upload parameters:', error);
       setIsUploadingImage(false);
       throw error;
     }
   };
 
   const handleImageUploadComplete = async (result: { successful: any[] }) => {
-    console.log('Upload complete result:', result);
-
     if (result.successful && result.successful.length > 0) {
       const uploadURL = result.successful[0].uploadURL;
-      console.log('Processing upload URL:', uploadURL);
 
       if (uploadURL) {
         try {
           // Update the course image and set ACL policy
-          console.log('Setting course image ACL...');
           const data = await apiRequest("PUT", "/api/course-images", {
             courseImageURL: uploadURL,
           });
-          console.log('ACL response:', data);
 
           // Set the uploaded image URL for preview and form
           setUploadedImageUrl(data.objectPath);
@@ -174,7 +164,6 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
             description: "Course image has been uploaded successfully.",
           });
         } catch (error) {
-          console.error('Upload processing error:', error);
           toast({
             title: "Upload Error",
             description: "Failed to process uploaded image. Please try again.",
@@ -185,7 +174,6 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
         }
       }
     } else {
-      console.error('Upload failed - no successful uploads');
       setIsUploadingImage(false);
       toast({
         title: "Upload Failed",
@@ -267,7 +255,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                     <Label htmlFor="category">Course Category *</Label>
                     <Select
                       value={form.watch("category")}
-                      onValueChange={(value) => form.setValue("category", value)}
+                      onValueChange={(value) => form.setValue("category", value, { shouldValidate: true })}
                     >
                       <SelectTrigger data-testid="select-category">
                         <SelectValue placeholder="Select a category" />
@@ -525,12 +513,6 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
               type="submit" 
               disabled={updateCourseMutation.isPending}
               data-testid="button-update-course"
-              onClick={(e) => {
-                console.log('Update Course button clicked');
-                console.log('Form state:', form.formState);
-                console.log('Form values:', form.getValues());
-                console.log('Form errors:', form.formState.errors);
-              }}
             >
               <Edit className="mr-2 h-4 w-4" />
               {updateCourseMutation.isPending ? "Updating..." : "Update Course"}
