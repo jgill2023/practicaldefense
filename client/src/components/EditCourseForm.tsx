@@ -103,8 +103,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
         depositAmount: data.depositAmount && data.depositAmount !== "" ? parseFloat(data.depositAmount) : undefined,
         imageUrl: data.imageUrl, // Use form value directly since it's updated on image upload
       };
-      const response = await apiRequest("PUT", `/api/instructor/courses/${course.id}`, courseData);
-      return response.json();
+      return await apiRequest("PUT", `/api/instructor/courses/${course.id}`, courseData);
     },
     onSuccess: () => {
       toast({
