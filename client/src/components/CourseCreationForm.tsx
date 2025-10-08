@@ -114,8 +114,7 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
     try {
       console.log('Getting upload parameters...');
       setIsUploadingImage(true);
-      const response = await apiRequest("POST", "/api/objects/upload");
-      const data = await response.json();
+      const data = await apiRequest("POST", "/api/objects/upload");
       console.log('Upload parameters received:', data);
       return {
         method: 'PUT' as const,
@@ -139,10 +138,9 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
         try {
           // Update the course image and set ACL policy
           console.log('Setting course image ACL...');
-          const response = await apiRequest("PUT", "/api/course-images", {
+          const data = await apiRequest("PUT", "/api/course-images", {
             courseImageURL: uploadURL,
           });
-          const data = await response.json();
           console.log('ACL response:', data);
           
           // Set the uploaded image URL for preview and form
