@@ -1240,12 +1240,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/instructor/courses", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      const courseData = { ...req.body, instructorId: userId };
       
       // Validate required fields
-      if (!courseData.title || !courseData.description || !courseData.price || !courseData.category) {
+      if (!req.body.title || !req.body.description || !req.body.price || !req.body.category) {
         return res.status(400).json({ error: "Missing required fields" });
       }
+
+      // Convert string values to proper types for database
+      const courseData = {
+        ...req.body,
+        instructorId: userId,
+        price: req.body.price ? parseFloat(req.body.price) : undefined,
+        depositAmount: req.body.depositAmount ? parseFloat(req.body.depositAmount) : undefined,
+        maxStudents: req.body.maxStudents ? parseInt(req.body.maxStudents) : 20,
+        rounds: req.body.rounds ? parseInt(req.body.rounds) : undefined,
+      };
 
       const course = await storage.createCourse(courseData);
       res.status(201).json(course);
