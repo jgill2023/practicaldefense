@@ -79,8 +79,7 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
 
   const createCourseMutation = useMutation({
     mutationFn: async (data: CourseFormData) => {
-      const response = await apiRequest("POST", "/api/instructor/courses", data);
-      return response.json();
+      return await apiRequest("POST", "/api/instructor/courses", data);
     },
     onSuccess: () => {
       toast({
