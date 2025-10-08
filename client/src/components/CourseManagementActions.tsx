@@ -39,8 +39,7 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
   // Archive course mutation
   const archiveCourseMutation = useMutation({
     mutationFn: async (courseId: string) => {
-      const response = await apiRequest("PATCH", `/api/instructor/courses/${courseId}/archive`);
-      return response.json();
+      return await apiRequest("PATCH", `/api/instructor/courses/${courseId}/archive`);
     },
     onSuccess: () => {
       toast({
@@ -62,8 +61,7 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
   // Delete course mutation
   const deleteCourseMutation = useMutation({
     mutationFn: async (courseId: string) => {
-      const response = await apiRequest("DELETE", `/api/instructor/courses/${courseId}`);
-      return response.json();
+      return await apiRequest("DELETE", `/api/instructor/courses/${courseId}`);
     },
     onSuccess: () => {
       toast({
@@ -85,8 +83,7 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
   // Publish/Unpublish course mutation
   const publishCourseMutation = useMutation({
     mutationFn: async ({ courseId, action }: { courseId: string; action: 'publish' | 'unpublish' }) => {
-      const response = await apiRequest("PATCH", `/api/instructor/courses/${courseId}/${action}`);
-      return response.json();
+      return await apiRequest("PATCH", `/api/instructor/courses/${courseId}/${action}`);
     },
     onSuccess: (data, variables) => {
       const action = variables.action === 'publish' ? 'published' : 'unpublished';
