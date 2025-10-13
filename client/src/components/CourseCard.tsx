@@ -57,15 +57,18 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
 
   return (
     <Card className="overflow-hidden border border-border hover:shadow-xl transition-shadow w-full" data-testid={`course-card-${course.id}`}>
-      <img 
-        src={course.imageUrl || getImageUrl(getCategoryName())} 
-        alt={course.title}
-        className="w-full h-40 sm:h-48 object-cover"
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.src = getImageUrl(getCategoryName());
-        }}
-      />
+      <div className="relative w-full h-40 sm:h-48 bg-muted">
+        <img 
+          src={course.imageUrl || getImageUrl(getCategoryName())} 
+          alt={course.title}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = getImageUrl(getCategoryName());
+          }}
+        />
+      </div>
       <CardContent className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
           <Badge className={getCategoryColor(getCategoryName())} data-testid={`badge-category-${course.id}`}>

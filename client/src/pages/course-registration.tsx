@@ -168,6 +168,7 @@ export default function CourseRegistration() {
     }
   };
 
+  // Fetch all courses
   const { data: course, isLoading: courseLoading } = useQuery<CourseWithSchedules>({
     queryKey: ["/api/courses", params?.id],
     enabled: !!params?.id,
