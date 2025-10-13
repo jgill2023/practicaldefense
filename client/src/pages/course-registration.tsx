@@ -19,7 +19,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Clock, Calendar, User, DollarSign, Users, CreditCard, Shield, Tag, Check, X } from "lucide-react";
 import type { CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PolicyModal } from "@/components/PolicyModal";
 
 // Load Stripe outside of component render
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
@@ -110,82 +111,7 @@ const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: a
   );
 };
 
-// Reusable Policy Modal Component
-const PolicyModal = ({ isOpen, onClose, type }: { isOpen: boolean; onClose: () => void; type: 'terms' | 'privacy' | 'refund' }) => {
-  const getPolicyContent = () => {
-    switch (type) {
-      case 'terms':
-        return {
-          title: "Terms of Service",
-          content: (
-            <>
-              <h2 className="text-lg font-bold mb-2">1. Acceptance of Terms</h2>
-              <p className="mb-4">By accessing and using this website, you agree to be bound by the following terms and conditions. If you do not agree with any part of these terms, you must not use our services.</p>
-              <h2 className="text-lg font-bold mb-2">2. Use of Service</h2>
-              <p className="mb-4">You agree to use our services only for lawful purposes and in a way that does not infringe the rights of, restrict, or inhibit the use and enjoyment of this website by any third party.</p>
-              <h2 className="text-lg font-bold mb-2">3. Intellectual Property</h2>
-              <p className="mb-4">All content on this website, including text, graphics, logos, and images, is our property or the property of our content suppliers and is protected by copyright laws.</p>
-              <h2 className="text-lg font-bold mb-2">4. Modifications</h2>
-              <p className="mb-4">We reserve the right to modify these terms and conditions at any time. Any changes will be effective immediately upon posting to the website.</p>
-              <h2 className="text-lg font-bold mb-2">5. Governing Law</h2>
-              <p className="mb-4">These terms shall be governed by and construed in accordance with the laws of [Your Jurisdiction].</p>
-            </>
-          ),
-        };
-      case 'privacy':
-        return {
-          title: "Privacy Policy",
-          content: (
-            <>
-              <h2 className="text-lg font-bold mb-2">1. Information We Collect</h2>
-              <p className="mb-4">We collect personal information such as your name, email address, and phone number when you register for our courses.</p>
-              <h2 className="text-lg font-bold mb-2">2. How We Use Your Information</h2>
-              <p className="mb-4">Your information is used to process your registration, communicate with you about course updates, and improve our services.</p>
-              <h2 className="text-lg font-bold mb-2">3. Data Security</h2>
-              <p className="mb-4">We implement appropriate security measures to protect your personal information from unauthorized access or disclosure.</p>
-              <h2 className="text-lg font-bold mb-2">4. Third-Party Sharing</h2>
-              <p className="mb-4">We do not sell or share your personal information with third parties, except as required to process payments through our secure payment gateway.</p>
-              <h2 className="text-lg font-bold mb-2">5. Changes to Privacy Policy</h2>
-              <p className="mb-4">This policy may be updated from time to time. We will notify you of any significant changes.</p>
-            </>
-          ),
-        };
-      case 'refund':
-        return {
-          title: "Refund Policy",
-          content: (
-            <>
-              <h2 className="text-lg font-bold mb-2">1. Refund Eligibility</h2>
-              <p className="mb-4">Refunds may be granted if requested at least 14 days prior to the course start date. A processing fee may apply.</p>
-              <h2 className="text-lg font-bold mb-2">2. How to Request a Refund</h2>
-              <p className="mb-4">To request a refund, please contact our support team at [Support Email Address] with your enrollment details.</p>
-              <h2 className="text-lg font-bold mb-2">3. Non-Refundable Items</h2>
-              <p className="mb-4">Deposit payments and any processing fees are non-refundable.</p>
-              <h2 className="text-lg font-bold mb-2">4. Course Cancellation</h2>
-              <p className="mb-4">In the event that we cancel a course, a full refund will be issued to all registered participants.</p>
-            </>
-          ),
-        };
-      default:
-        return { title: "Policy", content: <p>Policy content not available.</p> };
-    }
-  };
 
-  const { title, content } = getPolicyContent();
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <div className="p-4">
-          {content}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
 
 export default function CourseRegistration() {
@@ -1058,13 +984,29 @@ export default function CourseRegistration() {
                 />
                 <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed">
                   I agree to the{' '}
-                  <DialogTrigger asChild className="text-accent hover:text-accent/80 transition-colors cursor-pointer">
-                    <a href="#">Terms of Service</a>
-                  </DialogTrigger>
-                  {' '} and{' '}
-                  <DialogTrigger asChild className="text-accent hover:text-accent/80 transition-colors cursor-pointer">
-                    <a href="#">Privacy Policy</a>
-                  </DialogTrigger>
+                  <button
+                    type="button"
+                    onClick={() => setPolicyModalOpen('terms')}
+                    className="text-accent hover:text-accent/80 transition-colors cursor-pointer underline"
+                  >
+                    Terms of Service
+                  </button>
+                  {' '}and{' '}
+                  <button
+                    type="button"
+                    onClick={() => setPolicyModalOpen('privacy')}
+                    className="text-accent hover:text-accent/80 transition-colors cursor-pointer underline"
+                  >
+                    Privacy Policy
+                  </button>
+                  . I also acknowledge the{' '}
+                  <button
+                    type="button"
+                    onClick={() => setPolicyModalOpen('refund')}
+                    className="text-accent hover:text-accent/80 transition-colors cursor-pointer underline"
+                  >
+                    Refund Policy
+                  </button>
                   . I understand the risks associated with firearms training and accept full responsibility for my participation.
                 </label>
               </div>
