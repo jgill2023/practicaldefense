@@ -377,6 +377,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/contact" className="block hover:text-accent transition-colors" data-testid="link-contact-support">Contact Us</Link>
                 <Link href="/privacy-policy" className="block hover:text-accent transition-colors" data-testid="link-privacy-policy">Privacy Policy</Link>
                 <Link href="/terms-of-service" className="block hover:text-accent transition-colors" data-testid="link-terms-of-service">Terms of Service</Link>
+                <Link href="/refund-policy" className="block hover:text-accent transition-colors" data-testid="link-refund-policy">Refund Policy</Link>
               </div>
             </div>
 
