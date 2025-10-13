@@ -374,9 +374,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="space-y-4">
               <h4 className="font-semibold">Support</h4>
               <div className="space-y-2 text-primary-foreground/80">
-                <Link href="/contact" className="block hover:text-accent transition-colors" data-testid="link-contact-support">Contact Support</Link>
-                <a href="#" className="block hover:text-accent transition-colors">Privacy Policy</a>
-                <a href="#" className="block hover:text-accent transition-colors">Terms of Service</a>
+                <Link href="/contact" className="block hover:text-accent transition-colors" data-testid="link-contact-support">Contact Us</Link>
+                <Link href="/privacy-policy" className="block hover:text-accent transition-colors" data-testid="link-privacy-policy">Privacy Policy</Link>
+                <Link href="/terms-of-service" className="block hover:text-accent transition-colors" data-testid="link-terms-of-service">Terms of Service</Link>
               </div>
             </div>
 
