@@ -19,6 +19,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Clock, Calendar, User, DollarSign, Users, CreditCard, Shield, Tag, Check, X } from "lucide-react";
 import type { CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 // Load Stripe outside of component render
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
@@ -35,10 +36,10 @@ const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: a
   // Calculate the payment amount based on the payment option
   const getPaymentAmount = (enrollment: any) => {
     if (!enrollment) return 0;
-    
+
     const coursePrice = parseFloat(enrollment.course.price);
     const depositAmount = enrollment.course.depositAmount ? parseFloat(enrollment.course.depositAmount) : null;
-    
+
     if (enrollment.paymentOption === 'deposit' && depositAmount) {
       return depositAmount;
     }
@@ -73,19 +74,19 @@ const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: a
         paymentIntentId: paymentIntent.id,
       });
     }
-    
+
     setIsProcessing(false);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <PaymentElement />
-      
+
       <div className="flex items-center space-x-2 text-sm text-success">
         <Shield className="h-4 w-4" />
         <span>Secured by Stripe - Your payment information is encrypted</span>
       </div>
-      
+
       <Button
         type="submit"
         size="lg"
@@ -109,12 +110,90 @@ const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: a
   );
 };
 
+// Reusable Policy Modal Component
+const PolicyModal = ({ isOpen, onClose, type }: { isOpen: boolean; onClose: () => void; type: 'terms' | 'privacy' | 'refund' }) => {
+  const getPolicyContent = () => {
+    switch (type) {
+      case 'terms':
+        return {
+          title: "Terms of Service",
+          content: (
+            <>
+              <h2 className="text-lg font-bold mb-2">1. Acceptance of Terms</h2>
+              <p className="mb-4">By accessing and using this website, you agree to be bound by the following terms and conditions. If you do not agree with any part of these terms, you must not use our services.</p>
+              <h2 className="text-lg font-bold mb-2">2. Use of Service</h2>
+              <p className="mb-4">You agree to use our services only for lawful purposes and in a way that does not infringe the rights of, restrict, or inhibit the use and enjoyment of this website by any third party.</p>
+              <h2 className="text-lg font-bold mb-2">3. Intellectual Property</h2>
+              <p className="mb-4">All content on this website, including text, graphics, logos, and images, is our property or the property of our content suppliers and is protected by copyright laws.</p>
+              <h2 className="text-lg font-bold mb-2">4. Modifications</h2>
+              <p className="mb-4">We reserve the right to modify these terms and conditions at any time. Any changes will be effective immediately upon posting to the website.</p>
+              <h2 className="text-lg font-bold mb-2">5. Governing Law</h2>
+              <p className="mb-4">These terms shall be governed by and construed in accordance with the laws of [Your Jurisdiction].</p>
+            </>
+          ),
+        };
+      case 'privacy':
+        return {
+          title: "Privacy Policy",
+          content: (
+            <>
+              <h2 className="text-lg font-bold mb-2">1. Information We Collect</h2>
+              <p className="mb-4">We collect personal information such as your name, email address, and phone number when you register for our courses.</p>
+              <h2 className="text-lg font-bold mb-2">2. How We Use Your Information</h2>
+              <p className="mb-4">Your information is used to process your registration, communicate with you about course updates, and improve our services.</p>
+              <h2 className="text-lg font-bold mb-2">3. Data Security</h2>
+              <p className="mb-4">We implement appropriate security measures to protect your personal information from unauthorized access or disclosure.</p>
+              <h2 className="text-lg font-bold mb-2">4. Third-Party Sharing</h2>
+              <p className="mb-4">We do not sell or share your personal information with third parties, except as required to process payments through our secure payment gateway.</p>
+              <h2 className="text-lg font-bold mb-2">5. Changes to Privacy Policy</h2>
+              <p className="mb-4">This policy may be updated from time to time. We will notify you of any significant changes.</p>
+            </>
+          ),
+        };
+      case 'refund':
+        return {
+          title: "Refund Policy",
+          content: (
+            <>
+              <h2 className="text-lg font-bold mb-2">1. Refund Eligibility</h2>
+              <p className="mb-4">Refunds may be granted if requested at least 14 days prior to the course start date. A processing fee may apply.</p>
+              <h2 className="text-lg font-bold mb-2">2. How to Request a Refund</h2>
+              <p className="mb-4">To request a refund, please contact our support team at [Support Email Address] with your enrollment details.</p>
+              <h2 className="text-lg font-bold mb-2">3. Non-Refundable Items</h2>
+              <p className="mb-4">Deposit payments and any processing fees are non-refundable.</p>
+              <h2 className="text-lg font-bold mb-2">4. Course Cancellation</h2>
+              <p className="mb-4">In the event that we cancel a course, a full refund will be issued to all registered participants.</p>
+            </>
+          ),
+        };
+      default:
+        return { title: "Policy", content: <p>Policy content not available.</p> };
+    }
+  };
+
+  const { title, content } = getPolicyContent();
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="p-4">
+          {content}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
 export default function CourseRegistration() {
   const [, params] = useRoute("/course-registration/:id");
   const [, setLocation] = useLocation();
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
-  
+
   const [selectedSchedule, setSelectedSchedule] = useState<CourseSchedule | null>(null);
   const [clientSecret, setClientSecret] = useState("");
   const [taxInfo, setTaxInfo] = useState<{subtotal: number, tax: number, total: number, tax_included: boolean, originalAmount?: number, discountAmount?: number, promoCode?: any} | null>(null);
@@ -124,7 +203,10 @@ export default function CourseRegistration() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [currentEnrollment, setCurrentEnrollment] = useState<any>(null);
   const [isDraftCreated, setIsDraftCreated] = useState(false);
-  
+
+  // State for policy modals
+  const [policyModalOpen, setPolicyModalOpen] = useState<'terms' | 'privacy' | 'refund' | null>(null);
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -142,17 +224,17 @@ export default function CourseRegistration() {
   // Helper function to format date for HTML date input (YYYY-MM-DD) - timezone-safe
   const formatDateForInput = (dateValue: Date | string | null | undefined): string => {
     if (!dateValue) return '';
-    
+
     try {
       // If already in YYYY-MM-DD format, return as-is
       if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
         return dateValue;
       }
-      
+
       // Convert to date and use UTC to avoid timezone shifts
       const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
       if (isNaN(date.getTime())) return '';
-      
+
       // Use toISOString and slice to get YYYY-MM-DD without timezone conversion
       return date.toISOString().slice(0, 10);
     } catch (error) {
@@ -183,10 +265,10 @@ export default function CourseRegistration() {
   // Calculate the payment amount based on the payment option
   const getPaymentAmount = (enrollment: any) => {
     if (!enrollment) return 0;
-    
+
     const coursePrice = parseFloat(enrollment.course.price);
     const depositAmount = enrollment.course.depositAmount ? parseFloat(enrollment.course.depositAmount) : null;
-    
+
     if (enrollment.paymentOption === 'deposit' && depositAmount) {
       return depositAmount;
     }
@@ -205,9 +287,9 @@ export default function CourseRegistration() {
         promoCode: promoCode.trim(),
         paymentOption: formData.paymentOption,
       });
-      
+
       const data = await response.json();
-      
+
       if (data.clientSecret) {
         setPromoCodeApplied(promoCode.trim());
         setClientSecret(data.clientSecret);
@@ -281,7 +363,7 @@ export default function CourseRegistration() {
         });
         return false;
       }
-      
+
       if (formData.password !== formData.confirmPassword) {
         toast({
           title: "Password Mismatch",
@@ -326,7 +408,7 @@ export default function CourseRegistration() {
         password: formData.password,
       } : undefined,
     });
-    
+
     return true;
   };
 
@@ -414,9 +496,9 @@ export default function CourseRegistration() {
   const handleScheduleChange = async (scheduleId: string) => {
     const schedule = availableSchedules.find(s => s.id === scheduleId);
     if (!schedule) return;
-    
+
     setSelectedSchedule(schedule);
-    
+
     // Create draft enrollment if we have all required info
     if (formData.firstName && formData.lastName && formData.email && formData.phone && formData.dateOfBirth && formData.agreeToTerms) {
       await createDraftEnrollment(schedule);
@@ -426,7 +508,7 @@ export default function CourseRegistration() {
   // Update payment option and recreate payment intent
   const handlePaymentOptionChange = (paymentOption: 'full' | 'deposit') => {
     setFormData(prev => ({ ...prev, paymentOption }));
-    
+
     if (currentEnrollment && isDraftCreated) {
       createPaymentIntentMutation.mutate({
         enrollmentId: currentEnrollment.id,
@@ -659,7 +741,7 @@ export default function CourseRegistration() {
                 <p className="text-sm text-muted-foreground">
                   Create a secure account to complete your registration and track your training progress.
                 </p>
-                
+
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="createAccount"
@@ -739,7 +821,7 @@ export default function CourseRegistration() {
                       </div>
                     </Label>
                   </div>
-                  
+
                   {course.depositAmount && (
                     <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                       <RadioGroupItem value="deposit" id="deposit" data-testid="radio-deposit-payment" />
@@ -752,7 +834,7 @@ export default function CourseRegistration() {
                     </div>
                   )}
                 </RadioGroup>
-                
+
                 {!course.depositAmount && (
                   <p className="text-sm text-muted-foreground">
                     Only full payment is available for this course.
@@ -813,7 +895,7 @@ export default function CourseRegistration() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="border-t pt-4">
                       <div className="flex justify-between text-sm text-muted-foreground">
                         <span>
@@ -835,7 +917,7 @@ export default function CourseRegistration() {
                           <span data-testid="text-discount-amount">-${taxInfo.discountAmount.toFixed(2)}</span>
                         </div>
                       )}
-                      
+
                       <div className="flex justify-between text-sm text-muted-foreground">
                         <span>Subtotal</span>
                         <span>${taxInfo?.subtotal?.toFixed(2) || getPaymentAmount(currentEnrollment)}</span>
@@ -871,7 +953,7 @@ export default function CourseRegistration() {
                   <p className="text-sm text-muted-foreground">
                     Have a promo code? Enter it below to apply any available discounts to your order.
                   </p>
-                  
+
                   {!promoCodeApplied ? (
                     <div className="flex gap-2">
                       <Input
@@ -913,7 +995,7 @@ export default function CourseRegistration() {
                       </Button>
                     </div>
                   )}
-                  
+
                   {promoError && (
                     <div className="text-red-600 text-sm mt-1" data-testid="text-promo-error">
                       {promoError}
@@ -976,13 +1058,13 @@ export default function CourseRegistration() {
                 />
                 <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed">
                   I agree to the{' '}
-                  <a href="#" className="text-accent hover:text-accent/80 transition-colors">
-                    Terms of Service
-                  </a>{' '}
-                  and{' '}
-                  <a href="#" className="text-accent hover:text-accent/80 transition-colors">
-                    Privacy Policy
-                  </a>
+                  <DialogTrigger asChild className="text-accent hover:text-accent/80 transition-colors cursor-pointer">
+                    <a href="#">Terms of Service</a>
+                  </DialogTrigger>
+                  {' '} and{' '}
+                  <DialogTrigger asChild className="text-accent hover:text-accent/80 transition-colors cursor-pointer">
+                    <a href="#">Privacy Policy</a>
+                  </DialogTrigger>
                   . I understand the risks associated with firearms training and accept full responsibility for my participation.
                 </label>
               </div>
@@ -1002,6 +1084,15 @@ export default function CourseRegistration() {
         </div>
 
       </div>
+
+      {/* Policy Modals */}
+      {policyModalOpen && (
+        <PolicyModal 
+          isOpen={true} 
+          onClose={() => setPolicyModalOpen(null)} 
+          type={policyModalOpen}
+        />
+      )}
     </Layout>
   );
 }
