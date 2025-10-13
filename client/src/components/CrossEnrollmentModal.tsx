@@ -42,8 +42,7 @@ export function CrossEnrollmentModal({ isOpen, onClose, studentId, studentName }
       scheduleId: string;
       notes: string;
     }) => {
-      const response = await apiRequest("POST", `/api/instructor/enrollments`, data);
-      return response.json();
+      return await apiRequest("POST", `/api/instructor/enrollments`, data);
     },
     onSuccess: (data) => {
       if (data.success) {
