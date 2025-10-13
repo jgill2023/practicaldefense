@@ -45,13 +45,13 @@ export default function Landing() {
       if (!course.schedules || course.schedules.length === 0) {
         return new Date('9999-12-31'); // Courses without schedules go to the end
       }
-      
+
       const now = new Date();
       const upcomingDates = course.schedules
         .filter(schedule => new Date(schedule.startDate) >= now)
         .map(schedule => new Date(schedule.startDate))
         .sort((a, b) => a.getTime() - b.getTime());
-      
+
       // If no upcoming dates, use the most recent past date
       if (upcomingDates.length === 0) {
         const pastDates = course.schedules
@@ -59,7 +59,7 @@ export default function Landing() {
           .sort((a, b) => b.getTime() - a.getTime());
         return pastDates[0] || new Date('9999-12-31');
       }
-      
+
       return upcomingDates[0];
     };
 
@@ -71,13 +71,13 @@ export default function Landing() {
       coursesToDisplay = [...courses].sort((a, b) => {
         const dateA = getEarliestDate(a);
         const dateB = getEarliestDate(b);
-        
+
         // First sort by date
         const dateComparison = dateA.getTime() - dateB.getTime();
         if (dateComparison !== 0) {
           return dateComparison;
         }
-        
+
         // Then by category order - handle both string and object formats
         const getCategoryName = (category: any): string => {
           if (!category) return 'General';
@@ -89,19 +89,26 @@ export default function Landing() {
         };
         const orderA = categoryOrderMap.get(getCategoryName(a.category as any)) || 9999;
         const orderB = categoryOrderMap.get(getCategoryName(b.category as any)) || 9999;
-        
+
         if (orderA !== orderB) {
           return orderA - orderB;
         }
-        
+
         // Finally by course title
         return a.title.localeCompare(b.title);
       });
+
+      // Filter out courses that have no upcoming schedules
+      const now = new Date();
+      coursesToDisplay = coursesToDisplay.filter(course => {
+        return course.schedules.some(schedule => new Date(schedule.startDate) >= now);
+      });
+
     } else {
       // For specific category filters, show individual schedules
       const now = new Date();
       const categorySchedules: CourseWithSchedules[] = [];
-      
+
       // Filter courses by category - handle both string and object formats
       const categoryCourses = courses.filter(course => {
         if (!course.category) return false;
@@ -115,13 +122,13 @@ export default function Landing() {
         }
         return false;
       });
-      
+
       // For each course in the category, create individual entries for each upcoming schedule
       categoryCourses.forEach(course => {
         const upcomingSchedules = course.schedules.filter(schedule => 
           new Date(schedule.startDate) >= now
         );
-        
+
         // Create a separate course entry for each upcoming schedule
         upcomingSchedules.forEach(schedule => {
           categorySchedules.push({
@@ -131,7 +138,7 @@ export default function Landing() {
           });
         });
       });
-      
+
       // Sort by schedule date
       coursesToDisplay = categorySchedules.sort((a, b) => {
         const dateA = new Date(a.schedules[0]?.startDate || '9999-12-31');
@@ -139,7 +146,7 @@ export default function Landing() {
         return dateA.getTime() - dateB.getTime();
       });
     }
-    
+
     // Apply the course limit from app settings
     const courseLimit = appSettings?.homeCoursesLimit || 20;
     return coursesToDisplay.slice(0, courseLimit);
@@ -182,7 +189,7 @@ export default function Landing() {
           <p className="font-light mb-12 tracking-wide" style={{ fontSize: '25px' }}>
             You Don't Have To Be Defenseless.
           </p>
-          
+
           <div className="flex justify-center mb-16">
             <Button 
               size="lg" 
@@ -210,7 +217,7 @@ export default function Landing() {
       <section className="bg-muted py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            
+
             {/* Concealed Carry */}
             <div className="text-center" data-testid="feature-concealed-carry">
               <h3 className="text-lg font-semibold text-foreground mb-4 uppercase tracking-wide">
@@ -306,7 +313,7 @@ export default function Landing() {
               </p>
             </div>
           </div>
-          
+
           {/* Course Filter Tabs - Mobile Responsive */}
           <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-12 px-2">
             <Button 
@@ -327,7 +334,7 @@ export default function Landing() {
               </Button>
             ))}
           </div>
-          
+
           {/* Course Grid - Mobile Responsive */}
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
