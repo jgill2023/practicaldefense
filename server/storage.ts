@@ -1117,6 +1117,9 @@ export class DatabaseStorage implements IStorage {
     const formerEnrollments: any[] = [];  // Students who have taken past courses
     const heldEnrollments: any[] = [];    // Students on hold
 
+    // Track students who have current or former enrollments to exclude from held list
+    const studentsWithActiveEnrollments = new Set<string>();
+
     for (const enrollment of instructorEnrollments) {
       const scheduleEndDate = new Date(enrollment.schedule.endDate);
 
@@ -1132,7 +1135,7 @@ export class DatabaseStorage implements IStorage {
 
       // Categorize: held = on hold status, current = upcoming courses, former = completed courses
       if (enrollment.status === 'hold') {
-        // Held: student is on hold
+        // Held: student is on hold (will be filtered later if they have active enrollments)
         heldEnrollments.push({
           ...enrollment,
           enrollmentData,
@@ -1143,14 +1146,21 @@ export class DatabaseStorage implements IStorage {
           ...enrollment,
           enrollmentData,
         });
+        studentsWithActiveEnrollments.add(enrollment.student.id);
       } else {
         // Current: course is upcoming or ongoing
         currentEnrollments.push({
           ...enrollment,
           enrollmentData,
         });
+        studentsWithActiveEnrollments.add(enrollment.student.id);
       }
     }
+
+    // Filter out students from held list if they have any active (current or former) enrollments
+    const filteredHeldEnrollments = heldEnrollments.filter(
+      enrollment => !studentsWithActiveEnrollments.has(enrollment.student.id)
+    );
 
     // Process and sort each category
     const processEnrollments = (enrollmentsList: any[], isCurrentStudents: boolean) => {
@@ -1238,7 +1248,7 @@ export class DatabaseStorage implements IStorage {
     return {
       current: processEnrollments(currentEnrollments, true),
       former: processEnrollments(formerEnrollments, false),
-      held: processEnrollments(heldEnrollments, false),
+      held: processEnrollments(filteredHeldEnrollments, false),
     };
   }
 
