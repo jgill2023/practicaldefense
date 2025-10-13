@@ -181,6 +181,12 @@ function StudentsPage() {
     try {
       const requestBody = selectedScheduleId !== 'all' ? { scheduleId: selectedScheduleId } : {};
       const response = await apiRequest("POST", "/api/instructor/roster/google-sheets", requestBody);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Export failed' }));
+        throw new Error(errorData.message || 'Failed to export to Google Sheets');
+      }
+
       const result = await response.json();
 
       if (result.action === 'setup_required') {
@@ -217,6 +223,7 @@ function StudentsPage() {
         });
       }
     } catch (error: any) {
+      console.error("Google Sheets export error:", error);
       toast({
         title: "Export Failed",
         description: error.message || "Failed to create Google Sheets export. Please try again.",

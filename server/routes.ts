@@ -945,6 +945,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const ExcelJS = await import('exceljs');
         const workbook = new ExcelJS.default.Workbook();
 
+        // All Students sheet (combined)
+        const allStudentsSheet = workbook.addWorksheet('All Students');
+        const headers = [
+          'Student ID', 'First Name', 'Last Name', 'Email', 'Phone', 
+          'Date of Birth', 'License Expiration', 'Course Title', 'Course Code',
+          'Schedule Date', 'Start Time', 'End Time', 'Payment Status', 
+          'Enrollment Status', 'Category', 'Registration Date'
+        ];
+        allStudentsSheet.addRow(headers);
+
+        const allRows = [...data.current, ...data.former];
+        allRows.forEach(row => {
+          allStudentsSheet.addRow([
+            row.studentId, row.firstName, row.lastName, row.email, row.phone,
+            row.dateOfBirth, row.licenseExpiration, row.courseTitle, row.courseAbbreviation,
+            row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime, 
+            row.paymentStatus, row.enrollmentStatus, row.category, row.registrationDate
+          ]);
+        });
+
         // Summary sheet
         const summarySheet = workbook.addWorksheet('Summary');
         summarySheet.addRow(['Course Roster Export Summary']);
@@ -952,48 +972,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         summarySheet.addRow(['Total Current Students', data.summary.totalCurrentStudents]);
         summarySheet.addRow(['Total Former Students', data.summary.totalFormerStudents]);
         summarySheet.addRow(['Total Courses', data.summary.totalCourses]);
-
-        // Current students sheet
-        if (data.current.length > 0) {
-          const currentSheet = workbook.addWorksheet('Current Students');
-          const headers = [
-            'Student ID', 'First Name', 'Last Name', 'Email', 'Phone', 
-            'Date of Birth', 'License Expiration', 'Course Title', 'Course Code',
-            'Schedule Date', 'Start Time', 'End Time', 'Payment Status', 
-            'Enrollment Status', 'Registration Date'
-          ];
-          currentSheet.addRow(headers);
-
-          data.current.forEach(row => {
-            currentSheet.addRow([
-              row.studentId, row.firstName, row.lastName, row.email, row.phone,
-              row.dateOfBirth, row.licenseExpiration, row.courseTitle, row.courseAbbreviation,
-              row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime, 
-              row.paymentStatus, row.enrollmentStatus, row.registrationDate
-            ]);
-          });
-        }
-
-        // Former students sheet
-        if (data.former.length > 0) {
-          const formerSheet = workbook.addWorksheet('Former Students');
-          const headers = [
-            'Student ID', 'First Name', 'Last Name', 'Email', 'Phone', 
-            'Date of Birth', 'License Expiration', 'Course Title', 'Course Code',
-            'Schedule Date', 'Start Time', 'End Time', 'Payment Status', 
-            'Enrollment Status', 'Registration Date'
-          ];
-          formerSheet.addRow(headers);
-
-          data.former.forEach(row => {
-            formerSheet.addRow([
-              row.studentId, row.firstName, row.lastName, row.email, row.phone,
-              row.dateOfBirth, row.licenseExpiration, row.courseTitle, row.courseAbbreviation,
-              row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime, 
-              row.paymentStatus, row.enrollmentStatus, row.registrationDate
-            ]);
-          });
-        }
 
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="course-roster-${new Date().toISOString().split('T')[0]}.xlsx"`);
