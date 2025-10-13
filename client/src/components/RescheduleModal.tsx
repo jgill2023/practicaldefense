@@ -77,7 +77,7 @@ export function RescheduleModal({
         : { notes: data.notes };
 
       const response = await apiRequest("PATCH", endpoint, payload);
-      return response.json();
+      return response;
     },
     onSuccess: (data) => {
       if (data.success) {
