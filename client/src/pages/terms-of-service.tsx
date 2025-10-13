@@ -15,7 +15,8 @@ export default function TermsOfServicePage() {
             <CardTitle>Effective Date</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">Last Updated: January 2024</p>
+            <p className="text-muted-foreground">Effective Date: January 12, 2025</p>
+            <p className="text-muted-foreground">Last Updated: January 12, 2025</p>
           </CardContent>
         </Card>
 
@@ -25,64 +26,64 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              By accessing or using Practical Defense Training's services, including our website, 
-              training programs, and related services, you agree to be bound by these Terms of Service. 
-              If you do not agree to these terms, please do not use our services.
+              By accessing or using <a href="https://www.abqconcealedcarry.com" className="text-accent hover:underline">www.abqconcealedcarry.com</a> (the "Site") or registering for any training, course, or service provided by Practical Defense Training, LLC ("we," "us," or "our"), you agree to be bound by these Terms of Service ("Terms").
+            </p>
+            <p className="text-muted-foreground mt-4">
+              If you do not agree, do not use our website or services. These Terms apply to all users, including students, visitors, and account holders.
             </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>2. Course Registration and Enrollment</CardTitle>
+            <CardTitle>2. Eligibility</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              When you register for a course or training program:
+              To register for a firearms course or related training, you must:
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-              <li>You must provide accurate and complete information</li>
-              <li>You must be at least 18 years of age or have parental/guardian consent</li>
-              <li>You agree to pay all applicable fees and charges</li>
-              <li>You understand that course availability is subject to minimum enrollment requirements</li>
-              <li>You acknowledge that courses may be cancelled or rescheduled due to unforeseen circumstances</li>
+              <li>Be at least 18 years old, or attend with a parent or legal guardian</li>
+              <li>Be legally permitted to possess, handle, and/or use firearms in your jurisdiction</li>
+              <li>Provide accurate and complete registration information, including identification if required</li>
             </ul>
+            <p className="text-muted-foreground">
+              We reserve the right to verify your eligibility and deny service to anyone at our discretion for safety, legal, or behavioral reasons.
+            </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>3. Payment Terms</CardTitle>
+            <CardTitle>3. Course Registration and Accounts</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              Payment terms for our services:
+              To enroll in a class, users must create an account on our custom web application. You agree to:
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-              <li>Deposits may be required to secure your course registration</li>
-              <li>Full payment is due by the course start date unless otherwise specified</li>
-              <li>We accept various payment methods as indicated during checkout</li>
-              <li>All prices are in US Dollars unless otherwise stated</li>
-              <li>Prices are subject to change without notice</li>
+              <li>Maintain the confidentiality of your login credentials</li>
+              <li>Be responsible for all activity under your account</li>
+              <li>Provide truthful, accurate, and current information</li>
             </ul>
+            <p className="text-muted-foreground">
+              If you suspect unauthorized use of your account, notify us immediately at <a href="mailto:info@abqconcealedcarry.com" className="text-accent hover:underline">info@abqconcealedcarry.com</a>.
+            </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>4. Cancellation and Refund Policy</CardTitle>
+            <CardTitle>4. Payment and Refund Policy</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-muted-foreground"><strong>Student Cancellations:</strong></p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-              <li>Cancellations made 7+ days before the course date: Full refund minus processing fees</li>
-              <li>Cancellations made 3-6 days before: 50% refund</li>
-              <li>Cancellations made less than 3 days before: No refund (credit toward future course may be offered)</li>
+              <li>All payments are processed securely through Stripe</li>
+              <li>Full payment is required to confirm registration</li>
+              <li>Refunds or rescheduling requests must comply with our course cancellation policy as listed on the Site</li>
+              <li>Refund eligibility may vary based on notice provided prior to the scheduled course date</li>
+              <li>We do not store or directly process credit card details</li>
             </ul>
-            <p className="text-muted-foreground mt-4"><strong>Instructor Cancellations:</strong></p>
-            <p className="text-muted-foreground">
-              If we cancel a course, you will receive a full refund or the option to transfer to another scheduled course.
-            </p>
           </CardContent>
         </Card>
 
@@ -92,128 +93,186 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              By participating in our training programs, you agree to:
+              Your safety and the safety of all participants are our top priorities.
+            </p>
+            <p className="text-muted-foreground">
+              By registering, you agree to:
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-              <li>Follow all safety protocols and instructor directions</li>
-              <li>Handle all firearms safely and responsibly</li>
-              <li>Comply with all applicable laws and regulations</li>
-              <li>Behave professionally and respectfully toward instructors and other students</li>
-              <li>Not participate under the influence of alcohol or drugs</li>
-              <li>Bring only authorized equipment and firearms as specified</li>
+              <li>Follow all instructor directions at all times</li>
+              <li>Handle firearms responsibly and in compliance with all laws and range rules</li>
+              <li>Abstain from alcohol, illegal substances, or impairing medications before and during instruction</li>
+              <li>Conduct yourself with respect toward all staff, students, and facilities</li>
             </ul>
+            <p className="text-muted-foreground">
+              Violation of safety rules may result in immediate removal from the course without refund.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>6. Assumption of Risk and Waiver of Liability</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              By participating in firearms training or related activities provided by Practical Defense Training, LLC, you acknowledge and accept the inherent risks associated with handling firearms, live ammunition, and range activities.
+            </p>
+            <p className="text-muted-foreground">
+              You agree to:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
+              <li>Assume all risks, known and unknown, associated with training and related activities</li>
+              <li>Waive and release Practical Defense Training, LLC, its owners, instructors, and affiliates from any and all claims of injury, loss, or damage arising out of participation</li>
+              <li>Indemnify and hold harmless Practical Defense Training, LLC for any claims brought by third parties resulting from your actions</li>
+            </ul>
+            <p className="text-muted-foreground">
+              You further understand that safety protocols are strictly enforced and noncompliance may result in removal.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>7. Identification and Legal Compliance</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              As part of course registration, you may be required to provide:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
+              <li>A valid driver's license; and</li>
+              <li>A concealed carry license number (if applicable)</li>
+            </ul>
+            <p className="text-muted-foreground">
+              These details are collected solely for identity verification and compliance with state and federal training requirements. Information is stored securely and handled according to our <a href="/privacy-policy" className="text-accent hover:underline">Privacy Policy</a>.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>8. Intellectual Property</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              All content on the Site—including text, logos, videos, graphics, and course materials—is the property of Practical Defense Training, LLC and is protected by copyright and trademark laws.
+            </p>
             <p className="text-muted-foreground mt-4">
-              We reserve the right to remove any participant who violates safety protocols or 
-              engages in inappropriate conduct, without refund.
+              You may not copy, reproduce, distribute, or modify any materials without prior written consent.
             </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>6. Assumption of Risk and Liability Waiver</CardTitle>
+            <CardTitle>9. Communications and Notifications</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              Firearms training involves inherent risks. By participating in our courses, you 
-              acknowledge and accept these risks. You agree to release, indemnify, and hold harmless 
-              Practical Defense Training, its instructors, and affiliates from any claims, damages, 
-              or injuries arising from your participation in our training programs, except in cases 
-              of gross negligence or willful misconduct.
+              By creating an account or registering for a course, you consent to receive:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
+              <li>Transactional emails (confirmation, updates, receipts)</li>
+              <li>SMS or email reminders for class dates</li>
+              <li>Optional marketing communications, from which you can unsubscribe at any time</li>
+            </ul>
+            <p className="text-muted-foreground">
+              Some messages may be automated through integrated systems such as Twilio or Firebase.
             </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>7. Intellectual Property</CardTitle>
+            <CardTitle>10. Termination of Access</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              All course materials, content, trademarks, and intellectual property provided by 
-              Practical Defense Training remain our exclusive property. You may not reproduce, 
-              distribute, or create derivative works without our written permission.
+              We reserve the right to suspend or terminate any user account, registration, or access to our Site for violation of these Terms, unsafe behavior, or other conduct deemed inappropriate or unlawful.
             </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>8. Privacy and Data Protection</CardTitle>
+            <CardTitle>11. Disclaimer of Warranties</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Your use of our services is also governed by our Privacy Policy. We collect and use 
-              your personal information as described in our Privacy Policy, including for course 
-              administration, communications, and compliance with legal requirements.
+              All services are provided "as is" and "as available." We make no warranties or representations regarding the completeness, reliability, or accuracy of information on the Site or in training content.
+            </p>
+            <p className="text-muted-foreground mt-4">
+              We disclaim all implied warranties, including merchantability, fitness for a particular purpose, and non-infringement.
             </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>9. Disclaimer of Warranties</CardTitle>
+            <CardTitle>12. Limitation of Liability</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              Our services are provided "as is" without warranties of any kind, either express or 
-              implied. We do not guarantee that our training will result in licensing approval or 
-              any specific outcome. Students are responsible for meeting all legal requirements for 
-              concealed carry licensing in their jurisdiction.
+              To the fullest extent permitted by law, Practical Defense Training, LLC shall not be liable for any indirect, incidental, or consequential damages, including but not limited to personal injury, property damage, or data loss, arising from:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
+              <li>Use or inability to use the Site</li>
+              <li>Participation in training activities</li>
+              <li>Acts of other participants or third parties</li>
+            </ul>
+            <p className="text-muted-foreground">
+              Total liability for any claim shall not exceed the amount paid for the specific course or service giving rise to the claim.
             </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>10. Limitation of Liability</CardTitle>
+            <CardTitle>13. Indemnification</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              To the maximum extent permitted by law, Practical Defense Training shall not be liable 
-              for any indirect, incidental, special, consequential, or punitive damages arising from 
-              your use of our services.
+              You agree to defend, indemnify, and hold harmless Practical Defense Training, LLC, its owners, employees, and affiliates from any claims, damages, or expenses resulting from your use of the Site or participation in our courses.
             </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>11. Modifications to Terms</CardTitle>
+            <CardTitle>14. Governing Law and Jurisdiction</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              We reserve the right to modify these Terms of Service at any time. Changes will be 
-              effective immediately upon posting to our website. Your continued use of our services 
-              after changes constitutes acceptance of the modified terms.
+              These Terms are governed by the laws of the State of New Mexico, without regard to conflict-of-law principles. Any disputes shall be resolved exclusively in the state or federal courts located in Bernalillo County, New Mexico.
             </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>12. Governing Law</CardTitle>
+            <CardTitle>15. Changes to Terms</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              These Terms of Service shall be governed by and construed in accordance with the laws 
-              of the State of New Mexico, without regard to its conflict of law provisions.
+              We may update these Terms periodically. The updated version will be posted on this page with the revised effective date. Continued use of the Site after changes constitutes your acceptance of the new Terms.
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>13. Contact Information</CardTitle>
+            <CardTitle>16. Contact Us</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              If you have any questions about these Terms of Service, please contact us:
+              For questions or concerns regarding these Terms, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Email:</strong> jeremy@abqconcealedcarry.com</p>
-              <p><strong>Phone:</strong> (505) 944-5247</p>
-              <p><strong>Address:</strong> Albuquerque, New Mexico</p>
+              <p><strong>Practical Defense Training, LLC</strong></p>
+              <p><strong>Email:</strong> <a href="mailto:info@abqconcealedcarry.com" className="text-accent hover:underline">info@abqconcealedcarry.com</a></p>
+              <p><strong>Website:</strong> <a href="https://www.abqconcealedcarry.com" className="text-accent hover:underline">www.abqconcealedcarry.com</a></p>
+              <p><strong>Location:</strong> New Mexico, USA</p>
             </div>
           </CardContent>
         </Card>
