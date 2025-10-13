@@ -878,7 +878,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               endDate: schedule.endDate,
               startTime: schedule.startTime,
               endTime: schedule.endTime,
-              location: schedule.location,
               maxSpots: schedule.maxSpots,
               availableSpots: schedule.availableSpots,
               enrollmentCount: schedule.maxSpots - schedule.availableSpots

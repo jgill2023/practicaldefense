@@ -577,8 +577,7 @@ function StudentsPage() {
                   {courseSchedules?.map((schedule) => (
                     <SelectItem key={schedule.id} value={schedule.id}>
                       {schedule.courseTitle} {schedule.courseAbbreviation ? `(${schedule.courseAbbreviation})` : ''} - {' '}
-                      {format(new Date(schedule.startDate), 'MMM d, yyyy')} at {schedule.startTime}
-                      {schedule.location ? ` - ${schedule.location}` : ''} ({schedule.enrollmentCount} students)
+                      {format(new Date(schedule.startDate), 'MMM d, yyyy')} at {schedule.startTime} ({schedule.enrollmentCount} students)
                     </SelectItem>
                   ))}
                 </SelectContent>
