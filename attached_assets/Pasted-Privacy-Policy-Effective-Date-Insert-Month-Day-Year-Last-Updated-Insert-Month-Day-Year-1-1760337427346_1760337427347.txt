@@ -1,0 +1,135 @@
+Privacy Policy
+
+Effective Date: [Insert Month, Day, Year]
+Last Updated: [Insert Month, Day, Year]
+
+1. Introduction
+
+Practical Defense Training, LLC (“we,” “our,” or “us”) respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website www.abqconcealedcarry.com
+, register for courses, or otherwise interact with our services.
+
+By using our website or submitting your information, you agree to the terms of this Privacy Policy.
+
+2. Information We Collect
+
+We collect personal and technical information to facilitate course registration, communication, and compliance with legal requirements related to firearms training.
+
+Information You Provide
+
+Full name
+
+Email address
+
+Phone number
+
+Mailing address
+
+Payment information (processed securely through Stripe; we do not store full credit card details)
+
+Driver’s license number and/or concealed carry permit number (for verification of course eligibility)
+
+Reviews, comments, or other user-generated content submitted through our platform
+
+Information Collected Automatically
+
+IP address, browser type, device information, and access times
+
+Cookies and similar technologies for analytics, marketing, and retargeting
+
+3. How We Use Your Information
+
+We may use collected information to:
+
+Create and manage your account and course registrations
+
+Communicate with you about classes, updates, and account notices
+
+Send email, SMS, or marketing messages (some automated)
+
+Process payments securely through our third-party provider (Stripe)
+
+Maintain safety, legal compliance, and operational integrity
+
+Improve our services, user experience, and marketing effectiveness
+
+4. Legal Basis for Processing (GDPR Users)
+
+If you are located in the European Economic Area (EEA), we process your data under one or more of the following legal bases:
+
+Contract performance: to fulfill course registration and service delivery
+
+Legal obligation: to meet applicable firearm training and record-keeping laws
+
+Legitimate interest: for business operations and marketing improvements
+
+Consent: for optional marketing or cookie tracking activities
+
+5. Data Retention
+
+We retain your records—including account information, registration data, and uploaded identification—indefinitely, unless you request deletion or your account is terminated.
+You may request permanent deletion of your personal information at any time (see Section 10).
+
+6. Sharing of Information
+
+We do not sell, rent, or trade personal data. We may share limited information with trusted third parties who assist us in operating the website and delivering services, including:
+
+Stripe (payment processing)
+
+Email and SMS providers (for notifications and reminders)
+
+Analytics and marketing partners (for cookie-based retargeting)
+
+All third-party processors are contractually bound to keep your data secure and use it only for authorized purposes.
+
+7. Cookies and Tracking Technologies
+
+Our website uses cookies, web beacons, and similar technologies for site functionality, analytics, and targeted advertising. You can manage or delete cookies through your browser settings or decline optional cookies when prompted.
+
+8. Security of Your Information
+
+We implement appropriate administrative, technical, and physical safeguards to protect your data from unauthorized access, alteration, or disclosure. While no system is completely secure, we continuously monitor and improve our security practices.
+
+9. Children’s Privacy
+
+Our services are intended for adults aged 18 and older.
+Minors under 18 may only participate in training programs with a parent or legal guardian’s consent and supervision. We do not knowingly collect personal information from children under 13.
+
+10. Your Rights and Choices
+
+Depending on your jurisdiction, you may have the following rights:
+
+Access and obtain a copy of your data
+
+Request correction or deletion of your personal information
+
+Withdraw consent for marketing communications
+
+Object to or restrict certain data processing
+
+Request data portability (GDPR only)
+
+To exercise these rights, contact us at info@abqconcealedcarry.com
+. We will respond within applicable legal timeframes.
+
+11. International Data Transfers
+
+If you are accessing our website from outside the United States, please note that your data may be processed and stored in the U.S., where data protection laws may differ. We take appropriate steps to ensure that your data remains secure and protected under applicable law.
+
+12. Liability and Firearm-Related Data
+
+We collect identification data solely to verify eligibility for firearms instruction. We do not share or report firearm-related information to government agencies unless legally required. Practical Defense Training, LLC assumes no liability for misuse or unauthorized disclosure of data by users or third-party platforms beyond our control.
+
+13. Changes to This Privacy Policy
+
+We may update this Privacy Policy periodically. Updates will be posted on this page with the revised “Last Updated” date. Material changes will be communicated through the email address associated with your account.
+
+14. Contact Us
+
+For privacy inquiries or to exercise your data rights, please contact:
+
+Practical Defense Training, LLC
+Email: info@abqconcealedcarry.com
+
+Website: www.abqconcealedcarry.com
+
+Location: New Mexico, USA
