@@ -15,148 +15,219 @@ export default function PrivacyPolicyPage() {
             <CardTitle>Effective Date</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">Last Updated: January 2024</p>
+            <p className="text-muted-foreground">Effective Date: January 12, 2025</p>
+            <p className="text-muted-foreground">Last Updated: January 12, 2025</p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>1. Information We Collect</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              We collect information you provide directly to us when you:
-            </p>
-            <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-              <li>Register for a course or training program</li>
-              <li>Create an account on our platform</li>
-              <li>Contact us through our contact form</li>
-              <li>Subscribe to notifications or communications</li>
-              <li>Make a purchase through our store</li>
-            </ul>
-            <p className="text-muted-foreground">
-              This information may include: name, email address, phone number, date of birth, 
-              address, payment information, and firearms licensing information.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>2. How We Use Your Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">We use the information we collect to:</p>
-            <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-              <li>Process your course registrations and payments</li>
-              <li>Communicate with you about your training and schedules</li>
-              <li>Send you important updates and notifications</li>
-              <li>Maintain accurate records for licensing compliance</li>
-              <li>Improve our services and customer experience</li>
-              <li>Send you marketing communications (with your consent)</li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>3. Information Sharing and Disclosure</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-muted-foreground">
-              We do not sell, trade, or rent your personal information to third parties. 
-              We may share your information only in the following circumstances:
-            </p>
-            <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-              <li>With your explicit consent</li>
-              <li>To comply with legal obligations or law enforcement requests</li>
-              <li>With service providers who assist us in operating our business (payment processors, email services)</li>
-              <li>To protect the rights, property, or safety of our business and users</li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>4. Data Security</CardTitle>
+            <CardTitle>1. Introduction</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              We implement appropriate technical and organizational security measures to protect 
-              your personal information against unauthorized access, alteration, disclosure, or 
-              destruction. However, no method of transmission over the Internet or electronic 
-              storage is 100% secure.
+              Practical Defense Training, LLC ("we," "our," or "us") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website www.abqconcealedcarry.com, register for courses, or otherwise interact with our services.
+            </p>
+            <p className="text-muted-foreground mt-4">
+              By using our website or submitting your information, you agree to the terms of this Privacy Policy.
             </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>5. Your Rights and Choices</CardTitle>
+            <CardTitle>2. Information We Collect</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-muted-foreground">You have the right to:</p>
+            <p className="text-muted-foreground">
+              We collect personal and technical information to facilitate course registration, communication, and compliance with legal requirements related to firearms training.
+            </p>
+            <div>
+              <p className="text-muted-foreground font-semibold mb-2">Information You Provide</p>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
+                <li>Full name</li>
+                <li>Email address</li>
+                <li>Phone number</li>
+                <li>Mailing address</li>
+                <li>Payment information (processed securely through Stripe; we do not store full credit card details)</li>
+                <li>Driver's license number and/or concealed carry permit number (for verification of course eligibility)</li>
+                <li>Reviews, comments, or other user-generated content submitted through our platform</li>
+              </ul>
+            </div>
+            <div>
+              <p className="text-muted-foreground font-semibold mb-2">Information Collected Automatically</p>
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
+                <li>IP address, browser type, device information, and access times</li>
+                <li>Cookies and similar technologies for analytics, marketing, and retargeting</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>3. How We Use Your Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">We may use collected information to:</p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-              <li>Access and review your personal information</li>
-              <li>Request corrections to your personal information</li>
-              <li>Request deletion of your personal information</li>
-              <li>Opt-out of marketing communications</li>
-              <li>Manage your notification preferences</li>
+              <li>Create and manage your account and course registrations</li>
+              <li>Communicate with you about classes, updates, and account notices</li>
+              <li>Send email, SMS, or marketing messages (some automated)</li>
+              <li>Process payments securely through our third-party provider (Stripe)</li>
+              <li>Maintain safety, legal compliance, and operational integrity</li>
+              <li>Improve our services, user experience, and marketing effectiveness</li>
             </ul>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>6. Cookies and Tracking</CardTitle>
+            <CardTitle>4. Legal Basis for Processing (GDPR Users)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              If you are located in the European Economic Area (EEA), we process your data under one or more of the following legal bases:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
+              <li><strong>Contract performance:</strong> to fulfill course registration and service delivery</li>
+              <li><strong>Legal obligation:</strong> to meet applicable firearm training and record-keeping laws</li>
+              <li><strong>Legitimate interest:</strong> for business operations and marketing improvements</li>
+              <li><strong>Consent:</strong> for optional marketing or cookie tracking activities</li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>5. Data Retention</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              We use cookies and similar tracking technologies to enhance your experience on our 
-              website. You can control cookie settings through your browser preferences.
+              We retain your records—including account information, registration data, and uploaded identification—indefinitely, unless you request deletion or your account is terminated. You may request permanent deletion of your personal information at any time (see Section 10).
             </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>7. Children's Privacy</CardTitle>
+            <CardTitle>6. Sharing of Information</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              Our services are not directed to individuals under the age of 18. We do not knowingly 
-              collect personal information from children. Parents or guardians must provide consent 
-              for minors participating in our training programs.
+              We do not sell, rent, or trade personal data. We may share limited information with trusted third parties who assist us in operating the website and delivering services, including:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
+              <li>Stripe (payment processing)</li>
+              <li>Email and SMS providers (for notifications and reminders)</li>
+              <li>Analytics and marketing partners (for cookie-based retargeting)</li>
+            </ul>
+            <p className="text-muted-foreground mt-4">
+              All third-party processors are contractually bound to keep your data secure and use it only for authorized purposes.
             </p>
           </CardContent>
         </Card>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>8. Changes to This Privacy Policy</CardTitle>
+            <CardTitle>7. Cookies and Tracking Technologies</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              We may update this Privacy Policy from time to time. We will notify you of any 
-              material changes by posting the new Privacy Policy on this page and updating the 
-              "Last Updated" date.
+              Our website uses cookies, web beacons, and similar technologies for site functionality, analytics, and targeted advertising. You can manage or delete cookies through your browser settings or decline optional cookies when prompted.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>8. Security of Your Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              We implement appropriate administrative, technical, and physical safeguards to protect your data from unauthorized access, alteration, or disclosure. While no system is completely secure, we continuously monitor and improve our security practices.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>9. Children's Privacy</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              Our services are intended for adults aged 18 and older. Minors under 18 may only participate in training programs with a parent or legal guardian's consent and supervision. We do not knowingly collect personal information from children under 13.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>10. Your Rights and Choices</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              Depending on your jurisdiction, you may have the following rights:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
+              <li>Access and obtain a copy of your data</li>
+              <li>Request correction or deletion of your personal information</li>
+              <li>Withdraw consent for marketing communications</li>
+              <li>Object to or restrict certain data processing</li>
+              <li>Request data portability (GDPR only)</li>
+            </ul>
+            <p className="text-muted-foreground mt-4">
+              To exercise these rights, contact us at info@abqconcealedcarry.com. We will respond within applicable legal timeframes.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>11. International Data Transfers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              If you are accessing our website from outside the United States, please note that your data may be processed and stored in the U.S., where data protection laws may differ. We take appropriate steps to ensure that your data remains secure and protected under applicable law.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>12. Liability and Firearm-Related Data</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              We collect identification data solely to verify eligibility for firearms instruction. We do not share or report firearm-related information to government agencies unless legally required. Practical Defense Training, LLC assumes no liability for misuse or unauthorized disclosure of data by users or third-party platforms beyond our control.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>13. Changes to This Privacy Policy</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">
+              We may update this Privacy Policy periodically. Updates will be posted on this page with the revised "Last Updated" date. Material changes will be communicated through the email address associated with your account.
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>9. Contact Us</CardTitle>
+            <CardTitle>14. Contact Us</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              If you have any questions about this Privacy Policy or our privacy practices, 
-              please contact us:
+              For privacy inquiries or to exercise your data rights, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Email:</strong> jeremy@abqconcealedcarry.com</p>
-              <p><strong>Phone:</strong> (505) 944-5247</p>
-              <p><strong>Address:</strong> Albuquerque, New Mexico</p>
+              <p><strong>Practical Defense Training, LLC</strong></p>
+              <p><strong>Email:</strong> info@abqconcealedcarry.com</p>
+              <p><strong>Website:</strong> www.abqconcealedcarry.com</p>
+              <p><strong>Location:</strong> New Mexico, USA</p>
             </div>
           </CardContent>
         </Card>
