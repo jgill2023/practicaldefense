@@ -24,6 +24,8 @@ import ContactPage from "@/pages/contact";
 import ConcealedCarryPage from "@/pages/concealed-carry";
 import { OnlineConcealedCarryPage } from "@/pages/online-concealed-carry";
 import DefensiveHandgunPage from "@/pages/defensive-handgun";
+import PrivacyPolicyPage from "@/pages/privacy-policy";
+import TermsOfServicePage from "@/pages/terms-of-service";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -50,6 +52,8 @@ function Router() {
       <Route path="/checkout" component={Checkout} />
       <Route path="/schedule-list" component={ScheduleList} />
       <Route path="/schedule-calendar" component={ScheduleCalendar} />
+      <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+      <Route path="/terms-of-service" component={TermsOfServicePage} />
       {isAuthenticated && (
         <>
           <Route path="/instructor-dashboard" component={InstructorDashboard} />
