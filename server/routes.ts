@@ -3643,10 +3643,12 @@ Practical Defense Training`;
       }
 
       // Update enrollment with new schedule and set status to confirmed
+      // This will move students from held list to current list when rescheduled
       const updatedEnrollment = await storage.updateEnrollment(enrollmentId, {
         scheduleId: newScheduleId,
         courseId: newSchedule.courseId,
-        status: 'confirmed', // Set status to confirmed so student appears in current list
+        status: 'confirmed', // Set status to confirmed to move from held to current list
+        cancellationReason: null, // Clear any hold/cancellation reason
         notes: notes || `Rescheduled from ${currentSchedule.startDate} to ${newSchedule.startDate}`,
       });
 
