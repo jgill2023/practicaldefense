@@ -283,7 +283,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors py-2">Resources</a>
                 <Link href="/store" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-store-mobile">Our Store</Link>
                 <Link href="/contact" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
-                
+
                 {/* Mobile auth buttons */}
                 <div className="border-t border-primary-foreground/20 mt-2 pt-2 space-y-2">
                   {!isAuthenticated ? (
