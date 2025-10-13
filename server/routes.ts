@@ -45,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/profile', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      
+
       // Validate the request body
       const profileUpdateSchema = z.object({
         firstName: z.string().min(1, "First name is required"),
@@ -64,17 +64,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const validatedData = profileUpdateSchema.parse(req.body);
-      
+
       // Convert date strings to Date objects - process all date fields unconditionally
       const updateData: any = { ...validatedData };
-      
+
       // Helper function to safely convert date strings
       const safeConvertDate = (dateString: string | undefined): Date | null => {
         // Return null for empty, undefined, or invalid strings
         if (!dateString || dateString.trim() === '' || dateString === 'undefined' || dateString === 'null') {
           return null;
         }
-        
+
         try {
           const date = new Date(dateString);
           // Check if the date is valid and not "Invalid Date"
@@ -86,10 +86,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return null;
         }
       };
-      
+
       // Process all date fields unconditionally to prevent empty strings from reaching the database
       const dateFields = ['dateOfBirth', 'concealedCarryLicenseIssued', 'concealedCarryLicenseExpiration'] as const;
-      
+
       for (const field of dateFields) {
         const convertedDate = safeConvertDate(validatedData[field] as string | undefined);
         if (convertedDate) {
@@ -125,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
@@ -143,7 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
@@ -161,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
@@ -179,7 +179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
@@ -212,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
@@ -254,7 +254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
@@ -324,7 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const course = await storage.getCourse(req.params.courseId);
-      
+
       if (!course || course.instructorId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -335,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const schedule = await storage.createCourseSchedule(validatedData);
-      
+
       // Send notifications to all signups asynchronously (don't block response)
       CourseNotificationEngine.notifySignupsForSchedule(schedule.id, schedule, course)
         .then((result) => {
@@ -350,7 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .catch((error) => {
           console.error('Error sending notifications:', error);
         });
-      
+
       // Automatically create SMS list for this schedule (synchronous to ensure it exists before enrollments)
       try {
         const formatDate = (dateString: string | Date) => {
@@ -378,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error(`Error creating SMS list for schedule ${schedule.id}:`, error);
       }
-      
+
       res.status(201).json(schedule);
     } catch (error) {
       console.error("Error creating course schedule:", error);
@@ -391,7 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/courses/:courseId/notification-signup', async (req: any, res) => {
     try {
       const courseId = req.params.courseId;
-      
+
       // Verify course exists and is active
       const course = await storage.getCourse(courseId);
       if (!course || !course.isActive) {
@@ -423,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const courseId = req.params.courseId;
-      
+
       // Verify instructor has access to this course
       const course = await storage.getCourse(courseId);
       if (!course || course.instructorId !== userId) {
@@ -443,7 +443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
@@ -483,7 +483,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Single-page registration flow endpoints
-  
+
   // Step 1: Initiate draft enrollment
   app.post('/api/course-registration/initiate', async (req: any, res) => {
     try {
@@ -492,7 +492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let userId = null;
       let accountCreated = false;
-      
+
       // If user is authenticated, use their existing account
       if (req.isAuthenticated()) {
         userId = req.user.claims.sub;
@@ -505,7 +505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (existingUser) {
               return res.status(400).json({ message: "An account with this email already exists. Please log in." });
             }
-            
+
             // Create the user account but don't assign it to the enrollment yet
             // User must log in properly to claim the enrollment
             const newUser = await storage.upsertUser({
@@ -557,13 +557,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = paymentIntentRequestSchema.parse(req.body);
       const { enrollmentId, promoCode } = validatedData;
-      
+
       // Verify enrollment ownership
       const enrollment = await storage.getEnrollment(enrollmentId);
       if (!enrollment) {
         return res.status(404).json({ message: "Enrollment not found" });
       }
-      
+
       // Check ownership: either authenticated user owns it, or it's a guest enrollment
       if (req.isAuthenticated()) {
         const userId = req.user.claims.sub;
@@ -595,13 +595,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = confirmEnrollmentSchema.parse(req.body);
       const { enrollmentId, paymentIntentId, studentInfo } = validatedData;
-      
+
       // Verify enrollment ownership
       const enrollment = await storage.getEnrollment(enrollmentId);
       if (!enrollment) {
         return res.status(404).json({ message: "Enrollment not found" });
       }
-      
+
       // Check ownership: either authenticated user owns it, guest user matches email, or it's a draft enrollment
       if (req.isAuthenticated()) {
         const userId = req.user.claims.sub;
@@ -626,10 +626,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (async () => {
           try {
             const smsList = await storage.getSmsListBySchedule(finalizedEnrollment.scheduleId);
-            
+
             if (smsList) {
               const isAlreadyMember = await storage.checkSmsListMembership(smsList.id, finalizedEnrollment.studentId);
-              
+
               if (!isAlreadyMember) {
                 const course = await storage.getCourse(finalizedEnrollment.courseId);
                 await storage.addSmsListMember({
@@ -639,7 +639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   autoAdded: true,
                   notes: 'Auto-added from enrollment',
                 });
-                
+
                 console.log(`Successfully added student ${finalizedEnrollment.studentId} to SMS list ${smsList.id}`);
               } else {
                 console.log(`Student ${finalizedEnrollment.studentId} already in SMS list ${smsList.id}`);
@@ -689,13 +689,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       const studentsData = await storage.getStudentsByInstructor(userId);
-      
+
       // Return the full structured data for Students Management page
       res.json(studentsData);
     } catch (error) {
@@ -709,7 +709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const studentId = req.params.id;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
@@ -718,7 +718,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const studentsData = await storage.getStudentsByInstructor(userId);
       const allStudents = [...studentsData.current, ...studentsData.former];
       const studentExists = allStudents.some(student => student.id === studentId);
-      
+
       if (!studentExists) {
         return res.status(403).json({ message: "Access denied. Student not found in your courses." });
       }
@@ -734,9 +734,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         refresherReminderDays: z.number().optional(),
         enableRefresherReminder: z.boolean().optional(),
       });
-      
+
       const validatedData = updateSchema.parse(req.body);
-      
+
       // Convert date strings to proper format for database
       const updateData = {
         ...validatedData,
@@ -761,18 +761,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const enrollmentId = req.params.enrollmentId;
-      
+
       // Verify enrollment ownership
       const enrollment = await storage.getEnrollment(enrollmentId);
       if (!enrollment) {
         return res.status(404).json({ message: "Enrollment not found" });
       }
-      
+
       // Check ownership: either student owns it or instructor has access
       const user = await storage.getUser(userId);
       const hasAccess = enrollment.studentId === userId || 
                        (user?.role === 'instructor' && enrollment.course?.instructorId === userId);
-      
+
       if (!hasAccess) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -790,7 +790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const enrollmentIds = req.query.enrollmentIds as string;
-      
+
       if (!enrollmentIds) {
         return res.json([]);
       }
@@ -803,7 +803,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (!enrollment || enrollment.studentId !== userId) {
               return null;
             }
-            
+
             const paymentBalance = await storage.getPaymentBalance(enrollmentId);
             return {
               enrollmentId,
@@ -828,18 +828,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const enrollmentId = req.params.enrollmentId;
-      
+
       // Verify enrollment ownership
       const enrollment = await storage.getEnrollment(enrollmentId);
       if (!enrollment) {
         return res.status(404).json({ message: "Enrollment not found" });
       }
-      
+
       // Check ownership: either student owns it or instructor has access
       const user = await storage.getUser(userId);
       const hasAccess = enrollment.studentId === userId || 
                        (user?.role === 'instructor' && enrollment.course?.instructorId === userId);
-      
+
       if (!hasAccess) {
         return res.status(403).json({ message: "Access denied" });
       }
@@ -857,13 +857,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
         return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
       }
 
       const courses = await storage.getCoursesByInstructor(userId);
-      
+
       // Format schedules for export selection
       const schedules = courses
         .flatMap(course => 
@@ -898,7 +898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
         return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
       }
@@ -915,10 +915,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Schedule Date', 'Start Time', 'End Time', 'Payment Status', 
           'Enrollment Status', 'Category', 'Registration Date'
         ];
-        
+
         const allRows = [...data.current, ...data.former];
         const csvRows = [headers.join(',')];
-        
+
         allRows.forEach(row => {
           const values = [
             row.studentId, row.firstName, row.lastName, row.email, row.phone,
@@ -937,15 +937,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           csvRows.push(sanitizedValues.join(','));
         });
-        
+
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment; filename="course-roster-${new Date().toISOString().split('T')[0]}.csv"`);
         res.send(csvRows.join('\n'));
-        
+
       } else if (format === 'excel') {
         const ExcelJS = await import('exceljs');
         const workbook = new ExcelJS.default.Workbook();
-        
+
         // Summary sheet
         const summarySheet = workbook.addWorksheet('Summary');
         summarySheet.addRow(['Course Roster Export Summary']);
@@ -953,7 +953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         summarySheet.addRow(['Total Current Students', data.summary.totalCurrentStudents]);
         summarySheet.addRow(['Total Former Students', data.summary.totalFormerStudents]);
         summarySheet.addRow(['Total Courses', data.summary.totalCourses]);
-        
+
         // Current students sheet
         if (data.current.length > 0) {
           const currentSheet = workbook.addWorksheet('Current Students');
@@ -964,7 +964,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             'Enrollment Status', 'Registration Date'
           ];
           currentSheet.addRow(headers);
-          
+
           data.current.forEach(row => {
             currentSheet.addRow([
               row.studentId, row.firstName, row.lastName, row.email, row.phone,
@@ -974,7 +974,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ]);
           });
         }
-        
+
         // Former students sheet
         if (data.former.length > 0) {
           const formerSheet = workbook.addWorksheet('Former Students');
@@ -985,7 +985,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             'Enrollment Status', 'Registration Date'
           ];
           formerSheet.addRow(headers);
-          
+
           data.former.forEach(row => {
             formerSheet.addRow([
               row.studentId, row.firstName, row.lastName, row.email, row.phone,
@@ -995,17 +995,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ]);
           });
         }
-        
+
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="course-roster-${new Date().toISOString().split('T')[0]}.xlsx"`);
-        
+
         await workbook.xlsx.write(res);
         res.end();
-        
+
       } else {
         res.status(400).json({ message: "Unsupported format. Use 'csv' or 'excel'." });
       }
-      
+
     } catch (error: any) {
       console.error("Error exporting roster:", error);
       res.status(500).json({ message: "Failed to export roster" });
@@ -1017,7 +1017,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
         return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
       }
@@ -1025,7 +1025,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Google Sheets integration
       try {
         const { google } = await import('googleapis');
-        
+
         // Check if credentials are available
         if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
           return res.json({ 
@@ -1036,28 +1036,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Parse service account credentials
         const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
-        
+
         // Initialize Google Sheets API
         const auth = new google.auth.GoogleAuth({
           credentials,
           scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file']
         });
-        
+
         const sheets = google.sheets({ version: 'v4', auth });
         const drive = google.drive({ version: 'v3', auth });
-        
+
         // Get roster data
         const scheduleId = req.body.scheduleId as string | undefined;
         const data = await storage.getRosterExportData(userId, scheduleId);
         const allRows = [...data.current, ...data.former];
-        
+
         if (allRows.length === 0) {
           return res.json({
             message: "No student data available to export.",
             action: "no_data"
           });
         }
-        
+
         // Create new spreadsheet
         const createResponse = await sheets.spreadsheets.create({
           requestBody: {
@@ -1083,12 +1083,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ]
           }
         });
-        
+
         const spreadsheetId = createResponse.data.spreadsheetId;
         if (!spreadsheetId) {
           throw new Error('Failed to create spreadsheet - no ID returned');
         }
-        
+
         // Prepare data for the All Students sheet
         const headers = [
           'Student ID', 'First Name', 'Last Name', 'Email', 'Phone',
@@ -1096,7 +1096,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Schedule Date', 'Start Time', 'End Time', 'Payment Status',
           'Enrollment Status', 'Category', 'Registration Date'
         ];
-        
+
         const values = [
           headers,
           ...allRows.map(row => [
@@ -1106,7 +1106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             row.paymentStatus, row.enrollmentStatus, row.category, row.registrationDate
           ])
         ];
-        
+
         // Update the All Students sheet with data
         await sheets.spreadsheets.values.update({
           spreadsheetId,
@@ -1114,33 +1114,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           valueInputOption: 'RAW',
           requestBody: { values }
         });
-        
+
         // Keep the spreadsheet private (owner-only access)
         // Note: The spreadsheet is accessible only to the service account owner
         // Instructors can access via the returned URL if they have Google account permissions
-        
+
         const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
-        
+
         res.json({
           message: "Google Sheets export created successfully! Note: The spreadsheet is private and accessible only to the service account. You may need to request access or have the administrator share it with your Google account.",
           action: "success",
           spreadsheetUrl,
           spreadsheetId
         });
-        
+
       } catch (googleError: any) {
         console.error('Google Sheets API error:', googleError);
-        
+
         if (googleError.message?.includes('credentials')) {
           return res.json({ 
             message: "Google Sheets credentials not properly configured. Please contact administrator.",
             action: "setup_required"
           });
         }
-        
+
         throw googleError;
       }
-      
+
     } catch (error: any) {
       console.error("Error creating Google Sheets export:", error);
       res.status(500).json({ message: "Failed to create Google Sheets export" });
@@ -1152,13 +1152,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
         return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
       }
 
       const scheduleId = req.query.scheduleId as string | undefined;
-      
+
       if (!scheduleId) {
         return res.status(400).json({ message: "Schedule ID is required" });
       }
@@ -1187,7 +1187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         former: data.former,
         summary
       });
-      
+
     } catch (error: any) {
       console.error("Error fetching roster data:", error);
       res.status(500).json({ message: "Failed to fetch roster data" });
@@ -1240,7 +1240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/instructor/courses", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Validate required fields
       if (!req.body.title || !req.body.description || !req.body.price || !req.body.category) {
         return res.status(400).json({ error: "Missing required fields" });
@@ -1421,7 +1421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // as the regular getCourse won't return deleted courses
       const courses = await storage.getDeletedCoursesByInstructor(userId);
       const existingCourse = courses.find(c => c.id === courseId);
-      
+
       if (!existingCourse) {
         return res.status(403).json({ error: "Unauthorized: Course not found in deleted items or does not belong to instructor" });
       }
@@ -1443,7 +1443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify the course exists in deleted items and belongs to the instructor
       const deletedCourses = await storage.getDeletedCoursesByInstructor(userId);
       const existingCourse = deletedCourses.find(c => c.id === courseId);
-      
+
       if (!existingCourse) {
         return res.status(403).json({ error: "Unauthorized: Course not found in deleted items or does not belong to instructor" });
       }
@@ -1461,7 +1461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const eventData = req.body;
-      
+
       // Validate required fields
       if (!eventData.courseId || !eventData.startDate || !eventData.endDate) {
         return res.status(400).json({ error: "Missing required fields: courseId, startDate, endDate" });
@@ -1492,7 +1492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const schedule = await storage.createCourseSchedule(scheduleData);
-      
+
       res.status(201).json(schedule);
     } catch (error: any) {
       console.error("Error creating event:", error);
@@ -1547,11 +1547,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use direct PostgreSQL connection bypassing Drizzle entirely
       const { pool } = await import("./db");
-      
+
       // Build SQL update manually
       const updateParts = [];
       const values = [];
-      
+
       if (req.body.location !== undefined) {
         updateParts.push(`location = $${values.length + 1}`);
         values.push(req.body.location);
@@ -1576,7 +1576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateParts.push(`notes = $${values.length + 1}`);
         values.push(req.body.notes || null);
       }
-      
+
       // Handle date fields
       if (req.body.startDate !== undefined) {
         updateParts.push(`start_date = $${values.length + 1}`);
@@ -1598,15 +1598,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateParts.push(`auto_confirm_registration = $${values.length + 1}`);
         values.push(req.body.autoConfirmRegistration);
       }
-      
+
       // Always update timestamp
       updateParts.push(`updated_at = $${values.length + 1}`);
       values.push(new Date().toISOString());
-      
+
       if (updateParts.length === 1) {
         return res.status(400).json({ error: "No fields to update" });
       }
-      
+
       const query = `
         UPDATE course_schedules 
         SET ${updateParts.join(", ")}
@@ -1614,7 +1614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         RETURNING *
       `;
       values.push(scheduleId);
-      
+
       const result = await pool.query(query, values);
       const updatedSchedule = result.rows[0];
       res.json({ message: "Schedule updated successfully", schedule: updatedSchedule });
@@ -1633,7 +1633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if schedule exists in deleted schedules
       const deletedSchedules = await storage.getDeletedSchedulesByInstructor(userId);
       const existingSchedule = deletedSchedules.find(s => s.id === scheduleId);
-      
+
       if (!existingSchedule) {
         return res.status(403).json({ error: "Unauthorized: Schedule not found in deleted items or does not belong to instructor" });
       }
@@ -1823,7 +1823,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate payment amount based on payment option
       let paymentAmount: number;
       const coursePrice = parseFloat(course.price);
-      
+
       if (enrollment.paymentOption === 'deposit' && course.depositAmount) {
         paymentAmount = parseFloat(course.depositAmount);
       } else {
@@ -1839,7 +1839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let discountAmount = 0;
       let finalPaymentAmount = paymentAmount;
       let promoCodeInfo = null;
-      
+
       if (promoCode) {
         const validation = await storage.validatePromoCode(promoCode, userId, enrollment.courseId, paymentAmount);
         if (validation.isValid && validation.discountAmount !== undefined && validation.finalAmount !== undefined) {
@@ -1869,7 +1869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Use Stripe Tax to calculate taxes based on your dashboard settings
         console.log('Attempting Stripe Tax calculation for Albuquerque, NM...');
-        
+
         taxCalculation = await stripe.tax.calculations.create({
           currency: 'usd',
           line_items: [{
@@ -1973,7 +1973,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error(`Payment intent enrollment mismatch: expected ${enrollmentId}, got ${paymentIntent.metadata.enrollmentId}`);
         return res.status(400).json({ message: "Payment verification failed - enrollment mismatch" });
       }
-      
+
       if (paymentIntent.metadata.studentId !== userId) {
         console.error(`Payment intent user mismatch: expected ${userId}, got ${paymentIntent.metadata.studentId}`);
         return res.status(400).json({ message: "Payment verification failed - user mismatch" });
@@ -1993,7 +1993,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate expected payment amount for verification
       let expectedAmount: number;
       const coursePrice = parseFloat(course.price);
-      
+
       if (enrollment.paymentOption === 'deposit' && course.depositAmount) {
         expectedAmount = parseFloat(course.depositAmount);
       } else {
@@ -2025,7 +2025,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Instructor courses endpoint for forms management
-  app.get("/api/instructor/courses", async (req, res) => {
+  app.get("/api/instructor/courses", async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       if (!userId) {
@@ -2041,12 +2041,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Course Information Forms API Routes
-  
+
   // Get forms for a course
   app.get("/api/course-forms/:courseId", async (req, res) => {
     try {
       const { courseId } = req.params;
-      
+
       const userId = req.user?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -2057,7 +2057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!course || course.instructorId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
-      
+
       const forms = await storage.getCourseInformationFormsByCourse(courseId);
       res.json(forms);
     } catch (error: any) {
@@ -2293,7 +2293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/course-notifications", async (req, res) => {
     try {
       const validatedData = insertCourseNotificationSchema.parse(req.body);
-      
+
       // Check if user is authenticated and get their info if available
       let userId = null;
       if (req.isAuthenticated && req.isAuthenticated()) {
@@ -2319,7 +2319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
@@ -2353,7 +2353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdBy: userId,
         updatedBy: userId,
       };
-      
+
       const newPromoCode = await storage.createPromoCode(promoCodeData);
       res.json(newPromoCode);
     } catch (error: any) {
@@ -2366,12 +2366,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       const updateData = {
         ...req.body,
         updatedBy: userId,
       };
-      
+
       const updatedPromoCode = await storage.updatePromoCode(id, updateData);
       res.json(updatedPromoCode);
     } catch (error: any) {
@@ -2384,7 +2384,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       await storage.deletePromoCode(id);
       res.json({ message: "Promo code deleted successfully" });
     } catch (error: any) {
@@ -2412,12 +2412,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notification Management API Endpoints for Admin Interface
-  
+
   // Notification Templates Routes
   app.get("/api/admin/notification-templates", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2435,7 +2435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/notification-templates", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2449,17 +2449,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdBy: userId,
         updatedBy: userId,
       };
-      
+
       const newTemplate = await storage.createNotificationTemplate(templateData);
       res.status(201).json(newTemplate);
     } catch (error: any) {
       console.error("Error creating notification template:", error);
-      
+
       // Handle Zod validation errors as 400 Bad Request
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
-      
+
       res.status(500).json({ error: "Failed to create notification template" });
     }
   });
@@ -2468,7 +2468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2481,17 +2481,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...validatedData,
         updatedBy: userId,
       };
-      
+
       const updatedTemplate = await storage.updateNotificationTemplate(id, updateData);
       res.json(updatedTemplate);
     } catch (error: any) {
       console.error("Error updating notification template:", error);
-      
+
       // Handle Zod validation errors as 400 Bad Request
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
-      
+
       res.status(500).json({ error: "Failed to update notification template" });
     }
   });
@@ -2500,7 +2500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2519,7 +2519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/notification-schedules", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2537,7 +2537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/notification-schedules", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2546,17 +2546,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate request body with Zod
       const scheduleData = insertNotificationScheduleSchema.parse(req.body);
-      
+
       const newSchedule = await storage.createNotificationSchedule(scheduleData);
       res.status(201).json(newSchedule);
     } catch (error: any) {
       console.error("Error creating notification schedule:", error);
-      
+
       // Handle Zod validation errors as 400 Bad Request
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
-      
+
       res.status(500).json({ error: "Failed to create notification schedule" });
     }
   });
@@ -2565,7 +2565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2574,17 +2574,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate request body with Zod
       const updateData = insertNotificationScheduleSchema.partial().parse(req.body);
-      
+
       const updatedSchedule = await storage.updateNotificationSchedule(id, updateData);
       res.json(updatedSchedule);
     } catch (error: any) {
       console.error("Error updating notification schedule:", error);
-      
+
       // Handle Zod validation errors as 400 Bad Request
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
-      
+
       res.status(500).json({ error: "Failed to update notification schedule" });
     }
   });
@@ -2593,7 +2593,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2612,7 +2612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/notification-logs", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2631,7 +2631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { page, limit, templateId, type, status, recipientEmail } = querySchema.parse(req.query);
       const offset = (page - 1) * limit;
-      
+
       const filters = {
         templateId,
         type,
@@ -2650,12 +2650,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Error fetching notification logs:", error);
-      
+
       // Handle validation errors as 400 Bad Request
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
-      
+
       res.status(500).json({ error: "Failed to fetch notification logs" });
     }
   });
@@ -2664,7 +2664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/send-notification", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2690,7 +2690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       let recipients: User[] = [];
-      
+
       // Determine recipients based on type
       if (recipientType === 'individual' && recipientId) {
         const recipient = await storage.getUser(recipientId);
@@ -2754,12 +2754,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Error sending notification:", error);
-      
+
       // Handle Zod validation errors as 400 Bad Request
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
-      
+
       res.status(500).json({ error: "Failed to send notification" });
     }
   });
@@ -2772,7 +2772,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/waiver-templates", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2781,7 +2781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { scope, courseId, isActive } = req.query;
       const filters: any = {};
-      
+
       if (scope) filters.scope = scope;
       if (courseId) filters.courseId = courseId;
       if (isActive !== undefined) filters.isActive = isActive === 'true';
@@ -2798,7 +2798,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2820,7 +2820,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/waiver-templates", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2838,11 +2838,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(template);
     } catch (error: any) {
       console.error("Error creating waiver template:", error);
-      
+
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
-      
+
       res.status(500).json({ error: "Failed to create waiver template" });
     }
   });
@@ -2851,7 +2851,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2876,7 +2876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -2896,7 +2896,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { enrollmentId } = req.params;
-      
+
       // Verify enrollment access (student owns enrollment or instructor owns course)
       const enrollment = await storage.getEnrollment(enrollmentId);
       if (!enrollment) {
@@ -2905,12 +2905,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.getUser(userId);
       const isOwner = enrollment.studentId === userId;
-      
+
       // Fetch course schedule and course to check instructor authorization
       const courseSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
       const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
       const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
-      
+
       if (!isOwner && !isInstructor) {
         return res.status(403).json({ error: "Unauthorized: Access denied" });
       }
@@ -2927,7 +2927,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       const instance = await storage.getWaiverInstance(id);
       if (!instance) {
         return res.status(404).json({ error: "Waiver instance not found" });
@@ -2936,12 +2936,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify access
       const user = await storage.getUser(userId);
       const isOwner = instance.enrollment.studentId === userId;
-      
+
       // Fetch course schedule and course to check instructor authorization
       const courseSchedule = await storage.getCourseSchedule(instance.enrollment.scheduleId);
       const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
       const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
-      
+
       if (!isOwner && !isInstructor) {
         return res.status(403).json({ error: "Unauthorized: Access denied" });
       }
@@ -2956,10 +2956,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/waiver-instances", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Validate request body
       const instanceData = insertWaiverInstanceSchema.parse(req.body);
-      
+
       // Verify enrollment access
       const enrollment = await storage.getEnrollment(instanceData.enrollmentId);
       if (!enrollment) {
@@ -2968,12 +2968,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.getUser(userId);
       const isOwner = enrollment.studentId === userId;
-      
+
       // Fetch course schedule and course to check instructor authorization
       const courseSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
       const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
       const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
-      
+
       if (!isOwner && !isInstructor) {
         return res.status(403).json({ error: "Unauthorized: Access denied" });
       }
@@ -2982,11 +2982,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(instance);
     } catch (error: any) {
       console.error("Error creating waiver instance:", error);
-      
+
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
-      
+
       res.status(500).json({ error: "Failed to create waiver instance" });
     }
   });
@@ -2995,10 +2995,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/waiver-signatures", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Validate request body
       const signatureData = insertWaiverSignatureSchema.parse(req.body);
-      
+
       // Verify waiver instance access
       const instance = await storage.getWaiverInstance(signatureData.instanceId);
       if (!instance) {
@@ -3014,7 +3014,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!instance.enrollment.student) {
         return res.status(400).json({ error: "Student information not found" });
       }
-      
+
       const signature = await storage.createWaiverSignature({
         ...signatureData,
         signerEmail: instance.enrollment.student.email || '',
@@ -3032,11 +3032,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(signature);
     } catch (error: any) {
       console.error("Error creating waiver signature:", error);
-      
+
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
-      
+
       res.status(500).json({ error: "Failed to create waiver signature" });
     }
   });
@@ -3045,9 +3045,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/waiver-content/generate", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       const { templateId, enrollmentId } = req.body;
-      
+
       if (!templateId || !enrollmentId) {
         return res.status(400).json({ error: "templateId and enrollmentId are required" });
       }
@@ -3060,12 +3060,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.getUser(userId);
       const isOwner = enrollment.studentId === userId;
-      
+
       // Fetch course schedule and course to check instructor authorization
       const courseSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
       const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
       const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
-      
+
       if (!isOwner && !isInstructor) {
         return res.status(403).json({ error: "Unauthorized: Access denied" });
       }
@@ -3082,7 +3082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { enrollmentId } = req.params;
-      
+
       // Verify enrollment access
       const enrollment = await storage.getEnrollment(enrollmentId);
       if (!enrollment) {
@@ -3091,12 +3091,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.getUser(userId);
       const isOwner = enrollment.studentId === userId;
-      
+
       // Fetch course schedule and course to check instructor authorization
       const courseSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
       const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
       const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
-      
+
       if (!isOwner && !isInstructor) {
         return res.status(403).json({ error: "Unauthorized: Access denied" });
       }
@@ -3113,7 +3113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/waiver-compliance", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3121,7 +3121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { courseId, startDate, endDate } = req.query;
-      
+
       const filters: any = {};
       if (courseId) filters.courseId = courseId;
       if (startDate) filters.startDate = new Date(startDate as string);
@@ -3135,15 +3135,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ==========================================
-  // ROSTER NOTIFICATION & MANAGEMENT ENDPOINTS
-  // ==========================================
+  // ==============================================================
+  // COMMUNICATIONS DASHBOARD API ROUTES
+  // ==============================================================
 
   // Simple SMS notification for roster
   app.post("/api/notifications/sms", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to send SMS notifications
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3162,7 +3162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Import SMS service
       const { NotificationSmsService } = await import('./smsService');
-      
+
       const result = await NotificationSmsService.sendNotificationSms({
         to,
         message: message.trim(),
@@ -3181,7 +3181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/notifications/sms/:messageSid/status", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to check SMS status
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3189,14 +3189,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { messageSid } = req.params;
-      
+
       if (!messageSid) {
         return res.status(400).json({ error: "Message SID is required" });
       }
 
       // Import SMS service
       const { NotificationSmsService } = await import('./smsService');
-      
+
       const status = await NotificationSmsService.getMessageStatus(messageSid);
       res.json(status);
     } catch (error: any) {
@@ -3209,7 +3209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/debug/twilio-info", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to check account info
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3218,7 +3218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Import SMS service
       const { NotificationSmsService } = await import('./smsService');
-      
+
       const accountInfo = await NotificationSmsService.getAccountInfo();
       const envInfo = {
         hasSid: !!process.env.TWILIO_ACCOUNT_SID,
@@ -3226,7 +3226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasPhone: !!process.env.TWILIO_PHONE_NUMBER,
         phoneNumber: process.env.TWILIO_PHONE_NUMBER, // Safe to show this
       };
-      
+
       res.json({
         environment: envInfo,
         account: accountInfo
@@ -3241,7 +3241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/notifications/email", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to send email notifications
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3264,7 +3264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Import email service
       const { NotificationEmailService } = await import('./emailService');
-      
+
       const result = await NotificationEmailService.sendNotificationEmail({
         to,
         subject: subject.trim(),
@@ -3284,7 +3284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/notifications/payment-reminder", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to send payment reminders
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3314,7 +3314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send email if requested
       if ((method === 'email' || method === 'both') && recipients.email) {
         const { NotificationEmailService } = await import('./emailService');
-        
+
         const emailResult = await NotificationEmailService.sendNotificationEmail({
           to: [recipients.email],
           subject: subject.trim(),
@@ -3329,7 +3329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send SMS if requested
       if ((method === 'sms' || method === 'both') && recipients.phone) {
         const { NotificationSmsService } = await import('./smsService');
-        
+
         const smsResult = await NotificationSmsService.sendNotificationSms({
           to: [recipients.phone],
           message: message.trim(),
@@ -3359,7 +3359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
       const { enrollmentId, method } = req.body;
-      
+
       // Only allow instructors to send payment reminders
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3460,10 +3460,10 @@ Practical Defense Training`;
         }
 
         const { NotificationSmsService } = await import('./smsService');
-        
+
         // Shorter message for SMS
         const smsMessage = `Payment Reminder: You have a remaining balance of ${remainingBalanceFormatted} for ${courseName} on ${scheduleDate}. Total: ${totalAmount}, Paid: ${amountPaid}. Please complete your payment soon. - ${user.firstName} ${user.lastName}`;
-        
+
         result = await NotificationSmsService.sendNotificationSms({
           to: [student.phone],
           message: smsMessage,
@@ -3479,13 +3479,13 @@ Practical Defense Training`;
         }
 
         const { NotificationEmailService } = await import('./emailService');
-        
+
         const htmlContent = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #333;">Payment Reminder</h2>
             <p>Hello ${studentName},</p>
             <p>This is a friendly reminder about your outstanding balance for <strong>${courseName}</strong>.</p>
-            
+
             <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
               <h3 style="margin-top: 0; color: #555;">Course Details:</h3>
               <p style="margin: 5px 0;"><strong>Course:</strong> ${courseName}</p>
@@ -3494,16 +3494,16 @@ Practical Defense Training`;
               <p style="margin: 5px 0; color: #16a34a;"><strong>Amount Paid:</strong> ${amountPaid}</p>
               <p style="margin: 5px 0; color: #dc2626;"><strong>Remaining Balance:</strong> ${remainingBalanceFormatted}</p>
             </div>
-            
+
             <p>Please complete your payment at your earliest convenience.</p>
             <p>If you have any questions, please don't hesitate to reach out.</p>
-            
+
             <p style="margin-top: 30px;">Best regards,<br>
             ${user.firstName} ${user.lastName}<br>
             <em>Practical Defense Training</em></p>
           </div>
         `;
-        
+
         result = await NotificationEmailService.sendNotificationEmail({
           to: [student.email],
           subject: subject,
@@ -3525,7 +3525,7 @@ Practical Defense Training`;
     try {
       const userId = req.user?.claims?.sub;
       const { enrollmentId } = req.params;
-      
+
       // Only allow instructors to view payment details
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3551,7 +3551,7 @@ Practical Defense Training`;
 
       // Get payment balance info
       const paymentBalance = await storage.getPaymentBalance(enrollmentId);
-      
+
       const paymentDetails = {
         enrollmentId: enrollment.id,
         paymentStatus: enrollment.paymentStatus,
@@ -3575,7 +3575,7 @@ Practical Defense Training`;
   app.get("/api/instructor/available-schedules", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to view available schedules
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3600,7 +3600,7 @@ Practical Defense Training`;
       const userId = req.user?.claims?.sub;
       const { enrollmentId } = req.params;
       const { newScheduleId, notes } = req.body;
-      
+
       // Only allow instructors to reschedule students
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3620,7 +3620,7 @@ Practical Defense Training`;
       // Verify instructor owns both current and new course schedules
       const currentSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
       const newSchedule = await storage.getCourseSchedule(newScheduleId);
-      
+
       if (!currentSchedule || !newSchedule) {
         return res.status(404).json({ error: "Course schedule not found" });
       }
@@ -3657,10 +3657,10 @@ Practical Defense Training`;
         (async () => {
           try {
             const smsList = await storage.getSmsListBySchedule(newScheduleId);
-            
+
             if (smsList) {
               const isAlreadyMember = await storage.checkSmsListMembership(smsList.id, updatedEnrollment.studentId);
-              
+
               if (!isAlreadyMember) {
                 await storage.addSmsListMember({
                   listId: smsList.id,
@@ -3669,7 +3669,7 @@ Practical Defense Training`;
                   autoAdded: true,
                   notes: 'Auto-added from rescheduling',
                 });
-                
+
                 console.log(`Successfully added student ${updatedEnrollment.studentId} to SMS list ${smsList.id} after reschedule`);
               }
             } else {
@@ -3679,12 +3679,12 @@ Practical Defense Training`;
             console.error(`Error auto-adding student to SMS list after reschedule:`, error);
           }
         })();
-        
+
         // Remove student from old schedule's SMS list
         (async () => {
           try {
             const oldSmsList = await storage.getSmsListBySchedule(enrollment.scheduleId);
-            
+
             if (oldSmsList) {
               await storage.removeSmsListMemberByUserAndList(oldSmsList.id, updatedEnrollment.studentId);
               console.log(`Successfully removed student ${updatedEnrollment.studentId} from old SMS list ${oldSmsList.id} after reschedule`);
@@ -3710,7 +3710,7 @@ Practical Defense Training`;
       const userId = req.user?.claims?.sub;
       const { enrollmentId } = req.params;
       const { notes } = req.body;
-      
+
       // Only allow instructors to place students on hold
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3757,7 +3757,7 @@ Practical Defense Training`;
     try {
       const userId = req.user?.claims?.sub;
       const { studentId, scheduleId, notes } = req.body;
-      
+
       // Only allow instructors to cross-enroll students
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3798,11 +3798,11 @@ Practical Defense Training`;
         return res.status(400).json({ error: "Student is already enrolled in this course schedule" });
       }
 
-      // Check if schedule has available spots
-      const enrollmentCount = await storage.getScheduleEnrollmentCount(scheduleId);
-      if (enrollmentCount >= schedule.maxSpots) {
-        return res.status(400).json({ error: "Course schedule is full" });
-      }
+      // Check if student has any held enrollments for this instructor's courses
+      const existingEnrollments = await storage.getEnrollmentsByStudent(studentId);
+      const heldEnrollments = existingEnrollments.filter(e => 
+        e.status === 'hold' && e.course?.instructorId === userId
+      );
 
       // Create the enrollment
       const enrollmentData = {
@@ -3810,7 +3810,7 @@ Practical Defense Training`;
         courseId: schedule.courseId,
         scheduleId,
         status: 'confirmed' as const,
-        paymentStatus: 'paid' as const, // Instructor enrollments are marked as paid
+        paymentStatus: 'pending' as const, // Instructor enrollments are marked as paid
         paymentOption: 'full' as const,
         notes: notes || `Cross-enrolled by instructor`,
         registrationDate: new Date(),
@@ -3822,15 +3822,27 @@ Practical Defense Training`;
         .values(enrollmentData)
         .returning();
 
+      // If student was on hold, update all held enrollments to 'confirmed' to remove from held list
+      if (heldEnrollments.length > 0) {
+        await Promise.all(
+          heldEnrollments.map(heldEnrollment => 
+            storage.updateEnrollment(heldEnrollment.id, {
+              status: 'confirmed',
+              cancellationReason: null,
+            })
+          )
+        );
+      }
+
       // Auto-add student to SMS list for this schedule (fire-and-forget)
       if (newEnrollment.status === 'confirmed' && newEnrollment.studentId) {
         (async () => {
           try {
             const smsList = await storage.getSmsListBySchedule(newEnrollment.scheduleId);
-            
+
             if (smsList) {
               const isAlreadyMember = await storage.checkSmsListMembership(smsList.id, newEnrollment.studentId);
-              
+
               if (!isAlreadyMember) {
                 await storage.addSmsListMember({
                   listId: smsList.id,
@@ -3839,7 +3851,7 @@ Practical Defense Training`;
                   autoAdded: true,
                   notes: 'Auto-added from instructor cross-enrollment',
                 });
-                
+
                 console.log(`Successfully added student ${newEnrollment.studentId} to SMS list ${smsList.id}`);
               }
             } else {
@@ -3866,7 +3878,7 @@ Practical Defense Training`;
   app.get("/api/communications", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access communications dashboard
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3889,7 +3901,7 @@ Practical Defense Training`;
 
       const { page, limit, type, direction, isRead, isFlagged, search, userId: filterUserId, courseId, enrollmentId } = querySchema.parse(req.query);
       const offset = (page - 1) * limit;
-      
+
       const filters = {
         type,
         direction,
@@ -3912,12 +3924,12 @@ Practical Defense Training`;
       });
     } catch (error: any) {
       console.error("Error fetching communications:", error);
-      
+
       // Handle validation errors as 400 Bad Request
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
-      
+
       res.status(500).json({ error: "Failed to fetch communications" });
     }
   });
@@ -3927,7 +3939,7 @@ Practical Defense Training`;
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       // Only allow instructors to access communications
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3951,7 +3963,7 @@ Practical Defense Training`;
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       // Only allow instructors to manage communications
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3962,11 +3974,11 @@ Practical Defense Training`;
       res.json(communication);
     } catch (error: any) {
       console.error("Error marking communication as read:", error);
-      
+
       if (error.message === 'Communication not found') {
         return res.status(404).json({ error: "Communication not found" });
       }
-      
+
       res.status(500).json({ error: "Failed to mark communication as read" });
     }
   });
@@ -3976,7 +3988,7 @@ Practical Defense Training`;
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       // Only allow instructors to manage communications
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -3987,11 +3999,11 @@ Practical Defense Training`;
       res.json(communication);
     } catch (error: any) {
       console.error("Error marking communication as unread:", error);
-      
+
       if (error.message === 'Communication not found') {
         return res.status(404).json({ error: "Communication not found" });
       }
-      
+
       res.status(500).json({ error: "Failed to mark communication as unread" });
     }
   });
@@ -4001,7 +4013,7 @@ Practical Defense Training`;
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       // Only allow instructors to manage communications
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -4018,15 +4030,15 @@ Practical Defense Training`;
       res.json(communication);
     } catch (error: any) {
       console.error("Error flagging communication:", error);
-      
+
       if (error.message === 'Communication not found') {
         return res.status(404).json({ error: "Communication not found" });
       }
-      
+
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
-      
+
       res.status(500).json({ error: "Failed to flag communication" });
     }
   });
@@ -4036,7 +4048,7 @@ Practical Defense Training`;
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
-      
+
       // Only allow instructors to manage communications
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -4047,11 +4059,11 @@ Practical Defense Training`;
       res.json(communication);
     } catch (error: any) {
       console.error("Error unflagging communication:", error);
-      
+
       if (error.message === 'Communication not found') {
         return res.status(404).json({ error: "Communication not found" });
       }
-      
+
       res.status(500).json({ error: "Failed to unflag communication" });
     }
   });
@@ -4067,7 +4079,7 @@ Practical Defense Training`;
   app.get("/api/sms/inbox", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access SMS features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -4095,7 +4107,7 @@ Practical Defense Training`;
   app.get("/api/sms/messages", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access SMS features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -4126,7 +4138,7 @@ Practical Defense Training`;
     try {
       const userId = req.user?.claims?.sub;
       const { sid } = req.params;
-      
+
       // Only allow instructors to access SMS features
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -4149,7 +4161,7 @@ Practical Defense Training`;
   app.post("/api/sms/send", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to send SMS
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -4188,12 +4200,12 @@ Practical Defense Training`;
       });
     } catch (error: any) {
       console.error("Error sending SMS:", error);
-      
+
       // Handle Zod validation errors as 400 Bad Request
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
-      
+
       res.status(500).json({ error: "Failed to send SMS: " + error.message });
     }
   });
@@ -4202,7 +4214,7 @@ Practical Defense Training`;
   app.get("/api/sms/stats", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access SMS stats
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -4221,7 +4233,7 @@ Practical Defense Training`;
   app.get("/api/sms/contacts", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       // Only allow instructors to access contacts
       const user = await storage.getUser(userId);
       if (!user || user.role !== 'instructor') {
@@ -4229,18 +4241,18 @@ Practical Defense Training`;
       }
 
       const { search, role: filterRole } = req.query;
-      
+
       // Get all users with phone numbers
       let contacts = await storage.getAllStudents();
-      
+
       // Filter by role if specified
       if (filterRole && filterRole !== 'all') {
         contacts = contacts.filter(contact => contact.role === filterRole);
       }
-      
+
       // Filter out contacts without phone numbers
       contacts = contacts.filter(contact => contact.phone);
-      
+
       // Search filter
       if (search) {
         const searchLower = search.toString().toLowerCase();
@@ -4275,7 +4287,7 @@ Practical Defense Training`;
     console.log("=== WEBHOOK CALLED ===");
     console.log("Request body:", JSON.stringify(req.body, null, 2));
     console.log("Request headers:", JSON.stringify(req.headers, null, 2));
-    
+
     try {
       // Twilio sends webhook data as form-urlencoded
       const {
@@ -4308,7 +4320,7 @@ Practical Defense Training`;
       console.log("Looking for matching user...");
       const users = await storage.getAllUsers();
       console.log(`Found ${users.length} users in database`);
-      
+
       const matchingUser = users.find(u => 
         u.phone && u.phone.replace(/\D/g, '') === From.replace(/\D/g, '')
       );
@@ -4352,7 +4364,7 @@ Practical Defense Training`;
     } catch (error: any) {
       console.error("!!! Error processing SMS webhook:", error);
       console.error("Error stack:", error.stack);
-      
+
       // Still respond with 200 to Twilio to prevent retries
       res.type('text/xml');
       res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
@@ -4443,13 +4455,13 @@ Practical Defense Training`;
     try {
       const { category } = req.query;
       let products;
-      
+
       if (category) {
         products = await storage.getProductsByCategory(category.toString());
       } else {
         products = await storage.getProducts();
       }
-      
+
       res.json(products);
     } catch (error: any) {
       console.error("Error fetching products:", error);
@@ -4481,7 +4493,7 @@ Practical Defense Training`;
         ...req.body,
         createdBy: user.id,
       });
-      
+
       const product = await storage.createProduct(validatedData);
       res.status(201).json(product);
     } catch (error: any) {
@@ -4504,7 +4516,7 @@ Practical Defense Training`;
         ...req.body,
         updatedBy: user.id,
       });
-      
+
       const product = await storage.updateProduct(req.params.id, validatedData);
       res.json(product);
     } catch (error: any) {
@@ -4540,10 +4552,10 @@ Practical Defense Training`;
       }
 
       console.log("Starting Printful product sync...");
-      
+
       // Import the printfulService
       const { printfulService } = await import('./printfulService');
-      
+
       let syncResults = {
         productsProcessed: 0,
         variantsProcessed: 0,
@@ -4569,14 +4581,14 @@ Practical Defense Training`;
               p.printfulProductId === printfulProduct.id.toString() || 
               p.sku === printfulProductSku
             );
-            
+
             let productToUpdate = existingProduct;
 
             // Create product category if it doesn't exist
             let categoryId = null;
             const categories = await storage.getProductCategories();
             let printfulCategory = categories.find(c => c.name === 'Printful Products');
-            
+
             if (!printfulCategory) {
               printfulCategory = await storage.createProductCategory({
                 name: 'Printful Products',
@@ -4636,7 +4648,7 @@ Practical Defense Training`;
                   // Check if variant already exists for this product
                   const existingVariants = await storage.getProductVariants(productToUpdate.id);
                   const existingVariant = existingVariants.find(v => v.printfulSyncVariantId === printfulVariant.id.toString());
-                  
+
                   if (!existingVariant) {
                     await storage.createProductVariant({
                       productId: productToUpdate.id,
@@ -4692,7 +4704,7 @@ Practical Defense Training`;
 
       } catch (printfulError: any) {
         console.error("Error fetching from Printful:", printfulError);
-        
+
         // Handle specific Printful API errors with user-friendly messages
         if (printfulError.message && printfulError.message.includes("Manual Order / API platform")) {
           return res.status(400).json({
@@ -4701,7 +4713,7 @@ Practical Defense Training`;
             details: printfulError.message
           });
         }
-        
+
         if (printfulError.status === 401 || printfulError.message?.includes("Unauthorized")) {
           return res.status(401).json({
             error: "Printful API Authentication Failed",
@@ -4709,7 +4721,7 @@ Practical Defense Training`;
             details: printfulError.message
           });
         }
-        
+
         return res.status(500).json({ 
           error: "Failed to fetch products from Printful", 
           details: printfulError.message 
@@ -4744,7 +4756,7 @@ Practical Defense Training`;
         ...req.body,
         productId: req.params.productId,
       });
-      
+
       const variant = await storage.createProductVariant(validatedData);
       res.status(201).json(variant);
     } catch (error: any) {
@@ -4761,20 +4773,20 @@ Practical Defense Training`;
     try {
       const userId = req.user?.claims?.sub; // May be null for guest users
       const sessionId = req.sessionID;
-      
+
       console.log("GET /api/cart - userId:", userId, "sessionId:", sessionId);
-      
+
       // Use same logic as POST route: if userId exists, don't use sessionId
       const cartItems = await storage.getCartItems(userId, userId ? null : sessionId);
-      
+
       console.log("GET /api/cart - found items:", cartItems.length);
-      
+
       // Convert priceAtTime from string to number for frontend compatibility
       const formattedCartItems = cartItems.map(item => ({
         ...item,
         priceAtTime: Number(item.priceAtTime)
       }));
-      
+
       res.json(formattedCartItems);
     } catch (error: any) {
       console.error("Error fetching cart items:", error);
@@ -4786,9 +4798,9 @@ Practical Defense Training`;
     try {
       const userId = req.user?.claims?.sub; // May be null for guest users
       const sessionId = req.sessionID;
-      
+
       console.log("POST /api/cart - userId:", userId, "sessionId:", sessionId);
-      
+
       const cartItemSchema = z.object({
         productId: z.string().uuid(),
         variantId: z.string().uuid().optional(),
@@ -4798,15 +4810,15 @@ Practical Defense Training`;
       });
 
       const validatedData = cartItemSchema.parse(req.body);
-      
+
       const cartItem = await storage.addToCart({
         ...validatedData,
         userId: userId || null,
         sessionId: userId ? null : sessionId,
       });
-      
+
       console.log("POST /api/cart - created item with userId:", cartItem.userId, "sessionId:", cartItem.sessionId);
-      
+
       res.status(201).json(cartItem);
     } catch (error: any) {
       console.error("Error adding to cart:", error);
@@ -4849,7 +4861,7 @@ Practical Defense Training`;
     try {
       const userId = req.user?.claims?.sub;
       const sessionId = req.sessionID;
-      
+
       await storage.clearCart(userId, sessionId);
       res.status(204).send();
     } catch (error: any) {
@@ -4863,7 +4875,7 @@ Practical Defense Training`;
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       let orders;
       if (user?.role === 'instructor') {
         // Instructors can see all orders
@@ -4872,7 +4884,7 @@ Practical Defense Training`;
         // Students can only see their own orders
         orders = await storage.getEcommerceOrders(userId);
       }
-      
+
       res.json(orders);
     } catch (error: any) {
       console.error("Error fetching e-commerce orders:", error);
@@ -4885,16 +4897,16 @@ Practical Defense Training`;
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       const order = await storage.getEcommerceOrder(req.params.id);
-      
+
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
       }
-      
+
       // Check authorization
       if (user?.role !== 'instructor' && order.userId !== userId) {
         return res.status(403).json({ error: "Access denied" });
       }
-      
+
       res.json(order);
     } catch (error: any) {
       console.error("Error fetching e-commerce order:", error);
@@ -4920,12 +4932,12 @@ Practical Defense Training`;
 
       // Import email service
       const { NotificationEmailService } = await import('./emailService');
-      
+
       // Create email content
       const emailContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #1f2937;">New Contact Form Submission</h2>
-          
+
           <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="color: #374151; margin-top: 0;">Contact Information</h3>
             <p><strong>Name:</strong> ${firstName} ${lastName}</p>
@@ -4933,18 +4945,18 @@ Practical Defense Training`;
             ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ''}
             <p><strong>Preferred Contact:</strong> ${preferredContact || 'Email'}</p>
           </div>
-          
+
           <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="color: #374151; margin-top: 0;">Inquiry Details</h3>
             <p><strong>Type:</strong> ${inquiryType}</p>
             <p><strong>Subject:</strong> ${subject}</p>
           </div>
-          
+
           <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="color: #374151; margin-top: 0;">Message</h3>
             <p style="white-space: pre-wrap;">${message}</p>
           </div>
-          
+
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
           <p style="color: #6b7280; font-size: 14px;">
             This message was sent through the Practical Defense Training contact form.
@@ -4979,20 +4991,20 @@ Please respond to ${email} based on their preferred contact method: ${preferredC
         const confirmationContent = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #1f2937;">Thank You for Contacting Practical Defense Training</h2>
-            
+
             <p>Dear ${firstName},</p>
-            
+
             <p>Thank you for reaching out to us. We have received your message and will get back to you within 24 hours.</p>
-            
+
             <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #374151; margin-top: 0;">Your Message Summary</h3>
               <p><strong>Subject:</strong> ${subject}</p>
               <p><strong>Inquiry Type:</strong> ${inquiryType}</p>
               <p><strong>Preferred Contact Method:</strong> ${preferredContact || 'Email'}</p>
             </div>
-            
+
             <p>If you have any urgent questions, please feel free to call us at <strong>(505) 944-5247</strong>.</p>
-            
+
             <p>Best regards,<br>
             <strong>Jeremy Gill</strong><br>
             Practical Defense Training<br>
@@ -5044,19 +5056,19 @@ jeremy@abqconcealedcarry.com
   });
 
   // SMS Lists Management Routes (Instructor-protected)
-  
+
   // 1. GET /api/sms-lists - Get all lists for authenticated instructor
   app.get('/api/sms-lists', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       const lists = await storage.getSmsListsByInstructor(userId);
-      
+
       // Add member counts to each list
       const listsWithCounts = await Promise.all(
         lists.map(async (list) => {
@@ -5080,13 +5092,13 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       const list = await storage.getSmsListWithDetails(req.params.listId);
-      
+
       if (!list) {
         return res.status(404).json({ message: "SMS list not found" });
       }
@@ -5108,7 +5120,7 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
@@ -5137,14 +5149,14 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       // Verify list exists and ownership
       const existingList = await storage.getSmsList(req.params.listId);
-      
+
       if (!existingList) {
         return res.status(404).json({ message: "SMS list not found" });
       }
@@ -5156,7 +5168,7 @@ jeremy@abqconcealedcarry.com
       // Only allow updating specific fields
       const allowedFields = ['name', 'description', 'tags', 'isActive'];
       const updateData: any = {};
-      
+
       for (const field of allowedFields) {
         if (req.body[field] !== undefined) {
           updateData[field] = req.body[field];
@@ -5180,14 +5192,14 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       // Verify list exists and ownership
       const existingList = await storage.getSmsList(req.params.listId);
-      
+
       if (!existingList) {
         return res.status(404).json({ message: "SMS list not found" });
       }
@@ -5216,14 +5228,14 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       // Verify list exists and ownership
       const list = await storage.getSmsList(req.params.listId);
-      
+
       if (!list) {
         return res.status(404).json({ message: "SMS list not found" });
       }
@@ -5245,14 +5257,14 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       // Verify list exists and ownership
       const list = await storage.getSmsList(req.params.listId);
-      
+
       if (!list) {
         return res.status(404).json({ message: "SMS list not found" });
       }
@@ -5263,13 +5275,13 @@ jeremy@abqconcealedcarry.com
 
       // Accept single userId or array of userIds
       const { userId: singleUserId, userIds } = req.body;
-      
+
       if (!singleUserId && !userIds) {
         return res.status(400).json({ message: "userId or userIds is required" });
       }
 
       const userIdsToAdd = singleUserId ? [singleUserId] : userIds;
-      
+
       if (!Array.isArray(userIdsToAdd) || userIdsToAdd.length === 0) {
         return res.status(400).json({ message: "Invalid user IDs provided" });
       }
@@ -5277,10 +5289,10 @@ jeremy@abqconcealedcarry.com
       // Check for duplicates and prepare members to add
       const membersToAdd = [];
       const alreadyMembers = [];
-      
+
       for (const userIdToAdd of userIdsToAdd) {
         const isMember = await storage.checkSmsListMembership(req.params.listId, userIdToAdd);
-        
+
         if (isMember) {
           alreadyMembers.push(userIdToAdd);
         } else {
@@ -5314,7 +5326,7 @@ jeremy@abqconcealedcarry.com
     try {
       const instructorId = req.user.claims.sub;
       const user = await storage.getUser(instructorId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
@@ -5323,7 +5335,7 @@ jeremy@abqconcealedcarry.com
 
       // Verify list exists and ownership
       const list = await storage.getSmsList(listId);
-      
+
       if (!list) {
         return res.status(404).json({ message: "SMS list not found" });
       }
@@ -5336,7 +5348,7 @@ jeremy@abqconcealedcarry.com
       if (list.listType === 'course_schedule') {
         const members = await storage.getSmsListMembers(listId);
         const member = members.find(m => m.userId === userId);
-        
+
         if (member && member.autoAdded) {
           return res.status(400).json({ 
             message: "Cannot remove auto-added members from course schedule lists" 
@@ -5357,13 +5369,13 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       const query = req.query.q as string;
-      
+
       if (!query || query.trim() === '') {
         return res.status(400).json({ message: "Search query is required" });
       }
@@ -5383,14 +5395,14 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       // Verify list exists and ownership
       const list = await storage.getSmsList(req.params.listId);
-      
+
       if (!list) {
         return res.status(404).json({ message: "SMS list not found" });
       }
@@ -5412,20 +5424,20 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       const broadcast = await storage.getSmsBroadcastWithDeliveryStats(req.params.broadcastId);
-      
+
       if (!broadcast) {
         return res.status(404).json({ message: "Broadcast not found" });
       }
 
       // Verify ownership through list
       const list = await storage.getSmsList(broadcast.listId);
-      
+
       if (!list || list.instructorId !== userId) {
         return res.status(403).json({ message: "Access denied. You do not own this broadcast." });
       }
@@ -5442,14 +5454,14 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       // Verify list exists and ownership
       const list = await storage.getSmsList(req.params.listId);
-      
+
       if (!list) {
         return res.status(404).json({ message: "SMS list not found" });
       }
@@ -5485,14 +5497,14 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       // Verify broadcast exists
       const broadcast = await storage.getSmsBroadcastMessage(req.params.broadcastId);
-      
+
       if (!broadcast) {
         return res.status(404).json({ message: "Broadcast not found" });
       }
@@ -5510,7 +5522,7 @@ jeremy@abqconcealedcarry.com
       // Only allow updating specific fields
       const allowedFields = ['subject', 'messageContent', 'messageHtml', 'messagePlain', 'attachmentUrls', 'dynamicTags', 'scheduledFor'];
       const updateData: any = {};
-      
+
       for (const field of allowedFields) {
         if (req.body[field] !== undefined) {
           updateData[field] = req.body[field];
@@ -5534,14 +5546,14 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       // Verify broadcast exists
       const broadcast = await storage.getSmsBroadcastMessage(req.params.broadcastId);
-      
+
       if (!broadcast) {
         return res.status(404).json({ message: "Broadcast not found" });
       }
@@ -5569,14 +5581,14 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       // Get broadcast
       const broadcast = await storage.getSmsBroadcastMessage(req.params.broadcastId);
-      
+
       if (!broadcast) {
         return res.status(404).json({ message: "Broadcast not found" });
       }
@@ -5603,14 +5615,14 @@ jeremy@abqconcealedcarry.com
       if (broadcast.scheduledFor) {
         const scheduledTime = new Date(broadcast.scheduledFor);
         const now = new Date();
-        
+
         // If scheduled for future, mark as scheduled and return
         if (scheduledTime > now) {
           const updatedBroadcast = await storage.updateSmsBroadcastMessage(req.params.broadcastId, {
             status: 'scheduled',
             totalRecipients: membersWithPhone.length,
           });
-          
+
           return res.json({
             ...updatedBroadcast,
             message: `Broadcast scheduled for ${scheduledTime.toLocaleString()}`
@@ -5627,7 +5639,7 @@ jeremy@abqconcealedcarry.com
       // Helper function to format phone number to E.164 format
       const formatPhoneNumber = (phone: string): string => {
         let formatted = phone.replace(/[\s\-\(\)\.]/g, ''); // Remove formatting
-        
+
         // Add country code if missing (assuming US +1)
         if (!formatted.startsWith('+')) {
           if (formatted.length === 10) {
@@ -5638,21 +5650,21 @@ jeremy@abqconcealedcarry.com
             formatted = '+' + formatted;
           }
         }
-        
+
         return formatted;
       };
 
       // Helper function to replace dynamic tags
       const replaceDynamicTags = (message: string, member: any): string => {
         let personalizedMessage = message;
-        
+
         // Replace common tags
         personalizedMessage = personalizedMessage.replace(/\{\{firstName\}\}/g, member.user.firstName || '');
         personalizedMessage = personalizedMessage.replace(/\{\{lastName\}\}/g, member.user.lastName || '');
         personalizedMessage = personalizedMessage.replace(/\{\{email\}\}/g, member.user.email || '');
-        
+
         // Add more tag replacements as needed (courseName, etc.)
-        
+
         return personalizedMessage;
       };
 
@@ -5665,10 +5677,10 @@ jeremy@abqconcealedcarry.com
         try {
           // Personalize message
           const personalizedMessage = replaceDynamicTags(broadcast.messagePlain, member);
-          
+
           // Format phone number to E.164 format for consistency
           const formattedPhone = formatPhoneNumber(member.user.phone!);
-          
+
           // Create delivery record with pending status
           const delivery = await storage.createSmsBroadcastDelivery({
             broadcastId: req.params.broadcastId,
@@ -5722,7 +5734,7 @@ jeremy@abqconcealedcarry.com
       res.json(updatedBroadcast);
     } catch (error) {
       console.error("Error sending broadcast:", error);
-      
+
       // Try to update broadcast status to failed
       try {
         await storage.updateSmsBroadcastMessage(req.params.broadcastId, {
@@ -5731,7 +5743,7 @@ jeremy@abqconcealedcarry.com
       } catch (updateError) {
         console.error("Error updating broadcast status to failed:", updateError);
       }
-      
+
       res.status(500).json({ message: "Failed to send broadcast" });
     }
   });
@@ -5741,14 +5753,14 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
       // Verify broadcast exists
       const broadcast = await storage.getSmsBroadcastMessage(req.params.broadcastId);
-      
+
       if (!broadcast) {
         return res.status(404).json({ message: "Broadcast not found" });
       }
@@ -5781,7 +5793,7 @@ jeremy@abqconcealedcarry.com
         // Check if it's time to send
         if (broadcast.scheduledFor && new Date(broadcast.scheduledFor) <= now) {
           console.log(`Sending scheduled broadcast ${broadcast.id} (scheduled for ${broadcast.scheduledFor})`);
-          
+
           try {
             // Get list members
             const members = await storage.getSmsListMembers(broadcast.listId);
@@ -5817,7 +5829,7 @@ jeremy@abqconcealedcarry.com
             const sendPromises = membersWithPhone.map(async (member) => {
               try {
                 const personalizedMessage = replaceDynamicTags(broadcast.messagePlain, member);
-                
+
                 const delivery = await storage.createSmsBroadcastDelivery({
                   broadcastId: broadcast.id,
                   userId: member.userId,
@@ -5885,7 +5897,7 @@ jeremy@abqconcealedcarry.com
   app.post('/api/object-storage/upload-url', isAuthenticated, async (req: any, res) => {
     try {
       const { directory, filename } = req.body;
-      
+
       if (!directory || !filename) {
         return res.status(400).json({ message: "Directory and filename are required" });
       }
@@ -5896,7 +5908,7 @@ jeremy@abqconcealedcarry.com
       }
 
       const objectPath = `/${bucketId}/${directory}/${filename}`;
-      
+
       // Parse object path manually: /<bucket_name>/<object_name>
       const parts = objectPath.slice(1).split('/');
       const bucketName = parts[0];
