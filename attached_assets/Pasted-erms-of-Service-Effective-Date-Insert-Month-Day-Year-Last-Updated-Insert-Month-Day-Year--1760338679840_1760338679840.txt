@@ -1,0 +1,154 @@
+erms of Service
+
+Effective Date: [Insert Month, Day, Year]
+Last Updated: [Insert Month, Day, Year]
+
+1. Acceptance of Terms
+
+By accessing or using www.abqconcealedcarry.com
+ (the “Site”) or registering for any training, course, or service provided by Practical Defense Training, LLC (“we,” “us,” or “our”), you agree to be bound by these Terms of Service (“Terms”).
+
+If you do not agree, do not use our website or services. These Terms apply to all users, including students, visitors, and account holders.
+
+2. Eligibility
+
+To register for a firearms course or related training, you must:
+
+Be at least 18 years old, or attend with a parent or legal guardian;
+
+Be legally permitted to possess, handle, and/or use firearms in your jurisdiction;
+
+Provide accurate and complete registration information, including identification if required.
+
+We reserve the right to verify your eligibility and deny service to anyone at our discretion for safety, legal, or behavioral reasons.
+
+3. Course Registration and Accounts
+
+To enroll in a class, users must create an account on our custom web application. You agree to:
+
+Maintain the confidentiality of your login credentials;
+
+Be responsible for all activity under your account;
+
+Provide truthful, accurate, and current information.
+
+If you suspect unauthorized use of your account, notify us immediately at info@abqconcealedcarry.com
+.
+
+4. Payment and Refund Policy
+
+All payments are processed securely through Stripe.
+
+Full payment is required to confirm registration.
+
+Refunds or rescheduling requests must comply with our course cancellation policy as listed on the Site.
+
+Refund eligibility may vary based on notice provided prior to the scheduled course date.
+
+We do not store or directly process credit card details.
+
+5. Safety and Conduct
+
+Your safety and the safety of all participants are our top priorities.
+
+By registering, you agree to:
+
+Follow all instructor directions at all times;
+
+Handle firearms responsibly and in compliance with all laws and range rules;
+
+Abstain from alcohol, illegal substances, or impairing medications before and during instruction;
+
+Conduct yourself with respect toward all staff, students, and facilities.
+
+Violation of safety rules may result in immediate removal from the course without refund.
+
+6. Assumption of Risk and Waiver of Liability
+
+By participating in firearms training or related activities provided by Practical Defense Training, LLC, you acknowledge and accept the inherent risks associated with handling firearms, live ammunition, and range activities.
+
+You agree to:
+
+Assume all risks, known and unknown, associated with training and related activities;
+
+Waive and release Practical Defense Training, LLC, its owners, instructors, and affiliates from any and all claims of injury, loss, or damage arising out of participation;
+
+Indemnify and hold harmless Practical Defense Training, LLC for any claims brought by third parties resulting from your actions.
+
+You further understand that safety protocols are strictly enforced and noncompliance may result in removal.
+
+7. Identification and Legal Compliance
+
+As part of course registration, you may be required to provide:
+
+A valid driver’s license; and
+
+A concealed carry license number (if applicable).
+
+These details are collected solely for identity verification and compliance with state and federal training requirements. Information is stored securely and handled according to our Privacy Policy
+.
+
+8. Intellectual Property
+
+All content on the Site—including text, logos, videos, graphics, and course materials—is the property of Practical Defense Training, LLC and is protected by copyright and trademark laws.
+
+You may not copy, reproduce, distribute, or modify any materials without prior written consent.
+
+9. Communications and Notifications
+
+By creating an account or registering for a course, you consent to receive:
+
+Transactional emails (confirmation, updates, receipts);
+
+SMS or email reminders for class dates;
+
+Optional marketing communications, from which you can unsubscribe at any time.
+
+Some messages may be automated through integrated systems such as Twilio or Firebase.
+
+10. Termination of Access
+
+We reserve the right to suspend or terminate any user account, registration, or access to our Site for violation of these Terms, unsafe behavior, or other conduct deemed inappropriate or unlawful.
+
+11. Disclaimer of Warranties
+
+All services are provided “as is” and “as available.”
+We make no warranties or representations regarding the completeness, reliability, or accuracy of information on the Site or in training content.
+
+We disclaim all implied warranties, including merchantability, fitness for a particular purpose, and non-infringement.
+
+12. Limitation of Liability
+
+To the fullest extent permitted by law, Practical Defense Training, LLC shall not be liable for any indirect, incidental, or consequential damages, including but not limited to personal injury, property damage, or data loss, arising from:
+
+Use or inability to use the Site;
+
+Participation in training activities;
+
+Acts of other participants or third parties.
+
+Total liability for any claim shall not exceed the amount paid for the specific course or service giving rise to the claim.
+
+13. Indemnification
+
+You agree to defend, indemnify, and hold harmless Practical Defense Training, LLC, its owners, employees, and affiliates from any claims, damages, or expenses resulting from your use of the Site or participation in our courses.
+
+14. Governing Law and Jurisdiction
+
+These Terms are governed by the laws of the State of New Mexico, without regard to conflict-of-law principles.
+Any disputes shall be resolved exclusively in the state or federal courts located in Bernalillo County, New Mexico.
+
+15. Changes to Terms
+
+We may update these Terms periodically. The updated version will be posted on this page with the revised effective date. Continued use of the Site after changes constitutes your acceptance of the new Terms.
+
+16. Contact Us
+
+For questions or concerns regarding these Terms, please contact:
+
+Practical Defense Training, LLC
+Email: info@abqconcealedcarry.com
+
+Website: www.abqconcealedcarry.com
+
+Location: New Mexico, USA
