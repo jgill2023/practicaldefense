@@ -80,7 +80,7 @@ export default function TermsOfServicePage() {
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
               <li>All payments are processed securely through Stripe</li>
               <li>Full payment is required to confirm registration</li>
-              <li>Refunds or rescheduling requests must comply with our course cancellation policy as listed on the Site</li>
+              <li>Refunds or rescheduling requests must comply with our <a href="/refund-policy" className="text-accent hover:underline">Refund & Cancellation Policy</a></li>
               <li>Refund eligibility may vary based on notice provided prior to the scheduled course date</li>
               <li>We do not store or directly process credit card details</li>
             </ul>
