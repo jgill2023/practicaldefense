@@ -363,7 +363,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Footer */}
       <footer className="bg-primary text-primary-foreground py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             <div className="space-y-4">
               <h3 className="text-xl font-bold">Practical Defense Training</h3>
               <p className="text-primary-foreground/80">
@@ -372,19 +372,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold">Courses</h4>
-              <div className="space-y-2 text-primary-foreground/80">
-                <a href="#" className="block hover:text-accent transition-colors">Basic Safety Training</a>
-                <a href="#" className="block hover:text-accent transition-colors">Concealed Carry Permit</a>
-                <a href="#" className="block hover:text-accent transition-colors">Advanced Tactical</a>
-                <a href="#" className="block hover:text-accent transition-colors">Instructor Certification</a>
-              </div>
-            </div>
-
-            <div className="space-y-4">
               <h4 className="font-semibold">Support</h4>
               <div className="space-y-2 text-primary-foreground/80">
-                <a href="#" className="block hover:text-accent transition-colors">Help Center</a>
                 <Link href="/contact" className="block hover:text-accent transition-colors" data-testid="link-contact-support">Contact Support</Link>
                 <a href="#" className="block hover:text-accent transition-colors">Privacy Policy</a>
                 <a href="#" className="block hover:text-accent transition-colors">Terms of Service</a>
