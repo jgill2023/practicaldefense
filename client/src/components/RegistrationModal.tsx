@@ -1,38 +1,415 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Clock, Users, X } from "lucide-react";
-import type { CourseWithSchedules } from "@shared/schema";
+import { useMutation } from "@tanstack/react-query";
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Calendar, Clock, Users, User, DollarSign, CreditCard, Shield, Tag, Check, X } from "lucide-react";
+import type { CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
+import { PolicyModal } from "@/components/PolicyModal";
+
+// Load Stripe
+if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+}
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 interface RegistrationModalProps {
   course: CourseWithSchedules;
   onClose: () => void;
 }
 
-export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
-  const { isAuthenticated } = useAuth();
+const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: any; confirmEnrollmentMutation: any }) => {
+  const stripe = useStripe();
+  const elements = useElements();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Find the next available schedule
-  const nextSchedule = course.schedules
-    .filter(schedule => !schedule.deletedAt && new Date(schedule.startDate) > new Date())
-    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const handleRegister = () => {
-    // Navigate directly to registration page (no authentication required)
-    setLocation(`/course-registration/${course.id}`);
-    onClose();
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setIsProcessing(true);
+
+    const { error, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      redirect: 'if_required',
+    });
+
+    if (error) {
+      toast({
+        title: "Payment Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+      confirmEnrollmentMutation.mutate({
+        enrollmentId: enrollment.id,
+        paymentIntentId: paymentIntent.id,
+      });
+    }
+
+    setIsProcessing(false);
   };
 
   return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <PaymentElement />
+
+      <div className="flex items-center space-x-2 text-sm text-success">
+        <Shield className="h-4 w-4" />
+        <span>Secured by Stripe - Your payment information is encrypted</span>
+      </div>
+
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
+        disabled={!stripe || isProcessing || confirmEnrollmentMutation.isPending}
+        data-testid="button-complete-payment"
+      >
+        {isProcessing || confirmEnrollmentMutation.isPending ? (
+          <>
+            <div className="animate-spin w-4 h-4 border-2 border-transparent border-t-current rounded-full mr-2" />
+            Processing Payment...
+          </>
+        ) : (
+          <>
+            <CreditCard className="mr-2 h-4 w-4" />
+            Complete Payment
+          </>
+        )}
+      </Button>
+    </form>
+  );
+};
+
+export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
+  const { isAuthenticated, user } = useAuth();
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
+  const [selectedSchedule, setSelectedSchedule] = useState<CourseSchedule | null>(null);
+  const [clientSecret, setClientSecret] = useState("");
+  const [taxInfo, setTaxInfo] = useState<{subtotal: number, tax: number, total: number, tax_included: boolean, originalAmount?: number, discountAmount?: number, promoCode?: any} | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoCodeApplied, setPromoCodeApplied] = useState<string | null>(null);
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [currentEnrollment, setCurrentEnrollment] = useState<any>(null);
+  const [isDraftCreated, setIsDraftCreated] = useState(false);
+  const [policyModalOpen, setPolicyModalOpen] = useState<'terms' | 'privacy' | 'refund' | null>(null);
+
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    agreeToTerms: false,
+    paymentOption: 'full' as 'full' | 'deposit',
+    password: '',
+    confirmPassword: '',
+    createAccount: !isAuthenticated,
+  });
+
+  // Find the next available schedule
+  const availableSchedules = course.schedules
+    .filter(
+      schedule => 
+        !schedule.deletedAt &&
+        new Date(schedule.startDate) > new Date() && 
+        schedule.availableSpots > 0
+    )
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+  // Auto-populate form fields for logged-in students
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: (user as any)?.firstName || '',
+        lastName: (user as any)?.lastName || '',
+        email: (user as any)?.email || '',
+        phone: (user as any)?.phone || '',
+        dateOfBirth: formatDateForInput((user as any)?.dateOfBirth) || '',
+        createAccount: false,
+      }));
+    }
+  }, [isAuthenticated, user]);
+
+  const formatDateForInput = (dateValue: Date | string | null | undefined): string => {
+    if (!dateValue) return '';
+    try {
+      if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        return dateValue;
+      }
+      const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+      if (isNaN(date.getTime())) return '';
+      return date.toISOString().slice(0, 10);
+    } catch (error) {
+      return '';
+    }
+  };
+
+  const getPaymentAmount = (enrollment: any) => {
+    if (!enrollment) return 0;
+    const coursePrice = parseFloat(enrollment.course.price);
+    const depositAmount = enrollment.course.depositAmount ? parseFloat(enrollment.course.depositAmount) : null;
+    if (enrollment.paymentOption === 'deposit' && depositAmount) {
+      return depositAmount;
+    }
+    return coursePrice;
+  };
+
+  const validateAndApplyPromoCode = async () => {
+    if (!promoCode.trim() || !currentEnrollment) return;
+
+    setIsValidatingPromo(true);
+    setPromoError(null);
+
+    try {
+      const response = await apiRequest("POST", "/api/course-registration/payment-intent", {
+        enrollmentId: currentEnrollment.id,
+        promoCode: promoCode.trim(),
+        paymentOption: formData.paymentOption,
+      });
+
+      const data = await response.json();
+
+      if (data.clientSecret) {
+        setPromoCodeApplied(promoCode.trim());
+        setClientSecret(data.clientSecret);
+        setTaxInfo({
+          originalAmount: data.originalAmount,
+          subtotal: data.subtotal,
+          discountAmount: data.discountAmount || 0,
+          tax: data.tax,
+          total: data.total,
+          tax_included: data.tax_included,
+          promoCode: data.promoCode
+        });
+        toast({
+          title: "Promo Code Applied!",
+          description: `You saved $${data.discountAmount?.toFixed(2) || '0.00'}`,
+        });
+      } else {
+        setPromoError(data.error || "Invalid promo code");
+        toast({
+          title: "Invalid Promo Code",
+          description: data.error || "Please check your code and try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      setPromoError("Failed to validate promo code");
+      toast({
+        title: "Validation Failed",
+        description: "Unable to validate promo code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  };
+
+  const removePromoCode = async () => {
+    setPromoCode("");
+    setPromoCodeApplied(null);
+    setPromoError(null);
+    if (currentEnrollment) {
+      createPaymentIntentMutation.mutate({
+        enrollmentId: currentEnrollment.id,
+        paymentOption: formData.paymentOption,
+      });
+    }
+  };
+
+  const createDraftEnrollment = async (schedule: CourseSchedule) => {
+    if (!isAuthenticated && formData.createAccount) {
+      if (!formData.password || formData.password.length < 6) {
+        toast({
+          title: "Password Required",
+          description: "Password must be at least 6 characters long",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        toast({
+          title: "Password Mismatch",
+          description: "Passwords do not match",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.dateOfBirth) {
+      toast({
+        title: "Required Fields Missing",
+        description: "Please fill in all required student information fields",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!formData.agreeToTerms) {
+      toast({
+        title: "Terms Required",
+        description: "Please agree to the terms and conditions",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    initiateDraftMutation.mutate({
+      courseId: course.id,
+      scheduleId: schedule.id,
+      paymentOption: formData.paymentOption,
+      studentInfo: {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        dateOfBirth: formData.dateOfBirth,
+      },
+      accountCreation: !isAuthenticated && formData.createAccount ? {
+        password: formData.password,
+      } : undefined,
+    });
+
+    return true;
+  };
+
+  const initiateDraftMutation = useMutation({
+    mutationFn: async (enrollmentData: any) => {
+      const response = await apiRequest("POST", "/api/course-registration/initiate", enrollmentData);
+      return response.json();
+    },
+    onSuccess: (enrollment) => {
+      setCurrentEnrollment(enrollment);
+      setIsDraftCreated(true);
+      createPaymentIntentMutation.mutate({
+        enrollmentId: enrollment.id,
+        paymentOption: formData.paymentOption,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Registration Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createPaymentIntentMutation = useMutation({
+    mutationFn: async ({ enrollmentId, paymentOption, promoCode }: { enrollmentId: string; paymentOption: string; promoCode?: string }) => {
+      const response = await apiRequest("POST", "/api/course-registration/payment-intent", {
+        enrollmentId,
+        paymentOption,
+        promoCode,
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setClientSecret(data.clientSecret);
+      setTaxInfo({
+        originalAmount: data.originalAmount,
+        subtotal: data.subtotal,
+        discountAmount: data.discountAmount || 0,
+        tax: data.tax,
+        total: data.total,
+        tax_included: data.tax_included,
+        promoCode: data.promoCode
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Payment Setup Failed",
+        description: "Unable to initialize payment. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const confirmEnrollmentMutation = useMutation({
+    mutationFn: async ({ enrollmentId, paymentIntentId }: { enrollmentId: string; paymentIntentId: string }) => {
+      const response = await apiRequest("POST", "/api/course-registration/confirm", {
+        enrollmentId,
+        paymentIntentId,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Payment Successful",
+        description: "Your course registration is confirmed!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
+      onClose();
+      setLocation('/student-portal');
+    },
+    onError: (error) => {
+      toast({
+        title: "Confirmation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleScheduleChange = async (scheduleId: string) => {
+    const schedule = availableSchedules.find(s => s.id === scheduleId);
+    if (!schedule) return;
+
+    setSelectedSchedule(schedule);
+
+    if (formData.firstName && formData.lastName && formData.email && formData.phone && formData.dateOfBirth && formData.agreeToTerms) {
+      await createDraftEnrollment(schedule);
+    }
+  };
+
+  const handlePaymentOptionChange = (paymentOption: 'full' | 'deposit') => {
+    setFormData(prev => ({ ...prev, paymentOption }));
+
+    if (currentEnrollment && isDraftCreated) {
+      createPaymentIntentMutation.mutate({
+        enrollmentId: currentEnrollment.id,
+        paymentOption,
+        promoCode: promoCodeApplied || undefined,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (selectedSchedule && formData.firstName && formData.lastName && formData.email && formData.phone && formData.dateOfBirth && formData.agreeToTerms && !isDraftCreated) {
+      createDraftEnrollment(selectedSchedule);
+    }
+  }, [formData, selectedSchedule, isDraftCreated]);
+
+  return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="modal-registration">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" data-testid="modal-registration">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-card-foreground">
             Course Registration
@@ -72,112 +449,342 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
             </div>
           </div>
 
-          {/* Course Description */}
-          <div>
-            <h5 className="font-semibold text-card-foreground mb-2">Course Description</h5>
-            <div 
-              className="text-muted-foreground" 
-              data-testid="text-modal-description"
-              dangerouslySetInnerHTML={{ __html: course.description }}
-            />
-          </div>
-
-          {/* Next Schedule Info */}
-          {nextSchedule ? (
-            <div className="bg-accent/10 p-4 rounded-lg border border-accent/20">
-              <h5 className="font-semibold text-accent mb-3">Next Available Class</h5>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center">
-                  <Calendar className="mr-2 h-4 w-4 text-accent" />
-                  <div>
-                    <div className="font-medium" data-testid="text-modal-start-date">
-                      {formatDateSafe(nextSchedule.startDate)}
-                    </div>
-                    <div className="text-muted-foreground text-xs">Start Date</div>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Clock className="mr-2 h-4 w-4 text-accent" />
-                  <div>
-                    <div className="font-medium">
-                      {new Date(nextSchedule.startDate).toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </div>
-                    <div className="text-muted-foreground text-xs">Start Time</div>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Users className="mr-2 h-4 w-4 text-accent" />
-                  <div>
-                    <div className="font-medium text-accent" data-testid="text-modal-spots">
-                      {nextSchedule.availableSpots} spots left
-                    </div>
-                    <div className="text-muted-foreground text-xs">Available</div>
-                  </div>
-                </div>
-                {nextSchedule.location && (
-                  <div className="flex items-center">
-                    <span className="mr-2">📍</span>
-                    <div>
-                      <div className="font-medium" data-testid="text-modal-location">
-                        {nextSchedule.location}
+          {/* Schedule Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Choose Course Date</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {availableSchedules.length > 0 ? (
+                <div className="space-y-4">
+                  <Label htmlFor="schedule">Available Dates *</Label>
+                  <Select onValueChange={handleScheduleChange}>
+                    <SelectTrigger data-testid="select-course-schedule">
+                      <SelectValue placeholder="Select a course date" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableSchedules.map((schedule) => (
+                        <SelectItem key={schedule.id} value={schedule.id}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{formatDateSafe(schedule.startDate.toString())} - {schedule.availableSpots} spots left</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedSchedule && (
+                    <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                      <div className="text-sm">
+                        <div className="font-medium text-accent mb-1">Selected Date:</div>
+                        <div className="flex items-center text-muted-foreground">
+                          <Calendar className="mr-2 h-4 w-4 text-accent" />
+                          {formatDateSafe(selectedSchedule.startDate.toString())}
+                        </div>
+                        {selectedSchedule.location && (
+                          <div className="flex items-center text-muted-foreground mt-1">
+                            <span className="mr-2">📍</span>
+                            {selectedSchedule.location}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-muted-foreground text-xs">Location</div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium text-muted-foreground mb-2">No schedules available</h3>
+                  <p className="text-sm text-muted-foreground">Please check back later for new course dates</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Student Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Student Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName">First Name *</Label>
+                  <Input
+                    id="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                    required
+                    data-testid="input-first-name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Input
+                    id="lastName"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                    required
+                    data-testid="input-last-name"
+                  />
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="bg-muted p-4 rounded-lg text-center">
-              <Calendar className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-              <h5 className="font-semibold text-muted-foreground mb-1">No Upcoming Schedules</h5>
-              <p className="text-sm text-muted-foreground">Check back later for new class dates</p>
-            </div>
+
+              <div>
+                <Label htmlFor="email">Email Address *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                  data-testid="input-email"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="phone">Phone Number *</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  required
+                  data-testid="input-phone"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                  required
+                  data-testid="input-date-of-birth"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Account Creation (for non-authenticated users) */}
+          {!isAuthenticated && formData.createAccount && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <User className="mr-2 h-5 w-5" />
+                  Create Your Account
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="password">Password *</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Minimum 6 characters"
+                    required
+                    data-testid="input-password"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    placeholder="Confirm your password"
+                    required
+                    data-testid="input-confirm-password"
+                  />
+                </div>
+              </CardContent>
+            </Card>
           )}
 
-          {/* Registration Process Info */}
-          <div className="space-y-3">
-            <h5 className="font-semibold text-card-foreground">Registration Process</h5>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-accent rounded-full mr-3"></div>
-                Complete registration form with personal information
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-accent rounded-full mr-3"></div>
-                Secure payment processing via Stripe
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-accent rounded-full mr-3"></div>
-                Instant confirmation and access to student portal
-              </div>
-            </div>
-          </div>
+          {/* Payment Options */}
+          {course.depositAmount && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <DollarSign className="mr-2 h-5 w-5" />
+                  Payment Options
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <RadioGroup
+                  value={formData.paymentOption}
+                  onValueChange={handlePaymentOptionChange}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                    <RadioGroupItem value="full" id="full" data-testid="radio-full-payment" />
+                    <Label htmlFor="full" className="flex-1 cursor-pointer">
+                      <div className="font-medium">Full Payment - ${course.price}</div>
+                    </Label>
+                  </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 pt-4 border-t">
-            <Button 
-              variant="outline" 
-              onClick={onClose}
-              className="flex-1"
-              data-testid="button-modal-cancel"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleRegister}
-              disabled={!nextSchedule}
-              className="flex-1 bg-secondary text-secondary-foreground hover:bg-secondary/90"
-              data-testid="button-modal-proceed"
-            >
-              {nextSchedule ? 'Proceed to Registration' : 'No Schedules Available'}
-            </Button>
-          </div>
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                    <RadioGroupItem value="deposit" id="deposit" data-testid="radio-deposit-payment" />
+                    <Label htmlFor="deposit" className="flex-1 cursor-pointer">
+                      <div className="font-medium">Deposit - ${course.depositAmount}</div>
+                      <div className="text-sm text-muted-foreground">
+                        (remaining ${(parseFloat(course.price) - parseFloat(course.depositAmount)).toFixed(2)} due later)
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payment Section */}
+          {selectedSchedule && clientSecret && (
+            <>
+              {/* Promo Code Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Tag className="mr-2 h-5 w-5" />
+                    Promo Code
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {!promoCodeApplied ? (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter promo code"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        data-testid="input-promo-code"
+                      />
+                      <Button 
+                        onClick={validateAndApplyPromoCode}
+                        disabled={!promoCode.trim() || isValidatingPromo}
+                        size="sm"
+                      >
+                        {isValidatingPromo ? "Checking..." : "Apply"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4" />
+                        <span className="text-sm font-medium">{promoCodeApplied} applied</span>
+                      </div>
+                      <Button onClick={removePromoCode} variant="ghost" size="sm">
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Order Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal</span>
+                    <span>${taxInfo?.subtotal?.toFixed(2) || '0.00'}</span>
+                  </div>
+                  {taxInfo?.discountAmount && taxInfo.discountAmount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Discount</span>
+                      <span>-${taxInfo.discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {taxInfo?.tax_included && taxInfo.tax > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span>Tax</span>
+                      <span>${taxInfo.tax.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-semibold text-lg pt-2 border-t">
+                    <span>Total</span>
+                    <span>${taxInfo?.total?.toFixed(2) || '0.00'}</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Payment Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    Payment Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Elements 
+                    key={clientSecret}
+                    stripe={stripePromise} 
+                    options={{ 
+                      clientSecret,
+                      appearance: {
+                        theme: 'stripe',
+                        variables: {
+                          colorPrimary: '#1F2937',
+                        }
+                      }
+                    }}
+                  >
+                    <CheckoutForm enrollment={currentEnrollment} confirmEnrollmentMutation={confirmEnrollmentMutation} />
+                  </Elements>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* Terms and Conditions */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="terms"
+                  checked={formData.agreeToTerms}
+                  onCheckedChange={(checked) => 
+                    setFormData(prev => ({ ...prev, agreeToTerms: checked === true }))
+                  }
+                  data-testid="checkbox-agree-terms"
+                />
+                <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed">
+                  I agree to the{' '}
+                  <button
+                    type="button"
+                    onClick={() => setPolicyModalOpen('terms')}
+                    className="text-accent hover:text-accent/80 transition-colors underline"
+                  >
+                    Terms of Service
+                  </button>
+                  {' '}and{' '}
+                  <button
+                    type="button"
+                    onClick={() => setPolicyModalOpen('privacy')}
+                    className="text-accent hover:text-accent/80 transition-colors underline"
+                  >
+                    Privacy Policy
+                  </button>
+                </label>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </DialogContent>
+
+      {/* Policy Modals */}
+      {policyModalOpen && (
+        <PolicyModal 
+          isOpen={true} 
+          onClose={() => setPolicyModalOpen(null)} 
+          type={policyModalOpen}
+        />
+      )}
     </Dialog>
   );
 }
