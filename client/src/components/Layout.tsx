@@ -386,11 +386,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="space-y-2 text-primary-foreground/80">
                 <div className="flex items-center space-x-2">
                   <span>📞</span>
-                  <span>(505) 944-5247</span>
+                  <a href="tel:+15059445247" className="hover:text-accent transition-colors">(505) 944-5247</a>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span>✉️</span>
-                  <span>jeremy@abqconcealedcarry.com</span>
+                  <a href="mailto:jeremy@abqconcealedcarry.com" className="hover:text-accent transition-colors">jeremy@abqconcealedcarry.com</a>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span>📍</span>
