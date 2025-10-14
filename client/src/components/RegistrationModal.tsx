@@ -186,13 +186,11 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
     setPromoError(null);
 
     try {
-      const response = await apiRequest("POST", "/api/course-registration/payment-intent", {
+      const data = await apiRequest("POST", "/api/course-registration/payment-intent", {
         enrollmentId: currentEnrollment.id,
         promoCode: promoCode.trim(),
         paymentOption: formData.paymentOption,
       });
-
-      const data = await response.json();
 
       if (data.clientSecret) {
         setPromoCodeApplied(promoCode.trim());
@@ -303,7 +301,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
   const initiateDraftMutation = useMutation({
     mutationFn: async (enrollmentData: any) => {
       const response = await apiRequest("POST", "/api/course-registration/initiate", enrollmentData);
-      return response.json();
+      return response;
     },
     onSuccess: (enrollment) => {
       setCurrentEnrollment(enrollment);
@@ -329,7 +327,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
         paymentOption,
         promoCode,
       });
-      return response.json();
+      return response;
     },
     onSuccess: (data) => {
       setClientSecret(data.clientSecret);
