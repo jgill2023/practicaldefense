@@ -33,14 +33,24 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
 
   const getImageUrl = (category: string | null) => {
     if (!category) return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-    switch (category.toLowerCase()) {
-      case 'concealed':
-        return 'https://images.unsplash.com/photo-1593784991095-a205069470b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-      case 'advanced':
-        return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-      default:
-        return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+    
+    const categoryLower = category.toLowerCase();
+    
+    // Check if category contains keywords
+    if (categoryLower.includes('concealed') || categoryLower.includes('ccw') || categoryLower.includes('nm concealed')) {
+      return 'https://images.unsplash.com/photo-1593784991095-a205069470b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
     }
+    
+    if (categoryLower.includes('defensive') || categoryLower.includes('handgun')) {
+      return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+    }
+    
+    if (categoryLower.includes('advanced')) {
+      return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+    }
+    
+    // Default fallback
+    return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
   };
 
   // Helper to safely get category name (handles both string and object formats)
