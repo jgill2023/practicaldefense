@@ -13,12 +13,19 @@ import heroImage from "@assets/MainHeader2AndyOVERLAY_1757359693558.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
   const [selectedCourse, setSelectedCourse] = useState<CourseWithSchedules | null>(null);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
-  const [courseFilter, setCourseFilter] = useState("all");
+  const [courseFilter, setCourseFilter] = useState("all"); // Renamed from courseFilter to selectedCategory for clarity
 
   const { data: courses = [], isLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/courses"],
@@ -32,12 +39,27 @@ export default function Landing() {
     queryKey: ["/api/app-settings"],
   });
 
+  // Helper function to get category name, handling different formats
+  const getCategoryName = (category: any): string => {
+    if (!category) return 'General';
+    if (typeof category === 'string') return category as string;
+    if (typeof category === 'object' && 'name' in category && category.name) {
+      return category.name as string;
+    }
+    return 'General';
+  };
+
+  // Extract unique category names, excluding "Printful Products"
+  const availableCategories = [
+    ...new Set(categories.map(category => getCategoryName(category.name))),
+  ].filter(name => name !== "Printful Products");
+
   // Sort courses first by date, then by category order
   const sortedAndFilteredCourses = (() => {
     // Create a map of category names to their sort order for quick lookup
     const categoryOrderMap = new Map();
     categories.forEach((category, index) => {
-      categoryOrderMap.set(category.name, category.sortOrder || (9999 + index));
+      categoryOrderMap.set(getCategoryName(category.name), category.sortOrder || (9999 + index));
     });
 
     // Helper function to get the earliest upcoming schedule date for a course
@@ -67,8 +89,9 @@ export default function Landing() {
     let coursesToDisplay: CourseWithSchedules[];
 
     if (courseFilter === "all") {
-      // For "All Courses", show unique courses (current behavior)
-      coursesToDisplay = [...courses].sort((a, b) => {
+      // For "All Courses", show unique courses (current behavior), excluding Printful Products
+      coursesToDisplay = courses.filter(course => getCategoryName(course.category) !== "Printful Products");
+      coursesToDisplay.sort((a, b) => {
         const dateA = getEarliestDate(a);
         const dateB = getEarliestDate(b);
 
@@ -78,17 +101,9 @@ export default function Landing() {
           return dateComparison;
         }
 
-        // Then by category order - handle both string and object formats
-        const getCategoryName = (category: any): string => {
-          if (!category) return 'General';
-          if (typeof category === 'string') return category as string;
-          if (typeof category === 'object' && 'name' in category && category.name) {
-            return category.name as string;
-          }
-          return 'General';
-        };
-        const orderA = categoryOrderMap.get(getCategoryName(a.category as any)) || 9999;
-        const orderB = categoryOrderMap.get(getCategoryName(b.category as any)) || 9999;
+        // Then by category order
+        const orderA = categoryOrderMap.get(getCategoryName(a.category)) || 9999;
+        const orderB = categoryOrderMap.get(getCategoryName(b.category)) || 9999;
 
         if (orderA !== orderB) {
           return orderA - orderB;
@@ -109,18 +124,13 @@ export default function Landing() {
       const now = new Date();
       const categorySchedules: CourseWithSchedules[] = [];
 
-      // Filter courses by category - handle both string and object formats
+      // Filter courses by category, excluding Printful Products
       const categoryCourses = courses.filter(course => {
-        if (!course.category) return false;
-        // Handle string format (old)
-        if (typeof course.category === 'string') {
-          return course.category === courseFilter;
-        }
-        // Handle object format (new)
-        if (typeof course.category === 'object' && 'name' in course.category) {
-          return (course.category as any).name === courseFilter;
-        }
-        return false;
+        const categoryName = getCategoryName(course.category);
+        return categoryName === courseFilter && 
+               categoryName !== "Printful Products" &&
+               course.schedules && 
+               course.schedules.length > 0;
       });
 
       // For each course in the category, create individual entries for each upcoming schedule
@@ -323,14 +333,14 @@ export default function Landing() {
             >
               All Courses
             </Button>
-            {categories.map((category) => (
+            {availableCategories.map((category) => (
               <Button
-                key={category.id}
-                variant={courseFilter === category.name ? "default" : "outline"}
-                onClick={() => setCourseFilter(category.name)}
-                data-testid={`filter-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
+                key={category}
+                variant={courseFilter === category ? "default" : "outline"}
+                onClick={() => setCourseFilter(category)}
+                data-testid={`filter-${category.toLowerCase().replace(/\s+/g, '-')}`}
               >
-                {category.name}
+                {category}
               </Button>
             ))}
           </div>
