@@ -768,6 +768,14 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
                   >
                     Privacy Policy
                   </button>
+                  . I also acknowledge the{' '}
+                  <button
+                    type="button"
+                    onClick={() => setPolicyModalOpen('refund')}
+                    className="text-accent hover:text-accent/80 transition-colors underline"
+                  >
+                    Refund Policy
+                  </button>
                 </label>
               </div>
             </CardContent>
