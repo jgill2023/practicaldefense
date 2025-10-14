@@ -31,6 +31,7 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
     }
   };
 
+  // Helper to get fallback image URL based on category
   const getImageUrl = (category: string | null) => {
     if (!category) return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
     
@@ -65,17 +66,25 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
     return 'General';
   };
 
+  // Determine which image to display - prioritize uploaded image
+  const displayImageUrl = course.imageUrl && course.imageUrl.trim() !== '' 
+    ? course.imageUrl 
+    : getImageUrl(getCategoryName());
+
   return (
     <Card className="overflow-hidden border border-border hover:shadow-xl transition-shadow w-full" data-testid={`course-card-${course.id}`}>
       <div className="relative w-full h-40 sm:h-48 bg-muted">
         <img 
-          src={course.imageUrl || getImageUrl(getCategoryName())} 
+          src={displayImageUrl} 
           alt={course.title}
           className="w-full h-full object-cover"
           loading="lazy"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src = getImageUrl(getCategoryName());
+            // If the uploaded image fails to load, fall back to category-based image
+            if (target.src !== getImageUrl(getCategoryName())) {
+              target.src = getImageUrl(getCategoryName());
+            }
           }}
         />
       </div>
