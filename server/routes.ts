@@ -1183,8 +1183,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Object storage routes for waivers
-  app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
+  // Object storage routes for waivers and course images
+  app.get("/objects/:objectPath(*)", async (req: any, res) => {
     const userId = req.user?.claims?.sub;
     const objectStorageService = new ObjectStorageService();
     try {
