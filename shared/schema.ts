@@ -57,6 +57,8 @@ export const users = pgTable("users", {
   // Instructor-specific settings
   replyToEmail: varchar("reply_to_email"), // Custom reply-to email for instructor communications
   role: varchar("role").notNull().default('student'), // 'student' or 'instructor'
+  // Moodle integration
+  moodleUserId: integer("moodle_user_id"), // Moodle user ID for LMS integration
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -94,6 +96,9 @@ export const courses = pgTable("courses", {
   isActive: boolean("is_active").notNull().default(true),
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   imageUrl: varchar("image_url"),
+  // Moodle integration
+  moodleCourseId: integer("moodle_course_id"), // Moodle course ID for online courses
+  moodleEnrollmentEnabled: boolean("moodle_enrollment_enabled").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -162,6 +167,10 @@ export const enrollments = pgTable("enrollments", {
   completionDate: timestamp("completion_date"),
   cancellationDate: timestamp("cancellation_date"),
   cancellationReason: text("cancellation_reason"),
+  // Moodle integration
+  moodleEnrolled: boolean("moodle_enrolled").default(false),
+  moodleEnrollmentDate: timestamp("moodle_enrollment_date"),
+  notes: text("notes"), // For tracking Moodle enrollment status and errors
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

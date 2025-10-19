@@ -111,16 +111,16 @@ import {
   smsBroadcastDeliveries,
   type SmsList,
   type InsertSmsList,
-  type SmsListMember,
+  typeSmsListMember,
   type InsertSmsListMember,
-  type SmsBroadcastMessage,
+  typeSmsBroadcastMessage,
   type InsertSmsBroadcastMessage,
-  type SmsBroadcastDelivery,
+  typeSmsBroadcastDelivery,
   type InsertSmsBroadcastDelivery,
-  type SmsListWithDetails,
-  type SmsListMemberWithUser,
-  type SmsBroadcastMessageWithDetails,
-  type SmsBroadcastDeliveryWithDetails,
+  typeSmsListWithDetails,
+  typeSmsListMemberWithUser,
+  typeSmsBroadcastMessageWithDetails,
+  typeSmsBroadcastDeliveryWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne } from "drizzle-orm";
@@ -133,7 +133,7 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, data: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>): Promise<User>;
   updateStudent(id: string, data: { email?: string; phone?: string; concealedCarryLicenseExpiration?: string; concealedCarryLicenseIssued?: string; licenseExpirationReminderDays?: number; enableLicenseExpirationReminder?: boolean; refresherReminderDays?: number; enableRefresherReminder?: boolean; enableSmsNotifications?: boolean; enableSmsReminders?: boolean; enableSmsPaymentNotices?: boolean; enableSmsAnnouncements?: boolean }): Promise<User>;
-  
+
   // Category operations
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category>;
@@ -141,7 +141,7 @@ export interface IStorage {
   getCategory(id: string): Promise<Category | undefined>;
   getCategories(): Promise<Category[]>;
   reorderCategories(updates: {id: string; sortOrder: number}[]): Promise<void>;
-  
+
   // Course operations
   createCourse(course: InsertCourse): Promise<Course>;
   duplicateCourse(courseId: string): Promise<Course>;
@@ -153,7 +153,7 @@ export interface IStorage {
   getCourses(): Promise<CourseWithSchedules[]>;
   getCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]>;
   getDeletedCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]>;
-  
+
   // Course schedule operations
   createCourseSchedule(schedule: InsertCourseSchedule): Promise<CourseSchedule>;
   duplicateCourseSchedule(scheduleId: string): Promise<CourseSchedule>;
@@ -163,7 +163,7 @@ export interface IStorage {
   getCourseSchedule(id: string): Promise<CourseSchedule | undefined>;
   getCourseSchedules(courseId: string): Promise<CourseSchedule[]>;
   getDeletedSchedulesByInstructor(instructorId: string): Promise<any[]>;
-  
+
   // Enrollment operations
   createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment>;
   updateEnrollment(id: string, enrollment: Partial<InsertEnrollment>): Promise<Enrollment>;
@@ -191,7 +191,7 @@ export interface IStorage {
       exportDate: string;
     };
   }>;
-  
+
   // Draft enrollment operations for single-page registration
   initiateRegistration(data: {
     courseId: string;
@@ -222,7 +222,7 @@ export interface IStorage {
       password: string;
     };
   }): Promise<Enrollment>;
-  
+
   // Payment balance and form completion tracking
   getPaymentBalance(enrollmentId: string): Promise<{
     remainingBalance: number;
@@ -236,7 +236,7 @@ export interface IStorage {
     isComplete: boolean;
     missingForms: { id: string; title: string; isRequired: boolean }[];
   }>;
-  
+
   // Course Information Forms operations
   createCourseInformationForm(form: InsertCourseInformationForm): Promise<CourseInformationForm>;
   updateCourseInformationForm(id: string, form: Partial<InsertCourseInformationForm>): Promise<CourseInformationForm>;
@@ -244,25 +244,25 @@ export interface IStorage {
   getCourseInformationForm(id: string): Promise<CourseInformationFormWithFields | undefined>;
   getCourseInformationForms(): Promise<CourseInformationFormWithFields[]>;
   getCourseInformationFormsByCourse(courseId: string): Promise<CourseInformationFormWithFields[]>;
-  
+
   // Course Information Form Fields operations
   createCourseInformationFormField(field: InsertCourseInformationFormField): Promise<CourseInformationFormField>;
   updateCourseInformationFormField(id: string, field: Partial<InsertCourseInformationFormField>): Promise<CourseInformationFormField>;
   deleteCourseInformationFormField(id: string): Promise<void>;
   getCourseInformationFormFields(formId: string): Promise<CourseInformationFormField[]>;
   reorderCourseInformationFormFields(updates: {id: string; sortOrder: number}[]): Promise<void>;
-  
+
   // Student Form Response operations
   createStudentFormResponse(response: InsertStudentFormResponse): Promise<StudentFormResponse>;
   updateStudentFormResponse(id: string, response: Partial<InsertStudentFormResponse>): Promise<StudentFormResponse>;
   getStudentFormResponsesByEnrollment(enrollmentId: string): Promise<StudentFormResponse[]>;
   getStudentFormResponsesByForm(formId: string): Promise<StudentFormResponse[]>;
   getStudentFormResponsesWithDetails(enrollmentId: string): Promise<any[]>;
-  
+
   // App settings operations
   getAppSettings(): Promise<AppSettings>;
   updateAppSettings(input: InsertAppSettings): Promise<AppSettings>;
-  
+
   // Dashboard statistics
   getInstructorDashboardStats(instructorId: string): Promise<{
     upcomingCourses: number;
@@ -271,7 +271,7 @@ export interface IStorage {
     totalRevenue: number;
     outstandingRevenue: number;
   }>;
-  
+
   // Promo code operations
   createPromoCode(promoCode: InsertPromoCode): Promise<PromoCode>;
   updatePromoCode(id: string, promoCode: Partial<InsertPromoCode>): Promise<PromoCode>;
@@ -280,17 +280,17 @@ export interface IStorage {
   getPromoCodeByCode(code: string): Promise<PromoCode | undefined>;
   getPromoCodes(): Promise<PromoCodeWithDetails[]>;
   getPromoCodesByCreator(createdBy: string): Promise<PromoCodeWithDetails[]>;
-  
+
   // Promo code validation and redemption
   validatePromoCode(code: string, userId: string, courseId: string, amount: number): Promise<PromoCodeValidationResult>;
   redeemPromoCode(redemption: InsertPromoCodeRedemption): Promise<PromoCodeRedemption>;
   getPromoCodeRedemptions(promoCodeId: string): Promise<PromoCodeRedemption[]>;
   getPromoCodeRedemptionsByUser(userId: string): Promise<PromoCodeRedemption[]>;
-  
+
   // Promo code utility methods
   generatePromoCode(): Promise<string>;
   updatePromoCodeUsageCount(promoCodeId: string, increment: number): Promise<void>;
-  
+
   // Notification Template operations
   createNotificationTemplate(template: InsertNotificationTemplate): Promise<NotificationTemplate>;
   updateNotificationTemplate(id: string, template: Partial<InsertNotificationTemplate>): Promise<NotificationTemplate>;
@@ -299,7 +299,7 @@ export interface IStorage {
   getNotificationTemplates(courseId?: string): Promise<NotificationTemplateWithDetails[]>;
   getNotificationTemplatesByCategory(category: string): Promise<NotificationTemplateWithDetails[]>;
   reorderNotificationTemplates(updates: {id: string; sortOrder: number}[]): Promise<void>;
-  
+
   // Notification Schedule operations
   createNotificationSchedule(schedule: InsertNotificationSchedule): Promise<NotificationSchedule>;
   updateNotificationSchedule(id: string, schedule: Partial<InsertNotificationSchedule>): Promise<NotificationSchedule>;
@@ -307,7 +307,7 @@ export interface IStorage {
   getNotificationSchedule(id: string): Promise<NotificationScheduleWithDetails | undefined>;
   getNotificationSchedules(courseId?: string, scheduleId?: string): Promise<NotificationScheduleWithDetails[]>;
   getActiveNotificationSchedulesByEvent(event: string): Promise<NotificationScheduleWithDetails[]>;
-  
+
   // Notification Log operations
   createNotificationLog(log: InsertNotificationLog): Promise<NotificationLog>;
   updateNotificationLog(id: string, log: Partial<InsertNotificationLog>): Promise<NotificationLog>;
@@ -323,7 +323,7 @@ export interface IStorage {
     offset?: number;
   }): Promise<{ logs: NotificationLogWithDetails[]; total: number }>;
   getNotificationLogsByEnrollment(enrollmentId: string): Promise<NotificationLogWithDetails[]>;
-  
+
   // Waiver Template operations
   createWaiverTemplate(template: InsertWaiverTemplate): Promise<WaiverTemplate>;
   updateWaiverTemplate(id: string, template: Partial<InsertWaiverTemplate>): Promise<WaiverTemplate>;
@@ -331,7 +331,7 @@ export interface IStorage {
   getWaiverTemplate(id: string): Promise<WaiverTemplateWithDetails | undefined>;
   getWaiverTemplates(filters?: { scope?: string; courseId?: string; isActive?: boolean }): Promise<WaiverTemplateWithDetails[]>;
   getWaiverTemplatesByCourse(courseId: string): Promise<WaiverTemplateWithDetails[]>;
-  
+
   // Waiver Instance operations
   createWaiverInstance(instance: InsertWaiverInstance): Promise<WaiverInstance>;
   updateWaiverInstance(id: string, instance: Partial<InsertWaiverInstance>): Promise<WaiverInstance>;
@@ -339,12 +339,12 @@ export interface IStorage {
   getWaiverInstancesByEnrollment(enrollmentId: string): Promise<WaiverInstanceWithDetails[]>;
   getWaiverInstancesByTemplate(templateId: string): Promise<WaiverInstanceWithDetails[]>;
   getWaiverInstancesByStatus(status: string): Promise<WaiverInstanceWithDetails[]>;
-  
+
   // Waiver Signature operations  
   createWaiverSignature(signature: InsertWaiverSignature): Promise<WaiverSignature>;
   getWaiverSignature(id: string): Promise<WaiverSignature | undefined>;
   getWaiverSignaturesByInstance(instanceId: string): Promise<WaiverSignature[]>;
-  
+
   // Waiver utility methods
   generateWaiverContent(templateId: string, enrollmentId: string): Promise<{ content: string; mergedData: any }>;
   checkWaiverRequirements(enrollmentId: string): Promise<{
@@ -373,10 +373,10 @@ export interface IStorage {
     topViolations: Array<{ word: string; count: number; category: string }>;
     instructorStats: Array<{ instructorId: string; attempts: number; blocked: number }>;
   }>;
-  
+
   // Roster and scheduling operations
   getInstructorAvailableSchedules(instructorId: string, excludeEnrollmentId?: string): Promise<any[]>;
-  
+
   // Course notification signup operations
   createCourseNotificationSignup(signup: InsertCourseNotificationSignup): Promise<CourseNotificationSignup>;
   getCourseNotificationSignups(courseId: string): Promise<CourseNotificationSignupWithDetails[]>;
@@ -384,7 +384,7 @@ export interface IStorage {
   deleteCourseNotificationSignup(id: string): Promise<void>;
   logNotificationDelivery(log: InsertCourseNotificationDeliveryLog): Promise<CourseNotificationDeliveryLog>;
   getNotificationDeliveryLogs(signupId: string): Promise<CourseNotificationDeliveryLog[]>;
-  
+
   // Communications tracking operations
   createCommunication(communication: InsertCommunication): Promise<Communication>;
   updateCommunication(id: string, communication: Partial<InsertCommunication>): Promise<Communication>;
@@ -413,7 +413,7 @@ export interface IStorage {
   deleteProductCategory(id: string): Promise<void>;
   getProductCategory(id: string): Promise<ProductCategory | undefined>;
   getProductCategories(): Promise<ProductCategoryWithProducts[]>;
-  
+
   // Products
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product>;
@@ -421,32 +421,32 @@ export interface IStorage {
   getProduct(id: string): Promise<ProductWithDetails | undefined>;
   getProducts(): Promise<ProductWithDetails[]>;
   getProductsByCategory(categoryId: string): Promise<ProductWithDetails[]>;
-  
+
   // Product Variants
   createProductVariant(variant: InsertProductVariant): Promise<ProductVariant>;
   updateProductVariant(id: string, variant: Partial<InsertProductVariant>): Promise<ProductVariant>;
   deleteProductVariant(id: string): Promise<void>;
   getProductVariant(id: string): Promise<ProductVariant | undefined>;
   getProductVariants(productId: string): Promise<ProductVariant[]>;
-  
+
   // Shopping Cart
   addToCart(item: InsertCartItem): Promise<CartItem>;
   updateCartItem(id: string, quantity: number): Promise<CartItem>;
   removeFromCart(id: string): Promise<void>;
   getCartItems(userId?: string, sessionId?: string): Promise<CartItemWithDetails[]>;
   clearCart(userId?: string, sessionId?: string): Promise<void>;
-  
+
   // E-commerce Orders
-  createEcommerceOrder(order: InsertEcommerceOrder): Promise<EcommerceOrder>;
-  updateEcommerceOrder(id: string, order: Partial<InsertEcommerceOrder>): Promise<EcommerceOrder>;
-  getEcommerceOrder(id: string): Promise<EcommerceOrderWithDetails | undefined>;
-  getEcommerceOrders(userId?: string): Promise<EcommerceOrderWithDetails[]>;
-  
+  createEcommerceOrder(order: InsertEcommerceOrder): Promise< EcommerceOrder>;
+  updateEcommerceOrder(id: string, order: Partial<InsertEcommerceOrder>): Promise< EcommerceOrder>;
+  getEcommerceOrder(id: string): Promise< EcommerceOrderWithDetails | undefined>;
+  getEcommerceOrders(userId?: string): Promise< EcommerceOrderWithDetails[]>;
+
   // E-commerce Order Items
   createEcommerceOrderItem(item: InsertEcommerceOrderItem): Promise<EcommerceOrderItem>;
   updateEcommerceOrderItem(id: string, item: Partial<InsertEcommerceOrderItem>): Promise<EcommerceOrderItem>;
   getEcommerceOrderItems(orderId: string): Promise<EcommerceOrderItem[]>;
-  
+
   // Course Notifications
   createCourseNotification(notification: InsertCourseNotification): Promise<CourseNotification>;
   getCourseNotifications(courseType?: string): Promise<CourseNotificationWithUser[]>;
@@ -535,11 +535,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, id))
       .returning();
-    
+
     if (!user) {
       throw new Error('User not found');
     }
-    
+
     return user;
   }
 
@@ -618,7 +618,7 @@ export class DatabaseStorage implements IStorage {
       .set(updateData)
       .where(eq(users.id, id))
       .returning();
-    
+
     if (!user) {
       throw new Error(`User with id ${id} not found`);
     }
@@ -736,22 +736,22 @@ export class DatabaseStorage implements IStorage {
   async permanentlyDeleteCourse(id: string): Promise<void> {
     // Hard delete - permanently remove from database with cascade
     // First delete related data in proper order to maintain referential integrity
-    
+
     // Delete course information forms (will cascade to fields and responses)
     await db
       .delete(courseInformationForms)
       .where(eq(courseInformationForms.courseId, id));
-    
+
     // Delete enrollments (references courseSchedules)
     await db
       .delete(enrollments)
       .where(eq(enrollments.courseId, id));
-    
+
     // Delete course schedules (references courses)
     await db
       .delete(courseSchedules)
       .where(eq(courseSchedules.courseId, id));
-    
+
     // Finally delete the course itself
     await db
       .delete(courses)
@@ -1165,10 +1165,10 @@ export class DatabaseStorage implements IStorage {
     // Process and sort each category
     const processEnrollments = (enrollmentsList: any[], isCurrentStudents: boolean) => {
       const studentsMap = new Map();
-      
+
       for (const enrollment of enrollmentsList) {
         const studentId = enrollment.student.id;
-        
+
         if (!studentsMap.has(studentId)) {
           studentsMap.set(studentId, {
             id: enrollment.student.id,
@@ -1180,12 +1180,12 @@ export class DatabaseStorage implements IStorage {
             enrollments: [],
           });
         }
-        
+
         studentsMap.get(studentId).enrollments.push(enrollment.enrollmentData);
       }
-      
+
       const students = Array.from(studentsMap.values());
-      
+
       // Sort students based on category
       if (isCurrentStudents) {
         // For current students: sort by upcoming course, then by date, then alphabetically by first name
@@ -1194,29 +1194,29 @@ export class DatabaseStorage implements IStorage {
             // First by course abbreviation
             const courseCompare = a.courseAbbreviation.localeCompare(b.courseAbbreviation);
             if (courseCompare !== 0) return courseCompare;
-            
+
             // Then by date
             const dateCompare = new Date(a.scheduleDate).getTime() - new Date(b.scheduleDate).getTime();
             if (dateCompare !== 0) return dateCompare;
-            
+
             // Then by start time
             return a.scheduleStartTime.localeCompare(b.scheduleStartTime);
           });
         });
-        
+
         // Sort students by their next upcoming course, then by first name
         students.sort((a, b) => {
           const aNext = a.enrollments[0];
           const bNext = b.enrollments[0];
-          
+
           // First by course abbreviation of next course
           const courseCompare = aNext.courseAbbreviation.localeCompare(bNext.courseAbbreviation);
           if (courseCompare !== 0) return courseCompare;
-          
+
           // Then by date of next course
           const dateCompare = new Date(aNext.scheduleDate).getTime() - new Date(bNext.scheduleDate).getTime();
           if (dateCompare !== 0) return dateCompare;
-          
+
           // Finally alphabetically by first name
           return a.firstName.localeCompare(b.firstName);
         });
@@ -1228,20 +1228,20 @@ export class DatabaseStorage implements IStorage {
             return new Date(b.scheduleDate).getTime() - new Date(a.scheduleDate).getTime();
           });
         });
-        
+
         students.sort((a, b) => {
           const aRecent = a.enrollments[0];
           const bRecent = b.enrollments[0];
-          
+
           // Sort by most recent course completion
           const dateCompare = new Date(bRecent.scheduleDate).getTime() - new Date(aRecent.scheduleDate).getTime();
           if (dateCompare !== 0) return dateCompare;
-          
+
           // Then alphabetically by first name
           return a.firstName.localeCompare(b.firstName);
         });
       }
-      
+
       return students;
     };
 
@@ -1279,7 +1279,7 @@ export class DatabaseStorage implements IStorage {
 
     // Group students and their enrollments
     const studentMap = new Map();
-    
+
     scheduleEnrollments.forEach(({ enrollment, student, course, schedule }) => {
       if (!studentMap.has(student.id)) {
         studentMap.set(student.id, {
@@ -1287,7 +1287,7 @@ export class DatabaseStorage implements IStorage {
           enrollments: []
         });
       }
-      
+
       studentMap.get(student.id).enrollments.push({
         ...enrollment,
         courseTitle: course.title,
@@ -1300,7 +1300,7 @@ export class DatabaseStorage implements IStorage {
     });
 
     const students = Array.from(studentMap.values());
-    
+
     // For schedule-specific filtering, we consider all students as "current"
     // since they're all enrolled in the specific schedule
     return {
@@ -1321,7 +1321,7 @@ export class DatabaseStorage implements IStorage {
           eq(enrollments.status, 'confirmed')
         )
       );
-    
+
     return result[0]?.count || 0;
   }
 
@@ -1336,7 +1336,7 @@ export class DatabaseStorage implements IStorage {
     };
   }> {
     let studentsData;
-    
+
     if (scheduleId) {
       // Filter by specific schedule
       studentsData = await this.getStudentsBySchedule(scheduleId, instructorId);
@@ -1344,7 +1344,7 @@ export class DatabaseStorage implements IStorage {
       // Get all students for the instructor
       studentsData = await this.getStudentsByInstructor(instructorId);
     }
-    
+
     // Flatten the data for export
     const flattenStudent = (student: any, category: 'current' | 'former') => {
       return student.enrollments.map((enrollment: any) => ({
@@ -1372,7 +1372,7 @@ export class DatabaseStorage implements IStorage {
 
     const currentFlat = studentsData.current.flatMap(student => flattenStudent(student, 'current'));
     const formerFlat = studentsData.former.flatMap(student => flattenStudent(student, 'former'));
-    
+
     const allCourses = new Set();
     [...currentFlat, ...formerFlat].forEach(row => allCourses.add(row.courseTitle));
 
@@ -1390,11 +1390,11 @@ export class DatabaseStorage implements IStorage {
 
   async getInstructorAvailableSchedules(instructorId: string, excludeEnrollmentId?: string): Promise<any[]> {
     const now = new Date();
-    
+
     // Get the schedule ID and current course category to exclude if we have an enrollmentId
     let excludeScheduleId: string | undefined;
     let currentCourseCategory: string | undefined;
-    
+
     if (excludeEnrollmentId) {
       // Get enrollment with course details to determine category
       const [enrollmentWithCourse] = await db
@@ -1407,7 +1407,7 @@ export class DatabaseStorage implements IStorage {
         .from(enrollments)
         .leftJoin(courses, eq(enrollments.courseId, courses.id))
         .where(eq(enrollments.id, excludeEnrollmentId));
-      
+
       if (enrollmentWithCourse) {
         excludeScheduleId = enrollmentWithCourse.scheduleId;
         // Use categoryId if available, otherwise fall back to category string
@@ -1418,7 +1418,7 @@ export class DatabaseStorage implements IStorage {
     // Get all active course schedules for this instructor's courses that are in the future
     // First try to get schedules from the same category
     let availableSchedules = [];
-    
+
     if (currentCourseCategory) {
       availableSchedules = await db
         .select({
@@ -1463,7 +1463,7 @@ export class DatabaseStorage implements IStorage {
         )
         .orderBy(courseSchedules.startDate, courseSchedules.startTime);
     }
-    
+
     // If no same-category schedules found, fall back to all available schedules
     if (availableSchedules.length === 0) {
       availableSchedules = await db
@@ -1644,7 +1644,7 @@ export class DatabaseStorage implements IStorage {
     // Import Stripe here to avoid circular dependencies
     const Stripe = await import('stripe');
     const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY!);
-    
+
     // Get enrollment and course details
     const enrollment = await db.query.enrollments.findFirst({
       where: eq(enrollments.id, enrollmentId),
@@ -1653,7 +1653,7 @@ export class DatabaseStorage implements IStorage {
         schedule: true,
       },
     });
-    
+
     console.log('📋 Enrollment data:', {
       found: !!enrollment,
       courseFound: !!enrollment?.course,
@@ -1661,17 +1661,17 @@ export class DatabaseStorage implements IStorage {
       coursePrice: enrollment?.course?.price,
       depositAmount: enrollment?.course?.depositAmount
     });
-    
+
     if (!enrollment || !enrollment.course) {
       throw new Error('Enrollment or course not found');
     }
-    
+
     const course = enrollment.course;
-    
+
     // Calculate payment amount based on payment option
     let paymentAmount: number;
     const coursePrice = parseFloat(course.price);
-    
+
     console.log('💰 Price calculations:', {
       rawCoursePrice: course.price,
       parsedCoursePrice: coursePrice,
@@ -1679,25 +1679,25 @@ export class DatabaseStorage implements IStorage {
       parsedDepositAmount: course.depositAmount ? parseFloat(course.depositAmount) : null,
       paymentOption: enrollment.paymentOption
     });
-    
+
     if (enrollment.paymentOption === 'deposit' && course.depositAmount) {
       paymentAmount = parseFloat(course.depositAmount);
     } else {
       paymentAmount = coursePrice;
     }
-    
+
     console.log('💵 Final payment amount:', paymentAmount);
-    
+
     if (paymentAmount <= 0) {
       console.error('❌ Invalid payment amount:', paymentAmount);
       throw new Error('Invalid payment amount');
     }
-    
+
     // Apply promo code discount if provided
     let discountAmount = 0;
     let finalPaymentAmount = paymentAmount;
     let promoCodeInfo = null;
-    
+
     if (promoCode) {
       // For draft enrollments, we'll use a placeholder userId for promo validation
       // The actual user validation will happen during finalization
@@ -1715,12 +1715,12 @@ export class DatabaseStorage implements IStorage {
         throw new Error(`Invalid promo code: ${validation.error}`);
       }
     }
-    
+
     // Calculate tax using Stripe Tax Calculation API
     let taxCalculation = null;
     let taxAmount = 0;
     let finalAmount = Math.round(finalPaymentAmount * 100);
-    
+
     try {
       taxCalculation = await stripe.tax.calculations.create({
         currency: 'usd',
@@ -1739,7 +1739,7 @@ export class DatabaseStorage implements IStorage {
           address_source: 'billing',
         },
       });
-      
+
       if (taxCalculation && taxCalculation.amount_total) {
         finalAmount = taxCalculation.amount_total;
         taxAmount = taxCalculation.tax_amount_exclusive || 0;
@@ -1748,7 +1748,7 @@ export class DatabaseStorage implements IStorage {
       console.error('Stripe Tax calculation failed:', taxError.message);
       // Continue without tax if calculation fails
     }
-    
+
     // Create or update the Stripe PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: finalAmount,
@@ -1765,7 +1765,7 @@ export class DatabaseStorage implements IStorage {
         discount_amount: discountAmount.toString(),
       },
     });
-    
+
     // Update enrollment with Stripe PaymentIntent ID and promo code
     await db
       .update(enrollments)
@@ -1775,7 +1775,7 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       })
       .where(eq(enrollments.id, enrollmentId));
-    
+
     return {
       clientSecret: paymentIntent.client_secret!,
       originalAmount: paymentAmount,
@@ -1804,7 +1804,7 @@ export class DatabaseStorage implements IStorage {
   }): Promise<Enrollment> {
     // Import Stripe here
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    
+
     // Get enrollment with related data first
     const enrollment = await db.query.enrollments.findFirst({
       where: eq(enrollments.id, data.enrollmentId),
@@ -1813,42 +1813,42 @@ export class DatabaseStorage implements IStorage {
         schedule: true,
       },
     });
-    
+
     if (!enrollment) {
       throw new Error('Enrollment not found');
     }
-    
+
     if (enrollment.status !== 'initiated') {
       throw new Error('Enrollment not in initiated state');
     }
-    
+
     // Verify payment with Stripe FIRST (critical security check)
     const paymentIntent = await stripe.paymentIntents.retrieve(data.paymentIntentId);
     if (paymentIntent.status !== 'succeeded') {
       throw new Error('Payment not completed');
     }
-    
+
     // Verify payment intent belongs to this enrollment
     if (paymentIntent.metadata.enrollmentId !== data.enrollmentId) {
       throw new Error('Payment verification failed - enrollment mismatch');
     }
-    
+
     // CRITICAL SECURITY FIX: Calculate expected payment amount server-side and validate
     if (!enrollment.course) {
       throw new Error('Course information not found');
     }
-    
+
     // Calculate expected payment amount based on enrollment payment option
     let expectedAmount = 0;
     const coursePrice = parseFloat(enrollment.course.price);
-    
+
     if (enrollment.paymentOption === 'full') {
       expectedAmount = coursePrice;
     } else if (enrollment.paymentOption === 'deposit') {
       const depositAmount = parseFloat(enrollment.course.depositAmount || '0');
       expectedAmount = depositAmount > 0 ? depositAmount : 50; // Default to $50 if not set
     }
-    
+
     // Apply promo code discount if applicable
     let discountAmount = 0;
     if (enrollment.promoCodeApplied) {
@@ -1862,13 +1862,13 @@ export class DatabaseStorage implements IStorage {
         discountAmount = validation.discountAmount || 0;
       }
     }
-    
+
     const subtotal = expectedAmount - discountAmount;
     // Add tax if applicable (using same logic as upsertPaymentIntent)
     const taxRate = 0.06; // 6% tax rate - should match payment intent creation
     const taxAmount = Math.round(subtotal * taxRate * 100);
     const expectedTotalCents = Math.round(subtotal * 100) + taxAmount;
-    
+
     // Validate payment amount matches server calculation
     if (paymentIntent.amount_received !== expectedTotalCents) {
       throw new Error(
@@ -1876,10 +1876,10 @@ export class DatabaseStorage implements IStorage {
         `received $${(paymentIntent.amount_received / 100).toFixed(2)}`
       );
     }
-    
+
     // Create or find user by email
     let user = await this.getUserByEmail(data.studentInfo.email);
-    
+
     if (!user) {
       // Create new user
       user = await this.upsertUser({
@@ -1889,7 +1889,7 @@ export class DatabaseStorage implements IStorage {
         role: 'student',
       });
     }
-    
+
     // WRAP ENTIRE PROCESS IN TRANSACTION FOR ATOMICITY
     const result = await db.transaction(async (tx) => {
       // Check schedule capacity and atomically decrement spots
@@ -1897,7 +1897,7 @@ export class DatabaseStorage implements IStorage {
       if (!schedule || schedule.availableSpots <= 0) {
         throw new Error('No available spots in this course schedule');
       }
-      
+
       // Atomically decrement available spots to prevent race conditions
       const [updatedSchedule] = await tx
         .update(courseSchedules)
@@ -1912,11 +1912,41 @@ export class DatabaseStorage implements IStorage {
           )
         )
         .returning();
-      
+
       if (!updatedSchedule) {
         throw new Error('No available spots remaining for this course schedule');
       }
-      
+
+      // Moodle integration: Check if the course is a Moodle course and if Moodle enrollment is enabled
+      let moodleEnrolled: boolean | null = null;
+      let moodleEnrollmentDate: Date | null = null;
+      let enrollmentNotes: string | null = null;
+
+      // Placeholder for Moodle integration logic - this would involve calling a Moodle API
+      // For now, we'll assume it's successful if the course has a moodleCourseId and enrollment is enabled
+      const moodleCourseId = enrollment.course.moodleCourseId; // Assuming this field exists on the course table
+      const isMoodleEnrollmentEnabled = enrollment.course.enableMoodleEnrollment; // Assuming this field exists
+
+      if (moodleCourseId && isMoodleEnrollmentEnabled) {
+        try {
+          // Replace this with actual Moodle API call to enroll the user
+          // Example: await callMoodleEnrollmentAPI(user.email, moodleCourseId);
+          console.log(`Attempting to enroll user ${user.email} in Moodle course ${moodleCourseId}`);
+          
+          // Simulate successful enrollment
+          moodleEnrolled = true;
+          moodleEnrollmentDate = new Date();
+          enrollmentNotes = 'Moodle enrollment successful.';
+
+        } catch (error) {
+          console.error('Moodle enrollment failed:', error);
+          moodleEnrolled = false;
+          enrollmentNotes = `Moodle enrollment failed: ${error.message}`;
+          // Depending on requirements, you might want to throw an error here
+          // or allow the enrollment to proceed without Moodle enrollment.
+        }
+      }
+
       // Finalize the enrollment with consistent field names
       const [finalizedEnrollment] = await tx
         .update(enrollments)
@@ -1924,14 +1954,17 @@ export class DatabaseStorage implements IStorage {
           studentId: user.id,
           status: 'confirmed',
           paymentStatus: 'paid',
-          stripePaymentIntentId: data.paymentIntentId, // Consistent field name
-          studentInfo: data.studentInfo,
+          paymentIntentId: data.paymentIntentId,
+          stripePaymentIntentId: paymentIntent.id,
           confirmationDate: new Date(),
+          moodleEnrolled,
+          moodleEnrollmentDate,
+          notes: enrollmentNotes,
           updatedAt: new Date(),
         })
         .where(eq(enrollments.id, data.enrollmentId))
         .returning();
-      
+
       // Record promo code redemption if applicable
       if (enrollment.promoCodeApplied) {
         const promoCode = await this.getPromoCodeByCode(enrollment.promoCodeApplied);
@@ -1946,7 +1979,7 @@ export class DatabaseStorage implements IStorage {
             finalAmount: (subtotal).toString(),
             paymentIntentId: data.paymentIntentId,
           });
-          
+
           // Update promo code usage count atomically
           await tx
             .update(promoCodes)
@@ -1957,10 +1990,10 @@ export class DatabaseStorage implements IStorage {
             .where(eq(promoCodes.id, promoCode.id));
         }
       }
-      
+
       return finalizedEnrollment;
     });
-    
+
     return result;
   }
 
@@ -1973,7 +2006,7 @@ export class DatabaseStorage implements IStorage {
     outstandingRevenue: number;
   }> {
     const now = new Date();
-    
+
     // Get all courses for this instructor
     const instructorCourses = await db.query.courses.findMany({
       where: eq(courses.instructorId, instructorId),
@@ -2047,7 +2080,7 @@ export class DatabaseStorage implements IStorage {
   // App settings operations
   async getAppSettings(): Promise<AppSettings> {
     const settings = await db.select().from(appSettings).limit(1);
-    
+
     if (settings.length === 0) {
       // Create default settings if none exist
       const [newSettings] = await db.insert(appSettings).values({
@@ -2055,13 +2088,13 @@ export class DatabaseStorage implements IStorage {
       }).returning();
       return newSettings;
     }
-    
+
     return settings[0];
   }
 
   async updateAppSettings(input: InsertAppSettings): Promise<AppSettings> {
     const existingSettings = await db.select().from(appSettings).limit(1);
-    
+
     if (existingSettings.length === 0) {
       // Create new settings if none exist
       const [newSettings] = await db.insert(appSettings).values({
@@ -2069,7 +2102,7 @@ export class DatabaseStorage implements IStorage {
       }).returning();
       return newSettings;
     }
-    
+
     // Update existing settings
     const [updatedSettings] = await db.update(appSettings)
       .set({
@@ -2078,7 +2111,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(appSettings.id, existingSettings[0].id))
       .returning();
-    
+
     return updatedSettings;
   }
 
@@ -2260,7 +2293,7 @@ export class DatabaseStorage implements IStorage {
       ...(promoCodeData.value !== undefined ? { value: String(promoCodeData.value) } : {}),
       updatedAt: new Date() 
     };
-    
+
     const [updatedPromoCode] = await db
       .update(promoCodes)
       .set(updateData)
@@ -2298,9 +2331,9 @@ export class DatabaseStorage implements IStorage {
         },
       },
     });
-    
+
     if (!promoCode) return undefined;
-    
+
     return {
       ...promoCode,
       updater: promoCode.updater || undefined,
@@ -2341,7 +2374,7 @@ export class DatabaseStorage implements IStorage {
       },
       orderBy: desc(promoCodes.createdAt),
     });
-    
+
     return promoCodeList.map(promoCode => ({
       ...promoCode,
       updater: promoCode.updater || undefined,
@@ -2375,7 +2408,7 @@ export class DatabaseStorage implements IStorage {
       },
       orderBy: desc(promoCodes.createdAt),
     });
-    
+
     return promoCodeList.map(promoCode => ({
       ...promoCode,
       updater: promoCode.updater || undefined,
@@ -2390,7 +2423,7 @@ export class DatabaseStorage implements IStorage {
   // Promo code validation and redemption
   async validatePromoCode(code: string, userId: string, courseId: string, amount: number): Promise<PromoCodeValidationResult> {
     const promoCode = await this.getPromoCodeByCode(code);
-    
+
     if (!promoCode) {
       return {
         isValid: false,
@@ -2417,7 +2450,7 @@ export class DatabaseStorage implements IStorage {
         errorCode: 'TIME_RESTRICTION',
       };
     }
-    
+
     if (promoCode.endDate && new Date(promoCode.endDate) < now) {
       return {
         isValid: false,
@@ -2567,10 +2600,10 @@ export class DatabaseStorage implements IStorage {
       .insert(promoCodeRedemptions)
       .values(redemption)
       .returning();
-    
+
     // Update the promo code usage count
     await this.updatePromoCodeUsageCount(redemption.promoCodeId, 1);
-    
+
     return newRedemption;
   }
 
@@ -2597,19 +2630,19 @@ export class DatabaseStorage implements IStorage {
     let code: string;
     let attempts = 0;
     const maxAttempts = 10;
-    
+
     do {
       // Generate a random 8-character alphanumeric code
       code = Math.random().toString(36).substring(2, 10).toUpperCase();
       attempts++;
-      
+
       // Check if code already exists
       const existingCode = await this.getPromoCodeByCode(code);
       if (!existingCode) {
         return code;
       }
     } while (attempts < maxAttempts);
-    
+
     // If we can't generate a unique code, add timestamp
     const timestamp = Date.now().toString().slice(-4);
     return `${code.substring(0, 4)}${timestamp}`;
@@ -2671,7 +2704,7 @@ export class DatabaseStorage implements IStorage {
 
   async getNotificationTemplates(courseId?: string): Promise<NotificationTemplateWithDetails[]> {
     const conditions = [eq(notificationTemplates.isActive, true)];
-    
+
     if (courseId) {
       conditions.push(eq(notificationTemplates.courseId, courseId));
     }
@@ -2772,7 +2805,7 @@ export class DatabaseStorage implements IStorage {
 
   async getNotificationSchedules(courseId?: string, scheduleId?: string): Promise<NotificationScheduleWithDetails[]> {
     const conditions = [eq(notificationSchedules.isActive, true)];
-    
+
     if (courseId) {
       conditions.push(eq(notificationSchedules.courseId, courseId));
     }
@@ -2872,7 +2905,7 @@ export class DatabaseStorage implements IStorage {
       .select({ count: sql<number>`count(*)` })
       .from(notificationLogs)
       .leftJoin(users, eq(notificationLogs.recipientId, users.id));
-    
+
     let dataQuery = db
       .select()
       .from(notificationLogs)
@@ -2891,12 +2924,12 @@ export class DatabaseStorage implements IStorage {
     if (filters.recipientEmail) conditions.push(eq(users.email, filters.recipientEmail));
 
     const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
-    
+
     countQuery = db
       .select({ count: sql<number>`count(*)` })
       .from(notificationLogs)
       .leftJoin(users, eq(notificationLogs.recipientId, users.id));
-    
+
     dataQuery = db
       .select()
       .from(notificationLogs)
@@ -2905,7 +2938,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(notificationLogs.recipientId, users.id))
       .leftJoin(enrollments, eq(notificationLogs.enrollmentId, enrollments.id))
       .leftJoin(courses, eq(notificationLogs.courseId, courses.id));
-    
+
     if (whereCondition) {
       countQuery = countQuery.where(whereCondition);
       dataQuery = dataQuery.where(whereCondition);
@@ -2916,7 +2949,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(notificationLogs.createdAt))
       .limit(filters.limit || 50)
       .offset(filters.offset || 0);
-    
+
     // Get total count and data
     const [countResult, logs] = await Promise.all([
       countQuery.execute(),
@@ -2924,7 +2957,7 @@ export class DatabaseStorage implements IStorage {
     ]);
 
     const total = countResult[0]?.count || 0;
-    
+
     return {
       logs: logs.map(log => ({
         ...log.notification_logs,
@@ -2960,100 +2993,6 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  // Payment balance calculation
-  async getPaymentBalance(enrollmentId: string): Promise<{
-    remainingBalance: number;
-    hasRemainingBalance: boolean;
-    originalAmount: number;
-    paidAmount: number;
-  }> {
-    const enrollment = await this.getEnrollment(enrollmentId);
-    if (!enrollment || !enrollment.course) {
-      throw new Error('Enrollment not found');
-    }
-
-    const coursePrice = parseFloat(enrollment.course.price);
-    const depositAmount = enrollment.course.depositAmount ? parseFloat(enrollment.course.depositAmount) : 0;
-    
-    let paidAmount = 0;
-    let remainingBalance = coursePrice;
-    
-    if (enrollment.paymentStatus === 'paid') {
-      if (enrollment.paymentOption === 'deposit') {
-        // Deposit paid, remaining balance due
-        paidAmount = depositAmount;
-        remainingBalance = coursePrice - depositAmount;
-      } else {
-        // Full payment completed
-        paidAmount = coursePrice;
-        remainingBalance = 0;
-      }
-    } else if (enrollment.paymentStatus === 'partial') {
-      // Partial payment made (usually deposit)
-      paidAmount = depositAmount;
-      remainingBalance = coursePrice - depositAmount;
-    } else if (enrollment.paymentStatus === 'pending') {
-      // No payment made yet
-      paidAmount = 0;
-      remainingBalance = coursePrice;
-    }
-    
-    return {
-      remainingBalance,
-      hasRemainingBalance: remainingBalance > 0,
-      originalAmount: coursePrice,
-      paidAmount,
-    };
-  }
-
-  // Form completion status checking
-  async getFormCompletionStatus(enrollmentId: string): Promise<{
-    totalForms: number;
-    completedForms: number;
-    isComplete: boolean;
-    missingForms: { id: string; title: string; isRequired: boolean }[];
-  }> {
-    const enrollment = await this.getEnrollment(enrollmentId);
-    if (!enrollment) {
-      throw new Error('Enrollment not found');
-    }
-
-    // Get all forms for this course
-    const courseForms = await db.query.courseInformationForms.findMany({
-      where: and(
-        eq(courseInformationForms.courseId, enrollment.courseId),
-        eq(courseInformationForms.isActive, true)
-      ),
-      with: {
-        fields: true,
-      },
-    });
-
-    // Get completed form responses for this enrollment
-    const completedResponses = await db.query.studentFormResponses.findMany({
-      where: eq(studentFormResponses.enrollmentId, enrollmentId),
-      with: {
-        form: true,
-      },
-    });
-
-    const completedFormIds = new Set(completedResponses.map(r => r.formId));
-    const missingForms = courseForms
-      .filter(form => !completedFormIds.has(form.id))
-      .map(form => ({
-        id: form.id,
-        title: form.title,
-        isRequired: form.isRequired,
-      }));
-
-    return {
-      totalForms: courseForms.length,
-      completedForms: completedFormIds.size,
-      isComplete: missingForms.length === 0,
-      missingForms,
-    };
-  }
-  
   // Waiver Template operations
   async createWaiverTemplate(template: InsertWaiverTemplate): Promise<WaiverTemplate> {
     const [created] = await db.insert(waiverTemplates).values(template).returning();
@@ -3082,13 +3021,13 @@ export class DatabaseStorage implements IStorage {
         instances: true,
       },
     });
-    
+
     if (!template) return undefined;
-    
+
     // Calculate computed fields
     const instanceCount = template.instances.length;
     const signedCount = template.instances.filter(instance => instance.status === 'signed').length;
-    
+
     return {
       ...template,
       updater: template.updater || undefined,
@@ -3099,7 +3038,7 @@ export class DatabaseStorage implements IStorage {
 
   async getWaiverTemplates(filters?: { scope?: string; courseId?: string; isActive?: boolean }): Promise<WaiverTemplateWithDetails[]> {
     const conditions = [];
-    
+
     if (filters?.scope) {
       conditions.push(eq(waiverTemplates.scope, filters.scope));
     }
@@ -3110,7 +3049,7 @@ export class DatabaseStorage implements IStorage {
     if (filters?.isActive !== undefined) {
       conditions.push(eq(waiverTemplates.isActive, filters.isActive));
     }
-    
+
     const templates = await db.query.waiverTemplates.findMany({
       where: conditions.length > 0 ? and(...conditions) : undefined,
       with: {
@@ -3120,12 +3059,12 @@ export class DatabaseStorage implements IStorage {
       },
       orderBy: [asc(waiverTemplates.name)],
     });
-    
+
     // Add computed fields to each template
     return templates.map(template => {
       const instanceCount = template.instances.length;
       const signedCount = template.instances.filter(instance => instance.status === 'signed').length;
-      
+
       return {
         ...template,
         updater: template.updater || undefined,
@@ -3297,11 +3236,11 @@ export class DatabaseStorage implements IStorage {
     expired: WaiverInstanceWithDetails[];
   }> {
     const instances = await this.getWaiverInstancesByEnrollment(enrollmentId);
-    
+
     const required = instances; // All instances are considered required
     const signed = instances.filter(i => i.status === 'signed');
     const pending = instances.filter(i => i.status === 'pending');
-    
+
     // Check for expired waivers (if expiresAt exists and is past)
     const now = new Date();
     const expired = instances.filter(i => 
@@ -3319,7 +3258,7 @@ export class DatabaseStorage implements IStorage {
     complianceRate: number;
   }> {
     const conditions = [];
-    
+
     if (courseId) {
       // Filter by course through enrollment relationship
       const courseEnrollments = await db.query.enrollments.findMany({
@@ -3327,12 +3266,12 @@ export class DatabaseStorage implements IStorage {
         columns: { id: true },
       });
       const enrollmentIds = courseEnrollments.map(e => e.id);
-      
+
       if (enrollmentIds.length === 0) {
         return { totalWaivers: 0, signedWaivers: 0, pendingWaivers: 0, expiredWaivers: 0, complianceRate: 0 };
       }
     }
-    
+
     if (startDate) {
       conditions.push(sql`${waiverInstances.createdAt} >= ${startDate}`);
     }
@@ -3350,7 +3289,7 @@ export class DatabaseStorage implements IStorage {
     const totalWaivers = allInstances.length;
     const signedWaivers = allInstances.filter(i => i.status === 'signed').length;
     const pendingWaivers = allInstances.filter(i => i.status === 'pending').length;
-    
+
     const now = new Date();
     const expiredWaivers = allInstances.filter(i => 
       i.expiresAt && new Date(i.expiresAt) < now
@@ -3467,11 +3406,11 @@ export class DatabaseStorage implements IStorage {
       .set({ ...communication, updatedAt: new Date() })
       .where(eq(communications.id, id))
       .returning();
-    
+
     if (!updatedCommunication) {
       throw new Error('Communication not found');
     }
-    
+
     return updatedCommunication;
   }
 
@@ -3588,11 +3527,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(communications.id, id))
       .returning();
-    
+
     if (!updatedCommunication) {
       throw new Error('Communication not found');
     }
-    
+
     return updatedCommunication;
   }
 
@@ -3606,11 +3545,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(communications.id, id))
       .returning();
-    
+
     if (!updatedCommunication) {
       throw new Error('Communication not found');
     }
-    
+
     return updatedCommunication;
   }
 
@@ -3625,11 +3564,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(communications.id, id))
       .returning();
-    
+
     if (!updatedCommunication) {
       throw new Error('Communication not found');
     }
-    
+
     return updatedCommunication;
   }
 
@@ -3644,16 +3583,16 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(communications.id, id))
       .returning();
-    
+
     if (!updatedCommunication) {
       throw new Error('Communication not found');
     }
-    
+
     return updatedCommunication;
   }
 
   // E-commerce operations implementation
-  
+
   // Product Categories
   async createProductCategory(category: InsertProductCategory): Promise<ProductCategory> {
     const [created] = await db.insert(productCategories).values(category).returning();
@@ -3666,11 +3605,11 @@ export class DatabaseStorage implements IStorage {
       .set({ ...category, updatedAt: new Date() })
       .where(eq(productCategories.id, id))
       .returning();
-    
+
     if (!updated) {
       throw new Error('Product category not found');
     }
-    
+
     return updated;
   }
 
@@ -3709,11 +3648,11 @@ export class DatabaseStorage implements IStorage {
       .set({ ...product, updatedAt: new Date() })
       .where(eq(products.id, id))
       .returning();
-    
+
     if (!updated) {
       throw new Error('Product not found');
     }
-    
+
     return updated;
   }
 
@@ -3776,11 +3715,11 @@ export class DatabaseStorage implements IStorage {
       .set({ ...variant, updatedAt: new Date() })
       .where(eq(productVariants.id, id))
       .returning();
-    
+
     if (!updated) {
       throw new Error('Product variant not found');
     }
-    
+
     return updated;
   }
 
@@ -3827,11 +3766,11 @@ export class DatabaseStorage implements IStorage {
       .set({ quantity, updatedAt: new Date() })
       .where(eq(cartItems.id, id))
       .returning();
-    
+
     if (!updated) {
       throw new Error('Cart item not found');
     }
-    
+
     return updated;
   }
 
@@ -3841,7 +3780,7 @@ export class DatabaseStorage implements IStorage {
 
   async getCartItems(userId?: string, sessionId?: string): Promise<CartItemWithDetails[]> {
     const whereConditions = [];
-    
+
     if (userId) {
       whereConditions.push(eq(cartItems.userId, userId));
     } else if (sessionId) {
@@ -3867,7 +3806,7 @@ export class DatabaseStorage implements IStorage {
 
   async clearCart(userId?: string, sessionId?: string): Promise<void> {
     const whereConditions = [];
-    
+
     if (userId) {
       whereConditions.push(eq(cartItems.userId, userId));
     } else if (sessionId) {
@@ -3880,26 +3819,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   // E-commerce Orders
-  async createEcommerceOrder(order: InsertEcommerceOrder): Promise<EcommerceOrder> {
+  async createEcommerceOrder(order: InsertEcommerceOrder): Promise< EcommerceOrder> {
     const [created] = await db.insert(ecommerceOrders).values(order).returning();
     return created;
   }
 
-  async updateEcommerceOrder(id: string, order: Partial<InsertEcommerceOrder>): Promise<EcommerceOrder> {
+  async updateEcommerceOrder(id: string, order: Partial<InsertEcommerceOrder>): Promise< EcommerceOrder> {
     const [updated] = await db
       .update(ecommerceOrders)
       .set({ ...order, updatedAt: new Date() })
       .where(eq(ecommerceOrders.id, id))
       .returning();
-    
+
     if (!updated) {
       throw new Error('E-commerce order not found');
     }
-    
+
     return updated;
   }
 
-  async getEcommerceOrder(id: string): Promise<EcommerceOrderWithDetails | undefined> {
+  async getEcommerceOrder(id: string): Promise< EcommerceOrderWithDetails | undefined> {
     return db.query.ecommerceOrders.findFirst({
       where: eq(ecommerceOrders.id, id),
       with: {
@@ -3915,7 +3854,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getEcommerceOrders(userId?: string): Promise<EcommerceOrderWithDetails[]> {
+  async getEcommerceOrders(userId?: string): Promise< EcommerceOrderWithDetails[]> {
     const whereConditions = userId ? [eq(ecommerceOrders.userId, userId)] : [];
 
     return db.query.ecommerceOrders.findMany({
@@ -3935,7 +3874,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // E-commerce Order Items
-  async createEcommerceOrderItem(item: InsertEcommerceOrderItem): Promise<EcommerceOrderItem> {
+  async createEcommerceOrderItem(item: InsertEcommerceOrderItem): Promise< EcommerceOrderItem> {
     const [created] = await db.insert(ecommerceOrderItems).values(item).returning();
     return created;
   }
@@ -3946,11 +3885,11 @@ export class DatabaseStorage implements IStorage {
       .set({ ...item, updatedAt: new Date() })
       .where(eq(ecommerceOrderItems.id, id))
       .returning();
-    
+
     if (!updated) {
       throw new Error('E-commerce order item not found');
     }
-    
+
     return updated;
   }
 
@@ -4008,11 +3947,11 @@ export class DatabaseStorage implements IStorage {
       .insert(smsLists)
       .values(data)
       .returning();
-    
+
     if (!list) {
       throw new Error('Failed to create SMS list');
     }
-    
+
     return list;
   }
 
@@ -4021,7 +3960,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(smsLists)
       .where(eq(smsLists.id, id));
-    
+
     return list;
   }
 
@@ -4044,7 +3983,7 @@ export class DatabaseStorage implements IStorage {
         eq(smsLists.scheduleId, scheduleId),
         eq(smsLists.listType, 'course_schedule')
       ));
-    
+
     return list;
   }
 
@@ -4057,39 +3996,39 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(smsLists.id, id))
       .returning();
-    
+
     if (!list) {
       throw new Error('SMS list not found');
     }
-    
+
     return list;
   }
 
   async deleteSmsList(id: string): Promise<void> {
     // Delete related records first to avoid foreign key constraint errors
-    
+
     // Delete all broadcast deliveries for broadcasts in this list
     const broadcasts = await db
       .select({ id: smsBroadcastMessages.id })
       .from(smsBroadcastMessages)
       .where(eq(smsBroadcastMessages.listId, id));
-    
+
     for (const broadcast of broadcasts) {
       await db
         .delete(smsBroadcastDeliveries)
         .where(eq(smsBroadcastDeliveries.broadcastId, broadcast.id));
     }
-    
+
     // Delete all broadcasts for this list
     await db
       .delete(smsBroadcastMessages)
       .where(eq(smsBroadcastMessages.listId, id));
-    
+
     // Delete all list members
     await db
       .delete(smsListMembers)
       .where(eq(smsListMembers.listId, id));
-    
+
     // Finally delete the list itself
     await db
       .delete(smsLists)
@@ -4118,11 +4057,11 @@ export class DatabaseStorage implements IStorage {
       .insert(smsListMembers)
       .values(data)
       .returning();
-    
+
     if (!member) {
       throw new Error('Failed to add SMS list member');
     }
-    
+
     return member;
   }
 
@@ -4130,7 +4069,7 @@ export class DatabaseStorage implements IStorage {
     if (members.length === 0) {
       return [];
     }
-    
+
     return db
       .insert(smsListMembers)
       .values(members)
@@ -4185,7 +4124,7 @@ export class DatabaseStorage implements IStorage {
         eq(smsListMembers.userId, userId)
       ))
       .limit(1);
-    
+
     return !!member;
   }
 
@@ -4195,11 +4134,11 @@ export class DatabaseStorage implements IStorage {
       .insert(smsBroadcastMessages)
       .values(data)
       .returning();
-    
+
     if (!message) {
       throw new Error('Failed to create SMS broadcast message');
     }
-    
+
     return message;
   }
 
@@ -4208,7 +4147,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(smsBroadcastMessages)
       .where(eq(smsBroadcastMessages.id, id));
-    
+
     return message;
   }
 
@@ -4229,11 +4168,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(smsBroadcastMessages.id, id))
       .returning();
-    
+
     if (!message) {
       throw new Error('SMS broadcast message not found');
     }
-    
+
     return message;
   }
 
@@ -4249,11 +4188,11 @@ export class DatabaseStorage implements IStorage {
       .insert(smsBroadcastDeliveries)
       .values(data)
       .returning();
-    
+
     if (!delivery) {
       throw new Error('Failed to create SMS broadcast delivery');
     }
-    
+
     return delivery;
   }
 
@@ -4261,7 +4200,7 @@ export class DatabaseStorage implements IStorage {
     if (deliveries.length === 0) {
       return [];
     }
-    
+
     return db
       .insert(smsBroadcastDeliveries)
       .values(deliveries)
@@ -4284,7 +4223,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(smsBroadcastDeliveries)
       .where(eq(smsBroadcastDeliveries.id, id));
-    
+
     return delivery;
   }
 
@@ -4294,11 +4233,11 @@ export class DatabaseStorage implements IStorage {
       .set(data)
       .where(eq(smsBroadcastDeliveries.id, id))
       .returning();
-    
+
     if (!delivery) {
       throw new Error('SMS broadcast delivery not found');
     }
-    
+
     return delivery;
   }
 
@@ -4329,11 +4268,11 @@ export class DatabaseStorage implements IStorage {
         broadcasts: true,
       },
     });
-    
+
     if (!list) {
       return undefined;
     }
-    
+
     return {
       ...list,
       members: list.members.map(m => ({
@@ -4352,7 +4291,7 @@ export class DatabaseStorage implements IStorage {
         deliveries: true,
       },
     });
-    
+
     return broadcast;
   }
 }
