@@ -79,7 +79,15 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
 
   const createCourseMutation = useMutation({
     mutationFn: async (data: CourseFormData) => {
-      return await apiRequest("POST", "/api/instructor/courses", data);
+      const courseData = {
+        ...data,
+        price: parseFloat(data.price),
+        depositAmount: data.depositAmount && data.depositAmount !== "" ? parseFloat(data.depositAmount) : undefined,
+        maxStudents: parseInt(data.maxStudents?.toString() || "20"),
+        rounds: data.rounds ? parseInt(data.rounds.toString()) : undefined,
+        imageUrl: uploadedImageUrl || data.imageUrl || undefined,
+      };
+      return await apiRequest("POST", "/api/instructor/courses", courseData);
     },
     onSuccess: () => {
       toast({
@@ -87,26 +95,26 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
         description: "Your course has been created successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
       onCourseCreated?.();
       onClose?.();
       form.reset();
       setUploadedImageUrl("");
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Course creation error:", error);
       toast({
         title: "Error Creating Course",
-        description: error.message,
+        description: error.message || "Failed to create course. Please try again.",
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = (data: CourseFormData) => {
-    const courseData = {
-      ...data,
-      imageUrl: uploadedImageUrl || undefined,
-    };
-    createCourseMutation.mutate(courseData);
+    console.log("Form submitted with data:", data);
+    createCourseMutation.mutate(data);
   };
 
   const handleGetUploadParameters = async () => {
@@ -181,7 +189,17 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
         </h2>
       </div>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} onKeyDown={(e) => {
+        <form onSubmit={form.handleSubmit(
+          onSubmit,
+          (errors) => {
+            console.error("Form validation errors:", errors);
+            toast({
+              title: "Validation Error",
+              description: "Please check all required fields and fix any errors.",
+              variant: "destructive",
+            });
+          }
+        )} onKeyDown={(e) => {
           // Prevent form submission on Enter key press
           if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'BUTTON') {
             e.preventDefault();
