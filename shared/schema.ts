@@ -1416,13 +1416,6 @@ export const products = pgTable("products", {
   productType: varchar("product_type", { length: 20 }).notNull().default('physical'), // 'physical', 'digital', 'service'
   fulfillmentType: varchar("fulfillment_type", { length: 20 }).notNull().default('manual'), // 'printful', 'download', 'manual', 'moodle'
 
-  // Images
-  primaryImageUrl: varchar("primary_image_url"),
-  imageUrls: text("image_urls").array(), // Array of additional image URLs
-
-  // Moodle integration for online courses
-  moodleCourseId: integer("moodle_course_id"), // Link to Moodle course for automatic enrollment
-
   // Status and visibility
   status: varchar("status", { length: 20 }).default('draft'), // 'draft', 'active', 'inactive'
   featured: boolean("featured").default(false),
@@ -1439,10 +1432,13 @@ export const products = pgTable("products", {
   printfulProductId: integer("printful_product_id"),
   printfulSyncProductId: integer("printful_sync_product_id"),
 
-  // Moodle integration
-  moodleCourseId: integer("moodle_course_id"), // Moodle course ID for auto-enrollment
+  // Moodle integration for online courses
+  moodleCourseId: integer("moodle_course_id"), // Link to Moodle course for automatic enrollment
   moodleEnrollmentEnabled: boolean("moodle_enrollment_enabled").notNull().default(false),
 
+  // Audit fields
+  createdBy: varchar("created_by").references(() => users.id),
+  updatedBy: varchar("updated_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
