@@ -510,12 +510,26 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
               Cancel
             </Button>
             <Button 
-              type="submit" 
-              disabled={updateCourseMutation.isPending}
+              type="submit"
+              disabled={updateCourseMutation.isPending || isUploadingImage}
               data-testid="button-update-course"
+              onClick={(e) => {
+                e.preventDefault();
+                form.handleSubmit(
+                  onSubmit,
+                  (errors) => {
+                    console.error("Form validation errors:", errors);
+                    toast({
+                      title: "Validation Error",
+                      description: "Please check all required fields and fix any errors.",
+                      variant: "destructive",
+                    });
+                  }
+                )();
+              }}
             >
               <Edit className="mr-2 h-4 w-4" />
-              {updateCourseMutation.isPending ? "Updating..." : "Update Course"}
+              {updateCourseMutation.isPending ? "Updating..." : isUploadingImage ? "Uploading..." : "Update Course"}
             </Button>
           </div>
         </form>

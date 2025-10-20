@@ -537,9 +537,23 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
                 </Button>
               ) : (
                 <Button 
-                  type="submit" 
+                  type="submit"
                   disabled={createCourseMutation.isPending || isUploadingImage}
                   data-testid="button-submit-course"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    form.handleSubmit(
+                      onSubmit,
+                      (errors) => {
+                        console.error("Form validation errors:", errors);
+                        toast({
+                          title: "Validation Error",
+                          description: "Please check all required fields and fix any errors.",
+                          variant: "destructive",
+                        });
+                      }
+                    )();
+                  }}
                 >
                   {createCourseMutation.isPending ? "Creating..." : isUploadingImage ? "Uploading Image..." : "Create Course"}
                 </Button>
