@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Layout } from "@/components/Layout";
+import { useCart } from "@/components/shopping-cart";
 import { 
-  Calendar, 
+  Calendar as CalendarIcon, 
   Clock, 
   Target, 
   BookOpen, 
@@ -15,11 +16,15 @@ import {
   Smartphone,
   Globe,
   Star,
-  Quote
+  Quote,
+  ShoppingCart,
+  Package,
+  Filter,
+  Search
 } from "lucide-react";
-import { useState } from "react";
-import { RegistrationModal } from "@/components/RegistrationModal";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 interface CourseSpec {
   icon: React.ComponentType<{ className?: string }>;
@@ -153,41 +158,35 @@ const faqs: FAQ[] = [
 ];
 
 export function OnlineConcealedCarryPage() {
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
-  const [showModal, setShowModal] = useState(false);
+  const { addItem } = useCart();
+  const { toast } = useToast();
+  const [, navigate] = useLocation();
 
-  const { data: courses } = useQuery({
-    queryKey: ['/api/courses']
+  const { data: products } = useQuery({
+    queryKey: ['/api/products']
   });
 
-  const handleCourseSelect = (course: any) => {
-    setSelectedCourse(course);
-    setShowModal(true);
+  const getOnlineConcealedCarryProduct = () => {
+    if (!products || products.length === 0) return null;
+
+    return products.find((product: any) => 
+      product.name && 
+      product.name.toLowerCase().includes('online') && 
+      product.name.toLowerCase().includes('concealed carry') &&
+      product.type === 'course'
+    );
   };
 
-  const getOnlineCourse = () => {
-    if (!courses || courses.length === 0) return null;
-    
-    // Look for online concealed carry course
-    const onlineCourse = courses.find((course: any) => 
-      course.name && 
-      course.name.toLowerCase().includes('online') && 
-      course.name.toLowerCase().includes('concealed')
-    );
-    
-    // Fallback to any concealed carry course
-    if (!onlineCourse) {
-      const concealedCourse = courses.find((course: any) => 
-        course.name && 
-        course.name.toLowerCase().includes('concealed')
-      );
-      if (concealedCourse) return concealedCourse;
-    }
-    
-    // Final fallback to first available course
-    const firstCourse = courses.find((course: any) => course.name);
-    return onlineCourse || firstCourse;
+  const handlePurchase = (product: any) => {
+    addItem(product);
+    toast({
+      title: "Item added to cart",
+      description: `"${product.name}" has been added to your cart.`,
+    });
+    navigate('/cart');
   };
+
+  const onlineConcealedCarryProduct = getOnlineConcealedCarryProduct();
 
   return (
     <Layout>
@@ -199,20 +198,20 @@ export function OnlineConcealedCarryPage() {
             <Badge variant="secondary" className="mb-4 bg-accent text-accent-foreground">
               New Mexico Concealed Carry Course
             </Badge>
-            
+
             <h1 className="text-2xl md:text-3xl font-medium mb-6" data-testid="text-hero-title">
               Online New Mexico Concealed Carry Course
             </h1>
-            
+
             <div className="max-w-6xl mx-auto">
               <p className="text-base md:text-lg mb-8 leading-relaxed">
                 New Mexico Concealed Carry Training On <strong>YOUR</strong> Schedule
               </p>
-              
+
               <p className="text-sm md:text-base mb-8">
                 Complete 8 hours online at your pace and place, and the remaining 7 hours at the range!
               </p>
-              
+
               <div className="bg-primary-foreground/10 rounded-lg p-6 mb-8">
                 <p className="text-base font-normal mb-2">
                   Concealed Carry training around <strong>your schedule</strong>, not the other way around. Complete required classroom instruction in your "office", on the plane, at work, in your pjs, and/or on your couch.
@@ -263,9 +262,9 @@ export function OnlineConcealedCarryPage() {
               <p className="text-sm leading-relaxed">
                 Our <strong>ONLINE New Mexico Concealed Carry Course</strong> has been fully vetted and approved by the New Mexico Department of Public Safety. Complete up to 8 of the 15 required hours online, at your pace and place. Once you complete the online portion, we'll arrange a 7-hour live-fire range day that works with <strong>your</strong> schedule.
               </p>
-              
+
               <Separator className="my-6" />
-              
+
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="text-center p-4 bg-secondary/30 rounded-lg">
                   <div className="text-3xl font-bold text-primary mb-2">53%</div>
@@ -306,39 +305,37 @@ export function OnlineConcealedCarryPage() {
           {/* Call to Action */}
           <div className="text-center bg-primary text-primary-foreground rounded-lg p-8">
             <h2 className="text-xl md:text-2xl font-medium mb-6">
-              You've Waited Long Enough - Enroll Today
+              You've Waited Long Enough - Purchase Today
             </h2>
             <p className="text-base mb-8 leading-relaxed">
-              We now offer easy payment options for our New Mexico Online Concealed Carry Course!
+              Get instant access to our New Mexico Online Concealed Carry Course!
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                variant="secondary"
-                onClick={() => {
-                  const course = getOnlineCourse();
-                  if (course) handleCourseSelect(course);
-                }}
-                disabled={!getOnlineCourse()}
-                data-testid="button-enroll-full"
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                Enroll Today - Pay in Full
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                onClick={() => {
-                  const course = getOnlineCourse();
-                  if (course) handleCourseSelect(course);
-                }}
-                disabled={!getOnlineCourse()}
-                data-testid="button-enroll-payments"
-                className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
-              >
-                Easy Payments Option
-              </Button>
+              {onlineConcealedCarryProduct ? (
+                <>
+                  <Button 
+                    size="lg" 
+                    variant="secondary"
+                    onClick={() => handlePurchase(onlineConcealedCarryProduct)}
+                    data-testid="button-purchase-full"
+                    className="bg-accent text-accent-foreground hover:bg-accent/90"
+                  >
+                    Purchase Now - Instant Access
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    onClick={() => handlePurchase(onlineConcealedCarryProduct)}
+                    data-testid="button-purchase-payments"
+                    className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
+                  >
+                    Add to Cart
+                  </Button>
+                </>
+              ) : (
+                <p>Product details loading...</p>
+              )}
             </div>
           </div>
         </div>
@@ -404,34 +401,22 @@ export function OnlineConcealedCarryPage() {
           <p className="text-base mb-8 leading-relaxed">
             If you have been wanting to get your New Mexico Concealed Carry License, stop waiting to follow-through with it and join the many other students who have received the required training on their schedule, not the other way around.
           </p>
-          
-          <Button 
-            size="lg" 
-            variant="secondary"
-            onClick={() => {
-              const course = getOnlineCourse();
-              if (course) handleCourseSelect(course);
-            }}
-            disabled={!getOnlineCourse()}
-            data-testid="button-get-started"
-            className="bg-accent text-accent-foreground hover:bg-accent/90"
-          >
-            Let's Get Started
-          </Button>
+
+          {onlineConcealedCarryProduct ? (
+            <Button 
+              size="lg" 
+              variant="secondary"
+              onClick={() => handlePurchase(onlineConcealedCarryProduct)}
+              data-testid="button-get-started"
+              className="bg-accent text-accent-foreground hover:bg-accent/90"
+            >
+              Let's Get Started
+            </Button>
+          ) : (
+            <p>Product details loading...</p>
+          )}
         </div>
       </section>
-
-      {/* Registration Modal */}
-        {selectedCourse && (
-          <RegistrationModal
-            isOpen={showModal}
-            onClose={() => {
-              setShowModal(false);
-              setSelectedCourse(null);
-            }}
-            course={selectedCourse}
-          />
-        )}
       </div>
     </Layout>
   );

@@ -3459,7 +3459,7 @@ Practical Defense Training`;
 
         const htmlContent = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">Payment Reminder</h2>
+            <h2 style="color: #1f2937;">Payment Reminder</h2>
             <p>Hello ${studentName},</p>
             <p>This is a friendly reminder about your outstanding balance for <strong>${courseName}</strong>.</p>
 
@@ -3716,10 +3716,10 @@ Practical Defense Training`;
       }
 
       // Update enrollment status to hold and clear schedule
+      // Note: We keep the scheduleId but change status to indicate hold
       const updatedEnrollment = await storage.updateEnrollment(enrollmentId, {
         status: 'hold',
         cancellationReason: notes.trim(),
-        // Note: We keep the scheduleId but change status to indicate hold
       });
 
       res.json({ success: true, enrollment: updatedEnrollment });
@@ -4891,6 +4891,96 @@ Practical Defense Training`;
     }
   });
 
+  // Checkout completion endpoint
+  app.post('/api/checkout/complete', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { paymentIntentId } = req.body;
+
+      if (!paymentIntentId) {
+        return res.status(400).json({ message: "Payment intent ID is required" });
+      }
+
+      // Verify the payment intent with Stripe
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ message: "Payment has not been completed" });
+      }
+
+      // Get the cart items from metadata
+      const cartItems = JSON.parse(paymentIntent.metadata.cartItems || '[]');
+
+      // Create order record
+      const order = await storage.createOrder({
+        userId,
+        stripePaymentIntentId: paymentIntentId,
+        subtotal: paymentIntent.amount / 100, // Convert from cents
+        tax: 0, // Calculate if needed
+        total: paymentIntent.amount / 100,
+        status: 'completed',
+        paymentStatus: 'paid',
+      });
+
+      // Create order items and handle Moodle enrollments
+      for (const item of cartItems) {
+        await storage.createOrderItem({
+          orderId: order.id,
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          priceAtTime: item.priceAtTime,
+        });
+
+        // Check if this product requires Moodle enrollment
+        const product = await storage.getProduct(item.productId);
+        if (product && product.moodleEnrollmentEnabled && product.moodleCourseId) {
+          try {
+            const { moodleService } = await import('./moodleService');
+            const user = await storage.getUser(userId);
+
+            if (user) {
+              // Get or create Moodle user
+              const moodleUser = await moodleService.getOrCreateUser({
+                username: user.email.split('@')[0],
+                password: randomUUID(), // Generate random password
+                firstname: user.firstName || '',
+                lastname: user.lastName || '',
+                email: user.email,
+              });
+
+              // Enroll user in Moodle course
+              await moodleService.enrollUser(moodleUser.id, product.moodleCourseId);
+
+              // Update user record with Moodle info
+              await storage.updateUser(userId, {
+                moodleUserId: moodleUser.id,
+                moodleUsername: moodleUser.username,
+              });
+
+              console.log(`Successfully enrolled user ${userId} in Moodle course ${product.moodleCourseId}`);
+            }
+          } catch (moodleError) {
+            console.error(`Failed to enroll user in Moodle course ${product.moodleCourseId}:`, moodleError);
+            // Don't fail the entire checkout if Moodle enrollment fails
+          }
+        }
+      }
+
+      // Clear the user's cart
+      await storage.clearCart(userId);
+
+      res.json({ 
+        success: true, 
+        orderId: order.id,
+        message: "Order completed successfully" 
+      });
+    } catch (error: any) {
+      console.error("Error completing checkout:", error);
+      res.status(500).json({ message: "Failed to complete checkout" });
+    }
+  });
+
   // Contact form submission endpoint
   app.post("/api/contact", async (req, res) => {
     try {
@@ -5615,7 +5705,7 @@ jeremy@abqconcealedcarry.com
 
       // Helper function to format phone number to E.164 format
       const formatPhoneNumber = (phone: string): string => {
-        let formatted = phone.replace(/[\s\-\(\)\.]/g, ''); // Remove formatting
+        let formatted = phone.replace(/[\The user wants to add the `crypto` import statement to the code.The user wants to add the `crypto` import statement to the code.replace(/\s\-\(\)\.]/g, ''); // Remove formatting
 
         // Add country code if missing (assuming US +1)
         if (!formatted.startsWith('+')) {
@@ -5701,8 +5791,7 @@ jeremy@abqconcealedcarry.com
       await Promise.all(sendPromises);
 
       // Update broadcast with final stats
-      const updatedBroadcast = await storage.updateSmsBroadcastMessage(req.params.broadcastId, {
-        status: 'sent',
+      const updatedBroadcast = await storage.updateSmsBroadcastMessage(req.params.broadcastId, {        status: 'sent',
         successCount,
         failureCount,
         sentAt: new Date(),
@@ -5807,21 +5896,44 @@ jeremy@abqconcealedcarry.com
               try {
                 const personalizedMessage = replaceDynamicTags(broadcast.messagePlain, member);
 
+                // Format phone number to E.164 format for consistency
+                const formatPhoneNumber = (phone: string): string => {
+                  let formatted = phone.replace(/[\s\-\(\)\.]/g, ''); // Remove formatting
+
+                  // Add country code if missing (assuming US +1)
+                  if (!formatted.startsWith('+')) {
+                    if (formatted.length === 10) {
+                      formatted = '+1' + formatted;
+                    } else if (formatted.length === 11 && formatted.startsWith('1')) {
+                      formatted = '+' + formatted;
+                    } else {
+                      formatted = '+' + formatted;
+                    }
+                  }
+
+                  return formatted;
+                };
+                const formattedPhone = formatPhoneNumber(member.user.phone!);
+
+                // Create delivery record with pending status
                 const delivery = await storage.createSmsBroadcastDelivery({
                   broadcastId: broadcast.id,
                   userId: member.userId,
-                  phoneNumber: member.user.phone!,
+                  phoneNumber: formattedPhone,
                   personalizedMessage,
                   status: 'pending',
                 });
 
+                // Send SMS
                 const smsResult = await sendSms({
-                  to: member.user.phone!,
+                  to: formattedPhone,
                   body: personalizedMessage,
                   instructorId: broadcast.instructorId,
+                  studentId: member.userId, // Add studentId for proper threading
                   purpose: 'educational',
                 });
 
+                // Update delivery record based on result
                 if (smsResult.success) {
                   await storage.updateSmsBroadcastDelivery(delivery.id, {
                     status: 'sent',

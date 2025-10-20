@@ -1016,7 +1016,7 @@ export const prohibitedWords = pgTable("prohibited_words", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Message audit log for SMS compliance tracking  
+// Message audit log for SMS compliance tracking
 export const messageAuditLog = pgTable("message_audit_log", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   instructorId: varchar("instructor_id").notNull().references(() => users.id),
@@ -1075,22 +1075,6 @@ export const communications = pgTable("communications", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
-
-// Communications relations
-export const communicationsRelations = relations(communications, ({ one }) => ({
-  user: one(users, {
-    fields: [communications.userId],
-    references: [users.id],
-  }),
-  enrollment: one(enrollments, {
-    fields: [communications.enrollmentId],
-    references: [enrollments.id],
-  }),
-  course: one(courses, {
-    fields: [communications.courseId],
-    references: [courses.id],
-  }),
-}));
 
 // Prohibited words insert schema
 export const insertProhibitedWordSchema = createInsertSchema(prohibitedWords).omit({
@@ -1420,52 +1404,45 @@ export const productCategories = pgTable("product_categories", {
 
 // Products table - main product catalog
 export const products = pgTable("products", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name", { length: 255 }).notNull(),
-  description: text("description").notNull(),
+  description: text("description"),
   shortDescription: varchar("short_description", { length: 500 }),
-  sku: varchar("sku", { length: 100 }).unique().notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  salePrice: decimal("sale_price", { precision: 10, scale: 2 }),
+  categoryId: uuid("category_id").references(() => productCategories.id),
+  sku: varchar("sku", { length: 100 }).unique().notNull(),
 
   // Product type and fulfillment
-  productType: varchar("product_type", { length: 20 }).notNull(), // 'physical', 'digital', 'service'
-  fulfillmentType: varchar("fulfillment_type", { length: 20 }).notNull(), // 'printful', 'download', 'manual'
-
-  // Printful integration
-  printfulProductId: integer("printful_product_id"),
-  printfulSyncVariantId: integer("printful_sync_variant_id"),
-  designTemplateUrl: varchar("design_template_url"),
-  mockupImageUrl: varchar("mockup_image_url"),
-
-  // Digital product settings
-  downloadUrl: varchar("download_url"), // For digital products
-  downloadLimit: integer("download_limit"), // Max downloads per purchase
-  downloadExpireDays: integer("download_expire_days"), // Days until download expires
-
-  // Inventory and shipping
-  trackInventory: boolean("track_inventory").default(false),
-  stockQuantity: integer("stock_quantity"),
-  lowStockThreshold: integer("low_stock_threshold").default(5),
-  weight: decimal("weight", { precision: 8, scale: 2 }), // in pounds
-
-  // SEO and organization
-  slug: varchar("slug", { length: 255 }).unique(),
-  categoryId: varchar("category_id").references(() => productCategories.id),
-  tags: text("tags").array(),
+  productType: varchar("product_type", { length: 20 }).notNull().default('physical'), // 'physical', 'digital', 'service'
+  fulfillmentType: varchar("fulfillment_type", { length: 20 }).notNull().default('manual'), // 'printful', 'download', 'manual', 'moodle'
 
   // Images
   primaryImageUrl: varchar("primary_image_url"),
   imageUrls: text("image_urls").array(), // Array of additional image URLs
+
+  // Moodle integration for online courses
+  moodleCourseId: integer("moodle_course_id"), // Link to Moodle course for automatic enrollment
 
   // Status and visibility
   status: varchar("status", { length: 20 }).default('draft'), // 'draft', 'active', 'inactive'
   featured: boolean("featured").default(false),
   sortOrder: integer("sort_order").default(0),
 
-  // Audit fields
-  createdBy: varchar("created_by").references(() => users.id),
-  updatedBy: varchar("updated_by").references(() => users.id),
+  // Media
+  primaryImageUrl: varchar("primary_image_url"),
+  imageUrls: text("image_urls").array(),
+
+  // Organization
+  tags: text("tags").array(),
+
+  // Printful integration
+  printfulProductId: integer("printful_product_id"),
+  printfulSyncProductId: integer("printful_sync_product_id"),
+
+  // Moodle integration
+  moodleCourseId: integer("moodle_course_id"), // Moodle course ID for auto-enrollment
+  moodleEnrollmentEnabled: boolean("moodle_enrollment_enabled").notNull().default(false),
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1777,7 +1754,7 @@ export type EcommerceOrderItemWithDetails = EcommerceOrderItem & {
 
 // E-commerce enums
 export type ProductType = 'physical' | 'digital' | 'service';
-export type FulfillmentType = 'printful' | 'download' | 'manual';
+export type FulfillmentType = 'printful' | 'download' | 'manual' | 'moodle';
 export type ProductStatus = 'draft' | 'active' | 'inactive';
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
@@ -1853,3 +1830,24 @@ export type CourseNotificationSignupWithDetails = CourseNotificationSignup & {
 // Notification enums
 export type NotificationChannel = 'email' | 'sms' | 'both';
 export type NotificationDeliveryStatus = 'sent' | 'failed' | 'pending';
+
+// Product schema validation
+const productSchema = z.object({
+  name: z.string().min(1, "Product name is required"),
+  description: z.string().min(1, "Description is required"),
+  shortDescription: z.string().optional(),
+  price: z.string().min(1, "Price is required").refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Price must be a valid non-negative number"),
+  categoryId: z.string().uuid("Please select a category"),
+  sku: z.string().min(1, "SKU is required"),
+  productType: z.enum(["physical", "digital", "service"]).default("physical"),
+  fulfillmentType: z.enum(["printful", "download", "manual", "moodle"]).default("manual"),
+  status: z.enum(["active", "inactive", "draft"]).default("active"),
+  featured: z.boolean().default(false),
+  primaryImageUrl: z.string().optional(),
+  imageUrls: z.array(z.string()).default([]),
+  tags: z.array(z.string()).default([]),
+  sortOrder: z.number().int().min(0).default(0),
+  printfulProductId: z.number().int().positive().optional().nullable(),
+  moodleCourseId: z.number().int().positive().optional().nullable(),
+  moodleEnrollmentEnabled: z.boolean().default(false),
+});
