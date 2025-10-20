@@ -109,7 +109,7 @@ import {
   smsListMembers,
   smsBroadcastMessages,
   smsBroadcastDeliveries,
-  type SmsList,
+  typeSmsList,
   type InsertSmsList,
   typeSmsListMember,
   type InsertSmsListMember,
@@ -123,7 +123,7 @@ import {
   typeSmsBroadcastDeliveryWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne } from "drizzle-orm";
+import { eq, and, inArray, desc, asc, isNotNull, isNull, gte, lte, or, lt, sql, gt } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -864,11 +864,7 @@ export class DatabaseStorage implements IStorage {
 
   async getCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]> {
     const courseList = await db.query.courses.findMany({
-      where: and(
-        eq(courses.instructorId, instructorId), 
-        isNull(courses.deletedAt),
-        eq(courses.isActive, true)
-      ),
+      where: and(eq(courses.instructorId, instructorId), isNull(courses.deletedAt)),
       with: {
         schedules: {
           where: isNull(courseSchedules.deletedAt),
@@ -893,7 +889,7 @@ export class DatabaseStorage implements IStorage {
         instructor: true,
         category: true,
       },
-      orderBy: desc(courses.createdAt),
+      orderBy: asc(courses.title),
     });
     return courseList;
   }
@@ -1932,7 +1928,7 @@ export class DatabaseStorage implements IStorage {
           // Replace this with actual Moodle API call to enroll the user
           // Example: await callMoodleEnrollmentAPI(user.email, moodleCourseId);
           console.log(`Attempting to enroll user ${user.email} in Moodle course ${moodleCourseId}`);
-          
+
           // Simulate successful enrollment
           moodleEnrolled = true;
           moodleEnrollmentDate = new Date();
