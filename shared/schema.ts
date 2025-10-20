@@ -59,6 +59,7 @@ export const users = pgTable("users", {
   role: varchar("role").notNull().default('student'), // 'student' or 'instructor'
   // Moodle integration
   moodleUserId: integer("moodle_user_id"), // Moodle user ID for LMS integration
+  moodleUsername: text("moodle_username"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -514,45 +515,45 @@ export const promoCodes = pgTable("promo_codes", {
   code: varchar("code", { length: 50 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
-  
+
   // Discount configuration
   type: varchar("type", { length: 20 }).notNull(), // 'PERCENT' or 'FIXED_AMOUNT'
   value: decimal("value", { precision: 10, scale: 2 }).notNull(), // Percentage or dollar amount
-  
+
   // Scope configuration
   scopeType: varchar("scope_type", { length: 20 }).notNull().default('GLOBAL'), // 'GLOBAL', 'COURSES', 'CATEGORIES'
   scopeCourseIds: text("scope_course_ids").array(), // Array of course IDs when scoped to specific courses
   scopeCategoryIds: text("scope_category_ids").array(), // Array of category IDs when scoped to categories
   exclusionCourseIds: text("exclusion_course_ids").array(), // Courses to exclude from discount
   exclusionCategoryIds: text("exclusion_category_ids").array(), // Categories to exclude from discount
-  
+
   // Eligibility criteria
   minCartSubtotal: decimal("min_cart_subtotal", { precision: 10, scale: 2 }),
   firstPurchaseOnly: boolean("first_purchase_only").notNull().default(false),
   newCustomersOnly: boolean("new_customers_only").notNull().default(false),
   allowedUserIds: text("allowed_user_ids").array(), // Specific users who can use this code
   deniedUserIds: text("denied_user_ids").array(), // Users who cannot use this code
-  
+
   // Usage limits
   maxTotalUses: integer("max_total_uses"), // null = unlimited
   maxUsesPerUser: integer("max_uses_per_user").default(1),
   currentUseCount: integer("current_use_count").notNull().default(0),
-  
+
   // Time constraints
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
   validDaysOfWeek: varchar("valid_days_of_week", { length: 20 }), // Comma-separated: '1,2,3,4,5' for Mon-Fri
   validTimeStart: varchar("valid_time_start", { length: 8 }), // HH:MM:SS format
   validTimeEnd: varchar("valid_time_end", { length: 8 }), // HH:MM:SS format
-  
+
   // Stacking and application rules
   stackingPolicy: varchar("stacking_policy", { length: 20 }).notNull().default('EXCLUSIVE'), // 'EXCLUSIVE', 'STACKABLE'
   applyToTax: boolean("apply_to_tax").notNull().default(false),
   applyToShipping: boolean("apply_to_shipping").notNull().default(false),
-  
+
   // Status management
   status: varchar("status", { length: 20 }).notNull().default('ACTIVE'), // 'ACTIVE', 'SCHEDULED', 'PAUSED', 'EXPIRED'
-  
+
   // Audit fields
   createdBy: varchar("created_by").notNull().references(() => users.id),
   updatedBy: varchar("updated_by").references(() => users.id),
@@ -570,15 +571,15 @@ export const notificationTemplates = pgTable("notification_templates", {
   content: text("content").notNull(), // HTML for email, plain text for SMS
   replyToEmail: varchar("reply_to_email"), // Custom reply-to email for this template
   variables: text("variables").array(), // Available variables like {{student_name}}, {{course_name}}
-  
+
   // Course associations
   courseId: uuid("course_id").references(() => courses.id), // null for global templates
   scheduleId: uuid("schedule_id").references(() => courseSchedules.id), // null for course-wide templates
-  
+
   // Template settings
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0), // For custom ordering
-  
+
   // Audit fields
   createdBy: varchar("created_by").notNull().references(() => users.id),
   updatedBy: varchar("updated_by").references(() => users.id),
@@ -590,22 +591,22 @@ export const notificationTemplates = pgTable("notification_templates", {
 export const notificationSchedules = pgTable("notification_schedules", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   templateId: uuid("template_id").notNull().references(() => notificationTemplates.id, { onDelete: 'cascade' }),
-  
+
   // Trigger configuration
   triggerEvent: varchar("trigger_event", { length: 50 }).notNull(), // 'registration', 'payment_received', 'payment_failed', 'course_approaching', 'course_cancelled', 'license_expiration'
   triggerTiming: varchar("trigger_timing", { length: 20 }).notNull().default('immediate'), // 'immediate', 'delayed'
   delayDays: integer("delay_days").default(0), // Days to delay (negative for before, positive for after)
   delayHours: integer("delay_hours").default(0), // Additional hours delay
-  
+
   // Scope configuration
   courseId: uuid("course_id").references(() => courses.id), // null for global schedules
   scheduleId: uuid("schedule_id").references(() => courseSchedules.id), // null for course-wide schedules
-  
+
   // Settings
   isActive: boolean("is_active").notNull().default(true),
   sendEmail: boolean("send_email").notNull().default(true),
   sendSms: boolean("send_sms").notNull().default(false),
-  
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -615,33 +616,33 @@ export const notificationLogs = pgTable("notification_logs", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   templateId: uuid("template_id").notNull().references(() => notificationTemplates.id),
   scheduleId: uuid("schedule_id").references(() => notificationSchedules.id), // null for manual sends
-  
+
   // Recipient information
   recipientId: varchar("recipient_id").notNull().references(() => users.id),
   recipientEmail: varchar("recipient_email", { length: 255 }),
   recipientPhone: varchar("recipient_phone", { length: 20 }),
-  
+
   // Message details
   type: varchar("type", { length: 10 }).notNull(), // 'email' or 'sms'
   subject: varchar("subject", { length: 500 }), // Email subject (after variable substitution)
   content: text("content").notNull(), // Final message content (after variable substitution)
   variables: jsonb("variables"), // Variables used for substitution
-  
+
   // Delivery tracking
   status: varchar("status", { length: 20 }).notNull().default('pending'), // 'pending', 'sent', 'delivered', 'failed', 'bounced'
   deliveryAttempts: integer("delivery_attempts").notNull().default(0),
   lastAttemptAt: timestamp("last_attempt_at"),
   deliveredAt: timestamp("delivered_at"),
   errorMessage: text("error_message"),
-  
+
   // External service tracking
   externalId: varchar("external_id", { length: 255 }), // SendGrid message ID, Twilio SID, etc.
   externalStatus: varchar("external_status", { length: 50 }),
-  
+
   // Context
   enrollmentId: uuid("enrollment_id").references(() => enrollments.id), // Associated enrollment if applicable
   courseId: uuid("course_id").references(() => courses.id), // Associated course if applicable
-  
+
   // Audit
   sentBy: varchar("sent_by").references(() => users.id), // null for automatic sends
   sentAt: timestamp("sent_at").defaultNow(),
@@ -654,21 +655,21 @@ export const promoCodeRedemptions = pgTable("promo_code_redemptions", {
   promoCodeId: uuid("promo_code_id").notNull().references(() => promoCodes.id),
   userId: varchar("user_id").notNull().references(() => users.id),
   enrollmentId: uuid("enrollment_id").references(() => enrollments.id),
-  
+
   // Redemption details
   originalAmount: decimal("original_amount", { precision: 10, scale: 2 }).notNull(),
   discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).notNull(),
   finalAmount: decimal("final_amount", { precision: 10, scale: 2 }).notNull(),
-  
+
   // Payment integration
   paymentIntentId: varchar("payment_intent_id"),
   stripeMetadata: jsonb("stripe_metadata"), // Store additional Stripe metadata
-  
+
   // Tracking
   ipAddress: varchar("ip_address", { length: 45 }), // Support IPv6
   userAgent: text("user_agent"),
   redemptionSource: varchar("redemption_source", { length: 50 }).default('CHECKOUT'), // 'CHECKOUT', 'ADMIN', etc.
-  
+
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_promo_redemptions_code_user").on(table.promoCodeId, table.userId),
@@ -852,21 +853,21 @@ export const waiverTemplates = pgTable("waiver_templates", {
   name: varchar("name", { length: 255 }).notNull(),
   content: text("content").notNull(), // Rich text HTML content
   version: integer("version").notNull().default(1),
-  
+
   // Scope configuration
   scope: varchar("scope", { length: 20 }).notNull().default('course'), // 'global', 'course', 'category'
   courseIds: text("course_ids").array(), // Array of course IDs when scope is 'course'
   categoryIds: text("category_ids").array(), // Array of category IDs when scope is 'category'
-  
+
   // Waiver settings
   validityDays: integer("validity_days").default(365), // How long waiver is valid (null = forever)
   requiresGuardian: boolean("requires_guardian").notNull().default(false), // For minors
   isActive: boolean("is_active").notNull().default(true),
   forceReSign: boolean("force_re_sign").notNull().default(false), // Force re-sign on version update
-  
+
   // Merge fields available for this template
   availableFields: text("available_fields").array().default(sql`ARRAY['studentName', 'courseName', 'date', 'instructorName', 'location']`),
-  
+
   // Audit fields
   createdBy: varchar("created_by").notNull().references(() => users.id),
   updatedBy: varchar("updated_by").references(() => users.id),
@@ -878,24 +879,24 @@ export const waiverInstances = pgTable("waiver_instances", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   enrollmentId: uuid("enrollment_id").notNull().references(() => enrollments.id, { onDelete: 'cascade' }),
   templateId: uuid("template_id").notNull().references(() => waiverTemplates.id, { onDelete: 'restrict' }),
-  
+
   // Status tracking
   status: varchar("status", { length: 20 }).notNull().default('pending'), // 'pending', 'signed', 'expired', 'cancelled'
   signerType: varchar("signer_type", { length: 20 }).notNull().default('student'), // 'student', 'guardian'
-  
+
   // Compliance tracking
   ipAddress: varchar("ip_address", { length: 45 }), // IPv6 compatible
   userAgent: text("user_agent"),
   signedAt: timestamp("signed_at"),
   expiresAt: timestamp("expires_at"),
-  
+
   // File storage
   pdfUrl: varchar("pdf_url"), // URL to signed PDF
   renderedContent: text("rendered_content"), // HTML after merge field substitution
-  
+
   // Audit trail
   auditTrail: jsonb("audit_trail"), // JSON array of events
-  
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -903,25 +904,25 @@ export const waiverInstances = pgTable("waiver_instances", {
 export const waiverSignatures = pgTable("waiver_signatures", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   instanceId: uuid("instance_id").notNull().references(() => waiverInstances.id, { onDelete: 'cascade' }),
-  
+
   // Signer information
   signerName: varchar("signer_name", { length: 255 }).notNull(),
   signerEmail: varchar("signer_email", { length: 255 }).notNull(),
   signerRole: varchar("signer_role", { length: 20 }).notNull().default('student'), // 'student', 'guardian'
-  
+
   // Signature data
   signatureData: text("signature_data").notNull(), // Base64 signature image
   signatureMethod: varchar("signature_method", { length: 20 }).notNull().default('canvas'), // 'canvas', 'typed', 'uploaded'
-  
+
   // Consent checkboxes and acknowledgments
   consentCheckboxes: jsonb("consent_checkboxes"), // Array of checkbox confirmations
   acknowledgementsCompleted: boolean("acknowledgements_completed").notNull().default(false),
-  
+
   // Compliance data
   timestamp: timestamp("timestamp").notNull().defaultNow(),
   ipAddress: varchar("ip_address", { length: 45 }).notNull(),
   userAgent: text("user_agent").notNull(),
-  
+
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -1036,36 +1037,36 @@ export const messageAuditLog = pgTable("message_audit_log", {
 // Communications table for tracking all emails and text messages
 export const communications = pgTable("communications", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  
+
   // Communication type and direction
   type: varchar("type", { length: 10 }).notNull(), // 'email' or 'sms'
   direction: varchar("direction", { length: 10 }).notNull(), // 'outbound' or 'inbound'
   purpose: varchar("purpose", { length: 20 }), // 'educational', 'marketing', 'administrative', etc.
-  
+
   // Participants
   fromAddress: varchar("from_address", { length: 255 }), // Email from address or SMS from number
   toAddress: varchar("to_address", { length: 255 }).notNull(), // Email to address or SMS to number
-  
+
   // Message content
   subject: varchar("subject", { length: 500 }), // Email subject (null for SMS)
   content: text("content").notNull(), // Message body
   htmlContent: text("html_content"), // HTML version for emails
-  
+
   // User associations
   userId: varchar("user_id").references(() => users.id), // Associated student/instructor
   enrollmentId: uuid("enrollment_id").references(() => enrollments.id), // Related enrollment if applicable
   courseId: uuid("course_id").references(() => courses.id), // Related course if applicable
-  
+
   // Status tracking
   isRead: boolean("is_read").notNull().default(false), // Has the message been read/viewed
   isFlagged: boolean("is_flagged").notNull().default(false), // Flagged for follow-up
   flagNote: text("flag_note"), // Optional note when flagged
-  
+
   // Delivery tracking
   deliveryStatus: varchar("delivery_status", { length: 50 }).default('pending'), // 'pending', 'sent', 'delivered', 'failed', 'bounced'
   externalMessageId: varchar("external_message_id", { length: 255 }), // SendGrid message ID or Twilio SID
   errorMessage: text("error_message"), // Any delivery error details
-  
+
   // Timestamps
   sentAt: timestamp("sent_at"),
   deliveredAt: timestamp("delivered_at"),
@@ -1092,17 +1093,17 @@ export const communicationsRelations = relations(communications, ({ one }) => ({
 }));
 
 // Prohibited words insert schema
-export const insertProhibitedWordSchema = createInsertSchema(prohibitedWords).omit({ 
-  id: true, 
-  createdAt: true, 
-  updatedAt: true 
+export const insertProhibitedWordSchema = createInsertSchema(prohibitedWords).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
 });
 
 // Message audit log insert schema
-export const insertMessageAuditLogSchema = createInsertSchema(messageAuditLog).omit({ 
-  id: true, 
+export const insertMessageAuditLogSchema = createInsertSchema(messageAuditLog).omit({
+  id: true,
   attemptedAt: true,
-  deliveredAt: true 
+  deliveredAt: true
 });
 
 // Communications insert schema
@@ -1426,42 +1427,42 @@ export const products = pgTable("products", {
   sku: varchar("sku", { length: 100 }).unique().notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   salePrice: decimal("sale_price", { precision: 10, scale: 2 }),
-  
+
   // Product type and fulfillment
   productType: varchar("product_type", { length: 20 }).notNull(), // 'physical', 'digital', 'service'
   fulfillmentType: varchar("fulfillment_type", { length: 20 }).notNull(), // 'printful', 'download', 'manual'
-  
+
   // Printful integration
   printfulProductId: integer("printful_product_id"),
   printfulSyncVariantId: integer("printful_sync_variant_id"),
   designTemplateUrl: varchar("design_template_url"),
   mockupImageUrl: varchar("mockup_image_url"),
-  
+
   // Digital product settings
   downloadUrl: varchar("download_url"), // For digital products
   downloadLimit: integer("download_limit"), // Max downloads per purchase
   downloadExpireDays: integer("download_expire_days"), // Days until download expires
-  
+
   // Inventory and shipping
   trackInventory: boolean("track_inventory").default(false),
   stockQuantity: integer("stock_quantity"),
   lowStockThreshold: integer("low_stock_threshold").default(5),
   weight: decimal("weight", { precision: 8, scale: 2 }), // in pounds
-  
+
   // SEO and organization
   slug: varchar("slug", { length: 255 }).unique(),
   categoryId: varchar("category_id").references(() => productCategories.id),
   tags: text("tags").array(),
-  
+
   // Images
   primaryImageUrl: varchar("primary_image_url"),
   imageUrls: text("image_urls").array(), // Array of additional image URLs
-  
+
   // Status and visibility
   status: varchar("status", { length: 20 }).default('draft'), // 'draft', 'active', 'inactive'
   featured: boolean("featured").default(false),
   sortOrder: integer("sort_order").default(0),
-  
+
   // Audit fields
   createdBy: varchar("created_by").references(() => users.id),
   updatedBy: varchar("updated_by").references(() => users.id),
@@ -1477,24 +1478,24 @@ export const productVariants = pgTable("product_variants", {
   sku: varchar("sku", { length: 100 }).unique().notNull(),
   price: decimal("price", { precision: 10, scale: 2 }),
   salePrice: decimal("sale_price", { precision: 10, scale: 2 }),
-  
+
   // Variant attributes (size, color, etc.)
   attributes: jsonb("attributes"), // {size: "XL", color: "Blue", material: "Cotton"}
-  
+
   // Printful specific
   printfulVariantId: integer("printful_variant_id"),
-  
+
   // Inventory
   stockQuantity: integer("stock_quantity").default(0),
   weight: decimal("weight", { precision: 8, scale: 2 }),
-  
+
   // Images
   imageUrl: varchar("image_url"),
-  
+
   // Status
   isActive: boolean("is_active").default(true),
   sortOrder: integer("sort_order").default(0),
-  
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1518,51 +1519,51 @@ export const ecommerceOrders = pgTable("ecommerce_orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   orderNumber: varchar("order_number", { length: 50 }).unique().notNull(),
   userId: varchar("user_id").references(() => users.id), // Null for guest orders
-  
+
   // Customer information
   customerEmail: varchar("customer_email").notNull(),
   customerPhone: varchar("customer_phone"),
   customerFirstName: varchar("customer_first_name").notNull(),
   customerLastName: varchar("customer_last_name").notNull(),
-  
+
   // Billing address
   billingAddress: jsonb("billing_address").notNull(), // {name, address1, address2, city, state, zip, country}
-  
+
   // Shipping address
   shippingAddress: jsonb("shipping_address"), // Same structure as billing
-  
+
   // Order totals
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default('0'),
   shippingAmount: decimal("shipping_amount", { precision: 10, scale: 2 }).default('0'),
   discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default('0'),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
-  
+
   // Payment information
   paymentStatus: varchar("payment_status").default('pending'), // 'pending', 'paid', 'failed', 'refunded', 'partially_refunded'
   paymentMethod: varchar("payment_method"), // 'stripe', 'paypal', etc.
   stripePaymentIntentId: varchar("stripe_payment_intent_id"),
-  
+
   // Order status and fulfillment
   status: varchar("status").default('pending'), // 'pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'
   fulfillmentStatus: varchar("fulfillment_status").default('pending'), // 'pending', 'processing', 'fulfilled', 'partial'
-  
+
   // Printful integration
   printfulOrderId: varchar("printful_order_id"),
   printfulStatus: varchar("printful_status"),
-  
+
   // Shipping information
   shippingCarrier: varchar("shipping_carrier"),
   trackingNumber: varchar("tracking_number"),
   trackingUrl: varchar("tracking_url"),
-  
+
   // Applied discounts
   promoCodesApplied: text("promo_codes_applied").array(),
-  
+
   // Order notes
   customerNotes: text("customer_notes"),
   internalNotes: text("internal_notes"),
-  
+
   // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -1578,28 +1579,28 @@ export const ecommerceOrderItems = pgTable("ecommerce_order_items", {
   orderId: varchar("order_id").notNull().references(() => ecommerceOrders.id, { onDelete: 'cascade' }),
   productId: varchar("product_id").notNull().references(() => products.id),
   variantId: varchar("variant_id").references(() => productVariants.id),
-  
+
   // Item details at time of purchase (snapshot for historical accuracy)
   productName: varchar("product_name").notNull(),
   productSku: varchar("product_sku").notNull(),
   variantName: varchar("variant_name"),
   variantAttributes: jsonb("variant_attributes"),
-  
+
   // Pricing and quantity
   quantity: integer("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
-  
+
   // Customization and fulfillment
   customization: jsonb("customization"), // Custom designs, text, etc.
   fulfillmentStatus: varchar("fulfillment_status").default('pending'), // 'pending', 'processing', 'fulfilled', 'failed'
-  
+
   // Integration tracking
   printfulOrderId: varchar("printful_order_id"), // Printful order ID for this item
   downloadToken: varchar("download_token"), // For digital products
   downloadCount: integer("download_count").default(0),
   downloadExpiresAt: timestamp("download_expires_at"),
-  
+
   // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
