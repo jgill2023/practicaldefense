@@ -734,28 +734,55 @@ export class DatabaseStorage implements IStorage {
   }
 
   async permanentlyDeleteCourse(id: string): Promise<void> {
-    // Hard delete - permanently remove from database with cascade
-    // First delete related data in proper order to maintain referential integrity
+    // Hard delete - permanently remove from database
+    // Delete related data in proper order to maintain referential integrity
+    
+    await db.transaction(async (tx) => {
+      // Get all schedules for this course first
+      const courseSchedules = await tx
+        .select({ id: courseSchedules.id })
+        .from(courseSchedules)
+        .where(eq(courseSchedules.courseId, id));
+      
+      const scheduleIds = courseSchedules.map(s => s.id);
 
-    // Delete course information forms (will cascade to fields and responses)
-    await db
-      .delete(courseInformationForms)
-      .where(eq(courseInformationForms.courseId, id));
+      if (scheduleIds.length > 0) {
+        // Delete SMS lists associated with these schedules
+        await tx
+          .delete(smsLists)
+          .where(inArray(smsLists.scheduleId, scheduleIds));
 
-    // Delete enrollments (references courseSchedules)
-    await db
-      .delete(enrollments)
-      .where(eq(enrollments.courseId, id));
+        // Delete course notification signups for these schedules
+        await tx
+          .delete(courseNotificationSignups)
+          .where(eq(courseNotificationSignups.courseId, id));
 
-    // Delete course schedules (references courses)
-    await db
-      .delete(courseSchedules)
-      .where(eq(courseSchedules.courseId, id));
+        // Delete enrollments for these schedules
+        await tx
+          .delete(enrollments)
+          .where(inArray(enrollments.scheduleId, scheduleIds));
 
-    // Finally delete the course itself
-    await db
-      .delete(courses)
-      .where(eq(courses.id, id));
+        // Delete the schedules themselves
+        await tx
+          .delete(courseSchedules)
+          .where(inArray(courseSchedules.id, scheduleIds));
+      }
+
+      // Delete course information forms (will cascade to fields and responses via FK constraints)
+      await tx
+        .delete(courseInformationForms)
+        .where(eq(courseInformationForms.courseId, id));
+
+      // Delete any remaining enrollments directly associated with the course
+      await tx
+        .delete(enrollments)
+        .where(eq(enrollments.courseId, id));
+
+      // Finally delete the course itself
+      await tx
+        .delete(courses)
+        .where(eq(courses.id, id));
+    });
   }
 
   async restoreCourse(id: string): Promise<Course> {
