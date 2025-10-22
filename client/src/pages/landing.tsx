@@ -49,9 +49,11 @@ export default function Landing() {
     return 'General';
   };
 
-  // Extract unique category names, excluding "Printful Products"
+  // Extract unique category names, excluding "Printful Products" and those hidden from home page
   const availableCategories = [
-    ...new Set(categories.map(category => getCategoryName(category.name))),
+    ...new Set(categories
+      .filter(category => category.showOnHomePage !== false)
+      .map(category => getCategoryName(category.name))),
   ].filter(name => name !== "Printful Products");
 
   // Sort courses first by date, then by category order

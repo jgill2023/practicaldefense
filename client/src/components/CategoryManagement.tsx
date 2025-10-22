@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Plus, Palette, ArrowUp, ArrowDown, Save } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Category, InsertCategory } from "@shared/schema";
@@ -39,6 +40,7 @@ export function CategoryManagement() {
     description: "",
     color: "#3b82f6",
     isActive: true,
+    displayOnHome: true, // New field for home page visibility
   });
 
   const { data: categories = [] } = useQuery<Category[]>({
@@ -140,6 +142,7 @@ export function CategoryManagement() {
       description: "",
       color: "#3b82f6",
       isActive: true,
+      displayOnHome: true, // Reset new field
     });
   };
 
@@ -154,6 +157,7 @@ export function CategoryManagement() {
       description: category.description || "",
       color: category.color || "#3b82f6",
       isActive: category.isActive,
+      displayOnHome: category.displayOnHome ?? true, // Set new field, default to true if not present
     });
   };
 
@@ -174,10 +178,10 @@ export function CategoryManagement() {
   const moveCategory = (index: number, direction: 'up' | 'down') => {
     const newCategories = [...localCategories];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    
+
     // Swap the categories
     [newCategories[index], newCategories[targetIndex]] = [newCategories[targetIndex], newCategories[index]];
-    
+
     setLocalCategories(newCategories);
     setHasUnsavedOrder(true);
   };
@@ -188,9 +192,27 @@ export function CategoryManagement() {
       id: category.id,
       sortOrder: (index + 1) * 10
     }));
-    
+
     reorderCategoriesMutation.mutate(items);
   };
+
+  const toggleDisplayOnHome = (categoryId: string, currentDisplayValue: boolean) => {
+    const updatedCategories = localCategories.map(cat => {
+      if (cat.id === categoryId) {
+        return { ...cat, displayOnHome: !currentDisplayValue };
+      }
+      return cat;
+    });
+    setLocalCategories(updatedCategories);
+    setHasUnsavedOrder(true); // Treat this as an unsaved change
+
+    // Optimistically update the category
+    updateCategoryMutation.mutate({
+      id: categoryId,
+      updates: { displayOnHome: !currentDisplayValue },
+    });
+  };
+
 
   return (
     <div className="space-y-6">
@@ -237,13 +259,14 @@ export function CategoryManagement() {
                   <TableHead>Description</TableHead>
                   <TableHead>Color</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Display on Home</TableHead> {/* New Header */}
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {localCategories.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8"> {/* Colspan adjusted */}
                       No categories found. Create your first category to get started.
                     </TableCell>
                   </TableRow>
@@ -274,7 +297,7 @@ export function CategoryManagement() {
                       </TableCell>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          <div 
+                          <div
                             className="w-3 h-3 rounded-full border"
                             style={{ backgroundColor: category.color || '#3b82f6' }}
                           />
@@ -298,6 +321,13 @@ export function CategoryManagement() {
                         <Badge variant={category.isActive ? "default" : "secondary"}>
                           {category.isActive ? "Active" : "Inactive"}
                         </Badge>
+                      </TableCell>
+                      <TableCell> {/* New Cell for Display on Home */}
+                        <Switch
+                          checked={category.displayOnHome ?? false}
+                          onCheckedChange={() => toggleDisplayOnHome(category.id, category.displayOnHome ?? false)}
+                          data-testid={`switch-display-on-home-${category.id}`}
+                        />
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -378,6 +408,15 @@ export function CategoryManagement() {
                 />
               </div>
             </div>
+            <div> {/* New Field in Create Dialog */}
+              <Label htmlFor="displayOnHome">Display on Home Page</Label>
+              <Switch
+                id="displayOnHome"
+                checked={formData.displayOnHome}
+                onCheckedChange={(checked) => setFormData({ ...formData, displayOnHome: checked })}
+                data-testid="switch-create-display-on-home"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -449,6 +488,15 @@ export function CategoryManagement() {
                   className="font-mono text-sm"
                 />
               </div>
+            </div>
+            <div> {/* New Field in Edit Dialog */}
+              <Label htmlFor="edit-displayOnHome">Display on Home Page</Label>
+              <Switch
+                id="edit-displayOnHome"
+                checked={formData.displayOnHome}
+                onCheckedChange={(checked) => setFormData({ ...formData, displayOnHome: checked })}
+                data-testid="switch-edit-display-on-home"
+              />
             </div>
           </div>
           <DialogFooter>
