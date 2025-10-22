@@ -216,13 +216,33 @@ export function CategoryManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Info Banner */}
+      <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20 p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 mt-0.5">
+            <svg className="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
+              Home Page Display Control
+            </h3>
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              Use the "Show on Home Page" toggle to control which categories and their courses appear on your public-facing home page. 
+              Hidden categories will still be accessible through direct links and the schedule pages.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Category Management</CardTitle>
               <CardDescription>
-                Manage course categories to organize your training programs
+                Manage course categories and control which ones appear on the home page
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -259,7 +279,7 @@ export function CategoryManagement() {
                   <TableHead>Description</TableHead>
                   <TableHead>Color</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Display on Home</TableHead> {/* New Header */}
+                  <TableHead className="text-center">Show on Home Page</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -322,12 +342,17 @@ export function CategoryManagement() {
                           {category.isActive ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
-                      <TableCell> {/* New Cell for Display on Home */}
-                        <Switch
-                          checked={category.displayOnHome ?? false}
-                          onCheckedChange={() => toggleDisplayOnHome(category.id, category.displayOnHome ?? false)}
-                          data-testid={`switch-display-on-home-${category.id}`}
-                        />
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Switch
+                            checked={category.displayOnHome ?? false}
+                            onCheckedChange={() => toggleDisplayOnHome(category.id, category.displayOnHome ?? false)}
+                            data-testid={`switch-display-on-home-${category.id}`}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            {category.displayOnHome ? 'Visible' : 'Hidden'}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
