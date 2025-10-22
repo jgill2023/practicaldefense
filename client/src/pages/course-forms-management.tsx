@@ -81,8 +81,7 @@ export default function CourseFormsManagement() {
     mutationFn: async (data: { courseId: string; title: string; description?: string; isRequired: boolean }) => {
       const url = editingForm ? `/api/course-forms/${editingForm.id}` : "/api/course-forms";
       const method = editingForm ? "PATCH" : "POST";
-      const response = await apiRequest(method, url, data);
-      return response.json();
+      return await apiRequest(method, url, data);
     },
     onSuccess: () => {
       toast({
@@ -114,8 +113,7 @@ export default function CourseFormsManagement() {
     }) => {
       const url = editingField ? `/api/course-form-fields/${editingField.id}` : "/api/course-form-fields";
       const method = editingField ? "PATCH" : "POST";
-      const response = await apiRequest(method, url, data);
-      return response.json();
+      return await apiRequest(method, url, data);
     },
     onSuccess: () => {
       toast({
@@ -168,8 +166,7 @@ export default function CourseFormsManagement() {
     mutationFn: async (data: InsertWaiverTemplate) => {
       const url = editingWaiver ? `/api/admin/waiver-templates/${editingWaiver.id}` : "/api/admin/waiver-templates";
       const method = editingWaiver ? "PATCH" : "POST";
-      const response = await apiRequest(method, url, data);
-      return response.json();
+      return await apiRequest(method, url, data);
     },
     onSuccess: () => {
       toast({
@@ -215,10 +212,9 @@ export default function CourseFormsManagement() {
   // Assign waiver to course
   const assignWaiverMutation = useMutation({
     mutationFn: async (data: { templateId: string; courseIds: string[] }) => {
-      const response = await apiRequest("POST", `/api/admin/waiver-templates/${data.templateId}/assign`, {
+      return await apiRequest("POST", `/api/admin/waiver-templates/${data.templateId}/assign`, {
         courseIds: data.courseIds
       });
-      return response.json();
     },
     onSuccess: () => {
       toast({
