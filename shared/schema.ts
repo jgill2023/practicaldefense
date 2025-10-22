@@ -72,6 +72,7 @@ export const categories = pgTable("categories", {
   color: varchar("color", { length: 7 }).default('#3b82f6'), // Hex color for UI
   sortOrder: integer("sort_order"), // For custom ordering of categories
   isActive: boolean("is_active").notNull().default(true),
+  showOnHomePage: boolean("show_on_home_page").notNull().default(true), // Control home page visibility
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -97,6 +98,7 @@ export const courses = pgTable("courses", {
   isActive: boolean("is_active").notNull().default(true),
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   imageUrl: varchar("image_url"),
+  showOnHomePage: boolean("show_on_home_page").notNull().default(true), // Control home page visibility
   // Moodle integration
   moodleCourseId: integer("moodle_course_id"), // Moodle course ID for online courses
   moodleEnrollmentEnabled: boolean("moodle_enrollment_enabled").notNull().default(false),

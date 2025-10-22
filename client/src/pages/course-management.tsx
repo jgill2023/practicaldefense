@@ -13,6 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import { 
@@ -34,7 +37,8 @@ import {
   FileText,
   BadgePercent,
   ArrowLeft,
-  Bell
+  Bell,
+  ChevronDown
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -194,6 +198,82 @@ function DeletePermanentlyButton({ course }: { course: CourseWithSchedules }) {
   );
 }
 
+// Category Visibility Control Component
+function CategoryVisibilityControl({ 
+  category, 
+  courses, 
+  onCategoryToggle, 
+  onCourseToggle 
+}: { 
+  category: any; 
+  courses: any[]; 
+  onCategoryToggle: (categoryId: string, visible: boolean) => void;
+  onCourseToggle: (courseId: string, visible: boolean) => void;
+}) {
+  const [isCategoryVisible, setIsCategoryVisible] = useState(category.showOnHomePage !== false);
+  const visibleCoursesCount = courses.filter(c => c.showOnHomePage !== false).length;
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div 
+            className="w-4 h-4 rounded-full" 
+            style={{ backgroundColor: category.color || '#3b82f6' }}
+          />
+          <div>
+            <h4 className="font-medium text-sm">{category.name}</h4>
+            <p className="text-xs text-muted-foreground">
+              {visibleCoursesCount} of {courses.length} courses visible
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Label htmlFor={`category-${category.id}`} className="text-xs text-muted-foreground">
+            Show on home page
+          </Label>
+          <Switch
+            id={`category-${category.id}`}
+            checked={isCategoryVisible}
+            onCheckedChange={(checked) => {
+              setIsCategoryVisible(checked);
+              onCategoryToggle(category.id, checked);
+            }}
+            data-testid={`switch-category-${category.id}`}
+          />
+        </div>
+      </div>
+
+      {courses.length > 0 && (
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="courses" className="border-0">
+            <AccordionTrigger className="text-xs py-2 hover:no-underline">
+              <span className="text-muted-foreground">
+                Show/hide individual courses ({courses.length})
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-2 pt-2">
+              {courses.map((course) => (
+                <div 
+                  key={course.id} 
+                  className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded"
+                >
+                  <span className="text-sm">{course.title}</span>
+                  <Switch
+                    checked={course.showOnHomePage !== false}
+                    onCheckedChange={(checked) => onCourseToggle(course.id, checked)}
+                    data-testid={`switch-course-${course.id}`}
+                  />
+                </div>
+              ))}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+    </div>
+  );
+}
+
 export default function CourseManagement() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -221,6 +301,13 @@ export default function CourseManagement() {
   // Fetch deleted courses
   const { data: deletedCourses = [], isLoading: deletedCoursesLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/deleted-courses"],
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    retry: false,
+  });
+
+  // Fetch categories for visibility controls
+  const { data: categories = [] } = useQuery<any[]>({
+    queryKey: ["/api/categories"],
     enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
   });
@@ -515,7 +602,8 @@ export default function CourseManagement() {
               <span>Home Page Settings</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
+            {/* Course Limit Setting */}
             <form 
               onSubmit={settingsForm.handleSubmit((data) => {
                 updateSettingsMutation.mutate(data);
@@ -551,6 +639,61 @@ export default function CourseManagement() {
                 </p>
               )}
             </form>
+
+            <Separator />
+
+            {/* Category Visibility Controls */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold mb-2">Category Visibility</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Choose which categories and their courses are displayed on the home page
+                </p>
+              </div>
+              
+              <div className="space-y-3">
+                {categories.map((category) => (
+                  <CategoryVisibilityControl 
+                    key={category.id}
+                    category={category}
+                    courses={courses.filter((c: any) => c.categoryId === category.id)}
+                    onCategoryToggle={(categoryId, visible) => {
+                      apiRequest('PATCH', `/api/categories/${categoryId}/home-visibility`, { showOnHomePage: visible })
+                        .then(() => {
+                          queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+                          toast({
+                            title: "Success",
+                            description: `Category visibility updated`,
+                          });
+                        }).catch((error) => {
+                          toast({
+                            title: "Error",
+                            description: error.message || "Failed to update category visibility",
+                            variant: "destructive",
+                          });
+                        });
+                    }}
+                    onCourseToggle={(courseId, visible) => {
+                      apiRequest('PATCH', `/api/courses/${courseId}/home-visibility`, { showOnHomePage: visible })
+                        .then(() => {
+                          queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+                          queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+                          toast({
+                            title: "Success",
+                            description: `Course visibility updated`,
+                          });
+                        }).catch((error) => {
+                          toast({
+                            title: "Error",
+                            description: error.message || "Failed to update course visibility",
+                            variant: "destructive",
+                          });
+                        });
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
 

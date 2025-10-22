@@ -197,6 +197,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Toggle category home page visibility
+  app.patch('/api/categories/:id/home-visibility', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const { showOnHomePage } = req.body;
+      if (typeof showOnHomePage !== 'boolean') {
+        return res.status(400).json({ message: "Invalid request: showOnHomePage must be a boolean" });
+      }
+
+      const category = await storage.updateCategory(req.params.id, { showOnHomePage });
+      res.json(category);
+    } catch (error) {
+      console.error("Error updating category visibility:", error);
+      res.status(500).json({ message: "Failed to update category visibility" });
+    }
+  });
+
   // App settings routes
   app.get('/api/app-settings', async (req, res) => {
     try {
@@ -269,6 +292,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating course:", error);
       res.status(500).json({ message: "Failed to create course" });
+    }
+  });
+
+  // Toggle course home page visibility
+  app.patch('/api/courses/:id/home-visibility', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const { showOnHomePage } = req.body;
+      if (typeof showOnHomePage !== 'boolean') {
+        return res.status(400).json({ message: "Invalid request: showOnHomePage must be a boolean" });
+      }
+
+      const course = await storage.getCourse(req.params.id);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      if (course.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const updatedCourse = await storage.updateCourse(req.params.id, { showOnHomePage });
+      res.json(updatedCourse);
+    } catch (error) {
+      console.error("Error updating course visibility:", error);
+      res.status(500).json({ message: "Failed to update course visibility" });
     }
   });
 

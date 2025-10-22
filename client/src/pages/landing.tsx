@@ -49,16 +49,19 @@ export default function Landing() {
     return 'General';
   };
 
+  // Filter categories to only show those marked for home page display
+  const visibleCategories = categories.filter(cat => cat.showOnHomePage !== false);
+  
   // Extract unique category names, excluding "Printful Products"
   const availableCategories = [
-    ...new Set(categories.map(category => getCategoryName(category.name))),
+    ...new Set(visibleCategories.map(category => getCategoryName(category.name))),
   ].filter(name => name !== "Printful Products");
 
   // Sort courses first by date, then by category order
   const sortedAndFilteredCourses = (() => {
     // Create a map of category names to their sort order for quick lookup
     const categoryOrderMap = new Map();
-    categories.forEach((category, index) => {
+    visibleCategories.forEach((category, index) => {
       categoryOrderMap.set(getCategoryName(category.name), category.sortOrder || (9999 + index));
     });
 
@@ -90,7 +93,14 @@ export default function Landing() {
 
     if (courseFilter === "all") {
       // For "All Courses", show unique courses (current behavior), excluding Printful Products
-      coursesToDisplay = courses.filter(course => getCategoryName(course.category) !== "Printful Products");
+      // Also filter by showOnHomePage for both courses and their categories
+      coursesToDisplay = courses.filter(course => {
+        const categoryName = getCategoryName(course.category);
+        const category = visibleCategories.find(cat => getCategoryName(cat.name) === categoryName);
+        return categoryName !== "Printful Products" && 
+               course.showOnHomePage !== false &&
+               category; // Only show if category is visible
+      });
       coursesToDisplay.sort((a, b) => {
         const dateA = getEarliestDate(a);
         const dateB = getEarliestDate(b);
@@ -124,11 +134,14 @@ export default function Landing() {
       const now = new Date();
       const categorySchedules: CourseWithSchedules[] = [];
 
-      // Filter courses by category, excluding Printful Products
+      // Filter courses by category, excluding Printful Products, and check visibility
       const categoryCourses = courses.filter(course => {
         const categoryName = getCategoryName(course.category);
+        const category = visibleCategories.find(cat => getCategoryName(cat.name) === categoryName);
         return categoryName === courseFilter && 
                categoryName !== "Printful Products" &&
+               course.showOnHomePage !== false &&
+               category &&
                course.schedules && 
                course.schedules.length > 0;
       });
