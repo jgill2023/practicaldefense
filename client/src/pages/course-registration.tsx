@@ -725,7 +725,7 @@ export default function CourseRegistration() {
           )}
 
           {/* Payment Options */}
-          {course && (
+          {course && parseFloat(course.price) > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -772,7 +772,7 @@ export default function CourseRegistration() {
           )}
 
           {/* Payment Section - Show immediately when schedule is selected */}
-          {selectedSchedule && (
+          {selectedSchedule && parseFloat(course.price) > 0 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-foreground mb-2">Complete Your Payment</h2>
@@ -1013,6 +1013,36 @@ export default function CourseRegistration() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Free Course Registration - Show when schedule is selected and course is free */}
+          {selectedSchedule && parseFloat(course.price) === 0 && (
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="p-8 text-center">
+                <div className="mb-4">
+                  <Check className="h-12 w-12 text-green-600 mx-auto" />
+                </div>
+                <h3 className="text-lg font-medium text-foreground mb-2">Free Course Registration</h3>
+                <p className="text-muted-foreground mb-4">
+                  This is a free course. Click the button below to complete your registration.
+                </p>
+                <Button
+                  size="lg"
+                  className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                  onClick={() => {
+                    if (currentEnrollment) {
+                      confirmEnrollmentMutation.mutate({
+                        enrollmentId: currentEnrollment.id,
+                        paymentIntentId: 'free-course',
+                      });
+                    }
+                  }}
+                  disabled={!currentEnrollment || confirmEnrollmentMutation.isPending}
+                >
+                  {confirmEnrollmentMutation.isPending ? 'Completing Registration...' : 'Complete Free Registration'}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Show loading when creating draft */}
           {selectedSchedule && initiateDraftMutation.isPending && (
