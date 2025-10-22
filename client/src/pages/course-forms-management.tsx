@@ -81,15 +81,17 @@ export default function CourseFormsManagement() {
     mutationFn: async (data: { courseId: string; title: string; description?: string; isRequired: boolean }) => {
       const url = editingForm ? `/api/course-forms/${editingForm.id}` : "/api/course-forms";
       const method = editingForm ? "PATCH" : "POST";
-      return await apiRequest(method, url, data);
+      const response = await apiRequest(method, url, data);
+      return response.json();
     },
     onSuccess: () => {
       toast({
         title: editingForm ? "Form Updated" : "Form Created",
         description: `Information form has been ${editingForm ? "updated" : "created"} successfully.`,
       });
-      // Invalidate the specific course forms query
+      // Invalidate and refetch the specific course forms query
       queryClient.invalidateQueries({ queryKey: ["/api/course-forms", selectedCourse] });
+      queryClient.refetchQueries({ queryKey: ["/api/course-forms", selectedCourse] });
       setShowCreateFormDialog(false);
       setEditingForm(null);
     },
