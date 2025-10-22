@@ -81,8 +81,7 @@ export default function CourseFormsManagement() {
     mutationFn: async (data: { courseId: string; title: string; description?: string; isRequired: boolean }) => {
       const url = editingForm ? `/api/course-forms/${editingForm.id}` : "/api/course-forms";
       const method = editingForm ? "PATCH" : "POST";
-      const response = await apiRequest(method, url, data);
-      return response.json();
+      return await apiRequest(method, url, data);
     },
     onSuccess: () => {
       toast({
