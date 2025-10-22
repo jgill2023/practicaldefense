@@ -345,11 +345,14 @@ export default function CourseRegistration() {
     onSuccess: (enrollment) => {
       setCurrentEnrollment(enrollment);
       setIsDraftCreated(true);
-      // Create payment intent immediately after draft enrollment
-      createPaymentIntentMutation.mutate({
-        enrollmentId: enrollment.id,
-        paymentOption: formData.paymentOption,
-      });
+      
+      // Only create payment intent if the course has a price > 0
+      if (course && parseFloat(course.price) > 0) {
+        createPaymentIntentMutation.mutate({
+          enrollmentId: enrollment.id,
+          paymentOption: formData.paymentOption,
+        });
+      }
     },
     onError: (error) => {
       toast({
