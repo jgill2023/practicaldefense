@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User } from "
 import { Layout } from "@/components/Layout";
 import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
-import type { CourseWithSchedules, AppSettings, Category } from "@shared/schema";
+import type { CourseWithSchedules, AppSettings } from "@shared/schema";
 import heroImage from "@assets/MainHeader2AndyOVERLAY_1757359693558.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
@@ -31,15 +31,9 @@ export default function Landing() {
     queryKey: ["/api/courses"],
   });
 
-  // Fetch categories for filtering - only show categories with displayOnHome enabled
-  const { data: allCategories = [] } = useQuery<Category[]>({
-    queryKey: ['/api/categories'],
+  const { data: categories = [] } = useQuery<any[]>({
+    queryKey: ["/api/categories"],
   });
-
-  // Filter to only categories that should be displayed on home page
-  const categories = useMemo(() => {
-    return allCategories.filter(cat => cat.displayOnHome !== false);
-  }, [allCategories]);
 
   const { data: appSettings } = useQuery<AppSettings>({
     queryKey: ["/api/app-settings"],
@@ -55,11 +49,9 @@ export default function Landing() {
     return 'General';
   };
 
-  // Extract unique category names, excluding "Printful Products" and those hidden from home page
+  // Extract unique category names, excluding "Printful Products"
   const availableCategories = [
-    ...new Set(categories
-      .filter(category => category.displayOnHome !== false) // Ensure we only consider categories set to display on home
-      .map(category => getCategoryName(category.name))),
+    ...new Set(categories.map(category => getCategoryName(category.name))),
   ].filter(name => name !== "Printful Products");
 
   // Sort courses first by date, then by category order

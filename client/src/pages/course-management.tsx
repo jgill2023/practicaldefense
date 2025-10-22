@@ -515,7 +515,7 @@ export default function CourseManagement() {
               <span>Home Page Settings</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent>
             <form 
               onSubmit={settingsForm.handleSubmit((data) => {
                 updateSettingsMutation.mutate(data);
@@ -551,22 +551,6 @@ export default function CourseManagement() {
                 </p>
               )}
             </form>
-
-            <div className="border-t pt-6">
-              <div className="mb-4">
-                <h3 className="text-sm font-semibold mb-1">Category Display Settings</h3>
-                <p className="text-sm text-muted-foreground">
-                  Control which categories and their courses appear on the home page
-                </p>
-              </div>
-              <Link href="/course-management">
-                <a className="inline-block">
-                  <Button variant="outline" size="sm" data-testid="button-manage-categories">
-                    Manage Category Display
-                  </Button>
-                </a>
-              </Link>
-            </div>
           </CardContent>
         </Card>
 

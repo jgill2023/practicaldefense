@@ -109,7 +109,7 @@ import {
   smsListMembers,
   smsBroadcastMessages,
   smsBroadcastDeliveries,
-  typeSmsList,
+  type SmsList,
   type InsertSmsList,
   typeSmsListMember,
   type InsertSmsListMember,
@@ -123,7 +123,7 @@ import {
   typeSmsBroadcastDeliveryWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, inArray, desc, asc, isNotNull, isNull, gte, lte, or, lt, sql, gt } from "drizzle-orm";
+import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -734,55 +734,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async permanentlyDeleteCourse(id: string): Promise<void> {
-    // Hard delete - permanently remove from database
-    // Delete related data in proper order to maintain referential integrity
-    
-    await db.transaction(async (tx) => {
-      // Get all schedules for this course first
-      const courseSchedules = await tx
-        .select({ id: courseSchedules.id })
-        .from(courseSchedules)
-        .where(eq(courseSchedules.courseId, id));
-      
-      const scheduleIds = courseSchedules.map(s => s.id);
+    // Hard delete - permanently remove from database with cascade
+    // First delete related data in proper order to maintain referential integrity
 
-      if (scheduleIds.length > 0) {
-        // Delete SMS lists associated with these schedules
-        await tx
-          .delete(smsLists)
-          .where(inArray(smsLists.scheduleId, scheduleIds));
+    // Delete course information forms (will cascade to fields and responses)
+    await db
+      .delete(courseInformationForms)
+      .where(eq(courseInformationForms.courseId, id));
 
-        // Delete course notification signups for these schedules
-        await tx
-          .delete(courseNotificationSignups)
-          .where(eq(courseNotificationSignups.courseId, id));
+    // Delete enrollments (references courseSchedules)
+    await db
+      .delete(enrollments)
+      .where(eq(enrollments.courseId, id));
 
-        // Delete enrollments for these schedules
-        await tx
-          .delete(enrollments)
-          .where(inArray(enrollments.scheduleId, scheduleIds));
+    // Delete course schedules (references courses)
+    await db
+      .delete(courseSchedules)
+      .where(eq(courseSchedules.courseId, id));
 
-        // Delete the schedules themselves
-        await tx
-          .delete(courseSchedules)
-          .where(inArray(courseSchedules.id, scheduleIds));
-      }
-
-      // Delete course information forms (will cascade to fields and responses via FK constraints)
-      await tx
-        .delete(courseInformationForms)
-        .where(eq(courseInformationForms.courseId, id));
-
-      // Delete any remaining enrollments directly associated with the course
-      await tx
-        .delete(enrollments)
-        .where(eq(enrollments.courseId, id));
-
-      // Finally delete the course itself
-      await tx
-        .delete(courses)
-        .where(eq(courses.id, id));
-    });
+    // Finally delete the course itself
+    await db
+      .delete(courses)
+      .where(eq(courses.id, id));
   }
 
   async restoreCourse(id: string): Promise<Course> {
@@ -891,7 +864,11 @@ export class DatabaseStorage implements IStorage {
 
   async getCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]> {
     const courseList = await db.query.courses.findMany({
-      where: and(eq(courses.instructorId, instructorId), isNull(courses.deletedAt)),
+      where: and(
+        eq(courses.instructorId, instructorId), 
+        isNull(courses.deletedAt),
+        eq(courses.isActive, true)
+      ),
       with: {
         schedules: {
           where: isNull(courseSchedules.deletedAt),
@@ -916,7 +893,7 @@ export class DatabaseStorage implements IStorage {
         instructor: true,
         category: true,
       },
-      orderBy: asc(courses.title),
+      orderBy: desc(courses.createdAt),
     });
     return courseList;
   }
@@ -1955,7 +1932,7 @@ export class DatabaseStorage implements IStorage {
           // Replace this with actual Moodle API call to enroll the user
           // Example: await callMoodleEnrollmentAPI(user.email, moodleCourseId);
           console.log(`Attempting to enroll user ${user.email} in Moodle course ${moodleCourseId}`);
-
+          
           // Simulate successful enrollment
           moodleEnrolled = true;
           moodleEnrollmentDate = new Date();
