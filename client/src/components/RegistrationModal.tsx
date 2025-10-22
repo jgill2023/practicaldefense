@@ -300,8 +300,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
 
   const initiateDraftMutation = useMutation({
     mutationFn: async (enrollmentData: any) => {
-      const response = await apiRequest("POST", "/api/course-registration/initiate", enrollmentData);
-      return response;
+      return await apiRequest("POST", "/api/course-registration/initiate", enrollmentData);
     },
     onSuccess: (enrollment) => {
       setCurrentEnrollment(enrollment);
@@ -322,12 +321,11 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
 
   const createPaymentIntentMutation = useMutation({
     mutationFn: async ({ enrollmentId, paymentOption, promoCode }: { enrollmentId: string; paymentOption: string; promoCode?: string }) => {
-      const response = await apiRequest("POST", "/api/course-registration/payment-intent", {
+      return await apiRequest("POST", "/api/course-registration/payment-intent", {
         enrollmentId,
         paymentOption,
         promoCode,
       });
-      return response;
     },
     onSuccess: (data) => {
       setClientSecret(data.clientSecret);

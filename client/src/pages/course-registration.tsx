@@ -209,13 +209,11 @@ export default function CourseRegistration() {
     setPromoError(null);
 
     try {
-      const response = await apiRequest("POST", "/api/course-registration/payment-intent", {
+      const data = await apiRequest("POST", "/api/course-registration/payment-intent", {
         enrollmentId: currentEnrollment.id,
         promoCode: promoCode.trim(),
         paymentOption: formData.paymentOption,
       });
-
-      const data = await response.json();
 
       if (data.clientSecret) {
         setPromoCodeApplied(promoCode.trim());
@@ -342,8 +340,7 @@ export default function CourseRegistration() {
 
   const initiateDraftMutation = useMutation({
     mutationFn: async (enrollmentData: any) => {
-      const response = await apiRequest("POST", "/api/course-registration/initiate", enrollmentData);
-      return response.json();
+      return await apiRequest("POST", "/api/course-registration/initiate", enrollmentData);
     },
     onSuccess: (enrollment) => {
       setCurrentEnrollment(enrollment);
@@ -365,12 +362,11 @@ export default function CourseRegistration() {
 
   const createPaymentIntentMutation = useMutation({
     mutationFn: async ({ enrollmentId, paymentOption, promoCode }: { enrollmentId: string; paymentOption: string; promoCode?: string }) => {
-      const response = await apiRequest("POST", "/api/course-registration/payment-intent", {
+      return await apiRequest("POST", "/api/course-registration/payment-intent", {
         enrollmentId,
         paymentOption,
         promoCode,
       });
-      return response.json();
     },
     onSuccess: (data) => {
       setClientSecret(data.clientSecret);
