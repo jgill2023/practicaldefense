@@ -88,7 +88,8 @@ export default function CourseFormsManagement() {
         title: editingForm ? "Form Updated" : "Form Created",
         description: `Information form has been ${editingForm ? "updated" : "created"} successfully.`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/course-forms"] });
+      // Invalidate the specific course forms query
+      queryClient.invalidateQueries({ queryKey: ["/api/course-forms", selectedCourse] });
       setShowCreateFormDialog(false);
       setEditingForm(null);
     },
