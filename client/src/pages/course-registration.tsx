@@ -395,15 +395,14 @@ export default function CourseRegistration() {
 
   const confirmEnrollmentMutation = useMutation({
     mutationFn: async ({ enrollmentId, paymentIntentId }: { enrollmentId: string; paymentIntentId: string }) => {
-      const response = await apiRequest("POST", "/api/course-registration/confirm", {
+      return await apiRequest("POST", "/api/course-registration/confirm", {
         enrollmentId,
         paymentIntentId,
       });
-      return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "Payment Successful",
+        title: "Registration Successful",
         description: "Your course registration is confirmed!",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
@@ -411,7 +410,7 @@ export default function CourseRegistration() {
     },
     onError: (error) => {
       toast({
-        title: "Confirmation Failed",
+        title: "Registration Failed",
         description: error.message,
         variant: "destructive",
       });
