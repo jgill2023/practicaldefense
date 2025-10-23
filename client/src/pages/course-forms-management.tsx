@@ -60,6 +60,13 @@ export default function CourseFormsManagement() {
     queryKey: ["/api/instructor/courses"],
   });
 
+  // Auto-select first course when courses load
+  useEffect(() => {
+    if (courses.length > 0 && !selectedCourse) {
+      setSelectedCourse(courses[0].id);
+    }
+  }, [courses, selectedCourse]);
+
   // Fetch forms for selected course
   const { data: forms = [], isLoading } = useQuery<CourseInformationFormWithFields[]>({
     queryKey: ["/api/course-forms", selectedCourse],

@@ -1,0 +1,69 @@
+[FORMS DEBUG] Selected course: 
+injected.js:27 [FORMS DEBUG] Forms data: []
+injected.js:27 [FORMS DEBUG] Forms length: 0
+injected.js:27 [FORMS DEBUG] Is loading: false
+injected.js:204  GET https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/api/communications?page=1&limit=100 500 (Internal Server Error)
+apply @ injected.js:204
+queryFn @ useCommunicationCounts.ts:17
+fetchFn @ @tanstack_react-query.js?v=6e335b39:840
+run @ @tanstack_react-query.js?v=6e335b39:494
+start @ @tanstack_react-query.js?v=6e335b39:536
+fetch @ @tanstack_react-query.js?v=6e335b39:926
+executeFetch_fn @ @tanstack_react-query.js?v=6e335b39:2211
+onSubscribe @ @tanstack_react-query.js?v=6e335b39:1898
+subscribe @ @tanstack_react-query.js?v=6e335b39:24
+(anonymous) @ @tanstack_react-query.js?v=6e335b39:3022
+subscribeToStore @ chunk-XQLYTHWV.js?v=6e335b39:11984
+commitHookEffectListMount @ chunk-XQLYTHWV.js?v=6e335b39:16915
+commitPassiveMountOnFiber @ chunk-XQLYTHWV.js?v=6e335b39:18156
+commitPassiveMountEffects_complete @ chunk-XQLYTHWV.js?v=6e335b39:18129
+commitPassiveMountEffects_begin @ chunk-XQLYTHWV.js?v=6e335b39:18119
+commitPassiveMountEffects @ chunk-XQLYTHWV.js?v=6e335b39:18109
+flushPassiveEffectsImpl @ chunk-XQLYTHWV.js?v=6e335b39:19490
+flushPassiveEffects @ chunk-XQLYTHWV.js?v=6e335b39:19447
+commitRootImpl @ chunk-XQLYTHWV.js?v=6e335b39:19416
+commitRoot @ chunk-XQLYTHWV.js?v=6e335b39:19277
+performSyncWorkOnRoot @ chunk-XQLYTHWV.js?v=6e335b39:18895
+flushSyncCallbacks @ chunk-XQLYTHWV.js?v=6e335b39:9119
+(anonymous) @ chunk-XQLYTHWV.js?v=6e335b39:18627
+setTimeout
+scheduleFn @ @tanstack_react-query.js?v=6e335b39:555
+flush @ @tanstack_react-query.js?v=6e335b39:569
+batch @ @tanstack_react-query.js?v=6e335b39:587
+dispatch_fn @ @tanstack_react-query.js?v=6e335b39:996
+setData @ @tanstack_react-query.js?v=6e335b39:696
+onSuccess @ @tanstack_react-query.js?v=6e335b39:897
+resolve @ @tanstack_react-query.js?v=6e335b39:456
+Promise.then
+run @ @tanstack_react-query.js?v=6e335b39:498
+start @ @tanstack_react-query.js?v=6e335b39:536
+fetch @ @tanstack_react-query.js?v=6e335b39:926
+executeFetch_fn @ @tanstack_react-query.js?v=6e335b39:2211
+onSubscribe @ @tanstack_react-query.js?v=6e335b39:1898
+subscribe @ @tanstack_react-query.js?v=6e335b39:24
+(anonymous) @ @tanstack_react-query.js?v=6e335b39:3022
+subscribeToStore @ chunk-XQLYTHWV.js?v=6e335b39:11984
+commitHookEffectListMount @ chunk-XQLYTHWV.js?v=6e335b39:16915
+commitPassiveMountOnFiber @ chunk-XQLYTHWV.js?v=6e335b39:18156
+commitPassiveMountEffects_complete @ chunk-XQLYTHWV.js?v=6e335b39:18129
+commitPassiveMountEffects_begin @ chunk-XQLYTHWV.js?v=6e335b39:18119
+commitPassiveMountEffects @ chunk-XQLYTHWV.js?v=6e335b39:18109
+flushPassiveEffectsImpl @ chunk-XQLYTHWV.js?v=6e335b39:19490
+flushPassiveEffects @ chunk-XQLYTHWV.js?v=6e335b39:19447
+performSyncWorkOnRoot @ chunk-XQLYTHWV.js?v=6e335b39:18868
+flushSyncCallbacks @ chunk-XQLYTHWV.js?v=6e335b39:9119
+commitRootImpl @ chunk-XQLYTHWV.js?v=6e335b39:19432
+commitRoot @ chunk-XQLYTHWV.js?v=6e335b39:19277
+finishConcurrentRender @ chunk-XQLYTHWV.js?v=6e335b39:18805
+performConcurrentWorkOnRoot @ chunk-XQLYTHWV.js?v=6e335b39:18718
+workLoop @ chunk-XQLYTHWV.js?v=6e335b39:197
+flushWork @ chunk-XQLYTHWV.js?v=6e335b39:176
+performWorkUntilDeadline @ chunk-XQLYTHWV.js?v=6e335b39:384Understand this error
+injected.js:27 [FORMS DEBUG] Selected course: 
+injected.js:27 [FORMS DEBUG] Forms data: []
+injected.js:27 [FORMS DEBUG] Forms length: 0
+injected.js:27 [FORMS DEBUG] Is loading: false
+injected.js:27 [FORMS DEBUG] Selected course: 
+injected.js:27 [FORMS DEBUG] Forms data: []
+injected.js:27 [FORMS DEBUG] Forms length: 0
+injected.js:27 [FORMS DEBUG] Is loading: false
