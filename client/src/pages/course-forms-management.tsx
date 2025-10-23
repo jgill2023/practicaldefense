@@ -67,12 +67,17 @@ export default function CourseFormsManagement() {
       if (!selectedCourse) return [];
       const response = await apiRequest("GET", `/api/course-forms/${selectedCourse}`);
       const data = await response.json();
-      console.log('[DEBUG] Frontend received forms:', data);
-      console.log('[DEBUG] Forms count:', data.length);
       return data;
     },
     enabled: !!selectedCourse,
+    staleTime: 0,
+    gcTime: 0,
   });
+
+  console.log('[FORMS DEBUG] Selected course:', selectedCourse);
+  console.log('[FORMS DEBUG] Forms data:', forms);
+  console.log('[FORMS DEBUG] Forms length:', forms?.length);
+  console.log('[FORMS DEBUG] Is loading:', isLoading);
 
   // Fetch waiver templates
   const { data: waiverTemplates = [], isLoading: waiverTemplatesLoading } = useQuery<WaiverTemplateWithDetails[]>({
