@@ -5296,7 +5296,6 @@ jeremy@abqconcealedcarry.com
       console.error("Error creating SMS list:", error);
       res.status(500).json({ message: "Failed to create SMS list" });
     }
-   });
   });
 
   // 4. PATCH /api/sms-lists/:listId - Update list details
