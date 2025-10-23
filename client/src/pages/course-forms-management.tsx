@@ -66,7 +66,10 @@ export default function CourseFormsManagement() {
     queryFn: async () => {
       if (!selectedCourse) return [];
       const response = await apiRequest("GET", `/api/course-forms/${selectedCourse}`);
-      return response.json();
+      const data = await response.json();
+      console.log('[DEBUG] Frontend received forms:', data);
+      console.log('[DEBUG] Forms count:', data.length);
+      return data;
     },
     enabled: !!selectedCourse,
   });
