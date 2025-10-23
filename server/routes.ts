@@ -2322,6 +2322,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { updates } = req.body as { updates: { id: string; sortOrder: number }[] };
       const userId = req.user?.claims?.sub;
 
+      console.log('[DEBUG] Reorder request body:', JSON.stringify(req.body, null, 2));
+      console.log('[DEBUG] Updates:', updates);
+
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
@@ -2332,6 +2335,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get all forms to verify ownership - use the simplified method
       const forms = await storage.getCourseInformationForms();
+      console.log('[DEBUG] Found forms count:', forms.length);
+      console.log('[DEBUG] First form has fields:', forms[0]?.fields?.length);
       
       // Find which forms contain the fields being reordered
       const formIds = new Set<string>();
