@@ -52,8 +52,95 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
+  useSortable,
 } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+
+// Sortable Field Component
+function SortableField({ 
+  field, 
+  fieldTypes,
+  onEdit,
+  onDelete 
+}: {
+  field: CourseInformationFormField;
+  fieldTypes: Array<{ value: FormFieldType; label: string }>;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between p-3 border rounded-lg bg-muted/10"
+    >
+      <div className="flex items-center gap-3">
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium" data-testid={`text-field-label-${field.id}`}>
+              {field.label}
+            </span>
+            {field.isRequired && (
+              <Badge variant="outline" className="text-xs">Required</Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Badge variant="secondary" className="text-xs">
+              {fieldTypes.find(t => t.value === field.fieldType)?.label || field.fieldType}
+            </Badge>
+            {field.placeholder && (
+              <span>• Placeholder: "{field.placeholder}"</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onEdit}
+          data-testid={`button-edit-field-${field.id}`}
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDelete}
+          className="text-destructive hover:text-destructive"
+          data-testid={`button-delete-field-${field.id}`}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default function CourseFormsManagement() {
   const { user } = useAuth();
@@ -611,61 +698,21 @@ export default function CourseFormsManagement() {
                                 modifiers={[restrictToVerticalAxis]}
                               >
                                 <SortableContext
-                                  items={form.fields.map(f => ({ id: f.id }))}
+                                  items={form.fields.map(f => f.id)}
                                   strategy={verticalListSortingStrategy}
                                 >
                                   <div className="space-y-2">
-                                    {form.fields.map((field, index) => (
-                                      <div
+                                    {form.fields.map((field) => (
+                                      <SortableField
                                         key={field.id}
-                                        className="flex items-center justify-between p-3 border rounded-lg bg-muted/10"
-                                      >
-                                        <div className="flex items-center gap-3">
-                                          <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                          <div>
-                                            <div className="flex items-center gap-2">
-                                              <span className="font-medium" data-testid={`text-field-label-${field.id}`}>
-                                                {field.label}
-                                              </span>
-                                              {field.isRequired && (
-                                                <Badge variant="outline" className="text-xs">Required</Badge>
-                                              )}
-                                            </div>
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                              <Badge variant="secondary" className="text-xs">
-                                                {fieldTypes.find(t => t.value === field.fieldType)?.label || field.fieldType}
-                                              </Badge>
-                                              {field.placeholder && (
-                                                <span>• Placeholder: "{field.placeholder}"</span>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-1">
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => {
-                                              setEditingField(field);
-                                              setShowFieldEditor(true);
-                                            }}
-                                            data-testid={`button-edit-field-${field.id}`}
-                                          >
-                                            <Edit className="h-4 w-4" />
-                                          </Button>
-
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => deleteFieldMutation.mutate(field.id)}
-                                            className="text-destructive hover:text-destructive"
-                                            data-testid={`button-delete-field-${field.id}`}
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                        </div>
-                                      </div>
+                                        field={field}
+                                        fieldTypes={fieldTypes}
+                                        onEdit={() => {
+                                          setEditingField(field);
+                                          setShowFieldEditor(true);
+                                        }}
+                                        onDelete={() => deleteFieldMutation.mutate(field.id)}
+                                      />
                                     ))}
                                   </div>
                                 </SortableContext>
