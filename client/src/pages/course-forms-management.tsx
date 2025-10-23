@@ -72,7 +72,15 @@ export default function CourseFormsManagement() {
     queryKey: ["/api/course-forms", selectedCourse],
     queryFn: async () => {
       if (!selectedCourse) return [];
-      const response = await apiRequest("GET", `/api/course-forms/${selectedCourse}`);
+      const response = await fetch(`/api/course-forms/${selectedCourse}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+        cache: 'no-store',
+      });
       const data = await response.json();
       return data;
     },
