@@ -38,18 +38,34 @@ import type {
   WaiverTemplateWithDetails,
   InsertWaiverTemplate
 } from "@shared/schema";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 export default function CourseFormsManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [showCreateFormDialog, setShowCreateFormDialog] = useState(false);
   const [editingForm, setEditingForm] = useState<CourseInformationFormWithFields | null>(null);
   const [showFieldEditor, setShowFieldEditor] = useState(false);
   const [editingField, setEditingField] = useState<CourseInformationFormField | null>(null);
   const [expandedForms, setExpandedForms] = useState<Set<string>>(new Set());
-  
+
   // Waiver management state
   const [showCreateWaiverDialog, setShowCreateWaiverDialog] = useState(false);
   const [editingWaiver, setEditingWaiver] = useState<WaiverTemplateWithDetails | null>(null);
@@ -258,6 +274,40 @@ export default function CourseFormsManagement() {
     },
   });
 
+  // Mutation for reordering fields
+  const reorderFieldsMutation = useMutation({
+    mutationFn: async (data: { formId: string; updates: { id: string; sortOrder: number }[] }) => {
+      return await apiRequest("PATCH", `/api/course-form-fields/reorder`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/course-forms"] });
+    },
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent, formId: string, fields: CourseInformationFormField[]) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = fields.findIndex((f) => f.id === active.id);
+      const newIndex = fields.findIndex((f) => f.id === over.id);
+
+      const newFields = arrayMove(fields, oldIndex, newIndex);
+      const updates = newFields.map((field, index) => ({
+        id: field.id,
+        sortOrder: index,
+      }));
+
+      reorderFieldsMutation.mutate({ formId, updates });
+    }
+  };
+
   const toggleFormExpansion = (formId: string) => {
     const newExpanded = new Set(expandedForms);
     if (newExpanded.has(formId)) {
@@ -308,7 +358,7 @@ export default function CourseFormsManagement() {
       });
       return;
     }
-    
+
     // Transform data to match schema requirements
     const waiverData = {
       name: data.name,
@@ -331,6 +381,8 @@ export default function CourseFormsManagement() {
   };
 
   const fieldTypes: Array<{ value: FormFieldType; label: string }> = [
+    { value: 'header', label: 'Header' },
+    { value: 'body', label: 'Body Text' },
     { value: 'text', label: 'Text' },
     { value: 'email', label: 'Email' },
     { value: 'phone', label: 'Phone' },
@@ -400,7 +452,7 @@ export default function CourseFormsManagement() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   {selectedCourse && (
                     <Dialog open={showCreateFormDialog} onOpenChange={setShowCreateFormDialog}>
                       <DialogTrigger asChild>
@@ -477,7 +529,7 @@ export default function CourseFormsManagement() {
                               )}
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-2">
                             {form.isRequired && (
                               <Badge variant="secondary">Required</Badge>
@@ -485,7 +537,7 @@ export default function CourseFormsManagement() {
                             <Badge variant="outline">
                               {form.fields.length} field{form.fields.length !== 1 ? 's' : ''}
                             </Badge>
-                            
+
                             <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
@@ -498,7 +550,7 @@ export default function CourseFormsManagement() {
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              
+
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -552,60 +604,72 @@ export default function CourseFormsManagement() {
                                 <p className="text-muted-foreground">No fields yet. Add your first field to get started.</p>
                               </div>
                             ) : (
-                              <div className="space-y-2">
-                                {form.fields.map((field, index) => (
-                                  <div
-                                    key={field.id}
-                                    className="flex items-center justify-between p-3 border rounded-lg bg-muted/10"
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                      <div>
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-medium" data-testid={`text-field-label-${field.id}`}>
-                                            {field.label}
-                                          </span>
-                                          {field.isRequired && (
-                                            <Badge variant="outline" className="text-xs">Required</Badge>
-                                          )}
+                              <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={(e) => handleDragEnd(e, form.id, form.fields)}
+                                modifiers={[restrictToVerticalAxis]}
+                              >
+                                <SortableContext
+                                  items={form.fields.map(f => ({ id: f.id }))}
+                                  strategy={verticalListSortingStrategy}
+                                >
+                                  <div className="space-y-2">
+                                    {form.fields.map((field, index) => (
+                                      <div
+                                        key={field.id}
+                                        className="flex items-center justify-between p-3 border rounded-lg bg-muted/10"
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <GripVertical className="h-4 w-4 text-muted-foreground" />
+                                          <div>
+                                            <div className="flex items-center gap-2">
+                                              <span className="font-medium" data-testid={`text-field-label-${field.id}`}>
+                                                {field.label}
+                                              </span>
+                                              {field.isRequired && (
+                                                <Badge variant="outline" className="text-xs">Required</Badge>
+                                              )}
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                              <Badge variant="secondary" className="text-xs">
+                                                {fieldTypes.find(t => t.value === field.fieldType)?.label || field.fieldType}
+                                              </Badge>
+                                              {field.placeholder && (
+                                                <span>• Placeholder: "{field.placeholder}"</span>
+                                              )}
+                                            </div>
+                                          </div>
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                          <Badge variant="secondary" className="text-xs">
-                                            {fieldTypes.find(t => t.value === field.fieldType)?.label || field.fieldType}
-                                          </Badge>
-                                          {field.placeholder && (
-                                            <span>• Placeholder: "{field.placeholder}"</span>
-                                          )}
+
+                                        <div className="flex items-center gap-1">
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                              setEditingField(field);
+                                              setShowFieldEditor(true);
+                                            }}
+                                            data-testid={`button-edit-field-${field.id}`}
+                                          >
+                                            <Edit className="h-4 w-4" />
+                                          </Button>
+
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => deleteFieldMutation.mutate(field.id)}
+                                            className="text-destructive hover:text-destructive"
+                                            data-testid={`button-delete-field-${field.id}`}
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
                                         </div>
                                       </div>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-1">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                          setEditingField(field);
-                                          setShowFieldEditor(true);
-                                        }}
-                                        data-testid={`button-edit-field-${field.id}`}
-                                      >
-                                        <Edit className="h-4 w-4" />
-                                      </Button>
-                                      
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => deleteFieldMutation.mutate(field.id)}
-                                        className="text-destructive hover:text-destructive"
-                                        data-testid={`button-delete-field-${field.id}`}
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
+                                </SortableContext>
+                              </DndContext>
                             )}
                           </div>
                         </CardContent>
@@ -709,7 +773,7 @@ export default function CourseFormsManagement() {
                               </p>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-2">
                             {waiver.isActive ? (
                               <Badge variant="default">Active</Badge>
@@ -722,7 +786,7 @@ export default function CourseFormsManagement() {
                             <Badge variant="outline">
                               {waiver.courseIds?.length || 0} course{(waiver.courseIds?.length || 0) !== 1 ? 's' : ''}
                             </Badge>
-                            
+
                             <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
@@ -735,7 +799,7 @@ export default function CourseFormsManagement() {
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              
+
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -791,7 +855,7 @@ export default function CourseFormsManagement() {
                                   })}
                                 </div>
                               )}
-                              
+
                               <div className="mt-4">
                                 <AssignWaiverDialog
                                   waiver={waiver}
@@ -865,7 +929,7 @@ function CreateFormDialog({
           data-testid="input-form-title"
         />
       </div>
-      
+
       <div>
         <Label htmlFor="description">Description</Label>
         <Textarea
@@ -876,7 +940,7 @@ function CreateFormDialog({
           data-testid="textarea-form-description"
         />
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <Checkbox
           id="isRequired"
@@ -886,7 +950,7 @@ function CreateFormDialog({
         />
         <Label htmlFor="isRequired">Required form (students must complete before course)</Label>
       </div>
-      
+
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
@@ -924,6 +988,8 @@ function FieldEditor({
   });
 
   const fieldTypes: Array<{ value: FormFieldType; label: string }> = [
+    { value: 'header', label: 'Header' },
+    { value: 'body', label: 'Body Text' },
     { value: 'text', label: 'Text' },
     { value: 'email', label: 'Email' },
     { value: 'phone', label: 'Phone' },
@@ -936,7 +1002,7 @@ function FieldEditor({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     let parsedOptions = undefined;
     if (fieldData.options.trim()) {
       try {
@@ -946,7 +1012,7 @@ function FieldEditor({
         return;
       }
     }
-    
+
     onSubmit({
       fieldType: fieldData.fieldType,
       label: fieldData.label,
@@ -979,7 +1045,7 @@ function FieldEditor({
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="flex items-center space-x-2 pt-8">
           <Checkbox
             id="fieldRequired"
@@ -992,7 +1058,7 @@ function FieldEditor({
           <Label htmlFor="fieldRequired">Required field</Label>
         </div>
       </div>
-      
+
       <div>
         <Label htmlFor="label">Field Label *</Label>
         <Input
@@ -1004,7 +1070,7 @@ function FieldEditor({
           data-testid="input-field-label"
         />
       </div>
-      
+
       <div>
         <Label htmlFor="placeholder">Placeholder Text</Label>
         <Input
@@ -1015,8 +1081,8 @@ function FieldEditor({
           data-testid="input-field-placeholder"
         />
       </div>
-      
-      {fieldData.fieldType === 'select' && (
+
+      {(fieldData.fieldType === 'select' || fieldData.fieldType === 'checkbox') && (
         <div>
           <Label htmlFor="options">Options (JSON format)</Label>
           <Textarea
@@ -1028,11 +1094,11 @@ function FieldEditor({
             data-testid="textarea-field-options"
           />
           <p className="text-xs text-muted-foreground mt-1">
-            For dropdown fields, provide options as a JSON array
+            For dropdown and checkbox fields, provide options as a JSON array. For checkboxes, each option will be a separate checkbox.
           </p>
         </div>
       )}
-      
+
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
@@ -1112,7 +1178,7 @@ function CreateWaiverDialog({
           data-testid="input-waiver-name"
         />
       </div>
-      
+
       <div>
         <Label htmlFor="waiver-content">Waiver Content *</Label>
         <div className="mt-2">
@@ -1133,7 +1199,7 @@ function CreateWaiverDialog({
           />
         </div>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <Checkbox
           id="waiver-active"
@@ -1171,7 +1237,7 @@ function CreateWaiverDialog({
           </div>
         )}
       </div>
-      
+
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
@@ -1254,7 +1320,7 @@ function AssignWaiverDialog({
               ))}
             </div>
           )}
-          
+
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
               Cancel

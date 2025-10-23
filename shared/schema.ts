@@ -10,6 +10,7 @@ import {
   decimal,
   boolean,
   uuid,
+  pgEnum
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -467,7 +468,20 @@ export type StudentFormResponseWithDetails = StudentFormResponse & {
   enrollment: EnrollmentWithDetails;
 };
 
-export type FormFieldType = 'text' | 'email' | 'phone' | 'select' | 'checkbox' | 'textarea' | 'date' | 'number';
+export const formFieldTypeEnum = pgEnum('form_field_type', [
+  'text',
+  'email',
+  'phone',
+  'textarea',
+  'select',
+  'checkbox',
+  'date',
+  'number',
+  'header',
+  'body',
+]);
+
+export type FormFieldType = typeof formFieldTypeEnum.enumValues[number];
 
 // Course Notifications table for users who want to be notified about upcoming courses
 export const courseNotifications = pgTable("course_notifications", {

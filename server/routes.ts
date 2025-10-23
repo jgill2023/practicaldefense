@@ -2276,9 +2276,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete a form field
-  app.delete("/api/course-form-fields/:id", async (req, res) => {
+  app.delete("/api/course-form-fields/:fieldId", async (req, res) => {
     try {
-      const { id } = req.params;
+      const { fieldId } = req.params;
 
       const userId = req.user?.claims?.sub;
       if (!userId) {
@@ -2291,7 +2291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let targetForm = null;
 
       for (const form of forms) {
-        const field = form.fields.find(f => f.id === id);
+        const field = form.fields.find(f => f.id === fieldId);
         if (field) {
           targetField = field;
           targetForm = form;
@@ -2308,13 +2308,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      await storage.deleteCourseInformationFormField(id);
+      await storage.deleteCourseInformationFormField(fieldId);
       res.json({ success: true });
     } catch (error: any) {
       console.error("Error deleting form field:", error);
       res.status(500).json({ message: "Error deleting form field: " + error.message });
     }
   });
+
+  // Reorder course information form fields
+  app.patch("/api/course-form-fields/reorder", async (req, res) => {
+    try {
+      const { updates } = req.body as { updates: { id: string; sortOrder: number }[] };
+      const userId = req.user?.claims?.sub;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Verify ownership for all affected forms
+      const formIds = new Set<string>();
+      for (const update of updates) {
+        const field = await storage.getCourseInformationFormField(update.id);
+        if (field) {
+          formIds.add(field.formId);
+        } else {
+          return res.status(404).json({ message: `Field with ID ${update.id} not found` });
+        }
+      }
+
+      for (const formId of formIds) {
+        const form = await storage.getCourseInformationForm(formId);
+        if (!form || form.course.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied. You do not have permission to reorder fields in one of the forms." });
+        }
+      }
+
+      await storage.reorderCourseInformationFormFields(updates);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error reordering course form fields:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
 
   // Course Notification routes
   app.post("/api/course-notifications", async (req, res) => {
@@ -5259,6 +5296,7 @@ jeremy@abqconcealedcarry.com
       console.error("Error creating SMS list:", error);
       res.status(500).json({ message: "Failed to create SMS list" });
     }
+   });
   });
 
   // 4. PATCH /api/sms-lists/:listId - Update list details
@@ -5755,7 +5793,7 @@ jeremy@abqconcealedcarry.com
 
       // Helper function to format phone number to E.164 format
       const formatPhoneNumber = (phone: string): string => {
-        let formatted = phone.replace(/[\The user wants to add the `crypto` import statement to the code.The user wants to add the `crypto` import statement to the code.replace(/\s\-\(\)\.]/g, ''); // Remove formatting
+        let formatted = phone.replace(/[\s\-\(\)\.]/g, ''); // Remove formatting
 
         // Add country code if missing (assuming US +1)
         if (!formatted.startsWith('+')) {
@@ -5841,7 +5879,8 @@ jeremy@abqconcealedcarry.com
       await Promise.all(sendPromises);
 
       // Update broadcast with final stats
-      const updatedBroadcast = await storage.updateSmsBroadcastMessage(req.params.broadcastId, {        status: 'sent',
+      const updatedBroadcast = await storage.updateSmsBroadcastMessage(req.params.broadcastId, {
+        status: 'sent',
         successCount,
         failureCount,
         sentAt: new Date(),
