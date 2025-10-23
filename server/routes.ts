@@ -2102,7 +2102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/course-forms", async (req, res) => {
     try {
       // Validate request body with Zod
-      const { courseId, title, description, isRequired } = insertCourseInformationFormSchema.parse({
+      const validatedData = insertCourseInformationFormSchema.parse({
         ...req.body,
         // Provide defaults for omitted fields
         sortOrder: 0,
@@ -2115,18 +2115,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify instructor owns the course
-      const course = await storage.getCourse(courseId);
+      const course = await storage.getCourse(validatedData.courseId);
       if (!course || course.instructorId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const form = await storage.createCourseInformationForm({
-        courseId,
-        title,
-        description,
-        isRequired: Boolean(isRequired),
-        sortOrder: 0, // Will be handled by database default or UI sorting
-      });
+      const form = await storage.createCourseInformationForm(validatedData);
 
       res.status(201).json(form);
     } catch (error: any) {
