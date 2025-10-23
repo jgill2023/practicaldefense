@@ -1340,6 +1340,22 @@ export type PromoCodeRedemptionWithDetails = PromoCodeRedemption & {
   enrollment?: EnrollmentWithDetails;
 };
 
+// Relations for communications
+export const communicationsRelations = relations(communications, ({ one }) => ({
+  user: one(users, {
+    fields: [communications.userId],
+    references: [users.id],
+  }),
+  enrollment: one(enrollments, {
+    fields: [communications.enrollmentId],
+    references: [enrollments.id],
+  }),
+  course: one(courses, {
+    fields: [communications.courseId],
+    references: [courses.id],
+  }),
+}));
+
 // Extended type for communications with relations
 export type CommunicationWithDetails = Communication & {
   user?: User;
