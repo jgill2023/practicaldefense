@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import Stripe from "stripe";
 import { z } from "zod";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, requireAuth } from "./replitAuth"; // Import requireAuth
 import { db } from "./db";
 import { enrollments, smsBroadcastMessages } from "@shared/schema";
 import { eq, and, inArray } from "drizzle-orm";
@@ -2227,9 +2227,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update a form field
-  app.patch("/api/course-form-fields/:id", async (req, res) => {
+  app.patch("/api/course-form-fields/:fieldId", async (req, res) => {
     try {
-      const { id } = req.params;
+      const { fieldId } = req.params;
       const { fieldType, label, placeholder, isRequired, options } = req.body;
 
       const userId = req.user?.claims?.sub;
@@ -2243,7 +2243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let targetForm = null;
 
       for (const form of forms) {
-        const field = form.fields.find(f => f.id === id);
+        const field = form.fields.find(f => f.id === fieldId);
         if (field) {
           targetField = field;
           targetForm = form;
@@ -2260,7 +2260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const updatedField = await storage.updateCourseInformationFormField(id, {
+      const updatedField = await storage.updateCourseInformationFormField(fieldId, {
         fieldType,
         label,
         placeholder,
@@ -4404,9 +4404,11 @@ Practical Defense Training`;
         courseId: null,
         purpose: 'general',
         deliveryStatus: 'delivered',
-        externalMessageId: MessageSid,
-        sentAt: new Date(),
-        deliveredAt: new Date(),
+        externalMessageId: MessageSid, // Store Twilio's Message SID
+        sentAt: new Date(), // This is when Twilio *received* it, not sent time. For inbound, this is effectively received time.
+        deliveredAt: new Date(), // Same as sentAt for inbound
+        readAt: null,
+        flaggedAt: null,
         isRead: false,
         isFlagged: false,
       };
