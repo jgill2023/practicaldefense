@@ -2091,6 +2091,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const forms = await storage.getCourseInformationFormsByCourse(courseId);
+      console.log(`[DEBUG] Fetched ${forms.length} forms for course ${courseId}:`, JSON.stringify(forms, null, 2));
       res.json(forms);
     } catch (error: any) {
       console.error("Error fetching course forms:", error);
