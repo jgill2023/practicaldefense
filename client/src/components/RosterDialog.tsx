@@ -1,3 +1,4 @@
+replit_final_file>
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Phone, Mail, Calendar, DollarSign, X, FileText, AlertCircle, Award, RotateCcw, MessageSquare } from "lucide-react";
+import { Users, Phone, Mail, Calendar, DollarSign, X, FileText, AlertCircle, Award, RotateCcw, MessageSquare, FileSignature } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { SmsNotificationModal } from "./SmsNotificationModal";
@@ -36,6 +37,8 @@ interface RosterData {
     location: string;
     remainingBalance?: number;
     certificateIssued?: boolean;
+    waiverStatus?: 'signed' | 'pending' | 'not_started';
+    formStatus?: 'completed' | 'incomplete' | 'not_started';
   }>;
   former: Array<any>;
   summary: {
@@ -63,6 +66,14 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
   const [paymentModal, setPaymentModal] = useState<{ isOpen: boolean; studentId: string; studentName: string; enrollmentId: string }>({ isOpen: false, studentId: "", studentName: "", enrollmentId: "" });
   const [reminderModal, setReminderModal] = useState<{ isOpen: boolean; studentName: string; studentEmail: string; studentPhone?: string; remainingBalance: number; courseName: string; scheduleDate: string }>({ isOpen: false, studentName: "", studentEmail: "", remainingBalance: 0, courseName: "", scheduleDate: "" });
   const [rescheduleModal, setRescheduleModal] = useState<{ isOpen: boolean; studentId: string; studentName: string; enrollmentId: string; currentCourse: string; currentScheduleDate: string }>({ isOpen: false, studentId: "", studentName: "", enrollmentId: "", currentCourse: "", currentScheduleDate: "" });
+  const [formReminderModal, setFormReminderModal] = useState({
+    isOpen: false,
+    studentName: '',
+    studentEmail: '',
+    studentPhone: '',
+    reminderType: '' as 'waiver' | 'form'
+  });
+
 
   const { data: rosterData, isLoading, error } = useQuery<RosterData>({
     queryKey: ["/api/instructor/roster", scheduleId],
@@ -75,7 +86,7 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
 
   const getPaymentStatusBadge = (status: string, remainingBalance?: number, onClick?: () => void) => {
     const className = onClick ? "cursor-pointer hover:opacity-80" : "";
-    
+
     switch (status) {
       case 'paid':
         return (
@@ -151,6 +162,16 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
       remainingBalance: student.remainingBalance || 0,
       courseName: student.courseTitle,
       scheduleDate: formatDate(student.scheduleDate)
+    });
+  };
+
+  const handleFormReminderClick = (student: any, reminderType: 'waiver' | 'form') => {
+    setFormReminderModal({
+      isOpen: true,
+      studentName: `${student.firstName} ${student.lastName}`,
+      studentEmail: student.email,
+      studentPhone: student.phone,
+      reminderType
     });
   };
 
@@ -281,7 +302,7 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center">
@@ -321,12 +342,14 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Student Name</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>License Exp.</TableHead>
-                        <TableHead>Payment Status</TableHead>
-                        <TableHead>Actions</TableHead>
+                        <TableHead className="text-left">Student Name</TableHead>
+                        <TableHead className="text-left">Phone</TableHead>
+                        <TableHead className="text-left">Email</TableHead>
+                        <TableHead className="text-center">License Exp.</TableHead>
+                        <TableHead className="text-center">Payment Status</TableHead>
+                        <TableHead className="text-center">Waiver</TableHead>
+                        <TableHead className="text-center">Forms</TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -393,8 +416,67 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
                               </Button>
                             )}
                           </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
+
+                          {/* Waiver Status Icon */}
+                          <TableCell className="text-center">
+                            {(() => {
+                              const waiverStatus = student.waiverStatus || 'not_started';
+                              const isComplete = waiverStatus === 'signed';
+                              const isIncomplete = waiverStatus === 'pending';
+
+                              return (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => !isComplete && handleFormReminderClick(student, 'waiver')}
+                                  disabled={isComplete}
+                                  data-testid={`waiver-status-${student.studentId}`}
+                                >
+                                  {isComplete ? (
+                                    <FileSignature className="h-5 w-5 text-green-600" />
+                                  ) : isIncomplete ? (
+                                    <FileSignature className="h-5 w-5 text-gray-400" />
+                                  ) : (
+                                    <FileSignature className="h-5 w-5 text-red-500" />
+                                  )}
+                                </Button>
+                              );
+                            })()}
+                          </TableCell>
+
+                          {/* Information Form Status Icon */}
+                          <TableCell className="text-center">
+                            {(() => {
+                              const formStatus = student.formStatus || 'not_started';
+                              const isComplete = formStatus === 'completed';
+                              const isIncomplete = formStatus === 'incomplete';
+
+                              return (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => !isComplete && handleFormReminderClick(student, 'form')}
+                                  disabled={isComplete}
+                                  data-testid={`form-status-${student.studentId}`}
+                                >
+                                  {isComplete ? (
+                                    <FileText className="h-5 w-5 text-green-600" />
+                                  ) : isIncomplete ? (
+                                    <FileText className="h-5 w-5 text-gray-400" />
+                                  ) : (
+                                    <FileText className="h-5 w-5 text-red-500" />
+                                  )}
+                                </Button>
+                              );
+                            })()}
+                          </TableCell>
+
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-2"
+                              data-testid={`actions-${student.studentId}`}
+                            >
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -461,6 +543,96 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
           scheduleDate={reminderModal.scheduleDate}
         />
 
+        {/* Form/Waiver Reminder Modal */}
+        <Dialog open={formReminderModal.isOpen} onOpenChange={(open) => !open && setFormReminderModal({ ...formReminderModal, isOpen: false })}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                Send {formReminderModal.reminderType === 'waiver' ? 'Waiver' : 'Information Form'} Reminder
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Student Info */}
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="font-medium">{formReminderModal.studentName}</p>
+                <p className="text-sm text-muted-foreground">{formReminderModal.studentEmail}</p>
+                {formReminderModal.studentPhone && (
+                  <p className="text-sm text-muted-foreground">{formReminderModal.studentPhone}</p>
+                )}
+              </div>
+
+              {/* Reminder Type */}
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  {formReminderModal.reminderType === 'waiver' ? (
+                    <FileSignature className="h-5 w-5 text-yellow-600" />
+                  ) : (
+                    <FileText className="h-5 w-5 text-yellow-600" />
+                  )}
+                  <p className="font-medium text-yellow-800">
+                    {formReminderModal.reminderType === 'waiver'
+                      ? 'Student has not completed the waiver'
+                      : 'Student has not completed the information form'}
+                  </p>
+                </div>
+                <p className="text-sm text-yellow-700">
+                  Send a reminder to complete the required {formReminderModal.reminderType === 'waiver' ? 'waiver' : 'information form'}.
+                </p>
+              </div>
+
+              {/* Send Options */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  className="flex-1"
+                  onClick={() => {
+                    setEmailModal({
+                      isOpen: true,
+                      studentName: formReminderModal.studentName,
+                      emailAddress: formReminderModal.studentEmail
+                    });
+                    setFormReminderModal({ ...formReminderModal, isOpen: false });
+                  }}
+                  data-testid="button-send-email-reminder"
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Send Email Reminder
+                </Button>
+
+                {formReminderModal.studentPhone && (
+                  <Button
+                    className="flex-1"
+                    variant="outline"
+                    onClick={() => {
+                      setSmsModal({
+                        isOpen: true,
+                        studentName: formReminderModal.studentName,
+                        phoneNumber: formReminderModal.studentPhone
+                      });
+                      setFormReminderModal({ ...formReminderModal, isOpen: false });
+                    }}
+                    data-testid="button-send-sms-reminder"
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Send SMS Reminder
+                  </Button>
+                )}
+              </div>
+
+              {/* Close Button */}
+              <div className="flex justify-end pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setFormReminderModal({ ...formReminderModal, isOpen: false })}
+                  data-testid="button-cancel-form-reminder"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <RescheduleModal
           isOpen={rescheduleModal.isOpen}
           onClose={() => setRescheduleModal({ ...rescheduleModal, isOpen: false })}
@@ -474,3 +646,4 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
     </Dialog>
   );
 }
+</replit_final_file>

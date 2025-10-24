@@ -6,7 +6,7 @@ import { z } from "zod";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, requireAuth } from "./replitAuth"; // Import requireAuth
 import { db } from "./db";
-import { enrollments, smsBroadcastMessages } from "@shared/schema";
+import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms } from "@shared/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
@@ -1228,6 +1228,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const data = await storage.getRosterExportData(userId, scheduleId);
+
+      // Enrich data with waiver and form completion status
+      const enrichedCurrent = await Promise.all(data.current.map(async (student: any) => {
+        // Check waiver status
+        const waiverInstances = await db.query.waiverInstances.findMany({
+          where: eq(waiverInstances.enrollmentId, student.enrollmentId),
+        });
+        const waiverStatus = waiverInstances.length > 0 
+          ? (waiverInstances.some(w => w.status === 'signed') ? 'signed' : 'pending')
+          : 'not_started';
+
+        // Check form completion status
+        const formResponses = await db.query.studentFormResponses.findMany({
+          where: eq(studentFormResponses.enrollmentId, student.enrollmentId),
+        });
+        
+        // Get required fields count for this course
+        const courseForms = await db.query.courseInformationForms.findMany({
+          where: and(
+            eq(courseInformationForms.courseId, student.courseId),
+            eq(courseInformationForms.isActive, true)
+          ),
+          with: {
+            fields: true
+          }
+        });
+
+        const totalRequiredFields = courseForms.reduce((sum, form) => 
+          sum + form.fields.filter(f => f.isRequired).length, 0
+        );
+        const completedFields = formResponses.length;
+        
+        const formStatus = totalRequiredFields === 0 
+          ? 'not_applicable'
+          : completedFields >= totalRequiredFields 
+            ? 'completed' 
+            : completedFields > 0 
+              ? 'incomplete' 
+              : 'not_started';
+
+        return {
+          ...student,
+          waiverStatus,
+          formStatus
+        };
+      }));
+
+      data.current = enrichedCurrent;
 
       // Calculate summary statistics for the specific schedule
       const summary = {
