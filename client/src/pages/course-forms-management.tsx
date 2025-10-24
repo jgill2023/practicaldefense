@@ -951,20 +951,24 @@ export default function CourseFormsManagement() {
                 Select a course to duplicate "{duplicatingForm?.title}" to. All fields will be copied.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const targetCourseId = formData.get('targetCourse') as string;
+                if (duplicatingForm && targetCourseId) {
+                  duplicateFormMutation.mutate({
+                    formId: duplicatingForm.id,
+                    targetCourseId,
+                  });
+                }
+              }}
+              className="space-y-4"
+            >
               <div>
-                <Label>Target Course</Label>
-                <Select
-                  onValueChange={(courseId) => {
-                    if (duplicatingForm) {
-                      duplicateFormMutation.mutate({
-                        formId: duplicatingForm.id,
-                        targetCourseId: courseId,
-                      });
-                    }
-                  }}
-                >
-                  <SelectTrigger data-testid="select-duplicate-target-course">
+                <Label htmlFor="targetCourse">Target Course *</Label>
+                <Select name="targetCourse" required>
+                  <SelectTrigger id="targetCourse" data-testid="select-duplicate-target-course">
                     <SelectValue placeholder="Choose a course" />
                   </SelectTrigger>
                   <SelectContent>
@@ -978,7 +982,25 @@ export default function CourseFormsManagement() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDuplicatingForm(null)}
+                  data-testid="button-cancel-duplicate"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={duplicateFormMutation.isPending}
+                  data-testid="button-submit-duplicate"
+                >
+                  {duplicateFormMutation.isPending ? "Duplicating..." : "Duplicate Form"}
+                </Button>
+              </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
