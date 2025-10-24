@@ -1,4 +1,3 @@
-replit_final_file>
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -646,4 +645,3 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
     </Dialog>
   );
 }
-</replit_final_file>
