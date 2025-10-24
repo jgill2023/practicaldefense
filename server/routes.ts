@@ -1232,11 +1232,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Enrich data with waiver and form completion status
       const enrichedCurrent = await Promise.all(data.current.map(async (student: any) => {
         // Check waiver status
-        const waiverInstances = await db.query.waiverInstances.findMany({
+        const studentWaiverInstances = await db.query.waiverInstances.findMany({
           where: eq(waiverInstances.enrollmentId, student.enrollmentId),
         });
-        const waiverStatus = waiverInstances.length > 0 
-          ? (waiverInstances.some(w => w.status === 'signed') ? 'signed' : 'pending')
+        const waiverStatus = studentWaiverInstances.length > 0 
+          ? (studentWaiverInstances.some(w => w.status === 'signed') ? 'signed' : 'pending')
           : 'not_started';
 
         // Check form completion status
