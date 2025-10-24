@@ -1310,9 +1310,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getScheduleEnrollmentCount(scheduleId: string): Promise<number> {
+    // Count only confirmed enrollments that haven't been cancelled or moved
     const result = await db
       .select({
-        count: sql<number>`COALESCE(COUNT(${enrollments.id}), 0)`
+        count: sql<number>`COALESCE(COUNT(DISTINCT ${enrollments.studentId}), 0)`
       })
       .from(enrollments)
       .where(
@@ -1342,19 +1343,11 @@ export class DatabaseStorage implements IStorage {
         ? and(
             eq(enrollments.scheduleId, scheduleId),
             isNotNull(enrollments.studentId), // Only get actual student enrollments
-            or(
-              eq(enrollments.status, 'confirmed'),
-              eq(enrollments.status, 'pending'),
-              eq(enrollments.status, 'hold')
-            )
+            eq(enrollments.status, 'confirmed') // Only count confirmed enrollments
           )
         : and(
             isNotNull(enrollments.studentId), // Only get actual student enrollments
-            or(
-              eq(enrollments.status, 'confirmed'),
-              eq(enrollments.status, 'pending'),
-              eq(enrollments.status, 'hold')
-            )
+            eq(enrollments.status, 'confirmed') // Only count confirmed enrollments
           ),
       with: {
         student: true,
@@ -1377,17 +1370,23 @@ export class DatabaseStorage implements IStorage {
 
     console.log(`getRosterExportData - Instructor enrollments: ${instructorEnrollments.length}`);
 
-    // Split into current and former students
-    // Include 'confirmed', 'initiated', 'pending', and 'hold' as current
-    const currentStudents = instructorEnrollments.filter(e => 
-      e.status === 'confirmed' || e.status === 'initiated' || e.status === 'pending' || e.status === 'hold'
-    );
+    // For specific schedule, all confirmed enrollments are current
+    // For all schedules, check if schedule date is in future or past
+    const now = new Date();
+    const currentStudents = instructorEnrollments.filter(e => {
+      if (scheduleId) {
+        // For specific schedule filter, all are current
+        return true;
+      }
+      // For all schedules, check if course is upcoming
+      return e.schedule && new Date(e.schedule.startDate) >= now;
+    });
 
-    console.log(`getRosterExportData - Current students: ${currentStudents.length}, statuses: ${currentStudents.map(e => e.status).join(', ')}`);
+    console.log(`getRosterExportData - Current students: ${currentStudents.length}`);
 
-    // Former students are those whose enrollment status is not in the current list
-    const formerStudents = instructorEnrollments.filter(e => 
-      !currentStudents.includes(e)
+    // Former students are those with past course dates (only when not filtering by schedule)
+    const formerStudents = scheduleId ? [] : instructorEnrollments.filter(e => 
+      e.schedule && new Date(e.schedule.startDate) < now
     );
 
     // Flatten the data for export
