@@ -584,30 +584,38 @@ export default function InstructorDashboard() {
             return (
               <tr key={schedule.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4">
-                  <div className="font-medium text-gray-900" data-testid={`text-schedule-course-${schedule.id}`}>
-                    {schedule.course.title}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {typeof schedule.course.category === 'string' ? schedule.course.category : 
-                     (schedule.course.category && typeof schedule.course.category === 'object' && 'name' in schedule.course.category) 
-                       ? (schedule.course.category as any).name || 'General' 
-                       : 'General'}
-                  </div>
-                  {spotsLeft <= 10 && spotsLeft > 0 && (
-                    <span className="inline-block mt-1 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
-                      {spotsLeft} spots left
-                    </span>
-                  )}
-                  {spotsLeft === 0 && (
-                    <span className="inline-block mt-1 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
-                      Full
-                    </span>
-                  )}
-                  {spotsLeft > 10 && (
-                    <span className="inline-block mt-1 px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
-                      {spotsLeft} spots left
-                    </span>
-                  )}
+                  <button
+                    onClick={() => {
+                      setSelectedScheduleId(schedule.id);
+                      setShowRosterDialog(true);
+                    }}
+                    className="text-left hover:bg-gray-50 rounded p-1 -m-1 transition-colors w-full"
+                  >
+                    <div className="font-medium text-gray-900 hover:text-primary transition-colors" data-testid={`text-schedule-course-${schedule.id}`}>
+                      {schedule.course.title}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {typeof schedule.course.category === 'string' ? schedule.course.category : 
+                       (schedule.course.category && typeof schedule.course.category === 'object' && 'name' in schedule.course.category) 
+                         ? (schedule.course.category as any).name || 'General' 
+                         : 'General'}
+                    </div>
+                    {spotsLeft <= 10 && spotsLeft > 0 && (
+                      <span className="inline-block mt-1 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                        {spotsLeft} spots left
+                      </span>
+                    )}
+                    {spotsLeft === 0 && (
+                      <span className="inline-block mt-1 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                        Full
+                      </span>
+                    )}
+                    {spotsLeft > 10 && (
+                      <span className="inline-block mt-1 px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
+                        {spotsLeft} spots left
+                      </span>
+                    )}
+                  </button>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   <div>{displayDate}</div>
