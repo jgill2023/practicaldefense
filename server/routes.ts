@@ -740,6 +740,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/course-form-fields/reorder', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const { fieldId, newSortOrder } = req.body;
+
+      if (!fieldId || typeof newSortOrder !== 'number') {
+        return res.status(400).json({ message: "Field ID and new sort order are required" });
+      }
+
+      // Update the field's sort order
+      const updatedField = await storage.updateCourseFormField(fieldId, { sortOrder: newSortOrder });
+      
+      res.json(updatedField);
+    } catch (error) {
+      console.error("Error reordering form field:", error);
+      res.status(500).json({ message: "Failed to reorder field" });
+    }
+  });
+
   app.get('/api/students', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
