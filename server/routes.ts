@@ -2317,31 +2317,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reorder course information form fields
-  app.patch("/api/course-form-fields/reorder", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/course-form-fields/reorder", async (req, res) => {
     try {
-      const { formId, updates } = req.body as { formId: string; updates: { id: string; sortOrder: number }[] };
+      const { updates } = req.body as { updates: { id: string; sortOrder: number }[] };
       const userId = req.user?.claims?.sub;
 
-      console.log('[DEBUG] Reorder request - formId:', formId);
-      console.log('[DEBUG] Reorder request - updates:', updates);
+      console.log('[DEBUG] Reorder request body:', JSON.stringify(req.body, null, 2));
+      console.log('[DEBUG] Updates:', updates);
 
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      if (!formId || !updates || updates.length === 0) {
-        return res.status(400).json({ message: "Form ID and updates are required" });
+      if (!updates || updates.length === 0) {
+        return res.status(400).json({ message: "No updates provided" });
       }
 
-      // Get the specific form to verify ownership
-      const form = await storage.getCourseInformationForm(formId);
-      if (!form) {
-        return res.status(404).json({ message: "Form not found" });
+      // Get all forms to verify ownership - use the simplified method
+      const forms = await storage.getCourseInformationForms();
+      console.log('[DEBUG] Found forms count:', forms.length);
+      console.log('[DEBUG] First form has fields:', forms[0]?.fields?.length);
+      
+      // Find which forms contain the fields being reordered
+      const formIds = new Set<string>();
+      for (const update of updates) {
+        for (const form of forms) {
+          const field = form.fields.find(f => f.id === update.id);
+          if (field) {
+            formIds.add(form.id);
+            break;
+          }
+        }
       }
 
-      // Verify instructor owns the form's course
-      if (form.course.instructorId !== userId) {
-        return res.status(403).json({ message: "Access denied. You do not have permission to reorder fields in this form." });
+      if (formIds.size === 0) {
+        return res.status(404).json({ message: "No fields found to reorder" });
+      }
+
+      // Verify ownership of all affected forms
+      for (const formId of formIds) {
+        const form = forms.find(f => f.id === formId);
+        if (!form || form.course.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied. You do not have permission to reorder fields in one of the forms." });
+        }
       }
 
       await storage.reorderCourseInformationFormFields(updates);
