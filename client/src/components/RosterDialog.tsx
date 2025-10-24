@@ -238,7 +238,15 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
               <p className="text-muted-foreground">Unable to retrieve roster data. Please try again.</p>
             </div>
           </div>
-        ) : !rosterData || rosterData.current.length === 0 ? (
+        ) : !rosterData ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Data Available</h3>
+              <p className="text-muted-foreground">Unable to load roster data.</p>
+            </div>
+          </div>
+        ) : rosterData.current.length === 0 ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
