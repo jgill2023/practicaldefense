@@ -109,7 +109,7 @@ import {
   smsListMembers,
   smsBroadcastMessages,
   smsBroadcastDeliveries,
-  type SmsList,
+  typeSmsList,
   type InsertSmsList,
   typeSmsListMember,
   type InsertSmsListMember,
@@ -1098,7 +1098,7 @@ export class DatabaseStorage implements IStorage {
       orderBy: desc(enrollments.createdAt),
     });
 
-    // Filter for instructor's courses only and exclude incomplete registrations
+    // Filter enrollments for instructor's courses only and exclude incomplete registrations
     const instructorEnrollments = enrollmentList.filter(e => {
       // Only include if we have complete student data and course belongs to instructor
       return e.course && 
@@ -1335,53 +1335,96 @@ export class DatabaseStorage implements IStorage {
       exportDate: string;
     };
   }> {
-    let studentsData;
+    // Get all enrollments for instructor's courses
+    const allEnrollments = await db.query.enrollments.findMany({
+      where: scheduleId 
+        ? eq(enrollments.scheduleId, scheduleId)
+        : undefined,
+      with: {
+        student: true,
+        course: true,
+        schedule: true,
+      },
+    });
 
-    if (scheduleId) {
-      // Filter by specific schedule
-      studentsData = await this.getStudentsBySchedule(scheduleId, instructorId);
-    } else {
-      // Get all students for the instructor
-      studentsData = await this.getStudentsByInstructor(instructorId);
-    }
+    console.log(`getRosterExportData - Total enrollments found: ${allEnrollments.length}`);
+    console.log(`getRosterExportData - Schedule filter: ${scheduleId || 'none'}`);
+
+    // Filter enrollments by instructor ownership
+    const instructorEnrollments = allEnrollments.filter(e => 
+      e.course && e.course.instructorId === instructorId
+    );
+
+    console.log(`getRosterExportData - Instructor enrollments: ${instructorEnrollments.length}`);
+
+    // Split into current and former students
+    // Include 'confirmed', 'initiated', 'pending', and 'hold' as current
+    const currentStudents = instructorEnrollments.filter(e => 
+      e.status === 'confirmed' || e.status === 'initiated' || e.status === 'pending' || e.status === 'hold'
+    );
+
+    console.log(`getRosterExportData - Current students: ${currentStudents.length}, statuses: ${currentStudents.map(e => e.status).join(', ')}`);
+
+    // Former students are those whose enrollment status is not in the current list
+    const formerStudents = instructorEnrollments.filter(e => 
+      !currentStudents.includes(e)
+    );
 
     // Flatten the data for export
     const flattenStudent = (student: any, category: 'current' | 'former') => {
-      return student.enrollments.map((enrollment: any) => ({
-        studentId: student.id,
-        enrollmentId: enrollment.id,
-        firstName: student.firstName,
-        lastName: student.lastName,
-        email: student.email,
-        phone: student.phone || '',
-        dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : '',
-        licenseExpiration: student.concealedCarryLicenseExpiration ? 
-          new Date(student.concealedCarryLicenseExpiration).toLocaleDateString() : '',
-        courseTitle: enrollment.courseTitle,
-        courseAbbreviation: enrollment.courseAbbreviation,
-        scheduleDate: new Date(enrollment.scheduleDate).toLocaleDateString(),
-        scheduleStartTime: enrollment.scheduleStartTime,
-        scheduleEndTime: enrollment.scheduleEndTime,
-        paymentStatus: enrollment.paymentStatus,
-        enrollmentStatus: enrollment.status || 'confirmed',
-        category: category,
-        registrationDate: enrollment.registrationDate ? 
-          new Date(enrollment.registrationDate).toLocaleDateString() : ''
-      }));
+      // Ensure student and enrollment data are present before processing
+      if (!student || !student.enrollments || !Array.isArray(student.enrollments)) {
+        console.error("Invalid student or enrollment data for flattening:", student);
+        return [];
+      }
+
+      return student.enrollments.map((enrollment: any) => {
+        // Basic validation for enrollment data before mapping
+        if (!enrollment) {
+          console.error("Encountered null enrollment within student:", student.id);
+          return null; // Skip this enrollment
+        }
+
+        return {
+          studentId: student.id,
+          enrollmentId: enrollment.id,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          email: student.email,
+          phone: student.phone || '',
+          dateOfBirth: enrollment.student.dateOfBirth ? new Date(enrollment.student.dateOfBirth).toLocaleDateString() : '',
+          licenseExpiration: enrollment.student.concealedCarryLicenseExpiration ? 
+            new Date(enrollment.student.concealedCarryLicenseExpiration).toLocaleDateString() : '',
+          courseTitle: enrollment.courseTitle,
+          courseAbbreviation: enrollment.courseAbbreviation,
+          scheduleDate: enrollment.scheduleDate ? new Date(enrollment.scheduleDate).toLocaleDateString() : '',
+          scheduleStartTime: enrollment.scheduleStartTime,
+          scheduleEndTime: enrollment.scheduleEndTime,
+          paymentStatus: enrollment.paymentStatus,
+          enrollmentStatus: enrollment.status || 'confirmed', // Use enrollment status directly
+          category: category,
+          registrationDate: enrollment.createdAt ? 
+            new Date(enrollment.createdAt).toLocaleDateString() : ''
+        };
+      }).filter(Boolean); // Filter out any null entries from failed enrollments
     };
 
-    const currentFlat = studentsData.current.flatMap(student => flattenStudent(student, 'current'));
-    const formerFlat = studentsData.former.flatMap(student => flattenStudent(student, 'former'));
+    const currentFlat = currentStudents.flatMap(student => flattenStudent(student, 'current'));
+    const formerFlat = formerStudents.flatMap(student => flattenStudent(student, 'former'));
 
     const allCourses = new Set();
-    [...currentFlat, ...formerFlat].forEach(row => allCourses.add(row.courseTitle));
+    [...currentFlat, ...formerFlat].forEach(row => {
+      if (row && row.courseTitle) {
+        allCourses.add(row.courseTitle);
+      }
+    });
 
     return {
       current: currentFlat,
       former: formerFlat,
       summary: {
-        totalCurrentStudents: studentsData.current.length,
-        totalFormerStudents: studentsData.former.length,
+        totalCurrentStudents: currentStudents.length,
+        totalFormerStudents: formerStudents.length,
         totalCourses: allCourses.size,
         exportDate: new Date().toISOString()
       }
@@ -1932,7 +1975,7 @@ export class DatabaseStorage implements IStorage {
           // Replace this with actual Moodle API call to enroll the user
           // Example: await callMoodleEnrollmentAPI(user.email, moodleCourseId);
           console.log(`Attempting to enroll user ${user.email} in Moodle course ${moodleCourseId}`);
-          
+
           // Simulate successful enrollment
           moodleEnrolled = true;
           moodleEnrollmentDate = new Date();

@@ -1227,7 +1227,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Schedule ID is required" });
       }
 
+      console.log(`Fetching roster for schedule: ${scheduleId}`);
       const data = await storage.getRosterExportData(userId, scheduleId);
+      console.log(`Roster data - Current: ${data.current.length}, Former: ${data.former.length}`);
 
       // Enrich data with waiver and form completion status
       const enrichedCurrent = await Promise.all(data.current.map(async (student: any) => {
