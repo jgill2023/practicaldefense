@@ -1313,7 +1313,7 @@ export class DatabaseStorage implements IStorage {
     // Count only confirmed enrollments that haven't been cancelled or moved
     const result = await db
       .select({
-        count: sql<number>`COALESCE(COUNT(DISTINCT ${enrollments.studentId}), 0)`
+        count: sql<number>`CAST(COUNT(DISTINCT ${enrollments.studentId}) AS INTEGER)`
       })
       .from(enrollments)
       .where(
@@ -1324,7 +1324,9 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    return result[0]?.count || 0;
+    const count = result[0]?.count || 0;
+    console.log(`getScheduleEnrollmentCount for schedule ${scheduleId}: ${count} confirmed students`);
+    return Number(count);
   }
 
   async getRosterExportData(instructorId: string, scheduleId?: string): Promise<{

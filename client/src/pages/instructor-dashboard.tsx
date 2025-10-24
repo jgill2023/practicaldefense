@@ -564,7 +564,12 @@ export default function InstructorDashboard() {
               ? `${schedule.startTime.slice(0,5)} - ${schedule.endTime.slice(0,5)}`
               : '-';
 
-            const scheduleEnrollments = enrollments.filter(e => e.scheduleId === schedule.id && e.status !== 'hold');
+            // Count only confirmed enrollments for this schedule
+            const scheduleEnrollments = enrollments.filter(e => 
+              e.scheduleId === schedule.id && 
+              e.status === 'confirmed' && 
+              e.studentId !== null
+            );
             const enrollmentCount = scheduleEnrollments.length;
             const spotsLeft = schedule.availableSpots;
 
