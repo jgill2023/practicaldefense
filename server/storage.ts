@@ -1318,7 +1318,8 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(enrollments.scheduleId, scheduleId),
-          eq(enrollments.status, 'confirmed')
+          eq(enrollments.status, 'confirmed'),
+          isNotNull(enrollments.studentId) // Only count enrollments with actual students
         )
       );
 
@@ -1338,8 +1339,23 @@ export class DatabaseStorage implements IStorage {
     // Get all enrollments for instructor's courses
     const allEnrollments = await db.query.enrollments.findMany({
       where: scheduleId 
-        ? eq(enrollments.scheduleId, scheduleId)
-        : undefined,
+        ? and(
+            eq(enrollments.scheduleId, scheduleId),
+            isNotNull(enrollments.studentId), // Only get actual student enrollments
+            or(
+              eq(enrollments.status, 'confirmed'),
+              eq(enrollments.status, 'pending'),
+              eq(enrollments.status, 'hold')
+            )
+          )
+        : and(
+            isNotNull(enrollments.studentId), // Only get actual student enrollments
+            or(
+              eq(enrollments.status, 'confirmed'),
+              eq(enrollments.status, 'pending'),
+              eq(enrollments.status, 'hold')
+            )
+          ),
       with: {
         student: true,
         course: true,
@@ -1350,9 +1366,13 @@ export class DatabaseStorage implements IStorage {
     console.log(`getRosterExportData - Total enrollments found: ${allEnrollments.length}`);
     console.log(`getRosterExportData - Schedule filter: ${scheduleId || 'none'}`);
 
-    // Filter enrollments by instructor ownership
+    // Filter enrollments by instructor ownership and ensure student data exists
     const instructorEnrollments = allEnrollments.filter(e => 
-      e.course && e.course.instructorId === instructorId
+      e.course && 
+      e.course.instructorId === instructorId &&
+      e.student && 
+      e.student.firstName && 
+      e.student.lastName
     );
 
     console.log(`getRosterExportData - Instructor enrollments: ${instructorEnrollments.length}`);

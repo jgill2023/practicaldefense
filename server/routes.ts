@@ -1229,6 +1229,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Fetching roster for schedule: ${scheduleId}`);
       const data = await storage.getRosterExportData(userId, scheduleId);
+      
+      // Filter out any remaining null/incomplete enrollments from current list
+      data.current = data.current.filter(student => 
+        student && student.studentId && student.firstName && student.lastName
+      );
+      
       console.log(`Roster data - Current: ${data.current.length}, Former: ${data.former.length}`);
 
       // Enrich data with waiver and form completion status
