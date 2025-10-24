@@ -1448,27 +1448,43 @@ export class DatabaseStorage implements IStorage {
   async getInstructorAvailableSchedules(instructorId: string, excludeEnrollmentId?: string): Promise<any[]> {
     const now = new Date();
 
-    // Get the schedule ID to exclude if we have an enrollmentId
+    // Get the schedule ID and course ID to exclude if we have an enrollmentId
     let excludeScheduleId: string | undefined;
+    let currentCourseId: string | undefined;
 
     if (excludeEnrollmentId) {
       // Get enrollment to determine which schedule to exclude
-      const [enrollmentWithCourse] = await db
-        .select({ 
-          scheduleId: enrollments.scheduleId,
-          courseId: enrollments.courseId,
-        })
-        .from(enrollments)
-        .leftJoin(courses, eq(enrollments.courseId, courses.id))
-        .where(eq(enrollments.id, excludeEnrollmentId));
+      const enrollment = await db.query.enrollments.findFirst({
+        where: eq(enrollments.id, excludeEnrollmentId),
+      });
 
-      if (enrollmentWithCourse) {
-        excludeScheduleId = enrollmentWithCourse.scheduleId;
+      if (enrollment) {
+        excludeScheduleId = enrollment.scheduleId;
+        currentCourseId = enrollment.courseId;
       }
     }
 
     // Get all active course schedules for this instructor's courses that are in the future
-    // Show all available schedules regardless of category to give maximum flexibility
+    // For the same course type, exclude the current schedule
+    // For different course types, show all available schedules
+    const whereConditions = [
+      eq(courses.instructorId, instructorId),
+      eq(courses.isActive, true),
+      isNull(courses.deletedAt),
+      isNull(courseSchedules.deletedAt),
+      gte(courseSchedules.startDate, now), // Future dates only
+    ];
+
+    // Only exclude the current schedule if it's the same course
+    if (excludeScheduleId && currentCourseId) {
+      whereConditions.push(
+        or(
+          ne(courseSchedules.id, excludeScheduleId),
+          ne(courseSchedules.courseId, currentCourseId)
+        )
+      );
+    }
+
     const availableSchedules = await db
       .select({
         id: courseSchedules.id,
@@ -1480,7 +1496,7 @@ export class DatabaseStorage implements IStorage {
         endTime: courseSchedules.endTime,
         location: courseSchedules.location,
         maxSpots: courseSchedules.maxSpots,
-        enrolledCount: sql<number>`COALESCE(COUNT(${enrollments.id}), 0)`
+        enrolledCount: sql<number>`CAST(COALESCE(COUNT(DISTINCT ${enrollments.id}), 0) AS INTEGER)`
       })
       .from(courseSchedules)
       .leftJoin(courses, eq(courseSchedules.courseId, courses.id))
@@ -1488,13 +1504,7 @@ export class DatabaseStorage implements IStorage {
         eq(enrollments.scheduleId, courseSchedules.id),
         eq(enrollments.status, 'confirmed')
       ))
-      .where(and(
-        eq(courses.instructorId, instructorId),
-        isNull(courses.deletedAt),
-        isNull(courseSchedules.deletedAt),
-        gte(courseSchedules.startDate, now), // Future dates only
-        excludeScheduleId ? ne(courseSchedules.id, excludeScheduleId) : undefined
-      ))
+      .where(and(...whereConditions))
       .groupBy(
         courseSchedules.id,
         courseSchedules.courseId,
@@ -1508,6 +1518,8 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(courseSchedules.startDate, courseSchedules.startTime);
 
+    console.log(`Found ${availableSchedules.length} available schedules for instructor ${instructorId}, excluding enrollment ${excludeEnrollmentId}`);
+
     // Calculate available spots and format response
     return availableSchedules.map(schedule => ({
       id: schedule.id,
@@ -1519,7 +1531,7 @@ export class DatabaseStorage implements IStorage {
       endTime: schedule.endTime,
       location: schedule.location,
       maxSpots: schedule.maxSpots,
-      availableSpots: Math.max(0, schedule.maxSpots - schedule.enrolledCount)
+      availableSpots: Math.max(0, schedule.maxSpots - Number(schedule.enrolledCount))
     }));
   }
 
