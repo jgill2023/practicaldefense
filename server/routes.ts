@@ -764,7 +764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use the correct storage method for reordering
       await storage.reorderCourseInformationFormFields(updates);
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error reordering form fields:", error);
@@ -2344,61 +2344,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error: any) {
       console.error("Error deleting form field:", error);
-      res.status(500).json({ message: "Error deleting form field: " + error.message });
+      res.status(500).json({ message: "Failed to delete field" });
     }
   });
 
-  // Reorder course information form fields
-  app.patch("/api/course-form-fields/reorder", async (req, res) => {
+  // Duplicate course form to another course
+  app.post('/api/course-forms/:formId/duplicate', isAuthenticated, async (req: any, res) => {
     try {
-      const { updates } = req.body as { updates: { id: string; sortOrder: number }[] };
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
 
-      console.log('[DEBUG] Reorder request body:', JSON.stringify(req.body, null, 2));
-      console.log('[DEBUG] Updates:', updates);
-
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
-      if (!updates || updates.length === 0) {
-        return res.status(400).json({ message: "No updates provided" });
+      const { formId } = req.params;
+      const { targetCourseId } = req.body;
+
+      if (!targetCourseId) {
+        return res.status(400).json({ message: "Target course ID is required" });
       }
 
-      // Get all forms to verify ownership - use the simplified method
-      const forms = await storage.getCourseInformationForms();
-      console.log('[DEBUG] Found forms count:', forms.length);
-      console.log('[DEBUG] First form has fields:', forms[0]?.fields?.length);
-      
-      // Find which forms contain the fields being reordered
-      const formIds = new Set<string>();
-      for (const update of updates) {
-        for (const form of forms) {
-          const field = form.fields.find(f => f.id === update.id);
-          if (field) {
-            formIds.add(form.id);
-            break;
-          }
-        }
+      // Get the original form with fields
+      const originalForm = await storage.getCourseInformationForm(formId);
+      if (!originalForm) {
+        return res.status(404).json({ message: "Form not found" });
       }
 
-      if (formIds.size === 0) {
-        return res.status(404).json({ message: "No fields found to reorder" });
+      // Verify user owns both courses
+      const [originalCourse, targetCourse] = await Promise.all([
+        storage.getCourse(originalForm.courseId),
+        storage.getCourse(targetCourseId),
+      ]);
+
+      if (!originalCourse || originalCourse.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied to original course" });
       }
 
-      // Verify ownership of all affected forms
-      for (const formId of formIds) {
-        const form = forms.find(f => f.id === formId);
-        if (!form || form.course.instructorId !== userId) {
-          return res.status(403).json({ message: "Access denied. You do not have permission to reorder fields in one of the forms." });
-        }
+      if (!targetCourse || targetCourse.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied to target course" });
       }
 
-      await storage.reorderCourseInformationFormFields(updates);
-      res.json({ success: true });
-    } catch (error: any) {
-      console.error("Error reordering course form fields:", error);
-      res.status(500).json({ error: error.message });
+      // Create the duplicated form
+      const newForm = await storage.createCourseInformationForm({
+        courseId: targetCourseId,
+        title: originalForm.title,
+        description: originalForm.description,
+        isRequired: originalForm.isRequired,
+        sortOrder: originalForm.sortOrder,
+        isActive: originalForm.isActive,
+      });
+
+      // Duplicate all fields
+      for (const field of originalForm.fields) {
+        await storage.createCourseInformationFormField({
+          formId: newForm.id,
+          fieldType: field.fieldType,
+          label: field.label,
+          placeholder: field.placeholder,
+          isRequired: field.isRequired,
+          sortOrder: field.sortOrder,
+          options: field.options,
+          validation: field.validation,
+        });
+      }
+
+      res.json({ success: true, form: newForm });
+    } catch (error) {
+      console.error("Error duplicating form:", error);
+      res.status(500).json({ message: "Failed to duplicate form" });
     }
   });
 
@@ -6064,7 +6078,7 @@ jeremy@abqconcealedcarry.com
                   status: 'pending',
                 });
 
-                // Send SMS
+                // Send SMS - use student's userId for proper conversation threading
                 const smsResult = await sendSms({
                   to: formattedPhone,
                   body: personalizedMessage,

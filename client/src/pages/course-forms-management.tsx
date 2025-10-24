@@ -138,6 +138,7 @@ export default function CourseFormsManagement() {
   const [showFieldEditor, setShowFieldEditor] = useState(false);
   const [editingField, setEditingField] = useState<CourseInformationFormField | null>(null);
   const [expandedForms, setExpandedForms] = useState<Set<string>>(new Set());
+  const [duplicatingForm, setDuplicatingForm] = useState<CourseInformationFormWithFields | null>(null);
 
   // Waiver management state
   const [showCreateWaiverDialog, setShowCreateWaiverDialog] = useState(false);
@@ -258,6 +259,31 @@ export default function CourseFormsManagement() {
         description: "Information form has been deleted successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/course-forms"] });
+    },
+  });
+
+  // Duplicate form
+  const duplicateFormMutation = useMutation({
+    mutationFn: async (data: { formId: string; targetCourseId: string }) => {
+      return await apiRequest("POST", `/api/course-forms/${data.formId}/duplicate`, {
+        targetCourseId: data.targetCourseId,
+      });
+    },
+    onSuccess: (_, variables) => {
+      toast({
+        title: "Form Duplicated",
+        description: "Form has been duplicated successfully to the selected course.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/course-forms"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/course-forms", variables.targetCourseId] });
+      setDuplicatingForm(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -607,6 +633,16 @@ export default function CourseFormsManagement() {
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                onClick={() => setDuplicatingForm(form)}
+                                title="Duplicate to another course"
+                                data-testid={`button-duplicate-form-${form.id}`}
+                              >
+                                <Clipboard className="h-4 w-4" />
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => {
                                   setEditingForm(form);
                                   setShowCreateFormDialog(true);
@@ -905,6 +941,46 @@ export default function CourseFormsManagement() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Duplicate Form Dialog */}
+        <Dialog open={!!duplicatingForm} onOpenChange={(open) => !open && setDuplicatingForm(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Duplicate Form to Course</DialogTitle>
+              <DialogDescription>
+                Select a course to duplicate "{duplicatingForm?.title}" to. All fields will be copied.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Target Course</Label>
+                <Select
+                  onValueChange={(courseId) => {
+                    if (duplicatingForm) {
+                      duplicateFormMutation.mutate({
+                        formId: duplicatingForm.id,
+                        targetCourseId: courseId,
+                      });
+                    }
+                  }}
+                >
+                  <SelectTrigger data-testid="select-duplicate-target-course">
+                    <SelectValue placeholder="Choose a course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses
+                      .filter(course => course.id !== duplicatingForm?.courseId)
+                      .map((course) => (
+                        <SelectItem key={course.id} value={course.id}>
+                          {course.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
