@@ -4,6 +4,12 @@ Practical Defense Training is a professional firearms training management platfo
 
 # Recent Changes
 
+## October 24, 2025 - Student Management Enhancements
+- Fixed reschedule functionality: Updated date comparison to use start-of-day instead of current datetime, allowing same-day future classes to appear as reschedule options
+- Fixed hold list export bug: Modified getRosterExportData to fetch all enrollments (not just confirmed) and properly categorize held students in roster export
+- Implemented All Students Directory: Created comprehensive modal with search, filter (current/former/held), and sortable columns (name, email, status, enrollments, latest course, license expiration)
+- Added "View All Students" button to Students Management page header for quick access to directory
+
 ## October 1, 2025 - Email Template Button Navigation Fix
 - Fixed non-functional Email Template buttons in Communications Dashboard
 - "Manage Templates" button now navigates to Course Management > Notifications tab
