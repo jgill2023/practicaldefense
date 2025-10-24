@@ -20,12 +20,12 @@ import {
   Edit, 
   Trash2, 
   Eye, 
-  GripVertical, 
   FileText, 
   Users, 
   Settings, 
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   ArrowLeft,
   Clipboard
 } from "lucide-react";
@@ -38,65 +38,51 @@ import type {
   WaiverTemplateWithDetails,
   InsertWaiverTemplate
 } from "@shared/schema";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
-// Sortable Field Component
-function SortableField({ 
+// Field Component with up/down arrows
+function FieldRow({ 
   field, 
   fieldTypes,
   onEdit,
-  onDelete 
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast
 }: {
   field: CourseInformationFormField;
   fieldTypes: Array<{ value: FormFieldType; label: string }>;
   onEdit: () => void;
   onDelete: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isFirst: boolean;
+  isLast: boolean;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: field.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="flex items-center justify-between p-3 border rounded-lg bg-muted/10"
-    >
+    <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/10">
       <div className="flex items-center gap-3">
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing"
-        >
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-col gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onMoveUp}
+            disabled={isFirst}
+            className="h-6 w-6 p-0"
+            data-testid={`button-move-up-${field.id}`}
+          >
+            <ChevronUp className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onMoveDown}
+            disabled={isLast}
+            className="h-6 w-6 p-0"
+            data-testid={`button-move-down-${field.id}`}
+          >
+            <ChevronDown className="h-4 w-4" />
+          </Button>
         </div>
         <div>
           <div className="flex items-center gap-2">
@@ -371,28 +357,20 @@ export default function CourseFormsManagement() {
     },
   });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  const handleMoveField = (formId: string, fieldId: string, direction: 'up' | 'down', fields: CourseInformationFormField[]) => {
+    const currentIndex = fields.findIndex((f) => f.id === fieldId);
+    if (currentIndex === -1) return;
 
-  const handleDragEnd = (event: DragEndEvent, formId: string, fields: CourseInformationFormField[]) => {
-    const { active, over } = event;
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= fields.length) return;
 
-    if (over && active.id !== over.id) {
-      const oldIndex = fields.findIndex((f) => f.id === active.id);
-      const newIndex = fields.findIndex((f) => f.id === over.id);
+    // Swap the two fields
+    const updates = [
+      { id: fields[currentIndex].id, sortOrder: fields[newIndex].sortOrder },
+      { id: fields[newIndex].id, sortOrder: fields[currentIndex].sortOrder },
+    ];
 
-      const newFields = arrayMove(fields, oldIndex, newIndex);
-      const updates = newFields.map((field, index) => ({
-        id: field.id,
-        sortOrder: index,
-      }));
-
-      reorderFieldsMutation.mutate({ formId, updates });
-    }
+    reorderFieldsMutation.mutate({ formId, updates });
   };
 
   const toggleFormExpansion = (formId: string) => {
@@ -691,32 +669,24 @@ export default function CourseFormsManagement() {
                                 <p className="text-muted-foreground">No fields yet. Add your first field to get started.</p>
                               </div>
                             ) : (
-                              <DndContext
-                                sensors={sensors}
-                                collisionDetection={closestCenter}
-                                onDragEnd={(e) => handleDragEnd(e, form.id, form.fields)}
-                                modifiers={[restrictToVerticalAxis]}
-                              >
-                                <SortableContext
-                                  items={form.fields.map(f => f.id)}
-                                  strategy={verticalListSortingStrategy}
-                                >
-                                  <div className="space-y-2">
-                                    {form.fields.map((field) => (
-                                      <SortableField
-                                        key={field.id}
-                                        field={field}
-                                        fieldTypes={fieldTypes}
-                                        onEdit={() => {
-                                          setEditingField(field);
-                                          setShowFieldEditor(true);
-                                        }}
-                                        onDelete={() => deleteFieldMutation.mutate(field.id)}
-                                      />
-                                    ))}
-                                  </div>
-                                </SortableContext>
-                              </DndContext>
+                              <div className="space-y-2">
+                                {form.fields.map((field, index) => (
+                                  <FieldRow
+                                    key={field.id}
+                                    field={field}
+                                    fieldTypes={fieldTypes}
+                                    onEdit={() => {
+                                      setEditingField(field);
+                                      setShowFieldEditor(true);
+                                    }}
+                                    onDelete={() => deleteFieldMutation.mutate(field.id)}
+                                    onMoveUp={() => handleMoveField(form.id, field.id, 'up', form.fields)}
+                                    onMoveDown={() => handleMoveField(form.id, field.id, 'down', form.fields)}
+                                    isFirst={index === 0}
+                                    isLast={index === form.fields.length - 1}
+                                  />
+                                ))}
+                              </div>
                             )}
                           </div>
                         </CardContent>
