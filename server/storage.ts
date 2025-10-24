@@ -1375,7 +1375,7 @@ export class DatabaseStorage implements IStorage {
     // For specific schedule, all confirmed enrollments are current
     // For all schedules, check if schedule date is in future or past
     const now = new Date();
-    const currentStudents = instructorEnrollments.filter(e => {
+    const currentEnrollments = instructorEnrollments.filter(e => {
       if (scheduleId) {
         // For specific schedule filter, all are current
         return true;
@@ -1384,54 +1384,47 @@ export class DatabaseStorage implements IStorage {
       return e.schedule && new Date(e.schedule.startDate) >= now;
     });
 
-    console.log(`getRosterExportData - Current students: ${currentStudents.length}`);
+    console.log(`getRosterExportData - Current students: ${currentEnrollments.length}`);
 
     // Former students are those with past course dates (only when not filtering by schedule)
-    const formerStudents = scheduleId ? [] : instructorEnrollments.filter(e => 
+    const formerEnrollments = scheduleId ? [] : instructorEnrollments.filter(e => 
       e.schedule && new Date(e.schedule.startDate) < now
     );
 
-    // Flatten the data for export
-    const flattenStudent = (student: any, category: 'current' | 'former') => {
-      // Ensure student and enrollment data are present before processing
-      if (!student || !student.enrollments || !Array.isArray(student.enrollments)) {
-        console.error("Invalid student or enrollment data for flattening:", student);
-        return [];
+    // Flatten the data for export - convert enrollments directly to roster format
+    const flattenEnrollment = (enrollment: any, category: 'current' | 'former') => {
+      if (!enrollment || !enrollment.student || !enrollment.course || !enrollment.schedule) {
+        console.error("Invalid enrollment data for flattening:", enrollment);
+        return null;
       }
 
-      return student.enrollments.map((enrollment: any) => {
-        // Basic validation for enrollment data before mapping
-        if (!enrollment) {
-          console.error("Encountered null enrollment within student:", student.id);
-          return null; // Skip this enrollment
-        }
-
-        return {
-          studentId: student.id,
-          enrollmentId: enrollment.id,
-          firstName: student.firstName,
-          lastName: student.lastName,
-          email: student.email,
-          phone: student.phone || '',
-          dateOfBirth: enrollment.student.dateOfBirth ? new Date(enrollment.student.dateOfBirth).toLocaleDateString() : '',
-          licenseExpiration: enrollment.student.concealedCarryLicenseExpiration ? 
-            new Date(enrollment.student.concealedCarryLicenseExpiration).toLocaleDateString() : '',
-          courseTitle: enrollment.courseTitle,
-          courseAbbreviation: enrollment.courseAbbreviation,
-          scheduleDate: enrollment.scheduleDate ? new Date(enrollment.scheduleDate).toLocaleDateString() : '',
-          scheduleStartTime: enrollment.scheduleStartTime,
-          scheduleEndTime: enrollment.scheduleEndTime,
-          paymentStatus: enrollment.paymentStatus,
-          enrollmentStatus: enrollment.status || 'confirmed', // Use enrollment status directly
-          category: category,
-          registrationDate: enrollment.createdAt ? 
-            new Date(enrollment.createdAt).toLocaleDateString() : ''
-        };
-      }).filter(Boolean); // Filter out any null entries from failed enrollments
+      return {
+        studentId: enrollment.student.id,
+        enrollmentId: enrollment.id,
+        firstName: enrollment.student.firstName,
+        lastName: enrollment.student.lastName,
+        email: enrollment.student.email,
+        phone: enrollment.student.phone || '',
+        dateOfBirth: enrollment.student.dateOfBirth ? new Date(enrollment.student.dateOfBirth).toLocaleDateString() : '',
+        licenseExpiration: enrollment.student.concealedCarryLicenseExpiration ? 
+          new Date(enrollment.student.concealedCarryLicenseExpiration).toLocaleDateString() : '',
+        courseTitle: enrollment.course.title,
+        courseAbbreviation: enrollment.course.abbreviation || enrollment.course.title.split(' ').map(w => w[0]).join('').toUpperCase(),
+        scheduleDate: enrollment.schedule.startDate ? new Date(enrollment.schedule.startDate).toLocaleDateString() : '',
+        scheduleStartTime: enrollment.schedule.startTime,
+        scheduleEndTime: enrollment.schedule.endTime,
+        paymentStatus: enrollment.paymentStatus,
+        enrollmentStatus: enrollment.status || 'confirmed',
+        category: category,
+        registrationDate: enrollment.createdAt ? 
+          new Date(enrollment.createdAt).toLocaleDateString() : '',
+        courseId: enrollment.course.id,
+        location: enrollment.schedule.location || ''
+      };
     };
 
-    const currentFlat = currentStudents.flatMap(student => flattenStudent(student, 'current'));
-    const formerFlat = formerStudents.flatMap(student => flattenStudent(student, 'former'));
+    const currentFlat = currentEnrollments.map(e => flattenEnrollment(e, 'current')).filter(Boolean);
+    const formerFlat = formerEnrollments.map(e => flattenEnrollment(e, 'former')).filter(Boolean);
 
     const allCourses = new Set();
     [...currentFlat, ...formerFlat].forEach(row => {
@@ -1444,8 +1437,8 @@ export class DatabaseStorage implements IStorage {
       current: currentFlat,
       former: formerFlat,
       summary: {
-        totalCurrentStudents: currentStudents.length,
-        totalFormerStudents: formerStudents.length,
+        totalCurrentStudents: currentEnrollments.length,
+        totalFormerStudents: formerEnrollments.length,
         totalCourses: allCourses.size,
         exportDate: new Date().toISOString()
       }
