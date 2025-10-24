@@ -1448,9 +1448,8 @@ export class DatabaseStorage implements IStorage {
   async getInstructorAvailableSchedules(instructorId: string, excludeEnrollmentId?: string): Promise<any[]> {
     const now = new Date();
 
-    // Get the schedule ID and course ID to exclude if we have an enrollmentId
+    // Get the schedule ID to exclude if we have an enrollmentId
     let excludeScheduleId: string | undefined;
-    let currentCourseId: string | undefined;
 
     if (excludeEnrollmentId) {
       // Get enrollment to determine which schedule to exclude
@@ -1460,13 +1459,11 @@ export class DatabaseStorage implements IStorage {
 
       if (enrollment) {
         excludeScheduleId = enrollment.scheduleId;
-        currentCourseId = enrollment.courseId;
       }
     }
 
     // Get all active course schedules for this instructor's courses that are in the future
-    // For the same course type, exclude the current schedule
-    // For different course types, show all available schedules
+    // Exclude only the specific schedule the student is currently enrolled in
     const whereConditions = [
       eq(courses.instructorId, instructorId),
       eq(courses.isActive, true),
@@ -1475,14 +1472,9 @@ export class DatabaseStorage implements IStorage {
       gte(courseSchedules.startDate, now), // Future dates only
     ];
 
-    // Only exclude the current schedule if it's the same course
-    if (excludeScheduleId && currentCourseId) {
-      whereConditions.push(
-        or(
-          ne(courseSchedules.id, excludeScheduleId),
-          ne(courseSchedules.courseId, currentCourseId)
-        )
-      );
+    // Exclude the current schedule if provided
+    if (excludeScheduleId) {
+      whereConditions.push(ne(courseSchedules.id, excludeScheduleId));
     }
 
     const availableSchedules = await db
