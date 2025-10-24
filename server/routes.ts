@@ -755,13 +755,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Updates array is required" });
       }
 
-      // Update each field's sort order
+      // Validate updates array
       for (const update of updates) {
         if (!update.id || typeof update.sortOrder !== 'number') {
           return res.status(400).json({ message: "Each update must have id and sortOrder" });
         }
-        await storage.updateCourseFormField(update.id, { sortOrder: update.sortOrder });
       }
+
+      // Use the correct storage method for reordering
+      await storage.reorderCourseInformationFormFields(updates);
       
       res.json({ success: true });
     } catch (error) {
