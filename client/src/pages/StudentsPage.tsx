@@ -22,6 +22,7 @@ import { SmsNotificationModal } from "@/components/SmsNotificationModal";
 import { RescheduleModal } from "@/components/RescheduleModal";
 import { CrossEnrollmentModal } from "@/components/CrossEnrollmentModal";
 import { PaymentDetailsModal } from "@/components/PaymentDetailsModal";
+import { AllStudentsDirectory } from "@/components/AllStudentsDirectory";
 import { format } from "date-fns";
 
 // Phone number formatting utility
@@ -112,6 +113,7 @@ function StudentsPage() {
   const [selectedStudentForCrossEnrollment, setSelectedStudentForCrossEnrollment] = useState<Student | null>(null);
   const [paymentDetailsModalOpen, setPaymentDetailsModalOpen] = useState(false);
   const [selectedEnrollmentForPayment, setSelectedEnrollmentForPayment] = useState<string | null>(null);
+  const [allStudentsDirectoryOpen, setAllStudentsDirectoryOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -447,11 +449,22 @@ function StudentsPage() {
         </Link>
       </div>
 
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Students Management</h1>
-        <p className="text-muted-foreground">
-          Manage student information, track course progress, and communicate with your students.
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Students Management</h1>
+          <p className="text-muted-foreground">
+            Manage student information, track course progress, and communicate with your students.
+          </p>
+        </div>
+        <Button
+          variant="default"
+          onClick={() => setAllStudentsDirectoryOpen(true)}
+          className="shrink-0"
+          data-testid="button-view-all-students"
+        >
+          <Users className="h-4 w-4 mr-2" />
+          View All Students
+        </Button>
       </div>
 
       {/* Export Section */}
@@ -682,6 +695,12 @@ function StudentsPage() {
           enrollmentId={selectedEnrollmentForPayment}
         />
       )}
+
+      {/* All Students Directory Modal */}
+      <AllStudentsDirectory
+        isOpen={allStudentsDirectoryOpen}
+        onClose={() => setAllStudentsDirectoryOpen(false)}
+      />
       </div>
     </Layout>
   );

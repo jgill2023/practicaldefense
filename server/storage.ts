@@ -1332,25 +1332,23 @@ export class DatabaseStorage implements IStorage {
   async getRosterExportData(instructorId: string, scheduleId?: string): Promise<{
     current: any[];
     former: any[];
+    held: any[];
     summary: {
       totalCurrentStudents: number;
       totalFormerStudents: number;
+      totalHeldStudents: number;
       totalCourses: number;
       exportDate: string;
     };
   }> {
-    // Get all enrollments for instructor's courses
+    // Get all enrollments for instructor's courses (including held students)
     const allEnrollments = await db.query.enrollments.findMany({
       where: scheduleId 
         ? and(
             eq(enrollments.scheduleId, scheduleId),
-            isNotNull(enrollments.studentId), // Only get actual student enrollments
-            eq(enrollments.status, 'confirmed') // Only count confirmed enrollments
+            isNotNull(enrollments.studentId) // Only get actual student enrollments
           )
-        : and(
-            isNotNull(enrollments.studentId), // Only get actual student enrollments
-            eq(enrollments.status, 'confirmed') // Only count confirmed enrollments
-          ),
+        : isNotNull(enrollments.studentId), // Only get actual student enrollments
       with: {
         student: true,
         course: true,
@@ -1372,27 +1370,36 @@ export class DatabaseStorage implements IStorage {
 
     console.log(`getRosterExportData - Instructor enrollments: ${instructorEnrollments.length}`);
 
-    // For specific schedule, all confirmed enrollments are current
-    // For all schedules, check if schedule date is in future or past
     const now = new Date();
+    
+    // Categorize enrollments based on status and schedule date
+    const heldEnrollments = instructorEnrollments.filter(e => e.status === 'hold');
+    
+    // For specific schedule, confirmed enrollments are current
+    // For all schedules, check if schedule date is in future or past
     const currentEnrollments = instructorEnrollments.filter(e => {
+      if (e.status === 'hold') return false; // Exclude held students from current list
+      
       if (scheduleId) {
-        // For specific schedule filter, all are current
-        return true;
+        // For specific schedule filter, all confirmed/completed are current
+        return e.status === 'confirmed' || e.status === 'completed';
       }
-      // For all schedules, check if course is upcoming
-      return e.schedule && new Date(e.schedule.startDate) >= now;
+      // For all schedules, check if course is upcoming and confirmed
+      return e.schedule && new Date(e.schedule.startDate) >= now && e.status === 'confirmed';
     });
 
     console.log(`getRosterExportData - Current students: ${currentEnrollments.length}`);
 
     // Former students are those with past course dates (only when not filtering by schedule)
-    const formerEnrollments = scheduleId ? [] : instructorEnrollments.filter(e => 
-      e.schedule && new Date(e.schedule.startDate) < now
-    );
+    const formerEnrollments = scheduleId ? [] : instructorEnrollments.filter(e => {
+      if (e.status === 'hold') return false; // Exclude held students from former list
+      return e.schedule && new Date(e.schedule.startDate) < now;
+    });
+    
+    console.log(`getRosterExportData - Held students: ${heldEnrollments.length}`);
 
     // Flatten the data for export - convert enrollments directly to roster format
-    const flattenEnrollment = (enrollment: any, category: 'current' | 'former') => {
+    const flattenEnrollment = (enrollment: any, category: 'current' | 'former' | 'held') => {
       if (!enrollment || !enrollment.student || !enrollment.course || !enrollment.schedule) {
         console.error("Invalid enrollment data for flattening:", enrollment);
         return null;
@@ -1419,15 +1426,17 @@ export class DatabaseStorage implements IStorage {
         registrationDate: enrollment.createdAt ? 
           new Date(enrollment.createdAt).toLocaleDateString() : '',
         courseId: enrollment.course.id,
-        location: enrollment.schedule.location || ''
+        location: enrollment.schedule.location || '',
+        cancellationReason: enrollment.cancellationReason || ''
       };
     };
 
     const currentFlat = currentEnrollments.map(e => flattenEnrollment(e, 'current')).filter(Boolean);
     const formerFlat = formerEnrollments.map(e => flattenEnrollment(e, 'former')).filter(Boolean);
+    const heldFlat = heldEnrollments.map(e => flattenEnrollment(e, 'held')).filter(Boolean);
 
     const allCourses = new Set();
-    [...currentFlat, ...formerFlat].forEach(row => {
+    [...currentFlat, ...formerFlat, ...heldFlat].forEach(row => {
       if (row && row.courseTitle) {
         allCourses.add(row.courseTitle);
       }
@@ -1436,9 +1445,11 @@ export class DatabaseStorage implements IStorage {
     return {
       current: currentFlat,
       former: formerFlat,
+      held: heldFlat,
       summary: {
         totalCurrentStudents: currentEnrollments.length,
         totalFormerStudents: formerEnrollments.length,
+        totalHeldStudents: heldEnrollments.length,
         totalCourses: allCourses.size,
         exportDate: new Date().toISOString()
       }
@@ -1447,6 +1458,8 @@ export class DatabaseStorage implements IStorage {
 
   async getInstructorAvailableSchedules(instructorId: string, excludeEnrollmentId?: string): Promise<any[]> {
     const now = new Date();
+    // Get start of today to properly filter schedules (otherwise same-day future classes get excluded)
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     // Get the schedule ID to exclude if we have an enrollmentId
     let excludeScheduleId: string | undefined;
@@ -1469,7 +1482,7 @@ export class DatabaseStorage implements IStorage {
       eq(courses.isActive, true),
       isNull(courses.deletedAt),
       isNull(courseSchedules.deletedAt),
-      gte(courseSchedules.startDate, now), // Future dates only
+      gte(courseSchedules.startDate, startOfToday), // Compare to start of today instead of current time
     ];
 
     // Exclude the current schedule if provided

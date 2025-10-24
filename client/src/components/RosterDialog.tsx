@@ -38,8 +38,10 @@ interface RosterData {
     certificateIssued?: boolean;
     waiverStatus?: 'signed' | 'pending' | 'not_started';
     formStatus?: 'completed' | 'incomplete' | 'not_started';
+    cancellationReason?: string;
   }>;
   former: Array<any>;
+  held: Array<any>;
   summary: {
     totalEnrolled: number;
     paidStudents: number;
