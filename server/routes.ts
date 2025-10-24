@@ -749,19 +749,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
-      const { fieldId, newSortOrder } = req.body;
+      const { updates } = req.body;
 
-      if (!fieldId || typeof newSortOrder !== 'number') {
-        return res.status(400).json({ message: "Field ID and new sort order are required" });
+      if (!updates || !Array.isArray(updates) || updates.length === 0) {
+        return res.status(400).json({ message: "Updates array is required" });
       }
 
-      // Update the field's sort order
-      const updatedField = await storage.updateCourseFormField(fieldId, { sortOrder: newSortOrder });
+      // Update each field's sort order
+      for (const update of updates) {
+        if (!update.id || typeof update.sortOrder !== 'number') {
+          return res.status(400).json({ message: "Each update must have id and sortOrder" });
+        }
+        await storage.updateCourseFormField(update.id, { sortOrder: update.sortOrder });
+      }
       
-      res.json(updatedField);
+      res.json({ success: true });
     } catch (error) {
-      console.error("Error reordering form field:", error);
-      res.status(500).json({ message: "Failed to reorder field" });
+      console.error("Error reordering form fields:", error);
+      res.status(500).json({ message: "Failed to reorder fields" });
     }
   });
 
