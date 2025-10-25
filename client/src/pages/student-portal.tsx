@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign, FileSignature } from "lucide-react";
 import { Calendar, Clock, FileText, Download, BookOpen, Award } from "lucide-react";
