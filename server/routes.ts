@@ -1229,12 +1229,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Fetching roster for schedule: ${scheduleId}`);
       const data = await storage.getRosterExportData(userId, scheduleId);
-      
+
       // Filter out any remaining null/incomplete enrollments from current list
       data.current = data.current.filter(student => 
         student && student.studentId && student.firstName && student.lastName
       );
-      
+
       console.log(`Roster data - Current: ${data.current.length}, Former: ${data.former.length}`);
 
       // Enrich data with waiver and form completion status
@@ -1251,7 +1251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const formResponses = await db.query.studentFormResponses.findMany({
           where: eq(studentFormResponses.enrollmentId, student.enrollmentId),
         });
-        
+
         // Get required fields count for this course
         const courseForms = await db.query.courseInformationForms.findMany({
           where: and(
@@ -1267,7 +1267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           sum + form.fields.filter(f => f.isRequired).length, 0
         );
         const completedFields = formResponses.length;
-        
+
         const formStatus = totalRequiredFields === 0 
           ? 'not_applicable'
           : completedFields >= totalRequiredFields 
@@ -3937,31 +3937,32 @@ Practical Defense Training`;
   });
 
   // Cross-enroll student into additional courses
-  app.post("/api/instructor/enrollments", isAuthenticated, async (req: any, res) => {
+  // Cross-enrollment endpoint for enrolling students into courses
+  app.post('/api/instructor/enrollments', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      const { studentId, scheduleId, notes } = req.body;
-
-      // Only allow instructors to cross-enroll students
       const user = await storage.getUser(userId);
+
       if (!user || user.role !== 'instructor') {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
+      const { studentId, scheduleId, notes } = req.body;
+
       if (!studentId || !scheduleId) {
-        return res.status(400).json({ error: "Student ID and schedule ID are required" });
+        return res.status(400).json({ error: "Student ID and Schedule ID are required" });
       }
 
-      // Verify the student exists
+      // Verify student exists
       const student = await storage.getUser(studentId);
-      if (!student || student.role !== 'student') {
+      if (!student) {
         return res.status(404).json({ error: "Student not found" });
       }
 
-      // Verify the schedule exists and belongs to instructor
+      // Verify schedule exists and belongs to instructor
       const schedule = await storage.getCourseSchedule(scheduleId);
       if (!schedule) {
-        return res.status(404).json({ error: "Course schedule not found" });
+        return res.status(404).json({ error: "Schedule not found" });
       }
 
       const course = await storage.getCourse(schedule.courseId);
@@ -3969,88 +3970,53 @@ Practical Defense Training`;
         return res.status(403).json({ error: "Unauthorized: You can only enroll students in your own courses" });
       }
 
-      // Check if student is already enrolled in this schedule
-      const existingEnrollment = await db.query.enrollments.findFirst({
-        where: and(
-          eq(enrollments.studentId, studentId),
-          eq(enrollments.scheduleId, scheduleId),
-          inArray(enrollments.status, ['confirmed', 'initiated', 'pending', 'hold'])
-        )
-      });
-
-      if (existingEnrollment) {
-        return res.status(400).json({ error: "Student is already enrolled in this course schedule" });
+      // Check if schedule has available spots
+      if (schedule.availableSpots <= 0) {
+        return res.status(400).json({ error: "Schedule is full" });
       }
 
-      // Check if student has any held enrollments for this instructor's courses
-      const existingEnrollments = await storage.getEnrollmentsByStudent(studentId);
-      const heldEnrollments = existingEnrollments.filter(e => 
-        e.status === 'hold' && e.course?.instructorId === userId
-      );
-
-      // Create the enrollment
-      const enrollmentData = {
+      // Create enrollment
+      const enrollment = await storage.createEnrollment({
         studentId,
         courseId: schedule.courseId,
         scheduleId,
-        status: 'confirmed' as const,
-        paymentStatus: 'pending' as const, // Instructor enrollments are marked as paid
-        paymentOption: 'full' as const,
-        notes: notes || `Cross-enrolled by instructor`,
-        registrationDate: new Date(),
-        confirmationDate: new Date(),
-      };
-
-      const [newEnrollment] = await db
-        .insert(enrollments)
-        .values(enrollmentData)
-        .returning();
-
-      // If student was on hold, update all held enrollments to 'confirmed' to remove from held list
-      if (heldEnrollments.length > 0) {
-        await Promise.all(
-          heldEnrollments.map(heldEnrollment => 
-            storage.updateEnrollment(heldEnrollment.id, {
-              status: 'confirmed',
-              cancellationReason: null,
-            })
-          )
-        );
-      }
+        status: 'confirmed',
+        paymentStatus: 'pending',
+        paymentOption: 'full',
+        notes: notes || `Enrolled by instructor: ${user.firstName} ${user.lastName}`,
+      });
 
       // Auto-add student to SMS list for this schedule (fire-and-forget)
-      if (newEnrollment.status === 'confirmed' && newEnrollment.studentId) {
+      if (enrollment.status === 'confirmed' && enrollment.studentId) {
         (async () => {
           try {
-            const smsList = await storage.getSmsListBySchedule(newEnrollment.scheduleId);
+            const smsList = await storage.getSmsListBySchedule(scheduleId);
 
             if (smsList) {
-              const isAlreadyMember = await storage.checkSmsListMembership(smsList.id, newEnrollment.studentId);
+              const isAlreadyMember = await storage.checkSmsListMembership(smsList.id, enrollment.studentId);
 
               if (!isAlreadyMember) {
                 await storage.addSmsListMember({
                   listId: smsList.id,
-                  userId: newEnrollment.studentId,
+                  userId: enrollment.studentId,
                   addedBy: userId,
                   autoAdded: true,
-                  notes: 'Auto-added from instructor cross-enrollment',
+                  notes: 'Auto-added from cross-enrollment',
                 });
 
-                console.log(`Successfully added student ${newEnrollment.studentId} to SMS list ${smsList.id}`);
+                console.log(`Successfully added student ${enrollment.studentId} to SMS list ${smsList.id}`);
               }
-            } else {
-              console.log(`No SMS list found for schedule ${newEnrollment.scheduleId}`);
             }
           } catch (error) {
-            console.error(`Error auto-adding student to SMS list for enrollment ${newEnrollment.id}:`, error);
+            console.error(`Error auto-adding student to SMS list for enrollment ${enrollment.id}:`, error);
           }
         })();
       }
 
-      res.json({ success: true, enrollment: newEnrollment });
+      res.json({ success: true, enrollment });
     } catch (error: any) {
-      console.error("Error cross-enrolling student:", error);
-      res.status(500).json({ error: "Failed to cross-enroll student" });
+      console.error("Error creating enrollment:", error);
+      res.status(500).json({ error: "Failed to create enrollment" });
     }
   });
 
