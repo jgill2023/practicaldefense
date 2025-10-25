@@ -1651,12 +1651,102 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  // Payment balance tracking
+  async getPaymentBalance(enrollmentId: string): Promise<{
+    remainingBalance: number;
+    hasRemainingBalance: boolean;
+    originalAmount: number;
+    paidAmount: number;
+  }> {
+    const enrollment = await db.query.enrollments.findFirst({
+      where: eq(enrollments.id, enrollmentId),
+      with: {
+        course: true,
+      },
+    });
+
+    if (!enrollment || !enrollment.course) {
+      throw new Error('Enrollment or course not found');
+    }
+
+    // Calculate original amount based on payment option
+    const coursePrice = parseFloat(enrollment.course.price);
+    let originalAmount = coursePrice;
+
+    if (enrollment.paymentOption === 'deposit' && enrollment.course.depositAmount) {
+      originalAmount = parseFloat(enrollment.course.depositAmount);
+    }
+
+    // Determine how much has been paid
+    let paidAmount = 0;
+    if (enrollment.paymentStatus === 'paid') {
+      paidAmount = coursePrice;
+    } else if (enrollment.paymentStatus === 'deposit') {
+      paidAmount = originalAmount;
+    }
+
+    const remainingBalance = coursePrice - paidAmount;
+    const hasRemainingBalance = remainingBalance > 0;
+
+    return {
+      remainingBalance,
+      hasRemainingBalance,
+      originalAmount,
+      paidAmount,
+    };
+  }
+
+  // Form completion status tracking
+  async getFormCompletionStatus(enrollmentId: string): Promise<{
+    totalForms: number;
+    completedForms: number;
+    isComplete: boolean;
+    missingForms: { id: string; title: string; isRequired: boolean }[];
+  }> {
+    const enrollment = await db.query.enrollments.findFirst({
+      where: eq(enrollments.id, enrollmentId),
+      with: {
+        course: {
+          with: {
+            forms: {
+              where: eq(courseInformationForms.isActive, true),
+            },
+          },
+        },
+      },
+    });
+
+    if (!enrollment || !enrollment.course) {
+      throw new Error('Enrollment or course not found');
+    }
+
+    const requiredForms = enrollment.course.forms.filter(f => f.isRequired);
+    const totalForms = requiredForms.length;
+
+    // Check if form has been submitted
+    const completedForms = enrollment.formSubmittedAt ? totalForms : 0;
+    const isComplete = completedForms === totalForms;
+
+    const missingForms = isComplete ? [] : requiredForms.map(form => ({
+      id: form.id,
+      title: form.title,
+      isRequired: form.isRequired,
+    }));
+
+    return {
+      totalForms,
+      completedForms,
+      isComplete,
+      missingForms,
+    };
+  }
+
   // Draft enrollment operations for single-page registration
   async initiateRegistration(data: {
     courseId: string;
     scheduleId: string;
     paymentOption: 'full' | 'deposit';
-  }): Promise<Enrollment> {
+  }): Promise<Enrollment> {</old_str>
     const [draftEnrollment] = await db
       .insert(enrollments)
       .values({
