@@ -72,27 +72,27 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     retry: false,
   });
 
-  // Create field mapping object (moved outside useEffect to avoid hook ordering issues)
-  const fieldMapping: Record<string, any> = typedUser ? {
-    'first name': typedUser.firstName,
-    'last name': typedUser.lastName,
-    'email': typedUser.email,
-    'email address': typedUser.email,
-    'phone': typedUser.phone,
-    'phone number': typedUser.phone,
-    'date of birth': typedUser.dateOfBirth ? new Date(typedUser.dateOfBirth).toISOString().split('T')[0] : '',
-    'address': typedUser.streetAddress,
-    'street address': typedUser.streetAddress,
-    'current physical address': typedUser.streetAddress,
-    'city': typedUser.city,
-    'state': typedUser.state,
-    'zip': typedUser.zipCode,
-    'zip code': typedUser.zipCode,
-  } : {};
-
   // Autopopulate fields on mount
   useEffect(() => {
     if (courseForms && courseForms.length > 0 && typedUser) {
+      // Create field mapping object inside useEffect to avoid hook ordering issues
+      const fieldMapping: Record<string, any> = {
+        'first name': typedUser.firstName,
+        'last name': typedUser.lastName,
+        'email': typedUser.email,
+        'email address': typedUser.email,
+        'phone': typedUser.phone,
+        'phone number': typedUser.phone,
+        'date of birth': typedUser.dateOfBirth ? new Date(typedUser.dateOfBirth).toISOString().split('T')[0] : '',
+        'address': typedUser.streetAddress,
+        'street address': typedUser.streetAddress,
+        'current physical address': typedUser.streetAddress,
+        'city': typedUser.city,
+        'state': typedUser.state,
+        'zip': typedUser.zipCode,
+        'zip code': typedUser.zipCode,
+      };
+
       const autoPopulatedData: Record<string, any> = {};
       const autopopulatedFieldIds = new Set<string>();
       
@@ -111,7 +111,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
       setFormData(autoPopulatedData);
       setInitiallyAutopopulatedFields(autopopulatedFieldIds);
     }
-  }, [courseForms, typedUser, fieldMapping]);
+  }, [courseForms, typedUser]);
 
   if (isLoading) {
     return (
