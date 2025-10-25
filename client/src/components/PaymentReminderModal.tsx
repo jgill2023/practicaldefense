@@ -125,7 +125,7 @@ Practical Defense Training`
       message: string;
       recipients: { email?: string; phone?: string; };
     }) => {
-      const response = await apiRequest("POST", "/api/notifications/payment-reminder", {
+      return await apiRequest("POST", "/api/notifications/payment-reminder", {
         method: data.method,
         subject: data.subject,
         message: data.message,
@@ -135,7 +135,6 @@ Practical Defense Training`
         remainingBalance,
         scheduleDate
       });
-      return response.json();
     },
     onSuccess: (data) => {
       if (data.success) {

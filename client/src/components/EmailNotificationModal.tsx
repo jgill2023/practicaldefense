@@ -50,13 +50,12 @@ export function EmailNotificationModal({
 
   const sendEmailMutation = useMutation({
     mutationFn: async (data: { subject: string; message: string; emailAddress: string; isHtml: boolean }) => {
-      const response = await apiRequest("POST", "/api/notifications/email", {
+      return await apiRequest("POST", "/api/notifications/email", {
         to: [data.emailAddress],
         subject: data.subject,
         content: data.message,
         isHtml: data.isHtml
       });
-      return response.json();
     },
     onSuccess: (data) => {
       if (data.success) {

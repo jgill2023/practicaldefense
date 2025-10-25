@@ -27,11 +27,10 @@ export function SmsNotificationModal({
 
   const sendSmsMutation = useMutation({
     mutationFn: async (data: { message: string; phoneNumber: string }) => {
-      const response = await apiRequest("POST", "/api/notifications/sms", {
+      return await apiRequest("POST", "/api/notifications/sms", {
         to: [data.phoneNumber],
         message: data.message
       });
-      return response.json();
     },
     onSuccess: (data) => {
       if (data.success) {

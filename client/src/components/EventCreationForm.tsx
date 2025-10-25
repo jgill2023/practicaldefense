@@ -112,8 +112,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
   // Create event mutation
   const createEventMutation = useMutation({
     mutationFn: async (data: EventFormData) => {
-      const response = await apiRequest("POST", "/api/instructor/events", data);
-      return response.json();
+      return await apiRequest("POST", "/api/instructor/events", data);
     },
     onSuccess: () => {
       toast({

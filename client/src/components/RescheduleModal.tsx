@@ -56,8 +56,7 @@ export function RescheduleModal({
   const { data: availableSchedules = [], isLoading: schedulesLoading } = useQuery<AvailableSchedule[]>({
     queryKey: ["/api/instructor/available-schedules", enrollmentId],
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/instructor/available-schedules?excludeEnrollmentId=${enrollmentId}`);
-      return response.json();
+      return await apiRequest("GET", `/api/instructor/available-schedules?excludeEnrollmentId=${enrollmentId}`);
     },
     enabled: isOpen && action === 'reschedule',
   });

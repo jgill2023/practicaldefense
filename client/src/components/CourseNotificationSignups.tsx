@@ -33,8 +33,7 @@ export function CourseNotificationSignups() {
     queryKey: ["/api/instructor/courses", selectedCourseId, "notification-signups"],
     queryFn: async () => {
       if (!selectedCourseId) return [];
-      const response = await apiRequest("GET", `/api/instructor/courses/${selectedCourseId}/notification-signups`);
-      return response.json();
+      return await apiRequest("GET", `/api/instructor/courses/${selectedCourseId}/notification-signups`);
     },
     enabled: !!selectedCourseId,
     retry: false,
@@ -43,8 +42,7 @@ export function CourseNotificationSignups() {
   // Delete signup mutation
   const deleteSignupMutation = useMutation({
     mutationFn: async (signupId: string) => {
-      const response = await apiRequest("DELETE", `/api/instructor/notification-signups/${signupId}`);
-      return response.json();
+      return await apiRequest("DELETE", `/api/instructor/notification-signups/${signupId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ 
