@@ -1183,7 +1183,10 @@ export class DatabaseStorage implements IStorage {
           });
         }
 
-        studentsMap.get(studentId).enrollments.push(enrollment.enrollmentData);
+        studentsMap.get(studentId).enrollments.push({
+        ...enrollment.enrollmentData,
+        scheduleId: enrollment.schedule.id // Add scheduleId for roster lookup
+      });
       }
 
       const students = Array.from(studentsMap.values());

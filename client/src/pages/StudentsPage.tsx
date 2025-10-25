@@ -29,20 +29,20 @@ import { format } from "date-fns";
 // Phone number formatting utility
 function formatPhoneNumber(phone: string | undefined | null): string {
   if (!phone) return '';
-  
+
   // Remove all non-digit characters
   const digits = phone.replace(/\D/g, '');
-  
+
   // Format as (###) ###-####
   if (digits.length === 10) {
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
   }
-  
+
   // If 11 digits and starts with 1, remove the 1 and format
   if (digits.length === 11 && digits[0] === '1') {
     return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
   }
-  
+
   // Return original if not standard format
   return phone;
 }
@@ -103,7 +103,7 @@ function StudentsPage() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportFormat, setExportFormat] = useState<'excel' | 'csv' | 'google-sheets'>('excel');
   const [selectedScheduleId, setSelectedScheduleId] = useState<string>('all');
-  
+
   // Notification modal states
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [smsModalOpen, setSmsModalOpen] = useState(false);
@@ -117,6 +117,7 @@ function StudentsPage() {
   const [allStudentsDirectoryOpen, setAllStudentsDirectoryOpen] = useState(false);
   const [rosterDialogOpen, setRosterDialogOpen] = useState(false);
   const [selectedScheduleIdForRoster, setSelectedScheduleIdForRoster] = useState<string | null>(null);
+  const [selectedCourseIdForRoster, setSelectedCourseIdForRoster] = useState<string | null>(null); // New state for courseId
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -186,7 +187,7 @@ function StudentsPage() {
     try {
       const requestBody = selectedScheduleId !== 'all' ? { scheduleId: selectedScheduleId } : {};
       const response = await apiRequest("POST", "/api/instructor/roster/google-sheets", requestBody);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Export failed' }));
         throw new Error(errorData.message || 'Failed to export to Google Sheets');
@@ -352,10 +353,21 @@ function StudentsPage() {
                       <div className="space-y-1">
                         <button
                           onClick={() => {
-                            setSelectedScheduleIdForRoster(enrollment.id);
-                            setRosterDialogOpen(true);
+                            // Get the first enrollment's schedule ID for the roster
+                            const firstEnrollment = student.enrollments[0];
+                            if (firstEnrollment && firstEnrollment.scheduleId) {
+                              setSelectedScheduleIdForRoster(firstEnrollment.scheduleId);
+                              setSelectedCourseIdForRoster(null); // Let the backend use schedule to find course
+                              setRosterDialogOpen(true);
+                            } else if (firstEnrollment) {
+                              // Fallback if scheduleId is missing but enrollment exists
+                              console.warn("Missing scheduleId for enrollment, using enrollment ID as fallback for roster dialog.");
+                              setSelectedScheduleIdForRoster(firstEnrollment.id); 
+                              setSelectedCourseIdForRoster(null);
+                              setRosterDialogOpen(true);
+                            }
                           }}
-                          className="font-medium text-sm text-left hover:text-primary hover:underline transition-colors cursor-pointer"
+                          className="text-left hover:text-primary hover:underline transition-colors cursor-pointer"
                           data-testid={`button-course-roster-${enrollment.id}`}
                         >
                           {enrollment.courseTitle}
@@ -732,10 +744,12 @@ function StudentsPage() {
       {/* Roster Dialog */}
       <RosterDialog
         scheduleId={selectedScheduleIdForRoster}
+        courseId={selectedCourseIdForRoster}
         isOpen={rosterDialogOpen}
         onClose={() => {
           setRosterDialogOpen(false);
           setSelectedScheduleIdForRoster(null);
+          setSelectedCourseIdForRoster(null);
         }}
       />
       </div>
@@ -763,7 +777,7 @@ function EditStudentForm({ student, onClose }: { student: Student; onClose: () =
     mutationFn: async (data: EditStudentFormData) => {
       // Clean phone number - remove all non-digit characters
       const cleanedPhone = data.phone ? data.phone.replace(/\D/g, '') : data.phone;
-      
+
       const updateData = {
         ...data,
         phone: cleanedPhone,
