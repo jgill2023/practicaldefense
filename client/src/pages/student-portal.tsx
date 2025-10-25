@@ -66,7 +66,8 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [editableFields, setEditableFields] = useState<Record<string, boolean>>({});
   const [initiallyAutopopulatedFields, setInitiallyAutopopulatedFields] = useState<Set<string>>(new Set());
-  
+  const [formEditorOpen, setFormEditorOpen] = useState(true); // State to control modal visibility
+
   // Fetch course information forms for this course
   const { data: courseForms, isLoading } = useQuery({
     queryKey: ['/api/course-forms', enrollment.course.id],
@@ -97,19 +98,19 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
 
       const autoPopulatedData: Record<string, any> = {};
       const autopopulatedFieldIds = new Set<string>();
-      
+
       courseForms.forEach((form: any) => {
         form.fields?.forEach((field: any) => {
           const normalizedLabel = field.label.toLowerCase().trim();
           const mappedValue = fieldMapping[normalizedLabel];
-          
+
           if (mappedValue !== undefined && mappedValue !== null && mappedValue !== '') {
             autoPopulatedData[field.id] = mappedValue;
             autopopulatedFieldIds.add(field.id);
           }
         });
       });
-      
+
       setFormData(autoPopulatedData);
       setInitiallyAutopopulatedFields(autopopulatedFieldIds);
     }
@@ -117,20 +118,25 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
 
   // Form submission mutation - must be called before any early returns
   const submitFormMutation = useMutation({
-    mutationFn: async (data: { enrollmentId: string; formResponses: Record<string, any> }) => {
-      return await apiRequest('POST', '/api/enrollment-form-submissions', data);
+    mutationFn: async (formResponses: Record<string, any>) => {
+      return await apiRequest("POST", "/api/enrollment-form-submissions", {
+        enrollmentId: enrollment.id,
+        formResponses,
+      });
     },
     onSuccess: () => {
       toast({
         title: "Forms Submitted",
         description: "Your course information forms have been submitted successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/enrollments', enrollment.id, 'form-completion'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/enrollments/${enrollment.id}/form-completion`] });
+      setFormEditorOpen(false); // Close the modal on success
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: "Submission Failed",
-        description: error.message || "Failed to submit forms. Please try again.",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -186,7 +192,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     const value = formData[field.id] || '';
     const isAutopopulated = isFieldAutopopulated(field.id);
     const isEditable = editableFields[field.id] || !isAutopopulated;
-    
+
     switch (field.fieldType) {
       case 'text':
         return (
@@ -220,7 +226,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
             />
           </div>
         );
-      
+
       case 'email':
         return (
           <div key={field.id} className="space-y-2">
@@ -254,7 +260,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
             />
           </div>
         );
-      
+
       case 'phone':
         return (
           <div key={field.id} className="space-y-2">
@@ -288,7 +294,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
             />
           </div>
         );
-      
+
       case 'date':
         return (
           <div key={field.id} className="space-y-2">
@@ -321,7 +327,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
             />
           </div>
         );
-      
+
       case 'textarea':
         return (
           <div key={field.id} className="space-y-2">
@@ -355,7 +361,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
             />
           </div>
         );
-      
+
       case 'select':
         return (
           <div key={field.id} className="space-y-2">
@@ -379,7 +385,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
             </select>
           </div>
         );
-      
+
       case 'checkbox':
         return (
           <div key={field.id} className="flex items-center space-x-2">
@@ -394,7 +400,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
             </Label>
           </div>
         );
-      
+
       default:
         return (
           <div key={field.id} className="space-y-2">
@@ -434,7 +440,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     // Validate required fields
     const allForms = courseForms || [];
     let hasErrors = false;
-    
+
     for (const form of allForms) {
       for (const field of form.fields || []) {
         if (field.isRequired && !formData[field.id]) {
@@ -449,67 +455,74 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
       }
       if (hasErrors) break;
     }
-    
+
     if (!hasErrors) {
-      submitFormMutation.mutate({
-        enrollmentId: enrollment.id,
-        formResponses: formData
-      });
+      submitFormMutation.mutate(formData);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="p-4 bg-muted rounded-lg">
-        <h4 className="font-semibold mb-2">{enrollment.course.title}</h4>
-        <p className="text-sm text-muted-foreground">
-          {new Date(enrollment.schedule.startDate).toLocaleDateString()}
-        </p>
-      </div>
+    <Dialog open={formEditorOpen} onOpenChange={setFormEditorOpen}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Complete Course Information Forms</DialogTitle>
+          <DialogDescription>
+            Please complete the required information forms for {enrollment?.course.title}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6">
+          <div className="p-4 bg-muted rounded-lg">
+            <h4 className="font-semibold mb-2">{enrollment.course.title}</h4>
+            <p className="text-sm text-muted-foreground">
+              {new Date(enrollment.schedule.startDate).toLocaleDateString()}
+            </p>
+          </div>
 
-      <div className="space-y-6">
-        {courseForms.map((form: any) => (
-          <Card key={form.id} className="border-2">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{form.title}</span>
-                {form.isRequired && (
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                    Required
-                  </Badge>
-                )}
-              </CardTitle>
-              {form.description && (
-                <p className="text-sm text-muted-foreground">{form.description}</p>
-              )}
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {form.fields && form.fields.length > 0 ? (
-                  form.fields.map((field: any) => renderField(field))
-                ) : (
-                  <p className="text-sm text-muted-foreground">No fields configured for this form.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+          <div className="space-y-6">
+            {courseForms.map((form: any) => (
+              <Card key={form.id} className="border-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{form.title}</span>
+                    {form.isRequired && (
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                        Required
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  {form.description && (
+                    <p className="text-sm text-muted-foreground">{form.description}</p>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {form.fields && form.fields.length > 0 ? (
+                      form.fields.map((field: any) => renderField(field))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No fields configured for this form.</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-      <div className="flex justify-end space-x-3 pt-4 border-t">
-        <Button variant="outline" onClick={() => {
-          toast({
-            title: "Draft Saved",
-            description: "Your progress has been saved.",
-          });
-        }}>
-          Save Draft
-        </Button>
-        <Button onClick={handleSubmit} disabled={submitFormMutation.isPending}>
-          {submitFormMutation.isPending ? 'Submitting...' : 'Submit All Forms'}
-        </Button>
-      </div>
-    </div>
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <Button variant="outline" onClick={() => {
+              toast({
+                title: "Draft Saved",
+                description: "Your progress has been saved.",
+              });
+            }}>
+              Save Draft
+            </Button>
+            <Button onClick={handleSubmit} disabled={submitFormMutation.isPending}>
+              {submitFormMutation.isPending ? 'Submitting...' : 'Submit All Forms'}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -528,7 +541,7 @@ function EnhancedEnrollmentCard({
     enabled: !!enrollment.id,
     retry: false,
   });
-  
+
   const { data: formStatus } = useQuery<FormStatusResponse>({
     queryKey: ['/api/enrollments', enrollment.id, 'form-completion'],
     enabled: !!enrollment.id,
@@ -562,7 +575,7 @@ function EnhancedEnrollmentCard({
           {enrollment.status === 'confirmed' ? 'Confirmed' : enrollment.status}
         </Badge>
       </div>
-      
+
       {/* Course Details */}
       <div className="space-y-1 text-sm text-muted-foreground mb-3">
         <div className="flex items-center">
@@ -665,7 +678,7 @@ function EnhancedEnrollmentCard({
             Make Payment
           </Button>
         )}
-        
+
         {!formStatus?.isComplete && (
           <Button 
             variant="outline" 
@@ -689,7 +702,7 @@ function EnhancedEnrollmentCard({
             Complete Waiver
           </Button>
         )}
-        
+
         {enrollment.waiverUrl && (
           <Button variant="outline" size="sm" data-testid={`button-download-waiver-${enrollment.id}`}>
             <Download className="mr-2 h-4 w-4" />
@@ -719,19 +732,19 @@ function EditProfileDialog({ isOpen, onClose, user }: {
   // Convert dates to string format for form inputs
   const formatDateForInput = (date: Date | string | null) => {
     if (!date) return '';
-    
+
     // Handle string dates
     if (typeof date === 'string') {
       const parsedDate = new Date(date);
       if (isNaN(parsedDate.getTime())) return '';
       return parsedDate.toISOString().split('T')[0];
     }
-    
+
     // Handle Date objects
     if (date instanceof Date) {
       return date.toISOString().split('T')[0];
     }
-    
+
     return '';
   };
 
@@ -799,7 +812,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Basic Information</h3>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -813,7 +826,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="lastName"
@@ -858,7 +871,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
             {/* Contact Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Contact Information</h3>
-              
+
               <FormField
                 control={form.control}
                 name="email"
@@ -912,7 +925,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="state"
@@ -944,7 +957,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
             {/* License Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">License Information</h3>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -958,7 +971,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="concealedCarryLicenseExpiration"
@@ -977,7 +990,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
             {/* Emergency Contact Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Emergency Contact</h3>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -991,7 +1004,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="emergencyContactPhone"
@@ -1206,11 +1219,11 @@ export default function StudentPortal() {
   const getLicenseWarning = () => {
     const typedUser = user as User;
     if (!typedUser?.concealedCarryLicenseExpiration) return null;
-    
+
     const expirationDate = new Date(typedUser.concealedCarryLicenseExpiration);
     const today = new Date();
     const daysUntilExpiration = Math.ceil((expirationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (daysUntilExpiration <= 30) {
       return {
         level: 'critical',
@@ -1226,7 +1239,7 @@ export default function StudentPortal() {
     }
     return null;
   };
-  
+
   const licenseWarning = getLicenseWarning();
 
   useEffect(() => {
@@ -1438,7 +1451,7 @@ export default function StudentPortal() {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     {(user as User).concealedCarryLicenseIssued && (
                       <div className="flex justify-between text-sm">
@@ -1452,7 +1465,7 @@ export default function StudentPortal() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-medium mb-2">Renewal Reminders</h4>
@@ -1473,7 +1486,7 @@ export default function StudentPortal() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {licenseWarning && (
                     <div className={`p-3 rounded-lg border ${
                       licenseWarning.level === 'critical' ? 'bg-destructive/5 border-destructive/20' :
