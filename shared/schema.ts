@@ -227,6 +227,7 @@ export const courseRelations = relations(courses, ({ one, many }) => ({
   }),
   schedules: many(courseSchedules),
   enrollments: many(enrollments),
+  forms: many(courseInformationForms),
 }));
 
 export const courseScheduleRelations = relations(courseSchedules, ({ one, many }) => ({
