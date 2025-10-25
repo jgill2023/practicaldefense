@@ -1030,7 +1030,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(enrollments.id, enrollmentId));
 
       // Update user profile with form data
-      // Map form field IDs to their labels to find profile-related fields
       const profileUpdateData: any = {};
       
       // Create a mapping of field IDs to their labels
@@ -1044,10 +1043,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Map form responses to user profile fields
       Object.entries(formResponses).forEach(([fieldId, value]) => {
         const label = fieldMapping[fieldId];
-        if (!label || !value) return;
+        if (!label || !value || value === '') return;
 
-        // Map to user profile fields
-        if (label.includes('street') || label.includes('address')) {
+        // More comprehensive field mapping
+        if (label.includes('street') || label.includes('physical address') || (label.includes('current') && label.includes('address'))) {
           profileUpdateData.streetAddress = value;
         } else if (label === 'city') {
           profileUpdateData.city = value;
@@ -1055,19 +1054,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           profileUpdateData.state = value;
         } else if (label.includes('zip')) {
           profileUpdateData.zipCode = value;
-        } else if (label.includes('phone') && !label.includes('emergency')) {
+        } else if ((label.includes('phone') || label.includes('telephone')) && !label.includes('emergency')) {
           profileUpdateData.phone = value;
-        } else if (label === 'date of birth') {
+        } else if (label === 'date of birth' || label === 'birth date') {
           profileUpdateData.dateOfBirth = new Date(value as string);
-        } else if (label.includes('emergency contact') && label.includes('name')) {
+        } else if (label.includes('emergency') && (label.includes('name') || label.includes('contact')) && !label.includes('phone')) {
           profileUpdateData.emergencyContactName = value;
-        } else if (label.includes('emergency contact') && label.includes('phone')) {
+        } else if (label.includes('emergency') && label.includes('phone')) {
           profileUpdateData.emergencyContactPhone = value;
+        } else if (label === 'first name') {
+          profileUpdateData.firstName = value;
+        } else if (label === 'last name') {
+          profileUpdateData.lastName = value;
+        } else if (label.includes('email')) {
+          profileUpdateData.email = value;
         }
       });
 
       // Update user profile if there are any changes
       if (Object.keys(profileUpdateData).length > 0) {
+        console.log('Updating user profile with form data:', profileUpdateData);
         await storage.updateUser(userId, profileUpdateData);
       }
 

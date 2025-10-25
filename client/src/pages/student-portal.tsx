@@ -59,14 +59,13 @@ const editProfileSchema = z.object({
 type EditProfileForm = z.infer<typeof editProfileSchema>;
 
 // Form completion interface component
-function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDetails }) {
+function FormCompletionInterface({ enrollment, onClose }: { enrollment: EnrollmentWithDetails; onClose: () => void }) {
   const { toast } = useToast();
   const { user } = useAuth();
   const typedUser = user as User;
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [editableFields, setEditableFields] = useState<Record<string, boolean>>({});
   const [initiallyAutopopulatedFields, setInitiallyAutopopulatedFields] = useState<Set<string>>(new Set());
-  const [formEditorOpen, setFormEditorOpen] = useState(true); // State to control modal visibility
 
   // Fetch course information forms for this course
   const { data: courseForms, isLoading } = useQuery({
@@ -125,13 +124,19 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
       });
     },
     onSuccess: () => {
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/enrollments/${enrollment.id}/form-completion`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
+      // Show success message
       toast({
         title: "Forms Submitted",
         description: "Your course information forms have been submitted successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
-      queryClient.invalidateQueries({ queryKey: [`/api/enrollments/${enrollment.id}/form-completion`] });
-      setFormEditorOpen(false); // Close the modal on success
+      
+      // Close the dialog
+      onClose();
     },
     onError: (error) => {
       toast({
@@ -462,7 +467,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
   };
 
   return (
-    <Dialog open={formEditorOpen} onOpenChange={setFormEditorOpen}>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Complete Course Information Forms</DialogTitle>
@@ -1692,19 +1697,12 @@ export default function StudentPortal() {
       )}
 
       {/* Form Completion Dialog */}
-      <Dialog open={!!selectedEnrollmentForForms} onOpenChange={(open) => !open && setSelectedEnrollmentForForms(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Complete Course Information Forms</DialogTitle>
-            <DialogDescription>
-              Please complete the required information forms for {selectedEnrollmentForForms?.course.title}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedEnrollmentForForms && (
-            <FormCompletionInterface enrollment={selectedEnrollmentForForms} />
-          )}
-        </DialogContent>
-      </Dialog>
+      {selectedEnrollmentForForms && (
+        <FormCompletionInterface 
+          enrollment={selectedEnrollmentForForms} 
+          onClose={() => setSelectedEnrollmentForForms(null)}
+        />
+      )}
 
       {/* Waiver Completion Dialog */}
       <Dialog open={!!selectedEnrollmentForWaiver} onOpenChange={(open) => !open && setSelectedEnrollmentForWaiver(null)}>
