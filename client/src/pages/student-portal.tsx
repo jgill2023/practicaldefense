@@ -47,6 +47,8 @@ const editProfileSchema = z.object({
   dateOfBirth: z.string().optional(),
   concealedCarryLicenseIssued: z.string().optional(),
   concealedCarryLicenseExpiration: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
   preferredContactMethods: z.array(z.string()).optional(),
   enableSmsNotifications: z.boolean().optional(),
   enableSmsReminders: z.boolean().optional(),
@@ -651,7 +653,14 @@ function EnhancedEnrollmentCard({
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-2">
         {paymentBalance?.hasRemainingBalance && (
-          <Button variant="outline" size="sm" data-testid={`button-make-payment-${enrollment.id}`}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              window.location.href = `/checkout?enrollmentId=${enrollment.id}`;
+            }}
+            data-testid={`button-make-payment-${enrollment.id}`}
+          >
             <CreditCard className="mr-2 h-4 w-4" />
             Make Payment
           </Button>
@@ -741,6 +750,8 @@ function EditProfileDialog({ isOpen, onClose, user }: {
       dateOfBirth: formatDateForInput(user.dateOfBirth),
       concealedCarryLicenseIssued: formatDateForInput(user.concealedCarryLicenseIssued),
       concealedCarryLicenseExpiration: formatDateForInput(user.concealedCarryLicenseExpiration),
+      emergencyContactName: user.emergencyContactName || '',
+      emergencyContactPhone: user.emergencyContactPhone || '',
       preferredContactMethods: user.preferredContactMethods || [],
       enableSmsNotifications: user.enableSmsNotifications ?? true,
       enableSmsReminders: user.enableSmsReminders ?? true,
@@ -956,6 +967,39 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                       <FormLabel>NM CCL Expiration Date</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} data-testid="input-ccl-expiration" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Emergency Contact Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Emergency Contact</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="emergencyContactName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Contact Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Full Name" data-testid="input-emergency-contact-name" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="emergencyContactPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Contact Phone</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="tel" placeholder="(555) 123-4567" data-testid="input-emergency-contact-phone" />
                       </FormControl>
                     </FormItem>
                   )}

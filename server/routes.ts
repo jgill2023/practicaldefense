@@ -60,7 +60,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dateOfBirth: z.string().optional(),
         concealedCarryLicenseIssued: z.string().optional(),
         concealedCarryLicenseExpiration: z.string().optional(),
+        emergencyContactName: z.string().optional(),
+        emergencyContactPhone: z.string().optional(),
         preferredContactMethods: z.array(z.string()).optional(),
+        enableSmsNotifications: z.boolean().optional(),
+        enableSmsReminders: z.boolean().optional(),
+        enableSmsPaymentNotices: z.boolean().optional(),
+        enableSmsAnnouncements: z.boolean().optional(),
       });
 
       const validatedData = profileUpdateSchema.parse(req.body);
@@ -982,10 +988,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Submit enrollment form responses
-  app.post("/api/enrollment-form-submissions", isAuthenticated, async (req, res) => {
+  app.post("/api/enrollment-form-submissions", isAuthenticated, async (req: any, res) => {
     try {
       const { enrollmentId, formResponses } = req.body;
-      const userId = req.user?.id;
+      const userId = req.user.claims.sub;
 
       if (!enrollmentId || !formResponses) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -995,16 +1001,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const enrollment = await db.query.enrollments.findFirst({
         where: and(
           eq(enrollments.id, enrollmentId),
-          eq(enrollments.userId, userId!)
+          eq(enrollments.studentId, userId)
         ),
+        with: {
+          course: {
+            with: {
+              forms: {
+                with: {
+                  fields: true
+                }
+              }
+            }
+          }
+        }
       });
 
       if (!enrollment) {
         return res.status(404).json({ message: "Enrollment not found" });
       }
 
-      // Store form responses (you may want to create a separate table for this)
-      // For now, we'll update the enrollment notes field or create a metadata field
+      // Store form responses
       await db
         .update(enrollments)
         .set({ 
@@ -1012,6 +1028,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
           formSubmittedAt: new Date()
         })
         .where(eq(enrollments.id, enrollmentId));
+
+      // Update user profile with form data
+      // Map form field IDs to their labels to find profile-related fields
+      const profileUpdateData: any = {};
+      
+      // Create a mapping of field IDs to their labels
+      const fieldMapping: Record<string, string> = {};
+      enrollment.course?.forms?.forEach((form: any) => {
+        form.fields?.forEach((field: any) => {
+          fieldMapping[field.id] = field.label.toLowerCase().trim();
+        });
+      });
+
+      // Map form responses to user profile fields
+      Object.entries(formResponses).forEach(([fieldId, value]) => {
+        const label = fieldMapping[fieldId];
+        if (!label || !value) return;
+
+        // Map to user profile fields
+        if (label.includes('street') || label.includes('address')) {
+          profileUpdateData.streetAddress = value;
+        } else if (label === 'city') {
+          profileUpdateData.city = value;
+        } else if (label === 'state') {
+          profileUpdateData.state = value;
+        } else if (label.includes('zip')) {
+          profileUpdateData.zipCode = value;
+        } else if (label.includes('phone') && !label.includes('emergency')) {
+          profileUpdateData.phone = value;
+        } else if (label === 'date of birth') {
+          profileUpdateData.dateOfBirth = new Date(value as string);
+        } else if (label.includes('emergency contact') && label.includes('name')) {
+          profileUpdateData.emergencyContactName = value;
+        } else if (label.includes('emergency contact') && label.includes('phone')) {
+          profileUpdateData.emergencyContactPhone = value;
+        }
+      });
+
+      // Update user profile if there are any changes
+      if (Object.keys(profileUpdateData).length > 0) {
+        await storage.updateUser(userId, profileUpdateData);
+      }
 
       res.json({ message: "Form submitted successfully" });
     } catch (error) {

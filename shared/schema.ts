@@ -44,6 +44,9 @@ export const users = pgTable("users", {
   concealedCarryLicenseIssued: timestamp("concealed_carry_license_issued"),
   // Preferred contact methods (stored as JSON array)
   preferredContactMethods: text("preferred_contact_methods").array(), // ['text', 'email', 'phone']
+  // Emergency contact information
+  emergencyContactName: varchar("emergency_contact_name", { length: 255 }),
+  emergencyContactPhone: varchar("emergency_contact_phone", { length: 20 }),
   // Email reminder preferences
   licenseExpirationReminderDays: integer("license_expiration_reminder_days").default(60), // 30, 60, or 90 days
   enableLicenseExpirationReminder: boolean("enable_license_expiration_reminder").default(false),
@@ -175,6 +178,9 @@ export const enrollments = pgTable("enrollments", {
   moodleEnrolled: boolean("moodle_enrolled").default(false),
   moodleEnrollmentDate: timestamp("moodle_enrollment_date"),
   notes: text("notes"), // For tracking Moodle enrollment status and errors
+  // Form submission tracking
+  formSubmissionData: jsonb("form_submission_data"),
+  formSubmittedAt: timestamp("form_submitted_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
