@@ -843,6 +843,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Waiver instances for enrollment
+  app.get('/api/enrollments/:enrollmentId/waiver-instances', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const enrollmentId = req.params.enrollmentId;
+
+      // Verify enrollment ownership
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+
+      // Check ownership: either student owns it or instructor has access
+      const user = await storage.getUser(userId);
+      const hasAccess = enrollment.studentId === userId || 
+                       (user?.role === 'instructor' && enrollment.course?.instructorId === userId);
+
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const waiverInstances = await storage.getWaiverInstancesByEnrollment(enrollmentId);
+      res.json(waiverInstances);
+    } catch (error) {
+      console.error("Error fetching waiver instances:", error);
+      res.status(500).json({ message: "Failed to fetch waiver instances" });
+    }
+  });
+
   // Payment balance tracking
   app.get('/api/enrollments/:enrollmentId/payment-balance', isAuthenticated, async (req: any, res) => {
     try {

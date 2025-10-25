@@ -9,7 +9,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign } from "lucide-react";
+import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign, FileSignature } from "lucide-react";
 import { Calendar, Clock, FileText, Download, BookOpen, Award } from "lucide-react";
 import type { EnrollmentWithDetails, User } from "@shared/schema";
 
@@ -56,7 +56,15 @@ const editProfileSchema = z.object({
 type EditProfileForm = z.infer<typeof editProfileSchema>;
 
 // Enhanced enrollment card component with payment and form status
-function EnhancedEnrollmentCard({ enrollment }: { enrollment: EnrollmentWithDetails }) {
+function EnhancedEnrollmentCard({ 
+  enrollment, 
+  onCompleteFormsClick,
+  onCompleteWaiverClick 
+}: { 
+  enrollment: EnrollmentWithDetails;
+  onCompleteFormsClick: (enrollment: EnrollmentWithDetails) => void;
+  onCompleteWaiverClick: (enrollment: EnrollmentWithDetails) => void;
+}) {
   const { data: paymentBalance } = useQuery<PaymentBalanceResponse>({
     queryKey: ['/api/enrollments', enrollment.id, 'payment-balance'],
     enabled: !!enrollment.id,
@@ -65,6 +73,23 @@ function EnhancedEnrollmentCard({ enrollment }: { enrollment: EnrollmentWithDeta
   
   const { data: formStatus } = useQuery<FormStatusResponse>({
     queryKey: ['/api/enrollments', enrollment.id, 'form-completion'],
+    enabled: !!enrollment.id,
+    retry: false,
+  });
+
+  // Query waiver status for this enrollment
+  const { data: waiverStatus } = useQuery({
+    queryKey: ['/api/enrollments', enrollment.id, 'waiver-status'],
+    queryFn: async () => {
+      const response = await fetch(`/api/enrollments/${enrollment.id}/waiver-instances`, {
+        credentials: 'include'
+      });
+      if (!response.ok) return { hasPendingWaivers: false, allSigned: true };
+      const waivers = await response.json();
+      const pending = waivers.filter((w: any) => w.status === 'pending');
+      const allSigned = waivers.length > 0 && waivers.every((w: any) => w.status === 'signed');
+      return { hasPendingWaivers: pending.length > 0, allSigned };
+    },
     enabled: !!enrollment.id,
     retry: false,
   });
@@ -99,12 +124,12 @@ function EnhancedEnrollmentCard({ enrollment }: { enrollment: EnrollmentWithDeta
       </div>
 
       {/* Payment & Form Status */}
-      <div className="grid grid-cols-2 gap-4 mb-3">
+      <div className="grid grid-cols-3 gap-4 mb-3">
         {/* Payment Status */}
         <div className="space-y-1">
           <div className="flex items-center text-xs text-muted-foreground">
             <CreditCard className="mr-1 h-3 w-3" />
-            Payment Status
+            Payment
           </div>
           {paymentBalance?.hasRemainingBalance ? (
             <div className="flex items-center space-x-1">
@@ -116,7 +141,7 @@ function EnhancedEnrollmentCard({ enrollment }: { enrollment: EnrollmentWithDeta
           ) : (
             <div className="flex items-center space-x-1">
               <CheckCircle2 className="h-3 w-3 text-success" />
-              <span className="text-xs text-success font-medium">Paid in full</span>
+              <span className="text-xs text-success font-medium">Paid</span>
             </div>
           )}
         </div>
@@ -125,7 +150,7 @@ function EnhancedEnrollmentCard({ enrollment }: { enrollment: EnrollmentWithDeta
         <div className="space-y-1">
           <div className="flex items-center text-xs text-muted-foreground">
             <FileText className="mr-1 h-3 w-3" />
-            Forms Status
+            Forms
           </div>
           {formStatus?.isComplete ? (
             <div className="flex items-center space-x-1">
@@ -141,6 +166,30 @@ function EnhancedEnrollmentCard({ enrollment }: { enrollment: EnrollmentWithDeta
             </div>
           )}
         </div>
+
+        {/* Waiver Status */}
+        <div className="space-y-1">
+          <div className="flex items-center text-xs text-muted-foreground">
+            <FileSignature className="mr-1 h-3 w-3" />
+            Waiver
+          </div>
+          {waiverStatus?.allSigned ? (
+            <div className="flex items-center space-x-1">
+              <CheckCircle2 className="h-3 w-3 text-success" />
+              <span className="text-xs text-success font-medium">Signed</span>
+            </div>
+          ) : waiverStatus?.hasPendingWaivers ? (
+            <div className="flex items-center space-x-1">
+              <AlertCircle className="h-3 w-3 text-yellow-500" />
+              <span className="text-xs text-yellow-600 font-medium">Pending</span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1">
+              <AlertCircle className="h-3 w-3 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground font-medium">N/A</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Action Buttons */}
@@ -153,9 +202,26 @@ function EnhancedEnrollmentCard({ enrollment }: { enrollment: EnrollmentWithDeta
         )}
         
         {!formStatus?.isComplete && (
-          <Button variant="outline" size="sm" data-testid={`button-complete-forms-${enrollment.id}`}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => onCompleteFormsClick(enrollment)}
+            data-testid={`button-complete-forms-${enrollment.id}`}
+          >
             <FileText className="mr-2 h-4 w-4" />
             Complete Forms
+          </Button>
+        )}
+
+        {waiverStatus?.hasPendingWaivers && (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onCompleteWaiverClick(enrollment)}
+            data-testid={`button-complete-waiver-${enrollment.id}`}
+          >
+            <FileSignature className="mr-2 h-4 w-4" />
+            Complete Waiver
           </Button>
         )}
         
@@ -627,6 +693,8 @@ export default function StudentPortal() {
   const { toast } = useToast();
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isRemainingBalanceModalOpen, setIsRemainingBalanceModalOpen] = useState(false);
+  const [selectedEnrollmentForForms, setSelectedEnrollmentForForms] = useState<EnrollmentWithDetails | null>(null);
+  const [selectedEnrollmentForWaiver, setSelectedEnrollmentForWaiver] = useState<EnrollmentWithDetails | null>(null);
 
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/student/enrollments"],
@@ -955,7 +1023,12 @@ export default function StudentPortal() {
               ) : upcomingClasses.length > 0 ? (
                 <div className="space-y-4">
                   {upcomingClasses.map(enrollment => (
-                    <EnhancedEnrollmentCard key={enrollment.id} enrollment={enrollment} />
+                    <EnhancedEnrollmentCard 
+                      key={enrollment.id} 
+                      enrollment={enrollment}
+                      onCompleteFormsClick={setSelectedEnrollmentForForms}
+                      onCompleteWaiverClick={setSelectedEnrollmentForWaiver}
+                    />
                   ))}
                 </div>
               ) : (
@@ -1104,6 +1177,62 @@ export default function StudentPortal() {
           user={user as User} 
         />
       )}
+
+      {/* Form Completion Dialog */}
+      <Dialog open={!!selectedEnrollmentForForms} onOpenChange={(open) => !open && setSelectedEnrollmentForForms(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Complete Course Information Forms</DialogTitle>
+            <DialogDescription>
+              Please complete the required information forms for {selectedEnrollmentForForms?.course.title}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedEnrollmentForForms && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="font-semibold mb-2">{selectedEnrollmentForForms.course.title}</h4>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(selectedEnrollmentForForms.schedule.startDate).toLocaleDateString()}
+                </p>
+              </div>
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  Form completion interface coming soon. You will be able to fill out all required course information forms here.
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Waiver Completion Dialog */}
+      <Dialog open={!!selectedEnrollmentForWaiver} onOpenChange={(open) => !open && setSelectedEnrollmentForWaiver(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Complete Course Waiver</DialogTitle>
+            <DialogDescription>
+              Please review and sign the required waiver for {selectedEnrollmentForWaiver?.course.title}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedEnrollmentForWaiver && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="font-semibold mb-2">{selectedEnrollmentForWaiver.course.title}</h4>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(selectedEnrollmentForWaiver.schedule.startDate).toLocaleDateString()}
+                </p>
+              </div>
+              <div className="text-center py-8">
+                <FileSignature className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  Waiver signing interface coming soon. You will be able to review and electronically sign required waivers here.
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
