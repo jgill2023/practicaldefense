@@ -449,10 +449,29 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     }
     
     if (!hasErrors) {
-      submitFormMutation.mutate({
-        enrollmentId: enrollment.id,
-        formResponses: formData
-      });
+      // Check if any autopopulated fields were changed
+      const hasProfileUpdates = Object.keys(formData).some(fieldId => 
+        initiallyAutopopulatedFields.has(fieldId) && editableFields[fieldId]
+      );
+
+      if (hasProfileUpdates) {
+        // Show confirmation dialog
+        const confirmUpdate = window.confirm(
+          "Would you like to update your profile information with the changes you made?"
+        );
+        
+        submitFormMutation.mutate({
+          enrollmentId: enrollment.id,
+          formResponses: formData,
+          updateProfile: confirmUpdate
+        });
+      } else {
+        submitFormMutation.mutate({
+          enrollmentId: enrollment.id,
+          formResponses: formData,
+          updateProfile: false
+        });
+      }
     }
   };
 

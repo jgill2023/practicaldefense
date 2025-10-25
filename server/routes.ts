@@ -982,36 +982,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Submit enrollment form responses
-  app.post("/api/enrollment-form-submissions", isAuthenticated, async (req, res) => {
+  app.post("/api/enrollment-form-submissions", isAuthenticated, async (req: any, res) => {
     try {
-      const { enrollmentId, formResponses } = req.body;
-      const userId = req.user?.id;
+      const { enrollmentId, formResponses, updateProfile } = req.body;
+      const userId = req.user?.claims?.sub;
 
       if (!enrollmentId || !formResponses) {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
       // Verify the enrollment belongs to this user
-      const enrollment = await db.query.enrollments.findFirst({
-        where: and(
-          eq(enrollments.id, enrollmentId),
-          eq(enrollments.userId, userId!)
-        ),
-      });
-
-      if (!enrollment) {
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment || enrollment.studentId !== userId) {
         return res.status(404).json({ message: "Enrollment not found" });
       }
 
-      // Store form responses (you may want to create a separate table for this)
-      // For now, we'll update the enrollment notes field or create a metadata field
-      await db
-        .update(enrollments)
-        .set({ 
-          formSubmissionData: formResponses,
-          formSubmittedAt: new Date()
-        })
-        .where(eq(enrollments.id, enrollmentId));
+      // Store individual form responses
+      const formResponseEntries = Object.entries(formResponses);
+      
+      for (const [fieldId, response] of formResponseEntries) {
+        if (response && typeof response === 'string') {
+          // Upsert each form response
+          await storage.upsertStudentFormResponse({
+            enrollmentId,
+            formId: enrollment.courseId, // We'll need to get the actual formId
+            fieldId,
+            response: response as string,
+          });
+        }
+      }
+
+      // If user wants to update their profile, do it
+      if (updateProfile === true) {
+        const user = await storage.getUser(userId);
+        const updateData: any = {};
+
+        // Map common fields to user profile
+        const fieldMapping: Record<string, string> = {
+          'first_name': 'firstName',
+          'last_name': 'lastName',
+          'email': 'email',
+          'phone': 'phone',
+          'phone_number': 'phone',
+          'date_of_birth': 'dateOfBirth',
+          'address': 'streetAddress',
+          'street_address': 'streetAddress',
+          'current_physical_address': 'streetAddress',
+          'city': 'city',
+          'state': 'state',
+          'zip': 'zipCode',
+          'zip_code': 'zipCode',
+        };
+
+        // Get all form fields for this enrollment
+        const courseForms = await storage.getCourseInformationFormsByCourse(enrollment.courseId);
+        
+        for (const form of courseForms) {
+          for (const field of form.fields) {
+            const normalizedLabel = field.label.toLowerCase().trim();
+            const profileField = fieldMapping[normalizedLabel.replace(/\s+/g, '_')];
+            const responseValue = formResponses[field.id];
+            
+            if (profileField && responseValue) {
+              if (profileField === 'dateOfBirth') {
+                updateData[profileField] = new Date(responseValue);
+              } else {
+                updateData[profileField] = responseValue;
+              }
+            }
+          }
+        }
+
+        // Update user profile if we have data to update
+        if (Object.keys(updateData).length > 0) {
+          await storage.updateUser(userId, updateData);
+        }
+      }
 
       res.json({ message: "Form submitted successfully" });
     } catch (error) {

@@ -184,9 +184,11 @@ export interface IStorage {
   getRosterExportData(instructorId: string, scheduleId?: string): Promise<{
     current: any[];
     former: any[];
+    held: any[];
     summary: {
       totalCurrentStudents: number;
       totalFormerStudents: number;
+      totalHeldStudents: number;
       totalCourses: number;
       exportDate: string;
     };
@@ -236,6 +238,12 @@ export interface IStorage {
     isComplete: boolean;
     missingForms: { id: string; title: string; isRequired: boolean }[];
   }>;
+  upsertStudentFormResponse(data: {
+    enrollmentId: string;
+    formId: string;
+    fieldId: string;
+    response: string;
+  }): Promise<StudentFormResponse>;
 
   // Course Information Forms operations
   createCourseInformationForm(form: InsertCourseInformationForm): Promise<CourseInformationForm>;
@@ -1371,15 +1379,15 @@ export class DatabaseStorage implements IStorage {
     console.log(`getRosterExportData - Instructor enrollments: ${instructorEnrollments.length}`);
 
     const now = new Date();
-    
+
     // Categorize enrollments based on status and schedule date
     const heldEnrollments = instructorEnrollments.filter(e => e.status === 'hold');
-    
+
     // For specific schedule, confirmed enrollments are current
     // For all schedules, check if schedule date is in future or past
     const currentEnrollments = instructorEnrollments.filter(e => {
       if (e.status === 'hold') return false; // Exclude held students from current list
-      
+
       if (scheduleId) {
         // For specific schedule filter, all confirmed/completed are current
         return e.status === 'confirmed' || e.status === 'completed';
@@ -1395,7 +1403,7 @@ export class DatabaseStorage implements IStorage {
       if (e.status === 'hold') return false; // Exclude held students from former list
       return e.schedule && new Date(e.schedule.startDate) < now;
     });
-    
+
     console.log(`getRosterExportData - Held students: ${heldEnrollments.length}`);
 
     // Flatten the data for export - convert enrollments directly to roster format
@@ -2016,122 +2024,162 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  // Dashboard statistics
-  async getInstructorDashboardStats(instructorId: string): Promise<{
-    upcomingCourses: number;
-    pastCourses: number;
-    allStudents: number;
-    totalRevenue: number;
-    outstandingRevenue: number;
+  // Payment balance and form completion tracking
+  async getPaymentBalance(enrollmentId: string): Promise<{
+    remainingBalance: number;
+    hasRemainingBalance: boolean;
+    originalAmount: number;
+    paidAmount: number;
   }> {
-    const now = new Date();
+    const enrollment = await this.getEnrollment(enrollmentId);
+    if (!enrollment) {
+      throw new Error('Enrollment not found');
+    }
 
-    // Get all courses for this instructor
-    const instructorCourses = await db.query.courses.findMany({
-      where: eq(courses.instructorId, instructorId),
-      with: {
-        schedules: {
-          where: isNull(courseSchedules.deletedAt),
-        },
-      },
-    });
+    const coursePrice = parseFloat(enrollment.course.price);
+    let originalAmount = coursePrice;
 
-    // Get all enrollments for instructor's courses
-    const allEnrollments = await db.query.enrollments.findMany({
-      with: {
-        course: true,
-        schedule: true,
-        student: true,
-      },
-    });
+    // If deposit option was chosen, calculate original amount based on deposit
+    if (enrollment.paymentOption === 'deposit') {
+      const depositAmount = parseFloat(enrollment.course.depositAmount || '50'); // Default to 50 if not set
+      originalAmount = depositAmount;
+    }
 
-    // Filter enrollments for this instructor's courses
-    const instructorEnrollments = allEnrollments.filter(e => 
-      e.course && e.course.instructorId === instructorId
-    );
+    // Get Stripe payment intent to find the total amount paid
+    let paidAmount = 0;
+    if (enrollment.stripePaymentIntentId) {
+      try {
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        const paymentIntent = await stripe.paymentIntents.retrieve(enrollment.stripePaymentIntentId);
+        paidAmount = paymentIntent.amount_received / 100; // Amount is in cents
+      } catch (error) {
+        console.error('Error retrieving Stripe PaymentIntent:', error);
+        // Fallback: check for manual payments if Stripe data is unavailable
+        // This part would need specific logic if manual payments are tracked differently
+      }
+    }
 
-    // Calculate upcoming courses
-    const upcomingCourses = instructorCourses.reduce((count, course) => {
-      const upcomingSchedules = course.schedules.filter(schedule => 
-        schedule.startDate && new Date(schedule.startDate) > now
-      );
-      return count + upcomingSchedules.length;
-    }, 0);
-
-    // Calculate past courses
-    const pastCourses = instructorCourses.reduce((count, course) => {
-      const pastSchedules = course.schedules.filter(schedule => 
-        schedule.endDate && new Date(schedule.endDate) < now
-      );
-      return count + pastSchedules.length;
-    }, 0);
-
-    // Calculate unique students (all students who have enrolled)
-    const uniqueStudentIds = new Set(instructorEnrollments.map(e => e.studentId));
-    const allStudents = uniqueStudentIds.size;
-
-    // Calculate total revenue (all paid enrollments)
-    const totalRevenue = instructorEnrollments
-      .filter(e => e.paymentStatus === 'paid')
-      .reduce((sum, e) => {
-        const price = parseFloat(e.course?.price || '0');
-        return sum + price;
-      }, 0);
-
-    // Calculate outstanding revenue (enrollments with deposit only)
-    const outstandingRevenue = instructorEnrollments
-      .filter(e => e.paymentStatus === 'deposit')
-      .reduce((sum, e) => {
-        const price = parseFloat(e.course?.price || '0');
-        const depositAmount = 50; // Default deposit amount or get from course settings
-        return sum + (price - depositAmount);
-      }, 0);
+    const remainingBalance = Math.max(0, originalAmount - paidAmount);
+    const hasRemainingBalance = remainingBalance > 0;
 
     return {
-      upcomingCourses,
-      pastCourses,
-      allStudents,
-      totalRevenue,
-      outstandingRevenue,
+      remainingBalance,
+      hasRemainingBalance,
+      originalAmount,
+      paidAmount,
     };
   }
 
-  // App settings operations
-  async getAppSettings(): Promise<AppSettings> {
-    const settings = await db.select().from(appSettings).limit(1);
+  async getFormCompletionStatus(enrollmentId: string): Promise<{
+    totalForms: number;
+    completedForms: number;
+    isComplete: boolean;
+    missingForms: { id: string; title: string; isRequired: boolean }[];
+  }> {
+    const responses = await db.query.studentFormResponses.findMany({
+      where: eq(studentFormResponses.enrollmentId, enrollmentId),
+      with: {
+        form: true, // Include form details to check isRequired status
+        field: true
+      }
+    });
 
-    if (settings.length === 0) {
-      // Create default settings if none exist
-      const [newSettings] = await db.insert(appSettings).values({
-        homeCoursesLimit: 20,
-      }).returning();
-      return newSettings;
+    const enrollment = await this.getEnrollment(enrollmentId);
+    if (!enrollment) {
+      return { totalForms: 0, completedForms: 0, isComplete: false, missingForms: [] };
     }
 
-    return settings[0];
+    // Fetch all forms for the course, including their fields
+    const courseForms = await db.query.courseInformationForms.findMany({
+      where: and(
+        eq(courseInformationForms.courseId, enrollment.courseId),
+        eq(courseInformationForms.isActive, true)
+      ),
+      with: {
+        fields: {
+          where: eq(courseInformationFormFields.isRequired, true) // Only consider required fields
+        }
+      },
+      orderBy: asc(courseInformationForms.sortOrder)
+    });
+
+    // Count total number of required fields across all active forms for the course
+    const totalRequiredFieldsCount = courseForms.reduce((sum, form) => 
+      sum + form.fields.length, 0
+    );
+
+    // Count how many required fields have been responded to for this enrollment
+    const completedRequiredFieldsCount = responses.filter(response => response.field.isRequired).length;
+
+    // Determine which forms are missing required fields
+    const completedFormIds = new Set(responses.map(r => r.formId));
+    const missingForms = courseForms
+      .filter(form => !completedFormIds.has(form.id) && form.fields.length > 0)
+      .map(form => ({
+        id: form.id,
+        title: form.title,
+        isRequired: true // Since we filtered for forms with required fields
+      }));
+
+    // Check if all required fields are completed
+    const isComplete = totalRequiredFieldsCount > 0 && completedRequiredFieldsCount >= totalRequiredFieldsCount;
+
+    return {
+      totalForms: courseForms.length, // Total active forms for the course
+      completedForms: completedFormIds.size, // Number of forms that have at least one response (this might need refinement if we only care about *required* fields)
+      isComplete: isComplete,
+      missingForms: missingForms
+    };
   }
 
-  async updateAppSettings(input: InsertAppSettings): Promise<AppSettings> {
-    const existingSettings = await db.select().from(appSettings).limit(1);
+  async upsertStudentFormResponse(data: {
+    enrollmentId: string;
+    formId: string;
+    fieldId: string;
+    response: string;
+  }) {
+    // Check if response already exists for this field and enrollment
+    const existingResponse = await db.query.studentFormResponses.findFirst({
+      where: and(
+        eq(studentFormResponses.enrollmentId, data.enrollmentId),
+        eq(studentFormResponses.fieldId, data.fieldId)
+      )
+    });
 
-    if (existingSettings.length === 0) {
-      // Create new settings if none exist
-      const [newSettings] = await db.insert(appSettings).values({
-        ...input,
-      }).returning();
-      return newSettings;
+    if (existingResponse) {
+      // Update existing response
+      const [updatedResponse] = await db
+        .update(studentFormResponses)
+        .set({
+          response: data.response,
+          submittedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(studentFormResponses.id, existingResponse.id))
+        .returning();
+      
+      if (!updatedResponse) {
+        throw new Error('Failed to update student form response');
+      }
+      return updatedResponse;
+    } else {
+      // Insert new response
+      const [newResponse] = await db
+        .insert(studentFormResponses)
+        .values({
+          enrollmentId: data.enrollmentId,
+          formId: data.formId,
+          fieldId: data.fieldId,
+          response: data.response,
+          submittedAt: new Date(),
+        })
+        .returning();
+      
+      if (!newResponse) {
+        throw new Error('Failed to insert student form response');
+      }
+      return newResponse;
     }
-
-    // Update existing settings
-    const [updatedSettings] = await db.update(appSettings)
-      .set({
-        ...input,
-        updatedAt: sql`now()`,
-      })
-      .where(eq(appSettings.id, existingSettings[0].id))
-      .returning();
-
-    return updatedSettings;
   }
 
   // Course Information Forms operations
