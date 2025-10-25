@@ -4,6 +4,14 @@ Practical Defense Training is a professional firearms training management platfo
 
 # Recent Changes
 
+## October 25, 2025 - Student Portal Enhancements
+- Added Emergency Contact fields to user profiles (emergencyContactName and emergencyContactPhone)
+- Implemented Emergency Contact section in edit profile dialog between License Information and Contact Preferences
+- Updated backend validation schema to accept and persist emergency contact information
+- Made "Make Payment" button functional on course enrollment tiles - redirects to checkout page
+- Fixed form submission to properly update user profile with non-autopopulated fields from course forms
+- Added formSubmissionData and formSubmittedAt fields to enrollments table for tracking form completion
+
 ## October 24, 2025 - Student Management Enhancements
 - Fixed reschedule functionality: Updated date comparison to use start-of-day instead of current datetime, allowing same-day future classes to appear as reschedule options
 - Fixed hold list export bug: Modified getRosterExportData to fetch all enrollments (not just confirmed) and properly categorize held students in roster export
