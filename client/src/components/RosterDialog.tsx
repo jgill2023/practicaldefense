@@ -435,18 +435,26 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
                               const isComplete = waiverStatus === 'signed';
                               const isIncomplete = waiverStatus === 'pending';
 
+                              if (isComplete) {
+                                // Show green checkmark for signed waivers - not clickable
+                                return (
+                                  <div className="inline-flex items-center justify-center h-8 w-8" data-testid={`waiver-status-${student.studentId}`}>
+                                    <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                );
+                              }
+
                               return (
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className="h-8 w-8 p-0"
-                                  onClick={() => !isComplete && handleFormReminderClick(student, 'waiver')}
-                                  disabled={isComplete}
+                                  onClick={() => handleFormReminderClick(student, 'waiver')}
                                   data-testid={`waiver-status-${student.studentId}`}
                                 >
-                                  {isComplete ? (
-                                    <FileSignature className="h-5 w-5 text-green-600" />
-                                  ) : isIncomplete ? (
+                                  {isIncomplete ? (
                                     <FileSignature className="h-5 w-5 text-gray-400" />
                                   ) : (
                                     <FileSignature className="h-5 w-5 text-red-500" />
@@ -463,18 +471,26 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
                               const isComplete = formStatus === 'completed';
                               const isIncomplete = formStatus === 'incomplete';
 
+                              if (isComplete) {
+                                // Show green checkmark for completed forms - not clickable
+                                return (
+                                  <div className="inline-flex items-center justify-center h-8 w-8" data-testid={`form-status-${student.studentId}`}>
+                                    <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                  </div>
+                                );
+                              }
+
                               return (
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className="h-8 w-8 p-0"
-                                  onClick={() => !isComplete && handleFormReminderClick(student, 'form')}
-                                  disabled={isComplete}
+                                  onClick={() => handleFormReminderClick(student, 'form')}
                                   data-testid={`form-status-${student.studentId}`}
                                 >
-                                  {isComplete ? (
-                                    <FileText className="h-5 w-5 text-green-600" />
-                                  ) : isIncomplete ? (
+                                  {isIncomplete ? (
                                     <FileText className="h-5 w-5 text-gray-400" />
                                   ) : (
                                     <FileText className="h-5 w-5 text-red-500" />
