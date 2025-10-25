@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -72,8 +72,8 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     retry: false,
   });
 
-  // Map user profile fields to form field labels
-  const fieldMapping: Record<string, any> = {
+  // Map user profile fields to form field labels - useMemo to prevent re-creation
+  const fieldMapping: Record<string, any> = React.useMemo(() => ({
     'first name': typedUser?.firstName,
     'last name': typedUser?.lastName,
     'email': typedUser?.email,
@@ -88,7 +88,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     'state': typedUser?.state,
     'zip': typedUser?.zipCode,
     'zip code': typedUser?.zipCode,
-  };
+  }), [typedUser]);
 
   // Autopopulate fields on mount
   useEffect(() => {
@@ -111,7 +111,8 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
       setFormData(autoPopulatedData);
       setInitiallyAutopopulatedFields(autopopulatedFieldIds);
     }
-  }, [courseForms, typedUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseForms?.length, typedUser?.id]);
 
   if (isLoading) {
     return (
