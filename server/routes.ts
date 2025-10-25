@@ -1393,34 +1393,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ? (studentWaiverInstances.some(w => w.status === 'signed') ? 'signed' : 'pending')
           : 'not_started';
 
-        // Check form completion status
-        const formResponses = await db.query.studentFormResponses.findMany({
-          where: eq(studentFormResponses.enrollmentId, student.enrollmentId),
+        // Check form completion status - use formSubmittedAt from enrollment
+        const enrollment = await db.query.enrollments.findFirst({
+          where: eq(enrollments.id, student.enrollmentId),
         });
 
-        // Get required fields count for this course
+        // Get required forms count for this course
         const courseForms = await db.query.courseInformationForms.findMany({
           where: and(
             eq(courseInformationForms.courseId, student.courseId),
             eq(courseInformationForms.isActive, true)
           ),
-          with: {
-            fields: true
-          }
         });
 
-        const totalRequiredFields = courseForms.reduce((sum, form) => 
-          sum + form.fields.filter(f => f.isRequired).length, 0
-        );
-        const completedFields = formResponses.length;
+        const totalRequiredForms = courseForms.filter(f => f.isRequired).length;
 
-        const formStatus = totalRequiredFields === 0 
+        // If formSubmittedAt is set and there are required forms, it's completed
+        // If no required forms, it's not_applicable
+        // Otherwise check if formSubmissionData exists
+        const formStatus = totalRequiredForms === 0 
           ? 'not_applicable'
-          : completedFields >= totalRequiredFields 
+          : enrollment?.formSubmittedAt || enrollment?.formSubmissionData
             ? 'completed' 
-            : completedFields > 0 
-              ? 'incomplete' 
-              : 'not_started';
+            : 'not_started';
 
         return {
           ...student,
