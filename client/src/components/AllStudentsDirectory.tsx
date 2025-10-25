@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Users, ArrowUpDown, ArrowUp, ArrowDown, Mail, Phone, Calendar, X } from "lucide-react";
+import { Search, Users, ArrowUpDown, ArrowUp, ArrowDown, Mail, Phone, Calendar, X, Shuffle } from "lucide-react";
 import { format } from "date-fns";
+import { RescheduleModal } from "@/components/RescheduleModal";
+import { CrossEnrollmentModal } from "@/components/CrossEnrollmentModal";
 
 interface Student {
   id: string;
@@ -44,6 +46,7 @@ interface FlattenedStudent {
   enrollmentCount: number;
   latestCourse?: string;
   latestScheduleDate?: string;
+  latestEnrollmentId?: string;
 }
 
 type SortField = 'name' | 'email' | 'status' | 'enrollmentCount' | 'latestCourse' | 'licenseExpiration';
@@ -59,6 +62,21 @@ export function AllStudentsDirectory({ isOpen, onClose }: AllStudentsDirectoryPr
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  
+  // Modal states for reschedule and cross-enrollment
+  const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
+  const [crossEnrollmentModalOpen, setCrossEnrollmentModalOpen] = useState(false);
+  const [selectedStudentForReschedule, setSelectedStudentForReschedule] = useState<{
+    studentId: string;
+    studentName: string;
+    enrollmentId: string;
+    currentCourse: string;
+    currentScheduleDate: string;
+  } | null>(null);
+  const [selectedStudentForCrossEnrollment, setSelectedStudentForCrossEnrollment] = useState<{
+    studentId: string;
+    studentName: string;
+  } | null>(null);
 
   // Query for students data
   const { data: studentsData, isLoading, isError } = useQuery<StudentsData>({
@@ -87,6 +105,7 @@ export function AllStudentsDirectory({ isOpen, onClose }: AllStudentsDirectoryPr
         enrollmentCount: student.enrollments.length,
         latestCourse: latestEnrollment?.courseTitle,
         latestScheduleDate: latestEnrollment?.scheduleDate,
+        latestEnrollmentId: latestEnrollment?.id,
       };
     };
 
@@ -381,6 +400,7 @@ export function AllStudentsDirectory({ isOpen, onClose }: AllStudentsDirectoryPr
                             {getSortIcon('licenseExpiration')}
                           </Button>
                         </TableHead>
+                        <TableHead className="text-center">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -435,6 +455,49 @@ export function AllStudentsDirectory({ isOpen, onClose }: AllStudentsDirectoryPr
                           <TableCell>
                             {formatDate(student.licenseExpiration)}
                           </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center gap-2">
+                              {student.status === 'current' && student.latestEnrollmentId && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedStudentForReschedule({
+                                      studentId: student.id,
+                                      studentName: `${student.firstName} ${student.lastName}`,
+                                      enrollmentId: student.latestEnrollmentId!,
+                                      currentCourse: student.latestCourse || 'Unknown Course',
+                                      currentScheduleDate: student.latestScheduleDate || '',
+                                    });
+                                    setRescheduleModalOpen(true);
+                                  }}
+                                  title="Reschedule student"
+                                  data-testid={`button-reschedule-${student.id}`}
+                                >
+                                  <Shuffle className="h-4 w-4 mr-1" />
+                                  Reschedule
+                                </Button>
+                              )}
+                              {(student.status === 'former' || student.status === 'held') && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedStudentForCrossEnrollment({
+                                      studentId: student.id,
+                                      studentName: `${student.firstName} ${student.lastName}`,
+                                    });
+                                    setCrossEnrollmentModalOpen(true);
+                                  }}
+                                  title="Enroll in course"
+                                  data-testid={`button-enroll-${student.id}`}
+                                >
+                                  <Users className="h-4 w-4 mr-1" />
+                                  Enroll
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -443,6 +506,35 @@ export function AllStudentsDirectory({ isOpen, onClose }: AllStudentsDirectoryPr
               </div>
             )}
           </div>
+        )}
+
+        {/* Reschedule Modal */}
+        {selectedStudentForReschedule && (
+          <RescheduleModal
+            isOpen={rescheduleModalOpen}
+            onClose={() => {
+              setRescheduleModalOpen(false);
+              setSelectedStudentForReschedule(null);
+            }}
+            studentId={selectedStudentForReschedule.studentId}
+            studentName={selectedStudentForReschedule.studentName}
+            enrollmentId={selectedStudentForReschedule.enrollmentId}
+            currentCourse={selectedStudentForReschedule.currentCourse}
+            currentScheduleDate={selectedStudentForReschedule.currentScheduleDate}
+          />
+        )}
+
+        {/* Cross-Enrollment Modal */}
+        {selectedStudentForCrossEnrollment && (
+          <CrossEnrollmentModal
+            isOpen={crossEnrollmentModalOpen}
+            onClose={() => {
+              setCrossEnrollmentModalOpen(false);
+              setSelectedStudentForCrossEnrollment(null);
+            }}
+            studentId={selectedStudentForCrossEnrollment.studentId}
+            studentName={selectedStudentForCrossEnrollment.studentName}
+          />
         )}
       </DialogContent>
     </Dialog>
