@@ -59,7 +59,10 @@ type EditProfileForm = z.infer<typeof editProfileSchema>;
 // Form completion interface component
 function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDetails }) {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const typedUser = user as User;
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [editableFields, setEditableFields] = useState<Record<string, boolean>>({});
   
   // Fetch course information forms for this course
   const { data: courseForms, isLoading } = useQuery({
@@ -67,6 +70,44 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     enabled: !!enrollment.course.id,
     retry: false,
   });
+
+  // Map user profile fields to form field labels
+  const fieldMapping: Record<string, any> = {
+    'first name': typedUser?.firstName,
+    'last name': typedUser?.lastName,
+    'email': typedUser?.email,
+    'email address': typedUser?.email,
+    'phone': typedUser?.phone,
+    'phone number': typedUser?.phone,
+    'date of birth': typedUser?.dateOfBirth ? new Date(typedUser.dateOfBirth).toISOString().split('T')[0] : '',
+    'address': typedUser?.streetAddress,
+    'street address': typedUser?.streetAddress,
+    'current physical address': typedUser?.streetAddress,
+    'city': typedUser?.city,
+    'state': typedUser?.state,
+    'zip': typedUser?.zipCode,
+    'zip code': typedUser?.zipCode,
+  };
+
+  // Autopopulate fields on mount
+  useEffect(() => {
+    if (courseForms && courseForms.length > 0 && typedUser) {
+      const autoPopulatedData: Record<string, any> = {};
+      
+      courseForms.forEach((form: any) => {
+        form.fields?.forEach((field: any) => {
+          const normalizedLabel = field.label.toLowerCase().trim();
+          const mappedValue = fieldMapping[normalizedLabel];
+          
+          if (mappedValue !== undefined && mappedValue !== null && mappedValue !== '') {
+            autoPopulatedData[field.id] = mappedValue;
+          }
+        });
+      });
+      
+      setFormData(autoPopulatedData);
+    }
+  }, [courseForms, typedUser]);
 
   if (isLoading) {
     return (
@@ -103,23 +144,52 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     }));
   };
 
+  const toggleFieldEdit = (fieldId: string) => {
+    setEditableFields(prev => ({
+      ...prev,
+      [fieldId]: !prev[fieldId]
+    }));
+  };
+
+  const isFieldAutopopulated = (fieldId: string) => {
+    return formData[fieldId] !== undefined && formData[fieldId] !== '' && !editableFields[fieldId];
+  };
+
   const renderField = (field: any) => {
     const value = formData[field.id] || '';
+    const isAutopopulated = isFieldAutopopulated(field.id);
+    const isEditable = editableFields[field.id] || !isAutopopulated;
     
     switch (field.fieldType) {
       case 'text':
         return (
           <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>
-              {field.label}
-              {field.isRequired && <span className="text-destructive ml-1">*</span>}
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor={field.id}>
+                {field.label}
+                {field.isRequired && <span className="text-destructive ml-1">*</span>}
+              </Label>
+              {isAutopopulated && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleFieldEdit(field.id)}
+                  className="h-6 px-2"
+                >
+                  <Edit className="h-3 w-3 mr-1" />
+                  {isEditable ? 'Lock' : 'Edit'}
+                </Button>
+              )}
+            </div>
             <Input
               id={field.id}
               placeholder={field.placeholder || ''}
               value={value}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               required={field.isRequired}
+              disabled={!isEditable}
+              className={!isEditable ? 'bg-muted cursor-not-allowed' : ''}
             />
           </div>
         );
@@ -127,10 +197,24 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
       case 'email':
         return (
           <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>
-              {field.label}
-              {field.isRequired && <span className="text-destructive ml-1">*</span>}
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor={field.id}>
+                {field.label}
+                {field.isRequired && <span className="text-destructive ml-1">*</span>}
+              </Label>
+              {isAutopopulated && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleFieldEdit(field.id)}
+                  className="h-6 px-2"
+                >
+                  <Edit className="h-3 w-3 mr-1" />
+                  {isEditable ? 'Lock' : 'Edit'}
+                </Button>
+              )}
+            </div>
             <Input
               id={field.id}
               type="email"
@@ -138,6 +222,8 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
               value={value}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               required={field.isRequired}
+              disabled={!isEditable}
+              className={!isEditable ? 'bg-muted cursor-not-allowed' : ''}
             />
           </div>
         );
@@ -145,10 +231,24 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
       case 'phone':
         return (
           <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>
-              {field.label}
-              {field.isRequired && <span className="text-destructive ml-1">*</span>}
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor={field.id}>
+                {field.label}
+                {field.isRequired && <span className="text-destructive ml-1">*</span>}
+              </Label>
+              {isAutopopulated && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleFieldEdit(field.id)}
+                  className="h-6 px-2"
+                >
+                  <Edit className="h-3 w-3 mr-1" />
+                  {isEditable ? 'Lock' : 'Edit'}
+                </Button>
+              )}
+            </div>
             <Input
               id={field.id}
               type="tel"
@@ -156,6 +256,8 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
               value={value}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               required={field.isRequired}
+              disabled={!isEditable}
+              className={!isEditable ? 'bg-muted cursor-not-allowed' : ''}
             />
           </div>
         );
@@ -163,16 +265,32 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
       case 'date':
         return (
           <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>
-              {field.label}
-              {field.isRequired && <span className="text-destructive ml-1">*</span>}
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor={field.id}>
+                {field.label}
+                {field.isRequired && <span className="text-destructive ml-1">*</span>}
+              </Label>
+              {isAutopopulated && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleFieldEdit(field.id)}
+                  className="h-6 px-2"
+                >
+                  <Edit className="h-3 w-3 mr-1" />
+                  {isEditable ? 'Lock' : 'Edit'}
+                </Button>
+              )}
+            </div>
             <Input
               id={field.id}
               type="date"
               value={value}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               required={field.isRequired}
+              disabled={!isEditable}
+              className={!isEditable ? 'bg-muted cursor-not-allowed' : ''}
             />
           </div>
         );
@@ -180,10 +298,24 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
       case 'textarea':
         return (
           <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>
-              {field.label}
-              {field.isRequired && <span className="text-destructive ml-1">*</span>}
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor={field.id}>
+                {field.label}
+                {field.isRequired && <span className="text-destructive ml-1">*</span>}
+              </Label>
+              {isAutopopulated && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleFieldEdit(field.id)}
+                  className="h-6 px-2"
+                >
+                  <Edit className="h-3 w-3 mr-1" />
+                  {isEditable ? 'Lock' : 'Edit'}
+                </Button>
+              )}
+            </div>
             <Textarea
               id={field.id}
               placeholder={field.placeholder || ''}
@@ -191,6 +323,8 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               required={field.isRequired}
               rows={4}
+              disabled={!isEditable}
+              className={!isEditable ? 'bg-muted cursor-not-allowed' : ''}
             />
           </div>
         );
@@ -237,16 +371,32 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
       default:
         return (
           <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>
-              {field.label}
-              {field.isRequired && <span className="text-destructive ml-1">*</span>}
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor={field.id}>
+                {field.label}
+                {field.isRequired && <span className="text-destructive ml-1">*</span>}
+              </Label>
+              {isAutopopulated && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleFieldEdit(field.id)}
+                  className="h-6 px-2"
+                >
+                  <Edit className="h-3 w-3 mr-1" />
+                  {isEditable ? 'Lock' : 'Edit'}
+                </Button>
+              )}
+            </div>
             <Input
               id={field.id}
               placeholder={field.placeholder || ''}
               value={value}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               required={field.isRequired}
+              disabled={!isEditable}
+              className={!isEditable ? 'bg-muted cursor-not-allowed' : ''}
             />
           </div>
         );
