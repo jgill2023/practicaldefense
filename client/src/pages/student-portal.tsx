@@ -55,6 +55,123 @@ const editProfileSchema = z.object({
 
 type EditProfileForm = z.infer<typeof editProfileSchema>;
 
+// Form completion interface component
+function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDetails }) {
+  const { toast } = useToast();
+  
+  // Fetch course information forms for this course
+  const { data: courseForms, isLoading } = useQuery({
+    queryKey: ['/api/course-forms', enrollment.course.id],
+    enabled: !!enrollment.course.id,
+    retry: false,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+        <p className="text-muted-foreground">Loading forms...</p>
+      </div>
+    );
+  }
+
+  if (!courseForms || courseForms.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="p-4 bg-muted rounded-lg">
+          <h4 className="font-semibold mb-2">{enrollment.course.title}</h4>
+          <p className="text-sm text-muted-foreground">
+            {new Date(enrollment.schedule.startDate).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="text-center py-8">
+          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">
+            No forms are currently required for this course.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="p-4 bg-muted rounded-lg">
+        <h4 className="font-semibold mb-2">{enrollment.course.title}</h4>
+        <p className="text-sm text-muted-foreground">
+          {new Date(enrollment.schedule.startDate).toLocaleDateString()}
+        </p>
+      </div>
+
+      <div className="space-y-6">
+        {courseForms.map((form: any) => (
+          <Card key={form.id} className="border-2">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>{form.title}</span>
+                {form.isRequired && (
+                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                    Required
+                  </Badge>
+                )}
+              </CardTitle>
+              {form.description && (
+                <p className="text-sm text-muted-foreground">{form.description}</p>
+              )}
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {form.fields && form.fields.length > 0 ? (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      This form has {form.fields.length} field{form.fields.length !== 1 ? 's' : ''} to complete.
+                    </p>
+                    <div className="space-y-2">
+                      {form.fields.slice(0, 3).map((field: any) => (
+                        <div key={field.id} className="flex items-center text-sm">
+                          <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span>{field.label}</span>
+                          {field.isRequired && <span className="ml-1 text-destructive">*</span>}
+                        </div>
+                      ))}
+                      {form.fields.length > 3 && (
+                        <p className="text-xs text-muted-foreground ml-6">
+                          ...and {form.fields.length - 3} more field{form.fields.length - 3 !== 1 ? 's' : ''}
+                        </p>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No fields configured for this form.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="flex justify-end space-x-3 pt-4 border-t">
+        <Button variant="outline" onClick={() => {
+          toast({
+            title: "Coming Soon",
+            description: "Form submission functionality will be available soon.",
+          });
+        }}>
+          Save Draft
+        </Button>
+        <Button onClick={() => {
+          toast({
+            title: "Coming Soon",
+            description: "Form submission functionality will be available soon.",
+          });
+        }}>
+          Submit All Forms
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // Enhanced enrollment card component with payment and form status
 function EnhancedEnrollmentCard({ 
   enrollment, 
@@ -1188,20 +1305,7 @@ export default function StudentPortal() {
             </DialogDescription>
           </DialogHeader>
           {selectedEnrollmentForForms && (
-            <div className="space-y-4">
-              <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-semibold mb-2">{selectedEnrollmentForForms.course.title}</h4>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(selectedEnrollmentForForms.schedule.startDate).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="text-center py-8">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  Form completion interface coming soon. You will be able to fill out all required course information forms here.
-                </p>
-              </div>
-            </div>
+            <FormCompletionInterface enrollment={selectedEnrollmentForForms} />
           )}
         </DialogContent>
       </Dialog>
