@@ -398,7 +398,7 @@ function StudentsPage() {
                             <UserPen className="h-4 w-4" />
                           </Button>
                         )}
-                        {index === 0 && (
+                        {index === 0 && category !== 'former' && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -412,18 +412,35 @@ function StudentsPage() {
                             <Users className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedEnrollmentForReschedule({ student, enrollment });
-                            setRescheduleModalOpen(true);
-                          }}
-                          title={category === 'former' ? `Re-enroll ${student.firstName} ${student.lastName}` : `Reschedule ${student.firstName} ${student.lastName}`}
-                          data-testid={`button-reschedule-${student.id}-${enrollment.id}`}
-                        >
-                          <Shuffle className="h-4 w-4" />
-                        </Button>
+                        {category === 'current' ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedEnrollmentForReschedule({ student, enrollment });
+                              setRescheduleModalOpen(true);
+                            }}
+                            title={`Reschedule ${student.firstName} ${student.lastName}`}
+                            data-testid={`button-reschedule-${student.id}-${enrollment.id}`}
+                          >
+                            <Shuffle className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          index === 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedStudentForCrossEnrollment(student);
+                                setCrossEnrollmentModalOpen(true);
+                              }}
+                              title={`Re-enroll ${student.firstName} ${student.lastName}`}
+                              data-testid={`button-re-enroll-${student.id}`}
+                            >
+                              <Shuffle className="h-4 w-4" />
+                            </Button>
+                          )
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

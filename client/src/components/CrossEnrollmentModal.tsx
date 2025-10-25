@@ -121,30 +121,41 @@ export function CrossEnrollmentModal({ isOpen, onClose, studentId, studentName }
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="schedule-select">Select Course Schedule</Label>
-            <Select
-              value={selectedScheduleId}
-              onValueChange={setSelectedScheduleId}
-              disabled={schedulesLoading || crossEnrollMutation.isPending}
-              data-testid="select-course-schedule"
-            >
-              <SelectTrigger id="schedule-select">
-                <SelectValue placeholder={schedulesLoading ? "Loading schedules..." : "Select a course schedule"} />
-              </SelectTrigger>
-              <SelectContent>
-                {availableSchedules?.map((schedule: any) => {
-                  const isNearFull = schedule.availableSpots <= 3;
-                  return (
-                    <SelectItem 
-                      key={schedule.id} 
-                      value={schedule.id}
-                      data-testid={`option-schedule-${schedule.id}`}
-                    >
-                      {schedule.courseTitle} - {format(new Date(schedule.startDate), 'MMM d, yyyy')} at {schedule.startTime}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+            {schedulesLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
+                <span className="ml-3 text-muted-foreground">Loading available schedules...</span>
+              </div>
+            ) : !availableSchedules || availableSchedules.length === 0 ? (
+              <div className="p-4 bg-muted rounded-lg text-sm text-muted-foreground" data-testid="text-no-schedules">
+                No available course schedules found. Please create a new course schedule first.
+              </div>
+            ) : (
+              <Select
+                value={selectedScheduleId}
+                onValueChange={setSelectedScheduleId}
+                disabled={crossEnrollMutation.isPending}
+                data-testid="select-course-schedule"
+              >
+                <SelectTrigger id="schedule-select">
+                  <SelectValue placeholder="Select a course schedule" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableSchedules.map((schedule: any) => {
+                    const isNearFull = schedule.availableSpots <= 3;
+                    return (
+                      <SelectItem 
+                        key={schedule.id} 
+                        value={schedule.id}
+                        data-testid={`option-schedule-${schedule.id}`}
+                      >
+                        {schedule.courseTitle} - {format(new Date(schedule.startDate), 'MMM d, yyyy')} at {schedule.startTime} ({schedule.availableSpots} spots available)
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="space-y-2">
