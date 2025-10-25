@@ -113,6 +113,27 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     }
   }, [courseForms, typedUser]);
 
+  // Form submission mutation - must be called before any early returns
+  const submitFormMutation = useMutation({
+    mutationFn: async (data: { enrollmentId: string; formResponses: Record<string, any> }) => {
+      return await apiRequest('POST', '/api/enrollment-form-submissions', data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Forms Submitted",
+        description: "Your course information forms have been submitted successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/enrollments', enrollment.id, 'form-completion'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Submission Failed",
+        description: error.message || "Failed to submit forms. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="text-center py-8">
@@ -406,26 +427,6 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
         );
     }
   };
-
-  const submitFormMutation = useMutation({
-    mutationFn: async (data: { enrollmentId: string; formResponses: Record<string, any> }) => {
-      return await apiRequest('POST', '/api/enrollment-form-submissions', data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Forms Submitted",
-        description: "Your course information forms have been submitted successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/enrollments', enrollment.id, 'form-completion'] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Submission Failed",
-        description: error.message || "Failed to submit forms. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
 
   const handleSubmit = () => {
     // Validate required fields
