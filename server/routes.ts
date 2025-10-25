@@ -13,6 +13,7 @@ import { ObjectPermission } from "./objectAcl";
 import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, insertCourseNotificationSignupSchema, insertSmsListSchema, insertSmsListMemberSchema, insertSmsBroadcastMessageSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
 import { sendSms } from "./smsService";
 import { CourseNotificationEngine } from "./notificationEngine";
+import { NotificationEmailService } from "./emailService";
 import "./types"; // Import type declarations
 
 if (!process.env.STRIPE_SECRET_KEY) {
