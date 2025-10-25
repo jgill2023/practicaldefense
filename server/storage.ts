@@ -1746,7 +1746,7 @@ export class DatabaseStorage implements IStorage {
     courseId: string;
     scheduleId: string;
     paymentOption: 'full' | 'deposit';
-  }): Promise<Enrollment> {</old_str>
+  }): Promise<Enrollment> {
     const [draftEnrollment] = await db
       .insert(enrollments)
       .values({
