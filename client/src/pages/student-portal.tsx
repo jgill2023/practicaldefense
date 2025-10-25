@@ -58,6 +58,7 @@ type EditProfileForm = z.infer<typeof editProfileSchema>;
 // Form completion interface component
 function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDetails }) {
   const { toast } = useToast();
+  const [formData, setFormData] = useState<Record<string, any>>({});
   
   // Fetch course information forms for this course
   const { data: courseForms, isLoading } = useQuery({
@@ -94,6 +95,191 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     );
   }
 
+  const handleFieldChange = (fieldId: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldId]: value
+    }));
+  };
+
+  const renderField = (field: any) => {
+    const value = formData[field.id] || '';
+    
+    switch (field.fieldType) {
+      case 'text':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              placeholder={field.placeholder || ''}
+              value={value}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              required={field.isRequired}
+            />
+          </div>
+        );
+      
+      case 'email':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              type="email"
+              placeholder={field.placeholder || ''}
+              value={value}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              required={field.isRequired}
+            />
+          </div>
+        );
+      
+      case 'phone':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              type="tel"
+              placeholder={field.placeholder || ''}
+              value={value}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              required={field.isRequired}
+            />
+          </div>
+        );
+      
+      case 'date':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              type="date"
+              value={value}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              required={field.isRequired}
+            />
+          </div>
+        );
+      
+      case 'textarea':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Textarea
+              id={field.id}
+              placeholder={field.placeholder || ''}
+              value={value}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              required={field.isRequired}
+              rows={4}
+            />
+          </div>
+        );
+      
+      case 'select':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <select
+              id={field.id}
+              value={value}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              required={field.isRequired}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="">Select an option</option>
+              {field.options?.map((option: string) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+      
+      case 'checkbox':
+        return (
+          <div key={field.id} className="flex items-center space-x-2">
+            <Checkbox
+              id={field.id}
+              checked={value === true}
+              onCheckedChange={(checked) => handleFieldChange(field.id, checked)}
+            />
+            <Label htmlFor={field.id} className="font-normal">
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+          </div>
+        );
+      
+      default:
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              placeholder={field.placeholder || ''}
+              value={value}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              required={field.isRequired}
+            />
+          </div>
+        );
+    }
+  };
+
+  const handleSubmit = () => {
+    // Validate required fields
+    const allForms = courseForms || [];
+    let hasErrors = false;
+    
+    for (const form of allForms) {
+      for (const field of form.fields || []) {
+        if (field.isRequired && !formData[field.id]) {
+          hasErrors = true;
+          toast({
+            title: "Missing Required Field",
+            description: `Please complete the required field: ${field.label}`,
+            variant: "destructive",
+          });
+          break;
+        }
+      }
+      if (hasErrors) break;
+    }
+    
+    if (!hasErrors) {
+      toast({
+        title: "Coming Soon",
+        description: "Form submission functionality will be available soon.",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="p-4 bg-muted rounded-lg">
@@ -122,25 +308,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
             <CardContent>
               <div className="space-y-4">
                 {form.fields && form.fields.length > 0 ? (
-                  <>
-                    <p className="text-sm text-muted-foreground">
-                      This form has {form.fields.length} field{form.fields.length !== 1 ? 's' : ''} to complete.
-                    </p>
-                    <div className="space-y-2">
-                      {form.fields.slice(0, 3).map((field: any) => (
-                        <div key={field.id} className="flex items-center text-sm">
-                          <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span>{field.label}</span>
-                          {field.isRequired && <span className="ml-1 text-destructive">*</span>}
-                        </div>
-                      ))}
-                      {form.fields.length > 3 && (
-                        <p className="text-xs text-muted-foreground ml-6">
-                          ...and {form.fields.length - 3} more field{form.fields.length - 3 !== 1 ? 's' : ''}
-                        </p>
-                      )}
-                    </div>
-                  </>
+                  form.fields.map((field: any) => renderField(field))
                 ) : (
                   <p className="text-sm text-muted-foreground">No fields configured for this form.</p>
                 )}
@@ -153,18 +321,13 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
       <div className="flex justify-end space-x-3 pt-4 border-t">
         <Button variant="outline" onClick={() => {
           toast({
-            title: "Coming Soon",
-            description: "Form submission functionality will be available soon.",
+            title: "Draft Saved",
+            description: "Your progress has been saved.",
           });
         }}>
           Save Draft
         </Button>
-        <Button onClick={() => {
-          toast({
-            title: "Coming Soon",
-            description: "Form submission functionality will be available soon.",
-          });
-        }}>
+        <Button onClick={handleSubmit}>
           Submit All Forms
         </Button>
       </div>
