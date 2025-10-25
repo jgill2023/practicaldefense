@@ -23,6 +23,7 @@ import { RescheduleModal } from "@/components/RescheduleModal";
 import { CrossEnrollmentModal } from "@/components/CrossEnrollmentModal";
 import { PaymentDetailsModal } from "@/components/PaymentDetailsModal";
 import { AllStudentsDirectory } from "@/components/AllStudentsDirectory";
+import { RosterDialog } from "@/components/RosterDialog";
 import { format } from "date-fns";
 
 // Phone number formatting utility
@@ -114,6 +115,8 @@ function StudentsPage() {
   const [paymentDetailsModalOpen, setPaymentDetailsModalOpen] = useState(false);
   const [selectedEnrollmentForPayment, setSelectedEnrollmentForPayment] = useState<string | null>(null);
   const [allStudentsDirectoryOpen, setAllStudentsDirectoryOpen] = useState(false);
+  const [rosterDialogOpen, setRosterDialogOpen] = useState(false);
+  const [selectedScheduleIdForRoster, setSelectedScheduleIdForRoster] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -347,9 +350,16 @@ function StudentsPage() {
                     )}
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="font-medium text-sm">
+                        <button
+                          onClick={() => {
+                            setSelectedScheduleIdForRoster(enrollment.id);
+                            setRosterDialogOpen(true);
+                          }}
+                          className="font-medium text-sm text-left hover:text-primary hover:underline transition-colors cursor-pointer"
+                          data-testid={`button-course-roster-${enrollment.id}`}
+                        >
                           {enrollment.courseTitle}
-                        </div>
+                        </button>
                         <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                           <Calendar className="h-3 w-3" />
                           <span>
@@ -717,6 +727,16 @@ function StudentsPage() {
       <AllStudentsDirectory
         isOpen={allStudentsDirectoryOpen}
         onClose={() => setAllStudentsDirectoryOpen(false)}
+      />
+
+      {/* Roster Dialog */}
+      <RosterDialog
+        scheduleId={selectedScheduleIdForRoster}
+        isOpen={rosterDialogOpen}
+        onClose={() => {
+          setRosterDialogOpen(false);
+          setSelectedScheduleIdForRoster(null);
+        }}
       />
       </div>
     </Layout>
