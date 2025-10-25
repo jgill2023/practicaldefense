@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import Stripe from "stripe";
 import { z } from "zod";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, requireAuth } from "./replitAuth"; // Import requireAuth
+import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
 import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms } from "@shared/schema";
 import { eq, and, inArray } from "drizzle-orm";
@@ -940,7 +940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Form completion status tracking
-  app.get("/api/enrollments/:enrollmentId/form-completion", requireAuth, async (req: any, res) => {
+  app.get("/api/enrollments/:enrollmentId/form-completion", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const enrollmentId = req.params.enrollmentId;
@@ -982,7 +982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Submit enrollment form responses
-  app.post("/api/enrollment-form-submissions", requireAuth, async (req, res) => {
+  app.post("/api/enrollment-form-submissions", isAuthenticated, async (req, res) => {
     try {
       const { enrollmentId, formResponses } = req.body;
       const userId = req.user?.id;
