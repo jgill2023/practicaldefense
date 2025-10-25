@@ -3940,7 +3940,7 @@ Practical Defense Training`;
   // Cross-enrollment endpoint for enrolling students into courses
   app.post('/api/instructor/enrollments', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
       if (!user || user.role !== 'instructor') {
@@ -3981,8 +3981,9 @@ Practical Defense Training`;
         courseId: schedule.courseId,
         scheduleId,
         status: 'confirmed',
-        paymentStatus: 'pending',
+        paymentStatus: 'paid',
         paymentOption: 'full',
+        confirmationDate: new Date(),
         notes: notes || `Enrolled by instructor: ${user.firstName} ${user.lastName}`,
       });
 
@@ -4490,7 +4491,7 @@ Practical Defense Training`;
         courseId: null,
         purpose: 'general',
         deliveryStatus: 'delivered',
-        externalMessageId: MessageSid, // Store Twilio's Message SID
+        externalMessageSid: MessageSid, // Store Twilio's Message SID
         sentAt: new Date(), // This is when Twilio *received* it, not sent time. For inbound, this is effectively received time.
         deliveredAt: new Date(), // Same as sentAt for inbound
         readAt: null,
