@@ -55,12 +55,13 @@ interface RosterData {
 }
 
 interface RosterDialogProps {
-  scheduleId: string | null;
+  scheduleId?: string | null;
+  courseId?: string | null;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps) {
+export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDialogProps) {
   // Modal states
   const [smsModal, setSmsModal] = useState<{ isOpen: boolean; studentName: string; phoneNumber: string }>({ isOpen: false, studentName: "", phoneNumber: "" });
   const [emailModal, setEmailModal] = useState<{ isOpen: boolean; studentName: string; emailAddress: string }>({ isOpen: false, studentName: "", emailAddress: "" });
@@ -77,12 +78,13 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
 
 
   const { data: rosterData, isLoading, error } = useQuery<RosterData>({
-    queryKey: ["/api/instructor/roster", scheduleId],
+    queryKey: ["/api/instructor/roster", scheduleId, courseId],
     queryFn: async () => {
-      if (!scheduleId) return null;
-      return await apiRequest("GET", `/api/instructor/roster?scheduleId=${scheduleId}`);
+      if (!scheduleId && !courseId) return null;
+      const params = scheduleId ? `scheduleId=${scheduleId}` : `courseId=${courseId}`;
+      return await apiRequest("GET", `/api/instructor/roster?${params}`);
     },
-    enabled: !!scheduleId && isOpen,
+    enabled: (!!scheduleId || !!courseId) && isOpen,
   });
 
   const getPaymentStatusBadge = (status: string, remainingBalance?: number, onClick?: () => void) => {
@@ -215,7 +217,7 @@ export function RosterDialog({ scheduleId, isOpen, onClose }: RosterDialogProps)
     }).format(amount);
   };
 
-  if (!scheduleId || !isOpen) return null;
+  if ((!scheduleId && !courseId) || !isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

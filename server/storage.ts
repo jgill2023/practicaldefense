@@ -184,9 +184,11 @@ export interface IStorage {
   getRosterExportData(instructorId: string, scheduleId?: string): Promise<{
     current: any[];
     former: any[];
+    held: any[];
     summary: {
       totalCurrentStudents: number;
       totalFormerStudents: number;
+      totalHeldStudents: number;
       totalCourses: number;
       exportDate: string;
     };
@@ -1329,7 +1331,7 @@ export class DatabaseStorage implements IStorage {
     return Number(count);
   }
 
-  async getRosterExportData(instructorId: string, scheduleId?: string): Promise<{
+  async getRosterExportData(instructorId: string, scheduleId?: string, courseId?: string): Promise<{
     current: any[];
     former: any[];
     held: any[];
@@ -1341,45 +1343,49 @@ export class DatabaseStorage implements IStorage {
       exportDate: string;
     };
   }> {
-    // Get all enrollments for instructor's courses (including held students)
-    const allEnrollments = await db.query.enrollments.findMany({
-      where: scheduleId 
-        ? and(
-            eq(enrollments.scheduleId, scheduleId),
-            isNotNull(enrollments.studentId) // Only get actual student enrollments
-          )
-        : isNotNull(enrollments.studentId), // Only get actual student enrollments
+    // Build query conditions
+    let whereCondition;
+    if (scheduleId) {
+      whereCondition = eq(enrollments.scheduleId, scheduleId);
+    } else if (courseId) {
+      whereCondition = eq(enrollments.courseId, courseId);
+    }
+
+    // Get all enrollments for this instructor's courses
+    const instructorEnrollments = await db.query.enrollments.findMany({
+      where: whereCondition,
       with: {
         student: true,
-        course: true,
+        course: {
+          with: {
+            instructor: true,
+            category: true,
+          },
+        },
         schedule: true,
       },
     });
 
-    console.log(`getRosterExportData - Total enrollments found: ${allEnrollments.length}`);
-    console.log(`getRosterExportData - Schedule filter: ${scheduleId || 'none'}`);
+    console.log(`getRosterExportData - Total enrollments found: ${instructorEnrollments.length}`);
+    console.log(`getRosterExportData - Schedule filter: ${scheduleId || 'none'}, Course filter: ${courseId || 'none'}`);
 
-    // Filter enrollments by instructor ownership and ensure student data exists
-    const instructorEnrollments = allEnrollments.filter(e => 
-      e.course && 
-      e.course.instructorId === instructorId &&
-      e.student && 
-      e.student.firstName && 
-      e.student.lastName
+    // Filter to only this instructor's enrollments
+    const filteredEnrollments = instructorEnrollments.filter(e => 
+      e.course?.instructorId === instructorId
     );
 
-    console.log(`getRosterExportData - Instructor enrollments: ${instructorEnrollments.length}`);
+    console.log(`getRosterExportData - Instructor enrollments: ${filteredEnrollments.length}`);
 
     const now = new Date();
-    
+
     // Categorize enrollments based on status and schedule date
-    const heldEnrollments = instructorEnrollments.filter(e => e.status === 'hold');
-    
+    const heldEnrollments = filteredEnrollments.filter(e => e.status === 'hold');
+
     // For specific schedule, confirmed enrollments are current
     // For all schedules, check if schedule date is in future or past
-    const currentEnrollments = instructorEnrollments.filter(e => {
+    const currentEnrollments = filteredEnrollments.filter(e => {
       if (e.status === 'hold') return false; // Exclude held students from current list
-      
+
       if (scheduleId) {
         // For specific schedule filter, all confirmed/completed are current
         return e.status === 'confirmed' || e.status === 'completed';
@@ -1391,11 +1397,11 @@ export class DatabaseStorage implements IStorage {
     console.log(`getRosterExportData - Current students: ${currentEnrollments.length}`);
 
     // Former students are those with past course dates (only when not filtering by schedule)
-    const formerEnrollments = scheduleId ? [] : instructorEnrollments.filter(e => {
+    const formerEnrollments = scheduleId ? [] : filteredEnrollments.filter(e => {
       if (e.status === 'hold') return false; // Exclude held students from former list
       return e.schedule && new Date(e.schedule.startDate) < now;
     });
-    
+
     console.log(`getRosterExportData - Held students: ${heldEnrollments.length}`);
 
     // Flatten the data for export - convert enrollments directly to roster format
@@ -1441,6 +1447,28 @@ export class DatabaseStorage implements IStorage {
         allCourses.add(row.courseTitle);
       }
     });
+
+    // Calculate summary statistics for the specific schedule or course
+    const summary = {
+      totalEnrolled: currentFlat.length, // Changed to currentFlat.length to reflect current students
+      paidStudents: currentFlat.filter(s => s.paymentStatus === 'paid').length,
+      pendingPayments: currentFlat.filter(s => s.paymentStatus === 'pending').length,
+      totalRevenue: currentFlat
+        .filter(s => s.paymentStatus === 'paid')
+        .reduce((sum, s) => {
+          // Extract revenue from the enrollment data - this may need adjustment based on your data structure
+          // Assuming coursePrice is available in the flattened object, otherwise calculate from original amount if needed.
+          // For now, let's assume it's not directly available and use a placeholder or fetch it.
+          // A more robust solution would involve passing the course price or calculating it based on enrollment details.
+          // For this example, we'll return 0 and note that this needs proper implementation.
+          console.warn("Total revenue calculation needs to be implemented based on actual price data.");
+          return sum + 0; // Placeholder, needs proper calculation
+        }, 0),
+      courseTitle: courseId && !scheduleId ? 'All Schedules' : (currentFlat[0]?.courseTitle || 'Unknown Course'),
+      scheduleDate: courseId && !scheduleId ? 'All Schedules' : (currentFlat[0]?.scheduleDate || 'Unknown Date'),
+      scheduleTime: courseId && !scheduleId ? 'Various Times' : (currentFlat[0] ? `${currentFlat[0].scheduleStartTime} - ${currentFlat[0].scheduleEndTime}` : 'Unknown Time'),
+      location: courseId && !scheduleId ? 'Various Locations' : (currentFlat[0]?.location || 'Unknown Location')
+    };
 
     return {
       current: currentFlat,

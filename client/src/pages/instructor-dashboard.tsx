@@ -40,8 +40,9 @@ export default function InstructorDashboard() {
   const [showEventForm, setShowEventForm] = useState(false);
 
   // Roster dialog states
-  const [showRosterDialog, setShowRosterDialog] = useState(false);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [showRosterDialog, setShowRosterDialog] = useState(false);
 
   // Permanent deletion confirmation states
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -587,6 +588,7 @@ export default function InstructorDashboard() {
                   <button
                     onClick={() => {
                       setSelectedScheduleId(schedule.id);
+                      setSelectedCourseId(schedule.course.id); // Set courseId here
                       setShowRosterDialog(true);
                     }}
                     className="text-left hover:bg-gray-50 rounded p-1 -m-1 transition-colors w-full"
@@ -659,6 +661,7 @@ export default function InstructorDashboard() {
                       className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
                       onClick={() => {
                         setSelectedScheduleId(schedule.id);
+                        setSelectedCourseId(schedule.course.id); // Set courseId here
                         setShowRosterDialog(true);
                       }}
                       data-testid={`button-roster-schedule-${schedule.id}`}
@@ -830,6 +833,7 @@ export default function InstructorDashboard() {
                           const firstSchedule = course.schedules?.[0];
                           if (firstSchedule) {
                             setSelectedScheduleId(firstSchedule.id);
+                            setSelectedCourseId(course.id); // Set courseId here
                             setShowRosterDialog(true);
                           } else {
                             console.log('No schedules available for course', course.id);
@@ -1154,10 +1158,12 @@ export default function InstructorDashboard() {
       {/* Roster Dialog */}
       <RosterDialog
         scheduleId={selectedScheduleId}
+        courseId={selectedCourseId}
         isOpen={showRosterDialog}
         onClose={() => {
           setShowRosterDialog(false);
           setSelectedScheduleId(null);
+          setSelectedCourseId(null);
         }}
       />
 

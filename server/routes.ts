@@ -1367,13 +1367,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const scheduleId = req.query.scheduleId as string | undefined;
+      const courseId = req.query.courseId as string | undefined;
 
-      if (!scheduleId) {
-        return res.status(400).json({ message: "Schedule ID is required" });
+      if (!scheduleId && !courseId) {
+        return res.status(400).json({ message: "Schedule ID or Course ID is required" });
       }
 
-      console.log(`Fetching roster for schedule: ${scheduleId}`);
-      const data = await storage.getRosterExportData(userId, scheduleId);
+      console.log(`Fetching roster for ${scheduleId ? 'schedule: ' + scheduleId : 'course: ' + courseId}`);
+      const data = await storage.getRosterExportData(userId, scheduleId, courseId);
 
       // Filter out any remaining null/incomplete enrollments from current list
       data.current = data.current.filter(student => 
