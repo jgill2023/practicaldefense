@@ -93,6 +93,13 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
         'state': typedUser.state,
         'zip': typedUser.zipCode,
         'zip code': typedUser.zipCode,
+        'emergency contact first and last name': typedUser.emergencyContactName,
+        'emergency contact name': typedUser.emergencyContactName,
+        'emergency contact phone number': typedUser.emergencyContactPhone,
+        'emergency contact phone': typedUser.emergencyContactPhone,
+        'do you consent to receiving text message notifications?': 'Yes',
+        'do you consent to receive text messages': 'Yes',
+        'text message consent': 'Yes',
       };
 
       const autoPopulatedData: Record<string, any> = {};
