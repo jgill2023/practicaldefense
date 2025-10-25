@@ -63,6 +63,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
   const typedUser = user as User;
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [editableFields, setEditableFields] = useState<Record<string, boolean>>({});
+  const [initiallyAutopopulatedFields, setInitiallyAutopopulatedFields] = useState<Set<string>>(new Set());
   
   // Fetch course information forms for this course
   const { data: courseForms, isLoading } = useQuery({
@@ -93,6 +94,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
   useEffect(() => {
     if (courseForms && courseForms.length > 0 && typedUser) {
       const autoPopulatedData: Record<string, any> = {};
+      const autopopulatedFieldIds = new Set<string>();
       
       courseForms.forEach((form: any) => {
         form.fields?.forEach((field: any) => {
@@ -101,11 +103,13 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
           
           if (mappedValue !== undefined && mappedValue !== null && mappedValue !== '') {
             autoPopulatedData[field.id] = mappedValue;
+            autopopulatedFieldIds.add(field.id);
           }
         });
       });
       
       setFormData(autoPopulatedData);
+      setInitiallyAutopopulatedFields(autopopulatedFieldIds);
     }
   }, [courseForms, typedUser]);
 
@@ -152,7 +156,7 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
   };
 
   const isFieldAutopopulated = (fieldId: string) => {
-    return formData[fieldId] !== undefined && formData[fieldId] !== '' && !editableFields[fieldId];
+    return initiallyAutopopulatedFields.has(fieldId) && !editableFields[fieldId];
   };
 
   const renderField = (field: any) => {
@@ -403,6 +407,26 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     }
   };
 
+  const submitFormMutation = useMutation({
+    mutationFn: async (data: { enrollmentId: string; formResponses: Record<string, any> }) => {
+      return await apiRequest('POST', '/api/enrollment-form-submissions', data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Forms Submitted",
+        description: "Your course information forms have been submitted successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/enrollments', enrollment.id, 'form-completion'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Submission Failed",
+        description: error.message || "Failed to submit forms. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = () => {
     // Validate required fields
     const allForms = courseForms || [];
@@ -424,9 +448,9 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     }
     
     if (!hasErrors) {
-      toast({
-        title: "Coming Soon",
-        description: "Form submission functionality will be available soon.",
+      submitFormMutation.mutate({
+        enrollmentId: enrollment.id,
+        formResponses: formData
       });
     }
   };
@@ -478,8 +502,8 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
         }}>
           Save Draft
         </Button>
-        <Button onClick={handleSubmit}>
-          Submit All Forms
+        <Button onClick={handleSubmit} disabled={submitFormMutation.isPending}>
+          {submitFormMutation.isPending ? 'Submitting...' : 'Submit All Forms'}
         </Button>
       </div>
     </div>

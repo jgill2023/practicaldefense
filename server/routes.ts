@@ -940,20 +940,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Form completion status tracking
-  app.get('/api/enrollments/:enrollmentId/form-completion', isAuthenticated, async (req: any, res) => {
+  app.get("/api/enrollments/:enrollmentId/form-completion", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const enrollmentId = req.params.enrollmentId;
 
       // Verify enrollment ownership
-      const enrollment = await storage.getEnrollment(enrollmentId);
+      const enrollment = await db.query.enrollments.findFirst({
+        where: and(
+          eq(enrollments.id, enrollmentId),
+          eq(enrollments.userId, userId!)
+        ),
+        with: {
+          course: {
+            with: {
+              instructor: true
+            }
+          }
+        }
+      });
+
       if (!enrollment) {
         return res.status(404).json({ message: "Enrollment not found" });
       }
 
-      // Check ownership: either student owns it or instructor has access
+      // Check ownership: student owns enrollment or instructor has access
       const user = await storage.getUser(userId);
-      const hasAccess = enrollment.studentId === userId || 
+      const hasAccess = enrollment.userId === userId || 
                        (user?.role === 'instructor' && enrollment.course?.instructorId === userId);
 
       if (!hasAccess) {
@@ -965,6 +978,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching form completion status:", error);
       res.status(500).json({ message: "Failed to fetch form completion status" });
+    }
+  });
+
+  // Submit enrollment form responses
+  app.post("/api/enrollment-form-submissions", requireAuth, async (req, res) => {
+    try {
+      const { enrollmentId, formResponses } = req.body;
+      const userId = req.user?.id;
+
+      if (!enrollmentId || !formResponses) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Verify the enrollment belongs to this user
+      const enrollment = await db.query.enrollments.findFirst({
+        where: and(
+          eq(enrollments.id, enrollmentId),
+          eq(enrollments.userId, userId!)
+        ),
+      });
+
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+
+      // Store form responses (you may want to create a separate table for this)
+      // For now, we'll update the enrollment notes field or create a metadata field
+      await db
+        .update(enrollments)
+        .set({ 
+          formSubmissionData: formResponses,
+          formSubmittedAt: new Date()
+        })
+        .where(eq(enrollments.id, enrollmentId));
+
+      res.json({ message: "Form submitted successfully" });
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      res.status(500).json({ message: "Failed to submit form" });
     }
   });
 
