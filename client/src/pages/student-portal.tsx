@@ -47,8 +47,6 @@ const editProfileSchema = z.object({
   dateOfBirth: z.string().optional(),
   concealedCarryLicenseIssued: z.string().optional(),
   concealedCarryLicenseExpiration: z.string().optional(),
-  emergencyContactName: z.string().optional(),
-  emergencyContactPhone: z.string().optional(),
   preferredContactMethods: z.array(z.string()).optional(),
   enableSmsNotifications: z.boolean().optional(),
   enableSmsReminders: z.boolean().optional(),
@@ -451,13 +449,15 @@ function FormCompletionInterface({ enrollment }: { enrollment: EnrollmentWithDet
     }
     
     if (!hasErrors) {
-      // Check if any fields have values (autopopulated or newly entered)
-      const hasAnyData = Object.keys(formData).some(fieldId => formData[fieldId]);
+      // Check if any autopopulated fields were changed
+      const hasProfileUpdates = Object.keys(formData).some(fieldId => 
+        initiallyAutopopulatedFields.has(fieldId) && editableFields[fieldId]
+      );
 
-      if (hasAnyData) {
+      if (hasProfileUpdates) {
         // Show confirmation dialog
         const confirmUpdate = window.confirm(
-          "Would you like to update your profile information with the information you provided?"
+          "Would you like to update your profile information with the changes you made?"
         );
         
         submitFormMutation.mutate({
@@ -760,8 +760,6 @@ function EditProfileDialog({ isOpen, onClose, user }: {
       dateOfBirth: formatDateForInput(user.dateOfBirth),
       concealedCarryLicenseIssued: formatDateForInput(user.concealedCarryLicenseIssued),
       concealedCarryLicenseExpiration: formatDateForInput(user.concealedCarryLicenseExpiration),
-      emergencyContactName: (user as any).emergencyContactName || '',
-      emergencyContactPhone: (user as any).emergencyContactPhone || '',
       preferredContactMethods: user.preferredContactMethods || [],
       enableSmsNotifications: user.enableSmsNotifications ?? true,
       enableSmsReminders: user.enableSmsReminders ?? true,
@@ -982,37 +980,6 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                   )}
                 />
               </div>
-            </div>
-
-            {/* Emergency Contact Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Emergency Contact Information</h3>
-              
-              <FormField
-                control={form.control}
-                name="emergencyContactName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Emergency Contact Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="John Doe" data-testid="input-emergency-contact-name" />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="emergencyContactPhone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Emergency Contact Phone</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="(555) 123-4567" data-testid="input-emergency-contact-phone" />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
             </div>
 
             {/* Contact Preferences */}

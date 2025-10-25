@@ -997,36 +997,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Enrollment not found" });
       }
 
-      // Get all form fields for this enrollment to find the correct formId
-      const courseForms = await storage.getCourseInformationFormsByCourse(enrollment.courseId);
-      
-      if (!courseForms || courseForms.length === 0) {
-        return res.status(400).json({ message: "No forms found for this course" });
-      }
-
       // Store individual form responses
       const formResponseEntries = Object.entries(formResponses);
       
       for (const [fieldId, response] of formResponseEntries) {
         if (response && typeof response === 'string') {
-          // Find which form this field belongs to
-          let formId = null;
-          for (const form of courseForms) {
-            if (form.fields.some(f => f.id === fieldId)) {
-              formId = form.id;
-              break;
-            }
-          }
-          
-          if (formId) {
-            // Upsert each form response
-            await storage.upsertStudentFormResponse({
-              enrollmentId,
-              formId,
-              fieldId,
-              response: response as string,
-            });
-          }
+          // Upsert each form response
+          await storage.upsertStudentFormResponse({
+            enrollmentId,
+            formId: enrollment.courseId, // We'll need to get the actual formId
+            fieldId,
+            response: response as string,
+          });
         }
       }
 
@@ -1040,7 +1022,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'first_name': 'firstName',
           'last_name': 'lastName',
           'email': 'email',
-          'email_address': 'email',
           'phone': 'phone',
           'phone_number': 'phone',
           'date_of_birth': 'dateOfBirth',
@@ -1051,12 +1032,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'state': 'state',
           'zip': 'zipCode',
           'zip_code': 'zipCode',
-          'emergency_contact_first_and_last_name': 'emergencyContactName',
-          'emergency_contact_name': 'emergencyContactName',
-          'emergency_contact_phone_number': 'emergencyContactPhone',
-          'emergency_contact_phone': 'emergencyContactPhone',
         };
 
+        // Get all form fields for this enrollment
+        const courseForms = await storage.getCourseInformationFormsByCourse(enrollment.courseId);
+        
         for (const form of courseForms) {
           for (const field of form.fields) {
             const normalizedLabel = field.label.toLowerCase().trim();

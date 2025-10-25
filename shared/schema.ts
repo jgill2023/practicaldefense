@@ -42,9 +42,6 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   concealedCarryLicenseExpiration: timestamp("concealed_carry_license_expiration"),
   concealedCarryLicenseIssued: timestamp("concealed_carry_license_issued"),
-  // Emergency contact information
-  emergencyContactName: varchar("emergency_contact_name", { length: 255 }),
-  emergencyContactPhone: varchar("emergency_contact_phone", { length: 20 }),
   // Preferred contact methods (stored as JSON array)
   preferredContactMethods: text("preferred_contact_methods").array(), // ['text', 'email', 'phone']
   // Email reminder preferences
