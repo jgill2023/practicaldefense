@@ -1,0 +1,107 @@
+injected.js:27 Warning: React has detected a change in the order of Hooks called by FormCompletionInterface. This will lead to bugs and errors if not fixed. For more information, read the Rules of Hooks: https://reactjs.org/link/rules-of-hooks
+
+   Previous render            Next render
+   ------------------------------------------------------
+1. useState                   useState
+2. useEffect                  useEffect
+3. useContext                 useContext
+4. useContext                 useContext
+5. useContext                 useContext
+6. useEffect                  useEffect
+7. useState                   useState
+8. useCallback                useCallback
+9. useSyncExternalStore       useSyncExternalStore
+10. useEffect                 useEffect
+11. useState                  useState
+12. useState                  useState
+13. useState                  useState
+14. useContext                useContext
+15. useContext                useContext
+16. useContext                useContext
+17. useEffect                 useEffect
+18. useState                  useState
+19. useCallback               useCallback
+20. useSyncExternalStore      useSyncExternalStore
+21. useEffect                 useEffect
+22. useEffect                 useEffect
+23. undefined                 useContext
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    at FormCompletionInterface (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/src/pages/student-portal.tsx:58:36)
+    at div
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-KREND35G.js?v=28ce041a:42:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…runner/workspace/node_modules/.vite/deps/chunk-RDSICL5I.js?v=28ce041a:55:7
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=28ce041a:79:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=28ce041a:56:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-KREND35G.js?v=28ce041a:42:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…runner/workspace/node_modules/.vite/deps/chunk-TNS3ITUW.js?v=28ce041a:29:5
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…nner/workspace/node_modules/.vite/deps/chunk-XI2LMUWL.js?v=28ce041a:235:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…nner/workspace/node_modules/.vite/deps/chunk-XI2LMUWL.js?v=28ce041a:158:58
+    at Presence (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-ZDYRTK73.js?v=28ce041a:24:11)
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…nner/workspace/node_modules/.vite/deps/chunk-XI2LMUWL.js?v=28ce041a:149:64
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=28ce041a:79:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=28ce041a:56:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-KREND35G.js?v=28ce041a:42:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-XLWY6AKX.js?v=28ce041a:27:22
+    at Presence (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-ZDYRTK73.js?v=28ce041a:24:11)
+    at Provider (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-BCTQDHHX.js?v=28ce041a:38:15)
+    at DialogPortal (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…nner/workspace/node_modules/.vite/deps/chunk-XI2LMUWL.js?v=28ce041a:111:11)
+    at _c3 (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/src/components/ui/dialog.tsx:52:12)
+    at Provider (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-BCTQDHHX.js?v=28ce041a:38:15)
+    at Dialog (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…runner/workspace/node_modules/.vite/deps/chunk-XI2LMUWL.js?v=28ce041a:52:5)
+    at main
+    at div
+    at Layout (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at StudentPortal (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/src/pages/student-portal.tsx:2267:48)
+    at Route (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=28ce041a:265:16)
+    at Switch (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=28ce041a:321:17)
+    at Router (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/src/App.tsx?v=Gfh2gzTyVSA7A__B43wpb:51:48)
+    at Provider (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-BCTQDHHX.js?v=28ce041a:38:15)
+    at TooltipProvider (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…rkspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=28ce041a:63:5)
+    at QueryClientProvider (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=28ce041a:2805:3)
+    at App
+
+chunk-XQLYTHWV.js?v=28ce041a:11678 Uncaught Error: Rendered more hooks than during the previous render.
+    at FormCompletionInterface (student-portal.tsx:410:30)
+chunk-XQLYTHWV.js?v=28ce041a:11678 Uncaught Error: Rendered more hooks than during the previous render.
+    at FormCompletionInterface (student-portal.tsx:410:30)
+injected.js:27 The above error occurred in the <FormCompletionInterface> component:
+
+    at FormCompletionInterface (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/src/pages/student-portal.tsx:58:36)
+    at div
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-KREND35G.js?v=28ce041a:42:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…runner/workspace/node_modules/.vite/deps/chunk-RDSICL5I.js?v=28ce041a:55:7
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=28ce041a:79:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=28ce041a:56:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-KREND35G.js?v=28ce041a:42:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…runner/workspace/node_modules/.vite/deps/chunk-TNS3ITUW.js?v=28ce041a:29:5
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…nner/workspace/node_modules/.vite/deps/chunk-XI2LMUWL.js?v=28ce041a:235:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…nner/workspace/node_modules/.vite/deps/chunk-XI2LMUWL.js?v=28ce041a:158:58
+    at Presence (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-ZDYRTK73.js?v=28ce041a:24:11)
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…nner/workspace/node_modules/.vite/deps/chunk-XI2LMUWL.js?v=28ce041a:149:64
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=28ce041a:79:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-T5ONMTIY.js?v=28ce041a:56:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-KREND35G.js?v=28ce041a:42:13
+    at https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-XLWY6AKX.js?v=28ce041a:27:22
+    at Presence (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-ZDYRTK73.js?v=28ce041a:24:11)
+    at Provider (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-BCTQDHHX.js?v=28ce041a:38:15)
+    at DialogPortal (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…nner/workspace/node_modules/.vite/deps/chunk-XI2LMUWL.js?v=28ce041a:111:11)
+    at _c3 (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/src/components/ui/dialog.tsx:52:12)
+    at Provider (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-BCTQDHHX.js?v=28ce041a:38:15)
+    at Dialog (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…runner/workspace/node_modules/.vite/deps/chunk-XI2LMUWL.js?v=28ce041a:52:5)
+    at main
+    at div
+    at Layout (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/src/components/Layout.tsx:33:26)
+    at StudentPortal (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/src/pages/student-portal.tsx:2267:48)
+    at Route (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=28ce041a:265:16)
+    at Switch (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=28ce041a:321:17)
+    at Router (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/src/App.tsx?v=Gfh2gzTyVSA7A__B43wpb:51:48)
+    at Provider (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…unner/workspace/node_modules/.vite/deps/chunk-BCTQDHHX.js?v=28ce041a:38:15)
+    at TooltipProvider (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…rkspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=28ce041a:63:5)
+    at QueryClientProvider (https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.d…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=28ce041a:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+chunk-XQLYTHWV.js?v=28ce041a:11678 Uncaught Error: Rendered more hooks than during the previous render.
+    at FormCompletionInterface (student-portal.tsx:410:30)
