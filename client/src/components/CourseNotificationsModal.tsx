@@ -110,7 +110,10 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
   const templateForm = useForm<TemplateFormData>({
     resolver: zodResolver(templateFormSchema),
     defaultValues: {
+      name: "",
       type: "email",
+      subject: "",
+      content: "",
       isActive: true,
     },
   });
@@ -282,13 +285,15 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
         sortOrder: template.sortOrder || 0,
         replyToEmail: template.replyToEmail || null,
         variables: template.variables || [],
-        createdBy: course.instructorId, // Required field for template creation
       };
 
+      console.log("Duplicating template with data:", newTemplateData);
       const response = await apiRequest("POST", "/api/admin/notification-templates", newTemplateData);
+      console.log("Duplication response:", response);
       return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Duplication successful, invalidating cache");
       queryClient.invalidateQueries({ queryKey: ["/api/admin/notification-templates"] });
       toast({
         title: "Template Duplicated",
@@ -297,9 +302,11 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
     },
     onError: (error: any) => {
       console.error("Error duplicating template:", error);
+      console.error("Error stack:", error?.stack);
+      console.error("Error name:", error?.name);
       toast({
         title: "Error",
-        description: error.message || "Failed to duplicate template.",
+        description: error?.message || "Failed to duplicate template.",
         variant: "destructive",
       });
     },
@@ -314,6 +321,8 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
   };
 
   const handleSubmitTemplate = (data: TemplateFormData) => {
+    console.log("Template form submitted with data:", data);
+    console.log("Form errors:", templateForm.formState.errors);
     if (editingTemplate) {
       updateTemplateMutation.mutate({ id: editingTemplate.id, data });
     } else {
@@ -334,6 +343,7 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
   };
 
   const handleDuplicateTemplate = (template: NotificationTemplate) => {
+    console.log("handleDuplicateTemplate called with template:", template.id, template.name);
     duplicateTemplateMutation.mutate(template);
   };
 
@@ -670,9 +680,16 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                       <ReactQuill
                         theme="snow"
                         value={templateForm.watch("content") || ""}
-                        onChange={(value) => templateForm.setValue("content", value)}
+                        onChange={(value) => {
+                          templateForm.setValue("content", value, { shouldValidate: true });
+                        }}
                         placeholder="Enter message content (you can use variables like {{firstName}}, {{courseName}}, etc.)"
                       />
+                      {templateForm.formState.errors.content && (
+                        <p className="text-sm text-destructive mt-1">
+                          {templateForm.formState.errors.content.message}
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground mt-1">
                         Available variables: {"{firstName}"}, {"{lastName}"}, {"{courseName}"}, {"{startDate}"}, {"{startTime}"}
                       </p>
@@ -745,6 +762,7 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                             variant="outline"
                             onClick={() => handleEditTemplate(template)}
                             title="Edit template"
+                            data-testid={`button-edit-template-${template.id}`}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -754,6 +772,7 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                             onClick={() => handleDuplicateTemplate(template)}
                             title="Duplicate template"
                             disabled={duplicateTemplateMutation.isPending}
+                            data-testid={`button-duplicate-template-${template.id}`}
                           >
                             <Copy className="h-4 w-4" />
                           </Button>
@@ -763,6 +782,7 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                             onClick={() => handleDeleteTemplate(template)}
                             title="Delete template"
                             disabled={deleteTemplateMutation.isPending}
+                            data-testid={`button-delete-template-${template.id}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

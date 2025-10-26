@@ -819,6 +819,8 @@ export const insertNotificationTemplateSchema = createInsertSchema(notificationT
   id: true,
   createdAt: true,
   updatedAt: true,
+  createdBy: true,  // Backend sets this from session user
+  updatedBy: true,  // Backend sets this from session user
 });
 
 export const insertNotificationScheduleSchema = createInsertSchema(notificationSchedules).omit({
