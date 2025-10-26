@@ -269,16 +269,22 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
   // Duplicate template mutation
   const duplicateTemplateMutation = useMutation({
     mutationFn: async (template: NotificationTemplate) => {
-      const response = await apiRequest("POST", "/api/admin/notification-templates", {
+      // Create the new template data with all required fields
+      const newTemplateData = {
         name: `${template.name} (Copy)`,
         type: template.type,
         category: template.category || "course_specific",
-        subject: template.subject || undefined,
+        subject: template.subject || "",
         content: template.content,
         courseId: course.id,
+        scheduleId: template.scheduleId || null,
         isActive: false, // Start duplicates as inactive
-        createdBy: course.instructorId,
-      });
+        sortOrder: template.sortOrder || 0,
+        replyToEmail: template.replyToEmail || null,
+        variables: template.variables || [],
+      };
+
+      const response = await apiRequest("POST", "/api/admin/notification-templates", newTemplateData);
       return response;
     },
     onSuccess: () => {
