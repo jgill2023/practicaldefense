@@ -35,7 +35,8 @@ import {
   Trash2,
   Clock,
   Calendar,
-  CheckCircle
+  CheckCircle,
+  Copy
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { CourseWithSchedules, NotificationSchedule, NotificationTemplate } from "@shared/schema";
@@ -746,7 +747,7 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                             title="Duplicate template"
                             disabled={duplicateTemplateMutation.isPending}
                           >
-                            <Plus className="h-4 w-4" />
+                            <Copy className="h-4 w-4" />
                           </Button>
                           <Button
                             size="sm"
