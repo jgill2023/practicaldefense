@@ -49,7 +49,6 @@ import { EventCreationForm } from "@/components/EventCreationForm";
 import { CourseCreationForm } from "@/components/CourseCreationForm";
 import { EditCourseForm } from "@/components/EditCourseForm";
 import { CourseManagementActions } from "@/components/CourseManagementActions";
-import { NotificationsManagement } from "@/components/NotificationsManagement";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatDateSafe } from "@/lib/dateUtils";
 
@@ -720,14 +719,6 @@ export default function CourseManagement() {
                     <Trash2 className="w-4 h-4" />
                     Deleted ({deletedCourses.length})
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="notifications" 
-                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
-                    data-testid="tab-notifications"
-                  >
-                    <Bell className="w-4 h-4" />
-                    Notifications
-                  </TabsTrigger>
                 </TabsList>
               </div>
 
@@ -827,12 +818,6 @@ export default function CourseManagement() {
                       ))}
                     </div>
                   )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="notifications" className="mt-0">
-                <div className="py-6">
-                  <NotificationsManagement />
                 </div>
               </TabsContent>
             </Tabs>

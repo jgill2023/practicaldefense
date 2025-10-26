@@ -54,6 +54,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { NotificationsManagement } from "@/components/NotificationsManagement";
 
 // Types for communication data
 interface Communication {
@@ -1186,9 +1187,9 @@ export function CommunicationsDashboard() {
         </CardContent>
       </Card>
 
-      {/* Main sections for SMS Management and Email Templates */}
+      {/* Main sections for SMS Management, Email Templates, and Notifications */}
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="sms-management" data-testid="tab-section-sms-management" className="text-lg">
             <MessageSquare className="h-5 w-5 mr-2" />
             SMS Management
@@ -1196,6 +1197,10 @@ export function CommunicationsDashboard() {
           <TabsTrigger value="email-templates" data-testid="tab-section-email-templates" className="text-lg">
             <Mail className="h-5 w-5 mr-2" />
             Email Templates
+          </TabsTrigger>
+          <TabsTrigger value="notifications" data-testid="tab-section-notifications" className="text-lg">
+            <Bell className="h-5 w-5 mr-2" />
+            Notifications
           </TabsTrigger>
         </TabsList>
 
@@ -1307,6 +1312,11 @@ export function CommunicationsDashboard() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Notifications Section */}
+        <TabsContent value="notifications" className="space-y-4" data-testid="content-section-notifications">
+          <NotificationsManagement />
         </TabsContent>
 
         {/* SMS Management Section */}
