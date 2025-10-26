@@ -21,7 +21,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Archive, Trash2, EyeOff, Eye } from "lucide-react";
+import { MoreHorizontal, Edit, Archive, Trash2, EyeOff, Eye, Bell } from "lucide-react";
+import { EditCourseForm } from "@/components/EditCourseForm";
+import { CourseNotificationsModal } from "@/components/CourseNotificationsModal";
 import type { CourseWithSchedules } from "@shared/schema";
 
 interface CourseManagementActionsProps {
@@ -32,6 +34,8 @@ interface CourseManagementActionsProps {
 export function CourseManagementActions({ course, onEditCourse }: CourseManagementActionsProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
+  const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -127,7 +131,7 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
             Edit Course
           </DropdownMenuItem>
 
-          
+
           <DropdownMenuItem 
             onClick={() => publishCourseMutation.mutate({ 
               courseId: course.id, 
@@ -147,9 +151,9 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
               </>
             )}
           </DropdownMenuItem>
-          
+
           <DropdownMenuSeparator />
-          
+
           <DropdownMenuItem 
             onClick={() => setShowArchiveConfirm(true)}
             data-testid={`button-archive-course-${course.id}`}
@@ -158,7 +162,7 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
             <Archive className="mr-2 h-4 w-4" />
             Archive Course
           </DropdownMenuItem>
-          
+
           <DropdownMenuItem 
             onClick={() => setShowDeleteConfirm(true)}
             disabled={hasSchedules}
@@ -167,6 +171,16 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Delete Course
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            onClick={() => setIsNotificationsModalOpen(true)}
+            data-testid={`menuitem-notifications-${course.id}`}
+          >
+            <Bell className="mr-2 h-4 w-4" />
+            Course Notifications
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -238,6 +252,30 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Course Notifications Modal */}
+      <CourseNotificationsModal
+        isOpen={isNotificationsModalOpen}
+        onClose={() => setIsNotificationsModalOpen(false)}
+        course={course}
+      />
+
+      {/* Edit Course Dialog */}
+      {editingCourse && (
+        <EditCourseForm
+          course={editingCourse}
+          onClose={() => setEditingCourse(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
+            toast({
+              title: "Course Updated",
+              description: "The course has been updated successfully.",
+            });
+            setEditingCourse(null);
+          }}
+        />
+      )}
     </>
   );
 }
