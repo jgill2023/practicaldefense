@@ -1210,7 +1210,9 @@ export function CommunicationsDashboard() {
                 </div>
                 <Button 
                   size="sm" 
-                  onClick={() => setLocation("/course-management?tab=notifications")}
+                  onClick={() => {
+                    window.location.href = "/course-management#notifications";
+                  }}
                   data-testid="button-create-email-template"
                 >
                   Manage Templates
@@ -1232,7 +1234,13 @@ export function CommunicationsDashboard() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => setLocation("/course-management?tab=notifications")}
+                        onClick={() => {
+                          toast({
+                            title: "Template Management",
+                            description: "Email template editing is available in Course Management > Notifications tab",
+                          });
+                          setLocation("/course-management?tab=notifications");
+                        }}
                         data-testid="button-edit-template-registration"
                       >
                         <Edit className="h-4 w-4 mr-1" />
@@ -1241,7 +1249,13 @@ export function CommunicationsDashboard() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => setLocation("/course-management?tab=notifications")}
+                        onClick={() => {
+                          toast({
+                            title: "Template Management",
+                            description: "Email template previewing is available in Course Management > Notifications tab",
+                          });
+                          setLocation("/course-management?tab=notifications");
+                        }}
                         data-testid="button-preview-template-registration"
                       >
                         <Eye className="h-4 w-4 mr-1" />
@@ -1260,7 +1274,13 @@ export function CommunicationsDashboard() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => setLocation("/course-management?tab=notifications")}
+                        onClick={() => {
+                          toast({
+                            title: "Template Management",
+                            description: "Email template editing is available in Course Management > Notifications tab",
+                          });
+                          setLocation("/course-management?tab=notifications");
+                        }}
                         data-testid="button-edit-template-reminder"
                       >
                         <Edit className="h-4 w-4 mr-1" />
@@ -1269,7 +1289,13 @@ export function CommunicationsDashboard() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => setLocation("/course-management?tab=notifications")}
+                        onClick={() => {
+                          toast({
+                            title: "Template Management",
+                            description: "Email template previewing is available in Course Management > Notifications tab",
+                          });
+                          setLocation("/course-management?tab=notifications");
+                        }}
                         data-testid="button-preview-template-reminder"
                       >
                         <Eye className="h-4 w-4 mr-1" />
