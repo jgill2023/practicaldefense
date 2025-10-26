@@ -135,13 +135,13 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
       queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
       queryClient.invalidateQueries({ queryKey: [`/api/enrollments/${enrollment.id}/form-completion`] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      
+
       // Show success message
       toast({
         title: "Forms Submitted",
         description: "Your course information forms have been submitted successfully.",
       });
-      
+
       // Close the dialog
       onClose();
     },
