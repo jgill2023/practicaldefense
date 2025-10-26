@@ -45,7 +45,8 @@ import {
   Paperclip,
   X,
   FileText,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Bell
 } from "lucide-react";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { format } from "date-fns";
