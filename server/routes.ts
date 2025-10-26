@@ -6,11 +6,11 @@ import { z } from "zod";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
-import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms } from "@shared/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules } from "@shared/schema";
+import { eq, and, inArray, desc } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
-import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, insertCourseNotificationSignupSchema, insertSmsListSchema, insertSmsListMemberSchema, insertSmsBroadcastMessageSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
+import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, insertCourseNotificationSignupSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
 import { sendSms } from "./smsService";
 import { CourseNotificationEngine } from "./notificationEngine";
 import { NotificationEmailService } from "./emailService";
@@ -3804,6 +3804,8 @@ If you have any questions or need assistance, please don't hesitate to contact u
 Best regards,
 ${user.firstName} ${user.lastName}
 Practical Defense Training
+jeremy@abqconcealedcarry.com
+(505) 944-5247
         `.trim();
 
         const emailResult = await NotificationEmailService.sendNotificationEmail({

@@ -215,6 +215,86 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
     },
   });
 
+  // Update template mutation
+  const updateTemplateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: TemplateFormData }) => {
+      return await apiRequest("PUT", `/api/admin/notification-templates/${id}`, {
+        ...data,
+        courseId: course.id,
+        category: "course_specific",
+        updatedBy: course.instructorId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notification-templates"] });
+      setEditingTemplate(null);
+      setIsCreatingTemplate(false);
+      templateForm.reset();
+      toast({
+        title: "Template Updated",
+        description: "Notification template has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update notification template.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete template mutation
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("DELETE", `/api/admin/notification-templates/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notification-templates"] });
+      toast({
+        title: "Template Deleted",
+        description: "Notification template has been deleted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete notification template.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Duplicate template mutation
+  const duplicateTemplateMutation = useMutation({
+    mutationFn: async (template: NotificationTemplate) => {
+      return await apiRequest("POST", "/api/admin/notification-templates", {
+        name: `${template.name} (Copy)`,
+        type: template.type,
+        category: "course_specific",
+        subject: template.subject,
+        content: template.content,
+        courseId: course.id,
+        isActive: false, // Start duplicates as inactive
+        createdBy: course.instructorId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notification-templates"] });
+      toast({
+        title: "Template Duplicated",
+        description: "Template has been duplicated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to duplicate template.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmitSchedule = (data: NotificationFormData) => {
     if (editingSchedule) {
       updateScheduleMutation.mutate({ id: editingSchedule.id, data });
@@ -224,7 +304,43 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
   };
 
   const handleSubmitTemplate = (data: TemplateFormData) => {
-    createTemplateMutation.mutate(data);
+    if (editingTemplate) {
+      updateTemplateMutation.mutate({ id: editingTemplate.id, data });
+    } else {
+      createTemplateMutation.mutate(data);
+    }
+  };
+
+  const handleEditTemplate = (template: NotificationTemplate) => {
+    setEditingTemplate(template);
+    templateForm.reset({
+      name: template.name,
+      type: template.type as "email" | "sms",
+      subject: template.subject || undefined,
+      content: template.content,
+      isActive: template.isActive,
+    });
+    setIsCreatingTemplate(true);
+  };
+
+  const handleDuplicateTemplate = (template: NotificationTemplate) => {
+    duplicateTemplateMutation.mutate(template);
+  };
+
+  const handleDeleteTemplate = (template: NotificationTemplate) => {
+    const deleteConfirmation = prompt(
+      `Are you sure you want to delete "${template.name}"? This action cannot be undone.\n\nType DELETE to confirm:`
+    );
+    
+    if (deleteConfirmation === "DELETE") {
+      deleteTemplateMutation.mutate(template.id);
+    } else if (deleteConfirmation !== null) {
+      toast({
+        title: "Deletion Cancelled",
+        description: "You must type DELETE exactly to confirm deletion.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditSchedule = (schedule: NotificationSchedule) => {
@@ -487,7 +603,9 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
             {isCreatingTemplate && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Create Template</CardTitle>
+                  <CardTitle className="text-lg">
+                    {editingTemplate ? "Edit Template" : "Create Template"}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={templateForm.handleSubmit(handleSubmitTemplate)} className="space-y-4">
@@ -565,13 +683,17 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                         variant="outline"
                         onClick={() => {
                           setIsCreatingTemplate(false);
+                          setEditingTemplate(null);
                           templateForm.reset();
                         }}
                       >
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={createTemplateMutation.isPending}>
-                        Create Template
+                      <Button 
+                        type="submit" 
+                        disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
+                      >
+                        {editingTemplate ? "Update" : "Create"} Template
                       </Button>
                     </div>
                   </form>
@@ -606,6 +728,34 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                               Subject: {template.subject}
                             </p>
                           )}
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditTemplate(template)}
+                            title="Edit template"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDuplicateTemplate(template)}
+                            title="Duplicate template"
+                            disabled={duplicateTemplateMutation.isPending}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteTemplate(template)}
+                            title="Delete template"
+                            disabled={deleteTemplateMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
