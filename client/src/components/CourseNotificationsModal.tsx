@@ -282,6 +282,7 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
         sortOrder: template.sortOrder || 0,
         replyToEmail: template.replyToEmail || null,
         variables: template.variables || [],
+        createdBy: course.instructorId, // Required field for template creation
       };
 
       const response = await apiRequest("POST", "/api/admin/notification-templates", newTemplateData);
