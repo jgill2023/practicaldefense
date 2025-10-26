@@ -141,7 +141,7 @@ function DeletePermanentlyButton({ course }: { course: CourseWithSchedules }) {
       >
         Delete Permanently
       </Button>
-      
+
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -456,13 +456,13 @@ export default function CourseManagement() {
           : typeof schedule.startDate === 'string' && schedule.startDate
             ? (schedule.startDate as string).split('T')[0]?.split(' ')[0] 
             : new Date().toISOString().split('T')[0]; // Fallback to today
-        
+
         const endDateStr = schedule.endDate instanceof Date
           ? schedule.endDate.toISOString().split('T')[0]
           : typeof schedule.endDate === 'string' && schedule.endDate
             ? (schedule.endDate as string).split('T')[0]?.split(' ')[0]
             : new Date().toISOString().split('T')[0]; // Fallback to today
-        
+
         return {
           id: schedule.id,
           title: `${course.title}`,
@@ -529,7 +529,7 @@ export default function CourseManagement() {
             </Button>
           </Link>
         </div>
-        
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
           <div>
@@ -551,7 +551,6 @@ export default function CourseManagement() {
                 Course Forms
               </Button>
             </Link>
-            
             <Dialog open={showCreateCourseModal} onOpenChange={setShowCreateCourseModal}>
               <DialogTrigger asChild>
                 <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-create-course">
@@ -567,26 +566,6 @@ export default function CourseManagement() {
                     queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
                     queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
                     setShowCreateCourseModal(false);
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
-            <Dialog open={showCreateEventModal} onOpenChange={setShowCreateEventModal}>
-              <DialogTrigger asChild>
-                <Button className="bg-accent text-accent-foreground hover:bg-accent/90" data-testid="button-create-event">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Event
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Create New Training Event</DialogTitle>
-                </DialogHeader>
-                <EventCreationForm 
-                  onClose={() => setShowCreateEventModal(false)}
-                  onEventCreated={() => {
-                    // Refresh courses data
-                    queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
                   }}
                 />
               </DialogContent>
@@ -650,7 +629,7 @@ export default function CourseManagement() {
                   Choose which categories and their courses are displayed on the home page
                 </p>
               </div>
-              
+
               <div className="space-y-3">
                 {categories.map((category) => (
                   <CategoryVisibilityControl 
@@ -820,7 +799,7 @@ export default function CourseManagement() {
                                 <h3 className="font-semibold text-lg mb-2 truncate" data-testid={`text-course-title-${course.id}`}>
                                   {course.title}
                                 </h3>
-              
+
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
                                   <span className="whitespace-nowrap">${course.price}</span>
                                   <span className="whitespace-nowrap">{course.duration}</span>
