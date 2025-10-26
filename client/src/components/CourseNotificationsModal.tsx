@@ -268,16 +268,16 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
   // Duplicate template mutation
   const duplicateTemplateMutation = useMutation({
     mutationFn: async (template: NotificationTemplate) => {
-      return await apiRequest("POST", "/api/admin/notification-templates", {
+      const response = await apiRequest("POST", "/api/admin/notification-templates", {
         name: `${template.name} (Copy)`,
         type: template.type,
-        category: "course_specific",
+        category: template.category || "course_specific",
         subject: template.subject,
         content: template.content,
         courseId: course.id,
         isActive: false, // Start duplicates as inactive
-        createdBy: course.instructorId,
       });
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/notification-templates"] });
@@ -286,10 +286,11 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
         description: "Template has been duplicated successfully.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Error duplicating template:", error);
       toast({
         title: "Error",
-        description: "Failed to duplicate template.",
+        description: error.message || "Failed to duplicate template.",
         variant: "destructive",
       });
     },
