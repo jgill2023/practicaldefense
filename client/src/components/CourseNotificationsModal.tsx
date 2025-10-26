@@ -273,12 +273,11 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
         name: `${template.name} (Copy)`,
         type: template.type,
         category: template.category || "course_specific",
-        subject: template.subject,
+        subject: template.subject || undefined,
         content: template.content,
         courseId: course.id,
         isActive: false, // Start duplicates as inactive
         createdBy: course.instructorId,
-        updatedBy: course.instructorId,
       });
       return response;
     },
