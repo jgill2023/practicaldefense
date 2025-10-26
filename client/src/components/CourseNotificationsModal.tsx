@@ -277,6 +277,8 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
         content: template.content,
         courseId: course.id,
         isActive: false, // Start duplicates as inactive
+        createdBy: course.instructorId,
+        updatedBy: course.instructorId,
       });
       return response;
     },
