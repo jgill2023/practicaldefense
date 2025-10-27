@@ -21,7 +21,7 @@ import { Progress } from "@/components/ui/progress";
 import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign, FileSignature, Users } from "lucide-react";
 import { Calendar, Clock, FileText, Download, BookOpen, Award, Target } from "lucide-react";
 import type { EnrollmentWithDetails, User, CourseWithSchedules, CourseSchedule } from "@shared/schema";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "wouter";
 
 // Types for the query responses
 type PaymentBalanceResponse = {
