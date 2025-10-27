@@ -10,6 +10,7 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign, FileSignature } from "lucide-react";
-import { Calendar, Clock, FileText, Download, BookOpen, Award } from "lucide-react";
+import { Calendar, Clock, FileText, Download, BookOpen, Award, Target } from "lucide-react";
 import type { EnrollmentWithDetails, User } from "@shared/schema";
 
 // Types for the query responses
@@ -535,6 +536,474 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// Live-Fire Range Session Registration Modal
+function LiveFireRegistrationModal({ course, schedule, onClose }: { 
+  course: CourseWithSchedules; 
+  schedule: CourseSchedule; 
+  onClose: () => void;
+}) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const typedUser = user as User;
+  const [, navigate] = useLocation();
+
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch course information forms for this course
+  const { data: courseForms, isLoading } = useQuery({
+    queryKey: ['/api/course-forms', course.id],
+    enabled: !!course.id,
+    retry: false,
+  });
+
+  // Auto-populate fields on mount
+  useEffect(() => {
+    if (courseForms && courseForms.length > 0 && typedUser) {
+      const fieldMapping: Record<string, any> = {
+        'first name': typedUser.firstName,
+        'last name': typedUser.lastName,
+        'email': typedUser.email,
+        'email address': typedUser.email,
+        'phone': typedUser.phone,
+        'phone number': typedUser.phone,
+        'date of birth': typedUser.dateOfBirth ? new Date(typedUser.dateOfBirth).toISOString().split('T')[0] : '',
+        'address': typedUser.streetAddress,
+        'street address': typedUser.streetAddress,
+        'current physical address': typedUser.streetAddress,
+        'city': typedUser.city,
+        'state': typedUser.state,
+        'zip': typedUser.zipCode,
+        'zip code': typedUser.zipCode,
+        'emergency contact first and last name': typedUser.emergencyContactName,
+        'emergency contact name': typedUser.emergencyContactName,
+        'emergency contact phone number': typedUser.emergencyContactPhone,
+        'emergency contact phone': typedUser.emergencyContactPhone,
+      };
+
+      const autoPopulatedData: Record<string, any> = {};
+
+      courseForms.forEach((form: any) => {
+        form.fields?.forEach((field: any) => {
+          const normalizedLabel = field.label.toLowerCase().trim();
+          const mappedValue = fieldMapping[normalizedLabel];
+
+          if (mappedValue !== undefined && mappedValue !== null && mappedValue !== '') {
+            autoPopulatedData[field.id] = mappedValue;
+          }
+        });
+      });
+
+      setFormData(autoPopulatedData);
+    }
+  }, [courseForms, typedUser]);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      // Create enrollment for the live-fire session
+      const enrollment = await apiRequest("POST", "/api/course-registration/initiate", {
+        courseId: course.id,
+        scheduleId: schedule.id,
+        paymentOption: 'full',
+        studentInfo: {
+          firstName: typedUser.firstName,
+          lastName: typedUser.lastName,
+          email: typedUser.email,
+        },
+      });
+
+      // Submit form responses
+      if (Object.keys(formData).length > 0) {
+        await apiRequest("POST", "/api/enrollment-form-submissions", {
+          enrollmentId: enrollment.id,
+          formResponses: formData,
+        });
+      }
+
+      // Since it's a free course, finalize the enrollment
+      await apiRequest("POST", "/api/course-registration/confirm", {
+        enrollmentId: enrollment.id,
+        paymentIntentId: 'free-course',
+        studentInfo: {
+          firstName: typedUser.firstName,
+          lastName: typedUser.lastName,
+          email: typedUser.email,
+        },
+      });
+
+      toast({
+        title: "Registration Successful",
+        description: "You've been registered for the Live-Fire Range Session!",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
+      onClose();
+    } catch (error: any) {
+      toast({
+        title: "Registration Failed",
+        description: error.message || "Failed to register for the session.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderField = (field: any) => {
+    const value = formData[field.id] || '';
+
+    switch (field.fieldType) {
+      case 'text':
+      case 'email':
+      case 'phone':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              type={field.fieldType === 'email' ? 'email' : field.fieldType === 'phone' ? 'tel' : 'text'}
+              placeholder={field.placeholder || ''}
+              value={value}
+              onChange={(e) => setFormData(prev => ({ ...prev, [field.id]: e.target.value }))}
+              required={field.isRequired}
+            />
+          </div>
+        );
+
+      case 'date':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              type="date"
+              value={value}
+              onChange={(e) => setFormData(prev => ({ ...prev, [field.id]: e.target.value }))}
+              required={field.isRequired}
+            />
+          </div>
+        );
+
+      case 'textarea':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Textarea
+              id={field.id}
+              placeholder={field.placeholder || ''}
+              value={value}
+              onChange={(e) => setFormData(prev => ({ ...prev, [field.id]: e.target.value }))}
+              required={field.isRequired}
+              rows={4}
+            />
+          </div>
+        );
+
+      case 'select':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <select
+              id={field.id}
+              value={value}
+              onChange={(e) => setFormData(prev => ({ ...prev, [field.id]: e.target.value }))}
+              required={field.isRequired}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="">Select an option</option>
+              {field.options?.map((option: string) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+
+      case 'checkbox':
+        return (
+          <div key={field.id} className="flex items-center space-x-2">
+            <Checkbox
+              id={field.id}
+              checked={value === true}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, [field.id]: checked }))}
+            />
+            <Label htmlFor={field.id} className="font-normal">
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+          </div>
+        );
+
+      default:
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              placeholder={field.placeholder || ''}
+              value={value}
+              onChange={(e) => setFormData(prev => ({ ...prev, [field.id]: e.target.value }))}
+              required={field.isRequired}
+            />
+          </div>
+        );
+    }
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Register for Live-Fire Range Session</DialogTitle>
+          <DialogDescription>
+            Complete the information below to register for your live-fire range session.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Session Details */}
+          <Card className="bg-muted">
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-2 mb-2">
+                <Calendar className="h-4 w-4 text-accent" />
+                <span className="font-medium">
+                  {new Date(schedule.startDate).toLocaleDateString('en-US', { 
+                    weekday: 'long',
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                <div className="flex items-center">
+                  <Clock className="mr-1 h-3 w-3" />
+                  {schedule.startTime} - {schedule.endTime}
+                </div>
+                {schedule.location && (
+                  <div className="flex items-center">
+                    <span className="mr-1">📍</span>
+                    {schedule.location}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Course Forms */}
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading registration form...</p>
+            </div>
+          ) : courseForms && courseForms.length > 0 ? (
+            <div className="space-y-6">
+              {courseForms.map((form: any) => (
+                <Card key={form.id} className="border-2">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>{form.title}</span>
+                      {form.isRequired && (
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                          Required
+                        </Badge>
+                      )}
+                    </CardTitle>
+                    {form.description && (
+                      <p className="text-sm text-muted-foreground">{form.description}</p>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {form.fields && form.fields.length > 0 ? (
+                        form.fields.map((field: any) => renderField(field))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No fields configured for this form.</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                No forms are currently required for this session.
+              </p>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-transparent border-t-current rounded-full mr-2" />
+                  Registering...
+                </>
+              ) : (
+                'Complete Registration'
+              )}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Live-Fire Range Sessions Section Component
+function LiveFireRangeSessionsSection() {
+  const { toast } = useToast();
+  const [showAll, setShowAll] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+
+  // Fetch the Live-Fire Range Session course
+  const { data: courses = [] } = useQuery<CourseWithSchedules[]>({
+    queryKey: ["/api/courses"],
+  });
+
+  const liveFireCourse = courses.find(course => 
+    course.title.toLowerCase().includes('live-fire') && 
+    course.title.toLowerCase().includes('range')
+  );
+
+  // Get upcoming schedules for the Live-Fire Range Session
+  const upcomingSchedules = useMemo(() => {
+    if (!liveFireCourse || !liveFireCourse.schedules) return [];
+    
+    const now = new Date();
+    return liveFireCourse.schedules
+      .filter(schedule => 
+        !schedule.deletedAt && 
+        new Date(schedule.startDate) > now &&
+        schedule.availableSpots > 0
+      )
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+  }, [liveFireCourse]);
+
+  const displayedSchedules = showAll ? upcomingSchedules : upcomingSchedules.slice(0, 5);
+
+  const handleRegisterClick = (schedule: any) => {
+    setSelectedSchedule(schedule);
+    setShowRegistrationForm(true);
+  };
+
+  if (!liveFireCourse || upcomingSchedules.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <Card className="mb-8 border-2 border-accent">
+        <CardHeader className="bg-accent/5">
+          <CardTitle className="flex items-center">
+            <Target className="mr-2 h-5 w-5 text-accent" />
+            Live-Fire Range Sessions Available
+          </CardTitle>
+          <p className="text-sm text-muted-foreground mt-2">
+            Complete your Online New Mexico Concealed Carry Course by attending a required live-fire range session.
+          </p>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="space-y-3">
+            {displayedSchedules.map((schedule) => (
+              <div 
+                key={schedule.id}
+                className="p-4 border rounded-lg hover:border-accent transition-colors"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Calendar className="h-4 w-4 text-accent" />
+                      <span className="font-medium">
+                        {new Date(schedule.startDate).toLocaleDateString('en-US', { 
+                          weekday: 'long',
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                      <div className="flex items-center">
+                        <Clock className="mr-1 h-3 w-3" />
+                        {schedule.startTime} - {schedule.endTime}
+                      </div>
+                      {schedule.location && (
+                        <div className="flex items-center">
+                          <span className="mr-1">📍</span>
+                          {schedule.location}
+                        </div>
+                      )}
+                      <div className="flex items-center">
+                        <Users className="mr-1 h-3 w-3" />
+                        {schedule.availableSpots} spots left
+                      </div>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => handleRegisterClick(schedule)}
+                    disabled={schedule.availableSpots === 0}
+                    className="ml-4"
+                  >
+                    Register
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {upcomingSchedules.length > 5 && (
+            <div className="mt-4 text-center">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAll(!showAll)}
+              >
+                {showAll ? 'Show Less' : `View ${upcomingSchedules.length - 5} More Sessions`}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Registration Form Dialog */}
+      {showRegistrationForm && selectedSchedule && liveFireCourse && (
+        <LiveFireRegistrationModal
+          course={liveFireCourse}
+          schedule={selectedSchedule}
+          onClose={() => {
+            setShowRegistrationForm(false);
+            setSelectedSchedule(null);
+          }}
+        />
+      )}
+    </>
   );
 }
 
@@ -1524,6 +1993,11 @@ export default function StudentPortal() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Live-Fire Range Sessions Section - Only for Online CCW students */}
+        {enrollments.some(e => e.course.title.toLowerCase().includes('online') && e.course.title.toLowerCase().includes('concealed carry')) && (
+          <LiveFireRangeSessionsSection />
         )}
 
         <div className="grid lg:grid-cols-2 gap-8">
