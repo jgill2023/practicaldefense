@@ -132,7 +132,7 @@ export interface IStorage {
   getAllStudents(): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, data: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>): Promise<User>;
-  updateStudent(id: string, data: { email?: string; phone?: string; concealedCarryLicenseExpiration?: string; concealedCarryLicenseIssued?: string; licenseExpirationReminderDays?: number; enableLicenseExpirationReminder?: boolean; refresherReminderDays?: number; enableRefresherReminder?: boolean; enableSmsNotifications?: boolean; enableSmsReminders?: boolean; enableSmsPaymentNotices?: boolean; enableSmsAnnouncements?: boolean }): Promise<User>;
+  updateStudent(id: string, data: { email?: string; phone?: string; concealedCarryLicenseExpiration?: string; concealedCarryLicenseIssued?: string; driversLicenseNumber?: string; licenseExpirationReminderDays?: number; enableLicenseExpirationReminder?: boolean; refresherReminderDays?: number; enableRefresherReminder?: boolean; enableSmsNotifications?: boolean; enableSmsReminders?: boolean; enableSmsPaymentNotices?: boolean; enableSmsAnnouncements?: boolean }): Promise<User>;
 
   // Category operations
   createCategory(category: InsertCategory): Promise<Category>;
@@ -550,6 +550,7 @@ export class DatabaseStorage implements IStorage {
     phone?: string; 
     concealedCarryLicenseExpiration?: string;
     concealedCarryLicenseIssued?: string;
+    driversLicenseNumber?: string;
     licenseExpirationReminderDays?: number;
     enableLicenseExpirationReminder?: boolean;
     refresherReminderDays?: number;
@@ -569,6 +570,10 @@ export class DatabaseStorage implements IStorage {
 
     if (data.phone !== undefined) {
       updateData.phone = data.phone;
+    }
+
+    if (data.driversLicenseNumber !== undefined) {
+      updateData.driversLicenseNumber = data.driversLicenseNumber;
     }
 
     if (data.concealedCarryLicenseExpiration !== undefined) {

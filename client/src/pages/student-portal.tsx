@@ -48,6 +48,7 @@ const editProfileSchema = z.object({
   dateOfBirth: z.string().optional(),
   concealedCarryLicenseIssued: z.string().optional(),
   concealedCarryLicenseExpiration: z.string().optional(),
+  driversLicenseNumber: z.string().optional(),
   emergencyContactName: z.string().optional(),
   emergencyContactPhone: z.string().optional(),
   preferredContactMethods: z.array(z.string()).optional(),
@@ -1244,6 +1245,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
       dateOfBirth: formatDateForInput(user.dateOfBirth),
       concealedCarryLicenseIssued: formatDateForInput(user.concealedCarryLicenseIssued),
       concealedCarryLicenseExpiration: formatDateForInput(user.concealedCarryLicenseExpiration),
+      driversLicenseNumber: user.driversLicenseNumber || '',
       emergencyContactName: user.emergencyContactName || '',
       emergencyContactPhone: user.emergencyContactPhone || '',
       preferredContactMethods: user.preferredContactMethods || [],
@@ -1438,6 +1440,19 @@ function EditProfileDialog({ isOpen, onClose, user }: {
             {/* License Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">License Information</h3>
+
+              <FormField
+                control={form.control}
+                name="driversLicenseNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Driver's License Number</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="DL123456789" data-testid="input-drivers-license" />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField

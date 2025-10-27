@@ -52,6 +52,7 @@ const editStudentSchema = z.object({
   email: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
   phone: z.string().optional(),
   concealedCarryLicenseExpiration: z.string().optional(),
+  driversLicenseNumber: z.string().optional(),
 });
 
 type EditStudentFormData = z.infer<typeof editStudentSchema>;
@@ -770,6 +771,7 @@ function EditStudentForm({ student, onClose }: { student: Student; onClose: () =
       concealedCarryLicenseExpiration: student.concealedCarryLicenseExpiration 
         ? new Date(student.concealedCarryLicenseExpiration).toISOString().split('T')[0] 
         : "",
+      driversLicenseNumber: student.driversLicenseNumber || "",
     },
   });
 
@@ -841,6 +843,24 @@ function EditStudentForm({ student, onClose }: { student: Student; onClose: () =
                   placeholder="(555) 123-4567" 
                   {...field}
                   data-testid="input-student-phone"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="driversLicenseNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Driver's License Number</FormLabel>
+              <FormControl>
+                <Input 
+                  {...field}
+                  placeholder="DL123456789"
+                  data-testid="input-drivers-license"
                 />
               </FormControl>
               <FormMessage />
