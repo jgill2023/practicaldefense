@@ -911,30 +911,39 @@ export class DatabaseStorage implements IStorage {
   }
 
   async duplicateCourseSchedule(scheduleId: string): Promise<CourseSchedule> {
-    // Get the original schedule
-    const originalSchedule = await this.getCourseSchedule(scheduleId);
+    const originalSchedule = await db.query.courseSchedules.findFirst({
+      where: eq(courseSchedules.id, scheduleId),
+    });
+
     if (!originalSchedule) {
-      throw new Error('Schedule not found');
+      throw new Error("Schedule not found");
     }
 
-    // Create a duplicate schedule with similar data
-    const duplicateData: InsertCourseSchedule = {
+    // Create a copy with a new ID and updated dates
+    const [duplicatedSchedule] = await db.insert(courseSchedules).values({
       courseId: originalSchedule.courseId,
-      startDate: originalSchedule.startDate, // Keep the same date initially
+      startDate: originalSchedule.startDate,
       endDate: originalSchedule.endDate,
       startTime: originalSchedule.startTime,
       endTime: originalSchedule.endTime,
       location: originalSchedule.location,
       maxSpots: originalSchedule.maxSpots,
-      availableSpots: originalSchedule.maxSpots, // Reset to max capacity
+      availableSpots: originalSchedule.maxSpots, // Reset available spots
+      isMultiDay: originalSchedule.isMultiDay,
+      isRecurring: originalSchedule.isRecurring,
+      recurrencePattern: originalSchedule.recurrencePattern,
+      recurrenceInterval: originalSchedule.recurrenceInterval,
+      recurrenceEndDate: originalSchedule.recurrenceEndDate,
+      daysOfWeek: originalSchedule.daysOfWeek,
       registrationDeadline: originalSchedule.registrationDeadline,
-    };
+      waitlistEnabled: originalSchedule.waitlistEnabled,
+      autoConfirmRegistration: originalSchedule.autoConfirmRegistration,
+      eventCategory: originalSchedule.eventCategory,
+      notes: originalSchedule.notes,
+      deletedAt: null,
+    }).returning();
 
-    const [newSchedule] = await db
-      .insert(courseSchedules)
-      .values(duplicateData)
-      .returning();
-    return newSchedule;
+    return duplicatedSchedule;
   }
 
   async updateCourseSchedule(id: string, schedule: Partial<InsertCourseSchedule>): Promise<CourseSchedule> {
@@ -1358,7 +1367,6 @@ export class DatabaseStorage implements IStorage {
     const instructorEnrollments = await db.query.enrollments.findMany({
       where: whereCondition,
       with: {
-        student: true,
         course: {
           with: {
             instructor: true,
@@ -1497,9 +1505,7 @@ export class DatabaseStorage implements IStorage {
 
     if (excludeEnrollmentId) {
       // Get enrollment to determine which schedule to exclude
-      const enrollment = await db.query.enrollments.findFirst({
-        where: eq(enrollments.id, excludeEnrollmentId),
-      });
+      const enrollment = await this.getEnrollment(excludeEnrollmentId);
 
       if (enrollment) {
         excludeScheduleId = enrollment.scheduleId;

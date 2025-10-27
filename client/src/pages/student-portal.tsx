@@ -18,9 +18,10 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign, FileSignature } from "lucide-react";
+import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign, FileSignature, Users } from "lucide-react";
 import { Calendar, Clock, FileText, Download, BookOpen, Award, Target } from "lucide-react";
-import type { EnrollmentWithDetails, User } from "@shared/schema";
+import type { EnrollmentWithDetails, User, CourseWithSchedules, CourseSchedule } from "@shared/schema";
+import { useLocation } from "react-router-dom";
 
 // Types for the query responses
 type PaymentBalanceResponse = {
@@ -538,10 +539,10 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
   );
 }
 
-// Live-Fire Range Session Registration Modal
-function LiveFireRegistrationModal({ course, schedule, onClose }: { 
-  course: CourseWithSchedules; 
-  schedule: CourseSchedule; 
+// Live-Fire Range Registration Modal
+function LiveFireRegistrationModal({ course, schedule, onClose }: {
+  course: CourseWithSchedules;
+  schedule: CourseSchedule;
   onClose: () => void;
 }) {
   const { user } = useAuth();
@@ -786,11 +787,11 @@ function LiveFireRegistrationModal({ course, schedule, onClose }: {
               <div className="flex items-center space-x-2 mb-2">
                 <Calendar className="h-4 w-4 text-accent" />
                 <span className="font-medium">
-                  {new Date(schedule.startDate).toLocaleDateString('en-US', { 
+                  {new Date(schedule.startDate).toLocaleDateString('en-US', {
                     weekday: 'long',
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                   })}
                 </span>
               </div>
@@ -887,19 +888,19 @@ function LiveFireRangeSessionsSection() {
     queryKey: ["/api/courses"],
   });
 
-  const liveFireCourse = courses.find(course => 
-    course.title.toLowerCase().includes('live-fire') && 
+  const liveFireCourse = courses.find(course =>
+    course.title.toLowerCase().includes('live-fire') &&
     course.title.toLowerCase().includes('range')
   );
 
   // Get upcoming schedules for the Live-Fire Range Session
   const upcomingSchedules = useMemo(() => {
     if (!liveFireCourse || !liveFireCourse.schedules) return [];
-    
+
     const now = new Date();
     return liveFireCourse.schedules
-      .filter(schedule => 
-        !schedule.deletedAt && 
+      .filter(schedule =>
+        !schedule.deletedAt &&
         new Date(schedule.startDate) > now &&
         schedule.availableSpots > 0
       )
@@ -932,7 +933,7 @@ function LiveFireRangeSessionsSection() {
         <CardContent className="pt-6">
           <div className="space-y-3">
             {displayedSchedules.map((schedule) => (
-              <div 
+              <div
                 key={schedule.id}
                 className="p-4 border rounded-lg hover:border-accent transition-colors"
               >
@@ -941,11 +942,11 @@ function LiveFireRangeSessionsSection() {
                     <div className="flex items-center space-x-2 mb-2">
                       <Calendar className="h-4 w-4 text-accent" />
                       <span className="font-medium">
-                        {new Date(schedule.startDate).toLocaleDateString('en-US', { 
+                        {new Date(schedule.startDate).toLocaleDateString('en-US', {
                           weekday: 'long',
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
                         })}
                       </span>
                     </div>
@@ -966,7 +967,7 @@ function LiveFireRangeSessionsSection() {
                       </div>
                     </div>
                   </div>
-                  <Button 
+                  <Button
                     onClick={() => handleRegisterClick(schedule)}
                     disabled={schedule.availableSpots === 0}
                     className="ml-4"
@@ -980,8 +981,8 @@ function LiveFireRangeSessionsSection() {
 
           {upcomingSchedules.length > 5 && (
             <div className="mt-4 text-center">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowAll(!showAll)}
               >
                 {showAll ? 'Show Less' : `View ${upcomingSchedules.length - 5} More Sessions`}
@@ -1007,11 +1008,11 @@ function LiveFireRangeSessionsSection() {
 }
 
 // Enhanced enrollment card component with payment and form status
-function EnhancedEnrollmentCard({ 
-  enrollment, 
+function EnhancedEnrollmentCard({
+  enrollment,
   onCompleteFormsClick,
-  onCompleteWaiverClick 
-}: { 
+  onCompleteWaiverClick
+}: {
   enrollment: EnrollmentWithDetails;
   onCompleteFormsClick: (enrollment: EnrollmentWithDetails) => void;
   onCompleteWaiverClick: (enrollment: EnrollmentWithDetails) => void;
@@ -1146,9 +1147,9 @@ function EnhancedEnrollmentCard({
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-2">
         {paymentBalance?.hasRemainingBalance && (
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               window.location.href = `/checkout?enrollmentId=${enrollment.id}`;
             }}
@@ -1160,9 +1161,9 @@ function EnhancedEnrollmentCard({
         )}
 
         {!formStatus?.isComplete && (
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => onCompleteFormsClick(enrollment)}
             data-testid={`button-complete-forms-${enrollment.id}`}
           >
@@ -1172,8 +1173,8 @@ function EnhancedEnrollmentCard({
         )}
 
         {waiverStatus?.hasPendingWaivers && (
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => onCompleteWaiverClick(enrollment)}
             data-testid={`button-complete-waiver-${enrollment.id}`}
@@ -1195,9 +1196,9 @@ function EnhancedEnrollmentCard({
 }
 
 // Edit Profile Dialog Component
-function EditProfileDialog({ isOpen, onClose, user }: { 
-  isOpen: boolean; 
-  onClose: () => void; 
+function EditProfileDialog({ isOpen, onClose, user }: {
+  isOpen: boolean;
+  onClose: () => void;
   user: User;
 }) {
   const { toast } = useToast();
@@ -1527,10 +1528,10 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                                       return checked
                                         ? field.onChange([...(field.value || []), method.id])
                                         : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== method.id
-                                            )
+                                          field.value?.filter(
+                                            (value) => value !== method.id
                                           )
+                                        )
                                     }}
                                     data-testid={`checkbox-contact-${method.id}`}
                                   />
@@ -1656,17 +1657,17 @@ function EditProfileDialog({ isOpen, onClose, user }: {
 
             {/* Form Actions */}
             <div className="flex justify-end space-x-3 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={onClose}
                 data-testid="button-cancel-edit"
               >
                 <X className="mr-2 h-4 w-4" />
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={updateProfileMutation.isPending}
                 data-testid="button-save-profile"
               >
@@ -1712,7 +1713,7 @@ export default function StudentPortal() {
       };
     } else if (daysUntilExpiration <= 90) {
       return {
-        level: 'warning', 
+        level: 'warning',
         message: `License expires in ${daysUntilExpiration} days`,
         color: 'warning'
       };
@@ -1747,7 +1748,7 @@ export default function StudentPortal() {
   const confirmedEnrollments = enrollments.filter(e => e.status === 'confirmed');
   const completedEnrollments = enrollments.filter(e => e.status === 'completed');
   const upcomingClasses = confirmedEnrollments.filter(e => e.schedule?.startDate && new Date(e.schedule.startDate) > new Date());
-  const completionRate = enrollments.length > 0 
+  const completionRate = enrollments.length > 0
     ? Math.round((completedEnrollments.length / enrollments.length) * 100)
     : 0;
 
@@ -1798,9 +1799,9 @@ export default function StudentPortal() {
                   </h1>
                   <p className="text-primary-foreground/80">Your training dashboard and course management</p>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="border-primary-foreground/20 text-slate-800 hover:bg-primary-foreground hover:text-primary ml-4"
                   onClick={() => setIsEditProfileOpen(true)}
                   data-testid="button-edit-profile"
@@ -1815,8 +1816,8 @@ export default function StudentPortal() {
               {(user as User)?.concealedCarryLicenseExpiration && (
                 <div className="flex items-center space-x-2">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    licenseWarning?.level === 'critical' ? 'bg-destructive/10' : 
-                    licenseWarning?.level === 'warning' ? 'bg-yellow-500/10' : 
+                    licenseWarning?.level === 'critical' ? 'bg-destructive/10' :
+                    licenseWarning?.level === 'warning' ? 'bg-yellow-500/10' :
                     'bg-success/10'
                   }`}>
                     <Shield className={`h-5 w-5 ${
@@ -1882,7 +1883,7 @@ export default function StudentPortal() {
             </CardContent>
           </Card>
 
-          <Card 
+          <Card
             className="cursor-pointer hover:shadow-lg transition-shadow"
             onClick={() => totalRemainingBalance > 0 && setIsRemainingBalanceModalOpen(true)}
             data-testid="card-remaining-balance"
@@ -1979,7 +1980,7 @@ export default function StudentPortal() {
                         <div className="text-sm">
                           <p className="font-medium">Action Required</p>
                           <p className="text-muted-foreground">
-                            {licenseWarning.level === 'critical' 
+                            {licenseWarning.level === 'critical'
                               ? 'Your license is expiring soon. Please renew immediately.'
                               : 'Consider scheduling a renewal soon to avoid any issues.'
                             }
@@ -1995,7 +1996,11 @@ export default function StudentPortal() {
         )}
 
         {/* Live-Fire Range Sessions Section - Only for Online CCW students */}
-        {enrollments.some(e => e.course.title.toLowerCase().includes('online') && e.course.title.toLowerCase().includes('concealed carry')) && (
+        {enrollments.some(e =>
+          e.course.title &&
+          e.course.title.toLowerCase().includes('online') &&
+          (e.course.title.toLowerCase().includes('concealed carry') || e.course.title.toLowerCase().includes('ccw'))
+        ) && (
           <LiveFireRangeSessionsSection />
         )}
 
@@ -2021,8 +2026,8 @@ export default function StudentPortal() {
               ) : upcomingClasses.length > 0 ? (
                 <div className="space-y-4">
                   {upcomingClasses.map(enrollment => (
-                    <EnhancedEnrollmentCard 
-                      key={enrollment.id} 
+                    <EnhancedEnrollmentCard
+                      key={enrollment.id}
                       enrollment={enrollment}
                       onCompleteFormsClick={setSelectedEnrollmentForForms}
                       onCompleteWaiverClick={setSelectedEnrollmentForWaiver}
@@ -2065,10 +2070,10 @@ export default function StudentPortal() {
                         <h4 className="font-semibold text-card-foreground" data-testid={`text-history-course-${enrollment.id}`}>
                           {enrollment.course.title}
                         </h4>
-                        <Badge 
+                        <Badge
                           variant={
                             enrollment.status === 'completed' ? 'default' :
-                            enrollment.status === 'confirmed' ? 'secondary' : 
+                            enrollment.status === 'confirmed' ? 'secondary' :
                             'outline'
                           }
                         >
@@ -2122,8 +2127,8 @@ export default function StudentPortal() {
             <div className="space-y-3">
               <h3 className="font-semibold text-sm text-muted-foreground">Courses with Outstanding Balances</h3>
               {enrollmentsWithBalance.map((enrollment) => (
-                <div 
-                  key={enrollment.id} 
+                <div
+                  key={enrollment.id}
                   className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                   data-testid={`balance-item-${enrollment.id}`}
                 >
@@ -2150,7 +2155,7 @@ export default function StudentPortal() {
                       <div className="text-xs text-muted-foreground">remaining</div>
                     </div>
                   </div>
-                  <Button 
+                  <Button
                     onClick={() => {
                       window.location.href = `/checkout?enrollmentId=${enrollment.id}`;
                     }}
@@ -2169,17 +2174,17 @@ export default function StudentPortal() {
 
       {/* Edit Profile Dialog */}
       {user && (
-        <EditProfileDialog 
-          isOpen={isEditProfileOpen} 
-          onClose={() => setIsEditProfileOpen(false)} 
-          user={user as User} 
+        <EditProfileDialog
+          isOpen={isEditProfileOpen}
+          onClose={() => setIsEditProfileOpen(false)}
+          user={user as User}
         />
       )}
 
       {/* Form Completion Dialog */}
       {selectedEnrollmentForForms && (
-        <FormCompletionInterface 
-          enrollment={selectedEnrollmentForForms} 
+        <FormCompletionInterface
+          enrollment={selectedEnrollmentForForms}
           onClose={() => setSelectedEnrollmentForForms(null)}
         />
       )}
