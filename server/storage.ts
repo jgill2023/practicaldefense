@@ -123,7 +123,7 @@ import {
   typeSmsBroadcastDeliveryWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne } from "drizzle-orm";
+import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -168,6 +168,7 @@ export interface IStorage {
   createEnrollment(enrollment: InsertEnrollment): Promise<Enrollment>;
   updateEnrollment(id: string, enrollment: Partial<InsertEnrollment>): Promise<Enrollment>;
   getEnrollment(id: string): Promise<EnrollmentWithDetails | undefined>;
+  getEnrollmentsByScheduleId(scheduleId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByStudent(studentId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByInstructor(instructorId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByCourse(courseId: string): Promise<EnrollmentWithDetails[]>;
@@ -181,7 +182,7 @@ export interface IStorage {
     former: any[];
   }>;
   getScheduleEnrollmentCount(scheduleId: string): Promise<number>;
-  getRosterExportData(instructorId: string, scheduleId?: string): Promise<{
+  getRosterExportData(instructorId: string, scheduleId?: string, courseId?: string): Promise<{
     current: any[];
     former: any[];
     held: any[];
@@ -1355,70 +1356,84 @@ export class DatabaseStorage implements IStorage {
       exportDate: string;
     };
   }> {
-    // Build query conditions
-    let whereCondition;
-    if (scheduleId) {
-      whereCondition = eq(enrollments.scheduleId, scheduleId);
-    } else if (courseId) {
-      whereCondition = eq(enrollments.courseId, courseId);
+    console.log(`getRosterExportData - Schedule filter: ${scheduleId || 'none'}, Course filter: ${courseId || 'none'}`);
+
+    // Get all courses for this instructor
+    const instructorCourses = await this.getCoursesByInstructor(instructorId);
+    const courseIds = instructorCourses.map(c => c.id);
+
+    if (courseIds.length === 0) {
+      return {
+        current: [],
+        former: [],
+        held: [],
+        summary: {
+          totalCurrentStudents: 0,
+          totalFormerStudents: 0,
+          totalCourses: 0,
+        }
+      };
     }
 
-    // Get all enrollments for this instructor's courses
-    const instructorEnrollments = await db.query.enrollments.findMany({
-      where: whereCondition,
+    // Build the where clause - MUST have a studentId to be a valid enrollment
+    let whereClause: any = and(
+      inArray(enrollments.courseId, courseIds),
+      isNotNull(enrollments.studentId) // Exclude draft enrollments without students
+    );
+
+    if (scheduleId) {
+      whereClause = and(whereClause, eq(enrollments.scheduleId, scheduleId));
+    } else if (courseId) {
+      whereClause = and(whereClause, eq(enrollments.courseId, courseId));
+    }
+
+    // Get all enrollments with full details - explicitly include student
+    const allEnrollments = await db.query.enrollments.findMany({
+      where: whereClause,
       with: {
+        student: true, // This should load the student
         course: {
           with: {
-            instructor: true,
             category: true,
-          },
+            instructor: true,
+          }
         },
         schedule: true,
       },
     });
 
-    console.log(`getRosterExportData - Total enrollments found: ${instructorEnrollments.length}`);
-    console.log(`getRosterExportData - Schedule filter: ${scheduleId || 'none'}, Course filter: ${courseId || 'none'}`);
+    console.log(`getRosterExportData - Total enrollments found: ${allEnrollments.length}`);
+    console.log(`getRosterExportData - Instructor enrollments: ${allEnrollments.length}`);
 
-    // Filter to only this instructor's enrollments
-    const filteredEnrollments = instructorEnrollments.filter(e => 
-      e.course?.instructorId === instructorId
-    );
-
-    console.log(`getRosterExportData - Instructor enrollments: ${filteredEnrollments.length}`);
+    // Log enrollment details for debugging
+    allEnrollments.forEach(e => {
+      console.log(`Enrollment ${e.id}: status=${e.status}, studentId=${e.studentId}, hasStudent=${!!e.student}, hasSchedule=${!!e.schedule}, hasCourse=${!!e.course}`);
+    });
 
     const now = new Date();
 
-    // Categorize enrollments based on status and schedule date
-    const heldEnrollments = filteredEnrollments.filter(e => e.status === 'hold');
+    // Categorize enrollments - include 'hold' status in held students
+    const currentStudents = allEnrollments.filter(e => 
+      e.status === 'confirmed' || e.status === 'pending'
+    );
 
-    // For specific schedule, confirmed enrollments are current
-    // For all schedules, check if schedule date is in future or past
-    const currentEnrollments = filteredEnrollments.filter(e => {
-      if (e.status === 'hold') return false; // Exclude held students from current list
+    const heldStudents = allEnrollments.filter(e =>
+      e.status === 'hold' || (e.status === 'cancelled' && e.cancellationReason)
+    );
 
-      if (scheduleId) {
-        // For specific schedule filter, all confirmed/completed are current
-        return e.status === 'confirmed' || e.status === 'completed';
-      }
-      // For all schedules, check if course is upcoming and confirmed
-      return e.schedule && new Date(e.schedule.startDate) >= now && e.status === 'confirmed';
-    });
-
-    console.log(`getRosterExportData - Current students: ${currentEnrollments.length}`);
-
-    // Former students are those with past course dates (only when not filtering by schedule)
-    const formerEnrollments = scheduleId ? [] : filteredEnrollments.filter(e => {
-      if (e.status === 'hold') return false; // Exclude held students from former list
-      return e.schedule && new Date(e.schedule.startDate) < now;
-    });
-
-    console.log(`getRosterExportData - Held students: ${heldEnrollments.length}`);
+    console.log(`getRosterExportData - Current students: ${currentStudents.length}`);
+    console.log(`getRosterExportData - Held students: ${heldStudents.length}`);
 
     // Flatten the data for export - convert enrollments directly to roster format
     const flattenEnrollment = (enrollment: any, category: 'current' | 'former' | 'held') => {
-      if (!enrollment || !enrollment.student || !enrollment.course || !enrollment.schedule) {
-        console.error("Invalid enrollment data for flattening:", enrollment);
+      // Check if student data is available. If not, log an error and return null.
+      if (!enrollment || !enrollment.student || !enrollment.student.id) {
+        console.error("Invalid enrollment data for flattening: Missing student or student ID.", enrollment);
+        return null;
+      }
+      // Also ensure course and schedule data are present for complete flattening
+      if (!enrollment.course || !enrollment.schedule) {
+        console.error("Invalid enrollment data for flattening: Missing course or schedule.", enrollment);
         return null;
       }
 
@@ -1448,9 +1463,14 @@ export class DatabaseStorage implements IStorage {
       };
     };
 
-    const currentFlat = currentEnrollments.map(e => flattenEnrollment(e, 'current')).filter(Boolean);
-    const formerFlat = formerEnrollments.map(e => flattenEnrollment(e, 'former')).filter(Boolean);
-    const heldFlat = heldEnrollments.map(e => flattenEnrollment(e, 'held')).filter(Boolean);
+    const currentFlat = currentStudents.map(e => flattenEnrollment(e, 'current')).filter(Boolean);
+    const heldFlat = heldStudents.map(e => flattenEnrollment(e, 'held')).filter(Boolean);
+
+    // Former students are those with past course dates (only when not filtering by schedule)
+    const formerFlat = scheduleId ? [] : allEnrollments.filter(e => {
+      if (e.status === 'hold' || e.status === 'cancelled') return false; // Exclude held and cancelled students from former list
+      return e.schedule && new Date(e.schedule.startDate) < now;
+    }).map(e => flattenEnrollment(e, 'former')).filter(Boolean);
 
     const allCourses = new Set();
     [...currentFlat, ...formerFlat, ...heldFlat].forEach(row => {
@@ -1486,9 +1506,9 @@ export class DatabaseStorage implements IStorage {
       former: formerFlat,
       held: heldFlat,
       summary: {
-        totalCurrentStudents: currentEnrollments.length,
-        totalFormerStudents: formerEnrollments.length,
-        totalHeldStudents: heldEnrollments.length,
+        totalCurrentStudents: currentStudents.length,
+        totalFormerStudents: formerStudents.length,
+        totalHeldStudents: heldStudents.length,
         totalCourses: allCourses.size,
         exportDate: new Date().toISOString()
       }
