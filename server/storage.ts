@@ -1507,7 +1507,7 @@ export class DatabaseStorage implements IStorage {
       held: heldFlat,
       summary: {
         totalCurrentStudents: currentStudents.length,
-        totalFormerStudents: formerStudents.length,
+        totalFormerStudents: formerFlat.length,
         totalHeldStudents: heldStudents.length,
         totalCourses: allCourses.size,
         exportDate: new Date().toISOString()
