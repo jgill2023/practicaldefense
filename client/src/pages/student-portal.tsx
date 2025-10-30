@@ -1704,7 +1704,6 @@ function StudentTransferRequestModal({ enrollment, isOpen, onClose }: {
   const { toast } = useToast();
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
   const [isOnHold, setIsOnHold] = useState(false);
-  const [transferMutation, setTransferMutation] = useState<any>(null);
 
   // Fetch future course schedules for the same course
   const { data: futureSchedules = [], isLoading: isLoadingSchedules } = useQuery<CourseSchedule[]>({
@@ -2097,7 +2096,7 @@ export default function StudentPortal() {
                       }`}></div>
                       <span className={`text-sm font-medium ${
                         licenseWarning?.level === 'critical' ? 'text-destructive' :
-                        licenseWarning?.level === 'warning' ? 'text-yellow-600' :
+                        licenseWarning?.level === 'warning' ? 'text-yellow-500' :
                         'text-success'
                       }`}>
                         {licenseWarning ? licenseWarning.message : 'License Valid'}
