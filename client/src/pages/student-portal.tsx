@@ -1011,11 +1011,13 @@ function LiveFireRangeSessionsSection() {
 function EnhancedEnrollmentCard({
   enrollment,
   onCompleteFormsClick,
-  onCompleteWaiverClick
+  onCompleteWaiverClick,
+  onRequestTransferClick,
 }: {
   enrollment: EnrollmentWithDetails;
   onCompleteFormsClick: (enrollment: EnrollmentWithDetails) => void;
   onCompleteWaiverClick: (enrollment: EnrollmentWithDetails) => void;
+  onRequestTransferClick: (enrollment: EnrollmentWithDetails) => void;
 }) {
   const { data: paymentBalance } = useQuery<PaymentBalanceResponse>({
     queryKey: ['/api/enrollments', enrollment.id, 'payment-balance'],
@@ -1190,6 +1192,17 @@ function EnhancedEnrollmentCard({
             Download Waiver
           </Button>
         )}
+
+        {/* Request Transfer Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onRequestTransferClick(enrollment)}
+          data-testid={`button-request-transfer-${enrollment.id}`}
+        >
+          <Edit className="mr-2 h-4 w-4" />
+          Request Transfer
+        </Button>
       </div>
     </div>
   );
@@ -1682,6 +1695,163 @@ function EditProfileDialog({ isOpen, onClose, user }: {
   );
 }
 
+// StudentTransferRequestModal component
+function StudentTransferRequestModal({ enrollment, isOpen, onClose }: {
+  enrollment: EnrollmentWithDetails;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const { toast } = useToast();
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
+  const [isOnHold, setIsOnHold] = useState(false);
+  const [transferMutation, setTransferMutation] = useState<any>(null);
+
+  // Fetch future course schedules for the same course
+  const { data: futureSchedules = [], isLoading: isLoadingSchedules } = useQuery<CourseSchedule[]>({
+    queryKey: ['/api/course-schedules', enrollment.course.id, 'future'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/course-schedules?courseId=${enrollment.course.id}&future=true`);
+      return response;
+    },
+    enabled: isOpen && !!enrollment.course.id,
+    retry: false,
+  });
+
+  // Mutation for requesting a transfer
+  const requestTransferMutation = useMutation({
+    mutationFn: async (payload: { scheduleId?: string | null; isOnHold: boolean }) => {
+      return await apiRequest("POST", `/api/enrollments/${enrollment.id}/request-transfer`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
+      toast({
+        title: "Transfer Request Submitted",
+        description: isOnHold
+          ? "You have been unenrolled and placed on the hold list."
+          : "Your request to transfer to a future course date has been submitted.",
+      });
+      onClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Request Failed",
+        description: error.message || "Failed to submit transfer request. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = () => {
+    if (isOnHold) {
+      requestTransferMutation.mutate({ isOnHold: true });
+    } else if (selectedScheduleId) {
+      requestTransferMutation.mutate({ scheduleId: selectedScheduleId, isOnHold: false });
+    } else {
+      toast({
+        title: "Invalid Selection",
+        description: "Please select a future course date or choose to be placed on hold.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Request Course Transfer</DialogTitle>
+          <DialogDescription>
+            Request to transfer your enrollment in "{enrollment.course.title}" to a future date or be placed on hold.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          <div className="p-4 bg-muted rounded-lg">
+            <h4 className="font-semibold mb-2">{enrollment.course.title}</h4>
+            <p className="text-sm text-muted-foreground">
+              Current Date: {new Date(enrollment.schedule.startDate).toLocaleDateString()}
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hold-list"
+                checked={isOnHold}
+                onCheckedChange={(checked) => {
+                  setIsOnHold(checked as boolean);
+                  if (checked) {
+                    setSelectedScheduleId(null); // Clear schedule selection if on hold
+                  }
+                }}
+              />
+              <Label htmlFor="hold-list" className="font-normal">Place on Hold List</Label>
+            </div>
+            <FormDescription>
+              Unenroll from this scheduled course and be placed on a hold list. You can request a transfer later if a new course is scheduled.
+            </FormDescription>
+          </div>
+
+          {!isOnHold && (
+            <div className="space-y-4">
+              <Label htmlFor="future-schedule" className="font-semibold">Or, select a future course date:</Label>
+              {isLoadingSchedules ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+                  <p className="text-muted-foreground text-sm">Loading available dates...</p>
+                </div>
+              ) : futureSchedules.length > 0 ? (
+                <select
+                  id="future-schedule"
+                  value={selectedScheduleId || ""}
+                  onChange={(e) => {
+                    setSelectedScheduleId(e.target.value);
+                    setIsOnHold(false); // Ensure hold option is deselected
+                  }}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  disabled={futureSchedules.length === 0}
+                >
+                  <option value="">Select a future date</option>
+                  {futureSchedules.map((schedule) => (
+                    <option key={schedule.id} value={schedule.id}>
+                      {new Date(schedule.startDate).toLocaleDateString()} - {schedule.startTime}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p className="text-sm text-muted-foreground">No future dates available for this course at the moment.</p>
+              )}
+              <FormDescription>
+                Transfer to a future scheduled session of the same course.
+              </FormDescription>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={requestTransferMutation.isPending || (!isOnHold && !selectedScheduleId) || (isLoadingSchedules && futureSchedules.length === 0)}
+            >
+              {requestTransferMutation.isPending ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-transparent border-t-current rounded-full mr-2" />
+                  Processing...
+                </>
+              ) : (
+                'Submit Request'
+              )}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 export default function StudentPortal() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -1689,6 +1859,8 @@ export default function StudentPortal() {
   const [isRemainingBalanceModalOpen, setIsRemainingBalanceModalOpen] = useState(false);
   const [selectedEnrollmentForForms, setSelectedEnrollmentForForms] = useState<EnrollmentWithDetails | null>(null);
   const [selectedEnrollmentForWaiver, setSelectedEnrollmentForWaiver] = useState<EnrollmentWithDetails | null>(null);
+  const [selectedEnrollmentForTransfer, setSelectedEnrollmentForTransfer] = useState<EnrollmentWithDetails | null>(null);
+
 
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/student/enrollments"],
@@ -2031,6 +2203,7 @@ export default function StudentPortal() {
                       enrollment={enrollment}
                       onCompleteFormsClick={setSelectedEnrollmentForForms}
                       onCompleteWaiverClick={setSelectedEnrollmentForWaiver}
+                      onRequestTransferClick={setSelectedEnrollmentForTransfer}
                     />
                   ))}
                 </div>
@@ -2216,6 +2389,15 @@ export default function StudentPortal() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Transfer Request Dialog */}
+      {selectedEnrollmentForTransfer && (
+        <StudentTransferRequestModal
+          enrollment={selectedEnrollmentForTransfer}
+          isOpen={!!selectedEnrollmentForTransfer}
+          onClose={() => setSelectedEnrollmentForTransfer(null)}
+        />
+      )}
     </Layout>
   );
 }

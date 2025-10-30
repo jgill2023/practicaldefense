@@ -381,6 +381,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Student transfer request endpoints
+  // Get available schedules for student transfer (same course, future dates only)
+  app.get('/api/student/available-schedules/:courseId/:enrollmentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { courseId, enrollmentId } = req.params;
+
+      // Verify enrollment belongs to user
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment || enrollment.studentId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get future schedules for the same course, excluding current schedule
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      const course = await storage.getCourse(courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      const availableSchedules = course.schedules
+        .filter(schedule => 
+          !schedule.deletedAt &&
+          schedule.id !== enrollment.scheduleId &&
+          new Date(schedule.startDate) >= startOfToday &&
+          schedule.availableSpots > 0
+        )
+        .map(schedule => ({
+          id: schedule.id,
+          courseId: course.id,
+          courseTitle: course.title,
+          startDate: schedule.startDate,
+          endDate: schedule.endDate,
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          location: schedule.location,
+          maxSpots: schedule.maxSpots,
+          availableSpots: schedule.availableSpots
+        }))
+        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+      res.json(availableSchedules);
+    } catch (error) {
+      console.error("Error fetching available schedules:", error);
+      res.status(500).json({ message: "Failed to fetch available schedules" });
+    }
+  });
+
+  // Student request to transfer to a different schedule
+  app.post('/api/student/enrollments/:enrollmentId/request-transfer', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { enrollmentId } = req.params;
+      const { newScheduleId, notes } = req.body;
+
+      // Verify enrollment belongs to user
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment || enrollment.studentId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      if (!newScheduleId || !notes) {
+        return res.status(400).json({ message: "New schedule ID and notes are required" });
+      }
+
+      // Update enrollment with transfer request notes
+      await storage.updateEnrollment(enrollmentId, {
+        notes: `TRANSFER REQUEST: Student requested transfer to schedule ${newScheduleId}. Reason: ${notes}`,
+      });
+
+      // TODO: Send notification to instructor about transfer request
+      // This can be implemented later using the notification system
+
+      res.json({ 
+        success: true, 
+        message: "Transfer request submitted successfully" 
+      });
+    } catch (error) {
+      console.error("Error submitting transfer request:", error);
+      res.status(500).json({ message: "Failed to submit transfer request" });
+    }
+  });
+
+  // Student request to be placed on hold
+  app.post('/api/student/enrollments/:enrollmentId/request-hold', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { enrollmentId } = req.params;
+      const { notes } = req.body;
+
+      // Verify enrollment belongs to user
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment || enrollment.studentId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      if (!notes) {
+        return res.status(400).json({ message: "Notes are required" });
+      }
+
+      // Update enrollment with hold request notes
+      await storage.updateEnrollment(enrollmentId, {
+        notes: `HOLD REQUEST: Student requested to be placed on hold. Reason: ${notes}`,
+      });
+
+      // TODO: Send notification to instructor about hold request
+      // This can be implemented later using the notification system
+
+      res.json({ 
+        success: true, 
+        message: "Hold request submitted successfully" 
+      });
+    } catch (error) {
+      console.error("Error submitting hold request:", error);
+      res.status(500).json({ message: "Failed to submit hold request" });
+    }
+  });
+
   // Course schedule routes
   app.post('/api/courses/:courseId/schedules', isAuthenticated, async (req: any, res) => {
     try {
