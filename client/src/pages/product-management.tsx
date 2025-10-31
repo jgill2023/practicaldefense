@@ -815,7 +815,7 @@ export default function ProductManagement() {
                           )}
                           <ObjectUploader
                             maxNumberOfFiles={1}
-                            maxFileSize={5242880} // 5MB
+                            maxFileSize={15728640} // 15MB
                             onGetUploadParameters={async () => {
                               const data = await apiRequest('POST', '/api/objects/upload');
                               return { 
