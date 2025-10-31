@@ -1,0 +1,40 @@
+injected.js:27 Upload response: {
+  "url": "/replit-objstore-ea4bf722-a164-4c6d-9231-e8f760155b8f/public/range-images/1761883278390-20170409_171013249_iOS.jpg",
+  "filename": "20170409_171013249_iOS.jpg",
+  "size": 3053824
+}
+injected.js:27 URL from response: /replit-objstore-ea4bf722-a164-4c6d-9231-e8f760155b8f/public/range-images/1761883278390-20170409_171013249_iOS.jpg
+injected.js:27 Setting rangeLocationImageUrl to: /replit-objstore-ea4bf722-a164-4c6d-9231-e8f760155b8f/public/range-images/1761883278390-20170409_171013249_iOS.jpg
+injected.js:27 Form value after setting: /replit-objstore-ea4bf722-a164-4c6d-9231-e8f760155b8f/public/range-images/1761883278390-20170409_171013249_iOS.jpg
+1761883278390-20170409_171013249_iOS.jpg:1  GET https://92e1241f-51d0-4d2b-96e7-7102a349e88a-00-1x0tbv75d86dz.worf.replit.dev/replit-objstore-ea4bf722-a164-4c6d-9231-e8f760155b8f/public/range-images/1761883278390-20170409_171013249_iOS.jpg 500 (Internal Server Error)
+Image
+commitMount @ chunk-XQLYTHWV.js?v=45ccacfa:8412
+commitLayoutEffectOnFiber @ chunk-XQLYTHWV.js?v=45ccacfa:17102
+commitLayoutMountEffects_complete @ chunk-XQLYTHWV.js?v=45ccacfa:17980
+commitLayoutEffects_begin @ chunk-XQLYTHWV.js?v=45ccacfa:17969
+commitLayoutEffects @ chunk-XQLYTHWV.js?v=45ccacfa:17920
+commitRootImpl @ chunk-XQLYTHWV.js?v=45ccacfa:19353
+commitRoot @ chunk-XQLYTHWV.js?v=45ccacfa:19277
+finishConcurrentRender @ chunk-XQLYTHWV.js?v=45ccacfa:18805
+performConcurrentWorkOnRoot @ chunk-XQLYTHWV.js?v=45ccacfa:18718
+workLoop @ chunk-XQLYTHWV.js?v=45ccacfa:197
+flushWork @ chunk-XQLYTHWV.js?v=45ccacfa:176
+performWorkUntilDeadline @ chunk-XQLYTHWV.js?v=45ccacfa:384Understand this error
+injected.js:27 Image failed to load: /replit-objstore-ea4bf722-a164-4c6d-9231-e8f760155b8f/public/range-images/1761883278390-20170409_171013249_iOS.jpg
+(anonymous) @ injected.js:27
+onError @ EventCreationForm.tsx:733
+callCallback2 @ chunk-XQLYTHWV.js?v=45ccacfa:3674
+invokeGuardedCallbackDev @ chunk-XQLYTHWV.js?v=45ccacfa:3699
+invokeGuardedCallback @ chunk-XQLYTHWV.js?v=45ccacfa:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-XQLYTHWV.js?v=45ccacfa:3736
+executeDispatch @ chunk-XQLYTHWV.js?v=45ccacfa:7014
+processDispatchQueueItemsInOrder @ chunk-XQLYTHWV.js?v=45ccacfa:7034
+processDispatchQueue @ chunk-XQLYTHWV.js?v=45ccacfa:7043
+dispatchEventsForPlugins @ chunk-XQLYTHWV.js?v=45ccacfa:7051
+(anonymous) @ chunk-XQLYTHWV.js?v=45ccacfa:7174
+batchedUpdates$1 @ chunk-XQLYTHWV.js?v=45ccacfa:18913
+batchedUpdates @ chunk-XQLYTHWV.js?v=45ccacfa:3579
+dispatchEventForPluginEventSystem @ chunk-XQLYTHWV.js?v=45ccacfa:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-XQLYTHWV.js?v=45ccacfa:5478
+dispatchEvent @ chunk-XQLYTHWV.js?v=45ccacfa:5472Understand this error
+injected.js:27 Image loaded successfully: /replit-objstore-ea4bf722-a164-4c6d-9231-e8f760155b8f/public/range-images/1761883278390-20170409_171013249_iOS.jpg
