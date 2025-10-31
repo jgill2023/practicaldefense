@@ -1806,12 +1806,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // File upload endpoint for object storage
   app.post("/api/upload", isAuthenticated, async (req: any, res) => {
     try {
-      const multer = require("multer");
-      const { Storage } = require("@google-cloud/storage");
+      const multer = await import("multer");
+      const { Storage } = await import("@google-cloud/storage");
       
       // Configure multer for memory storage
-      const upload = multer({ 
-        storage: multer.memoryStorage(),
+      const upload = multer.default({ 
+        storage: multer.default.memoryStorage(),
         limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
       }).single("file");
 
@@ -1837,7 +1837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Extract bucket name from path (format: /bucket-name/path)
       const bucketName = bucketPath.split("/")[1];
-      const storage = new Storage();
+      const storage = new Storage.Storage();
       const bucket = storage.bucket(bucketName);
 
       // Generate unique filename
