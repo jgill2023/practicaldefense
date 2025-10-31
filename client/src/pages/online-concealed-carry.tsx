@@ -172,8 +172,7 @@ export function OnlineConcealedCarryPage() {
     return products.find((product: any) => 
       product.name && 
       product.name.toLowerCase().includes('online') && 
-      product.name.toLowerCase().includes('concealed carry') &&
-      product.type === 'course'
+      product.name.toLowerCase().includes('concealed carry')
     );
   };
 
