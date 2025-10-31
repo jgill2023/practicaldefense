@@ -1599,6 +1599,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Direct bucket path access for uploaded files
+  app.get("/replit-objstore-*", async (req: any, res) => {
+    const objectStorageService = new ObjectStorageService();
+    try {
+      // Parse the bucket path
+      const fullPath = req.path;
+      const parts = fullPath.split('/');
+      if (parts.length < 3) {
+        return res.sendStatus(404);
+      }
+      
+      const bucketName = parts[1];
+      const objectName = parts.slice(2).join('/');
+      
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+      
+      const [exists] = await file.exists();
+      if (!exists) {
+        return res.sendStatus(404);
+      }
+      
+      // Download the file
+      await objectStorageService.downloadObject(file, res);
+    } catch (error) {
+      console.error("Error serving bucket file:", error);
+      return res.sendStatus(500);
+    }
+  });
+
   app.post("/api/objects/upload", isAuthenticated, async (req, res) => {
     const objectStorageService = new ObjectStorageService();
     const uploadURL = await objectStorageService.getObjectEntityUploadURL();
