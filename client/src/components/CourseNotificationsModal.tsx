@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -26,12 +25,12 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Bell, 
-  Mail, 
-  MessageSquare, 
-  Plus, 
-  Edit, 
+import {
+  Bell,
+  Mail,
+  MessageSquare,
+  Plus,
+  Edit,
   Trash2,
   Clock,
   Calendar,
@@ -65,6 +64,15 @@ const templateFormSchema = z.object({
   type: z.enum(["email", "sms"]),
   subject: z.string().optional(),
   content: z.string().min(1, "Message content is required"),
+  isActive: z.boolean(),
+});
+
+const scheduleFormSchema = z.object({
+  templateId: z.string().uuid("Please select a template"),
+  triggerEvent: z.string().min(1, "Please select a trigger event"),
+  triggerTiming: z.enum(["immediate", "delayed"]),
+  delayDays: z.number().min(0).optional(),
+  delayHours: z.number().min(0).optional(),
   isActive: z.boolean(),
 });
 
@@ -351,7 +359,7 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
     const deleteConfirmation = prompt(
       `Are you sure you want to delete "${template.name}"? This action cannot be undone.\n\nType DELETE to confirm:`
     );
-    
+
     if (deleteConfirmation === "DELETE") {
       deleteTemplateMutation.mutate(template.id);
     } else if (deleteConfirmation !== null) {
@@ -380,6 +388,13 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
     if (confirm("Are you sure you want to delete this notification schedule?")) {
       deleteScheduleMutation.mutate(id);
     }
+  };
+
+  // Function to insert tag into the content
+  const insertTag = (tag: string) => {
+    const currentContent = templateForm.getValues("content") || "";
+    const newContent = currentContent + tag;
+    templateForm.setValue("content", newContent);
   };
 
   return (
@@ -613,6 +628,7 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                 onClick={() => {
                   templateForm.reset();
                   setIsCreatingTemplate(true);
+                  setEditingTemplate(null); // Ensure we are in create mode
                 }}
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -636,6 +652,11 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                         {...templateForm.register("name")}
                         placeholder="e.g., Course Reminder Email"
                       />
+                      {templateForm.formState.errors.name && (
+                        <p className="text-sm text-destructive mt-1">
+                          {templateForm.formState.errors.name.message}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -662,6 +683,11 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                           </SelectItem>
                         </SelectContent>
                       </Select>
+                      {templateForm.formState.errors.type && (
+                        <p className="text-sm text-destructive mt-1">
+                          {templateForm.formState.errors.type.message}
+                        </p>
+                      )}
                     </div>
 
                     {templateForm.watch("type") === "email" && (
@@ -672,27 +698,47 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                           {...templateForm.register("subject")}
                           placeholder="e.g., Reminder: {{courseName}} starts tomorrow"
                         />
+                        {templateForm.formState.errors.subject && (
+                          <p className="text-sm text-destructive mt-1">
+                            {templateForm.formState.errors.subject.message}
+                          </p>
+                        )}
                       </div>
                     )}
 
                     <div>
                       <Label htmlFor="content">Message Content</Label>
-                      <ReactQuill
-                        theme="snow"
-                        value={templateForm.watch("content") || ""}
-                        onChange={(value) => {
-                          templateForm.setValue("content", value, { shouldValidate: true });
-                        }}
-                        placeholder="Enter message content (you can use variables like {{firstName}}, {{courseName}}, etc.)"
-                      />
+                      <div className="flex flex-col gap-2">
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="xs" type="button" variant="outline" onClick={() => insertTag("{{firstName}}")}>First Name</Button>
+                          <Button size="xs" type="button" variant="outline" onClick={() => insertTag("{{lastName}}")}>Last Name</Button>
+                          <Button size="xs" type="button" variant="outline" onClick={() => insertTag("{{courseName}}")}>Course Name</Button>
+                          <Button size="xs" type="button" variant="outline" onClick={() => insertTag("{{startDate}}")}>Start Date</Button>
+                          <Button size="xs" type="button" variant="outline" onClick={() => insertTag("{{startTime}}")}>Start Time</Button>
+                        </div>
+                        <ReactQuill
+                          theme="snow"
+                          value={templateForm.watch("content") || ""}
+                          onChange={(value) => {
+                            templateForm.setValue("content", value, { shouldValidate: true });
+                          }}
+                          modules={{
+                            toolbar: [
+                              [{ 'header': [1, 2, false] }],
+                              ['bold', 'italic', 'underline'],
+                              ['link', 'image'],
+                              [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                              ['clean']
+                            ]
+                          }}
+                          className="h-64" // Taller message area
+                        />
+                      </div>
                       {templateForm.formState.errors.content && (
                         <p className="text-sm text-destructive mt-1">
                           {templateForm.formState.errors.content.message}
                         </p>
                       )}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Available variables: {"{firstName}"}, {"{lastName}"}, {"{courseName}"}, {"{startDate}"}, {"{startTime}"}
-                      </p>
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -716,8 +762,8 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                       >
                         Cancel
                       </Button>
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
                       >
                         {editingTemplate ? "Update" : "Create"} Template
