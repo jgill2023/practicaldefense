@@ -189,7 +189,7 @@ export default function ProductManagement() {
       const productsProcessed = results.productsProcessed || 0;
       const variantsProcessed = results.variantsProcessed || 0;
       const errors = results.errors || [];
-      
+
       toast({ 
         title: "Printful sync completed", 
         description: `Processed ${productsProcessed} products and ${variantsProcessed} variants${errors.length > 0 ? ` (${errors.length} errors)` : ''}`
@@ -256,7 +256,7 @@ export default function ProductManagement() {
       ...data,
       parentId: data.parentId === "none" ? null : data.parentId
     };
-    
+
     if (editingCategory) {
       updateCategoryMutation.mutate({ id: editingCategory.id, data: processedData });
     } else {
@@ -271,7 +271,7 @@ export default function ProductManagement() {
       price: data.price, // Keep as string for decimal conversion
       sortOrder: Number(data.sortOrder), // Convert to number
     };
-    
+
     if (editingProduct) {
       updateProductMutation.mutate({ id: editingProduct.id, data: transformedData });
     } else {
@@ -817,28 +817,31 @@ export default function ProductManagement() {
                             maxNumberOfFiles={1}
                             maxFileSize={5242880} // 5MB
                             onGetUploadParameters={async () => {
-                              const response = await apiRequest('POST', '/api/objects/upload');
-                              const data = await response.json();
+                              const data = await apiRequest('POST', '/api/objects/upload');
                               return { 
                                 method: 'PUT' as const, 
                                 url: data.uploadURL 
                               };
                             }}
                             onComplete={async (result) => {
+                              console.log('Upload result:', result);
                               if (result.successful && result.successful.length > 0) {
+                                // The uploadURL is the URL we used to PUT the file
                                 const uploadURL = result.successful[0].uploadURL;
-                                
+                                console.log('Upload URL:', uploadURL);
+
                                 if (uploadURL) {
                                   try {
                                     // Set ACL permissions and get public URL
-                                    const response = await apiRequest("PUT", "/api/product-images", {
+                                    const data = await apiRequest("PUT", "/api/product-images", {
                                       productImageURL: uploadURL,
                                     });
-                                    const data = await response.json();
-                                    
+
+                                    console.log('ACL response:', data);
+
                                     // Set the publicly accessible image URL
                                     field.onChange(data.objectPath);
-                                    
+
                                     toast({
                                       title: "Image Uploaded",
                                       description: "Product image has been uploaded successfully.",
@@ -852,6 +855,7 @@ export default function ProductManagement() {
                                     });
                                   }
                                 } else {
+                                  console.error('No upload URL in result');
                                   toast({
                                     title: "Upload Error",
                                     description: "Upload completed but no URL received.",
@@ -859,6 +863,7 @@ export default function ProductManagement() {
                                   });
                                 }
                               } else {
+                                console.error('Upload failed:', result);
                                 toast({
                                   title: "Upload Failed",
                                   description: "No files were successfully uploaded.",

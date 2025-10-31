@@ -83,10 +83,12 @@ export function ObjectUploader({
       if (response.ok) {
         // Extract the storage URL from the upload URL by removing query parameters
         const storageURL = url.split('?')[0];
+        console.log('Upload successful, storage URL:', storageURL);
         onComplete?.({
           successful: [{ uploadURL: storageURL }]
         });
       } else {
+        console.error('Upload failed with status:', response.status);
         alert('Upload failed. Please try again.');
       }
     } catch (error) {
