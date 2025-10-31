@@ -282,6 +282,7 @@ export default function CourseManagement() {
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<{course: CourseWithSchedules, schedule: CourseScheduleWithSessions} | null>(null);
   const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
+  const [selectedCourseForEvent, setSelectedCourseForEvent] = useState<CourseWithSchedules | null>(null);
 
   // Fetch instructor's courses with detailed schedules
   const { data: courses = [], isLoading: coursesLoading } = useQuery<CourseWithSchedules[]>({
@@ -434,6 +435,10 @@ export default function CourseManagement() {
                   <CourseManagementActions 
                     course={course}
                     onEditCourse={(course) => setEditingCourse(course)}
+                    onCreateEvent={(course) => {
+                      setSelectedCourseForEvent(course);
+                      setShowCreateEventModal(true);
+                    }}
                     data-testid={`actions-course-${course.id}`}
                   />
                 </div>
@@ -1035,6 +1040,23 @@ export default function CourseManagement() {
             onCourseUpdated={() => {
               // Course list will automatically refresh via query invalidation
             }}
+          />
+        )}
+
+        {/* Create Event Modal */}
+        {showCreateEventModal && (
+          <EventCreationForm
+            isOpen={showCreateEventModal}
+            onClose={() => {
+              setShowCreateEventModal(false);
+              setSelectedCourseForEvent(null);
+            }}
+            onEventCreated={() => {
+              setShowCreateEventModal(false);
+              setSelectedCourseForEvent(null);
+              queryClient.invalidateQueries({ queryKey: ['/api/instructor/courses'] });
+            }}
+            preSelectedCourseId={selectedCourseForEvent?.id}
           />
         )}
       </div>

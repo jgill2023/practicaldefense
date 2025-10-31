@@ -84,9 +84,10 @@ interface EventCreationFormProps {
   isOpen?: boolean;
   onClose: () => void;
   onEventCreated?: () => void;
+  preSelectedCourseId?: string;
 }
 
-export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: EventCreationFormProps) {
+export function EventCreationForm({ isOpen = false, onClose, onEventCreated, preSelectedCourseId }: EventCreationFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentTab, setCurrentTab] = useState("basic");
@@ -105,6 +106,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
+      courseId: preSelectedCourseId || "",
       isMultiDay: false,
       isRecurring: false,
       maxSpots: 20,
@@ -156,6 +158,8 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
 
   const onSubmit = (data: EventFormData) => {
     console.log('Form submission attempted - current tab:', currentTab);
+    console.log('Form data:', data);
+    console.log('Form errors:', form.formState.errors);
     
     // Only submit if we're on the final tab and have all required data
     if (currentTab !== "settings") {
@@ -170,6 +174,11 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
     
     // Validate required fields
     if (!data.courseId || !data.startDate || !data.endDate) {
+      console.log('Missing required fields:', { 
+        courseId: data.courseId, 
+        startDate: data.startDate, 
+        endDate: data.endDate 
+      });
       toast({
         title: "Missing Required Fields",
         description: "Please fill in course, start date, and end date.",
@@ -890,6 +899,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
                 // Manually trigger form submission since we've disabled the form's default behavior
                 form.handleSubmit(onSubmit)(e);
               }}
+              data-testid="button-submit-event"
             >
               {createEventMutation.isPending ? "Creating..." : "Create Event"}
             </Button>

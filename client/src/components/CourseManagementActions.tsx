@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Archive, Trash2, EyeOff, Eye, Bell } from "lucide-react";
+import { MoreHorizontal, Edit, Archive, Trash2, EyeOff, Eye, Bell, Plus } from "lucide-react";
 import { EditCourseForm } from "@/components/EditCourseForm";
 import { CourseNotificationsModal } from "@/components/CourseNotificationsModal";
 import type { CourseWithSchedules } from "@shared/schema";
@@ -29,9 +29,10 @@ import type { CourseWithSchedules } from "@shared/schema";
 interface CourseManagementActionsProps {
   course: CourseWithSchedules;
   onEditCourse?: (course: CourseWithSchedules) => void;
+  onCreateEvent?: (course: CourseWithSchedules) => void;
 }
 
-export function CourseManagementActions({ course, onEditCourse }: CourseManagementActionsProps) {
+export function CourseManagementActions({ course, onEditCourse, onCreateEvent }: CourseManagementActionsProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
@@ -123,6 +124,16 @@ export function CourseManagementActions({ course, onEditCourse }: CourseManageme
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem 
+            onClick={() => onCreateEvent?.(course)}
+            data-testid={`button-create-event-${course.id}`}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Create Event
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
           <DropdownMenuItem 
             onClick={() => onEditCourse?.(course)}
             data-testid={`button-edit-course-${course.id}`}
