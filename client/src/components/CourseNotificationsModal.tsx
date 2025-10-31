@@ -51,7 +51,7 @@ interface CourseNotificationsModalProps {
 const notificationFormSchema = z.object({
   templateId: z.string().uuid("Please select a template"),
   triggerEvent: z.string().min(1, "Please select a trigger event"),
-  triggerTiming: z.enum(["before", "after"]),
+  triggerTiming: z.enum(["before", "after"]).optional(),
   delayDays: z.number().min(0).optional(),
   delayHours: z.number().min(0).optional(),
   isActive: z.boolean(),
@@ -114,6 +114,16 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
     },
   });
 
+  // Watch trigger event to reset timing fields when changed
+  const triggerEvent = scheduleForm.watch("triggerEvent");
+  
+  // Reset timing fields when switching away from course_start
+  if (triggerEvent !== "course_start") {
+    scheduleForm.setValue("delayDays", 0);
+    scheduleForm.setValue("delayHours", 0);
+    scheduleForm.setValue("triggerTiming", undefined);
+  }
+
   // Template form
   const templateForm = useForm<TemplateFormData>({
     resolver: zodResolver(templateFormSchema),
@@ -163,6 +173,7 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/notification-schedules"] });
       setEditingSchedule(null);
+      setIsCreatingSchedule(false); // Close the form after successful update
       scheduleForm.reset();
       toast({
         title: "Schedule Updated",
@@ -512,51 +523,65 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                     </div>
 
                     <div className="space-y-4">
-                      <div>
-                        <Label>Send Notification</Label>
-                        <Select
-                          value={scheduleForm.watch("triggerTiming")}
-                          onValueChange={(value: "before" | "after") => scheduleForm.setValue("triggerTiming", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="When to send" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="before">Before course start</SelectItem>
-                            <SelectItem value="after">After course start</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
+                      {/* Only show timing selector for course_start trigger */}
+                      {scheduleForm.watch("triggerEvent") === "course_start" && (
                         <div>
-                          <Label htmlFor="delayDays">Days</Label>
-                          <Input
-                            id="delayDays"
-                            type="number"
-                            min="0"
-                            {...scheduleForm.register("delayDays", { valueAsNumber: true })}
-                            placeholder="0"
-                          />
+                          <Label>Send Notification</Label>
+                          <Select
+                            value={scheduleForm.watch("triggerTiming")}
+                            onValueChange={(value: "before" | "after") => scheduleForm.setValue("triggerTiming", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="When to send" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="before">Before course start</SelectItem>
+                              <SelectItem value="after">After course start</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                        <div>
-                          <Label htmlFor="delayHours">Hours</Label>
-                          <Input
-                            id="delayHours"
-                            type="number"
-                            min="0"
-                            {...scheduleForm.register("delayHours", { valueAsNumber: true })}
-                            placeholder="0"
-                          />
-                        </div>
-                      </div>
+                      )}
 
-                      {scheduleForm.watch("delayDays") > 0 || scheduleForm.watch("delayHours") > 0 ? (
+                      {/* Show delay inputs for all triggers */}
+                      {scheduleForm.watch("triggerEvent") === "course_start" ? (
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="delayDays">Days</Label>
+                            <Input
+                              id="delayDays"
+                              type="number"
+                              min="0"
+                              {...scheduleForm.register("delayDays", { valueAsNumber: true })}
+                              placeholder="0"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="delayHours">Hours</Label>
+                            <Input
+                              id="delayHours"
+                              type="number"
+                              min="0"
+                              {...scheduleForm.register("delayHours", { valueAsNumber: true })}
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-md bg-muted p-3">
+                          <p className="text-sm text-muted-foreground">
+                            This notification will be sent <strong>immediately</strong> when {scheduleForm.watch("triggerEvent")?.replace(/_/g, " ")} occurs.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Show timing summary only for course_start */}
+                      {scheduleForm.watch("triggerEvent") === "course_start" && 
+                       (scheduleForm.watch("delayDays") > 0 || scheduleForm.watch("delayHours") > 0) && (
                         <p className="text-sm text-muted-foreground">
                           Will send {scheduleForm.watch("delayDays") || 0} days and {scheduleForm.watch("delayHours") || 0} hours{" "}
                           <strong>{scheduleForm.watch("triggerTiming") === "before" ? "before" : "after"}</strong> course start
                         </p>
-                      ) : null}
+                      )}
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -624,10 +649,14 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                             </div>
                             <p className="text-sm text-muted-foreground">
                               Trigger: {schedule.triggerEvent.replace(/_/g, " ")}
-                              {schedule.delayDays || schedule.delayHours ? (
-                                <> • Send {schedule.delayDays || 0}d {schedule.delayHours || 0}h {schedule.triggerTiming === "before" ? "before" : "after"}</>
+                              {schedule.triggerEvent === "course_start" ? (
+                                schedule.delayDays || schedule.delayHours ? (
+                                  <> • Send {schedule.delayDays || 0}d {schedule.delayHours || 0}h {schedule.triggerTiming === "before" ? "before" : "after"}</>
+                                ) : (
+                                  <> • Send immediately</>
+                                )
                               ) : (
-                                <> • Send immediately</>
+                                <> • Send immediately upon trigger</>
                               )}
                             </p>
                           </div>
