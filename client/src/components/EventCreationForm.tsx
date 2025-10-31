@@ -724,18 +724,28 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
                 <div className="mt-2">
                   {form.watch("rangeLocationImageUrl") ? (
                     <div className="space-y-2">
-                      <div className="relative w-full h-48 rounded-lg overflow-hidden border">
+                      <div className="relative w-full h-48 rounded-lg overflow-hidden border bg-gray-50">
                         <img
-                          src={form.watch("rangeLocationImageUrl")}
+                          src={form.watch("rangeLocationImageUrl") || ""}
                           alt="Range location"
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.error("Image failed to load:", form.watch("rangeLocationImageUrl"));
+                            e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23ddd'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999'%3EImage Error%3C/text%3E%3C/svg%3E";
+                          }}
+                          onLoad={() => {
+                            console.log("Image loaded successfully:", form.watch("rangeLocationImageUrl"));
+                          }}
                         />
                       </div>
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => form.setValue("rangeLocationImageUrl", "")}
+                        onClick={() => {
+                          console.log("Removing image");
+                          form.setValue("rangeLocationImageUrl", "");
+                        }}
                         data-testid="button-remove-image"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -775,21 +785,32 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
                               credentials: "include",
                             });
 
-                            if (!response.ok) throw new Error("Upload failed");
+                            if (!response.ok) {
+                              const errorText = await response.text();
+                              console.error("Upload failed with status:", response.status, errorText);
+                              throw new Error("Upload failed");
+                            }
 
                             const data = await response.json();
-                            console.log("Upload response:", data);
+                            console.log("Upload response:", JSON.stringify(data, null, 2));
+                            console.log("URL from response:", data.url);
                             
                             // The upload returns a path like /replit-objstore-.../public/range-images/...
                             // We need to use this path directly
                             if (data.url) {
+                              console.log("Setting rangeLocationImageUrl to:", data.url);
                               form.setValue("rangeLocationImageUrl", data.url);
-                              console.log("Image URL set to:", data.url);
+                              
+                              // Verify it was set
+                              const currentValue = form.watch("rangeLocationImageUrl");
+                              console.log("Form value after setting:", currentValue);
+                              
                               toast({
                                 title: "Image uploaded",
                                 description: "Range location image has been uploaded successfully",
                               });
                             } else {
+                              console.error("No URL in response, full response:", data);
                               throw new Error("No URL in response");
                             }
                           } catch (error) {
