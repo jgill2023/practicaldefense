@@ -39,6 +39,14 @@ const scheduleFormSchema = z.object({
   registrationDeadline: z.string().optional(),
   waitlistEnabled: z.boolean(),
   autoConfirmRegistration: z.boolean(),
+  // Backend Details fields
+  rangeName: z.string().optional(),
+  classroomName: z.string().optional(),
+  arrivalTime: z.string().optional(),
+  departureTime: z.string().optional(),
+  dayOfWeek: z.string().optional(),
+  googleMapsLink: z.string().optional(),
+  rangeLocationImageUrl: z.string().optional(),
 });
 
 type ScheduleFormData = z.infer<typeof scheduleFormSchema>;
@@ -94,6 +102,14 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
           : schedule.registrationDeadline.toISOString().split('T')[0]) : '',
       waitlistEnabled: schedule?.waitlistEnabled ?? true,
       autoConfirmRegistration: schedule?.autoConfirmRegistration ?? true,
+      // Backend Details
+      rangeName: schedule?.rangeName || '',
+      classroomName: schedule?.classroomName || '',
+      arrivalTime: schedule?.arrivalTime || '',
+      departureTime: schedule?.departureTime || '',
+      dayOfWeek: schedule?.dayOfWeek || '',
+      googleMapsLink: schedule?.googleMapsLink || '',
+      rangeLocationImageUrl: schedule?.rangeLocationImageUrl || '',
     },
   });
 
@@ -111,6 +127,14 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
         startDate: data.startDate, // Send as string, server will convert
         endDate: data.endDate, // Send as string, server will convert
         registrationDeadline: data.registrationDeadline || null, // Send as string or null
+        // Backend Details
+        rangeName: data.rangeName || null,
+        classroomName: data.classroomName || null,
+        arrivalTime: data.arrivalTime || null,
+        departureTime: data.departureTime || null,
+        dayOfWeek: data.dayOfWeek || null,
+        googleMapsLink: data.googleMapsLink || null,
+        rangeLocationImageUrl: data.rangeLocationImageUrl || null,
       };
       
       await apiRequest("PATCH", `/api/instructor/schedules/${schedule.id}`, updateData);
@@ -339,6 +363,222 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
                   )}
                 />
               </div>
+            </div>
+
+            {/* Backend Details Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                Backend Details
+              </h3>
+              <FormDescription>
+                These details will be automatically populated into course email and SMS notifications
+              </FormDescription>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="rangeName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Range</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., Range A" 
+                          {...field}
+                          value={field.value || ''}
+                          data-testid="input-range-name"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="classroomName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Classroom</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="e.g., Classroom 101" 
+                          {...field}
+                          value={field.value || ''}
+                          data-testid="input-classroom-name"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="arrivalTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Arrival Time</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="time" 
+                          {...field}
+                          value={field.value || ''}
+                          data-testid="input-arrival-time"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="departureTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Departure Time</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="time" 
+                          {...field}
+                          value={field.value || ''}
+                          data-testid="input-departure-time"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="dayOfWeek"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Day</FormLabel>
+                    <Select 
+                      value={field.value || ''}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger data-testid="select-day-of-week">
+                          <SelectValue placeholder="Select day" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Monday">Monday</SelectItem>
+                        <SelectItem value="Tuesday">Tuesday</SelectItem>
+                        <SelectItem value="Wednesday">Wednesday</SelectItem>
+                        <SelectItem value="Thursday">Thursday</SelectItem>
+                        <SelectItem value="Friday">Friday</SelectItem>
+                        <SelectItem value="Saturday">Saturday</SelectItem>
+                        <SelectItem value="Sunday">Sunday</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="googleMapsLink"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Google Maps Location Link</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="url"
+                        placeholder="https://maps.google.com/..." 
+                        {...field}
+                        value={field.value || ''}
+                        data-testid="input-google-maps-link"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="rangeLocationImageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Range Location Image</FormLabel>
+                    <FormControl>
+                      <div className="mt-2">
+                        {field.value ? (
+                          <div className="space-y-2">
+                            <div className="relative w-full h-48 rounded-lg overflow-hidden border bg-gray-50">
+                              <img
+                                src={field.value}
+                                alt="Range location"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => field.onChange('')}
+                            >
+                              Remove Image
+                            </Button>
+                          </div>
+                        ) : (
+                          <div>
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+
+                                if (file.size > 5 * 1024 * 1024) {
+                                  return;
+                                }
+
+                                const formData = new FormData();
+                                formData.append("file", file);
+                                formData.append("directory", "public/range-images");
+
+                                try {
+                                  const response = await fetch("/api/upload", {
+                                    method: "POST",
+                                    body: formData,
+                                    credentials: "include",
+                                  });
+
+                                  if (!response.ok) {
+                                    throw new Error("Upload failed");
+                                  }
+
+                                  const data = await response.json();
+                                  if (data.url) {
+                                    field.onChange(data.url);
+                                  }
+                                } catch (error) {
+                                  console.error("Upload error:", error);
+                                }
+                              }}
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Upload an image of the range location (max 5MB)
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Registration Settings */}
