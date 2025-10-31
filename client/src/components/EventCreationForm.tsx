@@ -795,11 +795,19 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
                             console.log("Upload response:", JSON.stringify(data, null, 2));
                             console.log("URL from response:", data.url);
                             
-                            // The upload returns a path like /replit-objstore-.../public/range-images/...
-                            // We need to use this path directly
-                            if (data.url) {
-                              console.log("Setting rangeLocationImageUrl to:", data.url);
-                              form.setValue("rangeLocationImageUrl", data.url);
+                            // Convert the bucket path to an /objects/ path
+                            let imagePath = data.url;
+                            if (imagePath.startsWith('/replit-objstore-')) {
+                              // Extract everything after the bucket name
+                              const parts = imagePath.split('/');
+                              // Remove the bucket name (first two parts: '' and 'replit-objstore-...')
+                              const objectPath = parts.slice(2).join('/');
+                              imagePath = `/objects/${objectPath}`;
+                            }
+                            
+                            if (imagePath) {
+                              console.log("Setting rangeLocationImageUrl to:", imagePath);
+                              form.setValue("rangeLocationImageUrl", imagePath);
                               
                               // Verify it was set
                               const currentValue = form.watch("rangeLocationImageUrl");
