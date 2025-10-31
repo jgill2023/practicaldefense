@@ -1844,16 +1844,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const safeFilename = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
       const objectName = `${directory}/${timestamp}-${safeFilename}`;
 
-      // Upload file to object storage
+      // Upload file to object storage without public access
       const file = bucket.file(objectName);
       await file.save(req.file.buffer, {
         metadata: {
           contentType: req.file.mimetype,
         },
-        public: true,
       });
 
-      // Return the public URL
+      // Return the path that will be served through our /objects route
       const publicUrl = `/${bucketName}/${objectName}`;
       res.json({ 
         url: publicUrl,
