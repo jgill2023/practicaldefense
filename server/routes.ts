@@ -1069,18 +1069,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Form completion status tracking
   app.get("/api/enrollments/:enrollmentId/form-completion", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const enrollmentId = req.params.enrollmentId;
 
       // Verify enrollment ownership
-      const enrollment = await storage.getEnrollment(enrollmentId);
+      const enrollment = await db.query.enrollments.findFirst({
+        where: and(
+          eq(enrollments.id, enrollmentId),
+          eq(enrollments.userId, userId!)
+        ),
+        with: {
+          course: {
+            with: {
+              instructor: true
+            }
+          }
+        }
+      });
+
       if (!enrollment) {
         return res.status(404).json({ message: "Enrollment not found" });
       }
 
       // Check ownership: student owns enrollment or instructor has access
       const user = await storage.getUser(userId);
-      const hasAccess = enrollment.studentId === userId || 
+      const hasAccess = enrollment.userId === userId || 
                        (user?.role === 'instructor' && enrollment.course?.instructorId === userId);
 
       if (!hasAccess) {

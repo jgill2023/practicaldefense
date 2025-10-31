@@ -1704,6 +1704,7 @@ function StudentTransferRequestModal({ enrollment, isOpen, onClose }: {
   const { toast } = useToast();
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
   const [isOnHold, setIsOnHold] = useState(false);
+  const [transferMutation, setTransferMutation] = useState<any>(null);
 
   // Fetch future course schedules for the same course
   const { data: futureSchedules = [], isLoading: isLoadingSchedules } = useQuery<CourseSchedule[]>({
@@ -1786,9 +1787,9 @@ function StudentTransferRequestModal({ enrollment, isOpen, onClose }: {
               />
               <Label htmlFor="hold-list" className="font-normal">Place on Hold List</Label>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <FormDescription>
               Unenroll from this scheduled course and be placed on a hold list. You can request a transfer later if a new course is scheduled.
-            </p>
+            </FormDescription>
           </div>
 
           {!isOnHold && (
@@ -1820,9 +1821,9 @@ function StudentTransferRequestModal({ enrollment, isOpen, onClose }: {
               ) : (
                 <p className="text-sm text-muted-foreground">No future dates available for this course at the moment.</p>
               )}
-              <p className="text-sm text-muted-foreground">
+              <FormDescription>
                 Transfer to a future scheduled session of the same course.
-              </p>
+              </FormDescription>
             </div>
           )}
 
@@ -2096,7 +2097,7 @@ export default function StudentPortal() {
                       }`}></div>
                       <span className={`text-sm font-medium ${
                         licenseWarning?.level === 'critical' ? 'text-destructive' :
-                        licenseWarning?.level === 'warning' ? 'text-yellow-500' :
+                        licenseWarning?.level === 'warning' ? 'text-yellow-600' :
                         'text-success'
                       }`}>
                         {licenseWarning ? licenseWarning.message : 'License Valid'}
