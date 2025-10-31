@@ -51,7 +51,7 @@ interface CourseNotificationsModalProps {
 const notificationFormSchema = z.object({
   templateId: z.string().uuid("Please select a template"),
   triggerEvent: z.string().min(1, "Please select a trigger event"),
-  triggerTiming: z.enum(["immediate", "delayed"]),
+  triggerTiming: z.enum(["before", "after"]),
   delayDays: z.number().min(0).optional(),
   delayHours: z.number().min(0).optional(),
   isActive: z.boolean(),
@@ -106,8 +106,8 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
   const scheduleForm = useForm<NotificationFormData>({
     resolver: zodResolver(notificationFormSchema),
     defaultValues: {
-      triggerEvent: "enrollment_created",
-      triggerTiming: "immediate",
+      triggerEvent: "course_start",
+      triggerTiming: "before",
       delayDays: 0,
       delayHours: 0,
       isActive: true,
@@ -503,37 +503,60 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                           <SelectValue placeholder="Select trigger event" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="course_start">Course Start</SelectItem>
                           <SelectItem value="enrollment_created">Enrollment Created</SelectItem>
                           <SelectItem value="enrollment_confirmed">Enrollment Confirmed</SelectItem>
                           <SelectItem value="payment_completed">Payment Completed</SelectItem>
-                          <SelectItem value="course_start">Course Start</SelectItem>
-                          <SelectItem value="course_reminder">Course Reminder</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
                       <div>
-                        <Label htmlFor="delayDays">Delay (Days)</Label>
-                        <Input
-                          id="delayDays"
-                          type="number"
-                          {...scheduleForm.register("delayDays", { valueAsNumber: true })}
-                          placeholder="0"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Negative values = before event
+                        <Label>Send Notification</Label>
+                        <Select
+                          value={scheduleForm.watch("triggerTiming")}
+                          onValueChange={(value: "before" | "after") => scheduleForm.setValue("triggerTiming", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="When to send" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="before">Before course start</SelectItem>
+                            <SelectItem value="after">After course start</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="delayDays">Days</Label>
+                          <Input
+                            id="delayDays"
+                            type="number"
+                            min="0"
+                            {...scheduleForm.register("delayDays", { valueAsNumber: true })}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="delayHours">Hours</Label>
+                          <Input
+                            id="delayHours"
+                            type="number"
+                            min="0"
+                            {...scheduleForm.register("delayHours", { valueAsNumber: true })}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+
+                      {scheduleForm.watch("delayDays") > 0 || scheduleForm.watch("delayHours") > 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          Will send {scheduleForm.watch("delayDays") || 0} days and {scheduleForm.watch("delayHours") || 0} hours{" "}
+                          <strong>{scheduleForm.watch("triggerTiming") === "before" ? "before" : "after"}</strong> course start
                         </p>
-                      </div>
-                      <div>
-                        <Label htmlFor="delayHours">Delay (Hours)</Label>
-                        <Input
-                          id="delayHours"
-                          type="number"
-                          {...scheduleForm.register("delayHours", { valueAsNumber: true })}
-                          placeholder="0"
-                        />
-                      </div>
+                      ) : null}
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -602,8 +625,10 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
                             <p className="text-sm text-muted-foreground">
                               Trigger: {schedule.triggerEvent.replace(/_/g, " ")}
                               {schedule.delayDays || schedule.delayHours ? (
-                                <> • Delay: {schedule.delayDays || 0}d {schedule.delayHours || 0}h</>
-                              ) : null}
+                                <> • Send {schedule.delayDays || 0}d {schedule.delayHours || 0}h {schedule.triggerTiming === "before" ? "before" : "after"}</>
+                              ) : (
+                                <> • Send immediately</>
+                              )}
                             </p>
                           </div>
                           <div className="flex gap-2">

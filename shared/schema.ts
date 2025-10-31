@@ -624,10 +624,10 @@ export const notificationSchedules = pgTable("notification_schedules", {
   templateId: uuid("template_id").notNull().references(() => notificationTemplates.id, { onDelete: 'cascade' }),
 
   // Trigger configuration
-  triggerEvent: varchar("trigger_event", { length: 50 }).notNull(), // 'registration', 'payment_received', 'payment_failed', 'course_approaching', 'course_cancelled', 'license_expiration'
-  triggerTiming: varchar("trigger_timing", { length: 20 }).notNull().default('immediate'), // 'immediate', 'delayed'
-  delayDays: integer("delay_days").default(0), // Days to delay (negative for before, positive for after)
-  delayHours: integer("delay_hours").default(0), // Additional hours delay
+  triggerEvent: varchar("trigger_event", { length: 50 }).notNull(), // 'course_start', 'enrollment_created', 'enrollment_confirmed', 'payment_completed'
+  triggerTiming: varchar("trigger_timing", { length: 20 }).notNull().default('before'), // 'before', 'after'
+  delayDays: integer("delay_days").default(0), // Days before/after course start
+  delayHours: integer("delay_hours").default(0), // Additional hours before/after
 
   // Scope configuration
   courseId: uuid("course_id").references(() => courses.id), // null for global schedules
@@ -1340,7 +1340,7 @@ export type SignatureMethod = 'canvas' | 'typed' | 'uploaded';
 export type NotificationType = 'email' | 'sms';
 export type NotificationCategory = 'course_specific' | 'payment_notice' | 'announcement' | 'welcome' | 'certificate' | 'reminder';
 export type TriggerEvent = 'registration' | 'payment_received' | 'payment_failed' | 'course_approaching' | 'course_cancelled' | 'license_expiration';
-export type TriggerTiming = 'immediate' | 'delayed';
+export type TriggerTiming = 'before' | 'after';
 export type NotificationStatus = 'pending' | 'sent' | 'delivered' | 'failed' | 'bounced';
 
 // Extended types for promo codes
