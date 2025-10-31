@@ -772,17 +772,28 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
                             const response = await fetch("/api/upload", {
                               method: "POST",
                               body: formData,
+                              credentials: "include",
                             });
 
                             if (!response.ok) throw new Error("Upload failed");
 
                             const data = await response.json();
-                            form.setValue("rangeLocationImageUrl", data.url);
-                            toast({
-                              title: "Image uploaded",
-                              description: "Range location image has been uploaded successfully",
-                            });
+                            console.log("Upload response:", data);
+                            
+                            // The upload returns a path like /replit-objstore-.../public/range-images/...
+                            // We need to use this path directly
+                            if (data.url) {
+                              form.setValue("rangeLocationImageUrl", data.url);
+                              console.log("Image URL set to:", data.url);
+                              toast({
+                                title: "Image uploaded",
+                                description: "Range location image has been uploaded successfully",
+                              });
+                            } else {
+                              throw new Error("No URL in response");
+                            }
                           } catch (error) {
+                            console.error("Upload error:", error);
                             toast({
                               title: "Upload failed",
                               description: "Failed to upload image. Please try again.",
