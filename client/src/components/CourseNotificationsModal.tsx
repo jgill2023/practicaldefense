@@ -390,13 +390,25 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
     }
   };
 
-  // Function to insert tag into the content
+  // Function to insert tag into the content at cursor position
   const insertTag = (tag: string) => {
-    const currentContent = templateForm.getValues("content") || "";
-    // Add a space before the tag if content exists and doesn't end with space
-    const needsSpace = currentContent && !currentContent.endsWith(' ') && !currentContent.endsWith('<br>');
-    const newContent = currentContent + (needsSpace ? ' ' : '') + tag + ' ';
-    templateForm.setValue("content", newContent);
+    const quillEditor = document.querySelector('.ql-editor') as HTMLElement;
+    if (quillEditor) {
+      const selection = window.getSelection();
+      const range = selection?.getRangeAt(0);
+      
+      if (range) {
+        const textNode = document.createTextNode(tag + ' ');
+        range.insertNode(textNode);
+        range.setStartAfter(textNode);
+        range.setEndAfter(textNode);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        
+        // Update the form value
+        templateForm.setValue("content", quillEditor.innerHTML, { shouldValidate: true });
+      }
+    }
   };
 
   return (
@@ -710,55 +722,55 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
 
                     <div>
                       <Label htmlFor="content">Message Content</Label>
-                      <div className="flex flex-col gap-3">
-                        <div className="space-y-2">
+                      <div className="flex flex-col gap-2">
+                        <div className="space-y-1">
                           <div className="text-xs font-medium text-muted-foreground">Student Information</div>
-                          <div className="flex flex-wrap gap-2">
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{firstName}}")}>First Name</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{lastName}}")}>Last Name</Button>
+                          <div className="flex flex-wrap gap-1">
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{firstName}}")}>First Name</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{lastName}}")}>Last Name</Button>
                           </div>
                         </div>
                         
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                           <div className="text-xs font-medium text-muted-foreground">Course Details</div>
-                          <div className="flex flex-wrap gap-2">
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{courseName}}")}>Course Name</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{courseAbbreviation}}")}>Course Code</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{courseDescription}}")}>Description</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{coursePrice}}")}>Price</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{courseDuration}}")}>Duration</Button>
+                          <div className="flex flex-wrap gap-1">
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{courseName}}")}>Course Name</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{courseAbbreviation}}")}>Course Code</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{courseDescription}}")}>Description</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{coursePrice}}")}>Price</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{courseDuration}}")}>Duration</Button>
                           </div>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                           <div className="text-xs font-medium text-muted-foreground">Schedule Details</div>
-                          <div className="flex flex-wrap gap-2">
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{startDate}}")}>Start Date</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{endDate}}")}>End Date</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{startTime}}")}>Start Time</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{endTime}}")}>End Time</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{dayOfWeek}}")}>Day of Week</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{location}}")}>Location</Button>
+                          <div className="flex flex-wrap gap-1">
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{startDate}}")}>Start Date</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{endDate}}")}>End Date</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{startTime}}")}>Start Time</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{endTime}}")}>End Time</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{dayOfWeek}}")}>Day of Week</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{location}}")}>Location</Button>
                           </div>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                           <div className="text-xs font-medium text-muted-foreground">Backend Details</div>
-                          <div className="flex flex-wrap gap-2">
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{rangeName}}")}>Range Name</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{classroomName}}")}>Classroom</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{arrivalTime}}")}>Arrival Time</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{departureTime}}")}>Departure Time</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{googleMapsLink}}")}>Maps Link</Button>
+                          <div className="flex flex-wrap gap-1">
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{rangeName}}")}>Range Name</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{classroomName}}")}>Classroom</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{arrivalTime}}")}>Arrival Time</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{departureTime}}")}>Departure Time</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{googleMapsLink}}")}>Maps Link</Button>
                           </div>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                           <div className="text-xs font-medium text-muted-foreground">Instructor Information</div>
-                          <div className="flex flex-wrap gap-2">
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{instructorName}}")}>Instructor Name</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{instructorEmail}}")}>Instructor Email</Button>
-                            <Button size="sm" type="button" variant="outline" onClick={() => insertTag("{{instructorPhone}}")}>Instructor Phone</Button>
+                          <div className="flex flex-wrap gap-1">
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{instructorName}}")}>Instructor Name</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{instructorEmail}}")}>Instructor Email</Button>
+                            <Button size="sm" type="button" variant="outline" className="h-7 text-xs px-2" onClick={() => insertTag("{{instructorPhone}}")}>Instructor Phone</Button>
                           </div>
                         </div>
 
