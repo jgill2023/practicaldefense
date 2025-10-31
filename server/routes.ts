@@ -1803,6 +1803,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // File upload endpoint for object storage
+  app.post("/api/upload", isAuthenticated, async (req: any, res) => {
+    try {
+      const multer = require("multer");
+      const { Storage } = require("@google-cloud/storage");
+      
+      // Configure multer for memory storage
+      const upload = multer({ 
+        storage: multer.memoryStorage(),
+        limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+      }).single("file");
+
+      // Wrap multer middleware in a promise
+      await new Promise((resolve, reject) => {
+        upload(req, res, (err: any) => {
+          if (err) reject(err);
+          else resolve(null);
+        });
+      });
+
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const directory = req.body.directory || "public/uploads";
+      const publicObjectSearchPaths = process.env.PUBLIC_OBJECT_SEARCH_PATHS || "";
+      const bucketPath = publicObjectSearchPaths.split(",")[0]?.trim();
+      
+      if (!bucketPath) {
+        throw new Error("Object storage not configured");
+      }
+
+      // Extract bucket name from path (format: /bucket-name/path)
+      const bucketName = bucketPath.split("/")[1];
+      const storage = new Storage();
+      const bucket = storage.bucket(bucketName);
+
+      // Generate unique filename
+      const timestamp = Date.now();
+      const safeFilename = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const objectName = `${directory}/${timestamp}-${safeFilename}`;
+
+      // Upload file to object storage
+      const file = bucket.file(objectName);
+      await file.save(req.file.buffer, {
+        metadata: {
+          contentType: req.file.mimetype,
+        },
+        public: true,
+      });
+
+      // Return the public URL
+      const publicUrl = `/${bucketName}/${objectName}`;
+      res.json({ 
+        url: publicUrl,
+        filename: safeFilename,
+        size: req.file.size
+      });
+    } catch (error: any) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ error: "Failed to upload file: " + error.message });
+    }
+  });
+
   // Restore course endpoint (undelete)
   app.patch("/api/instructor/courses/:courseId/restore", isAuthenticated, async (req: any, res) => {
     try {
@@ -1858,6 +1922,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         registrationDeadline: eventData.registrationDeadline ? new Date(eventData.registrationDeadline) : null,
         waitlistEnabled: eventData.waitlistEnabled !== undefined ? eventData.waitlistEnabled : true,
         autoConfirmRegistration: eventData.autoConfirmRegistration !== undefined ? eventData.autoConfirmRegistration : true,
+        // Backend Details fields
+        rangeName: eventData.rangeName || null,
+        classroomName: eventData.classroomName || null,
+        arrivalTime: eventData.arrivalTime || null,
+        departureTime: eventData.departureTime || null,
+        dayOfWeek: eventData.dayOfWeek || null,
+        googleMapsLink: eventData.googleMapsLink || null,
+        rangeLocationImageUrl: eventData.rangeLocationImageUrl || null,
       };
 
       const schedule = await storage.createCourseSchedule(scheduleData);

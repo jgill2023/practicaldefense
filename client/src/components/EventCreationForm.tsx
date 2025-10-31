@@ -26,7 +26,9 @@ import {
   Trash2,
   Info,
   Repeat,
-  Settings
+  Settings,
+  Image as ImageIcon,
+  Upload
 } from "lucide-react";
 import type { CourseWithSchedules, InsertCourseSchedule, EventCategory, RecurrencePattern, Category } from "@shared/schema";
 
@@ -61,6 +63,15 @@ const eventSchema = z.object({
   recurrenceEndDate: z.string().optional(),
   daysOfWeek: z.array(z.number()).optional(),
   
+  // Backend Details fields
+  rangeName: z.string().optional(),
+  classroomName: z.string().optional(),
+  arrivalTime: z.string().optional(),
+  departureTime: z.string().optional(),
+  dayOfWeek: z.string().optional(),
+  googleMapsLink: z.string().optional(),
+  rangeLocationImageUrl: z.string().optional(),
+  
   // Registration settings
   registrationDeadline: z.string().optional(),
   waitlistEnabled: z.boolean().default(true),
@@ -79,6 +90,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentTab, setCurrentTab] = useState("basic");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Fetch available courses
   const { data: courses = [] } = useQuery<CourseWithSchedules[]>({
@@ -235,10 +247,11 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
           }
         }}>
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="sessions" disabled={!isMultiDay}>Sessions</TabsTrigger>
+          <TabsTrigger value="backend">Backend Details</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -606,6 +619,183 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
           </Card>
         </TabsContent>
 
+        {/* Backend Details Tab */}
+        <TabsContent value="backend" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <MapPin className="h-5 w-5" />
+                <span>Backend Details</span>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                These details will be automatically populated into course email and SMS notifications
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="rangeName">Range</Label>
+                  <Input
+                    id="rangeName"
+                    placeholder="e.g., Range A"
+                    {...form.register("rangeName")}
+                    data-testid="input-range-name"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="classroomName">Classroom</Label>
+                  <Input
+                    id="classroomName"
+                    placeholder="e.g., Classroom 101"
+                    {...form.register("classroomName")}
+                    data-testid="input-classroom-name"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="arrivalTime">Arrival Time</Label>
+                  <Input
+                    id="arrivalTime"
+                    type="time"
+                    {...form.register("arrivalTime")}
+                    data-testid="input-arrival-time"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="departureTime">Departure Time</Label>
+                  <Input
+                    id="departureTime"
+                    type="time"
+                    {...form.register("departureTime")}
+                    data-testid="input-departure-time"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="dayOfWeek">Day</Label>
+                <Select 
+                  value={form.watch("dayOfWeek") || ""}
+                  onValueChange={(value) => form.setValue("dayOfWeek", value)}
+                >
+                  <SelectTrigger data-testid="select-day-of-week">
+                    <SelectValue placeholder="Select day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Monday">Monday</SelectItem>
+                    <SelectItem value="Tuesday">Tuesday</SelectItem>
+                    <SelectItem value="Wednesday">Wednesday</SelectItem>
+                    <SelectItem value="Thursday">Thursday</SelectItem>
+                    <SelectItem value="Friday">Friday</SelectItem>
+                    <SelectItem value="Saturday">Saturday</SelectItem>
+                    <SelectItem value="Sunday">Sunday</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="googleMapsLink">Google Maps Location Link</Label>
+                <Input
+                  id="googleMapsLink"
+                  type="url"
+                  placeholder="https://maps.google.com/..."
+                  {...form.register("googleMapsLink")}
+                  data-testid="input-google-maps-link"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="rangeLocationImage">Range Location Image</Label>
+                <div className="mt-2">
+                  {form.watch("rangeLocationImageUrl") ? (
+                    <div className="space-y-2">
+                      <div className="relative w-full h-48 rounded-lg overflow-hidden border">
+                        <img
+                          src={form.watch("rangeLocationImageUrl")}
+                          alt="Range location"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => form.setValue("rangeLocationImageUrl", "")}
+                        data-testid="button-remove-image"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remove Image
+                      </Button>
+                    </div>
+                  ) : (
+                    <div>
+                      <Input
+                        id="rangeLocationImage"
+                        type="file"
+                        accept="image/*"
+                        disabled={uploadingImage}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          // Validate file size (max 5MB)
+                          if (file.size > 5 * 1024 * 1024) {
+                            toast({
+                              title: "File too large",
+                              description: "Please select an image smaller than 5MB",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+
+                          setUploadingImage(true);
+                          const formData = new FormData();
+                          formData.append("file", file);
+                          formData.append("directory", "public/range-images");
+
+                          try {
+                            const response = await fetch("/api/upload", {
+                              method: "POST",
+                              body: formData,
+                            });
+
+                            if (!response.ok) throw new Error("Upload failed");
+
+                            const data = await response.json();
+                            form.setValue("rangeLocationImageUrl", data.url);
+                            toast({
+                              title: "Image uploaded",
+                              description: "Range location image has been uploaded successfully",
+                            });
+                          } catch (error) {
+                            toast({
+                              title: "Upload failed",
+                              description: "Failed to upload image. Please try again.",
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setUploadingImage(false);
+                            // Reset the file input
+                            e.target.value = "";
+                          }
+                        }}
+                        data-testid="input-range-image"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {uploadingImage ? "Uploading..." : "Upload an image of the range location (max 5MB)"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-4">
           <Card>
@@ -658,10 +848,15 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
               type="button"
               variant="outline"
               onClick={() => {
-                const tabs = ["basic", "schedule", "sessions", "settings"];
+                const tabs = ["basic", "schedule", "sessions", "backend", "settings"];
                 const currentIndex = tabs.indexOf(currentTab);
                 if (currentIndex > 0) {
-                  setCurrentTab(tabs[currentIndex - 1]);
+                  let prevTab = tabs[currentIndex - 1];
+                  // Skip sessions tab if not multi-day
+                  if (prevTab === "sessions" && !isMultiDay) {
+                    prevTab = "schedule";
+                  }
+                  setCurrentTab(prevTab);
                 }
               }}
             >
@@ -672,13 +867,13 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
             <Button
               type="button"
               onClick={() => {
-                const tabs = ["basic", "schedule", "sessions", "settings"];
+                const tabs = ["basic", "schedule", "sessions", "backend", "settings"];
                 const currentIndex = tabs.indexOf(currentTab);
                 if (currentIndex < tabs.length - 1) {
                   let nextTab = tabs[currentIndex + 1];
                   // Skip sessions tab if not multi-day
                   if (nextTab === "sessions" && !isMultiDay) {
-                    nextTab = "settings";
+                    nextTab = "backend";
                   }
                   setCurrentTab(nextTab);
                 }

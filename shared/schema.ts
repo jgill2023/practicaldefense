@@ -134,6 +134,14 @@ export const courseSchedules = pgTable("course_schedules", {
   // Event specific category (more granular than course category)
   eventCategory: varchar("event_category", { length: 100 }),
   notes: text("notes"),
+  // Backend Details - for notifications and course logistics
+  rangeName: varchar("range_name", { length: 255 }), // Specific range location
+  classroomName: varchar("classroom_name", { length: 255 }), // Classroom location
+  arrivalTime: varchar("arrival_time", { length: 8 }), // HH:MM:SS format
+  departureTime: varchar("departure_time", { length: 8 }), // HH:MM:SS format
+  dayOfWeek: varchar("day_of_week", { length: 20 }), // e.g., "Monday", "Tuesday"
+  googleMapsLink: text("google_maps_link"), // Google Maps URL for location
+  rangeLocationImageUrl: varchar("range_location_image_url"), // Image URL from object storage
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
