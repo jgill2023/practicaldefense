@@ -1497,6 +1497,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const studentWaiverInstances = await db.query.waiverInstances.findMany({
           where: eq(waiverInstances.enrollmentId, student.enrollmentId),
         });
+
+
+  // Process e-commerce order fulfillment (including Moodle enrollment)
+  app.post("/api/ecommerce/process-order/:orderId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const { orderId } = req.params;
+
+      // Get order with items
+      const order = await db.query.ecommerceOrders.findFirst({
+        where: eq(ecommerceOrders.id, orderId),
+        with: {
+          items: {
+            with: {
+              product: true,
+            }
+          },
+          user: true,
+        }
+      });
+
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Verify order belongs to user or user is admin
+      const user = await storage.getUser(userId);
+      if (order.userId !== userId && user?.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Process each item for Moodle enrollment
+      const results = [];
+      for (const item of order.items) {
+        if ((item.product.productType === 'moodle' || item.product.fulfillmentType === 'moodle') 
+            && item.product.moodleCourseId 
+            && item.product.moodleEnrollmentEnabled) {
+          
+          try {
+            const { moodleService } = await import('./moodleService');
+            const orderUser = order.user || await storage.getUserByEmail(order.customerEmail);
+            
+            if (orderUser) {
+              const moodleUser = await moodleService.getOrCreateUser({
+                username: orderUser.email.split('@')[0],
+                password: Math.random().toString(36).slice(-12),
+                firstname: orderUser.firstName || order.customerFirstName,
+                lastname: orderUser.lastName || order.customerLastName,
+                email: orderUser.email || order.customerEmail,
+              });
+
+              await moodleService.enrollUser(moodleUser.id, item.product.moodleCourseId);
+              
+              // Update order item fulfillment status
+              await db.update(ecommerceOrderItems)
+                .set({ 
+                  fulfillmentStatus: 'fulfilled',
+                  updatedAt: new Date(),
+                })
+                .where(eq(ecommerceOrderItems.id, item.id));
+
+              results.push({
+                productId: item.productId,
+                productName: item.productName,
+                status: 'success',
+                moodleCourseId: item.product.moodleCourseId,
+              });
+
+              console.log(`✅ Enrolled user ${orderUser.email} in Moodle course ${item.product.moodleCourseId} for product ${item.productName}`);
+            }
+          } catch (error: any) {
+            console.error(`❌ Moodle enrollment failed for product ${item.productName}:`, error);
+            results.push({
+              productId: item.productId,
+              productName: item.productName,
+              status: 'failed',
+              error: error.message,
+            });
+          }
+        }
+      }
+
+      res.json({
+        orderId,
+        message: "Order processing completed",
+        results,
+      });
+    } catch (error: any) {
+      console.error("Error processing order:", error);
+      res.status(500).json({ message: "Failed to process order: " + error.message });
+    }
+  });
+
+
         const waiverStatus = studentWaiverInstances.length > 0 
           ? (studentWaiverInstances.some(w => w.status === 'signed') ? 'signed' : 'pending')
           : 'not_started';
@@ -2511,11 +2605,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Determine payment status based on payment option
       const paymentStatus = enrollment.paymentOption === 'deposit' ? 'deposit' : 'paid';
 
+      // Moodle enrollment for courses
+      let moodleEnrolled = false;
+      let moodleEnrollmentDate = null;
+      let enrollmentNotes = null;
+
+      if (course.moodleCourseId && course.moodleEnrollmentEnabled) {
+        try {
+          const { moodleService } = await import('./moodleService');
+          const user = await storage.getUser(userId);
+          
+          if (user) {
+            const moodleUser = await moodleService.getOrCreateUser({
+              username: user.email.split('@')[0],
+              password: Math.random().toString(36).slice(-12),
+              firstname: user.firstName || '',
+              lastname: user.lastName || '',
+              email: user.email || '',
+            });
+
+            await moodleService.enrollUser(moodleUser.id, course.moodleCourseId);
+            moodleEnrolled = true;
+            moodleEnrollmentDate = new Date();
+            enrollmentNotes = `Moodle enrollment successful for course ${course.moodleCourseId}`;
+            console.log(`✅ Enrolled user ${user.email} in Moodle course ${course.moodleCourseId}`);
+          }
+        } catch (error: any) {
+          console.error('❌ Moodle enrollment failed:', error);
+          enrollmentNotes = `Moodle enrollment failed: ${error.message}`;
+        }
+      }
+
       // Update enrollment status
       const updatedEnrollment = await storage.updateEnrollment(enrollmentId, {
         status: 'confirmed',
         paymentStatus,
         paymentIntentId,
+        moodleEnrolled,
+        moodleEnrollmentDate,
+        notes: enrollmentNotes || enrollment.notes,
       });
 
       res.json(updatedEnrollment);

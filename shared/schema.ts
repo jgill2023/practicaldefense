@@ -1797,7 +1797,7 @@ export type EcommerceOrderItemWithDetails = EcommerceOrderItem & {
 };
 
 // E-commerce enums
-export type ProductType = 'physical' | 'digital' | 'service';
+export type ProductType = 'physical' | 'digital' | 'service' | 'moodle';
 export type FulfillmentType = 'printful' | 'download' | 'manual' | 'moodle';
 export type ProductStatus = 'draft' | 'active' | 'inactive';
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
@@ -1883,7 +1883,7 @@ const productSchema = z.object({
   price: z.string().min(1, "Price is required").refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Price must be a valid non-negative number"),
   categoryId: z.string().uuid("Please select a category"),
   sku: z.string().min(1, "SKU is required"),
-  productType: z.enum(["physical", "digital", "service"]).default("physical"),
+  productType: z.enum(["physical", "digital", "service", "moodle"]).default("physical"),
   fulfillmentType: z.enum(["printful", "download", "manual", "moodle"]).default("manual"),
   status: z.enum(["active", "inactive", "draft"]).default("active"),
   featured: z.boolean().default(false),

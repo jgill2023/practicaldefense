@@ -33,8 +33,8 @@ const productSchema = z.object({
   price: z.string().min(1, "Price is required").refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Price must be a valid non-negative number"),
   categoryId: z.string().uuid("Please select a category"),
   sku: z.string().min(1, "SKU is required"),
-  productType: z.enum(["physical", "digital", "service"]).default("physical"),
-  fulfillmentType: z.enum(["printful", "download", "manual"]).default("manual"),
+  productType: z.enum(["physical", "digital", "service", "moodle"]).default("physical"),
+  fulfillmentType: z.enum(["printful", "download", "manual", "moodle"]).default("manual"),
   status: z.enum(["active", "inactive", "draft"]).default("active"),
   featured: z.boolean().default(false),
   primaryImageUrl: z.string().optional(),
@@ -42,6 +42,8 @@ const productSchema = z.object({
   tags: z.array(z.string()).default([]),
   sortOrder: z.number().int().min(0).default(0),
   printfulProductId: z.number().int().positive().optional().nullable(),
+  moodleCourseId: z.number().int().positive().optional().nullable(),
+  moodleEnrollmentEnabled: z.boolean().default(false),
 });
 
 type ProductCategoryFormData = z.infer<typeof productCategorySchema>;
@@ -92,6 +94,8 @@ export default function ProductManagement() {
       imageUrls: [],
       tags: [],
       sortOrder: 0,
+      moodleCourseId: undefined,
+      moodleEnrollmentEnabled: false,
     },
   });
 
@@ -246,6 +250,8 @@ export default function ProductManagement() {
       tags: product.tags || [],
       sortOrder: product.sortOrder || 0,
       printfulProductId: product.printfulProductId?.toString() || "",
+      moodleCourseId: product.moodleCourseId || undefined,
+      moodleEnrollmentEnabled: product.moodleEnrollmentEnabled || false,
     });
     setProductDialogOpen(true);
   };
@@ -270,6 +276,8 @@ export default function ProductManagement() {
       ...data,
       price: data.price, // Keep as string for decimal conversion
       sortOrder: Number(data.sortOrder), // Convert to number
+      moodleCourseId: data.moodleCourseId === undefined ? null : data.moodleCourseId, // Ensure null if undefined
+      printfulProductId: data.printfulProductId === undefined ? null : data.printfulProductId, // Ensure null if undefined
     };
 
     if (editingProduct) {
@@ -755,6 +763,7 @@ export default function ProductManagement() {
                           <SelectItem value="physical">Physical</SelectItem>
                           <SelectItem value="digital">Digital</SelectItem>
                           <SelectItem value="service">Service</SelectItem>
+                          <SelectItem value="moodle">Moodle Course</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -777,6 +786,7 @@ export default function ProductManagement() {
                           <SelectItem value="printful">Printful</SelectItem>
                           <SelectItem value="download">Download</SelectItem>
                           <SelectItem value="manual">Manual</SelectItem>
+                          <SelectItem value="moodle">Moodle</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -946,6 +956,59 @@ export default function ProductManagement() {
                   )}
                 />
               </div>
+
+                {/* Moodle Integration Section */}
+                {(productForm.watch('productType') === 'moodle' || productForm.watch('fulfillmentType') === 'moodle') && (
+                  <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                    <h3 className="font-medium">Moodle Integration</h3>
+
+                    <FormField
+                      control={productForm.control}
+                      name="moodleCourseId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Moodle Course ID</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Enter Moodle course ID"
+                              {...field}
+                              onChange={e => field.onChange(e.target.value ? parseInt(e.target.value) || null : null)}
+                              data-testid="input-moodle-course-id"
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Students will be automatically enrolled in this Moodle course upon purchase
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={productForm.control}
+                      name="moodleEnrollmentEnabled"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center space-x-2 pt-2">
+                          <FormControl>
+                            <input
+                              type="checkbox"
+                              checked={field.value}
+                              onChange={field.onChange}
+                              className="rounded"
+                              data-testid="checkbox-moodle-enrollment"
+                            />
+                          </FormControl>
+                          <FormLabel htmlFor="edit-moodleEnrollmentEnabled" className="cursor-pointer">
+                            Enable automatic Moodle enrollment
+                          </FormLabel>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+
               <div className="flex justify-end gap-2">
                 <Button 
                   type="button" 
