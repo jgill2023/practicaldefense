@@ -69,13 +69,13 @@ export function ObjectUploader({
     setIsUploading(true);
     try {
       const { url } = await onGetUploadParameters();
-      
+
       if (!url) {
         alert('Failed to get upload URL. Please try again.');
         setIsUploading(false);
         return;
       }
-      
+
       const response = await fetch(url, {
         method: 'PUT',
         body: file,
