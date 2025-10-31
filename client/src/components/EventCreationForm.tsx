@@ -26,8 +26,11 @@ import {
   Trash2,
   Info,
   Repeat,
-  Settings
+  Settings,
+  Image as ImageIcon
 } from "lucide-react";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { CourseWithSchedules, InsertCourseSchedule, EventCategory, RecurrencePattern, Category } from "@shared/schema";
 
 // Form validation schema
@@ -41,7 +44,7 @@ const eventSchema = z.object({
   maxSpots: z.number().min(1, "Must have at least 1 spot").max(100, "Cannot exceed 100 spots"),
   eventCategory: z.string().optional(),
   notes: z.string().optional(),
-  
+
   // Multi-day event fields
   isMultiDay: z.boolean().default(false),
   eventSessions: z.array(z.object({
@@ -53,18 +56,27 @@ const eventSchema = z.object({
     location: z.string().optional(),
     isRequired: z.boolean().default(true),
   })).optional(),
-  
+
   // Recurring event fields
   isRecurring: z.boolean().default(false),
   recurrencePattern: z.enum(['daily', 'weekly', 'monthly', 'custom']).optional(),
   recurrenceInterval: z.number().min(1).max(52).optional(),
   recurrenceEndDate: z.string().optional(),
   daysOfWeek: z.array(z.number()).optional(),
-  
+
   // Registration settings
   registrationDeadline: z.string().optional(),
   waitlistEnabled: z.boolean().default(true),
   autoConfirmRegistration: z.boolean().default(true),
+
+  // Backend notification details
+  rangeLocation: z.string().optional(),
+  classroomLocation: z.string().optional(),
+  arrivalTime: z.string().optional(),
+  departureTime: z.string().optional(),
+  dayOfEvent: z.string().optional(),
+  googleMapsLink: z.string().optional(),
+  rangeLocationImageUrl: z.string().optional(),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -76,9 +88,12 @@ interface EventCreationFormProps {
 }
 
 export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: EventCreationFormProps) {
+  const [currentTab, setCurrentTab] = useState("basic");
+  const [sessions, setSessions] = useState<InsertCourseSchedule[]>([]);
+  const [rangeImageUrl, setRangeImageUrl] = useState<string>("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [currentTab, setCurrentTab] = useState("basic");
 
   // Fetch available courses
   const { data: courses = [] } = useQuery<CourseWithSchedules[]>({
@@ -144,7 +159,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
 
   const onSubmit = (data: EventFormData) => {
     console.log('Form submission attempted - current tab:', currentTab);
-    
+
     // Only submit if we're on the final tab and have all required data
     if (currentTab !== "settings") {
       console.log('Preventing submission - not on settings tab');
@@ -155,34 +170,24 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
       });
       return;
     }
-    
-    // Validate required fields
-    if (!data.courseId || !data.startDate || !data.endDate) {
-      toast({
-        title: "Missing Required Fields",
-        description: "Please fill in course, start date, and end date.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Process the form data
-    const processedData = {
-      ...data,
-      availableSpots: data.maxSpots, // Initially all spots are available
-    };
-    
-    // Convert daysOfWeek array to comma-separated string for the API
+
+    // Convert rangeImageUrl to the correct field in the schema
     const apiData = {
-      ...processedData,
-      daysOfWeek: data.daysOfWeek?.join(','),
+      ...data,
+      rangeLocationImageUrl: rangeImageUrl,
+      daysOfWeek: data.daysOfWeek?.join(','), // Convert daysOfWeek array to comma-separated string for the API
     };
-    
+
+    // Remove eventSessions if it's empty and not multi-day
+    if (!isMultiDay) {
+      delete apiData.eventSessions;
+    }
+
     createEventMutation.mutate(apiData as any);
   };
 
   const addSession = () => {
-    const newSession = {
+    const newSession: InsertCourseSchedule = {
       sessionDate: '',
       startTime: '09:00',
       endTime: '17:00',
@@ -207,6 +212,38 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
     { value: 0, label: 'Sunday' },
   ];
 
+  const handleImageUpload = async (file: File) => {
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Image upload failed");
+      }
+
+      const result = await response.json();
+      setRangeImageUrl(result.url);
+      toast({
+        title: "Image Uploaded",
+        description: "Range location image uploaded successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Image Upload Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -220,7 +257,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
         <form onSubmit={(e) => {
           e.preventDefault();
           console.log('Form native submit prevented - current tab:', currentTab);
-          
+
           // Only allow submission on settings tab
           if (currentTab === "settings") {
             console.log('Proceeding with form submission');
@@ -235,10 +272,11 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
           }
         }}>
       <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="sessions" disabled={!isMultiDay}>Sessions</TabsTrigger>
+          <TabsTrigger value="backend">Backend Details</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -538,7 +576,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor={`eventSessions.${index}.sessionDate`}>Date</Label>
@@ -547,7 +585,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
                           {...form.register(`eventSessions.${index}.sessionDate`)}
                         />
                       </div>
-                      
+
                       <div>
                         <Label htmlFor={`eventSessions.${index}.sessionTitle`}>Title</Label>
                         <Input
@@ -555,7 +593,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
                           {...form.register(`eventSessions.${index}.sessionTitle`)}
                         />
                       </div>
-                      
+
                       <div>
                         <Label htmlFor={`eventSessions.${index}.startTime`}>Start Time</Label>
                         <Input
@@ -563,7 +601,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
                           {...form.register(`eventSessions.${index}.startTime`)}
                         />
                       </div>
-                      
+
                       <div>
                         <Label htmlFor={`eventSessions.${index}.endTime`}>End Time</Label>
                         <Input
@@ -571,7 +609,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
                           {...form.register(`eventSessions.${index}.endTime`)}
                         />
                       </div>
-                      
+
                       <div className="col-span-2">
                         <Label htmlFor={`eventSessions.${index}.location`}>Location</Label>
                         <Input
@@ -579,7 +617,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
                           {...form.register(`eventSessions.${index}.location`)}
                         />
                       </div>
-                      
+
                       <div className="col-span-2">
                         <Label htmlFor={`eventSessions.${index}.sessionDescription`}>Description</Label>
                         <Textarea
@@ -587,7 +625,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
                           {...form.register(`eventSessions.${index}.sessionDescription`)}
                         />
                       </div>
-                      
+
                       <div className="col-span-2">
                         <div className="flex items-center space-x-2">
                           <Switch
@@ -602,6 +640,87 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
                   </Card>
                 ))
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Backend Details Tab */}
+        <TabsContent value="backend" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <ImageIcon className="h-5 w-5" />
+                <span>Backend Notification Details</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="rangeLocation">Range Location</Label>
+                  <Input
+                    id="rangeLocation"
+                    placeholder="e.g., Main Shooting Range"
+                    {...form.register("rangeLocation")}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="classroomLocation">Classroom Location</Label>
+                  <Input
+                    id="classroomLocation"
+                    placeholder="e.g., Classroom Alpha"
+                    {...form.register("classroomLocation")}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="arrivalTime">Arrival Time</Label>
+                  <Input
+                    id="arrivalTime"
+                    type="time"
+                    {...form.register("arrivalTime")}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="departureTime">Departure Time</Label>
+                  <Input
+                    id="departureTime"
+                    type="time"
+                    {...form.register("departureTime")}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="dayOfEvent">Day of Event</Label>
+                <Input
+                  id="dayOfEvent"
+                  placeholder="e.g., Saturday"
+                  {...form.register("dayOfEvent")}
+                />
+              </div>
+              <div>
+                <Label htmlFor="googleMapsLink">Google Maps Location Link</Label>
+                <Input
+                  id="googleMapsLink"
+                  placeholder="Paste Google Maps URL here"
+                  {...form.register("googleMapsLink")}
+                />
+              </div>
+              <div>
+                <Label htmlFor="rangeLocationImageUrl">Range Location Image</Label>
+                <ObjectUploader
+                  id="rangeLocationImageUrl"
+                  onUpload={handleImageUpload}
+                  isUploading={isUploadingImage}
+                  imageUrl={rangeImageUrl}
+                  onClear={() => setRangeImageUrl("")}
+                />
+                {isUploadingImage && (
+                  <Alert className="mt-2">
+                    <AlertDescription>Uploading image...</AlertDescription>
+                  </Alert>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -658,7 +777,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
               type="button"
               variant="outline"
               onClick={() => {
-                const tabs = ["basic", "schedule", "sessions", "settings"];
+                const tabs = ["basic", "schedule", "sessions", "backend", "settings"];
                 const currentIndex = tabs.indexOf(currentTab);
                 if (currentIndex > 0) {
                   setCurrentTab(tabs[currentIndex - 1]);
@@ -672,13 +791,13 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated }: E
             <Button
               type="button"
               onClick={() => {
-                const tabs = ["basic", "schedule", "sessions", "settings"];
+                const tabs = ["basic", "schedule", "sessions", "backend", "settings"];
                 const currentIndex = tabs.indexOf(currentTab);
                 if (currentIndex < tabs.length - 1) {
                   let nextTab = tabs[currentIndex + 1];
                   // Skip sessions tab if not multi-day
                   if (nextTab === "sessions" && !isMultiDay) {
-                    nextTab = "settings";
+                    nextTab = "backend"; // Skip sessions and go directly to backend if not multi-day
                   }
                   setCurrentTab(nextTab);
                 }
