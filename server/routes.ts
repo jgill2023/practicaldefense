@@ -1837,7 +1837,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Extract bucket name from path (format: /bucket-name/path)
       const bucketName = bucketPath.split("/")[1];
-      const storage = new Storage.Storage();
+      const { Storage: GCSStorage } = await import("@google-cloud/storage");
+      const storage = new GCSStorage();
       const bucket = storage.bucket(bucketName);
 
       // Generate unique filename
