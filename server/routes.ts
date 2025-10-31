@@ -1613,6 +1613,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bucketName = parts[1];
       const objectName = parts.slice(2).join('/');
       
+      // Import objectStorageClient from the objectStorage module
+      const { objectStorageClient } = await import('./objectStorage');
       const bucket = objectStorageClient.bucket(bucketName);
       const file = bucket.file(objectName);
       
