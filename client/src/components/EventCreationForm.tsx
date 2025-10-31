@@ -31,6 +31,8 @@ import {
   Upload
 } from "lucide-react";
 import type { CourseWithSchedules, InsertCourseSchedule, EventCategory, RecurrencePattern, Category } from "@shared/schema";
+import { ObjectUploader } from "@/components/ObjectUploader";
+
 
 // Form validation schema
 const eventSchema = z.object({
@@ -43,7 +45,7 @@ const eventSchema = z.object({
   maxSpots: z.number().min(1, "Must have at least 1 spot").max(100, "Cannot exceed 100 spots"),
   eventCategory: z.string().optional(),
   notes: z.string().optional(),
-  
+
   // Multi-day event fields
   isMultiDay: z.boolean().default(false),
   eventSessions: z.array(z.object({
@@ -55,14 +57,14 @@ const eventSchema = z.object({
     location: z.string().optional(),
     isRequired: z.boolean().default(true),
   })).optional(),
-  
+
   // Recurring event fields
   isRecurring: z.boolean().default(false),
   recurrencePattern: z.enum(['daily', 'weekly', 'monthly', 'custom']).optional(),
   recurrenceInterval: z.number().min(1).max(52).optional(),
   recurrenceEndDate: z.string().optional(),
   daysOfWeek: z.array(z.number()).optional(),
-  
+
   // Backend Details fields
   rangeName: z.string().optional(),
   classroomName: z.string().optional(),
@@ -71,7 +73,7 @@ const eventSchema = z.object({
   dayOfWeek: z.string().optional(),
   googleMapsLink: z.string().optional(),
   rangeLocationImageUrl: z.string().optional(),
-  
+
   // Registration settings
   registrationDeadline: z.string().optional(),
   waitlistEnabled: z.boolean().default(true),
@@ -160,7 +162,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
     console.log('Form submission attempted - current tab:', currentTab);
     console.log('Form data:', data);
     console.log('Form errors:', form.formState.errors);
-    
+
     // Only submit if we're on the final tab and have all required data
     if (currentTab !== "settings") {
       console.log('Preventing submission - not on settings tab');
@@ -171,7 +173,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
       });
       return;
     }
-    
+
     // Validate required fields
     if (!data.courseId || !data.startDate || !data.endDate) {
       console.log('Missing required fields:', { 
@@ -186,19 +188,19 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
       });
       return;
     }
-    
+
     // Process the form data
     const processedData = {
       ...data,
       availableSpots: data.maxSpots, // Initially all spots are available
     };
-    
+
     // Convert daysOfWeek array to comma-separated string for the API
     const apiData = {
       ...processedData,
       daysOfWeek: data.daysOfWeek?.join(','),
     };
-    
+
     createEventMutation.mutate(apiData as any);
   };
 
@@ -241,7 +243,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
         <form onSubmit={(e) => {
           e.preventDefault();
           console.log('Form native submit prevented - current tab:', currentTab);
-          
+
           // Only allow submission on settings tab
           if (currentTab === "settings") {
             console.log('Proceeding with form submission');
@@ -560,7 +562,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor={`eventSessions.${index}.sessionDate`}>Date</Label>
@@ -569,7 +571,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
                           {...form.register(`eventSessions.${index}.sessionDate`)}
                         />
                       </div>
-                      
+
                       <div>
                         <Label htmlFor={`eventSessions.${index}.sessionTitle`}>Title</Label>
                         <Input
@@ -577,7 +579,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
                           {...form.register(`eventSessions.${index}.sessionTitle`)}
                         />
                       </div>
-                      
+
                       <div>
                         <Label htmlFor={`eventSessions.${index}.startTime`}>Start Time</Label>
                         <Input
@@ -585,7 +587,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
                           {...form.register(`eventSessions.${index}.startTime`)}
                         />
                       </div>
-                      
+
                       <div>
                         <Label htmlFor={`eventSessions.${index}.endTime`}>End Time</Label>
                         <Input
@@ -593,7 +595,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
                           {...form.register(`eventSessions.${index}.endTime`)}
                         />
                       </div>
-                      
+
                       <div className="col-span-2">
                         <Label htmlFor={`eventSessions.${index}.location`}>Location</Label>
                         <Input
@@ -601,7 +603,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
                           {...form.register(`eventSessions.${index}.location`)}
                         />
                       </div>
-                      
+
                       <div className="col-span-2">
                         <Label htmlFor={`eventSessions.${index}.sessionDescription`}>Description</Label>
                         <Textarea
@@ -609,7 +611,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
                           {...form.register(`eventSessions.${index}.sessionDescription`)}
                         />
                       </div>
-                      
+
                       <div className="col-span-2">
                         <div className="flex items-center space-x-2">
                           <Switch
@@ -718,7 +720,7 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
               </div>
 
               <div>
-                <Label htmlFor="rangeLocationImage">Range Location Image</Label>
+                <Label htmlFor="rangeLocationImageUrl">Range Location Image</Label>
                 <div className="mt-2">
                   {form.watch("rangeLocationImageUrl") ? (
                     <div className="space-y-2">
