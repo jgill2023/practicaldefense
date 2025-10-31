@@ -1807,7 +1807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/upload", isAuthenticated, async (req: any, res) => {
     try {
       const multer = await import("multer");
-      const { Storage } = await import("@google-cloud/storage");
+      const { objectStorageClient } = await import("./objectStorage");
       
       // Configure multer for memory storage
       const upload = multer.default({ 
@@ -1837,9 +1837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Extract bucket name from path (format: /bucket-name/path)
       const bucketName = bucketPath.split("/")[1];
-      const { Storage: GCSStorage } = await import("@google-cloud/storage");
-      const storage = new GCSStorage();
-      const bucket = storage.bucket(bucketName);
+      const bucket = objectStorageClient.bucket(bucketName);
 
       // Generate unique filename
       const timestamp = Date.now();
