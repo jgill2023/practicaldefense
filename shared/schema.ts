@@ -1479,7 +1479,7 @@ export const products = pgTable("products", {
 
   // Printful integration
   printfulProductId: integer("printful_product_id"),
-  printfulSyncProductId: integer("printful_sync_product_id"),
+  printfulSyncProductId: integer("printful_sync_product_id"), // Printful's sync product ID
 
   // Moodle integration for online courses
   moodleCourseId: integer("moodle_course_id"), // Link to Moodle course for automatic enrollment
