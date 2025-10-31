@@ -58,8 +58,11 @@ export function ObjectUploader({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const maxSizeMB = Math.round(maxFileSize / 1024 / 1024);
     if (file.size > maxFileSize) {
-      alert(`File size must be less than ${Math.round(maxFileSize / 1024 / 1024)}MB`);
+      alert(`File size must be less than ${maxSizeMB}MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
+      // Reset the input so the same file can be selected again after the user fixes it
+      event.target.value = '';
       return;
     }
 
@@ -69,6 +72,7 @@ export function ObjectUploader({
       
       if (!url) {
         alert('Failed to get upload URL. Please try again.');
+        setIsUploading(false);
         return;
       }
       
@@ -88,14 +92,17 @@ export function ObjectUploader({
           successful: [{ uploadURL: storageURL }]
         });
       } else {
-        console.error('Upload failed with status:', response.status);
-        alert('Upload failed. Please try again.');
+        const errorText = await response.text();
+        console.error('Upload failed with status:', response.status, errorText);
+        alert(`Upload failed: ${response.statusText}. Please try again.`);
       }
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Upload failed. Please try again.');
+      alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
     } finally {
       setIsUploading(false);
+      // Reset the input so the same file can be selected again
+      event.target.value = '';
     }
   };
 
