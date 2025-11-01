@@ -639,8 +639,8 @@ export default function CourseManagement() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <ScrollArea className="h-96 w-full rounded-md border p-4">
-                    <div className="space-y-3 pr-4">
+                  <div className="h-96 w-full rounded-md border overflow-y-auto p-4">
+                    <div className="space-y-3">
                       {categories.map((category) => (
                         <CategoryVisibilityControl 
                           key={category.id}
@@ -682,7 +682,7 @@ export default function CourseManagement() {
                         />
                       ))}
                     </div>
-                  </ScrollArea>
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
