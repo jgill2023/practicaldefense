@@ -195,12 +195,8 @@ export default function InstructorDashboard() {
   // Duplicate schedule mutation
   const duplicateScheduleMutation = useMutation({
     mutationFn: async (scheduleId: string) => {
-      const response = await apiRequest("POST", `/api/instructor/schedules/${scheduleId}/duplicate`);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: "Failed to duplicate schedule" }));
-        throw new Error(errorData.message || "Failed to duplicate schedule");
-      }
-      return response.json();
+      const data = await apiRequest("POST", `/api/instructor/schedules/${scheduleId}/duplicate`);
+      return data;
     },
     onSuccess: (data) => {
       toast({
