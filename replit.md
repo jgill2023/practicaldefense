@@ -4,6 +4,14 @@ Practical Defense Training is a professional firearms training management platfo
 
 # Recent Changes
 
+## November 1, 2025 - Promo Code Creation Form Fixes
+- Fixed Create Promo Code dialog opening issue by converting Select components from uncontrolled (defaultValue) to controlled (value) for proper React Hook Form integration
+- Resolved form validation blocking submission by removing `mode: "onChange"` setting that required all fields to be touched before allowing submit
+- Fixed client-side validation error for `createdBy` field by omitting it from form schema (server-side field set from authenticated user session)
+- Corrected date/numeric field handling in mutations to convert empty strings to null, preventing database errors
+- Form now successfully validates and submits with only required fields (Code, Name, Value)
+- Optional fields (dates, max uses, minimum cart amount) properly handled as nullable
+
 ## October 25, 2025 - Student Portal Enhancements
 - Added Emergency Contact fields to user profiles (emergencyContactName and emergencyContactPhone)
 - Implemented Emergency Contact section in edit profile dialog between License Information and Contact Preferences

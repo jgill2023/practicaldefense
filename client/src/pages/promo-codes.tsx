@@ -23,7 +23,9 @@ import { Link } from "wouter";
 import { insertPromoCodeSchema, PromoCodeWithDetails } from "@shared/schema";
 
 // Form schema for promo code creation/editing
-const promoCodeFormSchema = insertPromoCodeSchema.extend({
+const promoCodeFormSchema = insertPromoCodeSchema.omit({
+  createdBy: true, // Set server-side based on authenticated user
+}).extend({
   value: z.string().min(1, "Value is required"),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
@@ -58,16 +60,17 @@ export default function PromoCodesPage() {
   // Create promo code mutation
   const createPromoCodeMutation = useMutation({
     mutationFn: async (data: PromoCodeFormData) => {
-      const payload = {
+      const payload: any = {
         ...data,
         value: parseFloat(data.value),
-        maxTotalUses: data.maxTotalUses ? parseInt(data.maxTotalUses) : undefined,
-        maxUsesPerUser: data.maxUsesPerUser ? parseInt(data.maxUsesPerUser) : undefined,
-        minCartSubtotal: data.minCartSubtotal ? parseFloat(data.minCartSubtotal) : undefined,
-        startDate: data.startDate ? new Date(data.startDate) : undefined,
-        endDate: data.endDate ? new Date(data.endDate) : undefined,
+        // Convert empty strings to null for optional fields
+        startDate: data.startDate && data.startDate.trim() ? new Date(data.startDate) : null,
+        endDate: data.endDate && data.endDate.trim() ? new Date(data.endDate) : null,
+        maxTotalUses: data.maxTotalUses && data.maxTotalUses.trim() ? parseInt(data.maxTotalUses) : null,
+        maxUsesPerUser: data.maxUsesPerUser && data.maxUsesPerUser.trim() ? parseInt(data.maxUsesPerUser) : null,
+        minCartSubtotal: data.minCartSubtotal && data.minCartSubtotal.trim() ? parseFloat(data.minCartSubtotal) : null,
       };
-      console.log('Creating promo code with payload:', payload);
+      
       return apiRequest("POST", "/api/instructor/coupons", payload);
     },
     onSuccess: () => {
@@ -92,15 +95,17 @@ export default function PromoCodesPage() {
   // Update promo code mutation
   const updatePromoCodeMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: PromoCodeFormData }) => {
-      const payload = {
+      const payload: any = {
         ...data,
         value: parseFloat(data.value),
-        maxTotalUses: data.maxTotalUses ? parseInt(data.maxTotalUses) : undefined,
-        maxUsesPerUser: data.maxUsesPerUser ? parseInt(data.maxUsesPerUser) : undefined,
-        minCartSubtotal: data.minCartSubtotal ? parseFloat(data.minCartSubtotal) : undefined,
-        startDate: data.startDate ? new Date(data.startDate) : undefined,
-        endDate: data.endDate ? new Date(data.endDate) : undefined,
+        // Convert empty strings to null for optional fields
+        startDate: data.startDate && data.startDate.trim() ? new Date(data.startDate) : null,
+        endDate: data.endDate && data.endDate.trim() ? new Date(data.endDate) : null,
+        maxTotalUses: data.maxTotalUses && data.maxTotalUses.trim() ? parseInt(data.maxTotalUses) : null,
+        maxUsesPerUser: data.maxUsesPerUser && data.maxUsesPerUser.trim() ? parseInt(data.maxUsesPerUser) : null,
+        minCartSubtotal: data.minCartSubtotal && data.minCartSubtotal.trim() ? parseFloat(data.minCartSubtotal) : null,
       };
+      
       return apiRequest("PUT", `/api/instructor/coupons/${id}`, payload);
     },
     onSuccess: () => {
@@ -143,7 +148,6 @@ export default function PromoCodesPage() {
 
   const form = useForm<PromoCodeFormData>({
     resolver: zodResolver(promoCodeFormSchema),
-    mode: "onChange",
     defaultValues: {
       code: "",
       name: "",
@@ -168,8 +172,6 @@ export default function PromoCodesPage() {
   });
 
   const onSubmit = async (data: PromoCodeFormData) => {
-    console.log('Form data being submitted:', data);
-    
     // Validate that value is a valid number
     const valueNum = parseFloat(data.value);
     if (isNaN(valueNum) || valueNum < 0) {
@@ -254,11 +256,17 @@ export default function PromoCodesPage() {
               <p className="text-muted-foreground">Create and manage discount codes for your courses</p>
             </div>
             <Dialog open={isCreateDialogOpen || !!editingPromoCode} onOpenChange={(open) => {
-              if (!open) handleCloseDialog();
-              else setIsCreateDialogOpen(true);
+              if (!open) {
+                handleCloseDialog();
+              } else if (!editingPromoCode) {
+                setIsCreateDialogOpen(true);
+              }
             }}>
               <DialogTrigger asChild>
-                <Button data-testid="button-create-promo">
+                <Button 
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  data-testid="button-create-promo"
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   Create Promo Code
                 </Button>
@@ -288,7 +296,7 @@ export default function PromoCodesPage() {
                               <Input 
                                 placeholder="SAVE20" 
                                 {...field} 
-                                value={field.value.toUpperCase()}
+                                value={field.value?.toUpperCase() || ""}
                                 onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                                 data-testid="input-promo-code"
                               />
@@ -338,7 +346,7 @@ export default function PromoCodesPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Discount Type *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} data-testid="select-discount-type">
+                            <Select onValueChange={field.onChange} value={field.value} data-testid="select-discount-type">
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select type" />
@@ -380,7 +388,7 @@ export default function PromoCodesPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Scope *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value} data-testid="select-scope-type">
+                          <Select onValueChange={field.onChange} value={field.value} data-testid="select-scope-type">
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select scope" />
@@ -579,7 +587,7 @@ export default function PromoCodesPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Status</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value} data-testid="select-status">
+                          <Select onValueChange={field.onChange} value={field.value} data-testid="select-status">
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select status" />
