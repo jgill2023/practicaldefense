@@ -51,7 +51,7 @@ import { EditCourseForm } from "@/components/EditCourseForm";
 import { CourseManagementActions } from "@/components/CourseManagementActions";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatDateSafe } from "@/lib/dateUtils";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const localizer = momentLocalizer(moment);
@@ -631,16 +631,19 @@ export default function CourseManagement() {
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="category-visibility" className="border-0">
                 <AccordionTrigger className="hover:no-underline py-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-left">Category Visibility</h3>
-                    <p className="text-sm text-muted-foreground text-left">
-                      Choose which categories and their courses are displayed on the home page
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    <div>
+                      <h3 className="text-sm font-semibold text-left">Category Visibility Management</h3>
+                      <p className="text-sm text-muted-foreground text-left">
+                        Click to expand and manage which categories and courses appear on the home page
+                      </p>
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <div className="h-96 w-full rounded-md border overflow-y-auto p-4">
-                    <div className="space-y-3">
+                  <ScrollArea className="h-96 w-full rounded-md border">
+                    <div className="p-4 space-y-3">
                       {categories.map((category) => (
                         <CategoryVisibilityControl 
                           key={category.id}
@@ -682,7 +685,8 @@ export default function CourseManagement() {
                         />
                       ))}
                     </div>
-                  </div>
+                    <ScrollBar orientation="vertical" />
+                  </ScrollArea>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
