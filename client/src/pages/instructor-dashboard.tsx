@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +27,7 @@ import { EventCreationForm } from "@/components/EventCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
 import { RosterDialog } from "@/components/RosterDialog";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen } from "lucide-react";
+import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 
@@ -1105,18 +1106,26 @@ export default function InstructorDashboard() {
         {/* Category Management Section */}
         <div className="bg-card rounded-lg border mt-8">
           <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <FolderOpen className="w-5 h-5" />
-                  Category Management
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Organize your courses with custom categories
-                </p>
-              </div>
-            </div>
-            <CategoryManagement />
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="category-management" className="border-0">
+                <AccordionTrigger className="hover:no-underline py-3">
+                  <div className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    <div>
+                      <h2 className="text-xl font-semibold text-left flex items-center gap-2">
+                        Category Management
+                      </h2>
+                      <p className="text-sm text-muted-foreground text-left mt-1">
+                        Click to expand and manage course categories
+                      </p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CategoryManagement />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </div>
       </div>
