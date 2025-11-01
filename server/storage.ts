@@ -2513,11 +2513,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPromoCodeByCode(code: string): Promise<PromoCode | undefined> {
-    // Use case-insensitive search with ILIKE (PostgreSQL)
+    // Use case-insensitive search with UPPER comparison
+    const upperCode = code.trim().toUpperCase();
     const [promoCode] = await db
       .select()
       .from(promoCodes)
-      .where(sql`UPPER(${promoCodes.code}) = UPPER(${code})`);
+      .where(sql`UPPER(${promoCodes.code}) = ${upperCode}`);
     return promoCode;
   }
 
