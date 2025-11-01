@@ -962,7 +962,7 @@ export default function CourseRegistration() {
                       </p>
                       <Button
                         onClick={() => {
-                          if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.dateOfBirth) {
+                          if (!formData.firstName || !formData.lastName || !formData.email) {
                             toast({
                               title: "Missing Information",
                               description: "Please fill in all required fields.",
