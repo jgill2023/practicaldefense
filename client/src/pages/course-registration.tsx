@@ -962,10 +962,18 @@ export default function CourseRegistration() {
                       </p>
                       <Button
                         onClick={() => {
-                          if (!formData.firstName || !formData.lastName || !formData.email) {
+                          if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.dateOfBirth) {
                             toast({
                               title: "Missing Information",
                               description: "Please fill in all required fields.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          if (!formData.agreeToTerms) {
+                            toast({
+                              title: "Terms Required",
+                              description: "Please agree to the terms and conditions.",
                               variant: "destructive",
                             });
                             return;
@@ -977,6 +985,8 @@ export default function CourseRegistration() {
                               firstName: formData.firstName,
                               lastName: formData.lastName,
                               email: formData.email,
+                              phone: formData.phone,
+                              dateOfBirth: formData.dateOfBirth,
                             }
                           });
                         }}
