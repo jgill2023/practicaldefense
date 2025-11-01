@@ -369,10 +369,11 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
   });
 
   const confirmEnrollmentMutation = useMutation({
-    mutationFn: async ({ enrollmentId, paymentIntentId }: { enrollmentId: string; paymentIntentId: string }) => {
+    mutationFn: async ({ enrollmentId, paymentIntentId, studentInfo }: { enrollmentId: string; paymentIntentId: string; studentInfo?: { firstName: string; lastName: string; email: string } }) => {
       return await apiRequest("POST", "/api/course-registration/confirm", {
         enrollmentId,
         paymentIntentId,
+        ...(studentInfo && { studentInfo }),
       });
     },
     onSuccess: () => {

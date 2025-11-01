@@ -410,10 +410,11 @@ export default function CourseRegistration() {
   });
 
   const confirmEnrollmentMutation = useMutation({
-    mutationFn: async ({ enrollmentId, paymentIntentId }: { enrollmentId: string; paymentIntentId: string }) => {
+    mutationFn: async ({ enrollmentId, paymentIntentId, studentInfo }: { enrollmentId: string; paymentIntentId: string; studentInfo?: { firstName: string; lastName: string; email: string } }) => {
       return await apiRequest("POST", "/api/course-registration/confirm", {
         enrollmentId,
         paymentIntentId,
+        ...(studentInfo && { studentInfo }),
       });
     },
     onSuccess: () => {
@@ -962,14 +963,6 @@ export default function CourseRegistration() {
                       </p>
                       <Button
                         onClick={() => {
-                          if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.dateOfBirth) {
-                            toast({
-                              title: "Missing Information",
-                              description: "Please fill in all required student information fields.",
-                              variant: "destructive",
-                            });
-                            return;
-                          }
                           if (!formData.agreeToTerms) {
                             toast({
                               title: "Terms Required",
@@ -985,12 +978,10 @@ export default function CourseRegistration() {
                               firstName: formData.firstName,
                               lastName: formData.lastName,
                               email: formData.email,
-                              phone: formData.phone,
-                              dateOfBirth: formData.dateOfBirth,
                             }
                           });
                         }}
-                        disabled={confirmEnrollmentMutation.isPending || !formData.agreeToTerms || !formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.dateOfBirth}
+                        disabled={confirmEnrollmentMutation.isPending || !formData.agreeToTerms}
                         size="lg"
                         className="w-full bg-green-600 hover:bg-green-700 text-white"
                         data-testid="button-complete-free-registration"
