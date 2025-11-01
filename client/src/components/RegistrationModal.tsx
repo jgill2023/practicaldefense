@@ -192,7 +192,23 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
         paymentOption: formData.paymentOption,
       });
 
-      if (data.clientSecret) {
+      // Handle free enrollment (100% discount)
+      if (data.isFree) {
+        setPromoCodeApplied(promoCode.trim());
+        setTaxInfo({
+          originalAmount: data.originalAmount,
+          subtotal: 0,
+          discountAmount: data.discountAmount || 0,
+          tax: 0,
+          total: 0,
+          tax_included: false,
+          promoCode: data.promoCode
+        });
+        toast({
+          title: "Promo Code Applied!",
+          description: `This course is now free! You saved $${data.originalAmount?.toFixed(2) || '0.00'}`,
+        });
+      } else if (data.clientSecret) {
         setPromoCodeApplied(promoCode.trim());
         setClientSecret(data.clientSecret);
         setTaxInfo({
@@ -741,32 +757,87 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
                 </CardContent>
               </Card>
 
-              {/* Payment Form */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <CreditCard className="mr-2 h-5 w-5" />
-                    Payment Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Elements 
-                    key={clientSecret}
-                    stripe={stripePromise} 
-                    options={{ 
-                      clientSecret,
-                      appearance: {
-                        theme: 'stripe',
-                        variables: {
-                          colorPrimary: '#1F2937',
+              {/* Free Enrollment - No payment required */}
+              {taxInfo && taxInfo.total === 0 ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-green-600">
+                      <Check className="mr-2 h-5 w-5" />
+                      Free Enrollment - No Payment Required
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <p className="text-muted-foreground">
+                        Your promo code has made this course completely free! Click below to complete your registration.
+                      </p>
+                      <Button
+                        onClick={() => {
+                          if (!formData.firstName || !formData.lastName || !formData.email) {
+                            toast({
+                              title: "Missing Information",
+                              description: "Please fill in all required fields.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          confirmEnrollmentMutation.mutate({
+                            enrollmentId: currentEnrollment.id,
+                            paymentIntentId: 'free-enrollment',
+                            studentInfo: {
+                              firstName: formData.firstName,
+                              lastName: formData.lastName,
+                              email: formData.email,
+                            }
+                          });
+                        }}
+                        disabled={confirmEnrollmentMutation.isPending || !formData.agreeToTerms}
+                        size="lg"
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        data-testid="button-complete-free-registration"
+                      >
+                        {confirmEnrollmentMutation.isPending ? (
+                          <>
+                            <div className="animate-spin w-4 h-4 border-2 border-transparent border-t-current rounded-full mr-2" />
+                            Completing Registration...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="mr-2 h-4 w-4" />
+                            Complete Free Registration
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <CreditCard className="mr-2 h-5 w-5" />
+                      Payment Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Elements 
+                      key={clientSecret}
+                      stripe={stripePromise} 
+                      options={{ 
+                        clientSecret,
+                        appearance: {
+                          theme: 'stripe',
+                          variables: {
+                            colorPrimary: '#1F2937',
+                          }
                         }
-                      }
-                    }}
-                  >
-                    <CheckoutForm enrollment={currentEnrollment} confirmEnrollmentMutation={confirmEnrollmentMutation} />
-                  </Elements>
-                </CardContent>
-              </Card>
+                      }}
+                    >
+                      <CheckoutForm enrollment={currentEnrollment} confirmEnrollmentMutation={confirmEnrollmentMutation} />
+                    </Elements>
+                  </CardContent>
+                </Card>
+              )}
             </>
           )}
 

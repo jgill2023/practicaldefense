@@ -1902,6 +1902,32 @@ export class DatabaseStorage implements IStorage {
       console.log('⏭️ No promo code provided or empty, skipping validation');
     }
 
+    // Handle free enrollments (100% discount) - no payment needed
+    if (finalPaymentAmount <= 0) {
+      console.log('💯 Free enrollment detected (100% discount) - skipping Stripe payment');
+      
+      // Update enrollment with promo code but no payment intent
+      await db
+        .update(enrollments)
+        .set({
+          promoCodeApplied: promoCode || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(enrollments.id, enrollmentId));
+
+      return {
+        clientSecret: null, // No payment needed
+        originalAmount: paymentAmount,
+        subtotal: 0,
+        discountAmount,
+        tax: 0,
+        total: 0,
+        tax_included: false,
+        promoCode: promoCodeInfo?.code,
+        isFree: true, // Flag to indicate no payment is required
+      };
+    }
+
     // Calculate tax using Stripe Tax Calculation API
     let taxCalculation = null;
     let taxAmount = 0;
@@ -1971,6 +1997,7 @@ export class DatabaseStorage implements IStorage {
       total: finalAmount / 100,
       tax_included: taxAmount > 0,
       promoCode: promoCodeInfo?.code,
+      isFree: false,
     };
   }
 
