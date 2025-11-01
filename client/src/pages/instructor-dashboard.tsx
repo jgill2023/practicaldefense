@@ -196,6 +196,10 @@ export default function InstructorDashboard() {
   const duplicateScheduleMutation = useMutation({
     mutationFn: async (scheduleId: string) => {
       const response = await apiRequest("POST", `/api/instructor/schedules/${scheduleId}/duplicate`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Failed to duplicate schedule" }));
+        throw new Error(errorData.message || "Failed to duplicate schedule");
+      }
       return response.json();
     },
     onSuccess: (data) => {
@@ -206,11 +210,13 @@ export default function InstructorDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
 
       // Open edit form for the newly duplicated schedule
-      setTimeout(() => {
-        setEditingSchedule(data.schedule);
-      }, 500);
+      if (data && data.schedule) {
+        setTimeout(() => {
+          setEditingSchedule(data.schedule);
+        }, 500);
+      }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -224,7 +230,7 @@ export default function InstructorDashboard() {
       }
       toast({
         title: "Duplication Failed",
-        description: "Failed to duplicate schedule. Please try again.",
+        description: error?.message || "Failed to duplicate schedule. Please try again.",
         variant: "destructive",
       });
     },

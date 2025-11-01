@@ -1789,19 +1789,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the schedule and verify it belongs to the instructor's course
       const schedule = await storage.getCourseSchedule(scheduleId);
       if (!schedule) {
-        return res.status(404).json({ error: "Schedule not found" });
+        return res.status(404).json({ message: "Schedule not found" });
       }
 
       const course = await storage.getCourse(schedule.courseId);
       if (!course || course.instructorId !== userId) {
-        return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
+        return res.status(403).json({ message: "Unauthorized: Schedule does not belong to instructor" });
       }
 
       const duplicatedSchedule = await storage.duplicateCourseSchedule(scheduleId);
-      res.json({ message: "Schedule duplicated successfully", schedule: duplicatedSchedule });
+      
+      // Return the duplicated schedule with full details
+      res.status(201).json({ 
+        message: "Schedule duplicated successfully", 
+        schedule: duplicatedSchedule 
+      });
     } catch (error: any) {
       console.error("Error duplicating schedule:", error);
-      res.status(500).json({ error: "Failed to duplicate schedule: " + error.message });
+      res.status(500).json({ message: "Failed to duplicate schedule: " + error.message });
     }
   });
 
