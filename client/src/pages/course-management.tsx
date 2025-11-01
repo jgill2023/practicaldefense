@@ -51,6 +51,8 @@ import { EditCourseForm } from "@/components/EditCourseForm";
 import { CourseManagementActions } from "@/components/CourseManagementActions";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatDateSafe } from "@/lib/dateUtils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const localizer = momentLocalizer(moment);
 
@@ -786,42 +788,33 @@ export default function CourseManagement() {
                       <p className="text-muted-foreground">Deleted course types will appear here.</p>
                     </div>
                   ) : (
-                    <div className="grid gap-6">
-                      {deletedCourses.map((course) => (
-                        <Card key={course.id} className="border border-destructive/20 bg-destructive/5">
-                          <CardContent className="p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-lg mb-2 truncate" data-testid={`text-course-title-${course.id}`}>
-                                  {course.title}
-                                </h3>
-
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
-                                  <span className="whitespace-nowrap">${course.price}</span>
-                                  <span className="whitespace-nowrap">{course.duration}</span>
-                                  <span className="whitespace-nowrap">
-                                    {typeof course.category === 'string' ? course.category : 
-                                     (course.category && typeof course.category === 'object' && 'name' in course.category) 
-                                       ? (course.category as any).name || 'General' 
-                                       : 'General'}
-                                  </span>
-                                </div>
-                                <Badge variant="destructive" className="mb-2">Deleted</Badge>
-                                <p className="text-sm text-muted-foreground">
-                                  Deleted on {course.deletedAt ? formatDateSafe(course.deletedAt.toString()) : 'Unknown'}
-                                </p>
-                              </div>
-                              <div className="flex-shrink-0 w-full sm:w-auto">
-                                <div className="flex flex-col sm:flex-row gap-2">
-                                  <RestoreCourseButton course={course} />
-                                  <DeletePermanentlyButton course={course} />
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
+                    <ScrollArea className="h-[600px] border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Course</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Students</TableHead>
+                            <TableHead>Revenue</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {deletedCourses.map((course) => (
+                            <CourseManagementActions
+                              key={course.id}
+                              course={course}
+                              onEditCourse={(course) => setEditingCourse(course)}
+                              onCreateEvent={(course) => {
+                                setSelectedCourseForEvent(course);
+                                setShowCreateEventModal(true);
+                              }}
+                            />
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
                   )}
                 </div>
               </TabsContent>
