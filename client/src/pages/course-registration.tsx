@@ -962,10 +962,10 @@ export default function CourseRegistration() {
                       </p>
                       <Button
                         onClick={() => {
-                          if (!formData.firstName || !formData.lastName || !formData.email) {
+                          if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.dateOfBirth) {
                             toast({
                               title: "Missing Information",
-                              description: "Please fill in all required fields.",
+                              description: "Please fill in all required student information fields.",
                               variant: "destructive",
                             });
                             return;
@@ -990,7 +990,7 @@ export default function CourseRegistration() {
                             }
                           });
                         }}
-                        disabled={confirmEnrollmentMutation.isPending || !formData.agreeToTerms}
+                        disabled={confirmEnrollmentMutation.isPending || !formData.agreeToTerms || !formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.dateOfBirth}
                         size="lg"
                         className="w-full bg-green-600 hover:bg-green-700 text-white"
                         data-testid="button-complete-free-registration"
