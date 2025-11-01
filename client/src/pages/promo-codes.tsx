@@ -143,6 +143,7 @@ export default function PromoCodesPage() {
 
   const form = useForm<PromoCodeFormData>({
     resolver: zodResolver(promoCodeFormSchema),
+    mode: "onChange",
     defaultValues: {
       code: "",
       name: "",
@@ -166,7 +167,7 @@ export default function PromoCodesPage() {
     },
   });
 
-  const onSubmit = (data: PromoCodeFormData) => {
+  const onSubmit = async (data: PromoCodeFormData) => {
     console.log('Form data being submitted:', data);
     
     // Validate that value is a valid number
@@ -180,10 +181,14 @@ export default function PromoCodesPage() {
       return;
     }
 
-    if (editingPromoCode) {
-      updatePromoCodeMutation.mutate({ id: editingPromoCode.id, data });
-    } else {
-      createPromoCodeMutation.mutate(data);
+    try {
+      if (editingPromoCode) {
+        await updatePromoCodeMutation.mutateAsync({ id: editingPromoCode.id, data });
+      } else {
+        await createPromoCodeMutation.mutateAsync(data);
+      }
+    } catch (error) {
+      console.error('Mutation error:', error);
     }
   };
 
