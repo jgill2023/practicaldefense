@@ -2512,10 +2512,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPromoCodeByCode(code: string): Promise<PromoCode | undefined> {
+    // Use case-insensitive search with ILIKE (PostgreSQL)
     const [promoCode] = await db
       .select()
       .from(promoCodes)
-      .where(eq(promoCodes.code, code.toUpperCase()));
+      .where(sql`UPPER(${promoCodes.code}) = UPPER(${code})`);
     return promoCode;
   }
 
@@ -2588,14 +2589,10 @@ export class DatabaseStorage implements IStorage {
 
   // Promo code validation and redemption
   async validatePromoCode(code: string, userId: string, courseId: string, amount: number): Promise<PromoCodeValidationResult> {
-    const promoCode = await this.getPromoCodeByCode(code);
+    const promoCode = await this.getPromoCodeByCode(code.trim().toUpperCase());
 
     if (!promoCode) {
-      return {
-        isValid: false,
-        error: 'Promo code not found',
-        errorCode: 'NOT_FOUND',
-      };
+      return { isValid: false, error: 'Promo code not found', errorCode: 'NOT_FOUND' };
     }
 
     // Check if promo code is active
@@ -2659,19 +2656,6 @@ export class DatabaseStorage implements IStorage {
       };
     }
 
-    // Check per-user usage limit
-    if (promoCode.maxUsesPerUser) {
-      const userRedemptions = await this.getPromoCodeRedemptionsByUser(userId);
-      const thisCodeUses = userRedemptions.filter(r => r.promoCodeId === promoCode.id).length;
-      if (thisCodeUses >= promoCode.maxUsesPerUser) {
-        return {
-          isValid: false,
-          error: 'You have reached the usage limit for this promo code',
-          errorCode: 'USER_LIMIT_REACHED',
-        };
-      }
-    }
-
     // Check minimum cart amount
     if (promoCode.minCartSubtotal && amount < parseFloat(promoCode.minCartSubtotal)) {
       return {
@@ -2713,25 +2697,38 @@ export class DatabaseStorage implements IStorage {
       };
     }
 
-    // Check user eligibility
-    if (promoCode.allowedUserIds && !promoCode.allowedUserIds.includes(userId)) {
-      return {
-        isValid: false,
-        error: 'You are not eligible for this promo code',
-        errorCode: 'NOT_ELIGIBLE',
-      };
-    }
+    // Check user eligibility (skip for draft enrollments)
+    if (userId !== 'draft-enrollment') {
+      if (promoCode.allowedUserIds && promoCode.allowedUserIds.length > 0) {
+        if (!promoCode.allowedUserIds.includes(userId)) {
+          return { isValid: false, error: 'This promo code is not available to you', errorCode: 'NOT_ELIGIBLE' };
+        }
+      }
 
-    if (promoCode.deniedUserIds && promoCode.deniedUserIds.includes(userId)) {
-      return {
-        isValid: false,
-        error: 'You are not eligible for this promo code',
-        errorCode: 'NOT_ELIGIBLE',
-      };
+      if (promoCode.deniedUserIds && promoCode.deniedUserIds.includes(userId)) {
+        return { isValid: false, error: 'This promo code is not available to you', errorCode: 'NOT_ELIGIBLE' };
+      }
+
+      // Check if user has already used this code (if maxUsesPerUser is set)
+      if (promoCode.maxUsesPerUser) {
+        const userRedemptions = await db
+          .select()
+          .from(promoCodeRedemptions)
+          .where(
+            and(
+              eq(promoCodeRedemptions.promoCodeId, promoCode.id),
+              eq(promoCodeRedemptions.userId, userId)
+            )
+          );
+
+        if (userRedemptions.length >= promoCode.maxUsesPerUser) {
+          return { isValid: false, error: 'You have already used this promo code', errorCode: 'USER_LIMIT_REACHED' };
+        }
+      }
     }
 
     // Check first purchase eligibility
-    if (promoCode.firstPurchaseOnly) {
+    if (promoCode.firstPurchaseOnly && userId !== 'draft-enrollment') {
       const userEnrollments = await this.getEnrollmentsByStudent(userId);
       const paidEnrollments = userEnrollments.filter(e => e.paymentStatus === 'paid');
       if (paidEnrollments.length > 0) {
@@ -4066,7 +4063,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  // Course Notifications operations
+  // Course Notifications
   async createCourseNotification(notification: InsertCourseNotification): Promise<CourseNotification> {
     const [result] = await db
       .insert(courseNotifications)
