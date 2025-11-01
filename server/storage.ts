@@ -2522,15 +2522,17 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
     
-    // Use case-insensitive search with UPPER comparison
-    const upperCode = code.trim().toUpperCase();
-    const result = await db
+    // Get all promo codes and filter in memory for case-insensitive match
+    const allPromoCodes = await db
       .select()
-      .from(promoCodes)
-      .where(sql`UPPER(${promoCodes.code}) = ${upperCode}`)
-      .limit(1);
+      .from(promoCodes);
     
-    return result[0];
+    const trimmedCode = code.trim().toUpperCase();
+    const matchingCode = allPromoCodes.find(
+      pc => pc.code.trim().toUpperCase() === trimmedCode
+    );
+    
+    return matchingCode;
   }
 
   async getPromoCodes(): Promise<PromoCodeWithDetails[]> {
