@@ -628,57 +628,64 @@ export default function CourseManagement() {
             <Separator />
 
             {/* Category Visibility Controls */}
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold mb-2">Category Visibility</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Choose which categories and their courses are displayed on the home page
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {categories.map((category) => (
-                  <CategoryVisibilityControl 
-                    key={category.id}
-                    category={category}
-                    courses={courses.filter((c: any) => c.categoryId === category.id)}
-                    onCategoryToggle={(categoryId, visible) => {
-                      apiRequest('PATCH', `/api/categories/${categoryId}/home-visibility`, { showOnHomePage: visible })
-                        .then(() => {
-                          queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-                          toast({
-                            title: "Success",
-                            description: `Category visibility updated`,
-                          });
-                        }).catch((error) => {
-                          toast({
-                            title: "Error",
-                            description: error.message || "Failed to update category visibility",
-                            variant: "destructive",
-                          });
-                        });
-                    }}
-                    onCourseToggle={(courseId, visible) => {
-                      apiRequest('PATCH', `/api/courses/${courseId}/home-visibility`, { showOnHomePage: visible })
-                        .then(() => {
-                          queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
-                          queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
-                          toast({
-                            title: "Success",
-                            description: `Course visibility updated`,
-                          });
-                        }).catch((error) => {
-                          toast({
-                            title: "Error",
-                            description: error.message || "Failed to update course visibility",
-                            variant: "destructive",
-                          });
-                        });
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="category-visibility" className="border-0">
+                <AccordionTrigger className="hover:no-underline py-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-left">Category Visibility</h3>
+                    <p className="text-sm text-muted-foreground text-left">
+                      Choose which categories and their courses are displayed on the home page
+                    </p>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <ScrollArea className="h-96 w-full rounded-md border p-4">
+                    <div className="space-y-3 pr-4">
+                      {categories.map((category) => (
+                        <CategoryVisibilityControl 
+                          key={category.id}
+                          category={category}
+                          courses={courses.filter((c: any) => c.categoryId === category.id)}
+                          onCategoryToggle={(categoryId, visible) => {
+                            apiRequest('PATCH', `/api/categories/${categoryId}/home-visibility`, { showOnHomePage: visible })
+                              .then(() => {
+                                queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+                                toast({
+                                  title: "Success",
+                                  description: `Category visibility updated`,
+                                });
+                              }).catch((error) => {
+                                toast({
+                                  title: "Error",
+                                  description: error.message || "Failed to update category visibility",
+                                  variant: "destructive",
+                                });
+                              });
+                          }}
+                          onCourseToggle={(courseId, visible) => {
+                            apiRequest('PATCH', `/api/courses/${courseId}/home-visibility`, { showOnHomePage: visible })
+                              .then(() => {
+                                queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+                                queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+                                toast({
+                                  title: "Success",
+                                  description: `Course visibility updated`,
+                                });
+                              }).catch((error) => {
+                                toast({
+                                  title: "Error",
+                                  description: error.message || "Failed to update course visibility",
+                                  variant: "destructive",
+                                });
+                              });
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </CardContent>
         </Card>
 
