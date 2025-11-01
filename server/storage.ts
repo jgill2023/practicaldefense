@@ -1864,27 +1864,42 @@ export class DatabaseStorage implements IStorage {
     let finalPaymentAmount = paymentAmount;
     let promoCodeInfo = null;
 
-    if (promoCode) {
+    console.log('🎫 Promo code check:', {
+      promoCode,
+      type: typeof promoCode,
+      length: promoCode?.length,
+      trimmed: promoCode?.trim(),
+      courseId: enrollment.courseId
+    });
+
+    if (promoCode && promoCode.trim()) {
       // For draft enrollments, we'll use a placeholder userId for promo validation
       // The actual user validation will happen during finalization
       try {
-        const validation = await this.validatePromoCode(promoCode, 'draft-enrollment', enrollment.courseId, paymentAmount);
+        console.log('🎫 Validating promo code:', promoCode.trim());
+        const validation = await this.validatePromoCode(promoCode.trim(), 'draft-enrollment', enrollment.courseId, paymentAmount);
+        console.log('🎫 Validation result:', validation);
+        
         if (validation.isValid && validation.discountAmount !== undefined && validation.finalAmount !== undefined) {
           discountAmount = validation.discountAmount;
           finalPaymentAmount = validation.finalAmount;
           promoCodeInfo = {
-            code: promoCode,
+            code: promoCode.trim(),
             discountAmount,
             type: validation.code?.type,
             value: validation.code?.value
           };
+          console.log('✅ Promo code applied successfully:', promoCodeInfo);
         } else {
+          console.error('❌ Promo code validation failed:', validation.error);
           throw new Error(validation.error || 'Invalid promo code');
         }
       } catch (error: any) {
         console.error('Promo code validation error:', error);
         throw new Error(error.message || 'Failed to validate promo code');
       }
+    } else {
+      console.log('⏭️ No promo code provided or empty, skipping validation');
     }
 
     // Calculate tax using Stripe Tax Calculation API
