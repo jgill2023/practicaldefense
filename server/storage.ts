@@ -1867,18 +1867,23 @@ export class DatabaseStorage implements IStorage {
     if (promoCode) {
       // For draft enrollments, we'll use a placeholder userId for promo validation
       // The actual user validation will happen during finalization
-      const validation = await this.validatePromoCode(promoCode, 'draft-enrollment', enrollment.courseId, paymentAmount);
-      if (validation.isValid && validation.discountAmount !== undefined && validation.finalAmount !== undefined) {
-        discountAmount = validation.discountAmount;
-        finalPaymentAmount = validation.finalAmount;
-        promoCodeInfo = {
-          code: promoCode,
-          discountAmount,
-          type: validation.code?.type,
-          value: validation.code?.value
-        };
-      } else {
-        throw new Error(`Invalid promo code: ${validation.error}`);
+      try {
+        const validation = await this.validatePromoCode(promoCode, 'draft-enrollment', enrollment.courseId, paymentAmount);
+        if (validation.isValid && validation.discountAmount !== undefined && validation.finalAmount !== undefined) {
+          discountAmount = validation.discountAmount;
+          finalPaymentAmount = validation.finalAmount;
+          promoCodeInfo = {
+            code: promoCode,
+            discountAmount,
+            type: validation.code?.type,
+            value: validation.code?.value
+          };
+        } else {
+          throw new Error(validation.error || 'Invalid promo code');
+        }
+      } catch (error: any) {
+        console.error('Promo code validation error:', error);
+        throw new Error(error.message || 'Failed to validate promo code');
       }
     }
 
@@ -2513,13 +2518,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPromoCodeByCode(code: string): Promise<PromoCode | undefined> {
+    if (!code || !code.trim()) {
+      return undefined;
+    }
+    
     // Use case-insensitive search with UPPER comparison
     const upperCode = code.trim().toUpperCase();
-    const [promoCode] = await db
+    const result = await db
       .select()
       .from(promoCodes)
-      .where(sql`UPPER(${promoCodes.code}) = ${upperCode}`);
-    return promoCode;
+      .where(sql`UPPER(${promoCodes.code}) = ${upperCode}`)
+      .limit(1);
+    
+    return result[0];
   }
 
   async getPromoCodes(): Promise<PromoCodeWithDetails[]> {
