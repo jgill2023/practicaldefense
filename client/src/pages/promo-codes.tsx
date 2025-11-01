@@ -159,7 +159,7 @@ export default function PromoCodesPage() {
       newCustomersOnly: false,
       maxUsesPerUser: "1",
       maxTotalUses: "",
-      minCartSubtotal: "",
+      minCartSubtotal: "0.00",
       startDate: "",
       endDate: "",
       scopeCourseIds: [],
@@ -523,7 +523,8 @@ export default function PromoCodesPage() {
                               <Input 
                                 type="number" 
                                 placeholder="Unlimited" 
-                                {...field} 
+                                {...field}
+                                value={field.value || ""}
                                 data-testid="input-max-total-uses"
                               />
                             </FormControl>
@@ -541,7 +542,8 @@ export default function PromoCodesPage() {
                               <Input 
                                 type="number" 
                                 placeholder="1" 
-                                {...field} 
+                                {...field}
+                                value={field.value || ""}
                                 data-testid="input-max-uses-per-user"
                               />
                             </FormControl>
@@ -561,7 +563,8 @@ export default function PromoCodesPage() {
                             <Input 
                               type="number" 
                               placeholder="0" 
-                              {...field} 
+                              {...field}
+                              value={field.value || ""}
                               data-testid="input-min-cart-subtotal"
                             />
                           </FormControl>
