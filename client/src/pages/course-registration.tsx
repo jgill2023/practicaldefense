@@ -985,8 +985,6 @@ export default function CourseRegistration() {
                               firstName: formData.firstName,
                               lastName: formData.lastName,
                               email: formData.email,
-                              phone: formData.phone,
-                              dateOfBirth: formData.dateOfBirth,
                             }
                           });
                         }}
