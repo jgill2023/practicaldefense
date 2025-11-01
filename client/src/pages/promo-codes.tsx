@@ -67,20 +67,23 @@ export default function PromoCodesPage() {
         startDate: data.startDate ? new Date(data.startDate) : undefined,
         endDate: data.endDate ? new Date(data.endDate) : undefined,
       };
+      console.log('Creating promo code with payload:', payload);
       return apiRequest("POST", "/api/instructor/coupons", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/coupons"] });
       setIsCreateDialogOpen(false);
+      form.reset();
       toast({
         title: "Success",
         description: "Promo code created successfully!",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Error creating promo code:', error);
       toast({
         title: "Error",
-        description: "Failed to create promo code. Please try again.",
+        description: error?.message || "Failed to create promo code. Please try again.",
         variant: "destructive",
       });
     },
@@ -154,12 +157,29 @@ export default function PromoCodesPage() {
       firstPurchaseOnly: false,
       newCustomersOnly: false,
       maxUsesPerUser: "1",
+      maxTotalUses: "",
+      minCartSubtotal: "",
+      startDate: "",
+      endDate: "",
       scopeCourseIds: [],
       scopeCategoryIds: [],
     },
   });
 
   const onSubmit = (data: PromoCodeFormData) => {
+    console.log('Form data being submitted:', data);
+    
+    // Validate that value is a valid number
+    const valueNum = parseFloat(data.value);
+    if (isNaN(valueNum) || valueNum < 0) {
+      toast({
+        title: "Invalid Value",
+        description: "Please enter a valid discount value",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (editingPromoCode) {
       updatePromoCodeMutation.mutate({ id: editingPromoCode.id, data });
     } else {
