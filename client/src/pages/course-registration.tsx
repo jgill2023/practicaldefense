@@ -240,10 +240,11 @@ export default function CourseRegistration() {
         });
       }
     } catch (error: any) {
-      setPromoError("Failed to validate promo code");
+      const errorMessage = error.message || "Failed to validate promo code";
+      setPromoError(errorMessage);
       toast({
         title: "Validation Failed",
-        description: "Unable to validate promo code. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

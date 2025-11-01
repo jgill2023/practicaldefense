@@ -446,9 +446,9 @@ export interface IStorage {
   getEcommerceOrders(userId?: string): Promise< EcommerceOrderWithDetails[]>;
 
   // E-commerce Order Items
-  createEcommerceOrderItem(item: InsertEcommerceOrderItem): Promise<EcommerceOrderItem>;
-  updateEcommerceOrderItem(id: string, item: Partial<InsertEcommerceOrderItem>): Promise<EcommerceOrderItem>;
-  getEcommerceOrderItems(orderId: string): Promise<EcommerceOrderItem[]>;
+  createEcommerceOrderItem(item: InsertEcommerceOrderItem): Promise< EcommerceOrderItem>;
+  updateEcommerceOrderItem(id: string, item: Partial<InsertEcommerceOrderItem>): Promise< EcommerceOrderItem>;
+  getEcommerceOrderItems(orderId: string): Promise< EcommerceOrderItem[]>;
 
   // Course Notifications
   createCourseNotification(notification: InsertCourseNotification): Promise<CourseNotification>;
@@ -1488,7 +1488,7 @@ export class DatabaseStorage implements IStorage {
         .filter(s => s.paymentStatus === 'paid')
         .reduce((sum, s) => {
           // Extract revenue from the enrollment data - this may need adjustment based on your data structure
-          // Assuming coursePrice is available in the flattened object, otherwise calculate from original amount if needed.
+          // Assuming coursePrice is available in the flattened object, otherwise calculate it based on enrollment details.
           // For now, let's assume it's not directly available and use a placeholder or fetch it.
           // A more robust solution would involve passing the course price or calculating it based on enrollment details.
           // For this example, we'll return 0 and note that this needs proper implementation.
@@ -2174,28 +2174,28 @@ export class DatabaseStorage implements IStorage {
     const now = new Date();
 
     // Get all courses for this instructor
-    const instructorCourses = await db.query.courses.findMany({
-      where: eq(courses.instructorId, instructorId),
-      with: {
-        schedules: {
-          where: isNull(courseSchedules.deletedAt),
-        },
-      },
-    });
+    const instructorCourses = await this.getCoursesByInstructor(instructorId);
+    const courseIds = instructorCourses.map(c => c.id);
+
+    if (courseIds.length === 0) {
+      return {
+        upcomingCourses: 0,
+        pastCourses: 0,
+        allStudents: 0,
+        totalRevenue: 0,
+        outstandingRevenue: 0,
+      };
+    }
 
     // Get all enrollments for instructor's courses
     const allEnrollments = await db.query.enrollments.findMany({
+      where: inArray(enrollments.courseId, courseIds), // Filter only for instructor's courses
       with: {
         course: true,
         schedule: true,
         student: true,
       },
     });
-
-    // Filter enrollments for this instructor's courses
-    const instructorEnrollments = allEnrollments.filter(e => 
-      e.course && e.course.instructorId === instructorId
-    );
 
     // Calculate upcoming courses
     const upcomingCourses = instructorCourses.reduce((count, course) => {
@@ -2214,23 +2214,24 @@ export class DatabaseStorage implements IStorage {
     }, 0);
 
     // Calculate unique students (all students who have enrolled)
-    const uniqueStudentIds = new Set(instructorEnrollments.map(e => e.studentId));
+    const uniqueStudentIds = new Set(allEnrollments.map(e => e.studentId).filter(Boolean)); // Filter out null/undefined studentIds
     const allStudents = uniqueStudentIds.size;
 
     // Calculate total revenue (all paid enrollments)
-    const totalRevenue = instructorEnrollments
-      .filter(e => e.paymentStatus === 'paid')
+    const totalRevenue = allEnrollments
+      .filter(e => e.paymentStatus === 'paid' && e.course)
       .reduce((sum, e) => {
-        const price = parseFloat(e.course?.price || '0');
+        const price = parseFloat(e.course!.price);
         return sum + price;
       }, 0);
 
     // Calculate outstanding revenue (enrollments with deposit only)
-    const outstandingRevenue = instructorEnrollments
-      .filter(e => e.paymentStatus === 'deposit')
+    const outstandingRevenue = allEnrollments
+      .filter(e => e.paymentStatus === 'deposit' && e.course)
       .reduce((sum, e) => {
-        const price = parseFloat(e.course?.price || '0');
-        const depositAmount = 50; // Default deposit amount or get from course settings
+        const price = parseFloat(e.course!.price);
+        // Assuming a default deposit amount or fetching it from course settings if available
+        const depositAmount = e.course!.depositAmount ? parseFloat(e.course!.depositAmount) : 50; 
         return sum + (price - depositAmount);
       }, 0);
 
@@ -4042,7 +4043,7 @@ export class DatabaseStorage implements IStorage {
     return created;
   }
 
-  async updateEcommerceOrderItem(id: string, item: Partial<InsertEcommerceOrderItem>): Promise<EcommerceOrderItem> {
+  async updateEcommerceOrderItem(id: string, item: Partial<InsertEcommerceOrderItem>): Promise< EcommerceOrderItem> {
     const [updated] = await db
       .update(ecommerceOrderItems)
       .set({ ...item, updatedAt: new Date() })
@@ -4056,7 +4057,7 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async getEcommerceOrderItems(orderId: string): Promise<EcommerceOrderItem[]> {
+  async getEcommerceOrderItems(orderId: string): Promise< EcommerceOrderItem[]> {
     return db.query.ecommerceOrderItems.findMany({
       where: eq(ecommerceOrderItems.orderId, orderId),
       orderBy: [asc(ecommerceOrderItems.createdAt)],
