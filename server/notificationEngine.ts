@@ -211,13 +211,13 @@ export class NotificationEngine {
       variables.schedule = {
         startDate: this.safeFormatDate(schedule.startDate) || '',
         endDate: this.safeFormatDate(schedule.endDate) || '',
-        startTime: schedule.startTime,
-        endTime: schedule.endTime,
+        startTime: this.formatTime(schedule.startTime),
+        endTime: this.formatTime(schedule.endTime),
         location: schedule.location || '',
         maxSpots: schedule.maxSpots,
         availableSpots: schedule.availableSpots,
         dayOfWeek: schedule.dayOfWeek || '',
-        arrivalTime: schedule.arrivalTime || '',
+        arrivalTime: schedule.arrivalTime ? this.formatTime(schedule.arrivalTime) : '',
         rangeName: schedule.rangeName || '',
         classroomName: schedule.classroomName || '',
         googleMapsLink: schedule.googleMapsLink || '',
@@ -557,6 +557,19 @@ export class NotificationEngine {
       console.warn('Error formatting date:', date, error);
       return null;
     }
+  }
+
+  /**
+   * Format time from HH:MM or HH:MM:SS to 12-hour format with AM/PM
+   */
+  private static formatTime(time: string): string {
+    if (!time) return '';
+    
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return `${displayHour}:${minutes} ${ampm}`;
   }
 
   /**
