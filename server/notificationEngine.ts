@@ -328,7 +328,12 @@ export class NotificationEngine {
 
       // Process template content
       const processedSubject = this.processTemplate(template.subject || '', variables);
-      const processedContent = this.processTemplate(template.content || '', variables);
+      let processedContent = this.processTemplate(template.content || '', variables);
+
+      // Strip HTML tags for SMS notifications
+      if (template.type === 'sms') {
+        processedContent = this.stripHtml(processedContent);
+      }
 
       // Create notification log entry
       const logData: InsertNotificationLog = {
@@ -547,6 +552,24 @@ export class NotificationEngine {
       console.warn('Error formatting date:', date, error);
       return null;
     }
+  }
+
+  /**
+   * Strip HTML tags and convert to plain text
+   */
+  private static stripHtml(html: string): string {
+    return html
+      .replace(/<br\s*\/?>/gi, '\n') // Convert <br> to newlines
+      .replace(/<\/p>/gi, '\n\n') // Convert </p> to double newlines
+      .replace(/<[^>]*>/g, '') // Remove all other HTML tags
+      .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+      .replace(/&amp;/g, '&')  // Replace HTML entities
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\n\s*\n\s*\n/g, '\n\n') // Remove excessive newlines
+      .trim();
   }
 
   /**
