@@ -4,6 +4,12 @@ Practical Defense Training is a professional firearms training management platfo
 
 # Recent Changes
 
+## November 2, 2025 - Enrollment Notification Fix
+- Fixed critical bug preventing automatic enrollment notifications from being sent to students
+- Corrected event name mismatch: changed from 'ENROLLMENT_CONFIRMED' (uppercase) to 'enrollment_confirmed' (lowercase)
+- Event trigger now properly matches notification schedules in database, enabling automatic email and SMS notifications when students enroll in courses
+- Students will now receive confirmation messages via their preferred contact methods (email/SMS) upon successful course enrollment
+
 ## November 1, 2025 - Promo Code Creation Form Fixes
 - Fixed Create Promo Code dialog opening issue by converting Select components from uncontrolled (defaultValue) to controlled (value) for proper React Hook Form integration
 - Resolved form validation blocking submission by removing `mode: "onChange"` setting that required all fields to be touched before allowing submit
