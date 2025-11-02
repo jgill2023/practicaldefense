@@ -362,14 +362,15 @@ export class NotificationEngine {
           // fromName: template.fromName, // Not in schema yet
         });
       } else if (template.type === 'sms') {
-        // Send SMS via Twilio with ultra-strict content filtering
+        // Send SMS with educational purpose flag for enrollment confirmations
         if (!recipient.phone) {
           sendResult = { success: false, error: 'Recipient phone number not available' };
         } else {
           sendResult = await NotificationSmsService.sendNotificationSms({
             to: [recipient.phone],
             message: processedContent,
-            instructorId: params.recipientId // Use recipientId as fallback for instructorId
+            instructorId: params.recipientId, // Use recipientId as fallback for instructorId
+            purpose: 'educational' // Mark as educational to allow course-related content
           });
         }
       } else {

@@ -804,7 +804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         studentInfo,
       });
 
-      // Trigger enrollment confirmation notifications
+      // Trigger enrollment confirmation notifications (educational purpose)
       if (finalizedEnrollment.status === 'confirmed' && finalizedEnrollment.studentId) {
         await NotificationEngine.processEventTriggers('enrollment_confirmed', {
           userId: finalizedEnrollment.studentId,

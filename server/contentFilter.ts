@@ -207,8 +207,8 @@ export class ContentFilter {
     // Channel-aware firearm filtering logic
     const hasEducationalContext = channel === 'email' ? this.hasEducationalFirearmsContext(normalizedContent) : false;
     
-    // For SMS: Check strict firearm tokens FIRST (blocks ALL firearm terms regardless of context)
-    if (channel === 'sms') {
+    // For SMS: Apply strict firearm filtering ONLY for marketing, allow educational content
+    if (channel === 'sms' && purpose !== 'educational') {
       for (const token of ContentFilter.STRICT_FIREARM_TOKENS) {
         // Check exact matches and variations for each strict token
         const firearmViolation = this.checkStrictFirearmToken(normalizedContent, leetDecoded, token);
@@ -218,6 +218,10 @@ export class ContentFilter {
       }
     }
     
+    // For educational SMS: Check for educational context like email does
+    const smsEducationalContext = channel === 'sms' && purpose === 'educational' ? 
+      this.hasEducationalFirearmsContext(normalizedContent) : false;
+    
     // Check against all prohibited words
     for (const prohibitedWord of prohibitedWords) {
       if (!prohibitedWord.isActive) continue;
@@ -225,7 +229,10 @@ export class ContentFilter {
       // Channel-specific firearm filtering
       if (prohibitedWord.category === 'firearms') {
         if (channel === 'sms') {
-          // SMS: Block ALL firearm terms regardless of context
+          // SMS: Block firearm terms EXCEPT for educational purpose with valid context
+          if (purpose === 'educational' && smsEducationalContext) {
+            continue; // Skip firearm filtering for valid educational SMS
+          }
           const firearmViolation = this.checkFirearmViolation(normalizedContent, leetDecoded, prohibitedWord);
           if (firearmViolation) {
             violations.push(firearmViolation);
