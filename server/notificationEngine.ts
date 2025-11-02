@@ -68,6 +68,7 @@ export class NotificationEngine {
     companyPhone: '(555) 123-4567',
     companyEmail: 'info@practicaldefensetraining.com',
     website: 'practicaldefensetraining.com',
+    websiteUrl: process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://practicaldefensetraining.com',
     currentDate: new Date().toLocaleDateString()
   };
 
@@ -120,6 +121,7 @@ export class NotificationEngine {
     companyPhone: 'system.companyPhone',
     companyEmail: 'system.companyEmail',
     website: 'system.website',
+    websiteUrl: 'system.websiteUrl',
     currentDate: 'system.currentDate',
   };
 
@@ -605,7 +607,7 @@ export class NotificationEngine {
         'location', 'maxSpots', 'availableSpots'
       ],
       enrollment: ['paymentStatus', 'amountPaid', 'remainingBalance', 'registrationDate'],
-      system: ['companyName', 'companyPhone', 'companyEmail', 'website', 'currentDate']
+      system: ['companyName', 'companyPhone', 'companyEmail', 'website', 'websiteUrl', 'currentDate']
     };
   }
 }
