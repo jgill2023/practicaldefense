@@ -1103,171 +1103,96 @@ export class DatabaseStorage implements IStorage {
     former: any[];
     held: any[];
   }> {
-    // Get all enrollments for instructor's courses (all statuses)
-    const enrollmentList = await db.query.enrollments.findMany({
+    const courses = await this.getCoursesByInstructor(instructorId);
+    const courseIds = courses.map(c => c.id);
+
+    if (courseIds.length === 0) {
+      return { current: [], former: [], held: [] };
+    }
+
+    const allEnrollments = await db.query.enrollments.findMany({
+      where: inArray(enrollments.courseId, courseIds),
       with: {
+        student: true,
         course: true,
         schedule: true,
-        student: true,
       },
-      orderBy: desc(enrollments.createdAt),
     });
 
-    // Filter enrollments for instructor's courses only and exclude incomplete registrations
-    const instructorEnrollments = enrollmentList.filter(e => {
-      // Only include if we have complete student data and course belongs to instructor
-      return e.course && 
-             e.course.instructorId === instructorId &&
-             e.student &&
-             e.student.firstName &&
-             e.student.lastName &&
-             e.student.email &&
-             e.schedule;
-    });
+    // Group enrollments by student
+    const studentMap = new Map<string, {
+      student: any;
+      enrollments: Array<any>;
+    }>();
 
-    const now = new Date();
+    for (const enrollment of allEnrollments) {
+      if (!enrollment.student) continue;
 
-    // Separate enrollments by course timing and status
-    const currentEnrollments: any[] = []; // Students enrolled in upcoming courses
-    const formerEnrollments: any[] = [];  // Students who have taken past courses
-    const heldEnrollments: any[] = [];    // Students on hold
+      const studentId = enrollment.student.id;
+      if (!studentMap.has(studentId)) {
+        studentMap.set(studentId, {
+          student: enrollment.student,
+          enrollments: [],
+        });
+      }
 
-    // Track students who have current or former enrollments to exclude from held list
-    const studentsWithActiveEnrollments = new Set<string>();
-
-    for (const enrollment of instructorEnrollments) {
-      const scheduleEndDate = new Date(enrollment.schedule.endDate);
-
-      const enrollmentData = {
+      studentMap.get(studentId)!.enrollments.push({
         id: enrollment.id,
+        courseId: enrollment.courseId,
+        scheduleId: enrollment.scheduleId,
         courseTitle: enrollment.course.title,
-        courseAbbreviation: enrollment.course.abbreviation || enrollment.course.title.split(' ').map(w => w[0]).join('').toUpperCase(),
+        courseAbbreviation: enrollment.course.abbreviation,
         scheduleDate: enrollment.schedule.startDate,
         scheduleStartTime: enrollment.schedule.startTime,
         scheduleEndTime: enrollment.schedule.endTime,
         paymentStatus: enrollment.paymentStatus,
+        status: enrollment.status,
+      });
+    }
+
+    const now = new Date();
+    const current: Array<any> = [];
+    const former: Array<any> = [];
+    const held: Array<any> = [];
+
+    for (const [_, data] of studentMap) {
+      const { student, enrollments: studentEnrollments } = data;
+
+      // Filter out cancelled enrollments for current/held students
+      const activeEnrollments = studentEnrollments.filter(e => e.status !== 'cancelled');
+
+      // Check if student has any current (future) enrollments
+      const hasFutureEnrollment = activeEnrollments.some(e => {
+        const scheduleDate = new Date(e.scheduleDate);
+        return scheduleDate >= now;
+      });
+
+      // Check if student is on hold
+      const isOnHold = activeEnrollments.some(e => e.status === 'hold');
+
+      const studentData = {
+        id: student.id,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        email: student.email,
+        phone: student.phone,
+        concealedCarryLicenseExpiration: student.concealedCarryLicenseExpiration,
+        enrollments: activeEnrollments, // Only show active enrollments
       };
 
-      // Categorize: held = on hold status, current = upcoming courses, former = completed courses
-      if (enrollment.status === 'hold') {
-        // Held: student is on hold (will be filtered later if they have active enrollments)
-        heldEnrollments.push({
-          ...enrollment,
-          enrollmentData,
-        });
-      } else if (scheduleEndDate < now) {
-        // Former: course has ended
-        formerEnrollments.push({
-          ...enrollment,
-          enrollmentData,
-        });
-        studentsWithActiveEnrollments.add(enrollment.student.id);
+      if (isOnHold) {
+        held.push(studentData);
+      } else if (hasFutureEnrollment) {
+        current.push(studentData);
       } else {
-        // Current: course is upcoming or ongoing
-        currentEnrollments.push({
-          ...enrollment,
-          enrollmentData,
-        });
-        studentsWithActiveEnrollments.add(enrollment.student.id);
+        // Former students - only include if they have any enrollments (completed)
+        if (activeEnrollments.length > 0) {
+          former.push(studentData);
+        }
       }
     }
 
-    // Filter out students from held list if they have any active (current or former) enrollments
-    const filteredHeldEnrollments = heldEnrollments.filter(
-      enrollment => !studentsWithActiveEnrollments.has(enrollment.student.id)
-    );
-
-    // Process and sort each category
-    const processEnrollments = (enrollmentsList: any[], isCurrentStudents: boolean) => {
-      const studentsMap = new Map();
-
-      for (const enrollment of enrollmentsList) {
-        const studentId = enrollment.student.id;
-
-        if (!studentsMap.has(studentId)) {
-          studentsMap.set(studentId, {
-            id: enrollment.student.id,
-            firstName: enrollment.student.firstName,
-            lastName: enrollment.student.lastName,
-            email: enrollment.student.email,
-            phone: enrollment.student.phone || undefined,
-            concealedCarryLicenseExpiration: enrollment.student.concealedCarryLicenseExpiration || undefined,
-            enrollments: [],
-          });
-        }
-
-        studentsMap.get(studentId).enrollments.push({
-        ...enrollment.enrollmentData,
-        scheduleId: enrollment.schedule.id // Add scheduleId for roster lookup
-      });
-      }
-
-      const students = Array.from(studentsMap.values());
-
-      // Sort students based on category
-      if (isCurrentStudents) {
-        // For current students: sort by upcoming course, then by date, then alphabetically by first name
-        students.forEach(student => {
-          student.enrollments.sort((a: any, b: any) => {
-            // First by course abbreviation
-            const courseCompare = a.courseAbbreviation.localeCompare(b.courseAbbreviation);
-            if (courseCompare !== 0) return courseCompare;
-
-            // Then by date
-            const dateCompare = new Date(a.scheduleDate).getTime() - new Date(b.scheduleDate).getTime();
-            if (dateCompare !== 0) return dateCompare;
-
-            // Then by start time
-            return a.scheduleStartTime.localeCompare(b.scheduleStartTime);
-          });
-        });
-
-        // Sort students by their next upcoming course, then by first name
-        students.sort((a, b) => {
-          const aNext = a.enrollments[0];
-          const bNext = b.enrollments[0];
-
-          // First by course abbreviation of next course
-          const courseCompare = aNext.courseAbbreviation.localeCompare(bNext.courseAbbreviation);
-          if (courseCompare !== 0) return courseCompare;
-
-          // Then by date of next course
-          const dateCompare = new Date(aNext.scheduleDate).getTime() - new Date(bNext.scheduleDate).getTime();
-          if (dateCompare !== 0) return dateCompare;
-
-          // Finally alphabetically by first name
-          return a.firstName.localeCompare(b.firstName);
-        });
-      } else {
-        // For former students: sort by most recent course completion, then alphabetically
-        students.forEach(student => {
-          student.enrollments.sort((a: any, b: any) => {
-            // Sort by most recent first
-            return new Date(b.scheduleDate).getTime() - new Date(a.scheduleDate).getTime();
-          });
-        });
-
-        students.sort((a, b) => {
-          const aRecent = a.enrollments[0];
-          const bRecent = b.enrollments[0];
-
-          // Sort by most recent course completion
-          const dateCompare = new Date(bRecent.scheduleDate).getTime() - new Date(aRecent.scheduleDate).getTime();
-          if (dateCompare !== 0) return dateCompare;
-
-          // Then alphabetically by first name
-          return a.firstName.localeCompare(b.firstName);
-        });
-      }
-
-      return students;
-    };
-
-    return {
-      current: processEnrollments(currentEnrollments, true),
-      former: processEnrollments(formerEnrollments, false),
-      held: processEnrollments(filteredHeldEnrollments, false),
-    };
+    return { current, former, held };
   }
 
   async getStudentsBySchedule(scheduleId: string, instructorId: string): Promise<{
@@ -3626,6 +3551,169 @@ export class DatabaseStorage implements IStorage {
       topViolations,
       instructorStats
     };
+  }
+
+  // Roster and scheduling operations
+  async getInstructorAvailableSchedules(instructorId: string, excludeEnrollmentId?: string): Promise<any[]> {
+    const now = new Date();
+    // Get start of today to properly filter schedules (otherwise same-day future classes get excluded)
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Get the schedule ID to exclude if we have an enrollmentId
+    let excludeScheduleId: string | undefined;
+
+    if (excludeEnrollmentId) {
+      // Get enrollment to determine which schedule to exclude
+      const enrollment = await this.getEnrollment(excludeEnrollmentId);
+
+      if (enrollment) {
+        excludeScheduleId = enrollment.scheduleId;
+      }
+    }
+
+    // Get all active course schedules for this instructor's courses that are in the future
+    // Exclude only the specific schedule the student is currently enrolled in
+    const whereConditions = [
+      eq(courses.instructorId, instructorId),
+      eq(courses.isActive, true),
+      isNull(courses.deletedAt),
+      isNull(courseSchedules.deletedAt),
+      gte(courseSchedules.startDate, startOfToday), // Compare to start of today instead of current time
+    ];
+
+    // Exclude the current schedule if provided
+    if (excludeScheduleId) {
+      whereConditions.push(ne(courseSchedules.id, excludeScheduleId));
+    }
+
+    const availableSchedules = await db
+      .select({
+        id: courseSchedules.id,
+        courseId: courseSchedules.courseId,
+        courseTitle: courses.title,
+        startDate: courseSchedules.startDate,
+        endDate: courseSchedules.endDate,
+        startTime: courseSchedules.startTime,
+        endTime: courseSchedules.endTime,
+        location: courseSchedules.location,
+        maxSpots: courseSchedules.maxSpots,
+        enrolledCount: sql<number>`CAST(COALESCE(COUNT(DISTINCT ${enrollments.id}), 0) AS INTEGER)`
+      })
+      .from(courseSchedules)
+      .leftJoin(courses, eq(courseSchedules.courseId, courses.id))
+      .leftJoin(enrollments, and(
+        eq(enrollments.scheduleId, courseSchedules.id),
+        eq(enrollments.status, 'confirmed')
+      ))
+      .where(and(...whereConditions))
+      .groupBy(
+        courseSchedules.id,
+        courseSchedules.courseId,
+        courses.title,
+        courseSchedules.startDate,
+        courseSchedules.endDate,
+        courseSchedules.startTime,
+        courseSchedules.endTime,
+        courseSchedules.location,
+        courseSchedules.maxSpots
+      )
+      .orderBy(courseSchedules.startDate, courseSchedules.startTime);
+
+    console.log(`Found ${availableSchedules.length} available schedules for instructor ${instructorId}, excluding enrollment ${excludeEnrollmentId}`);
+
+    // Calculate available spots and format response
+    return availableSchedules.map(schedule => ({
+      id: schedule.id,
+      courseId: schedule.courseId,
+      courseTitle: schedule.courseTitle,
+      startDate: schedule.startDate,
+      endDate: schedule.endDate,
+      startTime: schedule.startTime,
+      endTime: schedule.endTime,
+      location: schedule.location,
+      maxSpots: schedule.maxSpots,
+      availableSpots: Math.max(0, schedule.maxSpots - Number(schedule.enrolledCount))
+    }));
+  }
+
+  // Course notification signup operations
+  async createCourseNotificationSignup(signup: InsertCourseNotificationSignup): Promise<CourseNotificationSignup> {
+    const [newSignup] = await db
+      .insert(courseNotificationSignups)
+      .values(signup)
+      .returning();
+    return newSignup;
+  }
+
+  async getCourseNotificationSignups(courseId: string): Promise<CourseNotificationSignupWithDetails[]> {
+    const signups = await db.query.courseNotificationSignups.findMany({
+      where: eq(courseNotificationSignups.courseId, courseId),
+      with: {
+        course: true,
+        deliveryLogs: true,
+      },
+      orderBy: desc(courseNotificationSignups.createdAt),
+    });
+    return signups;
+  }
+
+  async getCourseNotificationSignupsBySchedule(scheduleId: string): Promise<CourseNotificationSignupWithDetails[]> {
+    // Get the course ID from the schedule
+    const schedule = await db.query.courseSchedules.findFirst({
+      where: eq(courseSchedules.id, scheduleId),
+    });
+
+    if (!schedule) {
+      return [];
+    }
+
+    // Get all signups for this course that haven't been notified about this schedule yet
+    const signups = await db
+      .select({
+        id: courseNotificationSignups.id,
+        courseId: courseNotificationSignups.courseId,
+        firstName: courseNotificationSignups.firstName,
+        lastName: courseNotificationSignups.lastName,
+        email: courseNotificationSignups.email,
+        phone: courseNotificationSignups.phone,
+        preferredChannel: courseNotificationSignups.preferredChannel,
+        createdAt: courseNotificationSignups.createdAt,
+      })
+      .from(courseNotificationSignups)
+      .leftJoin(
+        courseNotificationDeliveryLogs,
+        and(
+          eq(courseNotificationDeliveryLogs.signupId, courseNotificationSignups.id),
+          eq(courseNotificationDeliveryLogs.scheduleId, scheduleId)
+        )
+      )
+      .where(
+        and(
+          eq(courseNotificationSignups.courseId, schedule.courseId),
+          isNull(courseNotificationDeliveryLogs.id) // Only get signups that haven't been notified for this schedule
+        )
+      );
+
+    return signups as CourseNotificationSignupWithDetails[];
+  }
+
+  async deleteCourseNotificationSignup(id: string): Promise<void> {
+    await db.delete(courseNotificationSignups).where(eq(courseNotificationSignups.id, id));
+  }
+
+  async logNotificationDelivery(log: InsertCourseNotificationDeliveryLog): Promise<CourseNotificationDeliveryLog> {
+    const [newLog] = await db
+      .insert(courseNotificationDeliveryLogs)
+      .values(log)
+      .returning();
+    return newLog;
+  }
+
+  async getNotificationDeliveryLogs(signupId: string): Promise<CourseNotificationDeliveryLog[]> {
+    return await db.query.courseNotificationDeliveryLogs.findMany({
+      where: eq(courseNotificationDeliveryLogs.signupId, signupId),
+      orderBy: desc(courseNotificationDeliveryLogs.sentAt),
+    });
   }
 
   // Communications tracking operations
