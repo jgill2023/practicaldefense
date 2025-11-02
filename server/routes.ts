@@ -847,7 +847,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('Triggering enrollment confirmation notifications...');
             
             // Trigger enrollment confirmed event
-            await NotificationEngine.processEventTriggers('ENROLLMENT_CONFIRMED', {
+            await NotificationEngine.processEventTriggers('enrollment_confirmed', {
               userId: finalizedEnrollment.studentId,
               courseId: finalizedEnrollment.courseId,
               scheduleId: finalizedEnrollment.scheduleId,
