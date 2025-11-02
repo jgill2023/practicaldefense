@@ -1115,7 +1115,7 @@ function EnhancedEnrollmentCard({
             <div className="flex items-center space-x-1">
               <AlertCircle className="h-3 w-3 text-yellow-500" />
               <span className="text-xs text-yellow-600 font-medium">
-                {formStatus?.missingForms || 0} pending
+                {formStatus?.missingForms?.length || 0} pending
               </span>
             </div>
           )}
