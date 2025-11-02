@@ -520,6 +520,7 @@ export class NotificationEngine {
 
   /**
    * Safely format date objects, handling both Date objects and string dates
+   * Returns MM/DD/YYYY format by default
    */
   private static safeFormatDate(date: Date | string | null | undefined, format: 'iso' | 'locale' = 'iso'): string | null {
     if (!date) {
@@ -544,9 +545,13 @@ export class NotificationEngine {
       }
 
       if (format === 'locale') {
-        return dateObj.toLocaleDateString();
+        return dateObj.toLocaleDateString('en-US');
       } else {
-        return dateObj.toISOString().split('T')[0];
+        // Format as MM/DD/YYYY
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        const year = dateObj.getFullYear();
+        return `${month}/${day}/${year}`;
       }
     } catch (error) {
       console.warn('Error formatting date:', date, error);
