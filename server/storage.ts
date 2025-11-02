@@ -124,6 +124,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne, inArray } from "drizzle-orm";
+import Stripe from 'stripe';
 
 export interface IStorage {
   // User operations
@@ -2015,9 +2016,6 @@ export class DatabaseStorage implements IStorage {
       password: string;
     };
   }): Promise<Enrollment> {
-    // Import Stripe here
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
     // Get enrollment with related data first
     const enrollment = await db.query.enrollments.findFirst({
       where: eq(enrollments.id, data.enrollmentId),
@@ -2035,15 +2033,23 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Enrollment not in initiated state');
     }
 
-    // Verify payment with Stripe FIRST (critical security check)
-    const paymentIntent = await stripe.paymentIntents.retrieve(data.paymentIntentId);
-    if (paymentIntent.status !== 'succeeded') {
-      throw new Error('Payment not completed');
-    }
+    // Check if this is a free enrollment (100% discount)
+    const isFreeEnrollment = data.paymentIntentId === 'free-enrollment';
 
-    // Verify payment intent belongs to this enrollment
-    if (paymentIntent.metadata.enrollmentId !== data.enrollmentId) {
-      throw new Error('Payment verification failed - enrollment mismatch');
+    // Only verify payment with Stripe if it's NOT a free enrollment
+    if (!isFreeEnrollment) {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+      
+      // Verify payment with Stripe FIRST (critical security check)
+      const paymentIntent = await stripe.paymentIntents.retrieve(data.paymentIntentId);
+      if (paymentIntent.status !== 'succeeded') {
+        throw new Error('Payment not completed');
+      }
+
+      // Verify payment intent belongs to this enrollment
+      if (paymentIntent.metadata.enrollmentId !== data.enrollmentId) {
+        throw new Error('Payment verification failed - enrollment mismatch');
+      }
     }
 
     // CRITICAL SECURITY FIX: Calculate expected payment amount server-side and validate
@@ -2082,12 +2088,17 @@ export class DatabaseStorage implements IStorage {
     const taxAmount = Math.round(subtotal * taxRate * 100);
     const expectedTotalCents = Math.round(subtotal * 100) + taxAmount;
 
-    // Validate payment amount matches server calculation
-    if (paymentIntent.amount_received !== expectedTotalCents) {
-      throw new Error(
-        `Payment amount mismatch: expected $${(expectedTotalCents / 100).toFixed(2)}, ` +
-        `received $${(paymentIntent.amount_received / 100).toFixed(2)}`
-      );
+    // Validate payment amount matches server calculation (only for paid enrollments)
+    if (!isFreeEnrollment) {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+      const paymentIntent = await stripe.paymentIntents.retrieve(data.paymentIntentId);
+      
+      if (paymentIntent.amount_received !== expectedTotalCents) {
+        throw new Error(
+          `Payment amount mismatch: expected $${(expectedTotalCents / 100).toFixed(2)}, ` +
+          `received $${(paymentIntent.amount_received / 100).toFixed(2)}`
+        );
+      }
     }
 
     // Create or find user by email
