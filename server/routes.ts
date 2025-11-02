@@ -787,16 +787,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check ownership: either authenticated user owns it, guest user matches email, or it's a draft enrollment
       if (req.isAuthenticated()) {
         const userId = req.user.claims.sub;
-        // For authenticated users, allow access to:
-        // 1. Enrollments they own (studentId matches)
-        // 2. Draft enrollments (studentId is null) that they can claim
-        if (enrollment.studentId !== null && enrollment.studentId !== userId) {
+        if (enrollment.studentId !== userId) {
           return res.status(403).json({ message: "Access denied - enrollment ownership required" });
         }
       } else {
-        // For guest users, verify email matches or it's a draft enrollment
-        if (enrollment.studentId !== null) {
-          return res.status(403).json({ message: "Access denied - authentication required" });
+        // For guest users, verify email matches the stored studentInfo or it's a draft enrollment
+        if (enrollment.studentInfo && enrollment.studentInfo.email !== studentInfo.email) {
+          return res.status(403).json({ message: "Access denied - email mismatch" });
         }
       }
 
@@ -834,29 +831,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           } catch (error) {
             console.error(`Error auto-adding student to SMS list for enrollment ${enrollmentId}:`, error);
-          }
-        })();
-      }
-
-      // Trigger automatic notification events for enrollment confirmation (fire-and-forget)
-      if (finalizedEnrollment.status === 'confirmed' && finalizedEnrollment.studentId) {
-        (async () => {
-          try {
-            const { NotificationEngine } = await import('./notificationEngine');
-            
-            console.log('Triggering enrollment confirmation notifications...');
-            
-            // Trigger enrollment confirmed event
-            await NotificationEngine.processEventTriggers('enrollment_confirmed', {
-              userId: finalizedEnrollment.studentId,
-              courseId: finalizedEnrollment.courseId,
-              scheduleId: finalizedEnrollment.scheduleId,
-              enrollmentId: finalizedEnrollment.id,
-            });
-            
-            console.log(`Successfully triggered enrollment confirmation notifications for enrollment ${finalizedEnrollment.id}`);
-          } catch (error) {
-            console.error(`Error triggering enrollment notifications for enrollment ${enrollmentId}:`, error);
           }
         })();
       }
@@ -1517,106 +1491,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`Roster data - Current: ${data.current.length}, Former: ${data.former.length}`);
 
+      // Get course details for price calculation
+      const course = scheduleId 
+        ? await storage.getCourseSchedule(scheduleId).then(async schedule => {
+            if (schedule) {
+              return await storage.getCourse(schedule.courseId);
+            }
+            return null;
+          })
+        : courseId 
+          ? await storage.getCourse(courseId)
+          : null;
+
+      const coursePrice = course ? parseFloat(course.price.toString()) : 0;
+
       // Enrich data with waiver and form completion status
       const enrichedCurrent = await Promise.all(data.current.map(async (student: any) => {
         // Check waiver status
         const studentWaiverInstances = await db.query.waiverInstances.findMany({
           where: eq(waiverInstances.enrollmentId, student.enrollmentId),
         });
-
-
-  // Process e-commerce order fulfillment (including Moodle enrollment)
-  app.post("/api/ecommerce/process-order/:orderId", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user?.claims?.sub;
-      const { orderId } = req.params;
-
-      // Get order with items
-      const order = await db.query.ecommerceOrders.findFirst({
-        where: eq(ecommerceOrders.id, orderId),
-        with: {
-          items: {
-            with: {
-              product: true,
-            }
-          },
-          user: true,
-        }
-      });
-
-      if (!order) {
-        return res.status(404).json({ message: "Order not found" });
-      }
-
-      // Verify order belongs to user or user is admin
-      const user = await storage.getUser(userId);
-      if (order.userId !== userId && user?.role !== 'instructor') {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      // Process each item for Moodle enrollment
-      const results = [];
-      for (const item of order.items) {
-        if ((item.product.productType === 'moodle' || item.product.fulfillmentType === 'moodle') 
-            && item.product.moodleCourseId 
-            && item.product.moodleEnrollmentEnabled) {
-          
-          try {
-            const { moodleService } = await import('./moodleService');
-            const orderUser = order.user || await storage.getUserByEmail(order.customerEmail);
-            
-            if (orderUser) {
-              const moodleUser = await moodleService.getOrCreateUser({
-                username: orderUser.email.split('@')[0],
-                password: Math.random().toString(36).slice(-12),
-                firstname: orderUser.firstName || order.customerFirstName,
-                lastname: orderUser.lastName || order.customerLastName,
-                email: orderUser.email || order.customerEmail,
-              });
-
-              await moodleService.enrollUser(moodleUser.id, item.product.moodleCourseId);
-              
-              // Update order item fulfillment status
-              await db.update(ecommerceOrderItems)
-                .set({ 
-                  fulfillmentStatus: 'fulfilled',
-                  updatedAt: new Date(),
-                })
-                .where(eq(ecommerceOrderItems.id, item.id));
-
-              results.push({
-                productId: item.productId,
-                productName: item.productName,
-                status: 'success',
-                moodleCourseId: item.product.moodleCourseId,
-              });
-
-              console.log(`✅ Enrolled user ${orderUser.email} in Moodle course ${item.product.moodleCourseId} for product ${item.productName}`);
-            }
-          } catch (error: any) {
-            console.error(`❌ Moodle enrollment failed for product ${item.productName}:`, error);
-            results.push({
-              productId: item.productId,
-              productName: item.productName,
-              status: 'failed',
-              error: error.message,
-            });
-          }
-        }
-      }
-
-      res.json({
-        orderId,
-        message: "Order processing completed",
-        results,
-      });
-    } catch (error: any) {
-      console.error("Error processing order:", error);
-      res.status(500).json({ message: "Failed to process order: " + error.message });
-    }
-  });
-
-
         const waiverStatus = studentWaiverInstances.length > 0 
           ? (studentWaiverInstances.some(w => w.status === 'signed') ? 'signed' : 'pending')
           : 'not_started';
@@ -1662,8 +1556,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalRevenue: data.current
           .filter(s => s.paymentStatus === 'paid')
           .reduce((sum, s) => {
-            // Extract revenue from the enrollment data - this may need adjustment based on your data structure
-            return sum + (s.coursePrice || 0);
+            // Use the course price for each paid student
+            return sum + coursePrice;
           }, 0),
         courseTitle: data.current[0]?.courseTitle || 'Unknown Course',
         scheduleDate: data.current[0]?.scheduleDate || 'Unknown Date',
@@ -1715,38 +1609,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof ObjectNotFoundError) {
         return res.sendStatus(404);
       }
-      return res.sendStatus(500);
-    }
-  });
-
-  // Direct bucket path access for uploaded files
-  app.get("/replit-objstore-*", async (req: any, res) => {
-    const objectStorageService = new ObjectStorageService();
-    try {
-      // Parse the bucket path
-      const fullPath = req.path;
-      const parts = fullPath.split('/');
-      if (parts.length < 3) {
-        return res.sendStatus(404);
-      }
-      
-      const bucketName = parts[1];
-      const objectName = parts.slice(2).join('/');
-      
-      // Import objectStorageClient from the objectStorage module
-      const { objectStorageClient } = await import('./objectStorage');
-      const bucket = objectStorageClient.bucket(bucketName);
-      const file = bucket.file(objectName);
-      
-      const [exists] = await file.exists();
-      if (!exists) {
-        return res.sendStatus(404);
-      }
-      
-      // Download the file
-      await objectStorageService.downloadObject(file, res);
-    } catch (error) {
-      console.error("Error serving bucket file:", error);
       return res.sendStatus(500);
     }
   });
@@ -1815,24 +1677,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the schedule and verify it belongs to the instructor's course
       const schedule = await storage.getCourseSchedule(scheduleId);
       if (!schedule) {
-        return res.status(404).json({ message: "Schedule not found" });
+        return res.status(404).json({ error: "Schedule not found" });
       }
 
       const course = await storage.getCourse(schedule.courseId);
       if (!course || course.instructorId !== userId) {
-        return res.status(403).json({ message: "Unauthorized: Schedule does not belong to instructor" });
+        return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
       const duplicatedSchedule = await storage.duplicateCourseSchedule(scheduleId);
-      
-      // Return the duplicated schedule with full details
-      res.status(201).json({ 
-        message: "Schedule duplicated successfully", 
-        schedule: duplicatedSchedule 
-      });
+      res.json({ message: "Schedule duplicated successfully", schedule: duplicatedSchedule });
     } catch (error: any) {
       console.error("Error duplicating schedule:", error);
-      res.status(500).json({ message: "Failed to duplicate schedule: " + error.message });
+      res.status(500).json({ error: "Failed to duplicate schedule: " + error.message });
     }
   });
 
@@ -1960,68 +1817,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // File upload endpoint for object storage
-  app.post("/api/upload", isAuthenticated, async (req: any, res) => {
-    try {
-      const multer = await import("multer");
-      const { objectStorageClient } = await import("./objectStorage");
-      
-      // Configure multer for memory storage
-      const upload = multer.default({ 
-        storage: multer.default.memoryStorage(),
-        limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-      }).single("file");
-
-      // Wrap multer middleware in a promise
-      await new Promise((resolve, reject) => {
-        upload(req, res, (err: any) => {
-          if (err) reject(err);
-          else resolve(null);
-        });
-      });
-
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
-      }
-
-      const directory = req.body.directory || "public/uploads";
-      const publicObjectSearchPaths = process.env.PUBLIC_OBJECT_SEARCH_PATHS || "";
-      const bucketPath = publicObjectSearchPaths.split(",")[0]?.trim();
-      
-      if (!bucketPath) {
-        throw new Error("Object storage not configured");
-      }
-
-      // Extract bucket name from path (format: /bucket-name/path)
-      const bucketName = bucketPath.split("/")[1];
-      const bucket = objectStorageClient.bucket(bucketName);
-
-      // Generate unique filename
-      const timestamp = Date.now();
-      const safeFilename = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const objectName = `${directory}/${timestamp}-${safeFilename}`;
-
-      // Upload file to object storage without public access
-      const file = bucket.file(objectName);
-      await file.save(req.file.buffer, {
-        metadata: {
-          contentType: req.file.mimetype,
-        },
-      });
-
-      // Return the path that will be served through our /objects route
-      const publicUrl = `/${bucketName}/${objectName}`;
-      res.json({ 
-        url: publicUrl,
-        filename: safeFilename,
-        size: req.file.size
-      });
-    } catch (error: any) {
-      console.error("Error uploading file:", error);
-      res.status(500).json({ error: "Failed to upload file: " + error.message });
-    }
-  });
-
   // Restore course endpoint (undelete)
   app.patch("/api/instructor/courses/:courseId/restore", isAuthenticated, async (req: any, res) => {
     try {
@@ -2077,14 +1872,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         registrationDeadline: eventData.registrationDeadline ? new Date(eventData.registrationDeadline) : null,
         waitlistEnabled: eventData.waitlistEnabled !== undefined ? eventData.waitlistEnabled : true,
         autoConfirmRegistration: eventData.autoConfirmRegistration !== undefined ? eventData.autoConfirmRegistration : true,
-        // Backend Details fields
-        rangeName: eventData.rangeName || null,
-        classroomName: eventData.classroomName || null,
-        arrivalTime: eventData.arrivalTime || null,
-        departureTime: eventData.departureTime || null,
-        dayOfWeek: eventData.dayOfWeek || null,
-        googleMapsLink: eventData.googleMapsLink || null,
-        rangeLocationImageUrl: eventData.rangeLocationImageUrl || null,
       };
 
       const schedule = await storage.createCourseSchedule(scheduleData);
@@ -2193,36 +1980,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.autoConfirmRegistration !== undefined) {
         updateParts.push(`auto_confirm_registration = $${values.length + 1}`);
         values.push(req.body.autoConfirmRegistration);
-      }
-
-      // Backend Details fields
-      if (req.body.rangeName !== undefined) {
-        updateParts.push(`range_name = $${values.length + 1}`);
-        values.push(req.body.rangeName || null);
-      }
-      if (req.body.classroomName !== undefined) {
-        updateParts.push(`classroom_name = $${values.length + 1}`);
-        values.push(req.body.classroomName || null);
-      }
-      if (req.body.arrivalTime !== undefined) {
-        updateParts.push(`arrival_time = $${values.length + 1}`);
-        values.push(req.body.arrivalTime || null);
-      }
-      if (req.body.departureTime !== undefined) {
-        updateParts.push(`departure_time = $${values.length + 1}`);
-        values.push(req.body.departureTime || null);
-      }
-      if (req.body.dayOfWeek !== undefined) {
-        updateParts.push(`day_of_week = $${values.length + 1}`);
-        values.push(req.body.dayOfWeek || null);
-      }
-      if (req.body.googleMapsLink !== undefined) {
-        updateParts.push(`google_maps_link = $${values.length + 1}`);
-        values.push(req.body.googleMapsLink || null);
-      }
-      if (req.body.rangeLocationImageUrl !== undefined) {
-        updateParts.push(`range_location_image_url = $${values.length + 1}`);
-        values.push(req.body.rangeLocationImageUrl || null);
       }
 
       // Always update timestamp
@@ -2636,45 +2393,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Determine payment status based on payment option
       const paymentStatus = enrollment.paymentOption === 'deposit' ? 'deposit' : 'paid';
 
-      // Moodle enrollment for courses
-      let moodleEnrolled = false;
-      let moodleEnrollmentDate = null;
-      let enrollmentNotes = null;
-
-      if (course.moodleCourseId && course.moodleEnrollmentEnabled) {
-        try {
-          const { moodleService } = await import('./moodleService');
-          const user = await storage.getUser(userId);
-          
-          if (user) {
-            const moodleUser = await moodleService.getOrCreateUser({
-              username: user.email.split('@')[0],
-              password: Math.random().toString(36).slice(-12),
-              firstname: user.firstName || '',
-              lastname: user.lastName || '',
-              email: user.email || '',
-            });
-
-            await moodleService.enrollUser(moodleUser.id, course.moodleCourseId);
-            moodleEnrolled = true;
-            moodleEnrollmentDate = new Date();
-            enrollmentNotes = `Moodle enrollment successful for course ${course.moodleCourseId}`;
-            console.log(`✅ Enrolled user ${user.email} in Moodle course ${course.moodleCourseId}`);
-          }
-        } catch (error: any) {
-          console.error('❌ Moodle enrollment failed:', error);
-          enrollmentNotes = `Moodle enrollment failed: ${error.message}`;
-        }
-      }
-
       // Update enrollment status
       const updatedEnrollment = await storage.updateEnrollment(enrollmentId, {
         status: 'confirmed',
         paymentStatus,
         paymentIntentId,
-        moodleEnrolled,
-        moodleEnrollmentDate,
-        notes: enrollmentNotes || enrollment.notes,
       });
 
       res.json(updatedEnrollment);
