@@ -1974,7 +1974,7 @@ function UnenrollConfirmationDialog({ isOpen, onClose, enrollment }: {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {refundEligibility.eligible ? 'Unenroll and Request Refund' : 'Confirm Unenrollment'}
