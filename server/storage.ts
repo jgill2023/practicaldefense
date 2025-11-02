@@ -1170,10 +1170,22 @@ export class DatabaseStorage implements IStorage {
       // Check if student has any confirmed or pending current (future or today) enrollments
       const hasCurrentEnrollment = activeEnrollments.some(e => {
         if (!e.scheduleDate) return false;
-        const scheduleDate = new Date(e.scheduleDate);
-        const scheduleStartOfDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
+        
+        // Parse the schedule date string properly
+        const scheduleDateStr = typeof e.scheduleDate === 'string' ? e.scheduleDate : e.scheduleDate.toISOString();
+        const datePart = scheduleDateStr.split('T')[0]; // Get YYYY-MM-DD part
+        const [year, month, day] = datePart.split('-').map(Number);
+        
+        // Create date at start of day in local timezone
+        const scheduleStartOfDay = new Date(year, month - 1, day); // month is 0-indexed
+        
         // Student is current if they have confirmed or pending enrollments for today or future
-        return scheduleStartOfDay >= startOfToday && (e.status === 'confirmed' || e.status === 'pending');
+        const isFutureOrToday = scheduleStartOfDay >= startOfToday;
+        const isActiveStatus = e.status === 'confirmed' || e.status === 'pending';
+        
+        console.log(`Checking enrollment ${e.id}: scheduleDate=${datePart}, startOfToday=${startOfToday.toISOString().split('T')[0]}, isFutureOrToday=${isFutureOrToday}, status=${e.status}, isActiveStatus=${isActiveStatus}`);
+        
+        return isFutureOrToday && isActiveStatus;
       });
 
       const studentData = {
