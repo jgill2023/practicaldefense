@@ -1013,11 +1013,13 @@ function EnhancedEnrollmentCard({
   onCompleteFormsClick,
   onCompleteWaiverClick,
   onRequestTransferClick,
+  onUnenrollClick,
 }: {
   enrollment: EnrollmentWithDetails;
   onCompleteFormsClick: (enrollment: EnrollmentWithDetails) => void;
   onCompleteWaiverClick: (enrollment: EnrollmentWithDetails) => void;
   onRequestTransferClick: (enrollment: EnrollmentWithDetails) => void;
+  onUnenrollClick: (enrollment: EnrollmentWithDetails) => void;
 }) {
   const { data: paymentBalance } = useQuery<PaymentBalanceResponse>({
     queryKey: ['/api/enrollments', enrollment.id, 'payment-balance'],
@@ -1208,9 +1210,7 @@ function EnhancedEnrollmentCard({
         <Button
           variant="destructive"
           size="sm"
-          onClick={() => {
-            // This will be handled by the StudentPortal component which manages the state for the dialog
-          }}
+          onClick={() => onUnenrollClick(enrollment)}
           data-testid={`button-unenroll-${enrollment.id}`}
         >
           <X className="mr-2 h-4 w-4" />
@@ -1864,16 +1864,15 @@ function StudentTransferRequestModal({ enrollment, isOpen, onClose }: {
 }
 
 // Unenroll Confirmation Dialog Component
-function UnenrollConfirmationDialog({ isOpen, onClose, enrollment, onConfirm }: {
+function UnenrollConfirmationDialog({ isOpen, onClose, enrollment }: {
   isOpen: boolean;
   onClose: () => void;
   enrollment: EnrollmentWithDetails;
-  onConfirm: () => void;
 }) {
   const { toast } = useToast();
 
   const unenrollMutation = useMutation({
-    mutationFn: () => apiRequest("DELETE", `/api/enrollments/${enrollment.id}`),
+    mutationFn: () => apiRequest("POST", `/api/student/enrollments/${enrollment.id}/unenroll`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
       toast({
@@ -1906,7 +1905,7 @@ function UnenrollConfirmationDialog({ isOpen, onClose, enrollment, onConfirm }: 
           </Button>
           <Button
             variant="destructive"
-            onClick={onConfirm}
+            onClick={() => unenrollMutation.mutate()}
             disabled={unenrollMutation.isPending}
           >
             {unenrollMutation.isPending ? 'Unenrolling...' : 'Unenroll Me'}
@@ -2030,15 +2029,6 @@ export default function StudentPortal() {
   const handleUnenrollClick = (enrollment: EnrollmentWithDetails) => {
     setSelectedEnrollmentForUnenroll(enrollment);
     setShowUnenrollDialog(true);
-  };
-
-  // Handler for confirming unenrollment
-  const handleUnenrollConfirm = () => {
-    if (selectedEnrollmentForUnenroll) {
-      // The actual unenrollment logic is handled by the UnenrollConfirmationDialog's mutation
-      // We just need to trigger the mutation by calling the confirm function passed down.
-      // The mutation itself will invalidate queries and show toast messages.
-    }
   };
 
   return (
@@ -2288,6 +2278,7 @@ export default function StudentPortal() {
                       onCompleteFormsClick={setSelectedEnrollmentForForms}
                       onCompleteWaiverClick={setSelectedEnrollmentForWaiver}
                       onRequestTransferClick={setSelectedEnrollmentForTransfer}
+                      onUnenrollClick={handleUnenrollClick}
                     />
                   ))}
                 </div>
@@ -2495,7 +2486,6 @@ export default function StudentPortal() {
             setSelectedEnrollmentForUnenroll(null);
           }}
           enrollment={selectedEnrollmentForUnenroll}
-          onConfirm={handleUnenrollConfirm} // This function will trigger the mutation
         />
       )}
     </Layout>
