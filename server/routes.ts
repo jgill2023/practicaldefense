@@ -381,6 +381,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Student unenrollment endpoint
+  app.post('/api/student/enrollments/:enrollmentId/unenroll', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { enrollmentId } = req.params;
+
+      // Verify enrollment belongs to user
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment || enrollment.studentId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Check if enrollment is already cancelled
+      if (enrollment.status === 'cancelled') {
+        return res.status(400).json({ message: "Enrollment is already cancelled" });
+      }
+
+      // Update enrollment status to cancelled
+      await storage.updateEnrollment(enrollmentId, {
+        status: 'cancelled',
+        cancellationDate: new Date(),
+        cancellationReason: 'Student self-unenrollment',
+      });
+
+      // Increase available spots on the schedule
+      const schedule = await storage.getCourseSchedule(enrollment.scheduleId);
+      if (schedule) {
+        await storage.updateCourseSchedule(enrollment.scheduleId, {
+          availableSpots: schedule.availableSpots + 1,
+        });
+      }
+
+      // Remove from SMS list if auto-added
+      try {
+        const smsList = await storage.getSmsListBySchedule(enrollment.scheduleId);
+        if (smsList) {
+          const membership = await storage.getSmsListMembership(smsList.id, userId);
+          if (membership && membership.autoAdded) {
+            await storage.removeSmsListMember(smsList.id, userId);
+          }
+        }
+      } catch (error) {
+        console.error('Error removing from SMS list:', error);
+        // Don't fail the unenrollment if SMS list removal fails
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Successfully unenrolled from course" 
+      });
+    } catch (error) {
+      console.error("Error unenrolling student:", error);
+      res.status(500).json({ message: "Failed to unenroll from course" });
+    }
+  });
+
   // Student transfer request endpoints
   // Get available schedules for student transfer (same course, future dates only)
   app.get('/api/student/available-schedules/:courseId/:enrollmentId', isAuthenticated, async (req: any, res) => {

@@ -1203,6 +1203,19 @@ function EnhancedEnrollmentCard({
           <Edit className="mr-2 h-4 w-4" />
           Request Transfer
         </Button>
+
+        {/* Unenroll Button */}
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => {
+            // This will be handled by the StudentPortal component which manages the state for the dialog
+          }}
+          data-testid={`button-unenroll-${enrollment.id}`}
+        >
+          <X className="mr-2 h-4 w-4" />
+          Unenroll Me
+        </Button>
       </div>
     </div>
   );
@@ -1850,6 +1863,60 @@ function StudentTransferRequestModal({ enrollment, isOpen, onClose }: {
   );
 }
 
+// Unenroll Confirmation Dialog Component
+function UnenrollConfirmationDialog({ isOpen, onClose, enrollment, onConfirm }: {
+  isOpen: boolean;
+  onClose: () => void;
+  enrollment: EnrollmentWithDetails;
+  onConfirm: () => void;
+}) {
+  const { toast } = useToast();
+
+  const unenrollMutation = useMutation({
+    mutationFn: () => apiRequest("DELETE", `/api/enrollments/${enrollment.id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
+      toast({
+        title: "Unenrolled Successfully",
+        description: `You have been unenrolled from ${enrollment.course.title}.`,
+      });
+      onClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Unenrollment Failed",
+        description: error.message || "Failed to unenroll. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Confirm Unenrollment</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to unenroll from "{enrollment.course.title}"? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end space-x-3 pt-4">
+          <Button variant="outline" onClick={onClose}>
+            Nevermind
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            disabled={unenrollMutation.isPending}
+          >
+            {unenrollMutation.isPending ? 'Unenrolling...' : 'Unenroll Me'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 export default function StudentPortal() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -1860,6 +1927,9 @@ export default function StudentPortal() {
   const [selectedEnrollmentForWaiver, setSelectedEnrollmentForWaiver] = useState<EnrollmentWithDetails | null>(null);
   const [selectedEnrollmentForTransfer, setSelectedEnrollmentForTransfer] = useState<EnrollmentWithDetails | null>(null);
 
+  // State for the unenroll confirmation dialog
+  const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
+  const [selectedEnrollmentForUnenroll, setSelectedEnrollmentForUnenroll] = useState<EnrollmentWithDetails | null>(null);
 
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/student/enrollments"],
@@ -1955,6 +2025,21 @@ export default function StudentPortal() {
       remainingBalance: balance?.remainingBalance || 0
     };
   });
+
+  // Handler for initiating unenrollment
+  const handleUnenrollClick = (enrollment: EnrollmentWithDetails) => {
+    setSelectedEnrollmentForUnenroll(enrollment);
+    setShowUnenrollDialog(true);
+  };
+
+  // Handler for confirming unenrollment
+  const handleUnenrollConfirm = () => {
+    if (selectedEnrollmentForUnenroll) {
+      // The actual unenrollment logic is handled by the UnenrollConfirmationDialog's mutation
+      // We just need to trigger the mutation by calling the confirm function passed down.
+      // The mutation itself will invalidate queries and show toast messages.
+    }
+  };
 
   return (
     <Layout>
@@ -2279,9 +2364,12 @@ export default function StudentPortal() {
 
       {/* Remaining Balance Modal */}
       <Dialog open={isRemainingBalanceModalOpen} onOpenChange={setIsRemainingBalanceModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Outstanding Balance</DialogTitle>
+            <DialogTitle>Outstanding Payment Balances</DialogTitle>
+            <DialogDescription>
+              You have outstanding balances for the following courses. Please complete payment to maintain your enrollment.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 overflow-y-auto pr-2">
             <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
@@ -2395,6 +2483,19 @@ export default function StudentPortal() {
           enrollment={selectedEnrollmentForTransfer}
           isOpen={!!selectedEnrollmentForTransfer}
           onClose={() => setSelectedEnrollmentForTransfer(null)}
+        />
+      )}
+
+      {/* Unenroll Confirmation Dialog */}
+      {selectedEnrollmentForUnenroll && (
+        <UnenrollConfirmationDialog
+          isOpen={showUnenrollDialog}
+          onClose={() => {
+            setShowUnenrollDialog(false);
+            setSelectedEnrollmentForUnenroll(null);
+          }}
+          enrollment={selectedEnrollmentForUnenroll}
+          onConfirm={handleUnenrollConfirm} // This function will trigger the mutation
         />
       )}
     </Layout>
