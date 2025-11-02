@@ -2179,7 +2179,7 @@ export class DatabaseStorage implements IStorage {
           status: 'confirmed',
           paymentStatus: 'paid',
           paymentIntentId: data.paymentIntentId,
-          stripePaymentIntentId: paymentIntent.id,
+          stripePaymentIntentId: isFreeEnrollment ? null : data.paymentIntentId,
           confirmationDate: new Date(),
           moodleEnrolled,
           moodleEnrollmentDate,
