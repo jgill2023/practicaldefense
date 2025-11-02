@@ -838,6 +838,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })();
       }
 
+      // Trigger automatic notification events for enrollment confirmation (fire-and-forget)
+      if (finalizedEnrollment.status === 'confirmed' && finalizedEnrollment.studentId) {
+        (async () => {
+          try {
+            const { NotificationEngine } = await import('./notificationEngine');
+            
+            console.log('Triggering enrollment confirmation notifications...');
+            
+            // Trigger enrollment confirmed event
+            await NotificationEngine.processEventTriggers('ENROLLMENT_CONFIRMED', {
+              userId: finalizedEnrollment.studentId,
+              courseId: finalizedEnrollment.courseId,
+              scheduleId: finalizedEnrollment.scheduleId,
+              enrollmentId: finalizedEnrollment.id,
+            });
+            
+            console.log(`Successfully triggered enrollment confirmation notifications for enrollment ${finalizedEnrollment.id}`);
+          } catch (error) {
+            console.error(`Error triggering enrollment notifications for enrollment ${enrollmentId}:`, error);
+          }
+        })();
+      }
+
       res.status(200).json(finalizedEnrollment);
     } catch (error) {
       console.error("Error finalizing enrollment:", error);
