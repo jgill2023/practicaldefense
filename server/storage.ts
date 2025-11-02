@@ -1198,13 +1198,17 @@ export class DatabaseStorage implements IStorage {
         enrollments: activeEnrollments, // Only show active enrollments
       };
 
+      console.log(`Student ${student.id} (${student.firstName} ${student.lastName}): isOnHold=${isOnHold}, hasCurrentEnrollment=${hasCurrentEnrollment}, activeEnrollments=${activeEnrollments.length}`);
+
       if (isOnHold) {
         held.push(studentData);
       } else if (hasCurrentEnrollment) {
+        console.log(`Adding ${student.firstName} ${student.lastName} to current students`);
         current.push(studentData);
       } else {
         // Former students - only include if they have any enrollments (completed or past)
         if (activeEnrollments.length > 0) {
+          console.log(`Adding ${student.firstName} ${student.lastName} to former students`);
           former.push(studentData);
         }
       }
