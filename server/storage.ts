@@ -1151,6 +1151,9 @@ export class DatabaseStorage implements IStorage {
     }
 
     const now = new Date();
+    // Get start of today to properly compare dates
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
     const current: Array<any> = [];
     const former: Array<any> = [];
     const held: Array<any> = [];
@@ -1161,10 +1164,11 @@ export class DatabaseStorage implements IStorage {
       // Filter out cancelled enrollments for categorization
       const activeEnrollments = studentEnrollments.filter(e => e.status !== 'cancelled');
 
-      // Check if student has any confirmed current (future) enrollments
+      // Check if student has any confirmed current (future or today) enrollments
       const hasConfirmedFutureEnrollment = activeEnrollments.some(e => {
         const scheduleDate = new Date(e.scheduleDate);
-        return scheduleDate >= now && e.status === 'confirmed';
+        // Compare dates only (not times) - course is current if it's today or in the future
+        return scheduleDate >= startOfToday && e.status === 'confirmed';
       });
 
       // Check if student is on hold
