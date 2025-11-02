@@ -716,6 +716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         courseId: schedule.courseId,
         scheduleId,
         paymentOption,
+        studentId: userId, // Pass userId for authenticated users, null for guests
       });
 
       // Include account creation status in response

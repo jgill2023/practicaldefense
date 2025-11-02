@@ -201,6 +201,7 @@ export interface IStorage {
     courseId: string;
     scheduleId: string;
     paymentOption: 'full' | 'deposit';
+    studentId?: string | null; // Optional studentId for authenticated users
   }): Promise<Enrollment>;
   upsertPaymentIntent(enrollmentId: string, promoCode?: string): Promise<{
     clientSecret: string;
@@ -1773,6 +1774,7 @@ export class DatabaseStorage implements IStorage {
     courseId: string;
     scheduleId: string;
     paymentOption: 'full' | 'deposit';
+    studentId?: string | null; // Optional studentId for authenticated users
   }): Promise<Enrollment> {
     const [draftEnrollment] = await db
       .insert(enrollments)
@@ -1782,7 +1784,7 @@ export class DatabaseStorage implements IStorage {
         paymentOption: data.paymentOption,
         status: 'initiated',
         paymentStatus: 'pending',
-        studentId: null, // No student yet for draft enrollment
+        studentId: data.studentId || null, // Use provided studentId for authenticated users
       })
       .returning();
 
