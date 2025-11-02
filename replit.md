@@ -4,7 +4,7 @@ Practical Defense Training is a professional firearms training management platfo
 
 # Recent Changes
 
-## November 2, 2025 - Complete Enrollment Notification System Fix
+## November 2, 2025 - Complete Enrollment Notification System Fix & Database Schema Sync
 - **Fixed critical bugs preventing automatic enrollment notifications from being sent to students**
 - **Event Name Mismatch**: Changed from 'ENROLLMENT_CONFIRMED' to 'enrollment_confirmed' to match database schema (server/routes.ts)
 - **Missing Notification Trigger**: Added NotificationEngine.processEventTriggers call to enrollment confirmation endpoint (server/routes.ts line 810)
@@ -12,7 +12,11 @@ Practical Defense Training is a professional firearms training management platfo
 - **Template Variable Population**: Created backward-compatible alias mapping system supporting both flat ({{firstName}}) and nested ({{student.firstName}}) variable names
 - **Missing Schedule Fields**: Added dayOfWeek, arrivalTime, rangeName, classroomName, googleMapsLink to notification variables
 - **Authorization Fix**: Updated initiateRegistration to accept studentId for authenticated users, preventing 403 enrollment errors
-- **Database Schema**: Added missing refund_requested and refund_requested_at columns to enrollments table
+- **Database Schema Synchronization**: 
+  - Added missing refund columns to enrollments table (refund_requested, refund_requested_at, refund_processed, refund_processed_at)
+  - Fixed schema type mismatch: changed products.id and products.categoryId from uuid to varchar to match database
+  - Ran `npm run db:push --force` to permanently sync schema with database
+  - Resolved 500 errors on Students, Communications, Course Management, and other pages
 - Students now successfully receive both email AND SMS confirmation messages with fully populated template variables upon course enrollment
 
 ## November 1, 2025 - Promo Code Creation Form Fixes
