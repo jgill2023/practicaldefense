@@ -332,9 +332,13 @@ export class NotificationEngine {
       const processedSubject = this.processTemplate(template.subject || '', variables);
       let processedContent = this.processTemplate(template.content || '', variables);
 
-      // Strip HTML tags for SMS notifications
+      // Debug logging for SMS notifications
       if (template.type === 'sms') {
+        console.log('SMS Template - Original content:', template.content);
+        console.log('SMS Template - Variables available:', JSON.stringify(variables, null, 2));
+        console.log('SMS Template - Processed content (before strip):', processedContent);
         processedContent = this.stripHtml(processedContent);
+        console.log('SMS Template - Final content (after strip):', processedContent);
       }
 
       // Create notification log entry
