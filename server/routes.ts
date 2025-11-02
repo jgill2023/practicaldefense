@@ -386,6 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { enrollmentId } = req.params;
+      const { requestRefund } = req.body;
 
       // Verify enrollment belongs to user
       const enrollment = await storage.getEnrollment(enrollmentId);
@@ -398,20 +399,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Enrollment is already cancelled" });
       }
 
+      // Calculate days until class starts for refund eligibility
+      const schedule = await storage.getCourseSchedule(enrollment.scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ message: "Schedule not found" });
+      }
+
+      const classStartDate = new Date(schedule.startDate);
+      const today = new Date();
+      const daysUntilClass = Math.ceil((classStartDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Determine cancellation reason based on refund policy
+      let cancellationReason = 'Student self-unenrollment';
+      if (requestRefund && daysUntilClass > 21) {
+        cancellationReason = 'Student self-unenrollment - Full refund requested (>21 days notice)';
+      } else if (daysUntilClass >= 14 && daysUntilClass <= 21) {
+        cancellationReason = 'Student self-unenrollment - Future credit eligible (14-21 days notice)';
+      } else if (daysUntilClass < 14 && daysUntilClass >= 0) {
+        cancellationReason = 'Student self-unenrollment - Partial future credit eligible (<14 days notice)';
+      }
+
       // Update enrollment status to cancelled
       await storage.updateEnrollment(enrollmentId, {
         status: 'cancelled',
         cancellationDate: new Date(),
-        cancellationReason: 'Student self-unenrollment',
+        cancellationReason,
       });
 
       // Increase available spots on the schedule
-      const schedule = await storage.getCourseSchedule(enrollment.scheduleId);
-      if (schedule) {
-        await storage.updateCourseSchedule(enrollment.scheduleId, {
-          availableSpots: schedule.availableSpots + 1,
-        });
-      }
+      await storage.updateCourseSchedule(enrollment.scheduleId, {
+        availableSpots: schedule.availableSpots + 1,
+      });
 
       // Remove from SMS list if auto-added
       try {
@@ -427,9 +445,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Don't fail the unenrollment if SMS list removal fails
       }
 
+      // Send notification email to instructors if refund was requested
+      if (requestRefund && daysUntilClass > 21) {
+        try {
+          const student = await storage.getUser(userId);
+          const course = await storage.getCourse(enrollment.courseId);
+          
+          if (student && course) {
+            // TODO: Send email notification to instructors about refund request
+            console.log(`Refund requested by ${student.firstName} ${student.lastName} for ${course.title}`);
+          }
+        } catch (error) {
+          console.error('Error sending refund notification:', error);
+          // Don't fail the unenrollment if email fails
+        }
+      }
+
       res.json({ 
         success: true, 
-        message: "Successfully unenrolled from course" 
+        message: requestRefund && daysUntilClass > 21 
+          ? "Successfully unenrolled. Refund request has been submitted." 
+          : "Successfully unenrolled from course" 
       });
     } catch (error) {
       console.error("Error unenrolling student:", error);

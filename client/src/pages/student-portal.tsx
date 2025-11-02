@@ -1873,15 +1873,66 @@ function UnenrollConfirmationDialog({ isOpen, onClose, enrollment }: {
   enrollment: EnrollmentWithDetails;
 }) {
   const { toast } = useToast();
+  const [requestRefund, setRequestRefund] = useState(false);
+
+  // Calculate days until class starts
+  const classStartDate = new Date(enrollment.schedule.startDate);
+  const today = new Date();
+  const daysUntilClass = Math.ceil((classStartDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+  // Determine refund eligibility based on policy
+  const getRefundEligibility = () => {
+    if (daysUntilClass > 21) {
+      return {
+        eligible: true,
+        type: 'full_refund',
+        message: 'You are eligible for a full refund since you are canceling more than 21 days before the class start date.',
+        detail: 'Any Stripe processing fees will be covered by us.'
+      };
+    } else if (daysUntilClass >= 14 && daysUntilClass <= 21) {
+      return {
+        eligible: false,
+        type: 'future_credit_full',
+        message: 'You are not eligible for a refund since you are canceling within 14-21 days of the class start date.',
+        detail: 'However, you may apply 100% of your payment toward a future course within 12 months of the original class date.'
+      };
+    } else if (daysUntilClass < 14 && daysUntilClass >= 0) {
+      return {
+        eligible: false,
+        type: 'future_credit_partial',
+        message: 'You are not eligible for a full refund since you are canceling within 14 days of the class start date.',
+        detail: 'You will forfeit your deposit, but any payment made beyond the deposit may be applied toward a future course within 12 months.'
+      };
+    } else {
+      return {
+        eligible: false,
+        type: 'past_date',
+        message: 'You cannot unenroll from a class that has already started or passed.',
+        detail: 'Please contact us directly if you have questions about this enrollment.'
+      };
+    }
+  };
+
+  const refundEligibility = getRefundEligibility();
 
   const unenrollMutation = useMutation({
-    mutationFn: () => apiRequest("POST", `/api/student/enrollments/${enrollment.id}/unenroll`),
+    mutationFn: () => apiRequest("POST", `/api/student/enrollments/${enrollment.id}/unenroll`, {
+      requestRefund: requestRefund && refundEligibility.eligible
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
-      toast({
-        title: "Unenrolled Successfully",
-        description: `You have been unenrolled from ${enrollment.course.title}.`,
-      });
+      
+      if (requestRefund && refundEligibility.eligible) {
+        toast({
+          title: "Refund Request Submitted",
+          description: `Your refund request for ${enrollment.course.title} has been submitted. You will receive your refund within 5-10 business days.`,
+        });
+      } else {
+        toast({
+          title: "Unenrolled Successfully",
+          description: `You have been unenrolled from ${enrollment.course.title}.`,
+        });
+      }
       onClose();
     },
     onError: (error: any) => {
@@ -1897,16 +1948,114 @@ function UnenrollConfirmationDialog({ isOpen, onClose, enrollment }: {
     unenrollMutation.mutate();
   };
 
+  // Don't allow unenrollment if class has already passed
+  if (refundEligibility.type === 'past_date') {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cannot Unenroll</DialogTitle>
+            <DialogDescription>
+              {refundEligibility.message}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4 bg-muted rounded-lg">
+            <p className="text-sm text-muted-foreground">{refundEligibility.detail}</p>
+          </div>
+          <div className="flex justify-end pt-4">
+            <Button onClick={onClose} data-testid="button-close-dialog">
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Confirm Unenrollment</DialogTitle>
+          <DialogTitle>
+            {refundEligibility.eligible ? 'Unenroll and Request Refund' : 'Confirm Unenrollment'}
+          </DialogTitle>
           <DialogDescription>
-            Are you sure you want to unenroll from "{enrollment.course.title}"? This action cannot be undone.
+            You are requesting to unenroll from "{enrollment.course.title}" scheduled for {classStartDate.toLocaleDateString()}.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex justify-end space-x-3 pt-4">
+
+        <div className="space-y-4">
+          {/* Refund Policy Information */}
+          <Card className={refundEligibility.eligible ? 'border-success' : 'border-amber-500'}>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center">
+                <AlertCircle className={`mr-2 h-5 w-5 ${refundEligibility.eligible ? 'text-success' : 'text-amber-500'}`} />
+                Refund Policy
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-sm font-medium mb-2">{refundEligibility.message}</p>
+                <p className="text-sm text-muted-foreground">{refundEligibility.detail}</p>
+              </div>
+
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p className="font-semibold">Days until class: {daysUntilClass}</p>
+                <p>• More than 21 days: Full refund eligible</p>
+                <p>• 14-21 days: 100% credit toward future course</p>
+                <p>• Less than 14 days: Deposit forfeited, remaining balance credited</p>
+              </div>
+
+              {refundEligibility.eligible && (
+                <div className="pt-3 border-t">
+                  <div className="flex items-start space-x-2">
+                    <Checkbox
+                      id="request-refund"
+                      checked={requestRefund}
+                      onCheckedChange={(checked) => setRequestRefund(checked as boolean)}
+                      data-testid="checkbox-request-refund"
+                    />
+                    <Label htmlFor="request-refund" className="text-sm font-normal cursor-pointer">
+                      I would like to request a full refund (refund will be processed to your original payment method within 5-10 business days)
+                    </Label>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Course Details */}
+          <div className="p-4 bg-muted rounded-lg">
+            <h4 className="font-semibold mb-2">{enrollment.course.title}</h4>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <div className="flex items-center">
+                <Calendar className="mr-2 h-4 w-4" />
+                {classStartDate.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </div>
+              {enrollment.schedule.location && (
+                <div className="flex items-center">
+                  <span className="mr-2">📍</span>
+                  {enrollment.schedule.location}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {!refundEligibility.eligible && (
+            <div className="p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <p className="text-sm text-amber-900 dark:text-amber-100">
+                <strong>Need to reschedule?</strong> Consider using the "Request Transfer" option instead to transfer your enrollment to a future date.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end space-x-3 pt-4 border-t">
           <Button 
             variant="outline" 
             onClick={onClose}
@@ -1916,12 +2065,12 @@ function UnenrollConfirmationDialog({ isOpen, onClose, enrollment }: {
             Nevermind
           </Button>
           <Button
-            variant="destructive"
+            variant={refundEligibility.eligible ? "default" : "destructive"}
             onClick={handleConfirmUnenroll}
             disabled={unenrollMutation.isPending}
             data-testid="button-confirm-unenroll"
           >
-            {unenrollMutation.isPending ? 'Unenrolling...' : 'Unenroll Me'}
+            {unenrollMutation.isPending ? 'Processing...' : refundEligibility.eligible ? 'I Understand' : 'I Understand'}
           </Button>
         </div>
       </DialogContent>
