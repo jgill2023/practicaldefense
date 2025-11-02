@@ -4,14 +4,16 @@ Practical Defense Training is a professional firearms training management platfo
 
 # Recent Changes
 
-## November 2, 2025 - Enrollment Notification Fix
-- Fixed critical bug preventing automatic enrollment notifications from being sent to students
-- **Event Name Mismatch**: Changed from 'ENROLLMENT_CONFIRMED' (uppercase) to 'enrollment_confirmed' (lowercase) to match database schema
-- **Database Constraint Error**: Fixed notification_logs foreign key constraint violation by passing notification schedule ID instead of course schedule ID
-- **Contact Preferences**: Enabled both 'email' and 'text' in instructor contact preferences to allow receiving notifications
-- **SMS Notification Schedule**: Created automatic SMS notification schedule for enrollment_confirmed event
-- Students now receive both email AND SMS confirmation messages upon successful course enrollment
-- Technical fix: server/notificationEngine.ts line 397 - changed from `scheduleId: context.scheduleId` to `scheduleId: schedule.id`
+## November 2, 2025 - Complete Enrollment Notification System Fix
+- **Fixed critical bugs preventing automatic enrollment notifications from being sent to students**
+- **Event Name Mismatch**: Changed from 'ENROLLMENT_CONFIRMED' to 'enrollment_confirmed' to match database schema (server/routes.ts)
+- **Missing Notification Trigger**: Added NotificationEngine.processEventTriggers call to enrollment confirmation endpoint (server/routes.ts line 810)
+- **Database Foreign Key Constraint**: Separated courseScheduleId (for template variables) from notificationScheduleId (for database FK) in sendNotification
+- **Template Variable Population**: Created backward-compatible alias mapping system supporting both flat ({{firstName}}) and nested ({{student.firstName}}) variable names
+- **Missing Schedule Fields**: Added dayOfWeek, arrivalTime, rangeName, classroomName, googleMapsLink to notification variables
+- **Authorization Fix**: Updated initiateRegistration to accept studentId for authenticated users, preventing 403 enrollment errors
+- **Database Schema**: Added missing refund_requested and refund_requested_at columns to enrollments table
+- Students now successfully receive both email AND SMS confirmation messages with fully populated template variables upon course enrollment
 
 ## November 1, 2025 - Promo Code Creation Form Fixes
 - Fixed Create Promo Code dialog opening issue by converting Select components from uncontrolled (defaultValue) to controlled (value) for proper React Hook Form integration
