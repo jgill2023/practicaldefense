@@ -6,9 +6,12 @@ Practical Defense Training is a professional firearms training management platfo
 
 ## November 2, 2025 - Enrollment Notification Fix
 - Fixed critical bug preventing automatic enrollment notifications from being sent to students
-- Corrected event name mismatch: changed from 'ENROLLMENT_CONFIRMED' (uppercase) to 'enrollment_confirmed' (lowercase)
-- Event trigger now properly matches notification schedules in database, enabling automatic email and SMS notifications when students enroll in courses
-- Students will now receive confirmation messages via their preferred contact methods (email/SMS) upon successful course enrollment
+- **Event Name Mismatch**: Changed from 'ENROLLMENT_CONFIRMED' (uppercase) to 'enrollment_confirmed' (lowercase) to match database schema
+- **Database Constraint Error**: Fixed notification_logs foreign key constraint violation by passing notification schedule ID instead of course schedule ID
+- **Contact Preferences**: Enabled both 'email' and 'text' in instructor contact preferences to allow receiving notifications
+- **SMS Notification Schedule**: Created automatic SMS notification schedule for enrollment_confirmed event
+- Students now receive both email AND SMS confirmation messages upon successful course enrollment
+- Technical fix: server/notificationEngine.ts line 397 - changed from `scheduleId: context.scheduleId` to `scheduleId: schedule.id`
 
 ## November 1, 2025 - Promo Code Creation Form Fixes
 - Fixed Create Promo Code dialog opening issue by converting Select components from uncontrolled (defaultValue) to controlled (value) for proper React Hook Form integration

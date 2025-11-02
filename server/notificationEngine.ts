@@ -181,7 +181,8 @@ export class NotificationEngine {
     templateId: string;
     recipientId: string;
     courseId?: string;
-    scheduleId?: string;
+    courseScheduleId?: string; // Course schedule ID for template variables
+    notificationScheduleId?: string; // Notification schedule ID for log reference
     enrollmentId?: string;
     variables?: NotificationVariables;
     triggerEvent?: string;
@@ -224,8 +225,8 @@ export class NotificationEngine {
         if (params.courseId) {
           course = await storage.getCourse(params.courseId);
         }
-        if (params.scheduleId) {
-          schedule = await storage.getCourseSchedule(params.scheduleId);
+        if (params.courseScheduleId) {
+          schedule = await storage.getCourseSchedule(params.courseScheduleId);
         }
         if (params.enrollmentId) {
           enrollment = await storage.getEnrollment(params.enrollmentId);
@@ -259,7 +260,7 @@ export class NotificationEngine {
         templateId: params.templateId,
         recipientId: params.recipientId,
         courseId: params.courseId,
-        scheduleId: params.scheduleId,
+        scheduleId: params.notificationScheduleId, // Use notification schedule ID for foreign key
         enrollmentId: params.enrollmentId,
         type: template.type,
         subject: processedSubject,
@@ -330,7 +331,8 @@ export class NotificationEngine {
     templateId: string;
     recipientIds: string[];
     courseId?: string;
-    scheduleId?: string;
+    courseScheduleId?: string; // Course schedule ID for template variables
+    notificationScheduleId?: string; // Notification schedule ID for log reference
     triggerEvent?: string;
     manualSend?: boolean;
   }): Promise<{
@@ -344,8 +346,13 @@ export class NotificationEngine {
 
     for (const recipientId of params.recipientIds) {
       const result = await this.sendNotification({
-        ...params,
+        templateId: params.templateId,
         recipientId,
+        courseId: params.courseId,
+        courseScheduleId: params.courseScheduleId,
+        notificationScheduleId: params.notificationScheduleId,
+        triggerEvent: params.triggerEvent,
+        manualSend: params.manualSend,
       });
 
       results.push({
@@ -391,7 +398,8 @@ export class NotificationEngine {
             templateId: schedule.templateId,
             recipientId: context.userId,
             courseId: context.courseId,
-            scheduleId: context.scheduleId,
+            courseScheduleId: context.scheduleId, // Course schedule ID for template variables
+            notificationScheduleId: schedule.id, // Notification schedule ID for log reference
             enrollmentId: context.enrollmentId,
             triggerEvent: event,
             manualSend: false,
