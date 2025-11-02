@@ -182,6 +182,10 @@ export const enrollments = pgTable("enrollments", {
   completionDate: timestamp("completion_date"),
   cancellationDate: timestamp("cancellation_date"),
   cancellationReason: text("cancellation_reason"),
+  refundRequested: boolean("refund_requested").default(false),
+  refundRequestedAt: timestamp("refund_requested_at"),
+  refundProcessed: boolean("refund_processed").default(false),
+  refundProcessedAt: timestamp("refund_processed_at"),
   // Moodle integration
   moodleEnrolled: boolean("moodle_enrolled").default(false),
   moodleEnrollmentDate: timestamp("moodle_enrollment_date"),

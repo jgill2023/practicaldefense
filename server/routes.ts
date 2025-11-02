@@ -420,11 +420,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update enrollment status to cancelled
-      await storage.updateEnrollment(enrollmentId, {
+      const updateData: any = {
         status: 'cancelled',
         cancellationDate: new Date(),
         cancellationReason,
-      });
+      };
+
+      // Track refund request if applicable
+      if (requestRefund && daysUntilClass > 21) {
+        updateData.refundRequested = true;
+        updateData.refundRequestedAt = new Date();
+      }
+
+      await storage.updateEnrollment(enrollmentId, updateData);
 
       // Increase available spots on the schedule
       await storage.updateCourseSchedule(enrollment.scheduleId, {
@@ -445,14 +453,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Don't fail the unenrollment if SMS list removal fails
       }
 
-      // Send notification email to instructors if refund was requested
+      // Send notification to instructors if refund was requested
       if (requestRefund && daysUntilClass > 21) {
         try {
           const student = await storage.getUser(userId);
           const course = await storage.getCourse(enrollment.courseId);
           
           if (student && course) {
-            // TODO: Send email notification to instructors about refund request
+            // Send email notification to instructor
+            const instructor = await storage.getUser(course.instructorId);
+            if (instructor && instructor.email) {
+              const NotificationEmailService = (await import('./emailService')).NotificationEmailService;
+              await NotificationEmailService.sendEmail({
+                to: instructor.email,
+                subject: `Refund Request - ${course.title}`,
+                html: `
+                  <h2>Refund Request Received</h2>
+                  <p>A student has requested a refund for your course:</p>
+                  <ul>
+                    <li><strong>Student:</strong> ${student.firstName} ${student.lastName}</li>
+                    <li><strong>Email:</strong> ${student.email}</li>
+                    <li><strong>Course:</strong> ${course.title}</li>
+                    <li><strong>Schedule Date:</strong> ${schedule.startDate ? new Date(schedule.startDate).toLocaleDateString() : 'N/A'}</li>
+                    <li><strong>Days Until Class:</strong> ${daysUntilClass}</li>
+                  </ul>
+                  <p>This student is eligible for a full refund as they cancelled more than 21 days before the class start date.</p>
+                  <p>Please process this refund within 5-10 business days.</p>
+                `,
+              });
+            }
+            
             console.log(`Refund requested by ${student.firstName} ${student.lastName} for ${course.title}`);
           }
         } catch (error) {
@@ -1689,6 +1719,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching instructor dashboard stats:", error);
       res.status(500).json({ message: "Failed to fetch dashboard statistics" });
+    }
+  });
+
+  // Get refund requests for instructor
+  app.get('/api/instructor/refund-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      // Get all enrollments for instructor's courses that have refund requests
+      const enrollments = await storage.getEnrollmentsByInstructor(userId);
+      const refundRequests = enrollments.filter(e => 
+        e.refundRequested && !e.refundProcessed
+      );
+
+      res.json(refundRequests);
+    } catch (error) {
+      console.error("Error fetching refund requests:", error);
+      res.status(500).json({ message: "Failed to fetch refund requests" });
+    }
+  });
+
+  // Mark refund as processed
+  app.post('/api/instructor/refund-requests/:enrollmentId/process', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const { enrollmentId } = req.params;
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+
+      // Verify instructor owns this course
+      const course = await storage.getCourse(enrollment.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.updateEnrollment(enrollmentId, {
+        refundProcessed: true,
+        refundProcessedAt: new Date(),
+      });
+
+      res.json({ success: true, message: "Refund marked as processed" });
+    } catch (error) {
+      console.error("Error processing refund:", error);
+      res.status(500).json({ message: "Failed to process refund" });
     }
   });
 

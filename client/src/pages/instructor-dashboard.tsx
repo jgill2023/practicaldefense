@@ -81,11 +81,22 @@ export default function InstructorDashboard() {
     allStudents: number;
     totalRevenue: number;
     outstandingRevenue: number;
+    refundRequests: number;
   }>({
     queryKey: ["/api/instructor/dashboard-stats"],
     enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
   });
+
+  // Fetch refund requests
+  const { data: refundRequests = [] } = useQuery<EnrollmentWithDetails[]>({
+    queryKey: ["/api/instructor/refund-requests"],
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    retry: false,
+  });
+
+  // Refund requests modal state
+  const [showRefundRequestsModal, setShowRefundRequestsModal] = useState(false);
 
   // Archive course mutation
   const archiveCourseMutation = useMutation({
@@ -426,6 +437,39 @@ export default function InstructorDashboard() {
       toast({
         title: "Delete Failed",
         description: "Failed to permanently delete schedule. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Process refund mutation
+  const processRefundMutation = useMutation({
+    mutationFn: async (enrollmentId: string) => {
+      await apiRequest("POST", `/api/instructor/refund-requests/${enrollmentId}/process`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Refund Processed",
+        description: "Refund has been marked as processed.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/refund-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Process Failed",
+        description: "Failed to process refund. Please try again.",
         variant: "destructive",
       });
     },
@@ -907,7 +951,7 @@ export default function InstructorDashboard() {
         </div>
 
         {/* Dashboard Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Upcoming Courses</CardTitle>
@@ -972,6 +1016,22 @@ export default function InstructorDashboard() {
                 {statsLoading ? '...' : `$${outstandingRevenue.toLocaleString()}`}
               </div>
               <p className="text-sm text-muted-foreground">Pending payments</p>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={() => setShowRefundRequestsModal(true)}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Refund Requests</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-red-600" data-testid="text-refund-requests">
+                {statsLoading ? '...' : dashboardStats?.refundRequests || 0}
+              </div>
+              <p className="text-sm text-muted-foreground">Pending refunds</p>
             </CardContent>
           </Card>
         </div>
@@ -1226,6 +1286,76 @@ export default function InstructorDashboard() {
                 {((deleteTarget?.type === 'course' && permanentDeleteCourseMutation.isPending) || (deleteTarget?.type === 'schedule' && permanentDeleteScheduleMutation.isPending)) ? 'Deleting...' : 'Delete Permanently'}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Refund Requests Modal */}
+      <Dialog open={showRefundRequestsModal} onOpenChange={setShowRefundRequestsModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Refund Requests</DialogTitle>
+            <DialogDescription>
+              Students who have requested refunds for their enrollments
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {refundRequests.length === 0 ? (
+              <div className="text-center py-8">
+                <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No Pending Refund Requests</h3>
+                <p className="text-muted-foreground">All refund requests have been processed.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {refundRequests.map((enrollment) => (
+                  <Card key={enrollment.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-lg mb-2">
+                            {enrollment.student?.firstName} {enrollment.student?.lastName}
+                          </h4>
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            <p>
+                              <span className="font-medium">Email:</span> {enrollment.student?.email}
+                            </p>
+                            <p>
+                              <span className="font-medium">Course:</span> {enrollment.course?.title}
+                            </p>
+                            <p>
+                              <span className="font-medium">Schedule:</span>{' '}
+                              {enrollment.schedule?.startDate ? formatDateSafe(enrollment.schedule.startDate.toString()) : 'N/A'}
+                            </p>
+                            <p>
+                              <span className="font-medium">Requested:</span>{' '}
+                              {enrollment.refundRequestedAt ? formatDateSafe(enrollment.refundRequestedAt.toString()) : 'N/A'}
+                            </p>
+                            <p>
+                              <span className="font-medium">Amount:</span> ${enrollment.course?.price ? parseFloat(enrollment.course.price.toString()).toFixed(2) : '0.00'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0 ml-4">
+                          <Button
+                            onClick={() => {
+                              if (window.confirm('Mark this refund as processed? Make sure you have issued the refund through Stripe first.')) {
+                                processRefundMutation.mutate(enrollment.id);
+                              }
+                            }}
+                            disabled={processRefundMutation.isPending}
+                            size="sm"
+                          >
+                            Mark as Processed
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

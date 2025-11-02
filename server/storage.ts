@@ -275,6 +275,7 @@ export interface IStorage {
     allStudents: number;
     totalRevenue: number;
     outstandingRevenue: number;
+    refundRequests: number; // Added for refund requests
   }>;
 
   // Promo code operations
@@ -1882,7 +1883,7 @@ export class DatabaseStorage implements IStorage {
         console.log('🎫 Validating promo code:', promoCode.trim());
         const validation = await this.validatePromoCode(promoCode.trim(), 'draft-enrollment', enrollment.courseId, paymentAmount);
         console.log('🎫 Validation result:', validation);
-        
+
         if (validation.isValid && validation.discountAmount !== undefined && validation.finalAmount !== undefined) {
           discountAmount = validation.discountAmount;
           finalPaymentAmount = validation.finalAmount;
@@ -1908,7 +1909,7 @@ export class DatabaseStorage implements IStorage {
     // Handle free enrollments (100% discount) - no payment needed
     if (finalPaymentAmount <= 0) {
       console.log('💯 Free enrollment detected (100% discount) - skipping Stripe payment');
-      
+
       // Update enrollment with promo code but no payment intent
       await db
         .update(enrollments)
@@ -2041,7 +2042,7 @@ export class DatabaseStorage implements IStorage {
     // Only verify payment with Stripe if it's NOT a free enrollment
     if (!isFreeEnrollment) {
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-      
+
       // Verify payment with Stripe FIRST (critical security check)
       const paymentIntent = await stripe.paymentIntents.retrieve(data.paymentIntentId);
       if (paymentIntent.status !== 'succeeded') {
@@ -2094,7 +2095,7 @@ export class DatabaseStorage implements IStorage {
     if (!isFreeEnrollment) {
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
       const paymentIntent = await stripe.paymentIntents.retrieve(data.paymentIntentId);
-      
+
       if (paymentIntent.amount_received !== expectedTotalCents) {
         throw new Error(
           `Payment amount mismatch: expected $${(expectedTotalCents / 100).toFixed(2)}, ` +
@@ -2230,6 +2231,7 @@ export class DatabaseStorage implements IStorage {
     allStudents: number;
     totalRevenue: number;
     outstandingRevenue: number;
+    refundRequests: number; // Added for refund requests
   }> {
     const now = new Date();
 
@@ -2244,6 +2246,7 @@ export class DatabaseStorage implements IStorage {
         allStudents: 0,
         totalRevenue: 0,
         outstandingRevenue: 0,
+        refundRequests: 0, // Initialize refund requests to 0
       };
     }
 
@@ -2277,23 +2280,23 @@ export class DatabaseStorage implements IStorage {
     const uniqueStudentIds = new Set(allEnrollments.map(e => e.studentId).filter(Boolean)); // Filter out null/undefined studentIds
     const allStudents = uniqueStudentIds.size;
 
-    // Calculate total revenue (all paid enrollments)
+    // Calculate revenue statistics
     const totalRevenue = allEnrollments
       .filter(e => e.paymentStatus === 'paid' && e.course)
       .reduce((sum, e) => {
-        const price = parseFloat(e.course!.price);
-        return sum + price;
+        const course = instructorCourses.find(c => c.id === e.courseId);
+        return sum + (course ? parseFloat(course.price.toString()) : 0);
       }, 0);
 
-    // Calculate outstanding revenue (enrollments with deposit only)
     const outstandingRevenue = allEnrollments
-      .filter(e => e.paymentStatus === 'deposit' && e.course)
+      .filter(e => e.paymentStatus === 'pending' && e.course)
       .reduce((sum, e) => {
-        const price = parseFloat(e.course!.price);
-        // Assuming a default deposit amount or fetching it from course settings if available
-        const depositAmount = e.course!.depositAmount ? parseFloat(e.course!.depositAmount) : 50; 
-        return sum + (price - depositAmount);
+        const course = instructorCourses.find(c => c.id === e.courseId);
+        return sum + (course ? parseFloat(course.price.toString()) : 0);
       }, 0);
+
+    // Count pending refund requests
+    const refundRequests = allEnrollments.filter(e => e.refundRequested && !e.refundProcessed).length;
 
     return {
       upcomingCourses,
@@ -2301,6 +2304,7 @@ export class DatabaseStorage implements IStorage {
       allStudents,
       totalRevenue,
       outstandingRevenue,
+      refundRequests,
     };
   }
 
@@ -2576,17 +2580,17 @@ export class DatabaseStorage implements IStorage {
     if (!code || !code.trim()) {
       return undefined;
     }
-    
+
     // Get all promo codes and filter in memory for case-insensitive match
     const allPromoCodes = await db
       .select()
       .from(promoCodes);
-    
+
     const trimmedCode = code.trim().toUpperCase();
     const matchingCode = allPromoCodes.find(
       pc => pc.code.trim().toUpperCase() === trimmedCode
     );
-    
+
     return matchingCode;
   }
 
