@@ -1158,13 +1158,13 @@ export class DatabaseStorage implements IStorage {
     for (const [_, data] of studentMap) {
       const { student, enrollments: studentEnrollments } = data;
 
-      // Filter out cancelled enrollments for current/held students
+      // Filter out cancelled enrollments for categorization
       const activeEnrollments = studentEnrollments.filter(e => e.status !== 'cancelled');
 
-      // Check if student has any current (future) enrollments
-      const hasFutureEnrollment = activeEnrollments.some(e => {
+      // Check if student has any confirmed current (future) enrollments
+      const hasConfirmedFutureEnrollment = activeEnrollments.some(e => {
         const scheduleDate = new Date(e.scheduleDate);
-        return scheduleDate >= now;
+        return scheduleDate >= now && e.status === 'confirmed';
       });
 
       // Check if student is on hold
@@ -1182,7 +1182,7 @@ export class DatabaseStorage implements IStorage {
 
       if (isOnHold) {
         held.push(studentData);
-      } else if (hasFutureEnrollment) {
+      } else if (hasConfirmedFutureEnrollment) {
         current.push(studentData);
       } else {
         // Former students - only include if they have any enrollments (completed)
