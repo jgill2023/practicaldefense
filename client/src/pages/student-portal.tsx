@@ -1149,71 +1149,74 @@ function EnhancedEnrollmentCard({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap gap-2">
-        {paymentBalance?.hasRemainingBalance && (
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="flex flex-wrap gap-2 flex-1">
+          {paymentBalance?.hasRemainingBalance && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                window.location.href = `/checkout?enrollmentId=${enrollment.id}`;
+              }}
+              data-testid={`button-make-payment-${enrollment.id}`}
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              Make Payment
+            </Button>
+          )}
+
+          {!formStatus?.isComplete && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onCompleteFormsClick(enrollment)}
+              data-testid={`button-complete-forms-${enrollment.id}`}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Complete Forms
+            </Button>
+          )}
+
+          {waiverStatus?.hasPendingWaivers && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onCompleteWaiverClick(enrollment)}
+              data-testid={`button-complete-waiver-${enrollment.id}`}
+            >
+              <FileSignature className="mr-2 h-4 w-4" />
+              Complete Waiver
+            </Button>
+          )}
+
+          {enrollment.waiverUrl && (
+            <Button variant="outline" size="sm" data-testid={`button-download-waiver-${enrollment.id}`}>
+              <Download className="mr-2 h-4 w-4" />
+              Download Waiver
+            </Button>
+          )}
+
+          {/* Request Transfer Button */}
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              window.location.href = `/checkout?enrollmentId=${enrollment.id}`;
-            }}
-            data-testid={`button-make-payment-${enrollment.id}`}
+            onClick={() => onRequestTransferClick(enrollment)}
+            data-testid={`button-request-transfer-${enrollment.id}`}
           >
-            <CreditCard className="mr-2 h-4 w-4" />
-            Make Payment
+            <Edit className="mr-2 h-4 w-4" />
+            Request Transfer
           </Button>
-        )}
+        </div>
 
-        {!formStatus?.isComplete && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onCompleteFormsClick(enrollment)}
-            data-testid={`button-complete-forms-${enrollment.id}`}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Complete Forms
-          </Button>
-        )}
-
-        {waiverStatus?.hasPendingWaivers && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onCompleteWaiverClick(enrollment)}
-            data-testid={`button-complete-waiver-${enrollment.id}`}
-          >
-            <FileSignature className="mr-2 h-4 w-4" />
-            Complete Waiver
-          </Button>
-        )}
-
-        {enrollment.waiverUrl && (
-          <Button variant="outline" size="sm" data-testid={`button-download-waiver-${enrollment.id}`}>
-            <Download className="mr-2 h-4 w-4" />
-            Download Waiver
-          </Button>
-        )}
-
-        {/* Request Transfer Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onRequestTransferClick(enrollment)}
-          data-testid={`button-request-transfer-${enrollment.id}`}
-        >
-          <Edit className="mr-2 h-4 w-4" />
-          Request Transfer
-        </Button>
-
-        {/* Unenroll Button */}
+        {/* Unenroll Button - Right aligned and smaller */}
         <Button
           variant="destructive"
           size="sm"
           onClick={() => onUnenrollClick(enrollment)}
           data-testid={`button-unenroll-${enrollment.id}`}
+          className="ml-auto text-xs px-2 py-1 h-7"
         >
-          <X className="mr-2 h-4 w-4" />
+          <X className="mr-1 h-3 w-3" />
           Unenroll Me
         </Button>
       </div>
@@ -1890,8 +1893,12 @@ function UnenrollConfirmationDialog({ isOpen, onClose, enrollment }: {
     },
   });
 
+  const handleConfirmUnenroll = () => {
+    unenrollMutation.mutate();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Confirm Unenrollment</DialogTitle>
@@ -1900,13 +1907,19 @@ function UnenrollConfirmationDialog({ isOpen, onClose, enrollment }: {
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end space-x-3 pt-4">
-          <Button variant="outline" onClick={onClose}>
+          <Button 
+            variant="outline" 
+            onClick={onClose}
+            disabled={unenrollMutation.isPending}
+            data-testid="button-cancel-unenroll"
+          >
             Nevermind
           </Button>
           <Button
             variant="destructive"
-            onClick={() => unenrollMutation.mutate()}
+            onClick={handleConfirmUnenroll}
             disabled={unenrollMutation.isPending}
+            data-testid="button-confirm-unenroll"
           >
             {unenrollMutation.isPending ? 'Unenrolling...' : 'Unenroll Me'}
           </Button>
