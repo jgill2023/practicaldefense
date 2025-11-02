@@ -40,6 +40,11 @@ export interface NotificationVariables {
     location: string;
     maxSpots: number;
     availableSpots: number;
+    dayOfWeek?: string;
+    arrivalTime?: string;
+    rangeName?: string;
+    classroomName?: string;
+    googleMapsLink?: string;
   };
   enrollment?: {
     paymentStatus: string;
@@ -67,14 +72,79 @@ export class NotificationEngine {
   };
 
   /**
+   * Flat variable aliases for backward compatibility with existing templates
+   * Maps flat variable names (e.g., firstName) to nested paths (e.g., student.firstName)
+   */
+  private static readonly FLAT_ALIAS_MAP: Record<string, string> = {
+    // Student aliases
+    firstName: 'student.firstName',
+    lastName: 'student.lastName',
+    name: 'student.name',
+    email: 'student.email',
+    phone: 'student.phone',
+    address: 'student.address',
+    city: 'student.city',
+    state: 'student.state',
+    zipCode: 'student.zipCode',
+    licenseNumber: 'student.licenseNumber',
+    licenseExpiration: 'student.licenseExpiration',
+    
+    // Course aliases
+    courseName: 'course.name',
+    courseDescription: 'course.description',
+    coursePrice: 'course.price',
+    courseCategory: 'course.category',
+    
+    // Schedule aliases
+    startDate: 'schedule.startDate',
+    endDate: 'schedule.endDate',
+    startTime: 'schedule.startTime',
+    endTime: 'schedule.endTime',
+    location: 'schedule.location',
+    maxSpots: 'schedule.maxSpots',
+    availableSpots: 'schedule.availableSpots',
+    dayOfWeek: 'schedule.dayOfWeek',
+    arrivalTime: 'schedule.arrivalTime',
+    rangeName: 'schedule.rangeName',
+    classroomName: 'schedule.classroomName',
+    googleMapsLink: 'schedule.googleMapsLink',
+    
+    // Enrollment aliases
+    paymentStatus: 'enrollment.paymentStatus',
+    amountPaid: 'enrollment.amountPaid',
+    remainingBalance: 'enrollment.remainingBalance',
+    registrationDate: 'enrollment.registrationDate',
+    
+    // System aliases
+    companyName: 'system.companyName',
+    companyPhone: 'system.companyPhone',
+    companyEmail: 'system.companyEmail',
+    website: 'system.website',
+    currentDate: 'system.currentDate',
+  };
+
+  /**
    * Process template variables and replace them in content
+   * Supports both flat ({{firstName}}) and nested ({{student.firstName}}) variable names
    */
   static processTemplate(content: string, variables: NotificationVariables): string {
     let processedContent = content;
 
     // Replace all variable placeholders with actual values
-    processedContent = processedContent.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-      const value = this.getNestedValue(variables, path.trim());
+    processedContent = processedContent.replace(/\{\{([^}]+)\}\}/g, (match, placeholder) => {
+      const trimmedPath = placeholder.trim();
+      
+      // Try nested path first
+      let value = this.getNestedValue(variables, trimmedPath);
+      
+      // If not found and doesn't contain a dot, try flat alias map
+      if (value === undefined && !trimmedPath.includes('.')) {
+        const nestedPath = this.FLAT_ALIAS_MAP[trimmedPath];
+        if (nestedPath) {
+          value = this.getNestedValue(variables, nestedPath);
+        }
+      }
+      
       return value !== undefined ? String(value) : match;
     });
 
@@ -146,6 +216,11 @@ export class NotificationEngine {
         location: schedule.location || '',
         maxSpots: schedule.maxSpots,
         availableSpots: schedule.availableSpots,
+        dayOfWeek: schedule.dayOfWeek || '',
+        arrivalTime: schedule.arrivalTime || '',
+        rangeName: schedule.rangeName || '',
+        classroomName: schedule.classroomName || '',
+        googleMapsLink: schedule.googleMapsLink || '',
       };
     }
 
