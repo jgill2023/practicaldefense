@@ -571,7 +571,7 @@ function StudentsPage() {
             Current Students
             {studentsData?.current && studentsData.current.length > 0 && (
               <Badge variant="secondary" className="ml-2">
-                {studentsData.current.length}
+                {studentsData.current.reduce((sum, student) => sum + student.enrollments.length, 0)}
               </Badge>
             )}
           </TabsTrigger>
@@ -579,7 +579,7 @@ function StudentsPage() {
             Held Students
             {studentsData?.held && studentsData.held.length > 0 && (
               <Badge variant="secondary" className="ml-2">
-                {studentsData.held.length}
+                {studentsData.held.reduce((sum, student) => sum + student.enrollments.length, 0)}
               </Badge>
             )}
           </TabsTrigger>
@@ -587,7 +587,7 @@ function StudentsPage() {
             Former Students
             {studentsData?.former && studentsData.former.length > 0 && (
               <Badge variant="secondary" className="ml-2">
-                {studentsData.former.length}
+                {studentsData.former.reduce((sum, student) => sum + student.enrollments.length, 0)}
               </Badge>
             )}
           </TabsTrigger>

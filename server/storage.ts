@@ -1164,9 +1164,6 @@ export class DatabaseStorage implements IStorage {
       // Filter out cancelled enrollments for categorization
       const activeEnrollments = studentEnrollments.filter(e => e.status !== 'cancelled');
 
-      // Check if student is on hold (any enrollment with 'hold' status)
-      const isOnHold = activeEnrollments.some(e => e.status === 'hold');
-
       // Check if student has any confirmed or pending current (future or today) enrollments
       const hasCurrentEnrollment = activeEnrollments.some(e => {
         if (!e.scheduleDate) return false;
@@ -1186,6 +1183,21 @@ export class DatabaseStorage implements IStorage {
         console.log(`Checking enrollment ${e.id}: scheduleDate=${datePart}, startOfToday=${startOfToday.toISOString().split('T')[0]}, isFutureOrToday=${isFutureOrToday}, status=${e.status}, isActiveStatus=${isActiveStatus}`);
         
         return isFutureOrToday && isActiveStatus;
+      });
+
+      // Check if student is on hold - only for current/future enrollments
+      const isOnHold = activeEnrollments.some(e => {
+        if (e.status !== 'hold') return false;
+        if (!e.scheduleDate) return false;
+        
+        // Parse the schedule date
+        const scheduleDateStr = typeof e.scheduleDate === 'string' ? e.scheduleDate : e.scheduleDate.toISOString();
+        const datePart = scheduleDateStr.split('T')[0];
+        const [year, month, day] = datePart.split('-').map(Number);
+        const scheduleStartOfDay = new Date(year, month - 1, day);
+        
+        // Only consider as on hold if the hold enrollment is for today or future
+        return scheduleStartOfDay >= startOfToday;
       });
 
       const studentData = {
