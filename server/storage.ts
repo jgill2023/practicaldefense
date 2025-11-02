@@ -1200,6 +1200,49 @@ export class DatabaseStorage implements IStorage {
         return scheduleStartOfDay >= startOfToday;
       });
 
+      // Filter enrollments based on student category
+      let filteredEnrollments = activeEnrollments;
+      
+      if (isOnHold) {
+        // For held students, show only current/future hold enrollments
+        filteredEnrollments = activeEnrollments.filter(e => {
+          if (e.status !== 'hold') return false;
+          if (!e.scheduleDate) return false;
+          
+          const scheduleDateStr = typeof e.scheduleDate === 'string' ? e.scheduleDate : e.scheduleDate.toISOString();
+          const datePart = scheduleDateStr.split('T')[0];
+          const [year, month, day] = datePart.split('-').map(Number);
+          const scheduleStartOfDay = new Date(year, month - 1, day);
+          
+          return scheduleStartOfDay >= startOfToday;
+        });
+      } else if (hasCurrentEnrollment) {
+        // For current students, show only future/today confirmed or pending enrollments
+        filteredEnrollments = activeEnrollments.filter(e => {
+          if (e.status !== 'confirmed' && e.status !== 'pending') return false;
+          if (!e.scheduleDate) return false;
+          
+          const scheduleDateStr = typeof e.scheduleDate === 'string' ? e.scheduleDate : e.scheduleDate.toISOString();
+          const datePart = scheduleDateStr.split('T')[0];
+          const [year, month, day] = datePart.split('-').map(Number);
+          const scheduleStartOfDay = new Date(year, month - 1, day);
+          
+          return scheduleStartOfDay >= startOfToday;
+        });
+      } else {
+        // For former students, show only past enrollments (completed or past confirmed)
+        filteredEnrollments = activeEnrollments.filter(e => {
+          if (!e.scheduleDate) return false;
+          
+          const scheduleDateStr = typeof e.scheduleDate === 'string' ? e.scheduleDate : e.scheduleDate.toISOString();
+          const datePart = scheduleDateStr.split('T')[0];
+          const [year, month, day] = datePart.split('-').map(Number);
+          const scheduleStartOfDay = new Date(year, month - 1, day);
+          
+          return scheduleStartOfDay < startOfToday;
+        });
+      }
+
       const studentData = {
         id: student.id,
         firstName: student.firstName,
@@ -1207,10 +1250,10 @@ export class DatabaseStorage implements IStorage {
         email: student.email,
         phone: student.phone,
         concealedCarryLicenseExpiration: student.concealedCarryLicenseExpiration,
-        enrollments: activeEnrollments, // Only show active enrollments
+        enrollments: filteredEnrollments, // Only show category-relevant enrollments
       };
 
-      console.log(`Student ${student.id} (${student.firstName} ${student.lastName}): isOnHold=${isOnHold}, hasCurrentEnrollment=${hasCurrentEnrollment}, activeEnrollments=${activeEnrollments.length}`);
+      console.log(`Student ${student.id} (${student.firstName} ${student.lastName}): isOnHold=${isOnHold}, hasCurrentEnrollment=${hasCurrentEnrollment}, activeEnrollments=${activeEnrollments.length}, filteredEnrollments=${filteredEnrollments.length}`);
 
       if (isOnHold) {
         held.push(studentData);
@@ -1218,8 +1261,8 @@ export class DatabaseStorage implements IStorage {
         console.log(`Adding ${student.firstName} ${student.lastName} to current students`);
         current.push(studentData);
       } else {
-        // Former students - only include if they have any enrollments (completed or past)
-        if (activeEnrollments.length > 0) {
+        // Former students - only include if they have any past enrollments
+        if (filteredEnrollments.length > 0) {
           console.log(`Adding ${student.firstName} ${student.lastName} to former students`);
           former.push(studentData);
         }
