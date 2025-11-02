@@ -1993,6 +1993,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         values.push(req.body.autoConfirmRegistration);
       }
 
+      // Handle backend details fields
+      if (req.body.rangeName !== undefined) {
+        updateParts.push(`range_name = $${values.length + 1}`);
+        values.push(req.body.rangeName || null);
+      }
+      if (req.body.classroomName !== undefined) {
+        updateParts.push(`classroom_name = $${values.length + 1}`);
+        values.push(req.body.classroomName || null);
+      }
+      if (req.body.arrivalTime !== undefined) {
+        updateParts.push(`arrival_time = $${values.length + 1}`);
+        values.push(req.body.arrivalTime || null);
+      }
+      if (req.body.departureTime !== undefined) {
+        updateParts.push(`departure_time = $${values.length + 1}`);
+        values.push(req.body.departureTime || null);
+      }
+      if (req.body.dayOfWeek !== undefined) {
+        updateParts.push(`day_of_week = $${values.length + 1}`);
+        values.push(req.body.dayOfWeek || null);
+      }
+      if (req.body.googleMapsLink !== undefined) {
+        updateParts.push(`google_maps_link = $${values.length + 1}`);
+        values.push(req.body.googleMapsLink || null);
+      }
+      if (req.body.rangeLocationImageUrl !== undefined) {
+        updateParts.push(`range_location_image_url = $${values.length + 1}`);
+        values.push(req.body.rangeLocationImageUrl || null);
+      }
+
       // Always update timestamp
       updateParts.push(`updated_at = $${values.length + 1}`);
       values.push(new Date().toISOString());
