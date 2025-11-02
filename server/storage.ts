@@ -1169,9 +1169,11 @@ export class DatabaseStorage implements IStorage {
 
       // Check if student has any confirmed or pending current (future or today) enrollments
       const hasCurrentEnrollment = activeEnrollments.some(e => {
+        if (!e.scheduleDate) return false;
         const scheduleDate = new Date(e.scheduleDate);
+        const scheduleStartOfDay = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate());
         // Student is current if they have confirmed or pending enrollments for today or future
-        return scheduleDate >= startOfToday && (e.status === 'confirmed' || e.status === 'pending');
+        return scheduleStartOfDay >= startOfToday && (e.status === 'confirmed' || e.status === 'pending');
       });
 
       const studentData = {
