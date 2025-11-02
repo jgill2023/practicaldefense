@@ -1164,15 +1164,15 @@ export class DatabaseStorage implements IStorage {
       // Filter out cancelled enrollments for categorization
       const activeEnrollments = studentEnrollments.filter(e => e.status !== 'cancelled');
 
-      // Check if student has any confirmed current (future or today) enrollments
-      const hasConfirmedFutureEnrollment = activeEnrollments.some(e => {
-        const scheduleDate = new Date(e.scheduleDate);
-        // Compare dates only (not times) - course is current if it's today or in the future
-        return scheduleDate >= startOfToday && e.status === 'confirmed';
-      });
-
-      // Check if student is on hold
+      // Check if student is on hold (any enrollment with 'hold' status)
       const isOnHold = activeEnrollments.some(e => e.status === 'hold');
+
+      // Check if student has any confirmed or pending current (future or today) enrollments
+      const hasCurrentEnrollment = activeEnrollments.some(e => {
+        const scheduleDate = new Date(e.scheduleDate);
+        // Student is current if they have confirmed or pending enrollments for today or future
+        return scheduleDate >= startOfToday && (e.status === 'confirmed' || e.status === 'pending');
+      });
 
       const studentData = {
         id: student.id,
@@ -1186,10 +1186,10 @@ export class DatabaseStorage implements IStorage {
 
       if (isOnHold) {
         held.push(studentData);
-      } else if (hasConfirmedFutureEnrollment) {
+      } else if (hasCurrentEnrollment) {
         current.push(studentData);
       } else {
-        // Former students - only include if they have any enrollments (completed)
+        // Former students - only include if they have any enrollments (completed or past)
         if (activeEnrollments.length > 0) {
           former.push(studentData);
         }
