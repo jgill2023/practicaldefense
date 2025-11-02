@@ -804,6 +804,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         studentInfo,
       });
 
+      // Trigger enrollment confirmation notifications
+      if (finalizedEnrollment.status === 'confirmed' && finalizedEnrollment.studentId) {
+        await NotificationEngine.processEventTriggers('enrollment_confirmed', {
+          userId: finalizedEnrollment.studentId,
+          courseId: finalizedEnrollment.courseId,
+          scheduleId: finalizedEnrollment.scheduleId,
+          enrollmentId: finalizedEnrollment.id
+        });
+      }
+
       // Auto-add student to SMS list for this schedule (fire-and-forget)
       if (finalizedEnrollment.status === 'confirmed' && finalizedEnrollment.studentId) {
         (async () => {
