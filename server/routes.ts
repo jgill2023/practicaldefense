@@ -6,7 +6,7 @@ import { z } from "zod";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { db } from "./db";
-import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules } from "@shared/schema";
+import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users } from "@shared/schema";
 import { eq, and, inArray, desc } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
@@ -458,7 +458,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const student = await storage.getUser(userId);
           const course = await storage.getCourse(enrollment.courseId);
-          
+
           if (student && course) {
             // Send email notification to instructor
             const instructor = await storage.getUser(course.instructorId);
@@ -482,7 +482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 `,
               });
             }
-            
+
             console.log(`Refund requested by ${student.firstName} ${student.lastName} for ${course.title}`);
           }
         } catch (error) {
@@ -1032,6 +1032,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get student profile with enrollment history
+  app.get('/api/students/:studentId/profile', async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send({ message: 'Unauthorized' });
+    }
+
+    const { studentId } = req.params;
+
+    try {
+      // Get student information
+      const student = await db.query.users.findFirst({
+        where: eq(users.id, studentId),
+      });
+
+      if (!student) {
+        return res.status(404).send({ message: 'Student not found' });
+      }
+
+      // Get all enrollments for this student, sorted by most recent
+      const enrollmentHistory = await db.query.enrollments.findMany({
+        where: eq(enrollments.studentId, studentId),
+        with: {
+          course: true,
+          schedule: true,
+        },
+        orderBy: [desc(courseSchedules.startDate)],
+      });
+
+      // Transform enrollment data
+      const formattedHistory = enrollmentHistory.map(enrollment => ({
+        id: enrollment.id,
+        courseTitle: enrollment.course.title,
+        courseAbbreviation: enrollment.course.abbreviation,
+        scheduleDate: enrollment.schedule.startDate.toISOString(),
+        scheduleStartTime: enrollment.schedule.startTime,
+        scheduleEndTime: enrollment.schedule.endTime,
+        status: enrollment.status,
+        paymentStatus: enrollment.paymentStatus,
+        completionDate: enrollment.completionDate?.toISOString(),
+        certificateIssued: enrollment.status === 'completed' && !!enrollment.completionDate,
+      }));
+
+      const profile = {
+        id: student.id,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        email: student.email,
+        phone: student.phone,
+        concealedCarryLicenseExpiration: student.concealedCarryLicenseExpiration?.toISOString(),
+        enrollmentHistory: formattedHistory,
+      };
+
+      res.json(profile);
+    } catch (error: any) {
+      console.error('Error fetching student profile:', error);
+      res.status(500).send({ message: 'Failed to fetch student profile' });
+    }
+  });
+
+  // Get all students with enrollments (for instructor view)
   app.get('/api/students', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -1115,7 +1175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Enrollment not found" });
       }
 
-      // Check ownership: either student owns it or instructor has access
+      // Check ownership: student owns enrollment or instructor has access
       const user = await storage.getUser(userId);
       const hasAccess = enrollment.studentId === userId || 
                        (user?.role === 'instructor' && enrollment.course?.instructorId === userId);
@@ -1395,7 +1455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const values = [
             row.studentId, row.firstName, row.lastName, row.email, row.phone,
             row.dateOfBirth, row.licenseExpiration, row.courseTitle, row.courseAbbreviation,
-            row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime, 
+            row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime,
             row.paymentStatus, row.enrollmentStatus, row.category, row.registrationDate
           ];
           // Sanitize CSV values to prevent formula injection
@@ -1757,7 +1817,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { enrollmentId } = req.params;
       const enrollment = await storage.getEnrollment(enrollmentId);
-      
+
       if (!enrollment) {
         return res.status(404).json({ message: "Enrollment not found" });
       }
@@ -4112,7 +4172,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <a href="${paymentLink}" style="display: inline-block; background-color: #e74c3c; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">Pay Remaining Balance</a>
             </div>
 
-            <p style="color: #7f8c8d; font-size: 14px;">Or copy and paste this link into your browser: <a href="${paymentLink}">${paymentLink}</a></p>
+            <p style="color: #7f8c8d; font-size: 14px;">
+              Or copy and paste this link into your browser: <a href="${paymentLink}">${paymentLink}</a>
+            </p>
 
             <p>If you have any questions or need assistance, please don't hesitate to contact us.</p>
 
@@ -4226,7 +4288,7 @@ jeremy@abqconcealedcarry.com
         return res.status(404).json({ error: "Enrollment not found" });
       }
 
-      // Get course schedule and course to verify instructor ownership
+      // Verify instructor owns this course
       const schedule = await storage.getCourseSchedule(enrollment.scheduleId);
       if (!schedule) {
         return res.status(404).json({ error: "Course schedule not found" });

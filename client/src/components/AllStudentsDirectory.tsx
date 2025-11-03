@@ -10,6 +10,9 @@ import { Search, Users, ArrowUpDown, ArrowUp, ArrowDown, Mail, Phone, Calendar, 
 import { format } from "date-fns";
 import { RescheduleModal } from "@/components/RescheduleModal";
 import { CrossEnrollmentModal } from "@/components/CrossEnrollmentModal";
+import { StudentProfileModal } from "@/components/StudentProfileModal";
+import { EmailNotificationModal } from "@/components/EmailNotificationModal";
+import { SmsNotificationModal } from "@/components/SmsNotificationModal";
 
 interface Student {
   id: string;
@@ -76,6 +79,14 @@ export function AllStudentsDirectory({ isOpen, onClose }: AllStudentsDirectoryPr
   const [selectedStudentForCrossEnrollment, setSelectedStudentForCrossEnrollment] = useState<{
     studentId: string;
     studentName: string;
+  } | null>(null);
+  const [selectedStudentForProfile, setSelectedStudentForProfile] = useState<string | null>(null);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [smsModalOpen, setSmsModalOpen] = useState(false);
+  const [selectedStudentForContact, setSelectedStudentForContact] = useState<{
+    name: string;
+    email: string;
+    phone?: string;
   } | null>(null);
 
   // Query for students data
@@ -248,6 +259,7 @@ export function AllStudentsDirectory({ isOpen, onClose }: AllStudentsDirectoryPr
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -407,7 +419,13 @@ export function AllStudentsDirectory({ isOpen, onClose }: AllStudentsDirectoryPr
                       {sortedStudents.map((student) => (
                         <TableRow key={student.id} data-testid={`row-student-${student.id}`}>
                           <TableCell className="font-medium">
-                            {student.firstName} {student.lastName}
+                            <button
+                              onClick={() => setSelectedStudentForProfile(student.id)}
+                              className="text-left hover:text-primary hover:underline transition-colors cursor-pointer font-medium"
+                              data-testid={`button-student-name-${student.id}`}
+                            >
+                              {student.firstName} {student.lastName}
+                            </button>
                           </TableCell>
                           <TableCell>
                             <a
@@ -538,5 +556,45 @@ export function AllStudentsDirectory({ isOpen, onClose }: AllStudentsDirectoryPr
         )}
       </DialogContent>
     </Dialog>
+
+    {/* Student Profile Modal */}
+    {selectedStudentForProfile && (
+      <StudentProfileModal
+        isOpen={!!selectedStudentForProfile}
+        onClose={() => setSelectedStudentForProfile(null)}
+        studentId={selectedStudentForProfile}
+        onEmailClick={(name, email) => {
+          setSelectedStudentForContact({ name, email });
+          setEmailModalOpen(true);
+        }}
+        onSmsClick={(name, phone) => {
+          setSelectedStudentForContact({ name, email: '', phone });
+          setSmsModalOpen(true);
+        }}
+      />
+    )}
+
+    {/* Email Notification Modal */}
+    <EmailNotificationModal
+      isOpen={emailModalOpen}
+      onClose={() => {
+        setEmailModalOpen(false);
+        setSelectedStudentForContact(null);
+      }}
+      studentName={selectedStudentForContact?.name || ''}
+      emailAddress={selectedStudentForContact?.email || ''}
+    />
+
+    {/* SMS Notification Modal */}
+    <SmsNotificationModal
+      isOpen={smsModalOpen}
+      onClose={() => {
+        setSmsModalOpen(false);
+        setSelectedStudentForContact(null);
+      }}
+      studentName={selectedStudentForContact?.name || ''}
+      phoneNumber={selectedStudentForContact?.phone || ''}
+    />
+    </>
   );
 }
