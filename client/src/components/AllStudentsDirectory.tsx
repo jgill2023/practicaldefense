@@ -259,7 +259,6 @@ export function AllStudentsDirectory({ isOpen, onClose }: AllStudentsDirectoryPr
   };
 
   return (
-    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -595,6 +594,5 @@ export function AllStudentsDirectory({ isOpen, onClose }: AllStudentsDirectoryPr
       studentName={selectedStudentForContact?.name || ''}
       phoneNumber={selectedStudentForContact?.phone || ''}
     />
-    </>
   );
 }
