@@ -118,7 +118,7 @@ export function CommunicationsDashboard() {
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  
+
   // List detail view state
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [activeListTab, setActiveListTab] = useState<"students" | "broadcasts" | "details">("students");
@@ -132,7 +132,7 @@ export function CommunicationsDashboard() {
   const [editListName, setEditListName] = useState("");
   const [editListDescription, setEditListDescription] = useState("");
   const [editListTags, setEditListTags] = useState("");
-  
+
   // SMS Template state
   const [isCreateTemplateDialogOpen, setIsCreateTemplateDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
@@ -141,7 +141,7 @@ export function CommunicationsDashboard() {
   const [templateCategory, setTemplateCategory] = useState("announcement");
   const [templateImageUrl, setTemplateImageUrl] = useState<string | null>(null);
   const quillRef = useRef<ReactQuill>(null);
-  
+
   // Broadcast composer state
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerMode, setComposerMode] = useState<'create' | 'edit'>('create');
@@ -157,7 +157,7 @@ export function CommunicationsDashboard() {
   });
   const [isSendConfirmOpen, setIsSendConfirmOpen] = useState(false);
   const messageContentRef = useRef<HTMLTextAreaElement>(null);
-  
+
   // Real-time notification state
   const [lastTotalCount, setLastTotalCount] = useState<number | null>(null);
   const [lastUnreadCount, setLastUnreadCount] = useState<number | null>(null);
@@ -165,7 +165,7 @@ export function CommunicationsDashboard() {
   const hasMountedRef = useRef(false);
   const lastFiltersRef = useRef<string>('');
   const suppressNotificationsRef = useRef(false);
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -260,14 +260,14 @@ export function CommunicationsDashboard() {
       apiRequest('POST', '/api/sms/send', { to, body }),
     onSuccess: (data, variables) => {
       suppressNotificationsRef.current = true;
-      
+
       // Auto-mark all unread inbound messages as read when replying
       if (selectedConversation) {
         const messages = getConversationMessages(selectedConversation);
         const unreadMessages = messages.filter(m => !m.isRead && m.direction === 'inbound');
         unreadMessages.forEach(msg => markAsReadMutation.mutate(msg.id));
       }
-      
+
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
       toast({ title: "Success", description: "Reply sent successfully" });
       setReplyText("");
@@ -577,7 +577,7 @@ export function CommunicationsDashboard() {
   // Helper functions for broadcast composer
   const insertTagAtCursor = (tag: string) => {
     if (!messageContentRef.current) return;
-    
+
     const textarea = messageContentRef.current;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
@@ -585,9 +585,9 @@ export function CommunicationsDashboard() {
     const before = text.substring(0, start);
     const after = text.substring(end);
     const newText = before + tag + after;
-    
+
     setBroadcastForm(prev => ({ ...prev, messageContent: newText }));
-    
+
     // Set cursor position after inserted tag
     setTimeout(() => {
       textarea.focus();
@@ -609,7 +609,7 @@ export function CommunicationsDashboard() {
       '{{courseName}}': 'Defensive Handgun Course',
       '{{scheduleDate}}': 'Jan 15, 2025'
     };
-    
+
     let preview = content;
     Object.entries(sampleData).forEach(([tag, value]) => {
       preview = preview.replace(new RegExp(tag, 'g'), value);
@@ -653,7 +653,7 @@ export function CommunicationsDashboard() {
     // Check if this is the first load or if filters changed
     const isFirstLoad = !hasMountedRef.current;
     const filtersChanged = lastFiltersRef.current !== currentFiltersKey;
-    
+
     if (isFirstLoad || filtersChanged) {
       // Reset tracking values without notifications
       setLastTotalCount(currentTotal);
@@ -736,10 +736,10 @@ export function CommunicationsDashboard() {
   // Get filtered communications based on active section and tab
   const getFilteredCommunications = (section: string, tab: string) => {
     if (!communicationsData?.data) return [];
-    
+
     // First filter by section (email/sms)
     let sectionFiltered = communicationsData.data.filter(c => c.type === section);
-    
+
     // Then filter by tab
     switch (tab) {
       case "unread":
@@ -806,12 +806,12 @@ export function CommunicationsDashboard() {
     // Convert to array and sort each conversation by date
     const conversations: Conversation[] = Array.from(conversationMap.entries()).map(([phoneNumber, messages]) => {
       const sorted = messages.sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
-      
+
       // Get student name from the most recent message with user data
       const messageWithUser = sorted.find(m => m.user);
       const user = messageWithUser?.user;
       const studentName = user ? `${user.firstName} ${user.lastName}` : phoneNumber;
-      
+
       // Get most recent course info from enrollment data
       let recentCourseInfo = '';
       if (messageWithUser?.enrollment?.course && messageWithUser?.enrollment?.schedule) {
@@ -821,7 +821,7 @@ export function CommunicationsDashboard() {
         const scheduleDate = format(new Date(schedule.startDate), 'MMM d');
         recentCourseInfo = `${scheduleDate} ${abbreviation}`;
       }
-      
+
       return {
         phoneNumber,
         studentName,
@@ -842,7 +842,7 @@ export function CommunicationsDashboard() {
     const smsData = communicationsData?.data.filter(c => c.type === 'sms') || [];
     const normalizePhone = (phone: string) => phone.replace(/\D/g, '');
     const normalizedPhone = normalizePhone(phoneNumber);
-    
+
     return smsData
       .filter(msg => 
         (msg.direction === 'inbound' && normalizePhone(msg.fromAddress) === normalizedPhone) ||
@@ -1009,7 +1009,7 @@ export function CommunicationsDashboard() {
                           Reply
                         </Button>
                       )}
-                      
+
                       {communication.isRead ? (
                         <Button
                           variant="outline"
@@ -1031,7 +1031,7 @@ export function CommunicationsDashboard() {
                           <Eye className="h-4 w-4" />
                         </Button>
                       )}
-                      
+
                       {communication.isFlagged ? (
                         <Button
                           variant="outline"
@@ -1142,7 +1142,7 @@ export function CommunicationsDashboard() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <Select
@@ -1159,7 +1159,7 @@ export function CommunicationsDashboard() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="flex-1">
               <Select
                 value={filters.direction || "all"}
@@ -1190,18 +1190,18 @@ export function CommunicationsDashboard() {
 
       {/* Main sections for SMS Management, Email Templates, and Notifications */}
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="sms-management" data-testid="tab-section-sms-management" className="text-lg">
-            <MessageSquare className="h-5 w-5 mr-2" />
-            SMS Management
+        <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsTrigger value="sms-management" data-testid="tab-section-sms-management" className="text-xs sm:text-sm px-2 py-2">
+            <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+            <span className="truncate">SMS Management</span>
           </TabsTrigger>
-          <TabsTrigger value="email-templates" data-testid="tab-section-email-templates" className="text-lg">
-            <Mail className="h-5 w-5 mr-2" />
-            Email Templates
+          <TabsTrigger value="email-templates" data-testid="tab-section-email-templates" className="text-xs sm:text-sm px-2 py-2">
+            <Mail className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+            <span className="truncate">Email Templates</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" data-testid="tab-section-notifications" className="text-lg">
-            <Bell className="h-5 w-5 mr-2" />
-            Notifications
+          <TabsTrigger value="notifications" data-testid="tab-section-notifications" className="text-xs sm:text-sm px-2 py-2">
+            <Bell className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+            <span className="truncate">Notifications</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1229,7 +1229,7 @@ export function CommunicationsDashboard() {
               <p className="text-muted-foreground mb-4">
                 Manage email templates for automated course notifications and reminders. Each template can have a custom reply-to email address.
               </p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Card className="border-dashed">
                   <CardContent className="p-6 text-center">
@@ -1270,7 +1270,7 @@ export function CommunicationsDashboard() {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="border-dashed">
                   <CardContent className="p-6 text-center">
                     <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -1375,7 +1375,7 @@ export function CommunicationsDashboard() {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="text-center py-8 text-muted-foreground">
                       <User className="h-12 w-12 mx-auto mb-4" />
                       <p>Contact management will display student and instructor phone numbers for SMS notifications.</p>
@@ -1679,7 +1679,7 @@ export function CommunicationsDashboard() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium mb-2">Message</label>
                     <textarea 
@@ -1692,7 +1692,7 @@ export function CommunicationsDashboard() {
                       0/160 characters
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline" data-testid="button-save-draft">Save Draft</Button>
                     <Button data-testid="button-send-sms">Send Message</Button>
@@ -1893,7 +1893,7 @@ export function CommunicationsDashboard() {
                                 )}
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center space-x-2">
                               {listDetails.listType === 'custom' && (
                                 <>
@@ -1959,7 +1959,7 @@ export function CommunicationsDashboard() {
                                 </div>
                               </CardContent>
                             </Card>
-                            
+
                             <Card>
                               <CardContent className="p-4">
                                 <div className="flex items-center space-x-3">
@@ -1975,7 +1975,7 @@ export function CommunicationsDashboard() {
                                 </div>
                               </CardContent>
                             </Card>
-                            
+
                             <Card>
                               <CardContent className="p-4">
                                 <div className="flex items-center space-x-3">
@@ -2013,7 +2013,7 @@ export function CommunicationsDashboard() {
                               </TabsTrigger>
                             </TabsList>
                           </CardHeader>
-                          
+
                           <CardContent>
                             {/* Students Tab */}
                             <TabsContent value="students" className="mt-0 space-y-4" data-testid="content-students">
@@ -2075,7 +2075,7 @@ export function CommunicationsDashboard() {
                                           const lastName = student.user?.lastName?.toLowerCase() || '';
                                           const fullName = `${firstName} ${lastName}`.trim();
                                           const email = student.user?.email?.toLowerCase() || '';
-                                          
+
                                           return fullName.includes(searchLower) || email.includes(searchLower);
                                         })
                                         .map((student: any, idx: number) => (
@@ -2190,7 +2190,7 @@ export function CommunicationsDashboard() {
                                             {broadcast.status}
                                           </Badge>
                                         </div>
-                                        
+
                                         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                           <div className="flex items-center space-x-1">
                                             <Clock className="h-3 w-3" />
@@ -2374,7 +2374,7 @@ export function CommunicationsDashboard() {
               <span>Message Details & Reply</span>
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedMessage && (
             <div className="space-y-4">
               {/* Message Details */}
@@ -2401,14 +2401,14 @@ export function CommunicationsDashboard() {
                       </Badge>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <div className="text-sm text-muted-foreground">Received:</div>
                     <div className="text-sm" data-testid="text-message-date">
                       {format(new Date(selectedMessage.sentAt), "MMMM d, yyyy 'at' h:mm a")}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <div className="text-sm text-muted-foreground">Message:</div>
                     <div 
@@ -2491,7 +2491,7 @@ export function CommunicationsDashboard() {
               <span>Create New SMS List</span>
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">
@@ -2588,7 +2588,7 @@ export function CommunicationsDashboard() {
               <span>Add Students to List</span>
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             {isLoadingAvailableStudents ? (
               <div className="space-y-2">
@@ -2711,7 +2711,7 @@ export function CommunicationsDashboard() {
               <span>Remove Student</span>
             </DialogTitle>
           </DialogHeader>
-          
+
           <p className="text-sm text-muted-foreground">
             Are you sure you want to remove this student from the list? This action cannot be undone.
           </p>
@@ -2752,7 +2752,7 @@ export function CommunicationsDashboard() {
               <span>Delete List</span>
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
               Are you sure you want to delete this list? This action cannot be undone.
@@ -2808,7 +2808,7 @@ export function CommunicationsDashboard() {
               <span>Edit List</span>
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">
@@ -3023,7 +3023,7 @@ export function CommunicationsDashboard() {
                 className="resize-none"
                 data-testid="textarea-broadcast-message"
               />
-              
+
               {/* Character Counter */}
               <div className="flex items-center justify-between mt-2">
                 <div className={`text-sm font-medium ${getCharacterCount(broadcastForm.messageContent).color}`}>
@@ -3037,7 +3037,7 @@ export function CommunicationsDashboard() {
                   </Badge>
                 )}
               </div>
-              
+
               {getCharacterCount(broadcastForm.messageContent).count > 320 && (
                 <p className="text-xs text-red-600 mt-1">
                   ⚠️ Message is quite long. Consider shortening it for better deliverability.
@@ -3053,7 +3053,7 @@ export function CommunicationsDashboard() {
               <p className="text-xs text-muted-foreground mb-3">
                 Attach images or documents to share with recipients
               </p>
-              
+
               <div className="space-y-3">
                 {/* Upload Button */}
                 {broadcastForm.attachmentUrls.length < 5 && (
@@ -3065,11 +3065,11 @@ export function CommunicationsDashboard() {
                         method: 'POST',
                         credentials: 'include',
                       });
-                      
+
                       if (!response.ok) {
                         throw new Error('Failed to get upload URL');
                       }
-                      
+
                       const data = await response.json();
                       return {
                         method: 'PUT' as const,
@@ -3094,14 +3094,14 @@ export function CommunicationsDashboard() {
                     Add Attachment
                   </ObjectUploader>
                 )}
-                
+
                 {/* Attached Files List */}
                 {broadcastForm.attachmentUrls.length > 0 && (
                   <div className="space-y-2" data-testid="list-attachments">
                     {broadcastForm.attachmentUrls.map((url, index) => {
                       const filename = url.split('/').pop()?.split('?')[0] || 'file';
                       const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
-                      
+
                       return (
                         <Card key={index} className="p-3">
                           <div className="flex items-center space-x-3">
@@ -3148,7 +3148,7 @@ export function CommunicationsDashboard() {
                     })}
                   </div>
                 )}
-                
+
                 {broadcastForm.attachmentUrls.length >= 5 && (
                   <p className="text-xs text-muted-foreground">
                     Maximum of 5 attachments reached
@@ -3176,7 +3176,7 @@ export function CommunicationsDashboard() {
                   Schedule for later
                 </label>
               </div>
-              
+
               {broadcastForm.isScheduled && (
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -3248,7 +3248,7 @@ export function CommunicationsDashboard() {
                     });
                     return;
                   }
-                  
+
                   if (selectedListId) {
                     try {
                       await createBroadcastMutation.mutateAsync({
@@ -3263,7 +3263,7 @@ export function CommunicationsDashboard() {
                           status: 'draft'
                         }
                       });
-                      
+
                       // Success - manually handle
                       queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
                       toast({ title: "Success", description: "Draft saved successfully" });
@@ -3390,17 +3390,17 @@ export function CommunicationsDashboard() {
                   // Then send it (or schedule it)
                   if (result?.id) {
                     await sendBroadcastMutation.mutateAsync(result.id);
-                    
+
                     // Success - manually close dialogs and reset form
                     await queryClient.invalidateQueries({ queryKey: ['/api/sms-lists'] });
-                    
+
                     toast({ 
                       title: "Success", 
                       description: broadcastForm.isScheduled && broadcastForm.scheduledFor 
                         ? "Broadcast scheduled successfully" 
                         : "Broadcast sent successfully" 
                     });
-                    
+
                     setIsSendConfirmOpen(false);
                     setIsComposerOpen(false);
                     setBroadcastForm({ subject: "", messageContent: "", messagePlain: "", dynamicTags: [], attachmentUrls: [], scheduledFor: "", isScheduled: false });
@@ -3450,7 +3450,7 @@ export function CommunicationsDashboard() {
           <DialogHeader>
             <DialogTitle>{editingTemplate ? 'Edit SMS Template' : 'Create SMS Template'}</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -3463,7 +3463,7 @@ export function CommunicationsDashboard() {
                   data-testid="input-template-name"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="template-category">Category</Label>
                 <Select value={templateCategory} onValueChange={setTemplateCategory}>
@@ -3626,7 +3626,7 @@ export function CommunicationsDashboard() {
                   });
                   return;
                 }
-                
+
                 if (editingTemplate) {
                   updateTemplateMutation.mutate({
                     id: editingTemplate.id,
