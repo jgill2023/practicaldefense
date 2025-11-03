@@ -104,19 +104,9 @@ export function StudentProfileModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <User className="h-5 w-5 text-primary" />
-              <DialogTitle className="text-xl">Student Profile</DialogTitle>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              data-testid="button-close-profile"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center gap-3">
+            <User className="h-5 w-5 text-primary" />
+            <DialogTitle className="text-xl">Student Profile</DialogTitle>
           </div>
         </DialogHeader>
 

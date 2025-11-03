@@ -1051,7 +1051,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get all enrollments for this student, sorted by most recent
-      const enrollmentHistory = await db.query.enrollments.findMany({
+      const allEnrollments = await db.query.enrollments.findMany({
         where: eq(enrollments.studentId, studentId),
         with: {
           course: true,
@@ -1060,19 +1060,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orderBy: [desc(courseSchedules.startDate)],
       });
 
-      // Transform enrollment data
-      const formattedHistory = enrollmentHistory.map(enrollment => ({
-        id: enrollment.id,
-        courseTitle: enrollment.course.title,
-        courseAbbreviation: enrollment.course.abbreviation,
-        scheduleDate: enrollment.schedule.startDate.toISOString(),
-        scheduleStartTime: enrollment.schedule.startTime,
-        scheduleEndTime: enrollment.schedule.endTime,
-        status: enrollment.status,
-        paymentStatus: enrollment.paymentStatus,
-        completionDate: enrollment.completionDate?.toISOString(),
-        certificateIssued: enrollment.status === 'completed' && !!enrollment.completionDate,
-      }));
+      // Build enrollment history from all enrollments
+      const enrollmentHistory = allEnrollments.map(enrollment => {
+        const schedule = schedules.find(s => s.id === enrollment.scheduleId);
+        return {
+          id: enrollment.id,
+          courseTitle: enrollment.course.title,
+          courseAbbreviation: enrollment.course.abbreviation,
+          scheduleDate: schedule?.startDate?.toISOString() || 'N/A', // Use optional chaining for safety
+          scheduleStartTime: schedule?.startTime || 'N/A',
+          scheduleEndTime: schedule?.endTime || 'N/A',
+          status: enrollment.status,
+          paymentStatus: enrollment.paymentStatus,
+          completionDate: enrollment.completionDate?.toISOString(),
+          certificateIssued: enrollment.status === 'completed' && !!enrollment.completionDate,
+        };
+      });
 
       const profile = {
         id: student.id,
@@ -1081,7 +1084,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: student.email,
         phone: student.phone,
         concealedCarryLicenseExpiration: student.concealedCarryLicenseExpiration?.toISOString(),
-        enrollmentHistory: formattedHistory,
+        enrollmentHistory: enrollmentHistory,
       };
 
       res.json(profile);
@@ -1166,7 +1169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Waiver instances for enrollment
   app.get('/api/enrollments/:enrollmentId/waiver-instances', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.claims.sub;
       const enrollmentId = req.params.enrollmentId;
 
       // Verify enrollment ownership
@@ -1195,7 +1198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Payment balance tracking
   app.get('/api/enrollments/:enrollmentId/payment-balance', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.claims.sub;
       const enrollmentId = req.params.enrollmentId;
 
       // Verify enrollment ownership
@@ -1224,7 +1227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bulk payment balance tracking for student dashboard
   app.get('/api/student/payment-balances', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.claims.sub;
       const enrollmentIds = req.query.enrollmentIds as string;
 
       if (!enrollmentIds) {
@@ -1262,7 +1265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Form completion status tracking
   app.get("/api/enrollments/:enrollmentId/form-completion", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.claims.sub;
       const enrollmentId = req.params.enrollmentId;
 
       // Verify enrollment ownership
@@ -1292,7 +1295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/enrollment-form-submissions", isAuthenticated, async (req: any, res) => {
     try {
       const { enrollmentId, formResponses } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.claims.sub;
 
       if (!enrollmentId || !formResponses) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -1388,7 +1391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course schedules for export selection
   app.get('/api/instructor/course-schedules', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.claims.sub;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
@@ -1428,7 +1431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course roster export routes
   app.get('/api/instructor/roster/export', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.claims.sub;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
@@ -1525,7 +1528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Sheets export route
   app.post('/api/instructor/roster/google-sheets', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.claims.sub;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
@@ -1660,7 +1663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course roster view route (for dialog display)
   app.get('/api/instructor/roster', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.claims.sub;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
@@ -1773,7 +1776,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Instructor dashboard statistics
   app.get('/api/instructor/dashboard-stats', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.claims.sub;
       const stats = await storage.getInstructorDashboardStats(userId);
       res.json(stats);
     } catch (error) {
@@ -1785,7 +1788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get refund requests for instructor
   app.get('/api/instructor/refund-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.claims.sub;
       const user = await storage.getUser(userId);
 
       if (!user || user.role !== 'instructor') {
@@ -1808,7 +1811,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mark refund as processed
   app.post('/api/instructor/refund-requests/:enrollmentId/process', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.claims.sub;
       const user = await storage.getUser(userId);
 
       if (!user || user.role !== 'instructor') {
@@ -4273,7 +4276,7 @@ jeremy@abqconcealedcarry.com
   // Get detailed payment information for enrollment
   app.get("/api/instructor/payment-details/:enrollmentId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.claims.sub;
       const { enrollmentId } = req.params;
 
       // Only allow instructors to view payment details
@@ -4324,7 +4327,7 @@ jeremy@abqconcealedcarry.com
   // Get available schedules for rescheduling
   app.get("/api/instructor/available-schedules", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.claims.sub;
 
       // Only allow instructors to view available schedules
       const user = await storage.getUser(userId);
@@ -4347,7 +4350,7 @@ jeremy@abqconcealedcarry.com
   // Reschedule student to new schedule
   app.patch("/api/instructor/enrollments/:enrollmentId/reschedule", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.claims.sub;
       const { enrollmentId } = req.params;
       const { newScheduleId, notes } = req.body;
 
@@ -4457,7 +4460,7 @@ jeremy@abqconcealedcarry.com
   // Place student on hold (remove from schedule)
   app.patch("/api/instructor/enrollments/:enrollmentId/hold", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.claims.sub;
       const { enrollmentId } = req.params;
       const { notes } = req.body;
 
@@ -4594,7 +4597,7 @@ jeremy@abqconcealedcarry.com
   // Get communications with filtering and search
   app.get("/api/communications", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.claims.sub;
 
       // Only allow instructors to access communications dashboard
       const user = await storage.getUser(userId);
@@ -4654,7 +4657,7 @@ jeremy@abqconcealedcarry.com
   // Get single communication by ID
   app.get("/api/communications/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.claims.sub;
       const { id } = req.params;
 
       // Only allow instructors to access communications
@@ -4678,7 +4681,7 @@ jeremy@abqconcealedcarry.com
   // Mark communication as read
   app.patch("/api/communications/:id/read", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.claims.sub;
       const { id } = req.params;
 
       // Only allow instructors to manage communications
@@ -4703,7 +4706,7 @@ jeremy@abqconcealedcarry.com
   // Mark communication as unread
   app.patch("/api/communications/:id/unread", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.claims.sub;
       const { id } = req.params;
 
       // Only allow instructors to manage communications
@@ -4728,7 +4731,7 @@ jeremy@abqconcealedcarry.com
   // Flag communication for follow-up
   app.patch("/api/communications/:id/flag", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.claims.sub;
       const { id } = req.params;
 
       // Only allow instructors to manage communications
@@ -4763,7 +4766,7 @@ jeremy@abqconcealedcarry.com
   // Unflag communication
   app.patch("/api/communications/:id/unflag", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.claims.sub;
       const { id } = req.params;
 
       // Only allow instructors to manage communications
