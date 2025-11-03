@@ -1050,32 +1050,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).send({ message: 'Student not found' });
       }
 
-      // Get all enrollments for this student, sorted by most recent
+      // Get all enrollments for this student with related data
       const allEnrollments = await db.query.enrollments.findMany({
         where: eq(enrollments.studentId, studentId),
         with: {
           course: true,
           schedule: true,
         },
-        orderBy: [desc(courseSchedules.startDate)],
       });
 
-      // Build enrollment history from all enrollments
-      const enrollmentHistory = allEnrollments.map(enrollment => {
-        const schedule = schedules.find(s => s.id === enrollment.scheduleId);
-        return {
+      // Build enrollment history from all enrollments, sorted by schedule date
+      const enrollmentHistory = allEnrollments
+        .map(enrollment => ({
           id: enrollment.id,
           courseTitle: enrollment.course.title,
           courseAbbreviation: enrollment.course.abbreviation,
-          scheduleDate: schedule?.startDate?.toISOString() || 'N/A', // Use optional chaining for safety
-          scheduleStartTime: schedule?.startTime || 'N/A',
-          scheduleEndTime: schedule?.endTime || 'N/A',
+          scheduleDate: enrollment.schedule?.startDate?.toISOString() || 'N/A',
+          scheduleStartTime: enrollment.schedule?.startTime || 'N/A',
+          scheduleEndTime: enrollment.schedule?.endTime || 'N/A',
           status: enrollment.status,
           paymentStatus: enrollment.paymentStatus,
           completionDate: enrollment.completionDate?.toISOString(),
           certificateIssued: enrollment.status === 'completed' && !!enrollment.completionDate,
-        };
-      });
+        }))
+        .sort((a, b) => {
+          // Sort by schedule date, most recent first
+          const dateA = a.scheduleDate !== 'N/A' ? new Date(a.scheduleDate).getTime() : 0;
+          const dateB = b.scheduleDate !== 'N/A' ? new Date(b.scheduleDate).getTime() : 0;
+          return dateB - dateA;
+        });
 
       const profile = {
         id: student.id,
