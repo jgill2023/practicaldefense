@@ -4091,7 +4091,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send payment reminder for specific enrollment
   app.post("/api/instructor/send-payment-reminder", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
       if (!user || user.role !== 'instructor') {
@@ -4600,7 +4600,12 @@ jeremy@abqconcealedcarry.com
   // Get communications with filtering and search
   app.get("/api/communications", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      // Safely access user ID with proper null checks
+      const userId = req.user?.claims?.sub || req.claims?.sub;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
 
       // Only allow instructors to access communications dashboard
       const user = await storage.getUser(userId);
@@ -4647,13 +4652,10 @@ jeremy@abqconcealedcarry.com
       });
     } catch (error: any) {
       console.error("Error fetching communications:", error);
-
-      // Handle validation errors as 400 Bad Request
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ error: "Validation failed", details: error.errors });
-      }
-
-      res.status(500).json({ error: "Failed to fetch communications" });
+      res.status(500).json({ 
+        message: "Failed to fetch communications",
+        error: error.message 
+      });
     }
   });
 
