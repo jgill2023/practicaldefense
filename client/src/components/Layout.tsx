@@ -162,11 +162,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
               {/* Desktop auth buttons and cart */}
               <div className="hidden md:flex items-center space-x-4">
-                <ShoppingCartComponent trigger={
-                  <Button variant="ghost" size="sm" className="relative text-primary-foreground hover:text-primary-foreground/80 hover:bg-primary/20" data-testid="cart-trigger">
-                    <ShoppingCart className="w-5 h-5" />
-                  </Button>
-                } />
+                <ShoppingCartComponent />
                 {!isAuthenticated && (
                   <Button 
                     className="bg-accent text-accent-foreground hover:bg-accent/90"
