@@ -427,6 +427,8 @@ export interface IStorage {
   getProduct(id: string): Promise<ProductWithDetails | undefined>;
   getProducts(): Promise<ProductWithDetails[]>;
   getProductsByCategory(categoryId: string): Promise<ProductWithDetails[]>;
+  syncPrintfulProducts(): Promise<{ productsProcessed: number; variantsProcessed: number; errors: string[] }>;
+
 
   // Product Variants
   createProductVariant(variant: InsertProductVariant): Promise<ProductVariant>;
@@ -1153,7 +1155,7 @@ export class DatabaseStorage implements IStorage {
     const now = new Date();
     // Get start of today to properly compare dates
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+
     const current: Array<any> = [];
     const former: Array<any> = [];
     const held: Array<any> = [];
@@ -1167,21 +1169,21 @@ export class DatabaseStorage implements IStorage {
       // Check if student has any confirmed or pending current (future or today) enrollments
       const hasCurrentEnrollment = activeEnrollments.some(e => {
         if (!e.scheduleDate) return false;
-        
+
         // Parse the schedule date string properly
         const scheduleDateStr = typeof e.scheduleDate === 'string' ? e.scheduleDate : e.scheduleDate.toISOString();
         const datePart = scheduleDateStr.split('T')[0]; // Get YYYY-MM-DD part
         const [year, month, day] = datePart.split('-').map(Number);
-        
+
         // Create date at start of day in local timezone
         const scheduleStartOfDay = new Date(year, month - 1, day); // month is 0-indexed
-        
+
         // Student is current if they have confirmed or pending enrollments for today or future
         const isFutureOrToday = scheduleStartOfDay >= startOfToday;
         const isActiveStatus = e.status === 'confirmed' || e.status === 'pending';
-        
+
         console.log(`Checking enrollment ${e.id}: scheduleDate=${datePart}, startOfToday=${startOfToday.toISOString().split('T')[0]}, isFutureOrToday=${isFutureOrToday}, status=${e.status}, isActiveStatus=${isActiveStatus}`);
-        
+
         return isFutureOrToday && isActiveStatus;
       });
 
@@ -1189,31 +1191,31 @@ export class DatabaseStorage implements IStorage {
       const isOnHold = activeEnrollments.some(e => {
         if (e.status !== 'hold') return false;
         if (!e.scheduleDate) return false;
-        
+
         // Parse the schedule date
         const scheduleDateStr = typeof e.scheduleDate === 'string' ? e.scheduleDate : e.scheduleDate.toISOString();
         const datePart = scheduleDateStr.split('T')[0];
         const [year, month, day] = datePart.split('-').map(Number);
         const scheduleStartOfDay = new Date(year, month - 1, day);
-        
+
         // Only consider as on hold if the hold enrollment is for today or future
         return scheduleStartOfDay >= startOfToday;
       });
 
       // Filter enrollments based on student category
       let filteredEnrollments = activeEnrollments;
-      
+
       if (isOnHold) {
         // For held students, show only current/future hold enrollments
         filteredEnrollments = activeEnrollments.filter(e => {
           if (e.status !== 'hold') return false;
           if (!e.scheduleDate) return false;
-          
+
           const scheduleDateStr = typeof e.scheduleDate === 'string' ? e.scheduleDate : e.scheduleDate.toISOString();
           const datePart = scheduleDateStr.split('T')[0];
           const [year, month, day] = datePart.split('-').map(Number);
           const scheduleStartOfDay = new Date(year, month - 1, day);
-          
+
           return scheduleStartOfDay >= startOfToday;
         });
       } else if (hasCurrentEnrollment) {
@@ -1221,24 +1223,24 @@ export class DatabaseStorage implements IStorage {
         filteredEnrollments = activeEnrollments.filter(e => {
           if (e.status !== 'confirmed' && e.status !== 'pending') return false;
           if (!e.scheduleDate) return false;
-          
+
           const scheduleDateStr = typeof e.scheduleDate === 'string' ? e.scheduleDate : e.scheduleDate.toISOString();
           const datePart = scheduleDateStr.split('T')[0];
           const [year, month, day] = datePart.split('-').map(Number);
           const scheduleStartOfDay = new Date(year, month - 1, day);
-          
+
           return scheduleStartOfDay >= startOfToday;
         });
       } else {
         // For former students, show only past enrollments (completed or past confirmed)
         filteredEnrollments = activeEnrollments.filter(e => {
           if (!e.scheduleDate) return false;
-          
+
           const scheduleDateStr = typeof e.scheduleDate === 'string' ? e.scheduleDate : e.scheduleDate.toISOString();
           const datePart = scheduleDateStr.split('T')[0];
           const [year, month, day] = datePart.split('-').map(Number);
           const scheduleStartOfDay = new Date(year, month - 1, day);
-          
+
           return scheduleStartOfDay < startOfToday;
         });
       }
@@ -1315,6 +1317,8 @@ export class DatabaseStorage implements IStorage {
         scheduleDate: schedule.startDate,
         scheduleStartTime: schedule.startTime,
         scheduleEndTime: schedule.endTime,
+        paymentStatus: enrollment.paymentStatus,
+        status: enrollment.status,
         category: course.category
       });
     });
@@ -4105,6 +4109,89 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  async syncPrintfulProducts(): Promise<{ productsProcessed: number; variantsProcessed: number; errors: string[] }> {
+    const { printfulService } = await import('./printfulService');
+
+    try {
+      // Fetch products from Printful
+      const printfulProducts = await printfulService.getProducts();
+
+      let productsProcessed = 0;
+      let variantsProcessed = 0;
+      const errors: string[] = [];
+
+      // Get or create Printful category
+      let printfulCategory = await db.query.productCategories.findFirst({
+        where: eq(productCategories.slug, 'printful'),
+      });
+
+      if (!printfulCategory) {
+        const [newCategory] = await db.insert(productCategories).values({
+          name: 'Printful Products',
+          slug: 'printful',
+          description: 'Products synced from Printful',
+        }).returning();
+        printfulCategory = newCategory;
+      }
+
+      for (const printfulProduct of printfulProducts) {
+        try {
+          // Check if product already exists
+          const existingProduct = await db.query.products.findFirst({
+            where: eq(products.printfulProductId, printfulProduct.id),
+          });
+
+          if (!existingProduct) {
+            // Create new product
+            const [newProduct] = await db.insert(products).values({
+              name: printfulProduct.name,
+              description: printfulProduct.name,
+              sku: `PRINTFUL-${printfulProduct.id}`,
+              price: '0', // Will be set from variants
+              categoryId: printfulCategory.id,
+              productType: 'physical',
+              fulfillmentType: 'printful',
+              status: 'active',
+              printfulProductId: printfulProduct.id,
+              primaryImageUrl: printfulProduct.thumbnail_url,
+            }).returning();
+
+            // Fetch and sync variants
+            const printfulVariants = await printfulService.getSyncVariants(printfulProduct.id);
+
+            for (const variant of printfulVariants) {
+              await db.insert(productVariants).values({
+                productId: newProduct.id,
+                name: variant.name,
+                sku: variant.sku || `PRINTFUL-VAR-${variant.id}`,
+                price: variant.retail_price || '0',
+                printfulVariantId: variant.id,
+                imageUrl: variant.files?.[0]?.preview_url || variant.product?.image,
+                attributes: variant.options,
+              });
+              variantsProcessed++;
+            }
+
+            productsProcessed++;
+          }
+        } catch (error) {
+          console.error(`Error syncing product ${printfulProduct.id}:`, error);
+          errors.push(`Product ${printfulProduct.id}: ${error.message}`);
+        }
+      }
+
+      return {
+        productsProcessed,
+        variantsProcessed,
+        errors,
+      };
+    } catch (error) {
+      console.error('Printful sync error:', error);
+      throw new Error(`Failed to sync Printful products: ${error.message}`);
+    }
+  }
+
+
   // Product Variants
   async createProductVariant(variant: InsertProductVariant): Promise<ProductVariant> {
     const [created] = await db.insert(productVariants).values(variant).returning();
@@ -4311,6 +4398,7 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async getCourseNotifications(courseType?: string): Promise<CourseNotificationWithUser[]>;
   async getCourseNotifications(courseType?: string): Promise<CourseNotificationWithUser[]> {
     const whereConditions = courseType 
       ? eq(courseNotifications.courseType, courseType)
