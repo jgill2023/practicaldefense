@@ -2653,7 +2653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               country: 'US',
               state: 'NM',
               city: 'Albuquerque', 
-              postal_code: '87101', // Albuquerque zip code
+              postal_code: '87120', // Albuquerque zip code
             },
             address_source: 'billing',
           },
