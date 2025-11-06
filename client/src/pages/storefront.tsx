@@ -112,7 +112,7 @@ export default function Storefront() {
       {/* Header with Cart */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold" data-testid="page-title">ProTrain Store</h1>
+          <h1 className="text-3xl font-bold" data-testid="page-title">Practical Defense Training Store</h1>
           <p className="text-muted-foreground">Professional training gear and merchandise</p>
         </div>
         <ShoppingCartComponent />
