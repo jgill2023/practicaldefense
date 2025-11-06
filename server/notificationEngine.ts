@@ -52,6 +52,11 @@ export interface NotificationVariables {
     remainingBalance: number;
     registrationDate: string;
   };
+  refund?: {
+    amount: string;
+    processedAt: string;
+    reason?: string;
+  };
   questionnaire?: Record<string, any>;
   system?: {
     companyName: string;
@@ -115,6 +120,11 @@ export class NotificationEngine {
     amountPaid: 'enrollment.amountPaid',
     remainingBalance: 'enrollment.remainingBalance',
     registrationDate: 'enrollment.registrationDate',
+    
+    // Refund aliases
+    refundAmount: 'refund.amount',
+    refundProcessedAt: 'refund.processedAt',
+    refundReason: 'refund.reason',
     
     // System aliases
     companyName: 'system.companyName',
@@ -234,6 +244,15 @@ export class NotificationEngine {
         remainingBalance: paymentBalance.remainingBalance,
         registrationDate: this.safeFormatDate(enrollment.createdAt, 'locale') || '',
       };
+      
+      // Add refund information if the enrollment has been refunded
+      if (enrollment.refundProcessed && enrollment.refundProcessedAt) {
+        variables.refund = {
+          amount: enrollment.refundAmount || 'N/A',
+          processedAt: this.safeFormatDate(enrollment.refundProcessedAt, 'locale') || '',
+          reason: enrollment.refundReason || '',
+        };
+      }
     }
 
     // Process questionnaire responses into key-value pairs

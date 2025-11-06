@@ -170,7 +170,7 @@ export const enrollments = pgTable("enrollments", {
   courseId: uuid("course_id").notNull().references(() => courses.id),
   scheduleId: uuid("schedule_id").notNull().references(() => courseSchedules.id),
   status: varchar("status").notNull().default('initiated'), // 'initiated', 'pending', 'confirmed', 'completed', 'cancelled', 'hold'
-  paymentStatus: varchar("payment_status").notNull().default('pending'), // 'pending', 'paid', 'failed'
+  paymentStatus: varchar("payment_status").notNull().default('pending'), // 'pending', 'paid', 'failed', 'refunded'
   paymentOption: varchar("payment_option").notNull().default('full'), // 'full' or 'deposit'
   paymentIntentId: varchar("payment_intent_id"),
   stripePaymentIntentId: varchar("stripe_payment_intent_id"), // For tracking Stripe PI
@@ -186,6 +186,8 @@ export const enrollments = pgTable("enrollments", {
   refundRequestedAt: timestamp("refund_requested_at"),
   refundProcessed: boolean("refund_processed").default(false),
   refundProcessedAt: timestamp("refund_processed_at"),
+  refundAmount: varchar("refund_amount"), // Amount refunded (formatted string, e.g., "$165.00")
+  refundReason: text("refund_reason"), // Reason for refund provided by instructor
   // Moodle integration
   moodleEnrolled: boolean("moodle_enrolled").default(false),
   moodleEnrollmentDate: timestamp("moodle_enrollment_date"),

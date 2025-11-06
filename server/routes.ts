@@ -1821,10 +1821,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mark refund as processed
+  // Process refund through Stripe and update enrollment
   app.post('/api/instructor/refund-requests/:enrollmentId/process', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
       if (!user || user.role !== 'instructor') {
@@ -1832,6 +1832,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { enrollmentId } = req.params;
+      
+      // Validate request body
+      const refundRequestSchema = z.object({
+        refundAmount: z.number().positive().optional(),
+        refundReason: z.string().optional(),
+      });
+      
+      const { refundAmount, refundReason } = refundRequestSchema.parse(req.body);
+
       const enrollment = await storage.getEnrollment(enrollmentId);
 
       if (!enrollment) {
@@ -1844,12 +1853,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
+      // Check if refund was requested
+      if (!enrollment.refundRequested) {
+        return res.status(400).json({ message: "No refund was requested for this enrollment" });
+      }
+
+      // Check if refund was already processed
+      if (enrollment.refundProcessed) {
+        return res.status(400).json({ message: "Refund has already been processed" });
+      }
+
+      // Process Stripe refund if payment was made
+      let stripeRefund = null;
+      if (enrollment.stripePaymentIntentId && enrollment.paymentStatus === 'paid') {
+        try {
+          // Calculate refund amount in cents
+          const schedule = await storage.getCourseSchedule(enrollment.scheduleId);
+          const coursePrice = schedule?.price || course.price || 0;
+          
+          // If refund amount is provided, use it; otherwise refund full amount
+          const amountToRefund = refundAmount ? Math.round(refundAmount * 100) : Math.round(coursePrice * 100);
+
+          // Create refund in Stripe
+          stripeRefund = await stripe.refunds.create({
+            payment_intent: enrollment.stripePaymentIntentId,
+            amount: amountToRefund,
+            reason: 'requested_by_customer', // Stripe only allows: 'duplicate' | 'fraudulent' | 'requested_by_customer'
+            metadata: {
+              enrollmentId: enrollment.id,
+              studentId: enrollment.studentId || '',
+              courseId: enrollment.courseId,
+              scheduleId: enrollment.scheduleId,
+              refundReason: refundReason || 'Student requested refund',
+            }
+          });
+
+          console.log('Stripe refund created:', stripeRefund.id);
+        } catch (stripeError: any) {
+          console.error('Stripe refund error:', stripeError);
+          return res.status(500).json({ 
+            message: "Failed to process Stripe refund", 
+            error: stripeError.message 
+          });
+        }
+      }
+
+      // Update enrollment with refund information
       await storage.updateEnrollment(enrollmentId, {
         refundProcessed: true,
         refundProcessedAt: new Date(),
+        paymentStatus: 'refunded',
+        refundAmount: stripeRefund ? `$${(stripeRefund.amount / 100).toFixed(2)}` : null,
+        refundReason: refundReason || 'Student requested refund',
+        cancellationReason: `${enrollment.cancellationReason || 'Cancelled'} - Refund processed${refundReason ? ': ' + refundReason : ''}`,
       });
 
-      res.json({ success: true, message: "Refund marked as processed" });
+      // Send notification to student about processed refund
+      try {
+        if (enrollment.studentId) {
+          await NotificationEngine.processEventTriggers('refund_processed', {
+            userId: enrollment.studentId,
+            courseId: enrollment.courseId,
+            scheduleId: enrollment.scheduleId,
+            enrollmentId: enrollment.id
+          });
+        }
+      } catch (notificationError) {
+        console.error('Error sending refund notification:', notificationError);
+        // Don't fail the request if notification fails
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Refund processed successfully",
+        stripeRefundId: stripeRefund?.id,
+        amountRefunded: stripeRefund ? stripeRefund.amount / 100 : null,
+      });
     } catch (error) {
       console.error("Error processing refund:", error);
       res.status(500).json({ message: "Failed to process refund" });
