@@ -137,7 +137,7 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
 
         <div className="flex flex-col h-full mt-6">
           {/* Cart Items */}
-          <div className="flex-1 overflow-y-auto pb-32">
+          <div className="flex-1 overflow-y-auto pb-4">
             {isLoading ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -260,7 +260,7 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
 
           {/* Cart Summary & Actions */}
           {cartItems.length > 0 && (
-            <div className="border-t pt-4 space-y-4">
+            <div className="border-t pt-4 pb-6 space-y-4">
               {/* Price Summary */}
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
