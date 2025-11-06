@@ -1779,7 +1779,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Instructor dashboard statistics
   app.get('/api/instructor/dashboard-stats', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.claims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
       const stats = await storage.getInstructorDashboardStats(userId);
       res.json(stats);
     } catch (error) {
@@ -1791,7 +1796,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get refund requests for instructor
   app.get('/api/instructor/refund-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.claims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
       const user = await storage.getUser(userId);
 
       if (!user || user.role !== 'instructor') {
