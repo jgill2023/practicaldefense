@@ -29,6 +29,9 @@ The platform integrates with Google Cloud Storage for file management, including
 ## Payment Processing
 Stripe is integrated for secure payment processing, utilizing Stripe Elements for card handling. The payment flow involves enrollment creation followed by payment confirmation, ensuring PCI compliance.
 
+## Refund Processing
+The platform features comprehensive refund management integrated with Stripe. Instructors can process refunds for student enrollments through the instructor portal. The system supports full or partial refunds, validates refund amounts, stores refund reasons, and automatically updates enrollment payment status. When a refund is processed, the system creates a Stripe refund transaction, stores refund details (amount and reason) in the database, and triggers automatic notifications to students via the notification engine.
+
 ## Development and Build System
 The project uses Vite for fast development and optimized production builds, TypeScript for strict type checking, and path aliases for organized imports.
 
