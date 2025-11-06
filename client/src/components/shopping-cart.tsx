@@ -137,7 +137,7 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
 
         <div className="flex flex-col h-full mt-6">
           {/* Cart Items */}
-          <div className="flex-1 overflow-y-auto pb-6">
+          <div className="flex-1 overflow-y-auto pb-12">
             {isLoading ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -268,7 +268,7 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
                   <span data-testid="cart-subtotal">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Tax (8%)</span>
+                  <span>Tax</span>
                   <span data-testid="cart-tax">${tax.toFixed(2)}</span>
                 </div>
                 <Separator />
