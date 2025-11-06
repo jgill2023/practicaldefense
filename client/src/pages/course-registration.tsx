@@ -840,18 +840,17 @@ export default function CourseRegistration() {
                     </div>
 
                     <div className="border-t pt-4">
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>
-                          {currentEnrollment?.paymentOption === 'deposit' ? 'Course deposit' : 'Course fee'}
-                        </span>
-                        <span>${taxInfo?.originalAmount?.toFixed(2) || getPaymentAmount(currentEnrollment)}</span>
-                      </div>
                       {currentEnrollment?.paymentOption === 'deposit' && currentEnrollment?.course?.depositAmount && (
                         <div className="flex justify-between text-sm text-muted-foreground">
                           <span>Remaining balance (due later)</span>
                           <span>${currentEnrollment?.course?.price && currentEnrollment?.course?.depositAmount ? (parseFloat(currentEnrollment.course.price) - parseFloat(currentEnrollment.course.depositAmount)).toFixed(2) : '0.00'}</span>
                         </div>
                       )}
+
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Subtotal</span>
+                        <span>${taxInfo?.subtotal?.toFixed(2) || getPaymentAmount(currentEnrollment)}</span>
+                      </div>
 
                       {/* Show discount if applied */}
                       {taxInfo?.discountAmount && taxInfo.discountAmount > 0 && (
@@ -861,13 +860,9 @@ export default function CourseRegistration() {
                         </div>
                       )}
 
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Subtotal</span>
-                        <span>${taxInfo?.subtotal?.toFixed(2) || getPaymentAmount(currentEnrollment)}</span>
-                      </div>
                       {taxInfo?.tax_included && taxInfo.tax > 0 && (
                         <div className="flex justify-between text-sm text-muted-foreground">
-                          <span>Tax</span>
+                          <span>Tax (7.63%)</span>
                           <span>${taxInfo.tax.toFixed(2)}</span>
                         </div>
                       )}
