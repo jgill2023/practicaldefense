@@ -72,7 +72,7 @@ export default function CartPage() {
   const subtotal = cartItems.reduce((sum: number, item: CartItemWithDetails) => 
     sum + (item.priceAtTime * item.quantity), 0
   );
-  const tax = subtotal * 0.08; // 8% tax rate
+  const tax = subtotal * 0.0763; // 7.63% tax rate
   const total = subtotal + tax;
 
   const handleQuantityChange = (item: CartItemWithDetails, newQuantity: number) => {
@@ -244,7 +244,7 @@ export default function CartPage() {
                     <span data-testid="cart-subtotal">${subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Tax (8%)</span>
+                    <span>Tax (7.63%)</span>
                     <span data-testid="cart-tax">${tax.toFixed(2)}</span>
                   </div>
                   <div className="border-t pt-4">

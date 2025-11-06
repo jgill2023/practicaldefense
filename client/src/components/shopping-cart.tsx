@@ -88,7 +88,7 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
   const subtotal = cartItems.reduce((sum: number, item: CartItemWithDetails) => 
     sum + (item.priceAtTime * item.quantity), 0
   );
-  const tax = subtotal * 0.08; // 8% tax rate - should be configurable
+  const tax = subtotal * 0.0763; // 7.63% tax rate
   const total = subtotal + tax;
 
   const handleQuantityChange = (item: CartItemWithDetails, newQuantity: number) => {
