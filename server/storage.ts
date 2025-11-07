@@ -427,8 +427,6 @@ export interface IStorage {
   getProduct(id: string): Promise<ProductWithDetails | undefined>;
   getProducts(): Promise<ProductWithDetails[]>;
   getProductsByCategory(categoryId: string): Promise<ProductWithDetails[]>;
-  syncPrintfulProducts(): Promise<{ productsProcessed: number; variantsProcessed: number; errors: string[] }>;
-
 
   // Product Variants
   createProductVariant(variant: InsertProductVariant): Promise<ProductVariant>;
@@ -2150,36 +2148,6 @@ export class DatabaseStorage implements IStorage {
         throw new Error('No available spots remaining for this course schedule');
       }
 
-      // Moodle integration: Check if the course is a Moodle course and if Moodle enrollment is enabled
-      let moodleEnrolled: boolean | null = null;
-      let moodleEnrollmentDate: Date | null = null;
-      let enrollmentNotes: string | null = null;
-
-      // Placeholder for Moodle integration logic - this would involve calling a Moodle API
-      // For now, we'll assume it's successful if the course has a moodleCourseId and enrollment is enabled
-      const moodleCourseId = enrollment.course.moodleCourseId; // Assuming this field exists on the course table
-      const isMoodleEnrollmentEnabled = enrollment.course.enableMoodleEnrollment; // Assuming this field exists
-
-      if (moodleCourseId && isMoodleEnrollmentEnabled) {
-        try {
-          // Replace this with actual Moodle API call to enroll the user
-          // Example: await callMoodleEnrollmentAPI(user.email, moodleCourseId);
-          console.log(`Attempting to enroll user ${user.email} in Moodle course ${moodleCourseId}`);
-
-          // Simulate successful enrollment
-          moodleEnrolled = true;
-          moodleEnrollmentDate = new Date();
-          enrollmentNotes = 'Moodle enrollment successful.';
-
-        } catch (error) {
-          console.error('Moodle enrollment failed:', error);
-          moodleEnrolled = false;
-          enrollmentNotes = `Moodle enrollment failed: ${error.message}`;
-          // Depending on requirements, you might want to throw an error here
-          // or allow the enrollment to proceed without Moodle enrollment.
-        }
-      }
-
       // Finalize the enrollment with consistent field names
       const [finalizedEnrollment] = await tx
         .update(enrollments)
@@ -2190,9 +2158,6 @@ export class DatabaseStorage implements IStorage {
           paymentIntentId: data.paymentIntentId,
           stripePaymentIntentId: isFreeEnrollment ? null : data.paymentIntentId,
           confirmationDate: new Date(),
-          moodleEnrolled,
-          moodleEnrollmentDate,
-          notes: enrollmentNotes,
           updatedAt: new Date(),
         })
         .where(eq(enrollments.id, data.enrollmentId))
@@ -4122,67 +4087,6 @@ export class DatabaseStorage implements IStorage {
       orderBy: [desc(products.featured), asc(products.sortOrder), asc(products.name)],
     });
   }
-
-  async syncPrintfulProducts(): Promise<{ productsProcessed: number; variantsProcessed: number; errors: string[] }> {
-    const { printfulService } = await import('./printfulService');
-    const errors: string[] = [];
-    let productsProcessed = 0;
-    let variantsProcessed = 0;
-
-    try {
-      // Fetch all products from Printful
-      const printfulProducts = await printfulService.getProducts();
-
-      for (const printfulProduct of printfulProducts) {
-        try {
-          // Check if product already exists
-          const existingProduct = await db.query.products.findFirst({
-            where: eq(products.printfulProductId, printfulProduct.id),
-          });
-
-          if (!existingProduct) {
-            // Create new product
-            const [newProduct] = await db.insert(products).values({
-              name: printfulProduct.name,
-              description: `Printful product: ${printfulProduct.name}`,
-              price: '0.00', // Will be updated from variants
-              categoryId: null,
-              sku: printfulProduct.external_id || `PRINTFUL-${printfulProduct.id}`,
-              productType: 'physical',
-              fulfillmentType: 'printful',
-              status: 'active', // Set as active so they appear in the product list
-              primaryImageUrl: printfulProduct.thumbnail_url,
-              printfulProductId: printfulProduct.id,
-            }).returning();
-
-            productsProcessed++;
-
-            // Fetch and create variants
-            const printfulVariants = await printfulService.getSyncVariants(printfulProduct.id);
-            for (const printfulVariant of printfulVariants) {
-              await db.insert(productVariants).values({
-                productId: newProduct.id,
-                name: printfulVariant.name,
-                sku: printfulVariant.sku,
-                price: printfulVariant.retail_price,
-                printfulVariantId: printfulVariant.id,
-                imageUrl: printfulVariant.product?.image,
-                isActive: !printfulVariant.is_ignored,
-              });
-              variantsProcessed++;
-            }
-          }
-        } catch (error: any) {
-          errors.push(`Error syncing product ${printfulProduct.id}: ${error.message}`);
-        }
-      }
-    } catch (error: any) {
-      errors.push(`Error fetching Printful products: ${error.message}`);
-    }
-
-    return { productsProcessed, variantsProcessed, errors };
-  }
-
 
   // Product Variants
   async createProductVariant(variant: InsertProductVariant): Promise<ProductVariant> {

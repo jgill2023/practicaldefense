@@ -20,7 +20,7 @@ This is a template for firearms instructors. New instructors should:
 
 1. Fork this Repl to create their own instance
 2. Complete the onboarding process via the "Onboarding" button on the instructor dashboard
-3. Add required secrets (Stripe) and optional secrets (Twilio, SendGrid, Moodle, Printful) via Replit Secrets
+3. Add required secrets (Stripe) and optional secrets (Twilio, SendGrid) via Replit Secrets
 4. See INSTRUCTOR_SETUP.md for detailed setup instructions
 
 ## Data Storage Solutions

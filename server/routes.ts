@@ -2617,23 +2617,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/products/sync-printful', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-
-      if (!user || user.role !== 'instructor') {
-        return res.status(403).json({ message: "Access denied. Instructor role required." });
-      }
-
-      const results = await storage.syncPrintfulProducts();
-      res.json(results);
-    } catch (error) {
-      console.error("Error syncing Printful products:", error);
-      res.status(500).json({ message: "Failed to sync Printful products" });
-    }
-  });
-
   // Dashboard statistics endpoint
   app.get("/api/instructor/dashboard-stats", isAuthenticated, async (req: any, res) => {
     try {
@@ -5482,197 +5465,6 @@ jeremy@abqconcealedcarry.com
     }
   });
 
-  // Sync products from Printful
-  app.post('/api/products/sync-printful', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.claims.sub);
-      if (user?.role !== 'instructor') {
-        return res.status(403).json({ error: "Only instructors can sync products from Printful" });
-      }
-
-      console.log("Starting Printful product sync...");
-
-      // Import the printfulService
-      const { printfulService } = await import('./printfulService');
-
-      let syncResults = {
-        productsProcessed: 0,
-        variantsProcessed: 0,
-        errors: []
-      };
-
-      try {
-        // Fetch products from Printful
-        const printfulProducts = await printfulService.getProducts();
-        console.log(`Found ${printfulProducts.length} products in Printful store`);
-
-        for (const printfulProduct of printfulProducts) {
-          try {
-            // Skip ignored products
-            if (printfulProduct.is_ignored) {
-              continue;
-            }
-
-            // Check if product already exists in our database by Printful ID or SKU
-            const existingProducts = await storage.getProducts();
-            const printfulProductSku = printfulProduct.external_id || `printful-${printfulProduct.id}`;
-            const existingProduct = existingProducts.find(p => 
-              p.printfulProductId === printfulProduct.id.toString() || 
-              p.sku === printfulProductSku
-            );
-
-            let productToUpdate = existingProduct;
-
-            // Create product category if it doesn't exist
-            let categoryId = null;
-            const categories = await storage.getProductCategories();
-            let printfulCategory = categories.find(c => c.name === 'Printful Products');
-
-            if (!printfulCategory) {
-              printfulCategory = await storage.createProductCategory({
-                name: 'Printful Products',
-                slug: 'printful-products',
-                description: 'Products imported from Printful',
-                isActive: true,
-                sortOrder: 999,
-              });
-            }
-            categoryId = printfulCategory.id;
-
-            if (!existingProduct) {
-              // Create the product in our database
-              productToUpdate = await storage.createProduct({
-                name: printfulProduct.name,
-                slug: printfulProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-                description: `Imported from Printful - ${printfulProduct.name}`,
-                categoryId: categoryId,
-                sku: printfulProduct.external_id || `printful-${printfulProduct.id}`,
-                price: '1.00', // Set to $1 initially, will be updated with variant prices
-                productType: 'physical',
-                fulfillmentType: 'printful',
-                printfulProductId: printfulProduct.id,
-                primaryImageUrl: printfulProduct.thumbnail_url,
-                imageUrls: printfulProduct.thumbnail_url ? [printfulProduct.thumbnail_url] : [],
-                tags: ['printful'],
-                status: 'active',
-                createdBy: user.id,
-                updatedBy: user.id,
-              });
-              console.log(`Created product: ${productToUpdate.name}`);
-            } else {
-              console.log(`Updating existing product: ${existingProduct.name}`);
-            }
-
-            syncResults.productsProcessed++;
-
-            // Fetch the real prices from Printful variants
-            try {
-              console.log(`Fetching variants for Printful product ID: ${printfulProduct.id} (${printfulProduct.name})`);
-              const printfulVariants = await printfulService.getSyncVariants(printfulProduct.id);
-              console.log(`Found ${printfulVariants.length} variants for product ${printfulProduct.name}`);
-
-              let lowestPrice = Infinity;
-
-              for (const printfulVariant of printfulVariants) {
-                try {
-                  if (printfulVariant.is_ignored || printfulVariant.is_discontinued) {
-                    continue;
-                  }
-
-                  const price = parseFloat(printfulVariant.retail_price || '0');
-                  if (price < lowestPrice && price > 0) {
-                    lowestPrice = price;
-                  }
-
-                  // Check if variant already exists for this product
-                  const existingVariants = await storage.getProductVariants(productToUpdate.id);
-                  const existingVariant = existingVariants.find(v => v.printfulSyncVariantId === printfulVariant.id.toString());
-
-                  if (!existingVariant) {
-                    await storage.createProductVariant({
-                      productId: productToUpdate.id,
-                      name: printfulVariant.name,
-                      sku: printfulVariant.sku,
-                      price: price,
-                      compareAtPrice: null,
-                      costPerItem: 0,
-                      trackQuantity: false,
-                      quantity: 0,
-                      weight: null,
-                      weightUnit: 'kg',
-                      options: printfulVariant.options ? JSON.stringify(printfulVariant.options) : null,
-                      images: printfulVariant.files && printfulVariant.files.length > 0 ? 
-                        [printfulVariant.files[0].preview_url || printfulVariant.files[0].url] : [],
-                      printfulSyncVariantId: printfulVariant.id.toString(),
-                      printfulVariantId: printfulVariant.variant_id.toString(),
-                    });
-                  }
-
-                  syncResults.variantsProcessed++;
-                } catch (variantError) {
-                  console.error(`Error processing variant ${printfulVariant.name}:`, variantError);
-                  syncResults.errors.push(`Variant ${printfulVariant.name}: ${variantError.message}`);
-                }
-              }
-
-              // Update product with the real price from Printful
-              if (lowestPrice !== Infinity && lowestPrice > 0) {
-                await storage.updateProduct(productToUpdate.id, {
-                  price: lowestPrice.toFixed(2),
-                  updatedBy: user.id,
-                });
-                console.log(`Updated product ${printfulProduct.name} price to $${lowestPrice.toFixed(2)}`);
-              }
-
-            } catch (variantError) {
-              console.error(`Error fetching variants for product ${printfulProduct.name} (ID: ${printfulProduct.id}):`, variantError);
-              syncResults.errors.push(`Product ${printfulProduct.name} variants: ${variantError.message}`);
-            }
-
-          } catch (productError) {
-            console.error(`Error processing product ${printfulProduct.name}:`, productError);
-            syncResults.errors.push(`Product ${printfulProduct.name}: ${productError.message}`);
-          }
-        }
-
-        console.log("Printful sync completed:", syncResults);
-        res.json({
-          message: "Printful sync completed",
-          results: syncResults
-        });
-
-      } catch (printfulError: any) {
-        console.error("Error fetching from Printful:", printfulError);
-
-        // Handle specific Printful API errors with user-friendly messages
-        if (printfulError.message && printfulError.message.includes("Manual Order / API platform")) {
-          return res.status(400).json({
-            error: "Printful Store Configuration",
-            message: "Your Printful store is configured for automatic platform integration (e.g., Shopify, Etsy). To use the API sync feature, you need to change your store to 'Manual Order / API' mode in your Printful dashboard.",
-            details: printfulError.message
-          });
-        }
-
-        if (printfulError.status === 401 || printfulError.message?.includes("Unauthorized")) {
-          return res.status(401).json({
-            error: "Printful API Authentication Failed",
-            message: "Please check your Printful API key configuration.",
-            details: printfulError.message
-          });
-        }
-
-        return res.status(500).json({ 
-          error: "Failed to fetch products from Printful", 
-          details: printfulError.message 
-        });
-      }
-
-    } catch (error: any) {
-      console.error("Error syncing Printful products:", error);
-      res.status(500).json({ error: "Failed to sync Printful products: " + error.message });
-    }
-  });
-
   // Product Variants Routes
   app.get('/api/products/:productId/variants', async (req, res) => {
     try {
@@ -5884,7 +5676,7 @@ jeremy@abqconcealedcarry.com
         paymentStatus: 'paid',
       });
 
-      // Create order items and handle Moodle enrollments
+      // Create order items
       for (const item of cartItems) {
         await storage.createOrderItem({
           orderId: order.id,
@@ -5893,40 +5685,6 @@ jeremy@abqconcealedcarry.com
           quantity: item.quantity,
           priceAtTime: item.priceAtTime,
         });
-
-        // Check if this product requires Moodle enrollment
-        const product = await storage.getProduct(item.productId);
-        if (product && product.moodleEnrollmentEnabled && product.moodleCourseId) {
-          try {
-            const { moodleService } = await import('./moodleService');
-            const user = await storage.getUser(userId);
-
-            if (user) {
-              // Get or create Moodle user
-              const moodleUser = await moodleService.getOrCreateUser({
-                username: user.email.split('@')[0],
-                password: randomUUID(), // Generate random password
-                firstname: user.firstName || '',
-                lastname: user.lastName || '',
-                email: user.email,
-              });
-
-              // Enroll user in Moodle course
-              await moodleService.enrollUser(moodleUser.id, product.moodleCourseId);
-
-              // Update user record with Moodle info
-              await storage.updateUser(userId, {
-                moodleUserId: moodleUser.id,
-                moodleUsername: moodleUser.username,
-              });
-
-              console.log(`Successfully enrolled user ${userId} in Moodle course ${product.moodleCourseId}`);
-            }
-          } catch (moodleError) {
-            console.error(`Failed to enroll user in Moodle course ${product.moodleCourseId}:`, moodleError);
-            // Don't fail the entire checkout if Moodle enrollment fails
-          }
-        }
       }
 
       // Clear the user's cart

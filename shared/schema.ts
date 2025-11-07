@@ -61,9 +61,6 @@ export const users = pgTable("users", {
   // Instructor-specific settings
   replyToEmail: varchar("reply_to_email"), // Custom reply-to email for instructor communications
   role: varchar("role").notNull().default('student'), // 'student' or 'instructor'
-  // Moodle integration
-  moodleUserId: integer("moodle_user_id"), // Moodle user ID for LMS integration
-  moodleUsername: text("moodle_username"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -103,9 +100,6 @@ export const courses = pgTable("courses", {
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   imageUrl: varchar("image_url"),
   showOnHomePage: boolean("show_on_home_page").notNull().default(true), // Control home page visibility
-  // Moodle integration
-  moodleCourseId: integer("moodle_course_id"), // Moodle course ID for online courses
-  moodleEnrollmentEnabled: boolean("moodle_enrollment_enabled").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -188,10 +182,7 @@ export const enrollments = pgTable("enrollments", {
   refundProcessedAt: timestamp("refund_processed_at"),
   refundAmount: varchar("refund_amount"), // Amount refunded (formatted string, e.g., "$165.00")
   refundReason: text("refund_reason"), // Reason for refund provided by instructor
-  // Moodle integration
-  moodleEnrolled: boolean("moodle_enrolled").default(false),
-  moodleEnrollmentDate: timestamp("moodle_enrollment_date"),
-  notes: text("notes"), // For tracking Moodle enrollment status and errors
+  notes: text("notes"),
   // Form submission tracking
   formSubmissionData: jsonb("form_submission_data"),
   formSubmittedAt: timestamp("form_submitted_at"),
@@ -1469,7 +1460,7 @@ export const products = pgTable("products", {
 
   // Product type and fulfillment
   productType: varchar("product_type", { length: 20 }).notNull().default('physical'), // 'physical', 'digital', 'service'
-  fulfillmentType: varchar("fulfillment_type", { length: 20 }).notNull().default('manual'), // 'printful', 'download', 'manual', 'moodle'
+  fulfillmentType: varchar("fulfillment_type", { length: 20 }).notNull().default('manual'), // 'download', 'manual'
 
   // Status and visibility
   status: varchar("status", { length: 20 }).default('draft'), // 'draft', 'active', 'inactive'
@@ -1482,13 +1473,6 @@ export const products = pgTable("products", {
 
   // Organization
   tags: text("tags").array(),
-
-  // Printful integration
-  printfulProductId: integer("printful_product_id"),
-
-  // Moodle integration for online courses
-  moodleCourseId: integer("moodle_course_id"), // Link to Moodle course for automatic enrollment
-  moodleEnrollmentEnabled: boolean("moodle_enrollment_enabled").notNull().default(false),
 
   // Audit fields
   createdBy: varchar("created_by").references(() => users.id),
@@ -1508,9 +1492,6 @@ export const productVariants = pgTable("product_variants", {
 
   // Variant attributes (size, color, etc.)
   attributes: jsonb("attributes"), // {size: "XL", color: "Blue", material: "Cotton"}
-
-  // Printful specific
-  printfulVariantId: integer("printful_variant_id"),
 
   // Inventory
   stockQuantity: integer("stock_quantity").default(0),
@@ -1575,10 +1556,6 @@ export const ecommerceOrders = pgTable("ecommerce_orders", {
   status: varchar("status").default('pending'), // 'pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'
   fulfillmentStatus: varchar("fulfillment_status").default('pending'), // 'pending', 'processing', 'fulfilled', 'partial'
 
-  // Printful integration
-  printfulOrderId: varchar("printful_order_id"),
-  printfulStatus: varchar("printful_status"),
-
   // Shipping information
   shippingCarrier: varchar("shipping_carrier"),
   trackingNumber: varchar("tracking_number"),
@@ -1622,8 +1599,7 @@ export const ecommerceOrderItems = pgTable("ecommerce_order_items", {
   customization: jsonb("customization"), // Custom designs, text, etc.
   fulfillmentStatus: varchar("fulfillment_status").default('pending'), // 'pending', 'processing', 'fulfilled', 'failed'
 
-  // Integration tracking
-  printfulOrderId: varchar("printful_order_id"), // Printful order ID for this item
+  // Digital products
   downloadToken: varchar("download_token"), // For digital products
   downloadCount: integer("download_count").default(0),
   downloadExpiresAt: timestamp("download_expires_at"),
@@ -1803,8 +1779,8 @@ export type EcommerceOrderItemWithDetails = EcommerceOrderItem & {
 };
 
 // E-commerce enums
-export type ProductType = 'physical' | 'digital' | 'service' | 'moodle';
-export type FulfillmentType = 'printful' | 'download' | 'manual' | 'moodle';
+export type ProductType = 'physical' | 'digital' | 'service';
+export type FulfillmentType = 'download' | 'manual';
 export type ProductStatus = 'draft' | 'active' | 'inactive';
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
@@ -1889,15 +1865,12 @@ const productSchema = z.object({
   price: z.string().min(1, "Price is required").refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Price must be a valid non-negative number"),
   categoryId: z.string().uuid("Please select a category"),
   sku: z.string().min(1, "SKU is required"),
-  productType: z.enum(["physical", "digital", "service", "moodle"]).default("physical"),
-  fulfillmentType: z.enum(["printful", "download", "manual", "moodle"]).default("manual"),
+  productType: z.enum(["physical", "digital", "service"]).default("physical"),
+  fulfillmentType: z.enum(["download", "manual"]).default("manual"),
   status: z.enum(["active", "inactive", "draft"]).default("active"),
   featured: z.boolean().default(false),
   primaryImageUrl: z.string().optional(),
   imageUrls: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]),
   sortOrder: z.number().int().min(0).default(0),
-  printfulProductId: z.number().int().positive().optional().nullable(),
-  moodleCourseId: z.number().int().positive().optional().nullable(),
-  moodleEnrollmentEnabled: z.boolean().default(false),
 });

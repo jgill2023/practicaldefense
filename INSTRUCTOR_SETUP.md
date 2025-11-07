@@ -55,28 +55,6 @@ Professional email notifications for course communications.
    - Key: `SENDGRID_API_KEY`
    - Value: Your SendGrid API key
 
-### 4. Moodle (Optional - LMS Integration)
-
-Integrate with Moodle for online course delivery.
-
-**Steps:**
-1. Set up a Moodle instance (MoodleCloud or self-hosted)
-2. Enable web services and create an API token
-3. Add to Replit Secrets:
-   - `MOODLE_URL` - Your Moodle site URL
-   - `MOODLE_TOKEN` - Your API token
-
-### 5. Printful (Optional - Merchandise)
-
-Print-on-demand merchandise fulfillment.
-
-**Steps:**
-1. Sign up at [https://www.printful.com](https://www.printful.com)
-2. Create a manual order platform/API integration
-3. Add to Replit Secrets:
-   - Key: `PRINTFUL_API_KEY`
-   - Value: Your Printful API key
-
 ## How to Add Secrets in Replit
 
 1. In your Replit workspace, click **Tools** in the left sidebar
