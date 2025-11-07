@@ -15,10 +15,8 @@ import type { EnrollmentWithDetails } from "@shared/schema";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
-}
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : null;
 
 const CheckoutForm = ({ enrollment, totalAmount }: { enrollment: EnrollmentWithDetails; totalAmount: number }) => {
   const stripe = useStripe();
@@ -435,24 +433,31 @@ export default function Checkout() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Make SURE to wrap the form in <Elements> which provides the stripe context. */}
-            <Elements 
-              stripe={stripePromise} 
-              options={{ 
-                clientSecret,
-                appearance: {
-                  theme: 'stripe',
-                  variables: {
-                    colorPrimary: '#1F2937',
+            {!stripePromise ? (
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-lg">
+                <p className="text-sm">
+                  Payment processing is currently unavailable. Please contact support to complete your registration.
+                </p>
+              </div>
+            ) : (
+              <Elements 
+                stripe={stripePromise} 
+                options={{ 
+                  clientSecret,
+                  appearance: {
+                    theme: 'stripe',
+                    variables: {
+                      colorPrimary: '#1F2937',
+                    }
                   }
-                }
-              }}
-            >
-              <CheckoutForm 
-                enrollment={enrollment} 
-                totalAmount={taxInfo?.total || getPaymentAmount(enrollment)}
-              />
-            </Elements>
+                }}
+              >
+                <CheckoutForm 
+                  enrollment={enrollment} 
+                  totalAmount={taxInfo?.total || getPaymentAmount(enrollment)}
+                />
+              </Elements>
+            )}
           </CardContent>
         </Card>
       </div>

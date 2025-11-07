@@ -22,11 +22,9 @@ import { formatDateSafe } from "@/lib/dateUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PolicyModal } from "@/components/PolicyModal";
 
-// Load Stripe outside of component render
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
-}
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+// Load Stripe outside of component render (if configured)
+const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : null;
 
 const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: any; confirmEnrollmentMutation: any }) => {
   const stripe = useStripe();
@@ -1005,21 +1003,29 @@ export default function CourseRegistration() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <Elements 
-                      key={clientSecret}
-                      stripe={stripePromise} 
-                      options={{ 
-                        clientSecret,
-                        appearance: {
-                          theme: 'stripe',
-                          variables: {
-                            colorPrimary: '#1F2937',
+                    {!stripePromise ? (
+                      <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-lg">
+                        <p className="text-sm">
+                          Payment processing is currently unavailable. Please contact support to complete your registration.
+                        </p>
+                      </div>
+                    ) : (
+                      <Elements 
+                        key={clientSecret}
+                        stripe={stripePromise} 
+                        options={{ 
+                          clientSecret,
+                          appearance: {
+                            theme: 'stripe',
+                            variables: {
+                              colorPrimary: '#1F2937',
+                            }
                           }
-                        }
-                      }}
-                    >
-                      <CheckoutForm enrollment={currentEnrollment} confirmEnrollmentMutation={confirmEnrollmentMutation} />
-                    </Elements>
+                        }}
+                      >
+                        <CheckoutForm enrollment={currentEnrollment} confirmEnrollmentMutation={confirmEnrollmentMutation} />
+                      </Elements>
+                    )}
                   </CardContent>
                 </Card>
               ) : (

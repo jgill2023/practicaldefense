@@ -5,11 +5,14 @@ import { z } from 'zod';
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 
-if (!accountSid || !authToken) {
-  throw new Error('TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables must be set');
+const isConfigured = !!(accountSid && authToken);
+
+if (!isConfigured) {
+  console.warn('⚠️  TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN not configured. SMS functionality is disabled.');
+  console.warn('   Set these environment variables to enable Twilio SMS features.');
 }
 
-const client = twilio(accountSid, authToken);
+const client = isConfigured ? twilio(accountSid, authToken) : null;
 
 // Types for SMS messages from Twilio
 export interface TwilioMessage {
@@ -62,6 +65,10 @@ export class TwilioSMSService {
    * Retrieve SMS messages from Twilio with optional filters
    */
   async getMessages(filters: SMSFilters = {}): Promise<TwilioMessage[]> {
+    if (!client) {
+      throw new Error('Twilio is not configured. Please set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables.');
+    }
+    
     try {
       const options: any = {
         limit: filters.limit || 50,
@@ -89,7 +96,7 @@ export class TwilioSMSService {
         errorMessage: msg.errorMessage,
         uri: msg.uri,
       }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching SMS messages from Twilio:', error);
       throw new Error(`Failed to fetch SMS messages: ${error.message}`);
     }
@@ -99,6 +106,10 @@ export class TwilioSMSService {
    * Get a specific message by SID
    */
   async getMessage(messageSid: string): Promise<TwilioMessage | null> {
+    if (!client) {
+      throw new Error('Twilio is not configured. Please set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables.');
+    }
+    
     try {
       const message = await client.messages(messageSid).fetch();
       
@@ -127,6 +138,10 @@ export class TwilioSMSService {
    * Send an SMS message
    */
   async sendSMS(data: SendSMSRequest): Promise<TwilioMessage> {
+    if (!client) {
+      throw new Error('Twilio is not configured. Please set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables.');
+    }
+    
     try {
       const message = await client.messages.create({
         body: data.body,
@@ -149,7 +164,7 @@ export class TwilioSMSService {
         errorMessage: message.errorMessage,
         uri: message.uri,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending SMS via Twilio:', error);
       throw new Error(`Failed to send SMS: ${error.message}`);
     }
