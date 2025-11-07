@@ -13,6 +13,7 @@ import { EmailNotificationModal } from "./EmailNotificationModal";
 import { PaymentDetailsModal } from "./PaymentDetailsModal";
 import { PaymentReminderModal } from "./PaymentReminderModal";
 import { RescheduleModal } from "./RescheduleModal";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface RosterData {
   current: Array<{
@@ -93,8 +94,8 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
     switch (status) {
       case 'paid':
         return (
-          <Badge 
-            variant="default" 
+          <Badge
+            variant="default"
             className={`bg-green-500 hover:bg-green-600 ${className}`}
             onClick={onClick}
           >
@@ -103,8 +104,8 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
         );
       case 'partial':
         return (
-          <Badge 
-            variant="secondary" 
+          <Badge
+            variant="secondary"
             className={`bg-yellow-500 hover:bg-yellow-600 text-white ${className}`}
             onClick={onClick}
           >
@@ -113,8 +114,8 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
         );
       case 'pending':
         return (
-          <Badge 
-            variant="secondary" 
+          <Badge
+            variant="secondary"
             className={`bg-orange-500 hover:bg-orange-600 text-white ${className}`}
             onClick={onClick}
           >
@@ -123,8 +124,8 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
         );
       case 'failed':
         return (
-          <Badge 
-            variant="destructive" 
+          <Badge
+            variant="destructive"
             className={className}
             onClick={onClick}
           >
@@ -133,8 +134,8 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
         );
       default:
         return (
-          <Badge 
-            variant="outline" 
+          <Badge
+            variant="outline"
             className={className}
             onClick={onClick}
           >
@@ -221,12 +222,12 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center gap-3">
-            <Users className="h-5 w-5 text-primary" />
-            <DialogTitle className="text-xl">Course Roster</DialogTitle>
-          </div>
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="pr-8">
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Course Roster
+          </DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
@@ -410,7 +411,7 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
                           </TableCell>
                           <TableCell data-testid={`badge-payment-${student.studentId}`}>
                             {getPaymentStatusBadge(
-                              student.paymentStatus, 
+                              student.paymentStatus,
                               student.remainingBalance,
                               () => handlePaymentClick(student.studentId, `${student.firstName} ${student.lastName}`, student.enrollmentId)
                             )}
@@ -501,30 +502,35 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
                           </TableCell>
 
                           <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-2"
-                              data-testid={`actions-${student.studentId}`}
-                            >
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 border-green-200 bg-green-50 text-green-600 hover:bg-green-100 hover:border-green-300"
-                                onClick={() => alert('Certificate management coming soon')}
-                                title="Issue/View Certificate"
-                                data-testid={`button-certificate-${student.studentId}`}
-                              >
-                                <Award className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 w-8 border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300"
-                                onClick={() => handleRescheduleClick(student)}
-                                title="Reschedule Student"
-                                data-testid={`button-reschedule-${student.studentId}`}
-                              >
-                                <RotateCcw className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="1" />
+                                    <circle cx="12" cy="5" r="1" />
+                                    <circle cx="12" cy="19" r="1" />
+                                  </svg>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => alert('Certificate management coming soon')}
+                                  className="group"
+                                  data-testid={`dropdown-certificate-${student.studentId}`}
+                                >
+                                  <Award className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                                  Issue/View Certificate
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleRescheduleClick(student)}
+                                  className="group"
+                                  data-testid={`dropdown-reschedule-${student.studentId}`}
+                                >
+                                  <RotateCcw className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                                  Reschedule Student
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       ))}
