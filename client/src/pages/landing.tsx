@@ -52,10 +52,10 @@ export default function Landing() {
   // Filter categories to only show those marked for home page display
   const visibleCategories = categories.filter(cat => cat.showOnHomePage !== false);
   
-  // Extract unique category names, excluding "Printful Products"
+  // Extract unique category names
   const availableCategories = [
     ...new Set(visibleCategories.map(category => getCategoryName(category.name))),
-  ].filter(name => name !== "Printful Products");
+  ];
 
   // Sort courses first by date, then by category order
   const sortedAndFilteredCourses = (() => {
@@ -92,13 +92,12 @@ export default function Landing() {
     let coursesToDisplay: CourseWithSchedules[];
 
     if (courseFilter === "all") {
-      // For "All Courses", show unique courses (current behavior), excluding Printful Products
+      // For "All Courses", show unique courses (current behavior)
       // Also filter by showOnHomePage for both courses and their categories
       coursesToDisplay = courses.filter(course => {
         const categoryName = getCategoryName(course.category);
         const category = visibleCategories.find(cat => getCategoryName(cat.name) === categoryName);
-        return categoryName !== "Printful Products" && 
-               course.showOnHomePage !== false &&
+        return course.showOnHomePage !== false &&
                category; // Only show if category is visible
       });
       coursesToDisplay.sort((a, b) => {
@@ -134,12 +133,11 @@ export default function Landing() {
       const now = new Date();
       const categorySchedules: CourseWithSchedules[] = [];
 
-      // Filter courses by category, excluding Printful Products, and check visibility
+      // Filter courses by category and check visibility
       const categoryCourses = courses.filter(course => {
         const categoryName = getCategoryName(course.category);
         const category = visibleCategories.find(cat => getCategoryName(cat.name) === categoryName);
         return categoryName === courseFilter && 
-               categoryName !== "Printful Products" &&
                course.showOnHomePage !== false &&
                category &&
                course.schedules && 

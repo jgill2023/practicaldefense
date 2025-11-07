@@ -39,18 +39,6 @@ export function InstructorOnboarding() {
       description: "Create a SendGrid account for email notifications",
       completed: false,
     },
-    {
-      id: "moodle",
-      title: "Set up Moodle (Optional)",
-      description: "Configure Moodle LMS integration for online courses",
-      completed: false,
-    },
-    {
-      id: "printful",
-      title: "Set up Printful (Optional)",
-      description: "Connect Printful for merchandise fulfillment",
-      completed: false,
-    },
   ]);
 
   const copyToClipboard = (text: string, keyName: string) => {
@@ -86,7 +74,7 @@ export function InstructorOnboarding() {
       </Alert>
 
       <Tabs defaultValue="stripe" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="stripe">
             {steps[0].completed ? <CheckCircle2 className="h-4 w-4 mr-2" /> : <Circle className="h-4 w-4 mr-2" />}
             Stripe
@@ -98,14 +86,6 @@ export function InstructorOnboarding() {
           <TabsTrigger value="sendgrid">
             {steps[2].completed ? <CheckCircle2 className="h-4 w-4 mr-2" /> : <Circle className="h-4 w-4 mr-2" />}
             SendGrid
-          </TabsTrigger>
-          <TabsTrigger value="moodle">
-            {steps[3].completed ? <CheckCircle2 className="h-4 w-4 mr-2" /> : <Circle className="h-4 w-4 mr-2" />}
-            Moodle
-          </TabsTrigger>
-          <TabsTrigger value="printful">
-            {steps[4].completed ? <CheckCircle2 className="h-4 w-4 mr-2" /> : <Circle className="h-4 w-4 mr-2" />}
-            Printful
           </TabsTrigger>
         </TabsList>
 
@@ -308,127 +288,6 @@ export function InstructorOnboarding() {
 
               <Button onClick={() => toggleStep("sendgrid")} className="w-full">
                 {steps[2].completed ? "Mark as Incomplete" : "Mark as Complete"}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Moodle Setup */}
-        <TabsContent value="moodle">
-          <Card>
-            <CardHeader>
-              <CardTitle>Moodle LMS Integration (Optional)</CardTitle>
-              <CardDescription>
-                Connect your Moodle Learning Management System for online course delivery.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="font-semibold">Step 1: Set Up Moodle</h3>
-                <p className="text-sm text-muted-foreground">
-                  You need a Moodle instance. You can use MoodleCloud or host your own.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-semibold">Step 2: Generate API Token</h3>
-                <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground ml-4">
-                  <li>Log into Moodle as admin</li>
-                  <li>Go to Site Administration → Web Services</li>
-                  <li>Enable web services</li>
-                  <li>Create a token for your user</li>
-                </ol>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-semibold">Step 3: Add to Replit Secrets</h3>
-                <div className="space-y-3 bg-muted p-4 rounded-lg">
-                  <div className="space-y-2">
-                    <Label>Moodle URL</Label>
-                    <div className="flex items-center gap-2">
-                      <Input value="MOODLE_URL" readOnly className="bg-background" />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => copyToClipboard("MOODLE_URL", "Moodle URL")}
-                      >
-                        {copiedKey === "Moodle URL" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Moodle Token</Label>
-                    <div className="flex items-center gap-2">
-                      <Input value="MOODLE_TOKEN" readOnly className="bg-background" />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => copyToClipboard("MOODLE_TOKEN", "Moodle Token")}
-                      >
-                        {copiedKey === "Moodle Token" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Button onClick={() => toggleStep("moodle")} className="w-full">
-                {steps[3].completed ? "Mark as Incomplete" : "Mark as Complete"}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Printful Setup */}
-        <TabsContent value="printful">
-          <Card>
-            <CardHeader>
-              <CardTitle>Printful Merchandise (Optional)</CardTitle>
-              <CardDescription>
-                Connect Printful for print-on-demand merchandise fulfillment.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="font-semibold">Step 1: Create a Printful Account</h3>
-                <Button variant="outline" asChild>
-                  <a href="https://www.printful.com/auth/register" target="_blank" rel="noopener noreferrer">
-                    Sign up for Printful <ExternalLink className="ml-2 h-4 w-4" />
-                  </a>
-                </Button>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-semibold">Step 2: Generate API Key</h3>
-                <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground ml-4">
-                  <li>Log into Printful Dashboard</li>
-                  <li>Go to Settings → Stores</li>
-                  <li>Add a "Manual order platform / API"</li>
-                  <li>Copy the API key</li>
-                </ol>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-semibold">Step 3: Add to Replit Secrets</h3>
-                <div className="space-y-3 bg-muted p-4 rounded-lg">
-                  <div className="space-y-2">
-                    <Label>Printful API Key</Label>
-                    <div className="flex items-center gap-2">
-                      <Input value="PRINTFUL_API_KEY" readOnly className="bg-background" />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => copyToClipboard("PRINTFUL_API_KEY", "Printful API Key")}
-                      >
-                        {copiedKey === "Printful API Key" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Button onClick={() => toggleStep("printful")} className="w-full">
-                {steps[4].completed ? "Mark as Incomplete" : "Mark as Complete"}
               </Button>
             </CardContent>
           </Card>

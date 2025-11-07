@@ -413,36 +413,6 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
                     />
                   </div>
 
-                  <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                    <h3 className="font-medium">Moodle Integration (Optional)</h3>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="moodleEnrollmentEnabled"
-                        {...form.register("moodleEnrollmentEnabled")}
-                        className="rounded"
-                        data-testid="checkbox-moodle-enabled"
-                      />
-                      <Label htmlFor="moodleEnrollmentEnabled" className="cursor-pointer">
-                        Enable automatic Moodle enrollment for this course
-                      </Label>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="moodleCourseId">Moodle Course ID</Label>
-                      <Input
-                        id="moodleCourseId"
-                        type="number"
-                        {...form.register("moodleCourseId", { valueAsNumber: true })}
-                        placeholder="Enter Moodle course ID"
-                        data-testid="input-moodle-course-id"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Students will be automatically enrolled in this Moodle course upon registration
-                      </p>
-                    </div>
-                  </div>
-
                   <div>
                     <Label htmlFor="maxStudents">Maximum Students</Label>
                     <Input
