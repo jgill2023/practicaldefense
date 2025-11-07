@@ -68,12 +68,14 @@ function Router() {
           <Route path="/course-management" component={CourseManagement} />
           <Route path="/course-forms-management" component={CourseFormsManagement} />
           <Route path="/product-management" component={ProductManagement} />
-          <Route path="/student-portal" component={StudentPortal} />
-          <Route path="/students" component={StudentsPage} />
           <Route path="/promo-codes" component={PromoCodesPage} />
           <Route path="/communications" component={CommunicationsDashboardPage} />
           <Route path="/reports" component={Reports} />
         </>
+      )}
+      {/* The student-portal route is now correctly registered and protected by authentication. */}
+      {isAuthenticated && (
+        <Route path="/student-portal" component={StudentPortal} />
       )}
       <Route component={NotFound} />
     </Switch>
