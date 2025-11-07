@@ -365,7 +365,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Footer */}
       <footer className="bg-primary text-primary-foreground py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-0">
             <div>
               <h3 className="text-xl font-bold mb-4">Practical Defense Training</h3>
               <p className="text-primary-foreground/80">
@@ -387,7 +387,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <h4 className="font-semibold mb-4">Contact</h4>
               <div className="space-y-2 text-primary-foreground/80">
                 <div className="flex items-start space-x-2">
-                  <span>📞</span>
+                  <span className="text-success">📞</span>
                   <a href="tel:+15059445247" className="hover:text-primary-foreground transition-colors">(505) 944-5247</a>
                 </div>
                 <div className="flex items-start space-x-2">
@@ -395,7 +395,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <a href="mailto:jeremy@abqconcealedcarry.com" className="hover:text-primary-foreground transition-colors">jeremy@abqconcealedcarry.com</a>
                 </div>
                 <div className="flex items-start space-x-2">
-                  <span>📍</span>
+                  <span className="text-success">📍</span>
                   <span>Albuquerque, New Mexico</span>
                 </div>
               </div>
