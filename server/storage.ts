@@ -271,11 +271,11 @@ export interface IStorage {
   // Dashboard statistics
   getInstructorDashboardStats(instructorId: string): Promise<{
     upcomingCourses: number;
-    pastCourses: number;
+    onlineStudents: number;
     allStudents: number;
     totalRevenue: number;
     outstandingRevenue: number;
-    refundRequests: number; // Added for refund requests
+    refundRequests: number;
   }>;
 
   // Promo code operations
@@ -2233,83 +2233,97 @@ export class DatabaseStorage implements IStorage {
   // Dashboard statistics
   async getInstructorDashboardStats(instructorId: string): Promise<{
     upcomingCourses: number;
-    pastCourses: number;
+    onlineStudents: number;
     allStudents: number;
     totalRevenue: number;
     outstandingRevenue: number;
-    refundRequests: number; // Added for refund requests
+    refundRequests: number;
   }> {
     const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Get all courses for this instructor
-    const instructorCourses = await this.getCoursesByInstructor(instructorId);
-    const courseIds = instructorCourses.map(c => c.id);
-
-    if (courseIds.length === 0) {
-      return {
-        upcomingCourses: 0,
-        pastCourses: 0,
-        allStudents: 0,
-        totalRevenue: 0,
-        outstandingRevenue: 0,
-        refundRequests: 0, // Initialize refund requests to 0
-      };
-    }
-
-    // Get all enrollments for instructor's courses
-    const allEnrollments = await db.query.enrollments.findMany({
-      where: inArray(enrollments.courseId, courseIds), // Filter only for instructor's courses
+    // Get all courses for the instructor
+    const instructorCourses = await db.query.courses.findMany({
+      where: and(
+        eq(courses.instructorId, instructorId),
+        isNull(courses.deletedAt)
+      ),
       with: {
-        course: true,
-        schedule: true,
-        student: true,
+        schedules: {
+          where: isNull(courseSchedules.deletedAt),
+        },
+        enrollments: true,
       },
     });
 
-    // Calculate upcoming courses
+    // Count upcoming courses (schedules with future start dates)
     const upcomingCourses = instructorCourses.reduce((count, course) => {
-      const upcomingSchedules = course.schedules.filter(schedule => 
-        schedule.startDate && new Date(schedule.startDate) > now
+      const upcomingSchedules = course.schedules.filter(
+        schedule => schedule.startDate && new Date(schedule.startDate) >= startOfToday
       );
       return count + upcomingSchedules.length;
     }, 0);
 
-    // Calculate past courses
-    const pastCourses = instructorCourses.reduce((count, course) => {
-      const pastSchedules = course.schedules.filter(schedule => 
-        schedule.endDate && new Date(schedule.endDate) < now
-      );
-      return count + pastSchedules.length;
-    }, 0);
+    // Count online students (students enrolled in online New Mexico concealed carry course)
+    const onlineCourse = instructorCourses.find(course => 
+      course.title && 
+      course.title.toLowerCase().includes('online') && 
+      (course.title.toLowerCase().includes('concealed carry') || course.title.toLowerCase().includes('ccw')) &&
+      course.title.toLowerCase().includes('new mexico')
+    );
 
-    // Calculate unique students (all students who have enrolled)
-    const uniqueStudentIds = new Set(allEnrollments.map(e => e.studentId).filter(Boolean)); // Filter out null/undefined studentIds
+    const onlineEnrollments = onlineCourse 
+      ? onlineCourse.enrollments.filter(e => 
+          e.studentId !== null && 
+          (e.status === 'confirmed' || e.status === 'pending')
+        )
+      : [];
+
+    const uniqueOnlineStudentIds = new Set(
+      onlineEnrollments.map(e => e.studentId)
+    );
+    const onlineStudents = uniqueOnlineStudentIds.size;
+
+    // Get unique students across all enrollments
+    const allEnrollments = instructorCourses.flatMap(course => course.enrollments);
+    const uniqueStudentIds = new Set(
+      allEnrollments
+        .filter(e => e.studentId !== null)
+        .map(e => e.studentId)
+    );
     const allStudents = uniqueStudentIds.size;
 
-    // Calculate revenue statistics
-    const totalRevenue = allEnrollments
-      .filter(e => e.paymentStatus === 'paid' && e.course)
-      .reduce((sum, e) => {
-        const course = instructorCourses.find(c => c.id === e.courseId);
-        return sum + (course ? parseFloat(course.price.toString()) : 0);
-      }, 0);
+    // Calculate revenue
+    const paidEnrollments = allEnrollments.filter(e => e.paymentStatus === 'paid');
+    const pendingEnrollments = allEnrollments.filter(e => e.paymentStatus === 'pending');
 
-    const outstandingRevenue = allEnrollments
-      .filter(e => e.paymentStatus === 'pending' && e.course)
-      .reduce((sum, e) => {
-        const course = instructorCourses.find(c => c.id === e.courseId);
-        return sum + (course ? parseFloat(course.price.toString()) : 0);
-      }, 0);
+    const totalRevenue = paidEnrollments.reduce((sum, enrollment) => {
+      const course = instructorCourses.find(c => c.id === enrollment.courseId);
+      if (course) {
+        return sum + parseFloat(course.price.toString());
+      }
+      return sum;
+    }, 0);
 
-    // Count pending refund requests
-    const refundRequests = allEnrollments.filter(e => e.refundRequested && !e.refundProcessed).length;
+    const outstandingRevenue = pendingEnrollments.reduce((sum, enrollment) => {
+      const course = instructorCourses.find(c => c.id === enrollment.courseId);
+      if (course) {
+        return sum + parseFloat(course.price.toString());
+      }
+      return sum;
+    }, 0);
+
+    // Count refund requests
+    const refundRequests = allEnrollments.filter(
+      e => e.refundRequested && !e.refundProcessed
+    ).length;
 
     return {
       upcomingCourses,
-      pastCourses,
+      onlineStudents,
       allStudents,
-      totalRevenue,
-      outstandingRevenue,
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      outstandingRevenue: Math.round(outstandingRevenue * 100) / 100,
       refundRequests,
     };
   }

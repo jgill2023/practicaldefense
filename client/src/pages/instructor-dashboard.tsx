@@ -78,7 +78,7 @@ export default function InstructorDashboard() {
   // Fetch dashboard statistics
   const { data: dashboardStats, isLoading: statsLoading } = useQuery<{
     upcomingCourses: number;
-    pastCourses: number;
+    onlineStudents: number;
     allStudents: number;
     totalRevenue: number;
     outstandingRevenue: number;
@@ -537,7 +537,7 @@ export default function InstructorDashboard() {
 
   // Use dashboard statistics from API
   const upcomingCourses = dashboardStats?.upcomingCourses || 0;
-  const pastCourses = dashboardStats?.pastCourses || 0;
+  const onlineStudents = dashboardStats?.onlineStudents || 0;
   const allStudents = dashboardStats?.allStudents || 0;
   const totalRevenue = dashboardStats?.totalRevenue || 0;
   const outstandingRevenue = dashboardStats?.outstandingRevenue || 0;
@@ -984,14 +984,14 @@ export default function InstructorDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Past Courses</CardTitle>
-              <GraduationCap className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Online Students</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-muted-foreground" data-testid="text-past-courses">
-                {statsLoading ? '...' : pastCourses}
+              <div className="text-3xl font-bold text-purple-600" data-testid="text-online-students">
+                {statsLoading ? '...' : onlineStudents}
               </div>
-              <p className="text-sm text-muted-foreground">Completed events</p>
+              <p className="text-sm text-muted-foreground">Online CCW enrollments</p>
             </CardContent>
           </Card>
 
