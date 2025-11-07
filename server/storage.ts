@@ -4111,28 +4111,13 @@ export class DatabaseStorage implements IStorage {
 
   async syncPrintfulProducts(): Promise<{ productsProcessed: number; variantsProcessed: number; errors: string[] }> {
     const { printfulService } = await import('./printfulService');
+    const errors: string[] = [];
+    let productsProcessed = 0;
+    let variantsProcessed = 0;
 
     try {
-      // Fetch products from Printful
+      // Fetch all products from Printful
       const printfulProducts = await printfulService.getProducts();
-
-      let productsProcessed = 0;
-      let variantsProcessed = 0;
-      const errors: string[] = [];
-
-      // Get or create Printful category
-      let printfulCategory = await db.query.productCategories.findFirst({
-        where: eq(productCategories.slug, 'printful'),
-      });
-
-      if (!printfulCategory) {
-        const [newCategory] = await db.insert(productCategories).values({
-          name: 'Printful Products',
-          slug: 'printful',
-          description: 'Products synced from Printful',
-        }).returning();
-        printfulCategory = newCategory;
-      }
 
       for (const printfulProduct of printfulProducts) {
         try {
@@ -4145,50 +4130,43 @@ export class DatabaseStorage implements IStorage {
             // Create new product
             const [newProduct] = await db.insert(products).values({
               name: printfulProduct.name,
-              description: printfulProduct.name,
-              sku: `PRINTFUL-${printfulProduct.id}`,
-              price: '0', // Will be set from variants
-              categoryId: printfulCategory.id,
+              description: `Printful product: ${printfulProduct.name}`,
+              price: '0.00', // Will be updated from variants
+              categoryId: null,
+              sku: printfulProduct.external_id || `PRINTFUL-${printfulProduct.id}`,
               productType: 'physical',
               fulfillmentType: 'printful',
-              status: 'active',
-              printfulProductId: printfulProduct.id,
+              status: 'active', // Set as active so they appear in the product list
               primaryImageUrl: printfulProduct.thumbnail_url,
+              printfulProductId: printfulProduct.id,
             }).returning();
 
-            // Fetch and sync variants
-            const printfulVariants = await printfulService.getSyncVariants(printfulProduct.id);
+            productsProcessed++;
 
-            for (const variant of printfulVariants) {
+            // Fetch and create variants
+            const printfulVariants = await printfulService.getSyncVariants(printfulProduct.id);
+            for (const printfulVariant of printfulVariants) {
               await db.insert(productVariants).values({
                 productId: newProduct.id,
-                name: variant.name,
-                sku: variant.sku || `PRINTFUL-VAR-${variant.id}`,
-                price: variant.retail_price || '0',
-                printfulVariantId: variant.id,
-                imageUrl: variant.files?.[0]?.preview_url || variant.product?.image,
-                attributes: variant.options,
+                name: printfulVariant.name,
+                sku: printfulVariant.sku,
+                price: printfulVariant.retail_price,
+                printfulVariantId: printfulVariant.id,
+                imageUrl: printfulVariant.product?.image,
+                isActive: !printfulVariant.is_ignored,
               });
               variantsProcessed++;
             }
-
-            productsProcessed++;
           }
-        } catch (error) {
-          console.error(`Error syncing product ${printfulProduct.id}:`, error);
-          errors.push(`Product ${printfulProduct.id}: ${error.message}`);
+        } catch (error: any) {
+          errors.push(`Error syncing product ${printfulProduct.id}: ${error.message}`);
         }
       }
-
-      return {
-        productsProcessed,
-        variantsProcessed,
-        errors,
-      };
-    } catch (error) {
-      console.error('Printful sync error:', error);
-      throw new Error(`Failed to sync Printful products: ${error.message}`);
+    } catch (error: any) {
+      errors.push(`Error fetching Printful products: ${error.message}`);
     }
+
+    return { productsProcessed, variantsProcessed, errors };
   }
 
 
