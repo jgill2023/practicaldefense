@@ -14,6 +14,15 @@ The client-side is built with React 18, TypeScript, Tailwind CSS, and shadcn/ui.
 ## Backend Architecture
 The server uses a RESTful API design with Node.js and Express.js, written in TypeScript. Authentication is handled via Replit Auth with OpenID Connect, and session management uses Express sessions with PostgreSQL storage.
 
+## Template Setup
+
+This is a template for firearms instructors. New instructors should:
+
+1. Fork this Repl to create their own instance
+2. Complete the onboarding process via the "Onboarding" button on the instructor dashboard
+3. Add required secrets (Stripe) and optional secrets (Twilio, SendGrid, Moodle, Printful) via Replit Secrets
+4. See INSTRUCTOR_SETUP.md for detailed setup instructions
+
 ## Data Storage Solutions
 The application utilizes Neon PostgreSQL as its relational database. Drizzle ORM is used for type-safe queries and schema management, with Drizzle Kit for migrations. Key entities include Users (with license management and role-based access), Courses, Course Schedules, Enrollments (with payment status), Sessions, App Settings, Course Information Forms, and Student Form Responses.
 

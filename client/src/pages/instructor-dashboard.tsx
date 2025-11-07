@@ -962,6 +962,14 @@ export default function InstructorDashboard() {
             </div>
             <div className="flex items-center space-x-4 mt-4 sm:mt-0">
               <Button 
+                variant="outline"
+                onClick={() => setLocation('/onboarding')}
+                data-testid="button-onboarding"
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Onboarding
+              </Button>
+              <Button 
                 className="bg-accent text-accent-foreground hover:bg-accent/90"
                 onClick={() => setLocation('/course-management')}
                 data-testid="button-manage-courses"

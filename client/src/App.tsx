@@ -28,6 +28,7 @@ import DefensiveHandgunPage from "@/pages/defensive-handgun";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import TermsOfServicePage from "@/pages/terms-of-service";
 import RefundPolicyPage from "@/pages/refund-policy";
+import OnboardingPage from "@/pages/onboarding";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -65,6 +66,7 @@ function Router() {
       {isAuthenticated && (
         <>
           <Route path="/instructor-dashboard" component={InstructorDashboard} />
+          <Route path="/onboarding" component={OnboardingPage} />
           <Route path="/course-management" component={CourseManagement} />
           <Route path="/course-forms-management" component={CourseFormsManagement} />
           <Route path="/product-management" component={ProductManagement} />

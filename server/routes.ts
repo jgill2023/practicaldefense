@@ -16,12 +16,17 @@ import { CourseNotificationEngine, NotificationEngine } from "./notificationEngi
 import { NotificationEmailService } from "./emailService";
 import "./types"; // Import type declarations
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+// Stripe is required for payment processing
+// During setup, payments will be disabled if not configured
+let stripe: Stripe | null = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-08-27.basil",
+  });
+} else {
+  console.warn('⚠️  STRIPE_SECRET_KEY not configured. Payment processing is disabled.');
+  console.warn('   Complete the onboarding process to enable payments.');
 }
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-08-27.basil",
-});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -2671,6 +2676,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Stripe payment routes
   app.post("/api/create-payment-intent", isAuthenticated, async (req: any, res) => {
+    if (!stripe) {
+      return res.status(503).json({ 
+        message: "Payment processing is not configured. Please complete the onboarding process and add your Stripe API key." 
+      });
+    }
+    
     try {
       const { enrollmentId, promoCode } = req.body;
       const userId = req.user?.claims?.sub;
