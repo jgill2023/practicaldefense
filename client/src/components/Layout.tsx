@@ -365,8 +365,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Footer */}
       <footer className="bg-primary text-primary-foreground py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-10 gap-8">
-            <div className="md:col-span-4">
+          <div className="grid md:grid-cols-12 gap-8">
+            <div className="md:col-span-5">
               <h3 className="text-xl font-bold mb-4">Practical Defense Training</h3>
               <p className="text-primary-foreground/80">
                 Professional firearms instruction by certified instructors. Serving the local community with safe, comprehensive training programs.
@@ -393,7 +393,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            <div className="md:col-span-2">
+            <div className="md:col-span-3">
               <h4 className="font-semibold mb-4">Contact</h4>
               <div className="space-y-2 text-primary-foreground/80">
                 <div className="flex items-start space-x-2">
