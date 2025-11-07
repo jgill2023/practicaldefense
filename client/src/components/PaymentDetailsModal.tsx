@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, DollarSign, Calendar, Tag, AlertCircle, X, MessageSquare, Mail } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { CreditCard, DollarSign, Calendar, Tag, AlertCircle, X, MessageSquare, Mail, RefreshCw } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
@@ -49,6 +52,9 @@ export function PaymentDetailsModal({
   enrollmentId 
 }: PaymentDetailsModalProps) {
   const { toast } = useToast();
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refundReason, setRefundReason] = useState("");
   
   const { data: paymentDetails, isLoading, error } = useQuery<PaymentDetails>({
     queryKey: ["/api/instructor/payment-details", enrollmentId],
@@ -97,6 +103,45 @@ export function PaymentDetailsModal({
       toast({
         title: "Failed to Send Email",
         description: "Unable to send email reminder. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const processRefundMutation = useMutation({
+    mutationFn: async () => {
+      const body: any = {};
+      
+      if (refundAmount && refundAmount.trim() !== "") {
+        const amount = parseFloat(refundAmount);
+        if (isNaN(amount) || amount <= 0) {
+          throw new Error("Please enter a valid refund amount");
+        }
+        body.refundAmount = amount;
+      }
+      
+      if (refundReason && refundReason.trim() !== "") {
+        body.refundReason = refundReason.trim();
+      }
+      
+      return await apiRequest("POST", `/api/instructor/refund-requests/${enrollmentId}/process`, body);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Refund Processed",
+        description: "The refund has been processed successfully and the student has been notified.",
+      });
+      setShowRefundDialog(false);
+      setRefundAmount("");
+      setRefundReason("");
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/payment-details", enrollmentId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/refund-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Refund Failed",
+        description: error?.message || "Unable to process refund. Please try again.",
         variant: "destructive",
       });
     },
@@ -291,6 +336,134 @@ export function PaymentDetailsModal({
                         </div>
                       </div>
                     ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Refund Section for Paid Enrollments */}
+            {paymentDetails.paymentStatus === 'paid' && !showRefundDialog && (
+              <Card className="border-purple-200 bg-purple-50">
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="h-5 w-5 text-purple-600" />
+                      <div>
+                        <p className="font-medium text-purple-800">Process Refund</p>
+                        <p className="text-sm text-purple-700">
+                          Issue a full or partial refund for this enrollment
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowRefundDialog(true)}
+                      className="bg-white hover:bg-purple-100"
+                      data-testid="button-initiate-refund"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Process Refund
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Refund Dialog */}
+            {showRefundDialog && (
+              <Card className="border-purple-200 bg-purple-50">
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="h-5 w-5 text-purple-600" />
+                        <p className="font-medium text-purple-800">Process Refund</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setShowRefundDialog(false);
+                          setRefundAmount("");
+                          setRefundReason("");
+                        }}
+                        data-testid="button-cancel-refund"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="refund-amount" className="text-sm font-medium text-purple-900">
+                          Refund Amount (Optional)
+                        </Label>
+                        <Input
+                          id="refund-amount"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max={paymentDetails.amountPaid}
+                          placeholder={`Leave empty for full refund ($${paymentDetails.amountPaid.toFixed(2)})`}
+                          value={refundAmount}
+                          onChange={(e) => setRefundAmount(e.target.value)}
+                          className="bg-white mt-1"
+                          data-testid="input-refund-amount"
+                        />
+                        <p className="text-xs text-purple-700 mt-1">
+                          If left empty, the full amount of {formatCurrency(paymentDetails.amountPaid)} will be refunded
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="refund-reason" className="text-sm font-medium text-purple-900">
+                          Refund Reason (Optional)
+                        </Label>
+                        <Textarea
+                          id="refund-reason"
+                          placeholder="Enter reason for refund (e.g., Student requested cancellation, Course rescheduled)"
+                          value={refundReason}
+                          onChange={(e) => setRefundReason(e.target.value)}
+                          className="bg-white mt-1"
+                          rows={3}
+                          data-testid="input-refund-reason"
+                        />
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          onClick={() => processRefundMutation.mutate()}
+                          disabled={processRefundMutation.isPending}
+                          className="bg-purple-600 hover:bg-purple-700"
+                          data-testid="button-confirm-refund"
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          {processRefundMutation.isPending ? "Processing..." : "Process Refund"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowRefundDialog(false);
+                            setRefundAmount("");
+                            setRefundReason("");
+                          }}
+                          disabled={processRefundMutation.isPending}
+                          className="bg-white"
+                          data-testid="button-cancel-refund-form"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-lg border border-purple-200">
+                        <p className="text-xs text-purple-700">
+                          <strong>Note:</strong> Processing this refund will create a refund in Stripe, 
+                          update the enrollment status to "Refunded", and automatically send a notification 
+                          to the student.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
