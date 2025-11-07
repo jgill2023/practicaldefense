@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
@@ -97,6 +98,8 @@ export default function InstructorDashboard() {
 
   // Refund requests modal state
   const [showRefundRequestsModal, setShowRefundRequestsModal] = useState(false);
+  const [refundFormData, setRefundFormData] = useState<{[key: string]: {amount: string, reason: string}}>({});
+  const [expandedRefundId, setExpandedRefundId] = useState<string | null>(null);
 
   // Archive course mutation
   const archiveCourseMutation = useMutation({
@@ -444,18 +447,32 @@ export default function InstructorDashboard() {
 
   // Process refund mutation
   const processRefundMutation = useMutation({
-    mutationFn: async (enrollmentId: string) => {
-      await apiRequest("POST", `/api/instructor/refund-requests/${enrollmentId}/process`);
+    mutationFn: async ({ enrollmentId, refundAmount, refundReason }: { enrollmentId: string, refundAmount?: number, refundReason?: string }) => {
+      const body: any = {};
+      if (refundAmount !== undefined && refundAmount > 0) {
+        body.refundAmount = refundAmount;
+      }
+      if (refundReason) {
+        body.refundReason = refundReason;
+      }
+      await apiRequest("POST", `/api/instructor/refund-requests/${enrollmentId}/process`, body);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast({
         title: "Refund Processed",
-        description: "Refund has been marked as processed.",
+        description: "Refund has been processed successfully and the student has been notified.",
       });
+      // Clear the form data for this enrollment
+      setRefundFormData(prev => {
+        const updated = { ...prev };
+        delete updated[variables.enrollmentId];
+        return updated;
+      });
+      setExpandedRefundId(null);
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/refund-requests"] });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -469,7 +486,7 @@ export default function InstructorDashboard() {
       }
       toast({
         title: "Process Failed",
-        description: "Failed to process refund. Please try again.",
+        description: error?.message || "Failed to process refund. Please try again.",
         variant: "destructive",
       });
     },
@@ -1338,19 +1355,143 @@ export default function InstructorDashboard() {
                           </div>
                         </div>
                         <div className="flex-shrink-0 ml-4">
-                          <Button
-                            onClick={() => {
-                              if (window.confirm('Mark this refund as processed? Make sure you have issued the refund through Stripe first.')) {
-                                processRefundMutation.mutate(enrollment.id);
-                              }
-                            }}
-                            disabled={processRefundMutation.isPending}
-                            size="sm"
-                          >
-                            Mark as Processed
-                          </Button>
+                          {expandedRefundId !== enrollment.id ? (
+                            <Button
+                              onClick={() => {
+                                setExpandedRefundId(enrollment.id);
+                                // Initialize form data if not exists
+                                if (!refundFormData[enrollment.id]) {
+                                  setRefundFormData(prev => ({
+                                    ...prev,
+                                    [enrollment.id]: { amount: '', reason: '' }
+                                  }));
+                                }
+                              }}
+                              size="sm"
+                              data-testid={`button-process-refund-${enrollment.id}`}
+                            >
+                              Process Refund
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setExpandedRefundId(null);
+                              }}
+                              size="sm"
+                              data-testid={`button-collapse-refund-${enrollment.id}`}
+                            >
+                              Cancel
+                            </Button>
+                          )}
                         </div>
                       </div>
+                      
+                      {/* Refund Form - Shows when expanded */}
+                      {expandedRefundId === enrollment.id && (
+                        <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                          <div className="space-y-3">
+                            <div>
+                              <Label htmlFor={`refund-amount-${enrollment.id}`} className="text-sm font-medium">
+                                Refund Amount (Optional)
+                              </Label>
+                              <Input
+                                id={`refund-amount-${enrollment.id}`}
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max={enrollment.course?.price ? parseFloat(enrollment.course.price.toString()) : undefined}
+                                placeholder={`Leave empty for full refund ($${enrollment.course?.price ? parseFloat(enrollment.course.price.toString()).toFixed(2) : '0.00'})`}
+                                value={refundFormData[enrollment.id]?.amount || ''}
+                                onChange={(e) => {
+                                  setRefundFormData(prev => ({
+                                    ...prev,
+                                    [enrollment.id]: {
+                                      ...prev[enrollment.id],
+                                      amount: e.target.value
+                                    }
+                                  }));
+                                }}
+                                className="bg-white mt-1"
+                                data-testid={`input-refund-amount-${enrollment.id}`}
+                              />
+                              <p className="text-xs text-purple-700 mt-1">
+                                Full refund amount: ${enrollment.course?.price ? parseFloat(enrollment.course.price.toString()).toFixed(2) : '0.00'}
+                              </p>
+                            </div>
+
+                            <div>
+                              <Label htmlFor={`refund-reason-${enrollment.id}`} className="text-sm font-medium">
+                                Refund Reason (Optional)
+                              </Label>
+                              <Textarea
+                                id={`refund-reason-${enrollment.id}`}
+                                placeholder="Enter reason for refund (e.g., Student requested cancellation)"
+                                value={refundFormData[enrollment.id]?.reason || ''}
+                                onChange={(e) => {
+                                  setRefundFormData(prev => ({
+                                    ...prev,
+                                    [enrollment.id]: {
+                                      ...prev[enrollment.id],
+                                      reason: e.target.value
+                                    }
+                                  }));
+                                }}
+                                className="bg-white mt-1"
+                                rows={3}
+                                data-testid={`input-refund-reason-${enrollment.id}`}
+                              />
+                            </div>
+
+                            <div className="flex gap-2 pt-2">
+                              <Button
+                                onClick={() => {
+                                  const formData = refundFormData[enrollment.id];
+                                  const amount = formData?.amount ? parseFloat(formData.amount) : undefined;
+                                  
+                                  if (amount !== undefined && (isNaN(amount) || amount <= 0)) {
+                                    toast({
+                                      title: "Invalid Amount",
+                                      description: "Please enter a valid refund amount or leave empty for full refund.",
+                                      variant: "destructive",
+                                    });
+                                    return;
+                                  }
+                                  
+                                  processRefundMutation.mutate({
+                                    enrollmentId: enrollment.id,
+                                    refundAmount: amount,
+                                    refundReason: formData?.reason || undefined
+                                  });
+                                }}
+                                disabled={processRefundMutation.isPending}
+                                className="bg-purple-600 hover:bg-purple-700"
+                                data-testid={`button-confirm-refund-${enrollment.id}`}
+                              >
+                                {processRefundMutation.isPending ? "Processing..." : "Confirm Refund"}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setExpandedRefundId(null);
+                                }}
+                                disabled={processRefundMutation.isPending}
+                                data-testid={`button-cancel-refund-form-${enrollment.id}`}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+
+                            <div className="bg-white p-3 rounded-lg border border-purple-200">
+                              <p className="text-xs text-purple-700">
+                                <strong>Note:</strong> Processing this refund will create a refund in Stripe, 
+                                update the enrollment status to "Refunded", and automatically send a notification 
+                                to the student.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
