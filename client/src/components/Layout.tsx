@@ -376,25 +376,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="space-y-4">
               <h4 className="font-semibold">Support</h4>
               <div className="space-y-2 text-primary-foreground/80">
-                <Link href="/contact" className="block hover:text-accent transition-colors" data-testid="link-contact-support">Contact Us</Link>
-                <Link href="/privacy-policy" className="block hover:text-accent transition-colors" data-testid="link-privacy-policy">Privacy Policy</Link>
-                <Link href="/terms-of-service" className="block hover:text-accent transition-colors" data-testid="link-terms-of-service">Terms of Service</Link>
-                <Link href="/refund-policy" className="block hover:text-accent transition-colors" data-testid="link-refund-policy">Refund Policy</Link>
+                <Link href="/contact" className="block hover:text-primary-foreground transition-colors" data-testid="link-contact-support">Contact Us</Link>
+                <Link href="/privacy-policy" className="block hover:text-primary-foreground transition-colors" data-testid="link-privacy-policy">Privacy Policy</Link>
+                <Link href="/terms-of-service" className="block hover:text-primary-foreground transition-colors" data-testid="link-terms-of-service">Terms of Service</Link>
+                <Link href="/refund-policy" className="block hover:text-primary-foreground transition-colors" data-testid="link-refund-policy">Refund Policy</Link>
               </div>
             </div>
 
             <div className="space-y-4">
               <h4 className="font-semibold">Contact</h4>
               <div className="space-y-2 text-primary-foreground/80">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-start space-x-2">
                   <span>📞</span>
-                  <a href="tel:+15059445247" className="hover:text-accent transition-colors">(505) 944-5247</a>
+                  <a href="tel:+15059445247" className="hover:text-primary-foreground transition-colors">(505) 944-5247</a>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-start space-x-2">
                   <span>✉️</span>
-                  <a href="mailto:jeremy@abqconcealedcarry.com" className="hover:text-accent transition-colors">jeremy@abqconcealedcarry.com</a>
+                  <a href="mailto:jeremy@abqconcealedcarry.com" className="hover:text-primary-foreground transition-colors">jeremy@abqconcealedcarry.com</a>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-start space-x-2">
                   <span>📍</span>
                   <span>Albuquerque, New Mexico</span>
                 </div>
@@ -403,7 +403,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-primary-foreground/80">
-            <p>&copy; 2024 Practical Defense Training. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Practical Defense Training. All rights reserved.</p>
           </div>
         </div>
       </footer>
