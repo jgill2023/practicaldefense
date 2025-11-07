@@ -49,10 +49,10 @@ export const users = pgTable("users", {
   emergencyContactPhone: varchar("emergency_contact_phone", { length: 20 }),
   // Email reminder preferences
   licenseExpirationReminderDays: integer("license_expiration_reminder_days").default(60), // 30, 60, or 90 days
-  enableLicenseExpirationReminder: boolean("enable_license_expiration_reminder").default(false),
+  enableLicenseExpirationReminder: boolean("enable_license_expiration_reminder").default(true),
   // 2-year refresher reminder (24 months after license issued date)
   refresherReminderDays: integer("refresher_reminder_days").default(60), // 30 or 60 days
-  enableRefresherReminder: boolean("enable_refresher_reminder").default(false),
+  enableRefresherReminder: boolean("enable_refresher_reminder").default(true),
   // SMS notification preferences
   enableSmsNotifications: boolean("enable_sms_notifications").default(true), // Master SMS toggle
   enableSmsReminders: boolean("enable_sms_reminders").default(true), // SMS for course/license reminders

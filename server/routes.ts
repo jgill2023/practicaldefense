@@ -64,6 +64,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         emergencyContactName: z.string().optional(),
         emergencyContactPhone: z.string().optional(),
         preferredContactMethods: z.array(z.string()).optional(),
+        enableLicenseExpirationReminder: z.boolean().optional(),
+        enableRefresherReminder: z.boolean().optional(),
         enableSmsNotifications: z.boolean().optional(),
         enableSmsReminders: z.boolean().optional(),
         enableSmsPaymentNotices: z.boolean().optional(),
@@ -1667,11 +1669,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/instructor/roster', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      
+
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
@@ -1785,11 +1787,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/instructor/dashboard-stats', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      
+
       const stats = await storage.getInstructorDashboardStats(userId);
       res.json(stats);
     } catch (error) {
@@ -1802,11 +1804,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/instructor/refund-requests', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      
+
       const user = await storage.getUser(userId);
 
       if (!user || user.role !== 'instructor') {
@@ -1837,13 +1839,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { enrollmentId } = req.params;
-      
+
       // Validate request body
       const refundRequestSchema = z.object({
         refundAmount: z.number().positive().optional(),
         refundReason: z.string().optional(),
       });
-      
+
       const { refundAmount, refundReason } = refundRequestSchema.parse(req.body);
 
       const enrollment = await storage.getEnrollment(enrollmentId);
@@ -1875,7 +1877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Calculate refund amount in cents
           const schedule = await storage.getCourseSchedule(enrollment.scheduleId);
           const coursePrice = schedule?.price || course.price || 0;
-          
+
           // If refund amount is provided, use it; otherwise refund full amount
           const amountToRefund = refundAmount ? Math.round(refundAmount * 100) : Math.round(coursePrice * 100);
 
@@ -3710,7 +3712,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { scope, courseId, isActive } = req.query;
       const filters: any = {};
-
       if (scope) filters.scope = scope;
       if (courseId) filters.courseId = courseId;
       if (isActive !== undefined) filters.isActive = isActive === 'true';
@@ -4475,11 +4476,11 @@ jeremy@abqconcealedcarry.com
   app.get("/api/instructor/payment-details/:enrollmentId", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
-      
+
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      
+
       const { enrollmentId } = req.params;
 
       // Only allow instructors to view payment details
