@@ -4474,7 +4474,12 @@ jeremy@abqconcealedcarry.com
   // Get detailed payment information for enrollment
   app.get("/api/instructor/payment-details/:enrollmentId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.claims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
       const { enrollmentId } = req.params;
 
       // Only allow instructors to view payment details
