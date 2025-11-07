@@ -1521,8 +1521,8 @@ export default function InstructorDashboard() {
       {/* Online Students Modal */}
       <Dialog open={showOnlineStudentsModal} onOpenChange={setShowOnlineStudentsModal}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+          <DialogHeader className="relative">
+            <DialogTitle className="flex items-center gap-2 pr-8">
               <Users className="h-5 w-5 text-purple-600" />
               Online Students
             </DialogTitle>
@@ -1531,81 +1531,107 @@ export default function InstructorDashboard() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {statsLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+          <Tabs defaultValue="current" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="current" data-testid="tab-current-online-students">
+                Current Students
+              </TabsTrigger>
+              <TabsTrigger value="former" data-testid="tab-former-online-students">
+                Former Students
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="current" className="mt-4" data-testid="content-current-online-students">
+              <div className="space-y-4">
+                {statsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : onlineStudents === 0 ? (
+                  <div className="text-center py-8">
+                    <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">No Current Online Students</h3>
+                    <p className="text-muted-foreground">No students are currently enrolled in the online CCW course.</p>
+                  </div>
+                ) : (
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Student</th>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Email</th>
+                          <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Phone</th>
+                          <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Payment Status</th>
+                          <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Enrollment Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {enrollments
+                          .filter(e => {
+                            // Filter for online New Mexico concealed carry course
+                            return e.course?.title && 
+                              e.course.title.toLowerCase().includes('online') && 
+                              (e.course.title.toLowerCase().includes('concealed carry') || 
+                               e.course.title.toLowerCase().includes('ccw')) &&
+                              e.course.title.toLowerCase().includes('new mexico') &&
+                              e.studentId !== null &&
+                              (e.status === 'confirmed' || e.status === 'pending');
+                          })
+                          .map((enrollment) => (
+                            <tr key={enrollment.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4">
+                                <div className="font-medium text-gray-900">
+                                  {enrollment.student?.firstName} {enrollment.student?.lastName}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <a
+                                  href={`mailto:${enrollment.student?.email}`}
+                                  className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                                >
+                                  {enrollment.student?.email}
+                                </a>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {enrollment.student?.phone || '-'}
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <Badge
+                                  variant={enrollment.paymentStatus === 'paid' ? 'default' : 'secondary'}
+                                  className={enrollment.paymentStatus === 'paid' ? 'bg-green-500' : 'bg-amber-500'}
+                                >
+                                  {enrollment.paymentStatus}
+                                </Badge>
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                <Badge
+                                  variant={enrollment.status === 'confirmed' ? 'default' : 'secondary'}
+                                >
+                                  {enrollment.status}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
-            ) : onlineStudents === 0 ? (
+            </TabsContent>
+
+            <TabsContent value="former" className="mt-4" data-testid="content-former-online-students">
               <div className="text-center py-8">
                 <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No Online Students</h3>
-                <p className="text-muted-foreground">No students are currently enrolled in the online CCW course.</p>
+                <h3 className="text-lg font-medium text-foreground mb-2">Former Students</h3>
+                <p className="text-muted-foreground">
+                  Online students who have attended an in-person training session will appear here.
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  This functionality will be added soon.
+                </p>
               </div>
-            ) : (
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Student</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Email</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Phone</th>
-                      <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Payment Status</th>
-                      <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Enrollment Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {enrollments
-                      .filter(e => {
-                        // Filter for online New Mexico concealed carry course
-                        return e.course?.title && 
-                          e.course.title.toLowerCase().includes('online') && 
-                          (e.course.title.toLowerCase().includes('concealed carry') || 
-                           e.course.title.toLowerCase().includes('ccw')) &&
-                          e.course.title.toLowerCase().includes('new mexico') &&
-                          e.studentId !== null &&
-                          (e.status === 'confirmed' || e.status === 'pending');
-                      })
-                      .map((enrollment) => (
-                        <tr key={enrollment.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4">
-                            <div className="font-medium text-gray-900">
-                              {enrollment.student?.firstName} {enrollment.student?.lastName}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <a
-                              href={`mailto:${enrollment.student?.email}`}
-                              className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
-                            >
-                              {enrollment.student?.email}
-                            </a>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            {enrollment.student?.phone || '-'}
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <Badge
-                              variant={enrollment.paymentStatus === 'paid' ? 'default' : 'secondary'}
-                              className={enrollment.paymentStatus === 'paid' ? 'bg-green-500' : 'bg-amber-500'}
-                            >
-                              {enrollment.paymentStatus}
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <Badge
-                              variant={enrollment.status === 'confirmed' ? 'default' : 'secondary'}
-                            >
-                              {enrollment.status}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </Layout>
