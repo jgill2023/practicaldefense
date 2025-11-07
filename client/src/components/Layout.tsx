@@ -365,7 +365,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Footer */}
       <footer className="bg-primary text-primary-foreground py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4">Practical Defense Training</h3>
               <p className="text-primary-foreground/80">
@@ -380,6 +380,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/privacy-policy" className="block hover:text-primary-foreground transition-colors" data-testid="link-privacy-policy">Privacy Policy</Link>
                 <Link href="/terms-of-service" className="block hover:text-primary-foreground transition-colors" data-testid="link-terms-of-service">Terms of Service</Link>
                 <Link href="/refund-policy" className="block hover:text-primary-foreground transition-colors" data-testid="link-refund-policy">Refund Policy</Link>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Quick Links</h4>
+              <div className="space-y-2 text-primary-foreground/80">
+                <Link href="/schedule-list" className="block hover:text-primary-foreground transition-colors" data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
+                <Link href="/student-portal" className="block hover:text-primary-foreground transition-colors" data-testid="link-footer-student-dashboard">Student Dashboard</Link>
+                <a href="#resources" className="block hover:text-primary-foreground transition-colors">Resources</a>
+                <Link href="/store" className="block hover:text-primary-foreground transition-colors" data-testid="link-footer-shop">Shop</Link>
               </div>
             </div>
 
