@@ -1666,7 +1666,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course roster view route (for dialog display)
   app.get('/api/instructor/roster', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.claims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
