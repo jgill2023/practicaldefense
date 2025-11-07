@@ -51,6 +51,8 @@ const editProfileSchema = z.object({
   emergencyContactName: z.string().optional(),
   emergencyContactPhone: z.string().optional(),
   preferredContactMethods: z.array(z.string()).optional(),
+  enableLicenseExpirationReminder: z.boolean().optional(),
+  enableRefresherReminder: z.boolean().optional(),
   enableSmsNotifications: z.boolean().optional(),
   enableSmsReminders: z.boolean().optional(),
   enableSmsPaymentNotices: z.boolean().optional(),
@@ -1276,6 +1278,8 @@ function EditProfileDialog({ isOpen, onClose, user }: {
       emergencyContactName: user.emergencyContactName || '',
       emergencyContactPhone: user.emergencyContactPhone || '',
       preferredContactMethods: user.preferredContactMethods || [],
+      enableLicenseExpirationReminder: user.enableLicenseExpirationReminder ?? false,
+      enableRefresherReminder: user.enableRefresherReminder ?? false,
       enableSmsNotifications: user.enableSmsNotifications ?? true,
       enableSmsReminders: user.enableSmsReminders ?? true,
       enableSmsPaymentNotices: user.enableSmsPaymentNotices ?? false,
@@ -1577,6 +1581,60 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                   </FormItem>
                 )}
               />
+            </div>
+
+            {/* License Renewal Reminders */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">License Renewal Reminders</h3>
+              <div className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="enableLicenseExpirationReminder"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-medium">
+                          License Expiration Reminders
+                        </FormLabel>
+                        <FormDescription>
+                          Receive reminders when your concealed carry license is expiring
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-license-expiration"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="enableRefresherReminder"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-medium">
+                          Refresher Course Reminders
+                        </FormLabel>
+                        <FormDescription>
+                          Receive reminders to take a refresher course before license renewal
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-refresher-reminder"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             {/* SMS Notification Preferences */}
