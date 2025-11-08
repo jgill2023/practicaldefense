@@ -51,7 +51,7 @@ export default function Landing() {
 
   // Filter categories to only show those marked for home page display
   const visibleCategories = categories.filter(cat => cat.showOnHomePage !== false);
-  
+
   // Extract unique category names
   const availableCategories = [
     ...new Set(visibleCategories.map(category => getCategoryName(category.name))),
@@ -204,10 +204,10 @@ export default function Landing() {
 
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
-          <h1 className="font-medium mb-4 tracking-tight" style={{ fontSize: '40px' }}>
+          <h1 className="font-medium mb-4 tracking-tight" style={{ fontSize: '40px', fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
             Tactical Advantage
           </h1>
-          <p className="font-light mb-12 tracking-wide" style={{ fontSize: '25px' }}>
+          <p className="font-light mb-12 tracking-wide" style={{ fontSize: '25px', fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
             Different by Design
           </p>
 
