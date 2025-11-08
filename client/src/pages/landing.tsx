@@ -204,10 +204,10 @@ export default function Landing() {
 
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
-          <h1 className="uppercase mb-4" style={{ fontSize: '33px', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, letterSpacing: '3px', lineHeight: '1.3em' }}>
+          <h1 className="uppercase mb-4" style={{ fontSize: '80px', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, letterSpacing: '3px', lineHeight: '1.1em' }}>
             Tactical Advantage
           </h1>
-          <p className="uppercase font-light mb-12 tracking-wide" style={{ fontSize: '25px', fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
+          <p className="uppercase mb-12" style={{ fontSize: '33px', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, letterSpacing: '3px', lineHeight: '1.3em' }}>
             Different by Design
           </p>
 
