@@ -225,11 +225,11 @@ export default function Landing() {
         </div>
 
       {/* Results-Driven Training Section - Overlaid on hero */}
-        <div className="absolute bottom-0 left-0 right-0 z-30 pointer-events-none" style={{ height: '40vh' }}>
-          <div className="relative bg-white h-full" style={{ clipPath: 'polygon(0 0, 100% 15%, 100% 100%, 0 100%)' }}>
-            <div className="py-8 px-4 sm:px-6 lg:px-8 text-center pointer-events-auto">
-              <div className="max-w-7xl mx-auto pt-4">
-                <h2 className="text-3xl lg:text-4xl mb-6 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, color: '#000' }}>
+        <div className="absolute bottom-0 left-0 right-0 z-30 pointer-events-none" style={{ height: '25vh' }}>
+          <div className="relative bg-white h-full" style={{ clipPath: 'polygon(0 0, 100% 10%, 100% 100%, 0 100%)' }}>
+            <div className="py-6 px-4 sm:px-6 lg:px-8 text-center pointer-events-auto">
+              <div className="max-w-7xl mx-auto pt-2">
+                <h2 className="text-3xl lg:text-4xl mb-4 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, color: '#000' }}>
                   <span className="line-through">Traditional</span> Results-Driven Training
                 </h2>
                 <p className="text-lg max-w-4xl mx-auto" style={{ color: '#666' }}>
