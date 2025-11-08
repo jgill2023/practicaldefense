@@ -92,6 +92,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   alt="Tactical Advantage" 
                   className="h-12 cursor-pointer"
                   data-testid="link-home"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    console.error('Logo failed to load from:', e.currentTarget.src);
+                  }}
                 />
               </Link>
             </div>
