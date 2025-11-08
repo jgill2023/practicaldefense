@@ -214,7 +214,7 @@ export default function Landing() {
           <div className="flex justify-center mb-16">
             <Button 
               size="lg" 
-              className="bg-white text-black hover:bg-white/90 px-8 py-3 text-lg rounded"
+              className="bg-white text-black hover:bg-gray-200 px-8 py-3 text-lg rounded border-2 border-white transition-colors"
               onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
               data-testid="button-browse-courses"
             >
