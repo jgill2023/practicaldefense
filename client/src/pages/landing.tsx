@@ -229,7 +229,7 @@ export default function Landing() {
       {/* Traditional Results-Driven Training */}
       <section className="relative py-16 bg-white overflow-hidden">
         {/* Diagonal slope overlay */}
-        <div className="absolute top-0 left-0 right-0 h-32 bg-black transform -skew-y-2 origin-top-left -translate-y-16"></div>
+        <div className="absolute top-0 left-0 right-0 h-32 bg-black transform skew-y-2 origin-top-right -translate-y-16"></div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl mb-6 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, color: '#000' }}>
