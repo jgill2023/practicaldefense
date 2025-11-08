@@ -225,9 +225,9 @@ export default function Landing() {
         </div>
 
       {/* Results-Driven Training Section - Overlaid on hero */}
-        <div className="absolute bottom-0 left-0 right-0 z-30 pointer-events-none" style={{ height: '9vh' }}>
-          <div className="relative bg-white h-full" style={{ clipPath: 'polygon(0 0, 100% 20%, 100% 100%, 0 100%)' }}>
-            <div className="py-2 px-4 sm:px-6 lg:px-8 text-center pointer-events-auto">
+        <div className="absolute bottom-0 left-0 right-0 z-30 pointer-events-none" style={{ height: '15vh' }}>
+          <div className="relative bg-white h-full" style={{ clipPath: 'polygon(0 0, 100% 40%, 100% 100%, 0 100%)' }}>
+            <div className="px-4 sm:px-6 lg:px-8 text-center pointer-events-auto" style={{ paddingTop: '80px', paddingBottom: '8px' }}>
               <div className="max-w-7xl mx-auto">
                 <h2 className="text-xl lg:text-2xl mb-2 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, color: '#000' }}>
                   <span className="line-through">Traditional</span> Results-Driven Training
