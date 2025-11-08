@@ -26,10 +26,10 @@ export default function RefundPolicyPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              At Practical Defense Training, LLC ("we," "us," or "our"), we understand that plans can change. Because class sizes are limited and range time is reserved in advance, we have established the following refund and cancellation policy to ensure fairness to all students and instructors.
+              At Tactical Advantage, LLC ("we," "us," or "our"), we understand that plans can change. Because class sizes are limited and range time is reserved in advance, we have established the following refund and cancellation policy to ensure fairness to all students and instructors.
             </p>
             <p className="text-muted-foreground mt-4">
-              By registering for a course on <a href="https://www.abqconcealedcarry.com" className="text-accent hover:underline">www.abqconcealedcarry.com</a>, you acknowledge and agree to the terms below.
+              By registering for a course on <a href="https://www.tacticaladv.com" className="text-accent hover:underline">www.tacticaladv.com</a>, you acknowledge and agree to the terms below.
             </p>
           </CardContent>
         </Card>
@@ -168,9 +168,9 @@ export default function RefundPolicyPage() {
               For questions or cancellation requests, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Practical Defense Training, LLC</strong></p>
-              <p><strong>Email:</strong> <a href="mailto:info@abqconcealedcarry.com" className="text-accent hover:underline">info@abqconcealedcarry.com</a></p>
-              <p><strong>Website:</strong> <a href="https://www.abqconcealedcarry.com" className="text-accent hover:underline">www.abqconcealedcarry.com</a></p>
+              <p><strong>Tactical Advantage, LLC</strong></p>
+              <p><strong>Email:</strong> <a href="mailto:info@tacticaladv.com" className="text-accent hover:underline">info@tacticaladv.com</a></p>
+              <p><strong>Website:</strong> <a href="https://www.tacticaladv.com" className="text-accent hover:underline">www.tacticaladv.com</a></p>
               <p><strong>Location:</strong> New Mexico, USA</p>
             </div>
           </CardContent>

@@ -26,7 +26,7 @@ export default function PrivacyPolicyPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Practical Defense Training, LLC ("we," "our," or "us") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website www.abqconcealedcarry.com, register for courses, or otherwise interact with our services.
+              Tactical Advantage, LLC ("we," "our," or "us") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website www.tacticaladv.com, register for courses, or otherwise interact with our services.
             </p>
             <p className="text-muted-foreground mt-4">
               By using our website or submitting your information, you agree to the terms of this Privacy Policy.
@@ -177,7 +177,7 @@ export default function PrivacyPolicyPage() {
               <li>Request data portability (GDPR only)</li>
             </ul>
             <p className="text-muted-foreground mt-4">
-              To exercise these rights, contact us at info@abqconcealedcarry.com. We will respond within applicable legal timeframes.
+              To exercise these rights, contact us at info@tacticaladv.com. We will respond within applicable legal timeframes.
             </p>
           </CardContent>
         </Card>
@@ -224,9 +224,9 @@ export default function PrivacyPolicyPage() {
               For privacy inquiries or to exercise your data rights, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Practical Defense Training, LLC</strong></p>
-              <p><strong>Email:</strong> info@abqconcealedcarry.com</p>
-              <p><strong>Website:</strong> www.abqconcealedcarry.com</p>
+              <p><strong>Tactical Advantage, LLC</strong></p>
+              <p><strong>Email:</strong> info@tacticaladv.com</p>
+              <p><strong>Website:</strong> www.tacticaladv.com</p>
               <p><strong>Location:</strong> New Mexico, USA</p>
             </div>
           </CardContent>

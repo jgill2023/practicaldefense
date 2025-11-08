@@ -69,11 +69,11 @@ export interface NotificationVariables {
 
 export class NotificationEngine {
   private static readonly SYSTEM_VARIABLES = {
-    companyName: 'Practical Defense Training',
+    companyName: 'Tactical Advantage',
     companyPhone: '(555) 123-4567',
-    companyEmail: 'info@practicaldefensetraining.com',
-    website: 'practicaldefensetraining.com',
-    websiteUrl: process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://practicaldefensetraining.com',
+    companyEmail: 'info@tacticaladv.com',
+    website: 'tacticaladv.com',
+    websiteUrl: process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://tacticaladv.com',
     currentDate: new Date().toLocaleDateString()
   };
 
@@ -945,7 +945,7 @@ export class CourseNotificationEngine {
           </div>
           <div class="footer">
             <p>You're receiving this email because you signed up to be notified about ${course.title}.</p>
-            <p>Practical Defense Training | jeremy@abqconcealedcarry.com</p>
+            <p>Tactical Advantage | chris@tacticaladv.com</p>
           </div>
         </div>
       </body>
@@ -982,7 +982,7 @@ Register at: ${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://example.com
 
 ---
 You're receiving this email because you signed up to be notified about ${course.title}.
-Practical Defense Training | jeremy@abqconcealedcarry.com
+Tactical Advantage | chris@tacticaladv.com
     `.trim();
   }
 
@@ -998,7 +998,7 @@ Practical Defense Training | jeremy@abqconcealedcarry.com
     const startTime = this.formatTime(schedule.startTime);
 
     // Keep SMS concise due to character limits
-    return `New ${course.title} scheduled for ${startDate} at ${startTime}. ${schedule.availableSpots} spots available. Register at ${process.env.REPLIT_DOMAINS?.split(',')[0] || 'abqconcealedcarry.com'}`;
+    return `New ${course.title} scheduled for ${startDate} at ${startTime}. ${schedule.availableSpots} spots available. Register at ${process.env.REPLIT_DOMAINS?.split(',')[0] || 'tacticaladv.com'}`;
   }
 
   /**

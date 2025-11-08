@@ -34,10 +34,10 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4">
-            Welcome to Practical Defense Training
+            Welcome to Tactical Advantage
           </h1>
           <p className="text-xl text-muted-foreground">
-            Your professional firearms training management platform
+            Results-driven firearms training platform
           </p>
         </div>
 

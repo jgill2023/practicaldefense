@@ -1,6 +1,6 @@
 # Overview
 
-Practical Defense Training is a full-stack web application designed to be a professional firearms training management platform. It enables instructors to manage courses, schedules, and student enrollments, while providing students with a portal to browse, register for, and track their training progress. Key capabilities include integrated payment processing via Stripe, secure document management for waivers and certificates, advanced student management with license tracking, payment balance monitoring, and form completion status tracking. The platform aims to streamline the administration of firearms training and enhance the student experience.
+Tactical Advantage is a full-stack web application designed to be a professional firearms training management platform. It enables instructors to manage courses, schedules, and student enrollments, while providing students with a portal to browse, register for, and track their training progress. Key capabilities include integrated payment processing via Stripe, secure document management for waivers and certificates, advanced student management with license tracking, payment balance monitoring, and form completion status tracking. The platform aims to streamline the administration of firearms training and enhance the student experience.
 
 # User Preferences
 

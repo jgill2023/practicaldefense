@@ -115,7 +115,7 @@ export default function ContactPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4" data-testid="text-page-title">
-            Contact Practical Defense Training
+            Contact Tactical Advantage
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Have questions about our firearms training programs? Need help with registration? 
@@ -148,7 +148,7 @@ export default function ContactPage() {
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="font-medium" data-testid="text-email">
-                      jeremy@abqconcealedcarry.com
+                      chris@tacticaladv.com
                     </p>
                     <p className="text-sm text-muted-foreground">Email us anytime</p>
                   </div>

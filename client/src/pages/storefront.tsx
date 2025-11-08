@@ -111,7 +111,7 @@ export default function Storefront() {
       <div className="container mx-auto px-6 md:px-12 lg:px-16 py-6 space-y-6" data-testid="storefront-page">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold" data-testid="page-title">Practical Defense Training Store</h1>
+        <h1 className="text-3xl font-bold" data-testid="page-title">Tactical Advantage Store</h1>
         <p className="text-muted-foreground">Professional training gear and merchandise</p>
       </div>
 

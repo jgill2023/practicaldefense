@@ -26,7 +26,7 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              By accessing or using <a href="https://www.abqconcealedcarry.com" className="text-accent hover:underline">www.abqconcealedcarry.com</a> (the "Site") or registering for any training, course, or service provided by Practical Defense Training, LLC ("we," "us," or "our"), you agree to be bound by these Terms of Service ("Terms").
+              By accessing or using <a href="https://www.tacticaladv.com" className="text-accent hover:underline">www.tacticaladv.com</a> (the "Site") or registering for any training, course, or service provided by Tactical Advantage, LLC ("we," "us," or "our"), you agree to be bound by these Terms of Service ("Terms").
             </p>
             <p className="text-muted-foreground mt-4">
               If you do not agree, do not use our website or services. These Terms apply to all users, including students, visitors, and account holders.
@@ -67,7 +67,7 @@ export default function TermsOfServicePage() {
               <li>Provide truthful, accurate, and current information</li>
             </ul>
             <p className="text-muted-foreground">
-              If you suspect unauthorized use of your account, notify us immediately at <a href="mailto:info@abqconcealedcarry.com" className="text-accent hover:underline">info@abqconcealedcarry.com</a>.
+              If you suspect unauthorized use of your account, notify us immediately at <a href="mailto:info@tacticaladv.com" className="text-accent hover:underline">info@tacticaladv.com</a>.
             </p>
           </CardContent>
         </Card>
@@ -269,9 +269,9 @@ export default function TermsOfServicePage() {
               For questions or concerns regarding these Terms, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Practical Defense Training, LLC</strong></p>
-              <p><strong>Email:</strong> <a href="mailto:info@abqconcealedcarry.com" className="text-accent hover:underline">info@abqconcealedcarry.com</a></p>
-              <p><strong>Website:</strong> <a href="https://www.abqconcealedcarry.com" className="text-accent hover:underline">www.abqconcealedcarry.com</a></p>
+              <p><strong>Tactical Advantage, LLC</strong></p>
+              <p><strong>Email:</strong> <a href="mailto:info@tacticaladv.com" className="text-accent hover:underline">info@tacticaladv.com</a></p>
+              <p><strong>Website:</strong> <a href="https://www.tacticaladv.com" className="text-accent hover:underline">www.tacticaladv.com</a></p>
               <p><strong>Location:</strong> New Mexico, USA</p>
             </div>
           </CardContent>

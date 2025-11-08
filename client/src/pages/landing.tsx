@@ -205,10 +205,10 @@ export default function Landing() {
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
           <h1 className="font-medium mb-4 tracking-tight" style={{ fontSize: '40px' }}>
-            Practical Defense Training
+            Tactical Advantage
           </h1>
           <p className="font-light mb-12 tracking-wide" style={{ fontSize: '25px' }}>
-            You Don't Have To Be Defenseless.
+            Different by Design
           </p>
 
           <div className="flex justify-center mb-16">
@@ -224,91 +224,101 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Bottom Banner */}
-        <div className="absolute bottom-0 left-0 right-0 bg-accent/90 text-white py-4 z-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p className="text-lg lg:text-xl font-medium">
-              It's <span className="italic font-bold">your</span> life. It's <span className="italic font-bold">your</span> safety and protection. It's <span className="italic font-bold">YOUR</span> responsibility.
-            </p>
-          </div>
+      </section>
+
+      {/* Traditional Results-Driven Training */}
+      <section className="py-16 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
+            Traditional Results-Driven Training
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-4xl mx-auto">
+            We pride ourselves on results-driven training that is tailored to, and for, the individual student.
+          </p>
         </div>
       </section>
 
-      {/* Course Feature Blurbs */}
-      <section className="bg-muted py-12">
+      {/* Training Programs */}
+      <section className="bg-muted py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
-            {/* Concealed Carry */}
-            <div className="text-center" data-testid="feature-concealed-carry">
-              <h3 className="text-lg font-semibold text-foreground mb-4 uppercase tracking-wide">
-                CONCEALED CARRY
-              </h3>
+            {/* Deductive Pistolcraft */}
+            <div className="bg-card rounded-lg overflow-hidden shadow-lg" data-testid="feature-deductive-pistolcraft">
               <div className="mb-4">
                 <img 
                   src={ccwRangeImage} 
-                  alt="Concealed Carry Training"
-                  className="w-full object-cover"
-                  style={{ aspectRatio: '500/331' }}
+                  alt="Deductive Pistolcraft"
+                  className="w-full object-cover h-64"
                 />
               </div>
-              <p className="text-sm text-muted-foreground mb-4 px-4">
-                We offer one of the most comprehensive and fun concealed carry courses in the state.
-              </p>
-              <Button 
-                className="bg-black text-white hover:bg-gray-800 px-8 py-2 rounded-none font-medium tracking-wide"
-                data-testid="button-learn-more-ccw"
-              >
-                LEARN MORE
-              </Button>
+              <div className="p-6">
+                <h3 className="text-2xl font-bold text-foreground mb-4">
+                  Deductive Pistolcraft
+                </h3>
+                <p className="text-base text-muted-foreground mb-6">
+                  We tailor the definition of proficiency to our clients' strengths and blind spots, forging a personalized path based on evidence, ability, and individual goals. Our program delves into fundamentals, emphasizing quantifiable metrics to validate theories.
+                </p>
+                <Button 
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 w-full"
+                  data-testid="button-learn-more-pistolcraft"
+                  onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  Let's Train!
+                </Button>
+              </div>
             </div>
 
-            {/* Online NM CCW Course */}
-            <div className="text-center" data-testid="feature-online-course">
-              <h3 className="text-lg font-semibold text-foreground mb-4 uppercase tracking-wide">
-                ONLINE NM CCW COURSE
-              </h3>
+            {/* Practice for Mastery */}
+            <div className="bg-card rounded-lg overflow-hidden shadow-lg" data-testid="feature-practice-mastery">
               <div className="mb-4">
                 <img 
                   src={laptopImage} 
-                  alt="Online Course"
-                  className="w-full object-cover"
-                  style={{ aspectRatio: '500/331' }}
+                  alt="Practice for Mastery"
+                  className="w-full object-cover h-64"
                 />
               </div>
-              <p className="text-sm text-muted-foreground mb-4 px-4">
-                Complete the majority of classroom instruction online, at your own pace!
-              </p>
-              <Button 
-                className="bg-black text-white hover:bg-gray-800 px-8 py-2 rounded-none font-medium tracking-wide"
-                data-testid="button-enroll-now"
-              >
-                ENROLL NOW
-              </Button>
+              <div className="p-6">
+                <h3 className="text-2xl font-bold text-foreground mb-4">
+                  Practice for Mastery
+                </h3>
+                <p className="text-base text-muted-foreground mb-6">
+                  Designed to assist our students in crafting a training plan geared towards achieving high-performance goals with a firearm. This program integrates both dry and live fire techniques, showcasing immediate improvements in performance.
+                </p>
+                <Button 
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 w-full"
+                  data-testid="button-learn-more-practice"
+                  onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  Let's Train!
+                </Button>
+              </div>
             </div>
 
-            {/* Defensive Handgun */}
-            <div className="text-center" data-testid="feature-defensive-handgun">
-              <h3 className="text-lg font-semibold text-foreground mb-4 uppercase tracking-wide">
-                DEFENSIVE HANDGUN
-              </h3>
+            {/* Performance Shooting */}
+            <div className="bg-card rounded-lg overflow-hidden shadow-lg" data-testid="feature-performance-shooting">
               <div className="mb-4">
                 <img 
                   src={dhcImage} 
-                  alt="Defensive Handgun Training"
-                  className="w-full object-cover"
-                  style={{ aspectRatio: '500/331' }}
+                  alt="Performance Shooting for the Concealed Carrier"
+                  className="w-full object-cover h-64"
                 />
               </div>
-              <p className="text-sm text-muted-foreground mb-4 px-4">
-                We offer 3 hour defensive handgun clinics, as well as 1 and 2 day defensive handgun courses.
-              </p>
-              <Button 
-                className="bg-black text-white hover:bg-gray-800 px-8 py-2 rounded-none font-medium tracking-wide"
-                data-testid="button-learn-more-defensive"
-              >
-                LEARN MORE
-              </Button>
+              <div className="p-6">
+                <h3 className="text-2xl font-bold text-foreground mb-4">
+                  Performance Shooting for the Concealed Carrier
+                </h3>
+                <p className="text-base text-muted-foreground mb-6">
+                  Offering an in-depth exploration of performance concepts employed by highly-skilled practitioners, specifically competitive shooters. We delve into applying those metrics to benefit concealed carriers and defensive enthusiasts.
+                </p>
+                <Button 
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 w-full"
+                  data-testid="button-learn-more-performance"
+                  onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  Let's Train!
+                </Button>
+              </div>
             </div>
 
           </div>
@@ -320,19 +330,11 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
-              Straightforward Firearms Training
+              Choose a Date and Time
             </h2>
-            <div className="max-w-6xl mx-auto space-y-3">
-              <p className="text-base text-muted-foreground font-light">
-                Practical Defense Training, LLC offers straightforward firearms training, with a focus and emphasis on New Mexico concealed carry training. One of the few courses which preaches and teaches practical over "tacti-cool"; bringing reliable and effective firearms training to the responsibly armed citizen. Students will gain the knowledge and skills necessary to legally and responsibly carry a concealed handgun in the State of New Mexico and those States with whom New Mexico shares reciprocity with.
-              </p>
-              <p className="text-base text-muted-foreground font-light">
-                We believe your firearms training should be <span className="font-semibold">SAFE</span>, <span className="font-semibold">FUN</span>, and <span className="font-semibold">PRACTICAL</span>.
-              </p>
-              <p className="text-base text-muted-foreground font-light">
-                Your safety and protection begins with <span className="italic font-semibold">you</span>. It's <span className="italic font-semibold">your</span> life. It's <span className="italic font-semibold">your</span> safety and protection. It's <span className="italic font-semibold">your</span> responsibility.
-              </p>
-            </div>
+            <p className="text-lg text-muted-foreground max-w-4xl mx-auto">
+              Select from our upcoming courses that work best for your schedule.
+            </p>
           </div>
 
           {/* Course Filter Tabs - Mobile Responsive */}

@@ -82,8 +82,8 @@ export interface NotificationEmailParams {
 }
 
 export class NotificationEmailService {
-  private static readonly DEFAULT_FROM_EMAIL = 'jeremy@abqconcealedcarry.com';
-  private static readonly DEFAULT_FROM_NAME = 'Jeremy - Practical Defense Training';
+  private static readonly DEFAULT_FROM_EMAIL = 'chris@tacticaladv.com';
+  private static readonly DEFAULT_FROM_NAME = 'Chris Bean - Tactical Advantage';
 
   static async sendNotificationEmail(params: NotificationEmailParams): Promise<{
     success: boolean;

@@ -118,7 +118,7 @@ export default function ConcealedCarryPage() {
               
               <div className="max-w-6xl mx-auto">
                 <p className="text-base md:text-lg mb-8 leading-relaxed">
-                  Practical Defense Training, LLC offers straightforward firearms training, with a focus and emphasis on New Mexico concealed carry training. One of the few courses which preaches and teaches <strong>practical over "tacti-cool"</strong>; bringing reliable and effective firearms training to the responsibly armed citizen.
+                  Tactical Advantage, LLC offers straightforward firearms training, with a focus and emphasis on New Mexico concealed carry training. One of the few courses which preaches and teaches <strong>practical over "tacti-cool"</strong>; bringing reliable and effective firearms training to the responsibly armed citizen.
                 </p>
                 
                 <p className="text-sm md:text-base mb-8">
@@ -367,7 +367,7 @@ export default function ConcealedCarryPage() {
               Ready to Start Your Concealed Carry Journey?
             </h2>
             <p className="text-base mb-8 leading-relaxed">
-              Join hundreds of New Mexico residents who have received their concealed carry training through Practical Defense Training. Professional instruction, practical skills, and the confidence you need.
+              Join hundreds of New Mexico residents who have received their concealed carry training through Tactical Advantage. Professional instruction, practical skills, and the confidence you need.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -394,8 +394,8 @@ export default function ConcealedCarryPage() {
             <div className="mt-12 pt-8 border-t border-primary-foreground/20">
               <p className="text-sm opacity-90">
                 Questions? Call <strong>(505) 944-5247</strong> or email{" "}
-                <a href="mailto:jeremy@abqconcealedcarry.com" className="underline">
-                  jeremy@abqconcealedcarry.com
+                <a href="mailto:chris@tacticaladv.com" className="underline">
+                  chris@tacticaladv.com
                 </a>
               </p>
             </div>

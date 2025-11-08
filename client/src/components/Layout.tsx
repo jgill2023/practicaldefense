@@ -88,7 +88,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex-shrink-0">
               <Link href="/">
                 <h1 className="text-xl font-normal text-primary-foreground cursor-pointer" data-testid="link-home">
-                  Practical Defense Training
+                  Tactical Advantage
                 </h1>
               </Link>
             </div>
@@ -367,9 +367,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-12 gap-8">
             <div className="md:col-span-5">
-              <h3 className="text-xl font-bold mb-4">Practical Defense Training</h3>
+              <h3 className="text-xl font-bold mb-4">Tactical Advantage</h3>
               <p className="text-primary-foreground/80">
-                Professional firearms instruction by certified instructors. Serving the local community with safe, comprehensive training programs.
+                Results-driven firearms training tailored to the individual student. Traditional, deductive pistolcraft emphasizing fundamentals and quantifiable metrics.
               </p>
             </div>
 
@@ -402,7 +402,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="flex items-start space-x-2">
                   <span>✉️</span>
-                  <a href="mailto:jeremy@abqconcealedcarry.com" className="hover:text-primary-foreground transition-colors">jeremy@abqconcealedcarry.com</a>
+                  <a href="mailto:chris@tacticaladv.com" className="hover:text-primary-foreground transition-colors">chris@tacticaladv.com</a>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="text-success">📍</span>
@@ -413,7 +413,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-primary-foreground/80">
-            <p>&copy; {new Date().getFullYear()} Practical Defense Training. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Tactical Advantage. All rights reserved.</p>
           </div>
         </div>
       </footer>
