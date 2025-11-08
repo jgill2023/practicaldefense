@@ -9,7 +9,7 @@ import { Layout } from "@/components/Layout";
 import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
 import type { CourseWithSchedules, AppSettings } from "@shared/schema";
-import heroImage from "@assets/IMG_3560_1762487254927.png";
+import heroImage from "@assets/TacticalAdvantageHeader_1762624792996.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
