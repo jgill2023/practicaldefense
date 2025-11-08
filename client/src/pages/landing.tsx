@@ -214,12 +214,12 @@ export default function Landing() {
           <div className="flex justify-center mb-16">
             <Button 
               size="lg" 
-              className="bg-white text-black hover:bg-gray-200 px-8 py-3 text-lg rounded border-2 border-white transition-colors"
+              className="bg-white text-black hover:bg-gray-200 px-8 py-3 rounded border-2 border-white transition-colors"
+              style={{ fontSize: '20px', fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
               onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
               data-testid="button-browse-courses"
             >
-              <Calendar className="mr-2 h-5 w-5" />
-              View Upcoming Courses
+              LET'S TRAIN TOGETHER
             </Button>
           </div>
         </div>
