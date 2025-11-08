@@ -224,20 +224,22 @@ export default function Landing() {
           </div>
         </div>
 
-      {/* Results-Driven Training Section - Overlaid on hero */}
-        <div className="absolute bottom-0 left-0 right-0 z-30 pointer-events-none" style={{ height: '15vh' }}>
-          <div className="relative bg-white h-full" style={{ clipPath: 'polygon(0 0, 100% 40%, 100% 100%, 0 100%)' }}>
-            <div className="px-4 sm:px-6 lg:px-8 text-center pointer-events-auto" style={{ paddingTop: '80px', paddingBottom: '8px' }}>
-              <div className="max-w-7xl mx-auto">
-                <h2 className="text-xl lg:text-2xl mb-2 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, color: '#000' }}>
-                  <span className="line-through">Traditional</span> Results-Driven Training
-                </h2>
-                <p className="text-sm max-w-4xl mx-auto" style={{ color: '#666' }}>
-                  We pride ourselves on results-driven training that is tailored to, and for, the individual student.
-                </p>
-              </div>
-            </div>
+        {/* Diagonal slope overlay - part of hero section */}
+        <div className="absolute bottom-0 left-0 right-0 z-30" style={{ height: '15vh' }}>
+          <div className="relative w-full h-full" style={{ clipPath: 'polygon(0 0, 100% 40%, 100% 100%, 0 100%)', backgroundColor: 'transparent' }}>
           </div>
+        </div>
+      </section>
+
+      {/* Results-Driven Training Section - Separate white section */}
+      <section className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl lg:text-4xl mb-6 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, color: '#000' }}>
+            <span className="line-through">Traditional</span> Results-Driven Training
+          </h2>
+          <p className="text-lg max-w-4xl mx-auto" style={{ color: '#000' }}>
+            We pride ourselves on results-driven training that is tailored to, and for, the individual student.
+          </p>
         </div>
       </section>
 
