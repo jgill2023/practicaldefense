@@ -199,15 +199,15 @@ export default function Landing() {
             }}
           ></div>
           {/* Dark overlay for better text readability */}
-          <div className="absolute inset-0 bg-black/40"></div>
+          <div className="absolute inset-0 bg-black/60"></div>
         </div>
 
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
-          <h1 className="font-medium mb-4 tracking-tight" style={{ fontSize: '40px', fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
+          <h1 className="uppercase mb-4" style={{ fontSize: '33px', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, letterSpacing: '3px', lineHeight: '1.3em' }}>
             Tactical Advantage
           </h1>
-          <p className="font-light mb-12 tracking-wide" style={{ fontSize: '25px', fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
+          <p className="uppercase font-light mb-12 tracking-wide" style={{ fontSize: '25px', fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
             Different by Design
           </p>
 
