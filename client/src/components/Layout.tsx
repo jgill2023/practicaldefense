@@ -84,12 +84,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <header className="bg-primary shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Company name aligned to the left */}
+            {/* Company logo aligned to the left */}
             <div className="flex-shrink-0">
               <Link href="/">
-                <h1 className="text-xl font-normal text-primary-foreground cursor-pointer" data-testid="link-home">
-                  Tactical Advantage
-                </h1>
+                <img 
+                  src="/tactical-advantage-logo.png" 
+                  alt="Tactical Advantage" 
+                  className="h-12 cursor-pointer"
+                  data-testid="link-home"
+                />
               </Link>
             </div>
 
