@@ -227,12 +227,15 @@ export default function Landing() {
       </section>
 
       {/* Traditional Results-Driven Training */}
-      <section className="py-16 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
-            Traditional Results-Driven Training
+      <section className="relative py-16 bg-white overflow-hidden">
+        {/* Diagonal slope overlay */}
+        <div className="absolute top-0 left-0 right-0 h-32 bg-black transform -skew-y-2 origin-top-left -translate-y-16"></div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl lg:text-4xl mb-6 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, color: '#000' }}>
+            <span className="line-through">Traditional</span> Results-Driven Training
           </h2>
-          <p className="text-lg text-muted-foreground max-w-4xl mx-auto">
+          <p className="text-lg max-w-4xl mx-auto" style={{ color: '#666' }}>
             We pride ourselves on results-driven training that is tailored to, and for, the individual student.
           </p>
         </div>
