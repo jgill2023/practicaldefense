@@ -248,7 +248,7 @@ export default function Landing() {
       <section className="bg-muted py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Deductive Pistolcraft */}
-          <div className="bg-card rounded-lg overflow-hidden shadow-lg" data-testid="feature-deductive-pistolcraft">
+          <div className="bg-card rounded-lg overflow-hidden shadow-lg mb-8" data-testid="feature-deductive-pistolcraft">
             <div className="grid md:grid-cols-2 gap-6 p-6">
               <div className="flex flex-col justify-center">
                 <h3 className="font-semibold text-foreground mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '26px', letterSpacing: '0px', lineHeight: '1.5em' }}>
@@ -271,6 +271,34 @@ export default function Landing() {
                   alt="Deductive Pistolcraft Instructor"
                   className="w-full h-auto object-cover"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Practice for Mastery */}
+          <div className="bg-card rounded-lg overflow-hidden shadow-lg" data-testid="feature-practice-mastery">
+            <div className="grid md:grid-cols-2 gap-6 p-6">
+              <div className="flex items-center">
+                <img 
+                  src={deductivePistolcraftImage}
+                  alt="Practice for Mastery Training"
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+              <div className="flex flex-col justify-center">
+                <h3 className="font-semibold text-foreground mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '26px', letterSpacing: '0px', lineHeight: '1.5em' }}>
+                  Practice for Mastery
+                </h3>
+                <p className="text-muted-foreground mb-6" style={{ fontSize: '16px', lineHeight: '1.8em' }}>
+                  "Practice for Mastery" is designed to assist our students in crafting a training plan geared towards achieving high-performance goals with a firearm. This program integrates both dry and live fire techniques, showcasing immediate improvements in performance. As participants advance through the curriculum, the emphasis transitions from immediate performance gains to sustained growth.
+                </p>
+                <Button 
+                  className="bg-black text-white hover:bg-black/90 w-fit rounded-sm"
+                  data-testid="button-learn-more-practice-mastery"
+                  onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  LET'S TRAIN!
+                </Button>
               </div>
             </div>
           </div>
