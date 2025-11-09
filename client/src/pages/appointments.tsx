@@ -20,7 +20,7 @@ import type { User } from "@shared/schema";
 type AppointmentType = {
   id: string;
   instructorId: string;
-  name: string;
+  title: string;
   description: string | null;
   durationMinutes: number;
   price: number;
@@ -59,7 +59,7 @@ export default function AppointmentsPage() {
   const [editingTemplate, setEditingTemplate] = useState<WeeklyTemplate | null>(null);
 
   const [typeForm, setTypeForm] = useState({
-    name: '',
+    title: '',
     description: '',
     durationMinutes: 30,
     price: 0,
@@ -182,7 +182,7 @@ export default function AppointmentsPage() {
 
   function resetTypeForm() {
     setTypeForm({
-      name: '',
+      title: '',
       description: '',
       durationMinutes: 30,
       price: 0,
@@ -205,7 +205,7 @@ export default function AppointmentsPage() {
     if (type) {
       setEditingType(type);
       setTypeForm({
-        name: type.name,
+        title: type.title,
         description: type.description || '',
         durationMinutes: type.durationMinutes,
         price: type.price,
@@ -338,7 +338,7 @@ export default function AppointmentsPage() {
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-lg">{type.name}</h3>
+                            <h3 className="font-semibold text-lg">{type.title}</h3>
                             {type.isActive ? (
                               <Badge variant="default">Active</Badge>
                             ) : (
@@ -489,13 +489,13 @@ export default function AppointmentsPage() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="name">Name*</Label>
+                <Label htmlFor="title">Name*</Label>
                 <Input
-                  id="name"
-                  value={typeForm.name}
-                  onChange={(e) => setTypeForm({ ...typeForm, name: e.target.value })}
+                  id="title"
+                  value={typeForm.title}
+                  onChange={(e) => setTypeForm({ ...typeForm, title: e.target.value })}
                   placeholder="e.g., 1-on-1 Coaching"
-                  data-testid="input-type-name"
+                  data-testid="input-type-title"
                 />
               </div>
               <div>

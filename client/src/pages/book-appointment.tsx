@@ -17,7 +17,7 @@ import type { User } from "@shared/schema";
 type AppointmentType = {
   id: string;
   instructorId: string;
-  name: string;
+  title: string;
   description: string | null;
   durationMinutes: number;
   price: number;
@@ -206,7 +206,7 @@ export default function BookAppointmentPage() {
                         data-testid={`button-select-type-${type.id}`}
                       >
                         <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-lg">{type.name}</h3>
+                          <h3 className="font-semibold text-lg">{type.title}</h3>
                           {selectedType?.id === type.id && (
                             <CheckCircle className="h-5 w-5 text-primary" />
                           )}
@@ -314,7 +314,7 @@ export default function BookAppointmentPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Appointment Type:</span>
-                    <span className="font-medium">{selectedType.name}</span>
+                    <span className="font-medium">{selectedType.title}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Date:</span>
