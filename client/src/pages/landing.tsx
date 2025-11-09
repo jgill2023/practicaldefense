@@ -463,13 +463,13 @@ export default function Landing() {
         backgroundRepeat: 'no-repeat'
       }}>
         {/* Semi-transparent black overlay */}
-        <div className="absolute inset-0 bg-black/60"></div>
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0, 0, 0, 0.65)' }}></div>
 
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12">
             {/* Left Column - Virtual Coaching */}
-            <div className="text-white">
+            <div className="text-white text-center">
               <h2 className="text-3xl lg:text-4xl mb-6 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                 Virtual Coaching
               </h2>
@@ -479,7 +479,7 @@ export default function Landing() {
             </div>
 
             {/* Right Column - Mental Management Coaching */}
-            <div className="text-white">
+            <div className="text-white text-center">
               <h2 className="text-3xl lg:text-4xl mb-6 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                 Mental Management Coaching
               </h2>
