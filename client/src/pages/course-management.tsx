@@ -56,6 +56,82 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 const localizer = momentLocalizer(moment);
 
+// Publish Course Button Component
+function PublishCourseButton({ course }: { course: CourseWithSchedules }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const publishMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("PATCH", `/api/instructor/courses/${course.id}/publish`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+      toast({
+        title: "Course Published",
+        description: `"${course.title}" has been published successfully.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to publish course. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  return (
+    <Button
+      variant="default"
+      size="sm"
+      onClick={() => publishMutation.mutate()}
+      disabled={publishMutation.isPending}
+      data-testid={`button-publish-${course.id}`}
+    >
+      {publishMutation.isPending ? "Publishing..." : "Publish"}
+    </Button>
+  );
+}
+
+// Reactivate Course Button Component
+function ReactivateCourseButton({ course }: { course: CourseWithSchedules }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const reactivateMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("PATCH", `/api/instructor/courses/${course.id}/reactivate`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+      toast({
+        title: "Course Reactivated",
+        description: `"${course.title}" has been reactivated and moved to unpublished status.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to reactivate course. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  return (
+    <Button
+      variant="default"
+      size="sm"
+      onClick={() => reactivateMutation.mutate()}
+      disabled={reactivateMutation.isPending}
+      data-testid={`button-reactivate-${course.id}`}
+    >
+      {reactivateMutation.isPending ? "Reactivating..." : "Reactivate"}
+    </Button>
+  );
+}
+
 // Restore Course Button Component
 function RestoreCourseButton({ course }: { course: CourseWithSchedules }) {
   const { toast } = useToast();
@@ -433,15 +509,21 @@ export default function CourseManagement() {
                   </div>
                 </div>
                 <div className="flex-shrink-0 w-full sm:w-auto">
-                  <CourseManagementActions 
-                    course={course}
-                    onEditCourse={(course) => setEditingCourse(course)}
-                    onCreateEvent={(course) => {
-                      setSelectedCourseForEvent(course);
-                      setShowCreateEventModal(true);
-                    }}
-                    data-testid={`actions-course-${course.id}`}
-                  />
+                  {type === 'archived' ? (
+                    <ReactivateCourseButton course={course} />
+                  ) : (course.status === 'unpublished' || course.status === 'draft') ? (
+                    <PublishCourseButton course={course} />
+                  ) : (
+                    <CourseManagementActions 
+                      course={course}
+                      onEditCourse={(course) => setEditingCourse(course)}
+                      onCreateEvent={(course) => {
+                        setSelectedCourseForEvent(course);
+                        setShowCreateEventModal(true);
+                      }}
+                      data-testid={`actions-course-${course.id}`}
+                    />
+                  )}
                 </div>
               </div>
             </CardContent>
