@@ -233,7 +233,7 @@ export default function Landing() {
       </section>
 
       {/* Training Programs */}
-      <section className="bg-muted py-16">
+      <section id="courses" className="bg-muted py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Deductive Pistolcraft */}
           <div className="bg-card rounded-lg overflow-hidden shadow-lg mb-8" data-testid="feature-deductive-pistolcraft">
@@ -395,7 +395,7 @@ export default function Landing() {
       </section>
 
       {/* Course Listings */}
-      <section id="courses" className="py-20">
+      <section id="course-listings" className="py-20">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
