@@ -147,7 +147,14 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             : "Your appointment has been confirmed! You'll receive a confirmation email shortly.",
         });
 
+        // Invalidate all appointment-related queries
         queryClient.invalidateQueries({ queryKey: ["/api/appointments/my-appointments"] });
+        queryClient.invalidateQueries({ 
+          predicate: (query) => {
+            const key = query.queryKey[0];
+            return typeof key === 'string' && key.startsWith('/api/appointments/available-slots');
+          }
+        });
         onClose();
       }
     },
