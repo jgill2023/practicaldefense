@@ -221,7 +221,7 @@ export default function BookAppointmentPage() {
                           </div>
                           <div className="flex items-center gap-1">
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
-                            <span>${type.price.toFixed(2)}</span>
+                            <span>${Number(type.price).toFixed(2)}</span>
                           </div>
                           {type.requiresApproval && (
                             <Badge variant="outline" className="text-xs">Requires Approval</Badge>
@@ -330,7 +330,7 @@ export default function BookAppointmentPage() {
                   </div>
                   <div className="flex justify-between text-lg font-semibold pt-2 border-t">
                     <span>Total:</span>
-                    <span>${selectedType.price.toFixed(2)}</span>
+                    <span>${Number(selectedType.price).toFixed(2)}</span>
                   </div>
                 </div>
                 {selectedType.requiresApproval && (

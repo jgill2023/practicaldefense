@@ -358,7 +358,7 @@ export default function AppointmentsPage() {
                             </div>
                             <div className="flex items-center gap-1">
                               <DollarSign className="h-4 w-4 text-muted-foreground" />
-                              <span>${type.price.toFixed(2)}</span>
+                              <span>${Number(type.price).toFixed(2)}</span>
                             </div>
                           </div>
                         </div>
