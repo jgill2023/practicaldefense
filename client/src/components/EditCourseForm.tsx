@@ -94,6 +94,26 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
     },
   });
 
+  // Re-sync form when course prop changes (e.g., after successful update)
+  useEffect(() => {
+    form.reset({
+      title: course.title,
+      briefDescription: course.briefDescription || "",
+      description: course.description,
+      abbreviation: course.abbreviation || "",
+      price: course.price.toString(),
+      depositAmount: course.depositAmount ? course.depositAmount.toString() : "",
+      duration: course.duration,
+      category: typeof course.category === 'string' ? course.category : (course.category as any)?.name || "",
+      classroomTime: course.classroomTime || "",
+      rangeTime: course.rangeTime || "",
+      rounds: course.rounds || 0,
+      prerequisites: course.prerequisites || "",
+      maxStudents: course.maxStudents,
+      imageUrl: course.imageUrl || "",
+    });
+  }, [course, form]);
+
   // Update course mutation
   const updateCourseMutation = useMutation({
     mutationFn: async (data: CourseFormData) => {
@@ -269,11 +289,21 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                   <div>
                     <Label htmlFor="category">Course Category *</Label>
                     <Select
-                      value={form.watch("category")}
-                      onValueChange={(value) => form.setValue("category", value, { shouldValidate: true })}
+                      value={form.watch("category") || ""}
+                      onValueChange={(value) => form.setValue("category", value, { shouldValidate: true, shouldDirty: true })}
                     >
                       <SelectTrigger data-testid="select-category">
-                        <SelectValue placeholder="Select a category" />
+                        <SelectValue placeholder="Select a category">
+                          {form.watch("category") && categories.find(c => c.name === form.watch("category")) && (
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: categories.find(c => c.name === form.watch("category"))?.color || '#3b82f6' }}
+                              />
+                              {form.watch("category")}
+                            </div>
+                          )}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {categories
