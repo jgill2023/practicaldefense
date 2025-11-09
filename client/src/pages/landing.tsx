@@ -15,7 +15,6 @@ import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
 import deductivePistolcraftImage from "@assets/Deductive-Pistol-Craft_1762671845456.jpg";
 import practiceForMasteryImage from "@assets/Performance-Shooting_1762673186670.jpg";
-import performanceShootingImage from "@assets/performance-shooting_1762673442000.jpg";
 import {
   Select,
   SelectContent,
