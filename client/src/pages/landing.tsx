@@ -471,7 +471,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 gap-12">
             {/* Left Column - Virtual Coaching */}
             <div className="text-white text-center">
-              <h2 className="text-3xl lg:text-4xl mb-6 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+              <h2 className="text-3xl lg:text-4xl mb-6" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                 Virtual Coaching
               </h2>
               <p className="text-base lg:text-lg leading-relaxed">
@@ -481,7 +481,7 @@ export default function Landing() {
 
             {/* Right Column - Mental Management Coaching */}
             <div className="text-white text-center">
-              <h2 className="text-2xl lg:text-3xl mb-6" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+              <h2 className="text-3xl lg:text-4xl mb-6" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                 Mental Management Coaching
               </h2>
               <p className="text-base lg:text-lg leading-relaxed">
