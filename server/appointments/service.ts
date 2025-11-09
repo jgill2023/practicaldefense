@@ -1,10 +1,14 @@
 import { storage } from '../storage';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import type { 
   InstructorWeeklyTemplate, 
   InstructorAvailabilityOverride, 
   InstructorAppointment,
   CourseSchedule
 } from '@db/schema';
+
+// Hardcoded timezone for instructor - in a real app this would come from user settings
+const INSTRUCTOR_TIMEZONE = 'America/Denver';
 
 export interface TimeSlot {
   startTime: Date;
@@ -28,10 +32,16 @@ export class AppointmentService {
   }
 
   private setTimeOnDate(date: Date, timeStr: string): Date {
-    const { hours, minutes } = this.parseTime(timeStr);
-    const result = new Date(date);
-    result.setHours(hours, minutes, 0, 0);
-    return result;
+    // Get the date in YYYY-MM-DD format
+    const dateStr = this.getDateKey(date);
+    
+    // Create a datetime string in the instructor's timezone
+    const localDateTimeStr = `${dateStr}T${timeStr}:00`;
+    
+    // Parse as a date in the instructor's timezone, then convert to UTC
+    // fromZonedTime treats the input as if it's in the specified timezone
+    const utcDate = fromZonedTime(localDateTimeStr, INSTRUCTOR_TIMEZONE);
+    return utcDate;
   }
 
   private addMinutes(date: Date, minutes: number): Date {
