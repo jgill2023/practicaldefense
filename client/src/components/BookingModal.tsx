@@ -18,10 +18,10 @@ type TimeSlot = {
   isAvailable?: boolean;
 };
 
-// Helper to format ISO time to HH:MM
+// Helper to format ISO time to 12-hour format
 const formatTimeFromISO = (isoString: string): string => {
   const date = new Date(isoString);
-  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 };
 
 type DayAvailability = {
