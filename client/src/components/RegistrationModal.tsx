@@ -71,7 +71,7 @@ const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: a
     <form onSubmit={handleSubmit} className="space-y-6">
       <PaymentElement />
 
-      <div className="flex items-center space-x-2 text-sm text-success">
+      <div className="flex items-center space-x-2 text-sm text-black">
         <Shield className="h-4 w-4" />
         <span>Secured by Stripe - Your payment information is encrypted</span>
       </div>
@@ -452,7 +452,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
               </div>
               <div>
                 <span className="text-muted-foreground">Price:</span>
-                <span className="ml-2 font-medium text-primary" data-testid="text-modal-price">${course.price}</span>
+                <span className="ml-2 font-medium text-black" data-testid="text-modal-price">${course.price}</span>
               </div>
               <div>
                 <span className="text-muted-foreground">Instructor:</span>
@@ -487,11 +487,11 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
                     </SelectContent>
                   </Select>
                   {selectedSchedule && (
-                    <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                    <div className="p-3 bg-black/10 border border-black/20 rounded-lg">
                       <div className="text-sm">
-                        <div className="font-medium text-accent mb-1">Selected Date:</div>
+                        <div className="font-medium text-black mb-1">Selected Date:</div>
                         <div className="flex items-center text-muted-foreground">
-                          <Calendar className="mr-2 h-4 w-4 text-accent" />
+                          <Calendar className="mr-2 h-4 w-4 text-black" />
                           {formatDateSafe(selectedSchedule.startDate.toString())}
                         </div>
                         {selectedSchedule.location && (
@@ -865,7 +865,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
                   <button
                     type="button"
                     onClick={() => setPolicyModalOpen('terms')}
-                    className="text-accent hover:text-accent/80 transition-colors underline"
+                    className="text-black hover:text-black/80 transition-colors underline"
                   >
                     Terms of Service
                   </button>
@@ -873,7 +873,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
                   <button
                     type="button"
                     onClick={() => setPolicyModalOpen('privacy')}
-                    className="text-accent hover:text-accent/80 transition-colors underline"
+                    className="text-black hover:text-black/80 transition-colors underline"
                   >
                     Privacy Policy
                   </button>
@@ -881,7 +881,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
                   <button
                     type="button"
                     onClick={() => setPolicyModalOpen('refund')}
-                    className="text-accent hover:text-accent/80 transition-colors underline"
+                    className="text-black hover:text-black/80 transition-colors underline"
                   >
                     Refund Policy
                   </button>

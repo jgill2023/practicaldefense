@@ -103,36 +103,36 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* Navigation and login aligned to the right */}
             <div className="flex items-center space-x-8">
               <nav className="hidden md:flex items-center space-x-8">
-                <Link href="/" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors" data-testid="link-home">Home</Link>
-                <a href="#about-us" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors">About Chris</a>
+                <Link href="/" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-home">Home</Link>
+                <a href="#about-us" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors">About Chris</a>
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
-                      <NavigationMenuTrigger className="text-base text-primary-foreground hover:text-accent bg-transparent border-none data-[state=open]:bg-accent/20">
+                      <NavigationMenuTrigger className="text-base text-primary-foreground hover:text-[#A8ACB3] bg-transparent border-none data-[state=open]:bg-[#A8ACB3]/20">
                         Courses
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
-                        <div className="w-56 p-2">
+                        <div className="w-56 p-2 bg-[#A8ACB3]">
                           <Link href="/#courses">
-                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-courses">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded text-black hover:text-[#292929] hover:bg-black/10 transition-colors" data-testid="link-courses">
                               <GraduationCap className="h-4 w-4" />
                               <span>All Courses</span>
                             </NavigationMenuLink>
                           </Link>
                           <Link href="/concealed-carry">
-                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-concealed-carry">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded text-black hover:text-[#292929] hover:bg-black/10 transition-colors" data-testid="link-concealed-carry">
                               <Shield className="h-4 w-4" />
                               <span>Concealed Carry</span>
                             </NavigationMenuLink>
                           </Link>
                           <Link href="/online-concealed-carry">
-                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-online-concealed-carry">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded text-black hover:text-[#292929] hover:bg-black/10 transition-colors" data-testid="link-online-concealed-carry">
                               <Globe className="h-4 w-4" />
                               <span>Online Concealed Carry</span>
                             </NavigationMenuLink>
                           </Link>
                           <Link href="/defensive-handgun">
-                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-defensive-handgun">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded text-black hover:text-[#292929] hover:bg-black/10 transition-colors" data-testid="link-defensive-handgun">
                               <Crosshair className="h-4 w-4" />
                               <span>Defensive Handgun</span>
                             </NavigationMenuLink>
@@ -145,19 +145,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
-                      <NavigationMenuTrigger className="text-base text-primary-foreground hover:text-accent bg-transparent border-none data-[state=open]:bg-accent/20">
+                      <NavigationMenuTrigger className="text-base text-primary-foreground hover:text-[#A8ACB3] bg-transparent border-none data-[state=open]:bg-[#A8ACB3]/20">
                         Schedule It!
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
-                        <div className="w-48 p-2">
+                        <div className="w-48 p-2 bg-[#A8ACB3]">
                           <Link href="/schedule-list">
-                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-schedule-list">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded text-black hover:text-[#292929] hover:bg-black/10 transition-colors" data-testid="link-schedule-list">
                               <List className="h-4 w-4" />
                               <span>List View</span>
                             </NavigationMenuLink>
                           </Link>
                           <Link href="/schedule-calendar">
-                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-schedule-calendar">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded text-black hover:text-[#292929] hover:bg-black/10 transition-colors" data-testid="link-schedule-calendar">
                               <Calendar className="h-4 w-4" />
                               <span>Calendar View</span>
                             </NavigationMenuLink>
@@ -167,8 +167,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </NavigationMenuItem>
                   </NavigationMenuList>
                 </NavigationMenu>
-                <Link href="/online-concealed-carry" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors" data-testid="link-virtual-training">Virtual Training</Link>
-                <Link href="/contact" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors" data-testid="link-contact">Contact Us</Link>
+                <Link href="/online-concealed-carry" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-virtual-training">Virtual Training</Link>
+                <Link href="/contact" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-contact">Contact Us</Link>
               </nav>
 
               {/* Desktop auth buttons and cart */}
@@ -200,13 +200,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {isMobileMenuOpen && (
             <div className="md:hidden border-t border-primary-foreground/20 py-4">
               <nav className="flex flex-col space-y-2">
-                <Link href="/" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-home-mobile" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
-                <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors py-2">About Chris</a>
+                <Link href="/" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-home-mobile" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
+                <a href="#about-us" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2">About Chris</a>
                 {/* Mobile Courses with submenu */}
                 <div>
                   <button 
                     onClick={() => setIsMobileCoursesOpen(!isMobileCoursesOpen)}
-                    className="flex items-center justify-between w-full text-left text-primary-foreground hover:text-accent transition-colors py-2"
+                    className="flex items-center justify-between w-full text-left text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2"
                     data-testid="button-mobile-courses"
                   >
                     <span>Courses</span>
@@ -220,7 +220,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <div className="pl-4 py-2 space-y-2 border-l-2 border-primary-foreground/20">
                       <Link 
                         href="/#courses" 
-                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-[#A8ACB3] transition-colors py-1"
                         data-testid="link-courses-mobile"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
@@ -229,7 +229,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       </Link>
                       <Link 
                         href="/concealed-carry" 
-                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-[#A8ACB3] transition-colors py-1"
                         data-testid="link-concealed-carry-mobile"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
@@ -238,7 +238,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       </Link>
                       <Link 
                         href="/online-concealed-carry" 
-                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-[#A8ACB3] transition-colors py-1"
                         data-testid="link-online-concealed-carry-mobile"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
@@ -247,7 +247,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       </Link>
                       <Link 
                         href="/defensive-handgun" 
-                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-[#A8ACB3] transition-colors py-1"
                         data-testid="link-defensive-handgun-mobile"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
@@ -261,7 +261,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <div>
                   <button 
                     onClick={() => setIsMobileScheduleOpen(!isMobileScheduleOpen)}
-                    className="flex items-center justify-between w-full text-left text-primary-foreground hover:text-accent transition-colors py-2"
+                    className="flex items-center justify-between w-full text-left text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2"
                     data-testid="button-mobile-schedule"
                   >
                     <span>Schedule It!</span>
@@ -275,7 +275,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <div className="pl-4 py-2 space-y-2 border-l-2 border-primary-foreground/20">
                       <Link 
                         href="/schedule-list" 
-                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-[#A8ACB3] transition-colors py-1"
                         data-testid="link-schedule-list-mobile"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
@@ -284,7 +284,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       </Link>
                       <Link 
                         href="/schedule-calendar" 
-                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-[#A8ACB3] transition-colors py-1"
                         data-testid="link-schedule-calendar-mobile"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
@@ -294,8 +294,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                   )}
                 </div>
-                <Link href="/online-concealed-carry" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-virtual-training-mobile" onClick={() => setIsMobileMenuOpen(false)}>Virtual Training</Link>
-                <Link href="/contact" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
+                <Link href="/online-concealed-carry" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-virtual-training-mobile" onClick={() => setIsMobileMenuOpen(false)}>Virtual Training</Link>
+                <Link href="/contact" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
 
                 {/* Mobile auth buttons */}
                 <div className="border-t border-primary-foreground/20 mt-2 pt-2 space-y-2">
