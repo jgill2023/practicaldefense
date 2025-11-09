@@ -324,7 +324,7 @@ export default function Landing() {
               </div>
               <div className="flex items-center">
                 <img 
-                  src={performanceShootingImage}
+                  src={deductivePistolcraftImage}
                   alt="Performance Shooting for the Concealed Carrier"
                   className="w-full h-auto object-cover"
                 />
