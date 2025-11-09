@@ -258,11 +258,11 @@ export default function Landing() {
                   We tailor the definition of proficiency to our clients' strengths and blind spots, forging a personalized path based on evidence, ability, and individual goals. Our program delves into fundamentals, emphasizing quantifiable metrics to validate theories. Grip, trigger control, sighting, practice, goal setting, and performance tracking are integral components, ensuring a comprehensive exploration of pistolcraft tailored to individual needs.
                 </p>
                 <Button 
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
+                  className="bg-black text-white hover:bg-black/90 w-fit"
                   data-testid="button-learn-more-pistolcraft"
                   onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
                 >
-                  Let's Train!
+                  LET'S TRAIN!
                 </Button>
               </div>
               <div className="flex items-center">
