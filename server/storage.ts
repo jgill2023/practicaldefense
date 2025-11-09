@@ -813,9 +813,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateCourse(id: string, course: Partial<InsertCourse>): Promise<Course> {
+    // Get current course to check status
+    const [existingCourse] = await db.select().from(courses).where(eq(courses.id, id));
+    if (!existingCourse) {
+      throw new Error("Course not found");
+    }
+
+    // Maintain isActive/status relationship:
+    // - published courses must have isActive: true
+    // - all other statuses must have isActive: false
+    const currentStatus = course.status || existingCourse.status;
+    const isActive = currentStatus === "published";
+
     const [updatedCourse] = await db
       .update(courses)
-      .set({ ...course, updatedAt: new Date() })
+      .set({ 
+        ...course, 
+        isActive, // Always sync isActive with status
+        updatedAt: new Date() 
+      })
       .where(eq(courses.id, id))
       .returning();
     return updatedCourse;
