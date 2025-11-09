@@ -266,8 +266,8 @@ export default function Landing() {
               </div>
               <div className="flex items-center">
                 <img 
-                  src="/api/objects/attached_assets/Deductive-Pistol-Craft-2025_1762671487798.jpg" 
-                  alt="Deductive Pistolcraft"
+                  src="/deductive-pistolcraft-instructor.jpg" 
+                  alt="Deductive Pistolcraft Instructor"
                   className="w-full h-auto object-cover rounded-lg"
                 />
               </div>
