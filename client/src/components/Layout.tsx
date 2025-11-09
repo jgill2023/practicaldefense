@@ -103,29 +103,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* Navigation and login aligned to the right */}
             <div className="flex items-center space-x-8">
               <nav className="hidden md:flex items-center space-x-8">
+                <Link href="/" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors" data-testid="link-home">Home</Link>
+                <a href="#about-us" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors">About Chris</a>
                 <NavigationMenu>
                   <NavigationMenuList>
-                    <NavigationMenuItem>
-                      <NavigationMenuTrigger className="text-base text-primary-foreground hover:text-accent bg-transparent border-none data-[state=open]:bg-accent/20">
-                        Schedule
-                      </NavigationMenuTrigger>
-                      <NavigationMenuContent>
-                        <div className="w-48 p-2">
-                          <Link href="/schedule-list">
-                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-schedule-list">
-                              <List className="h-4 w-4" />
-                              <span>List View</span>
-                            </NavigationMenuLink>
-                          </Link>
-                          <Link href="/schedule-calendar">
-                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-schedule-calendar">
-                              <Calendar className="h-4 w-4" />
-                              <span>Calendar View</span>
-                            </NavigationMenuLink>
-                          </Link>
-                        </div>
-                      </NavigationMenuContent>
-                    </NavigationMenuItem>
                     <NavigationMenuItem>
                       <NavigationMenuTrigger className="text-base text-primary-foreground hover:text-accent bg-transparent border-none data-[state=open]:bg-accent/20">
                         Courses
@@ -161,9 +142,32 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </NavigationMenuItem>
                   </NavigationMenuList>
                 </NavigationMenu>
-                <a href="#about-us" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors">About Us</a>
-                <a href="#resources" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors">Resources</a>
-                <Link href="/store" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors" data-testid="link-store">Our Store</Link>
+                <NavigationMenu>
+                  <NavigationMenuList>
+                    <NavigationMenuItem>
+                      <NavigationMenuTrigger className="text-base text-primary-foreground hover:text-accent bg-transparent border-none data-[state=open]:bg-accent/20">
+                        Schedule It!
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <div className="w-48 p-2">
+                          <Link href="/schedule-list">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-schedule-list">
+                              <List className="h-4 w-4" />
+                              <span>List View</span>
+                            </NavigationMenuLink>
+                          </Link>
+                          <Link href="/schedule-calendar">
+                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded hover:bg-accent hover:text-accent-foreground transition-colors" data-testid="link-schedule-calendar">
+                              <Calendar className="h-4 w-4" />
+                              <span>Calendar View</span>
+                            </NavigationMenuLink>
+                          </Link>
+                        </div>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  </NavigationMenuList>
+                </NavigationMenu>
+                <Link href="/online-concealed-carry" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors" data-testid="link-virtual-training">Virtual Training</Link>
                 <Link href="/contact" className="text-base text-primary-foreground hover:text-primary-foreground/80 transition-colors" data-testid="link-contact">Contact Us</Link>
               </nav>
 
@@ -196,43 +200,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {isMobileMenuOpen && (
             <div className="md:hidden border-t border-primary-foreground/20 py-4">
               <nav className="flex flex-col space-y-2">
-                {/* Mobile Schedule with submenu */}
-                <div>
-                  <button 
-                    onClick={() => setIsMobileScheduleOpen(!isMobileScheduleOpen)}
-                    className="flex items-center justify-between w-full text-left text-primary-foreground hover:text-accent transition-colors py-2"
-                    data-testid="button-mobile-schedule"
-                  >
-                    <span>Schedule</span>
-                    {isMobileScheduleOpen ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                  </button>
-                  {isMobileScheduleOpen && (
-                    <div className="pl-4 py-2 space-y-2 border-l-2 border-primary-foreground/20">
-                      <Link 
-                        href="/schedule-list" 
-                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
-                        data-testid="link-schedule-list-mobile"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <List className="h-4 w-4" />
-                        <span>List View</span>
-                      </Link>
-                      <Link 
-                        href="/schedule-calendar" 
-                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
-                        data-testid="link-schedule-calendar-mobile"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <Calendar className="h-4 w-4" />
-                        <span>Calendar View</span>
-                      </Link>
-                    </div>
-                  )}
-                </div>
+                <Link href="/" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-home-mobile" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
+                <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors py-2">About Chris</a>
                 {/* Mobile Courses with submenu */}
                 <div>
                   <button 
@@ -288,9 +257,44 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                   )}
                 </div>
-                <a href="#about-us" className="text-primary-foreground hover:text-accent transition-colors py-2">About Us</a>
-                <a href="#resources" className="text-primary-foreground hover:text-accent transition-colors py-2">Resources</a>
-                <Link href="/store" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-store-mobile">Our Store</Link>
+                {/* Mobile Schedule with submenu */}
+                <div>
+                  <button 
+                    onClick={() => setIsMobileScheduleOpen(!isMobileScheduleOpen)}
+                    className="flex items-center justify-between w-full text-left text-primary-foreground hover:text-accent transition-colors py-2"
+                    data-testid="button-mobile-schedule"
+                  >
+                    <span>Schedule It!</span>
+                    {isMobileScheduleOpen ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </button>
+                  {isMobileScheduleOpen && (
+                    <div className="pl-4 py-2 space-y-2 border-l-2 border-primary-foreground/20">
+                      <Link 
+                        href="/schedule-list" 
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
+                        data-testid="link-schedule-list-mobile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <List className="h-4 w-4" />
+                        <span>List View</span>
+                      </Link>
+                      <Link 
+                        href="/schedule-calendar" 
+                        className="flex items-center space-x-2 text-primary-foreground hover:text-accent transition-colors py-1"
+                        data-testid="link-schedule-calendar-mobile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Calendar className="h-4 w-4" />
+                        <span>Calendar View</span>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+                <Link href="/online-concealed-carry" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-virtual-training-mobile" onClick={() => setIsMobileMenuOpen(false)}>Virtual Training</Link>
                 <Link href="/contact" className="text-primary-foreground hover:text-accent transition-colors py-2" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
 
                 {/* Mobile auth buttons */}
