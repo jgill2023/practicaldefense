@@ -130,18 +130,21 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
     mutationFn: async (data: EventFormData) => {
       return await apiRequest("POST", "/api/instructor/events", data);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: "Event Created",
         description: "Your training event has been created successfully.",
       });
       // Invalidate multiple queries to refresh all event displays
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor/events"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/course-schedules"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/instructor/events"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/course-schedules"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/courses"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/instructor/enrollments"] }),
+      ]);
       onEventCreated?.();
       onClose();
     },

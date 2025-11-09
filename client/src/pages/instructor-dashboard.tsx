@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, Link } from "wouter";
@@ -555,8 +555,35 @@ export default function InstructorDashboard() {
   const totalRevenue = dashboardStats?.totalRevenue || 0;
   const outstandingRevenue = dashboardStats?.outstandingRevenue || 0;
 
+  // Transform courses into schedule items for the dashboard
+  const schedules = useMemo(() => {
+    if (!courses) return [];
+
+    return courses.flatMap(course =>
+      (course.schedules || [])
+        .filter(schedule => !schedule.deletedAt) // Filter out deleted schedules
+        .map(schedule => ({
+          id: schedule.id,
+          courseId: course.id,
+          courseTitle: course.title,
+          courseAbbreviation: course.abbreviation,
+          categoryColor: course.category?.color || '#3b82f6',
+          startDate: schedule.startDate,
+          endDate: schedule.endDate,
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          location: schedule.location,
+          maxSpots: schedule.maxSpots,
+          availableSpots: schedule.availableSpots,
+          enrollmentCount: schedule.enrollments?.filter((e: any) => e.status !== 'cancelled').length || 0,
+          status: schedule.availableSpots > 0 ? 'active' : 'full',
+        }))
+    ).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+  }, [courses]);
+
+
   // Get all schedules from all courses and categorize them
-  const allSchedules = courses.flatMap(course => 
+  const allSchedules = courses.flatMap(course =>
     course.schedules.map(schedule => ({
       ...schedule,
       course
@@ -565,22 +592,22 @@ export default function InstructorDashboard() {
 
   // Categorize schedules by status and date
   const categorizedSchedules = {
-    upcoming: allSchedules.filter(schedule => 
-      schedule.course.isActive && 
-      schedule.startDate && 
+    upcoming: allSchedules.filter(schedule =>
+      schedule.course.isActive &&
+      schedule.startDate &&
       new Date(schedule.startDate) > new Date() &&
       !schedule.notes?.includes('CANCELLED:') // Exclude cancelled schedules
     ).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()),
 
-    past: allSchedules.filter(schedule => 
-      schedule.course.isActive && 
-      schedule.startDate && 
+    past: allSchedules.filter(schedule =>
+      schedule.course.isActive &&
+      schedule.startDate &&
       new Date(schedule.startDate) <= new Date() &&
       !schedule.notes?.includes('CANCELLED:') // Exclude cancelled schedules
     ).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()),
 
-    cancelled: allSchedules.filter(schedule => 
-      schedule.course.isActive && 
+    cancelled: allSchedules.filter(schedule =>
+      schedule.course.isActive &&
       schedule.notes?.includes('CANCELLED:') // Include only cancelled schedules
     ).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
   };
@@ -592,7 +619,7 @@ export default function InstructorDashboard() {
     archived: [] // Placeholder for archived course types
   };
 
-  // Helper function to render schedule cards for each category  
+  // Helper function to render schedule cards for each category
   const renderScheduleCards = (categoryName: string, scheduleList: any[]) => {
     if (coursesLoading) {
       return (
@@ -634,18 +661,18 @@ export default function InstructorDashboard() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {scheduleList.map((schedule) => {
-            const displayDate = schedule.startDate 
+            const displayDate = schedule.startDate
               ? formatDateShort(schedule.startDate)
               : '-';
 
-            const displayTime = schedule.startTime && schedule.endTime 
+            const displayTime = schedule.startTime && schedule.endTime
               ? `${schedule.startTime.slice(0,5)} - ${schedule.endTime.slice(0,5)}`
               : '-';
 
             // Count only confirmed enrollments for this schedule
-            const scheduleEnrollments = enrollments.filter(e => 
-              e.scheduleId === schedule.id && 
-              e.status === 'confirmed' && 
+            const scheduleEnrollments = enrollments.filter(e =>
+              e.scheduleId === schedule.id &&
+              e.status === 'confirmed' &&
               e.studentId !== null
             );
             const enrollmentCount = scheduleEnrollments.length;
@@ -674,9 +701,9 @@ export default function InstructorDashboard() {
                       {schedule.course.title}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {typeof schedule.course.category === 'string' ? schedule.course.category : 
-                       (schedule.course.category && typeof schedule.course.category === 'object' && 'name' in schedule.course.category) 
-                         ? (schedule.course.category as any).name || 'General' 
+                      {typeof schedule.course.category === 'string' ? schedule.course.category :
+                       (schedule.course.category && typeof schedule.course.category === 'object' && 'name' in schedule.course.category)
+                         ? (schedule.course.category as any).name || 'General'
                          : 'General'}
                     </div>
                     {spotsLeft <= 10 && spotsLeft > 0 && (
@@ -711,8 +738,8 @@ export default function InstructorDashboard() {
                 </td>
                 <td className="px-6 py-4 text-center">
                   <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                    schedule.status === 'cancelled' 
-                      ? 'bg-red-100 text-red-800' 
+                    schedule.status === 'cancelled'
+                      ? 'bg-red-100 text-red-800'
                       : 'bg-green-100 text-green-800'
                   }`}>
                     {schedule.status === 'cancelled' ? 'Cancelled' : 'Active'}
@@ -848,9 +875,9 @@ export default function InstructorDashboard() {
                       {course.title}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {typeof course.category === 'string' ? course.category : 
-                       (course.category && typeof course.category === 'object' && 'name' in course.category) 
-                         ? (course.course.category as any).name || 'General' 
+                      {typeof course.category === 'string' ? course.category :
+                       (course.category && typeof course.category === 'object' && 'name' in course.category)
+                         ? (course.course.category as any).name || 'General'
                          : 'General'}
                     </div>
                   </td>
@@ -864,14 +891,14 @@ export default function InstructorDashboard() {
                   <td className="px-6 py-4 text-center text-sm font-medium text-gray-900">${courseRevenue.toLocaleString()}</td>
                   <td className="px-6 py-4 text-center">
                     <span className={`inline-block px-2 py-1 text-xs rounded-full ${
-                      course.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : categoryName === 'archived' 
-                        ? 'bg-red-100 text-red-800' 
+                      course.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : categoryName === 'archived'
+                        ? 'bg-red-100 text-red-800'
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {course.isActive ? "Active" : 
-                       categoryName === 'archived' ? "Archived" : 
+                      {course.isActive ? "Active" :
+                       categoryName === 'archived' ? "Archived" :
                        "Unpublished"}
                     </span>
                   </td>
@@ -961,7 +988,7 @@ export default function InstructorDashboard() {
               <p className="text-primary-foreground/80">Manage your training business efficiently</p>
             </div>
             <div className="flex items-center space-x-4 mt-4 sm:mt-0 overflow-x-auto">
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => setLocation('/onboarding')}
                 data-testid="button-onboarding"
@@ -970,7 +997,7 @@ export default function InstructorDashboard() {
                 <Settings className="mr-2 h-4 w-4" />
                 Onboarding
               </Button>
-              <Button 
+              <Button
                 className="bg-accent text-black hover:bg-accent/90 whitespace-nowrap"
                 onClick={() => setLocation('/course-management')}
                 data-testid="button-manage-courses"
@@ -978,14 +1005,14 @@ export default function InstructorDashboard() {
                 <Plus className="mr-2 h-4 w-4" />
                 Manage Courses
               </Button>
-              <Button 
+              <Button
                 className="bg-secondary text-black hover:bg-secondary/90 whitespace-nowrap"
                 data-testid="button-view-reports"
               >
                 <BarChart className="mr-2 h-4 w-4" />
                 Reports
               </Button>
-              <Button 
+              <Button
                 className="bg-white text-black border border-primary/20 hover:bg-gray-50 whitespace-nowrap"
                 onClick={() => setLocation('/appointments')}
                 data-testid="button-appointment-settings"
@@ -1012,7 +1039,7 @@ export default function InstructorDashboard() {
             </CardContent>
           </Card>
 
-          <Card 
+          <Card
             className="cursor-pointer hover:bg-muted/50 transition-colors"
             onClick={() => setShowOnlineStudentsModal(true)}
             data-testid="card-online-students"
@@ -1070,7 +1097,7 @@ export default function InstructorDashboard() {
             </CardContent>
           </Card>
 
-          <Card 
+          <Card
             className="cursor-pointer hover:bg-muted/50 transition-colors"
             onClick={() => setShowRefundRequestsModal(true)}
           >
@@ -1092,7 +1119,7 @@ export default function InstructorDashboard() {
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Schedule</h2>
-              <Button 
+              <Button
                 onClick={() => setShowEventForm(true)}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 data-testid="button-schedule-course"
@@ -1104,32 +1131,32 @@ export default function InstructorDashboard() {
             <Tabs defaultValue="upcoming" className="w-full">
               <div className="overflow-x-auto">
                 <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none justify-start min-w-max w-full">
-                  <TabsTrigger 
-                    value="upcoming" 
+                  <TabsTrigger
+                    value="upcoming"
                     className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
                     data-testid="tab-upcoming-schedules"
                   >
                     <Clock className="w-4 h-4" />
                     Upcoming ({categorizedSchedules.upcoming.length})
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="past" 
+                  <TabsTrigger
+                    value="past"
                     className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
                     data-testid="tab-past-schedules"
                   >
                     <Archive className="w-4 h-4" />
                     Past ({categorizedSchedules.past.length})
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="cancelled" 
+                  <TabsTrigger
+                    value="cancelled"
                     className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
                     data-testid="tab-cancelled-schedules"
                   >
                     <Trash2 className="w-4 h-4" />
                     Cancelled ({categorizedSchedules.cancelled.length})
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="deleted" 
+                  <TabsTrigger
+                    value="deleted"
                     className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
                     data-testid="tab-deleted-schedules"
                   >
@@ -1518,8 +1545,8 @@ export default function InstructorDashboard() {
 
                             <div className="bg-white p-3 rounded-lg border border-purple-200">
                               <p className="text-xs text-purple-700">
-                                <strong>Note:</strong> Processing this refund will create a refund in Stripe, 
-                                update the enrollment status to "Refunded", and automatically send a notification 
+                                <strong>Note:</strong> Processing this refund will create a refund in Stripe,
+                                update the enrollment status to "Refunded", and automatically send a notification
                                 to the student.
                               </p>
                             </div>
@@ -1586,9 +1613,9 @@ export default function InstructorDashboard() {
                         {enrollments
                           .filter(e => {
                             // Filter for online New Mexico concealed carry course
-                            return e.course?.title && 
-                              e.course.title.toLowerCase().includes('online') && 
-                              (e.course.title.toLowerCase().includes('concealed carry') || 
+                            return e.course?.title &&
+                              e.course.title.toLowerCase().includes('online') &&
+                              (e.course.title.toLowerCase().includes('concealed carry') ||
                                e.course.title.toLowerCase().includes('ccw')) &&
                               e.course.title.toLowerCase().includes('new mexico') &&
                               e.studentId !== null &&
