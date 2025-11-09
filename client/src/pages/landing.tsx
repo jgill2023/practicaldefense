@@ -4,11 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User } from "lucide-react";
+import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User, DollarSign, CalendarClock } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
 import type { CourseWithSchedules, AppSettings } from "@shared/schema";
+
+type AppointmentType = {
+  id: string;
+  instructorId: string;
+  title: string;
+  description: string | null;
+  durationMinutes: number;
+  price: number;
+  requiresApproval: boolean;
+  isActive: boolean;
+};
 import heroImage from "@assets/TacticalAdvantageHeader_1762624792996.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
@@ -40,6 +51,19 @@ export default function Landing() {
 
   const { data: appSettings } = useQuery<AppSettings>({
     queryKey: ["/api/app-settings"],
+  });
+
+  // Hardcoded instructor ID for single-instructor platform
+  const instructorId = "43575331";
+
+  const { data: appointmentTypes = [], isLoading: appointmentsLoading } = useQuery<AppointmentType[]>({
+    queryKey: ["/api/appointments/types", instructorId],
+    queryFn: async () => {
+      const response = await fetch(`/api/appointments/types/${instructorId}`);
+      if (!response.ok) throw new Error('Failed to fetch appointment types');
+      return response.json();
+    },
+    retry: false,
   });
 
   // Helper function to get category name, handling different formats
@@ -332,7 +356,82 @@ export default function Landing() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
+      {/* Schedule Your Training Section */}
+      <section className="py-20 bg-muted/30" data-testid="section-schedule-training">
+        <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
+              Schedule Your Training
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Book one-on-one training sessions tailored to your specific needs and schedule.
+            </p>
+          </div>
+
+          {appointmentsLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map(i => (
+                <Card key={i} className="animate-pulse">
+                  <div className="h-64 bg-muted" />
+                </Card>
+              ))}
+            </div>
+          ) : appointmentTypes.length === 0 ? (
+            <div className="text-center py-12">
+              <CalendarClock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No appointment types available at this time.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {appointmentTypes.map((type) => (
+                <Card 
+                  key={type.id} 
+                  className="hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => setLocation(`/book-appointment/${instructorId}`)}
+                  data-testid={`appointment-card-${type.id}`}
+                >
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>{type.title}</span>
+                      {type.requiresApproval && (
+                        <Badge variant="outline" className="text-xs">Approval Required</Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {type.description && (
+                      <p className="text-sm text-muted-foreground mb-4">{type.description}</p>
+                    )}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span>{type.durationMinutes} minutes</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-semibold">${Number(type.price).toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full bg-black text-white hover:bg-black/90"
+                      data-testid={`button-book-${type.id}`}
+                    >
+                      Book Now
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Additional Features Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
           {/* Student Portal Section */}
           <div className="bg-card rounded-lg overflow-hidden shadow-lg mt-8" data-testid="feature-student-portal">
             <div className="grid md:grid-cols-2 gap-6 p-6">
