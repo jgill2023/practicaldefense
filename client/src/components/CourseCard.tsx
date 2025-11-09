@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, Users } from "lucide-react";
+import { Clock, Calendar, Users, ArrowRight } from "lucide-react";
 import type { CourseWithSchedules } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
 
@@ -38,22 +38,22 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
   // Helper to get fallback image URL based on category
   const getImageUrl = (category: string | null) => {
     if (!category) return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-    
+
     const categoryLower = category.toLowerCase();
-    
+
     // Check if category contains keywords
     if (categoryLower.includes('concealed') || categoryLower.includes('ccw') || categoryLower.includes('nm concealed')) {
       return 'https://images.unsplash.com/photo-1593784991095-a205069470b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
     }
-    
+
     if (categoryLower.includes('defensive') || categoryLower.includes('handgun')) {
       return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
     }
-    
+
     if (categoryLower.includes('advanced')) {
       return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
     }
-    
+
     // Default fallback
     return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
   };
@@ -101,18 +101,18 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
             ${course.price}
           </span>
         </div>
-        
+
         <h3 className="text-xl font-semibold text-card-foreground mb-3" data-testid={`text-title-${course.id}`}>
           {course.title}
         </h3>
-        
-        
+
+
         <div className="space-y-3 mb-6">
           <div className="flex items-center text-sm text-muted-foreground">
             <Clock className="mr-2 h-4 w-4 text-accent" />
             <span data-testid={`text-duration-${course.id}`}>{course.duration}</span>
           </div>
-          
+
           {nextSchedule ? (
             <>
               <div className="flex items-center text-sm text-muted-foreground">
@@ -134,20 +134,22 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
               <span>No upcoming schedules</span>
             </div>
           )}
-          
+
           <div className="flex items-center text-sm text-muted-foreground">
             <Users className="mr-2 h-4 w-4 text-accent" />
             <span>Instructor: {course.instructor.firstName} {course.instructor.lastName}</span>
           </div>
         </div>
-        
+
         <Button 
-          className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
+          size="lg" 
+          className="w-full register-button"
           onClick={() => onRegister(course)}
           disabled={!nextSchedule}
           data-testid={`button-register-${course.id}`}
         >
-          {nextSchedule ? 'Register Now' : 'No Schedules Available'}
+          REGISTER NOW
+          <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
       </CardContent>
     </Card>

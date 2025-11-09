@@ -18,7 +18,7 @@
   --muted: hsl(0, 0%, 96%);
   --muted-foreground: hsl(0, 0%, 5%);
   --accent: hsl(0, 0%, 96%);
-  --accent-foreground: hsl(0, 0%, 5%);
+  --accent-foreground: hsl(0, 0%, 0%);
   --destructive: hsl(0, 84%, 60%);
   --destructive-foreground: hsl(0, 0%, 5%);
   --success: hsl(142, 76%, 36%);
@@ -103,6 +103,10 @@
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold;
+  }
+
+  a {
+    @apply text-blue-600 hover:text-blue-800;
   }
 
   .line-clamp-3 {
@@ -339,6 +343,10 @@
 
 .btn-accent {
   @apply btn-professional bg-accent hover:bg-accent hover:opacity-90;
+}
+
+.register-button {
+  @apply inline-flex items-center justify-center rounded text-sm font-bold uppercase tracking-wide transition-colors focus-ring disabled:opacity-50 disabled:pointer-events-none bg-black text-white hover:bg-gray-800;
 }
 
 /* Professional card styles */
