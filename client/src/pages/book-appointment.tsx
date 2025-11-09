@@ -66,6 +66,7 @@ export default function BookAppointmentPage() {
   });
 
   const formatLocalDate = (date: Date): string => {
+    // Use local timezone to format the date
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -92,11 +93,22 @@ export default function BookAppointmentPage() {
         throw new Error(`${response.status}: ${response.statusText}`);
       }
       const allSlots = await response.json();
+      console.log('All slots from API:', allSlots);
+      console.log('Selected date string:', dateStr);
+      
       // Filter to only slots that are available and on the selected date
-      return allSlots.filter((slot: any) => {
+      const filtered = allSlots.filter((slot: any) => {
+        if (!slot.isAvailable) return false;
+        
+        // Parse the ISO string and extract date in local timezone
         const slotDate = new Date(slot.startTime);
-        return slot.isAvailable && formatLocalDate(slotDate) === dateStr;
+        const slotDateStr = formatLocalDate(slotDate);
+        console.log(`Slot start: ${slot.startTime}, formatted: ${slotDateStr}, match: ${slotDateStr === dateStr}`);
+        return slotDateStr === dateStr;
       });
+      
+      console.log('Filtered slots:', filtered);
+      return filtered;
     },
     enabled: isAuthenticated && !!instructorId && !!selectedType && !!selectedDate,
     retry: false,
@@ -398,7 +410,8 @@ export default function BookAppointmentPage() {
                     </div>
                   ) : availableSlots.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
-                      No available time slots for this date. Please select a different date.
+                      <p>No available time slots for this date.</p>
+                      <p className="text-xs mt-2">Selected: {selectedDate ? formatLocalDate(selectedDate) : 'none'}</p>
                     </div>
                   ) : (
                     <div className="grid gap-2 max-h-96 overflow-y-auto pr-2">
