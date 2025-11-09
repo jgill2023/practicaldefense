@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,11 +8,12 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Clock, DollarSign, CalendarClock, CheckCircle } from "lucide-react";
 import type { User } from "@shared/schema";
+import { DayPicker } from "react-day-picker";
+import { cn } from "@/lib/utils";
 
 type AppointmentType = {
   id: string;
@@ -41,6 +42,8 @@ export default function BookAppointmentPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [availabilityMap, setAvailabilityMap] = useState<Record<string, boolean>>({});
 
   const instructorId = params?.instructorId || "";
 
@@ -85,6 +88,42 @@ export default function BookAppointmentPage() {
     enabled: isAuthenticated && !!instructorId && !!selectedType && !!selectedDate,
     retry: false,
   });
+
+  // Fetch availability for the next 60 days when modal opens
+  useEffect(() => {
+    if (!showBookingModal || !selectedType || !instructorId) return;
+
+    const fetchAvailability = async () => {
+      const map: Record<string, boolean> = {};
+      const today = new Date();
+      const promises = [];
+
+      for (let i = 0; i < 60; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        const dateStr = formatLocalDate(date);
+
+        const promise = fetch(
+          `/api/appointments/student/slots?instructorId=${instructorId}&appointmentTypeId=${selectedType.id}&date=${dateStr}`,
+          { credentials: "include" }
+        )
+          .then(res => res.json())
+          .then(slots => {
+            map[dateStr] = slots.length > 0;
+          })
+          .catch(() => {
+            map[dateStr] = false;
+          });
+
+        promises.push(promise);
+      }
+
+      await Promise.all(promises);
+      setAvailabilityMap(map);
+    };
+
+    fetchAvailability();
+  }, [showBookingModal, selectedType, instructorId]);
 
   const bookAppointmentMutation = useMutation({
     mutationFn: async () => {
@@ -148,6 +187,19 @@ export default function BookAppointmentPage() {
     bookAppointmentMutation.mutate();
   }
 
+  function handleBookNow(type: AppointmentType) {
+    setSelectedType(type);
+    setSelectedDate(undefined);
+    setSelectedSlot(null);
+    setShowBookingModal(true);
+  }
+
+  function handleCloseBookingModal() {
+    setShowBookingModal(false);
+    setSelectedDate(undefined);
+    setSelectedSlot(null);
+  }
+
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -172,108 +224,152 @@ export default function BookAppointmentPage() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Step 1: Choose Appointment Type</CardTitle>
-                <CardDescription>
-                  Select the type of appointment you'd like to book
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {typesLoading ? (
-                  <div className="text-center py-8 text-muted-foreground">Loading appointment types...</div>
-                ) : appointmentTypes.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No appointment types available at this time.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {appointmentTypes.map((type) => (
-                      <button
-                        key={type.id}
-                        onClick={() => {
-                          setSelectedType(type);
-                          setSelectedDate(undefined);
-                          setSelectedSlot(null);
-                        }}
-                        className={`w-full text-left border rounded-lg p-4 transition-all ${
-                          selectedType?.id === type.id
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-primary/50'
-                        }`}
-                        data-testid={`button-select-type-${type.id}`}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-lg">{type.title}</h3>
-                          {selectedType?.id === type.id && (
-                            <CheckCircle className="h-5 w-5 text-primary" />
-                          )}
-                        </div>
-                        {type.description && (
-                          <p className="text-sm text-muted-foreground mb-3">{type.description}</p>
-                        )}
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span>{type.durationMinutes} min</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
-                            <span>${Number(type.price).toFixed(2)}</span>
-                          </div>
-                          {type.requiresApproval && (
-                            <Badge variant="outline" className="text-xs">Requires Approval</Badge>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {selectedType && (
-              <Card>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {typesLoading ? (
+            <div className="col-span-full text-center py-12 text-muted-foreground">
+              Loading appointment types...
+            </div>
+          ) : appointmentTypes.length === 0 ? (
+            <div className="col-span-full text-center py-12 text-muted-foreground">
+              No appointment types available at this time.
+            </div>
+          ) : (
+            appointmentTypes.map((type) => (
+              <Card key={type.id} className="relative">
                 <CardHeader>
-                  <CardTitle>Step 2: Select Date</CardTitle>
-                  <CardDescription>
-                    Choose a date to see available time slots
-                  </CardDescription>
+                  <div className="flex items-start justify-between mb-2">
+                    <CardTitle className="text-xl">{type.title}</CardTitle>
+                    {type.requiresApproval && (
+                      <Badge variant="outline" className="text-xs">Approval Required</Badge>
+                    )}
+                  </div>
+                  {type.description && (
+                    <CardDescription>{type.description}</CardDescription>
+                  )}
                 </CardHeader>
-                <CardContent className="flex justify-center">
-                  <Calendar
+                <CardContent>
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span>{type.durationMinutes} minutes</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-lg font-semibold">
+                      <DollarSign className="h-5 w-5 text-muted-foreground" />
+                      <span>${Number(type.price).toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => handleBookNow(type)}
+                    className="w-full"
+                    data-testid={`button-book-${type.id}`}
+                  >
+                    Book Now
+                  </Button>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+
+        {/* Booking Modal */}
+        <Dialog open={showBookingModal} onOpenChange={handleCloseBookingModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden" data-testid="dialog-booking-modal">
+            <DialogHeader>
+              <DialogTitle>Book {selectedType?.title}</DialogTitle>
+              <DialogDescription>
+                Select a date and time for your appointment
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid md:grid-cols-2 gap-6 py-4">
+              {/* Left Column - Calendar */}
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <DayPicker
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
                     disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                    className="rounded-md border"
-                    data-testid="calendar-date-picker"
+                    modifiers={{
+                      available: (date) => {
+                        const dateStr = formatLocalDate(date);
+                        return availabilityMap[dateStr] === true;
+                      },
+                      unavailable: (date) => {
+                        const dateStr = formatLocalDate(date);
+                        return availabilityMap[dateStr] === false && date >= new Date(new Date().setHours(0, 0, 0, 0));
+                      },
+                    }}
+                    modifiersStyles={{
+                      available: {
+                        position: 'relative',
+                      },
+                      unavailable: {
+                        position: 'relative',
+                      },
+                    }}
+                    components={{
+                      Day: ({ date, ...props }) => {
+                        const dateStr = formatLocalDate(date);
+                        const hasAvailability = availabilityMap[dateStr] === true;
+                        const noAvailability = availabilityMap[dateStr] === false && date >= new Date(new Date().setHours(0, 0, 0, 0));
+                        
+                        return (
+                          <div className="relative">
+                            {hasAvailability && (
+                              <div className="absolute inset-0 rounded-full border-2 border-green-500 pointer-events-none" />
+                            )}
+                            {noAvailability && (
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className="w-full h-0.5 bg-red-500 rotate-45" />
+                              </div>
+                            )}
+                            <button {...props} className={cn("relative z-10", props.className)} />
+                          </div>
+                        );
+                      },
+                    }}
+                    className="rounded-md border p-3"
                   />
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                </div>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full border-2 border-green-500" />
+                    <span>Available slots</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="relative w-6 h-6">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-full h-0.5 bg-red-500 rotate-45" />
+                      </div>
+                    </div>
+                    <span>No availability</span>
+                  </div>
+                </div>
+              </div>
 
-          <div>
-            {selectedType && selectedDate && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Step 3: Choose Time</CardTitle>
-                  <CardDescription>
-                    Available time slots for {formattedDate}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {slotsLoading ? (
-                    <div className="text-center py-8 text-muted-foreground">Loading available times...</div>
+              {/* Right Column - Time Slots */}
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-3">
+                    {selectedDate ? formattedDate : 'Select a date'}
+                  </h4>
+                  
+                  {!selectedDate ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Please select a date to see available time slots
+                    </div>
+                  ) : slotsLoading ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Loading available times...
+                    </div>
                   ) : availableSlots.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       No available time slots for this date. Please select a different date.
                     </div>
                   ) : (
-                    <div className="grid gap-2 max-h-96 overflow-y-auto">
+                    <div className="grid gap-2 max-h-96 overflow-y-auto pr-2">
                       {availableSlots.map((slot, index) => (
                         <Button
                           key={index}
@@ -295,11 +391,11 @@ export default function BookAppointmentPage() {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
           <DialogContent data-testid="dialog-confirm-booking">
