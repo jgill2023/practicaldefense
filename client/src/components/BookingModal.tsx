@@ -135,7 +135,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         endTime: selectedSlot.endTime,
       };
 
-      const data = await apiRequest("POST", "/api/appointments/student/book", body);
+      const data = await apiRequest("POST", "/api/appointments/book", body);
       return data;
     },
     onSuccess: (data) => {
@@ -147,7 +147,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             : "Your appointment has been confirmed! You'll receive a confirmation email shortly.",
         });
 
-        queryClient.invalidateQueries({ queryKey: ["/api/appointments/student/bookings"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/appointments/my-appointments"] });
         onClose();
       }
     },
