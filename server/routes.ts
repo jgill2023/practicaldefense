@@ -14,6 +14,7 @@ import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, i
 import { sendSms } from "./smsService";
 import { CourseNotificationEngine, NotificationEngine } from "./notificationEngine";
 import { NotificationEmailService } from "./emailService";
+import { appointmentRouter } from "./appointments/routes";
 import "./types"; // Import type declarations
 
 // Stripe is required for payment processing
@@ -6750,6 +6751,9 @@ jeremy@abqconcealedcarry.com
       res.status(500).json({ message: "Failed to generate upload URL: " + error.message });
     }
   });
+
+  // Mount appointment routes
+  app.use('/api/appointments', appointmentRouter);
 
   const httpServer = createServer(app);
   return httpServer;
