@@ -52,6 +52,7 @@ export function CourseManagementActions({ course, onEditCourse, onCreateEvent }:
         description: "The course has been archived successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
     },
     onError: (error) => {
@@ -99,6 +100,7 @@ export function CourseManagementActions({ course, onEditCourse, onCreateEvent }:
         description: `The course has been ${action} successfully.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
     },
     onError: (error) => {
