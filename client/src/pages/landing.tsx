@@ -455,24 +455,50 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Registration Modal */}
-      {showRegistrationModal && selectedCourse && (
-        <RegistrationModal 
-          course={selectedCourse}
-          onClose={handleCloseModal}
-        />
-      )}
+      {/* Virtual Coaching and Mental Management Section */}
+      <section className="relative w-full py-24" style={{
+        backgroundImage: 'url(/coaching-bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}>
+        {/* Semi-transparent black overlay */}
+        <div className="absolute inset-0 bg-black/60"></div>
 
-      {/* Booking Modal */}
-      <BookingModal
-        appointmentType={selectedAppointmentType}
-        instructorId={instructorId}
-        open={showBookingModal}
-        onClose={() => {
-          setShowBookingModal(false);
-          setSelectedAppointmentType(null);
-        }}
-      />
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-12">
+            {/* Left Column - Virtual Coaching */}
+            <div className="text-white">
+              <h2 className="text-3xl lg:text-4xl mb-6 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+                Virtual Coaching
+              </h2>
+              <p className="text-base lg:text-lg leading-relaxed">
+                Enhancing your skills through virtual coaching is not only possible but highly effective. We specialize in helping you develop a personalized training plan, thoroughly examining and evaluating all aspects of your current abilities. Our clients consistently experience substantial benefits from virtual coaching, making it an exceptionally cost-effective means of receiving tailored one-on-one guidance.
+              </p>
+            </div>
+
+            {/* Right Column - Mental Management Coaching */}
+            <div className="text-white">
+              <h2 className="text-3xl lg:text-4xl mb-6 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+                Mental Management Coaching
+              </h2>
+              <p className="text-base lg:text-lg leading-relaxed">
+                Proudly, I am among an exclusive group of 23 coaches worldwide certified by the originator and pioneer of Mental Management, Lanny Bassham. As a certified Level II mental management coach, I've dedicated a significant amount of time and resources to becoming an exemplary guide in incorporating mental management concepts into the performer's toolkit.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer - Positioned absolutely at bottom */}
+      <footer className="relative bg-black text-white py-8 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-sm">
+            &copy; {new Date().getFullYear()} Tactical Advantage. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </Layout>
   );
 }
