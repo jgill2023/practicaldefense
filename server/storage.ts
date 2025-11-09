@@ -1079,8 +1079,7 @@ export class DatabaseStorage implements IStorage {
     const courseList = await db.query.courses.findMany({
       where: and(
         eq(courses.instructorId, instructorId), 
-        isNull(courses.deletedAt),
-        eq(courses.isActive, true)
+        isNull(courses.deletedAt)
       ),
       with: {
         schedules: {
