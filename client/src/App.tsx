@@ -83,6 +83,10 @@ function Router() {
       {isAuthenticated && (
         <Route path="/student-portal" component={StudentPortal} />
       )}
+      {/* Add the Students page route */}
+      {isAuthenticated && (
+        <Route path="/students" component={StudentsPage} />
+      )}
       <Route component={NotFound} />
     </Switch>
   );
