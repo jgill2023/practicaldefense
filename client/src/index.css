@@ -399,6 +399,11 @@
   @apply inline-flex items-center space-x-2 text-sm text-success bg-success bg-opacity-10 px-3 py-1 rounded-full;
 }
 
+/* Badge count indicator */
+.badge-count {
+  @apply inline-flex items-center justify-center min-w-[1.5rem] h-6 px-2 rounded-full bg-white text-foreground font-medium text-xs border-2 border-border;
+}
+
 /* Loading states */
 .loading-spinner {
   @apply animate-spin w-4 h-4 border-2 border-transparent border-t-current rounded-full;

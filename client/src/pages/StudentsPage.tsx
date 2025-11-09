@@ -353,7 +353,7 @@ function StudentsPage() {
                       <div className="space-y-1">
                         <button
                           onClick={() => {
-                            // Get the first enrollment's schedule ID for the roster
+                            // Get the first enrollment's schedule Id for the roster
                             const firstEnrollment = student.enrollments[0];
                             if (firstEnrollment && firstEnrollment.scheduleId) {
                               setSelectedScheduleIdForRoster(firstEnrollment.scheduleId);
@@ -570,7 +570,7 @@ function StudentsPage() {
           <TabsTrigger value="current" data-testid="tab-current-students">
             Current Students
             {studentsData?.current && studentsData.current.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="default" className="ml-2 badge-count">
                 {studentsData.current.reduce((sum, student) => sum + student.enrollments.length, 0)}
               </Badge>
             )}
@@ -578,7 +578,7 @@ function StudentsPage() {
           <TabsTrigger value="held" data-testid="tab-held-students">
             Held Students
             {studentsData?.held && studentsData.held.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="ml-2 badge-count">
                 {studentsData.held.reduce((sum, student) => sum + student.enrollments.length, 0)}
               </Badge>
             )}
@@ -586,7 +586,7 @@ function StudentsPage() {
           <TabsTrigger value="former" data-testid="tab-former-students">
             Former Students
             {studentsData?.former && studentsData.former.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="ml-2 badge-count">
                 {studentsData.former.reduce((sum, student) => sum + student.enrollments.length, 0)}
               </Badge>
             )}
