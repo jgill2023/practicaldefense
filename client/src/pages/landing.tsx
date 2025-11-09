@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -76,121 +76,56 @@ export default function Landing() {
     ...new Set(visibleCategories.map(category => getCategoryName(category.name))),
   ];
 
-  // Sort courses first by date, then by category order
-  const sortedAndFilteredCourses = (() => {
-    // Create a map of category names to their sort order for quick lookup
-    const categoryOrderMap = new Map();
-    visibleCategories.forEach((category, index) => {
-      categoryOrderMap.set(getCategoryName(category.name), category.sortOrder || (9999 + index));
+  // Filter and sort courses based on home page settings and category filter
+  const sortedAndFilteredCourses = useMemo(() => {
+    console.log('Filtering courses:', { 
+      totalCourses: courses?.length, 
+      courseFilter, 
+      appSettings 
     });
 
-    // Helper function to get the earliest upcoming schedule date for a course
-    const getEarliestDate = (course: CourseWithSchedules) => {
-      if (!course.schedules || course.schedules.length === 0) {
-        return new Date('9999-12-31'); // Courses without schedules go to the end
-      }
-
-      const now = new Date();
-      const upcomingDates = course.schedules
-        .filter(schedule => new Date(schedule.startDate) >= now)
-        .map(schedule => new Date(schedule.startDate))
-        .sort((a, b) => a.getTime() - b.getTime());
-
-      // If no upcoming dates, use the most recent past date
-      if (upcomingDates.length === 0) {
-        const pastDates = course.schedules
-          .map(schedule => new Date(schedule.startDate))
-          .sort((a, b) => b.getTime() - a.getTime());
-        return pastDates[0] || new Date('9999-12-31');
-      }
-
-      return upcomingDates[0];
-    };
-
-    // Different behavior based on filter selection
-    let coursesToDisplay: CourseWithSchedules[];
-
-    if (courseFilter === "all") {
-      // For "All Courses", show unique courses (current behavior)
-      // Also filter by showOnHomePage for both courses and their categories
-      coursesToDisplay = courses.filter(course => {
-        const categoryName = getCategoryName(course.category);
-        const category = visibleCategories.find(cat => getCategoryName(cat.name) === categoryName);
-        return course.showOnHomePage !== false &&
-               category; // Only show if category is visible
-      });
-      coursesToDisplay.sort((a, b) => {
-        const dateA = getEarliestDate(a);
-        const dateB = getEarliestDate(b);
-
-        // First sort by date
-        const dateComparison = dateA.getTime() - dateB.getTime();
-        if (dateComparison !== 0) {
-          return dateComparison;
-        }
-
-        // Then by category order
-        const orderA = categoryOrderMap.get(getCategoryName(a.category)) || 9999;
-        const orderB = categoryOrderMap.get(getCategoryName(b.category)) || 9999;
-
-        if (orderA !== orderB) {
-          return orderA - orderB;
-        }
-
-        // Finally by course title
-        return a.title.localeCompare(b.title);
-      });
-
-      // Filter out courses that have no upcoming schedules
-      const now = new Date();
-      coursesToDisplay = coursesToDisplay.filter(course => {
-        return course.schedules.some(schedule => new Date(schedule.startDate) >= now);
-      });
-
-    } else {
-      // For specific category filters, show individual schedules
-      const now = new Date();
-      const categorySchedules: CourseWithSchedules[] = [];
-
-      // Filter courses by category and check visibility
-      const categoryCourses = courses.filter(course => {
-        const categoryName = getCategoryName(course.category);
-        const category = visibleCategories.find(cat => getCategoryName(cat.name) === categoryName);
-        return categoryName === courseFilter && 
-               course.showOnHomePage !== false &&
-               category &&
-               course.schedules && 
-               course.schedules.length > 0;
-      });
-
-      // For each course in the category, create individual entries for each upcoming schedule
-      categoryCourses.forEach(course => {
-        const upcomingSchedules = course.schedules.filter(schedule => 
-          new Date(schedule.startDate) >= now
-        );
-
-        // Create a separate course entry for each upcoming schedule
-        upcomingSchedules.forEach(schedule => {
-          categorySchedules.push({
-            ...course,
-            id: `${course.id}-${schedule.id}`, // Create unique ID for React key
-            schedules: [schedule], // Only include this specific schedule
-          });
-        });
-      });
-
-      // Sort by schedule date
-      coursesToDisplay = categorySchedules.sort((a, b) => {
-        const dateA = new Date(a.schedules[0]?.startDate || '9999-12-31');
-        const dateB = new Date(b.schedules[0]?.startDate || '9999-12-31');
-        return dateA.getTime() - dateB.getTime();
-      });
+    if (!courses || courses.length === 0) {
+      console.log('No courses available');
+      return [];
     }
 
-    // Apply the course limit from app settings
-    const courseLimit = appSettings?.homeCoursesLimit || 20;
-    return coursesToDisplay.slice(0, courseLimit);
-  })();
+    // First filter by category
+    let filtered = courses.filter(course => {
+      // Only show active courses
+      if (!course.isActive || course.status !== 'published') {
+        console.log(`Filtering out course ${course.title}: isActive=${course.isActive}, status=${course.status}`);
+        return false;
+      }
+
+      if (courseFilter === "all") return true;
+      return course.category === courseFilter || 
+             (typeof course.category === 'object' && course.category?.name === courseFilter);
+    });
+
+    console.log(`After category filter: ${filtered.length} courses`);
+
+    // Then filter by home page visibility
+    filtered = filtered.filter(course => {
+      const show = course.showOnHomePage !== false;
+      if (!show) {
+        console.log(`Filtering out course ${course.title}: showOnHomePage=${course.showOnHomePage}`);
+      }
+      return show;
+    });
+
+    console.log(`After home page visibility filter: ${filtered.length} courses`);
+
+    // Apply home page limit if set
+    const limit = appSettings?.homeCoursesLimit || 20;
+
+    // Sort by creation date (newest first) and apply limit
+    const result = filtered
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
+
+    console.log(`Final filtered courses: ${result.length}`);
+    return result;
+  }, [courses, courseFilter, appSettings]);
 
   const handleRegisterCourse = (course: CourseWithSchedules) => {
     setSelectedCourse(course);
