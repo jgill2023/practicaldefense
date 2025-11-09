@@ -14,7 +14,7 @@ import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
 import deductivePistolcraftImage from "@assets/Deductive-Pistol-Craft_1762671845456.jpg";
-import practiceForMasteryImage from "@assets/IMG_3599_1762667056106.png";
+import practiceForMasteryImage from "@assets/IMG_3599_1762666974182.png";
 import {
   Select,
   SelectContent,
