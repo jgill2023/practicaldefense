@@ -10,7 +10,7 @@ import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
 import { BookingModal } from "@/components/BookingModal";
 import type { CourseWithSchedules, AppSettings, AppointmentType } from "@shared/schema";
-import heroImage from "@assets/TacticalAdvantageHeader_1762674118627.jpg";
+import heroImage from "@assets/TacticalAdvantageHeader_1762624792996.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
