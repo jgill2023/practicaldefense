@@ -387,20 +387,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="md:col-span-2">
               <h4 className="font-semibold mb-4">Support</h4>
               <div className="space-y-2 text-primary-foreground/80">
-                <Link href="/contact" className="block hover:text-primary-foreground transition-colors" data-testid="link-contact-support">Contact Us</Link>
-                <Link href="/privacy-policy" className="block hover:text-primary-foreground transition-colors" data-testid="link-privacy-policy">Privacy Policy</Link>
-                <Link href="/terms-of-service" className="block hover:text-primary-foreground transition-colors" data-testid="link-terms-of-service">Terms of Service</Link>
-                <Link href="/refund-policy" className="block hover:text-primary-foreground transition-colors" data-testid="link-refund-policy">Refund Policy</Link>
+                <Link href="/contact" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-contact-support">Contact Us</Link>
+                <Link href="/privacy-policy" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-privacy-policy">Privacy Policy</Link>
+                <Link href="/terms-of-service" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-terms-of-service">Terms of Service</Link>
+                <Link href="/refund-policy" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-refund-policy">Refund Policy</Link>
               </div>
             </div>
 
             <div className="md:col-span-2">
               <h4 className="font-semibold mb-4">Quick Links</h4>
               <div className="space-y-2 text-primary-foreground/80">
-                <Link href="/schedule-list" className="block hover:text-primary-foreground transition-colors" data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
-                <Link href="/student-portal" className="block hover:text-primary-foreground transition-colors" data-testid="link-footer-student-dashboard">Student Dashboard</Link>
-                <a href="#resources" className="block hover:text-primary-foreground transition-colors">Resources</a>
-                <Link href="/store" className="block hover:text-primary-foreground transition-colors" data-testid="link-footer-shop">Shop</Link>
+                <Link href="/schedule-list" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
+                <Link href="/student-portal" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-student-dashboard">Student Dashboard</Link>
+                <a href="#resources" className="block transition-colors" style={{ color: '#e8e9eb' }}>Resources</a>
+                <Link href="/store" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-shop">Shop</Link>
               </div>
             </div>
 
@@ -409,11 +409,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="space-y-2 text-primary-foreground/80">
                 <div className="flex items-start space-x-2">
                   <span className="text-success">📞</span>
-                  <a href="tel:+15059445247" className="hover:text-primary-foreground transition-colors">(505) 944-5247</a>
+                  <a href="tel:+15059445247" className="transition-colors" style={{ color: '#e8e9eb' }}>(505) 944-5247</a>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span>✉️</span>
-                  <a href="mailto:chris@tacticaladv.com" className="hover:text-primary-foreground transition-colors">chris@tacticaladv.com</a>
+                  <a href="mailto:chris@tacticaladv.com" className="transition-colors" style={{ color: '#e8e9eb' }}>chris@tacticaladv.com</a>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="text-success">📍</span>
