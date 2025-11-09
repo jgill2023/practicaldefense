@@ -121,7 +121,7 @@ function ReactivateCourseButton({ course }: { course: CourseWithSchedules }) {
 
   return (
     <Button
-      variant="default"
+      variant="outline"
       size="sm"
       onClick={() => reactivateMutation.mutate()}
       disabled={reactivateMutation.isPending}
@@ -272,6 +272,47 @@ function DeletePermanentlyButton({ course }: { course: CourseWithSchedules }) {
     </>
   );
 }
+
+// Delete Course Button Component (for unpublished and archived)
+function DeleteCourseButton({ course }: { course: CourseWithSchedules }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("DELETE", `/api/instructor/courses/${course.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/unpublished-courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/archived-courses"] });
+      toast({
+        title: "Course Deleted",
+        description: `"${course.title}" has been deleted and moved to trash.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete course. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  return (
+    <Button
+      variant="destructive"
+      size="sm"
+      onClick={() => deleteMutation.mutate()}
+      disabled={deleteMutation.isPending}
+      data-testid={`button-delete-${course.id}`}
+    >
+      {deleteMutation.isPending ? "Deleting..." : "Delete"}
+    </Button>
+  );
+}
+
 
 // Category Visibility Control Component
 function CategoryVisibilityControl({ 
@@ -513,17 +554,30 @@ export default function CourseManagement() {
                 </div>
                 <div className="flex-shrink-0 w-full sm:w-auto">
                   {type === 'archived' ? (
-                    <ReactivateCourseButton course={course} />
+                    <div className="flex items-center space-x-2">
+                      <ReactivateCourseButton course={course} />
+                      <DeleteCourseButton course={course} />
+                      <CourseManagementActions 
+                        course={course}
+                        onEditCourse={setEditingCourse}
+                        onCreateEvent={setSelectedCourseForEvent}
+                      />
+                    </div>
                   ) : (course.status === 'unpublished' || course.status === 'draft') ? (
-                    <PublishCourseButton course={course} />
+                    <div className="flex items-center space-x-2">
+                      <PublishCourseButton course={course} />
+                      <DeleteCourseButton course={course} />
+                      <CourseManagementActions 
+                        course={course}
+                        onEditCourse={setEditingCourse}
+                        onCreateEvent={setSelectedCourseForEvent}
+                      />
+                    </div>
                   ) : (
                     <CourseManagementActions 
                       course={course}
-                      onEditCourse={(course) => setEditingCourse(course)}
-                      onCreateEvent={(course) => {
-                        setSelectedCourseForEvent(course);
-                        setShowCreateEventModal(true);
-                      }}
+                      onEditCourse={setEditingCourse}
+                      onCreateEvent={setSelectedCourseForEvent}
                       data-testid={`actions-course-${course.id}`}
                     />
                   )}
