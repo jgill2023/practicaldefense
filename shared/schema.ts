@@ -65,6 +65,9 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Course status enum
+export const courseStatusEnum = pgEnum("course_status", ["draft", "published", "unpublished", "archived"]);
+
 // Course categories table for better organization
 export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -97,6 +100,8 @@ export const courses = pgTable("courses", {
   maxStudents: integer("max_students").notNull().default(20),
   instructorId: varchar("instructor_id").notNull().references(() => users.id),
   isActive: boolean("is_active").notNull().default(true),
+  status: courseStatusEnum("status").notNull().default("published"), // Course lifecycle status
+  archivedAt: timestamp("archived_at"), // Archive timestamp
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   imageUrl: varchar("image_url"),
   showOnHomePage: boolean("show_on_home_page").notNull().default(true), // Control home page visibility
