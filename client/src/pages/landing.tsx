@@ -246,88 +246,32 @@ export default function Landing() {
       {/* Training Programs */}
       <section className="bg-muted py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-            {/* Deductive Pistolcraft */}
-            <div className="bg-card rounded-lg overflow-hidden shadow-lg" data-testid="feature-deductive-pistolcraft">
-              <div className="grid md:grid-cols-2 gap-6 p-6">
-                <div className="flex flex-col justify-center">
-                  <h3 className="font-semibold text-foreground mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '26px', letterSpacing: '0px', lineHeight: '1.5em' }}>
-                    Deductive Pistolcraft
-                  </h3>
-                  <p className="text-muted-foreground mb-6" style={{ fontSize: '16px', lineHeight: '1.8em' }}>
-                    We tailor the definition of proficiency to our clients' strengths and blind spots, forging a personalized path based on evidence, ability, and individual goals. Our program delves into fundamentals, emphasizing quantifiable metrics to validate theories. Grip, trigger control, sighting, practice, goal setting, and performance tracking are integral components, ensuring a comprehensive exploration of pistolcraft tailored to individual needs.
-                  </p>
-                  <Button 
-                    className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
-                    data-testid="button-learn-more-pistolcraft"
-                    onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
-                  >
-                    Let's Train!
-                  </Button>
-                </div>
-                <div className="flex items-center">
-                  <img 
-                    src="https://649325f1-508f-46a7-9abc-3a8ee5f7b5c5-00-1mn48vi6jtpkj.spock.replit.dev/api/objects/attached_assets/Deductive-Pistol-Craft-2025_1762671487798.jpg" 
-                    alt="Deductive Pistolcraft"
-                    className="w-full h-auto object-cover rounded-lg"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Practice for Mastery */}
-            <div className="bg-card rounded-lg overflow-hidden shadow-lg" data-testid="feature-practice-mastery">
-              <div className="mb-4">
-                <img 
-                  src={laptopImage} 
-                  alt="Practice for Mastery"
-                  className="w-full object-cover h-64"
-                />
-              </div>
-              <div className="p-6">
-                <h3 className="text-2xl font-bold text-foreground mb-4">
-                  Practice for Mastery
+          {/* Deductive Pistolcraft */}
+          <div className="bg-card rounded-lg overflow-hidden shadow-lg" data-testid="feature-deductive-pistolcraft">
+            <div className="grid md:grid-cols-2 gap-6 p-6">
+              <div className="flex flex-col justify-center">
+                <h3 className="font-semibold text-foreground mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '26px', letterSpacing: '0px', lineHeight: '1.5em' }}>
+                  Deductive Pistolcraft
                 </h3>
-                <p className="text-base text-muted-foreground mb-6">
-                  Designed to assist our students in crafting a training plan geared towards achieving high-performance goals with a firearm. This program integrates both dry and live fire techniques, showcasing immediate improvements in performance.
+                <p className="text-muted-foreground mb-6" style={{ fontSize: '16px', lineHeight: '1.8em' }}>
+                  We tailor the definition of proficiency to our clients' strengths and blind spots, forging a personalized path based on evidence, ability, and individual goals. Our program delves into fundamentals, emphasizing quantifiable metrics to validate theories. Grip, trigger control, sighting, practice, goal setting, and performance tracking are integral components, ensuring a comprehensive exploration of pistolcraft tailored to individual needs.
                 </p>
                 <Button 
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 w-full"
-                  data-testid="button-learn-more-practice"
+                  className="bg-accent text-accent-foreground hover:bg-accent/90 w-fit"
+                  data-testid="button-learn-more-pistolcraft"
                   onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   Let's Train!
                 </Button>
               </div>
-            </div>
-
-            {/* Performance Shooting */}
-            <div className="bg-card rounded-lg overflow-hidden shadow-lg" data-testid="feature-performance-shooting">
-              <div className="mb-4">
+              <div className="flex items-center">
                 <img 
-                  src={dhcImage} 
-                  alt="Performance Shooting for the Concealed Carrier"
-                  className="w-full object-cover h-64"
+                  src="https://649325f1-508f-46a7-9abc-3a8ee5f7b5c5-00-1mn48vi6jtpkj.spock.replit.dev/api/objects/attached_assets/Deductive-Pistol-Craft-2025_1762671487798.jpg" 
+                  alt="Deductive Pistolcraft"
+                  className="w-full h-auto object-cover rounded-lg"
                 />
               </div>
-              <div className="p-6">
-                <h3 className="text-2xl font-bold text-foreground mb-4">
-                  Performance Shooting for the Concealed Carrier
-                </h3>
-                <p className="text-base text-muted-foreground mb-6">
-                  Offering an in-depth exploration of performance concepts employed by highly-skilled practitioners, specifically competitive shooters. We delve into applying those metrics to benefit concealed carriers and defensive enthusiasts.
-                </p>
-                <Button 
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 w-full"
-                  data-testid="button-learn-more-performance"
-                  onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  Let's Train!
-                </Button>
-              </div>
             </div>
-
           </div>
         </div>
       </section>
