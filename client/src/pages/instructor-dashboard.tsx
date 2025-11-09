@@ -28,7 +28,7 @@ import { EventCreationForm } from "@/components/EventCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
 import { RosterDialog } from "@/components/RosterDialog";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings } from "lucide-react";
+import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, MessageSquare } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 
@@ -850,7 +850,7 @@ export default function InstructorDashboard() {
                     <div className="text-sm text-gray-500">
                       {typeof course.category === 'string' ? course.category : 
                        (course.category && typeof course.category === 'object' && 'name' in course.category) 
-                         ? (course.category as any).name || 'General' 
+                         ? (course.course.category as any).name || 'General' 
                          : 'General'}
                     </div>
                   </td>

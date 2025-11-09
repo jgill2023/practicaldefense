@@ -176,15 +176,15 @@
 }
 
 .btn-primary {
-  @apply btn-professional bg-primary text-primary-foreground hover:bg-primary hover:opacity-90;
+  @apply btn-professional bg-primary text-black hover:bg-primary hover:opacity-90;
 }
 
 .btn-secondary {
-  @apply btn-professional bg-secondary text-secondary-foreground hover:bg-secondary hover:opacity-90;
+  @apply btn-professional bg-secondary text-black hover:bg-secondary hover:opacity-90;
 }
 
 .btn-accent {
-  @apply btn-professional bg-accent text-accent-foreground hover:bg-accent hover:opacity-90;
+  @apply btn-professional bg-accent text-black hover:bg-accent hover:opacity-90;
 }
 
 /* Professional card styles */
