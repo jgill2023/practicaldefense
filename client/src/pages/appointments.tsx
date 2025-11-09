@@ -87,6 +87,18 @@ export default function AppointmentsPage() {
     retry: false,
   });
 
+  const { data: notificationTemplates = [], isLoading: notificationTemplatesLoading } = useQuery<any[]>({
+    queryKey: ["/api/appointments/instructor/notification-templates"],
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    retry: false,
+  });
+
+  const { data: reminderSchedules = [], isLoading: reminderSchedulesLoading } = useQuery<any[]>({
+    queryKey: ["/api/appointments/instructor/reminder-schedules"],
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    retry: false,
+  });
+
   const createTypeMutation = useMutation({
     mutationFn: async (data: typeof typeForm) => {
       await apiRequest("POST", "/api/appointments/instructor/appointment-types", data);
@@ -302,6 +314,14 @@ export default function AppointmentsPage() {
             <TabsTrigger value="availability" data-testid="tab-weekly-availability">
               <Clock className="mr-2 h-4 w-4" />
               Weekly Availability
+            </TabsTrigger>
+            <TabsTrigger value="notifications" data-testid="tab-notification-templates">
+              <Bell className="mr-2 h-4 w-4" />
+              Notifications
+            </TabsTrigger>
+            <TabsTrigger value="reminders" data-testid="tab-reminder-schedules">
+              <Bell className="mr-2 h-4 w-4" />
+              Reminders
             </TabsTrigger>
           </TabsList>
 
@@ -532,6 +552,173 @@ export default function AppointmentsPage() {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Notification Templates</CardTitle>
+                    <CardDescription>
+                      Create email and SMS templates for appointment notifications
+                    </CardDescription>
+                  </div>
+                  <Button onClick={() => {/* TODO: Open notification template dialog */}} data-testid="button-create-notification-template">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Template
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {notificationTemplatesLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                ) : notificationTemplates.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No notification templates created yet. Click "Add Template" to create email and SMS templates for appointment notifications.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {notificationTemplates.map((template) => (
+                      <div
+                        key={template.id}
+                        className="border rounded-lg p-4 flex items-start justify-between"
+                        data-testid={`card-notification-template-${template.id}`}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg">{template.eventType}</h3>
+                            {template.isActive ? (
+                              <Badge variant="default">Active</Badge>
+                            ) : (
+                              <Badge variant="secondary">Inactive</Badge>
+                            )}
+                            <Badge variant="outline">
+                              {template.channelType === 'email' ? 'Email' : 'SMS'}
+                            </Badge>
+                            <Badge variant="outline">
+                              {template.recipientType}
+                            </Badge>
+                          </div>
+                          {template.subject && (
+                            <p className="text-sm text-muted-foreground mb-2">
+                              <strong>Subject:</strong> {template.subject}
+                            </p>
+                          )}
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {template.body}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {/* TODO: Edit template */}}
+                            data-testid={`button-edit-notification-template-${template.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {/* TODO: Delete template */}}
+                            data-testid={`button-delete-notification-template-${template.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reminders">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Reminder Schedules</CardTitle>
+                    <CardDescription>
+                      Set up automatic reminders to be sent before appointments
+                    </CardDescription>
+                  </div>
+                  <Button onClick={() => {/* TODO: Open reminder schedule dialog */}} data-testid="button-create-reminder-schedule">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Reminder
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {reminderSchedulesLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                ) : reminderSchedules.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No reminder schedules created yet. Click "Add Reminder" to set up automatic reminders before appointments.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reminderSchedules.map((schedule) => (
+                      <div
+                        key={schedule.id}
+                        className="border rounded-lg p-4 flex items-start justify-between"
+                        data-testid={`card-reminder-schedule-${schedule.id}`}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg">{schedule.reminderName}</h3>
+                            {schedule.isActive ? (
+                              <Badge variant="default">Active</Badge>
+                            ) : (
+                              <Badge variant="secondary">Inactive</Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            <p>
+                              <strong>Send:</strong> {Math.floor(schedule.minutesBefore / 60)} hours and {schedule.minutesBefore % 60} minutes before appointment
+                            </p>
+                            <div className="flex items-center gap-2">
+                              {schedule.sendEmail && (
+                                <Badge variant="outline" className="text-xs">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Email
+                                </Badge>
+                              )}
+                              {schedule.sendSms && (
+                                <Badge variant="outline" className="text-xs">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  SMS
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {/* TODO: Edit schedule */}}
+                            data-testid={`button-edit-reminder-schedule-${schedule.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {/* TODO: Delete schedule */}}
+                            data-testid={`button-delete-reminder-schedule-${schedule.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
