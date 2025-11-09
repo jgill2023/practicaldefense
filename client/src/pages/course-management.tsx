@@ -438,7 +438,7 @@ export default function CourseManagement() {
   });
 
   // Render course table function
-  const renderCourseTable = (type: 'active' | 'archived' | 'drafts', courseList: CourseWithSchedules[]) => {
+  const renderCourseTable = (type: 'active' | 'archived' | 'drafts' | 'unpublished', courseList: CourseWithSchedules[]) => {
     if (coursesLoading) {
       return (
         <div className="flex items-center justify-center py-8">
@@ -454,6 +454,7 @@ export default function CourseManagement() {
             {type === 'active' && <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">A</div>}
             {type === 'archived' && <Archive className="w-12 h-12" />}
             {type === 'drafts' && <Eye className="w-12 h-12" />}
+            {type === 'unpublished' && <EyeOff className="w-12 h-12" />}
           </div>
           <h3 className="text-lg font-medium text-foreground mb-2">
             No {type.charAt(0).toUpperCase() + type.slice(1)} Courses
@@ -462,6 +463,7 @@ export default function CourseManagement() {
             {type === 'active' && "Published course types will appear here."}
             {type === 'archived' && "Archived course types will appear here."}
             {type === 'drafts' && "Draft course types will appear here."}
+            {type === 'unpublished' && "Unpublished course types will appear here."}
           </p>
         </div>
       );
@@ -472,7 +474,7 @@ export default function CourseManagement() {
         {courseList.map((course) => (
           <Card key={course.id} className={`transition-all hover:shadow-md ${
             type === 'archived' ? 'border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800' :
-            type === 'drafts' ? 'border-gray-200 bg-gray-50 dark:bg-gray-950/20 dark:border-gray-800' :
+            type === 'drafts' || type === 'unpublished' ? 'border-gray-200 bg-gray-50 dark:bg-gray-950/20 dark:border-gray-800' :
             'border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800'
           }`}>
             <CardContent className="p-4 sm:p-6">
@@ -492,6 +494,7 @@ export default function CourseManagement() {
                     >
                       {type === 'active' ? 'Published' : 
                        type === 'archived' ? 'Archived' : 
+                       type === 'unpublished' ? 'Unpublished' :
                        'Draft'}
                     </Badge>
                   </div>
@@ -846,7 +849,7 @@ export default function CourseManagement() {
                     <EyeOff className="w-5 h-5" />
                     Unpublished Courses
                   </h2>
-                  {renderCourseTable('drafts', categorizedCourseTypes.unpublished)}
+                  {renderCourseTable('unpublished', categorizedCourseTypes.unpublished)}
                 </div>
               </TabsContent>
 
