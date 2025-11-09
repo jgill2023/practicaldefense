@@ -463,7 +463,7 @@ export default function Landing() {
         backgroundRepeat: 'no-repeat'
       }}>
         {/* Semi-transparent black overlay */}
-        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}></div>
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}></div>
 
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
