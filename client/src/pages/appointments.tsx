@@ -389,7 +389,7 @@ export default function AppointmentsPage() {
                             </div>
                             <div className="flex items-center gap-1">
                               <DollarSign className="h-4 w-4 text-muted-foreground" />
-                              <span>${typeof type.price === 'string' ? parseFloat(type.price).toFixed(2) : (typeof type.price === 'number' ? type.price.toFixed(2) : '0.00')}</span>
+                              <span className="font-semibold">${Number(type.price).toFixed(2)}</span>
                             </div>
                           </div>
                         </div>
@@ -461,7 +461,7 @@ export default function AppointmentsPage() {
                   <div className="space-y-3">
                     {DAYS_OF_WEEK.map((day) => {
                       const dayTemplates = weeklyTemplates.filter(t => t.dayOfWeek === day.value && t.isActive);
-                      
+
                       return (
                         <div key={day.value} className="flex items-start gap-3">
                           {/* Day Circle */}
@@ -509,9 +509,9 @@ export default function AppointmentsPage() {
                                     readOnly
                                     onClick={() => openTemplateDialog(template)}
                                   />
-                                  
+
                                   <span className="text-muted-foreground">—</span>
-                                  
+
                                   {/* End Time */}
                                   <Input
                                     type="time"
@@ -535,7 +535,7 @@ export default function AppointmentsPage() {
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
-                                  
+
                                   <Button
                                     variant="ghost"
                                     size="sm"

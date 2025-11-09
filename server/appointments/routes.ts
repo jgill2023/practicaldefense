@@ -484,6 +484,22 @@ appointmentRouter.post('/instructor/appointments/:id/cancel', isAuthenticated, a
 // STUDENT ROUTES - Browse and Book Appointments
 // ============================================
 
+appointmentRouter.get('/student/types', async (req, res) => {
+  try {
+    const { instructorId } = req.query;
+    
+    if (!instructorId) {
+      return res.status(400).json({ message: "Instructor ID is required" });
+    }
+    
+    const types = await storage.getActiveAppointmentTypes(instructorId as string);
+    res.json(types);
+  } catch (error) {
+    console.error("Error fetching active appointment types:", error);
+    res.status(500).json({ message: "Failed to fetch appointment types" });
+  }
+});
+
 appointmentRouter.get('/types/:instructorId', async (req, res) => {
   try {
     const { instructorId } = req.params;
