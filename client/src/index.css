@@ -5,8 +5,8 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(0, 0%, 10%);
-  --foreground: hsl(0, 0%, 95%);
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(0, 0%, 5%);
   --card: hsl(0, 0%, 15%);
   --card-foreground: hsl(0, 0%, 95%);
   --popover: hsl(0, 0%, 15%);
@@ -56,8 +56,8 @@
 }
 
 .dark {
-  --background: hsl(0, 0%, 5%);
-  --foreground: hsl(0, 0%, 98%);
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(0, 0%, 5%);
   --card: hsl(0, 0%, 10%);
   --card-foreground: hsl(0, 0%, 98%);
   --popover: hsl(0, 0%, 10%);
