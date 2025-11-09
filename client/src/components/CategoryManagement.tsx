@@ -96,8 +96,19 @@ export function CategoryManagement() {
   });
 
   const deleteCategoryMutation = useMutation({
-    mutationFn: (id: string) =>
-      apiRequest('DELETE', `/api/categories/${id}`),
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/categories/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete category");
+      }
+
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
       toast({
@@ -105,10 +116,10 @@ export function CategoryManagement() {
         description: "Category deleted successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to delete category",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -174,10 +185,10 @@ export function CategoryManagement() {
   const moveCategory = (index: number, direction: 'up' | 'down') => {
     const newCategories = [...localCategories];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    
+
     // Swap the categories
     [newCategories[index], newCategories[targetIndex]] = [newCategories[targetIndex], newCategories[index]];
-    
+
     setLocalCategories(newCategories);
     setHasUnsavedOrder(true);
   };
@@ -188,7 +199,7 @@ export function CategoryManagement() {
       id: category.id,
       sortOrder: (index + 1) * 10
     }));
-    
+
     reorderCategoriesMutation.mutate(items);
   };
 
@@ -274,7 +285,7 @@ export function CategoryManagement() {
                       </TableCell>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          <div 
+                          <div
                             className="w-3 h-3 rounded-full border"
                             style={{ backgroundColor: category.color || '#3b82f6' }}
                           />

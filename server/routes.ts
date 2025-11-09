@@ -181,6 +181,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
+      // Check if any courses are using this category
+      const courses = await storage.getCourses();
+      const coursesInCategory = courses.filter(c => c.categoryId === req.params.id);
+
+      if (coursesInCategory.length > 0) {
+        return res.status(400).json({ 
+          message: `Cannot delete category. ${coursesInCategory.length} course(s) are still using this category. Please reassign or delete those courses first.`,
+          coursesCount: coursesInCategory.length
+        });
+      }
+
       await storage.deleteCategory(req.params.id);
       res.json({ message: "Category deleted successfully" });
     } catch (error) {
