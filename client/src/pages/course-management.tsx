@@ -314,13 +314,14 @@ export default function CourseManagement() {
     retry: false,
   });
 
-  // Categorize courses by status (for now, treat all courses as active)
+  // Categorize courses by status
   const categorizedCourseTypes = useMemo(() => {
-    const active: CourseWithSchedules[] = courses;
+    const active: CourseWithSchedules[] = courses.filter(c => c.isActive === true);
+    const unpublished: CourseWithSchedules[] = courses.filter(c => c.isActive === false);
     const archived: CourseWithSchedules[] = [];
     const drafts: CourseWithSchedules[] = [];
 
-    return { active, archived, drafts };
+    return { active, unpublished, archived, drafts };
   }, [courses]);
 
   // Form for app settings
@@ -714,6 +715,14 @@ export default function CourseManagement() {
                     Active ({categorizedCourseTypes.active.length})
                   </TabsTrigger>
                   <TabsTrigger 
+                    value="unpublished" 
+                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
+                    data-testid="tab-unpublished-courses"
+                  >
+                    <EyeOff className="w-4 h-4" />
+                    Unpublished ({categorizedCourseTypes.unpublished.length})
+                  </TabsTrigger>
+                  <TabsTrigger 
                     value="archived" 
                     className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
                     data-testid="tab-archived-courses"
@@ -748,6 +757,16 @@ export default function CourseManagement() {
                     Active Courses
                   </h2>
                   {renderCourseTable('active', categorizedCourseTypes.active)}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="unpublished" className="mt-0">
+                <div className="py-6">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <EyeOff className="w-5 h-5" />
+                    Unpublished Courses
+                  </h2>
+                  {renderCourseTable('drafts', categorizedCourseTypes.unpublished)}
                 </div>
               </TabsContent>
 
