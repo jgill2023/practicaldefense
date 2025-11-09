@@ -147,7 +147,7 @@ appointmentRouter.get('/instructor/weekly-templates', isAuthenticated, async (re
 appointmentRouter.post('/instructor/weekly-templates', isAuthenticated, async (req: any, res) => {
   try {
     const instructorId = req.user.claims.sub;
-    const validatedData = insertInstructorWeeklyTemplateSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(req.body);
+    const validatedData = insertInstructorWeeklyTemplateSchema.omit({ id: true, createdAt: true, updatedAt: true, instructorId: true }).parse(req.body);
     const data = { ...validatedData, instructorId };
     const template = await storage.createWeeklyTemplate(data);
     res.status(201).json(template);

@@ -283,7 +283,7 @@ export default function AppointmentsPage() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-8 md:px-12 lg:px-16 py-8">
+      <div className="container mx-auto px-12 md:px-16 lg:px-24 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2" data-testid="text-page-title">
             Appointment Management
@@ -358,7 +358,7 @@ export default function AppointmentsPage() {
                             </div>
                             <div className="flex items-center gap-1">
                               <DollarSign className="h-4 w-4 text-muted-foreground" />
-                              <span>${typeof type.price === 'string' ? parseFloat(type.price).toFixed(2) : Number(type.price).toFixed(2)}</span>
+                              <span>${typeof type.price === 'string' ? parseFloat(type.price).toFixed(2) : type.price?.toFixed ? type.price.toFixed(2) : '0.00'}</span>
                             </div>
                           </div>
                         </div>
