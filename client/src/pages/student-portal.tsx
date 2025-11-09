@@ -10,7 +10,7 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign, FileSignature, Users } from "lucide-react";
 import { Calendar, Clock, FileText, Download, BookOpen, Award, Target } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import type { EnrollmentWithDetails, User, CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { useLocation } from "wouter";
 
@@ -1469,6 +1470,8 @@ function EditProfileDialog({ isOpen, onClose, user }: {
             </div>
 
             {/* License Information */}
+            {/* Hidden for now as per user request */}
+            {/* 
             <div className="space-y-4">
               <h3 className="text-lg font-medium">License Information</h3>
 
@@ -1500,6 +1503,68 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                 />
               </div>
             </div>
+
+            <Separator />
+            */}
+
+            {/* License Renewal Reminders */}
+            {/* Hidden for now as per user request */}
+            {/* 
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">License Renewal Reminders</h3>
+              <div className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="enableLicenseExpirationReminder"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-medium">
+                          License Expiration Reminders
+                        </FormLabel>
+                        <FormDescription>
+                          Receive reminders when your concealed carry license is expiring
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-license-expiration"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="enableRefresherReminder"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-medium">
+                          Refresher Course Reminders
+                        </FormLabel>
+                        <FormDescription>
+                          Receive reminders to take a refresher course before license renewal
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-refresher-reminder"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <Separator />
+            */}
 
             {/* Emergency Contact Information */}
             <div className="space-y-4">
@@ -1581,60 +1646,6 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                   </FormItem>
                 )}
               />
-            </div>
-
-            {/* License Renewal Reminders */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">License Renewal Reminders</h3>
-              <div className="space-y-3">
-                <FormField
-                  control={form.control}
-                  name="enableLicenseExpirationReminder"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base font-medium">
-                          License Expiration Reminders
-                        </FormLabel>
-                        <FormDescription>
-                          Receive reminders when your concealed carry license is expiring
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          data-testid="switch-license-expiration"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="enableRefresherReminder"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base font-medium">
-                          Refresher Course Reminders
-                        </FormLabel>
-                        <FormDescription>
-                          Receive reminders to take a refresher course before license renewal
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          data-testid="switch-refresher-reminder"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
             </div>
 
             {/* SMS Notification Preferences */}
@@ -1979,7 +1990,7 @@ function UnenrollConfirmationDialog({ isOpen, onClose, enrollment }: {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
-      
+
       if (requestRefund && refundEligibility.eligible) {
         toast({
           title: "Refund Request Submitted",
