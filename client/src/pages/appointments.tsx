@@ -76,7 +76,7 @@ export default function AppointmentsPage() {
   });
 
   const { data: appointmentTypes = [], isLoading: typesLoading } = useQuery<AppointmentType[]>({
-    queryKey: ["/api/appointments/instructor/types"],
+    queryKey: ["/api/appointments/instructor/appointment-types"],
     enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
   });
@@ -89,11 +89,11 @@ export default function AppointmentsPage() {
 
   const createTypeMutation = useMutation({
     mutationFn: async (data: typeof typeForm) => {
-      await apiRequest("POST", "/api/appointments/instructor/types", data);
+      await apiRequest("POST", "/api/appointments/instructor/appointment-types", data);
     },
     onSuccess: () => {
       toast({ title: "Appointment Type Created", description: "Type created successfully." });
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments/instructor/types"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments/instructor/appointment-types"] });
       setShowTypeDialog(false);
       resetTypeForm();
     },
@@ -102,11 +102,11 @@ export default function AppointmentsPage() {
 
   const updateTypeMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof typeForm }) => {
-      await apiRequest("PATCH", `/api/appointments/instructor/types/${id}`, data);
+      await apiRequest("PATCH", `/api/appointments/instructor/appointment-types/${id}`, data);
     },
     onSuccess: () => {
       toast({ title: "Appointment Type Updated", description: "Type updated successfully." });
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments/instructor/types"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments/instructor/appointment-types"] });
       setShowTypeDialog(false);
       setEditingType(null);
       resetTypeForm();
@@ -116,11 +116,11 @@ export default function AppointmentsPage() {
 
   const deleteTypeMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/appointments/instructor/types/${id}`);
+      await apiRequest("DELETE", `/api/appointments/instructor/appointment-types/${id}`);
     },
     onSuccess: () => {
       toast({ title: "Appointment Type Deleted", description: "Type deleted successfully." });
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments/instructor/types"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments/instructor/appointment-types"] });
     },
     onError: handleMutationError,
   });

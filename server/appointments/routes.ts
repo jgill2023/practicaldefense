@@ -68,7 +68,7 @@ appointmentRouter.post('/instructor/appointment-types', isAuthenticated, async (
       title: req.body.title || req.body.name, // Support both 'title' and 'name' fields
       description: req.body.description || null,
       durationMinutes: parseInt(req.body.durationMinutes),
-      price: parseFloat(req.body.price).toFixed(2),
+      price: parseFloat(req.body.price),
       requiresApproval: req.body.requiresApproval ?? false,
       bufferBefore: parseInt(req.body.bufferBefore) || 0,
       bufferAfter: parseInt(req.body.bufferAfter) || 0,
