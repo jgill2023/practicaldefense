@@ -418,6 +418,16 @@ export default function BookAppointmentPage() {
                       {availableSlots.map((slot, index) => {
                         const startTime = new Date(slot.startTime);
                         const endTime = new Date(slot.endTime);
+                        
+                        // Format time in 12-hour format with AM/PM
+                        const formatTime = (date: Date) => {
+                          return date.toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit', 
+                            hour12: true 
+                          });
+                        };
+                        
                         return (
                           <Button
                             key={index}
@@ -429,15 +439,7 @@ export default function BookAppointmentPage() {
                             <div className="flex items-center gap-2">
                               <CalendarClock className="h-4 w-4" />
                               <span className="font-medium">
-                                {startTime.toLocaleTimeString('en-US', { 
-                                  hour: 'numeric', 
-                                  minute: '2-digit', 
-                                  hour12: true
-                                })} - {endTime.toLocaleTimeString('en-US', { 
-                                  hour: 'numeric', 
-                                  minute: '2-digit', 
-                                  hour12: true 
-                                })}
+                                {formatTime(startTime)} - {formatTime(endTime)}
                               </span>
                             </div>
                             {slot.requiresApproval && (
