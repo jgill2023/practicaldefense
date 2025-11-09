@@ -837,11 +837,29 @@ export class DatabaseStorage implements IStorage {
     console.log(`Starting permanent deletion of course: ${id}`);
 
     try {
+      // Delete notification schedules for this course (references notification_templates and courses)
+      console.log(`Deleting notification schedules for course: ${id}`);
+      await db
+        .delete(notificationSchedules)
+        .where(eq(notificationSchedules.courseId, id));
+
+      // Delete notification templates for this course
+      console.log(`Deleting notification templates for course: ${id}`);
+      await db
+        .delete(notificationTemplates)
+        .where(eq(notificationTemplates.courseId, id));
+
       // Delete course information forms (will cascade to fields and responses)
       console.log(`Deleting course information forms for course: ${id}`);
       await db
         .delete(courseInformationForms)
         .where(eq(courseInformationForms.courseId, id));
+
+      // Delete course notification signups
+      console.log(`Deleting course notification signups for course: ${id}`);
+      await db
+        .delete(courseNotificationSignups)
+        .where(eq(courseNotificationSignups.courseId, id));
 
       // Get enrollment IDs for this course first
       console.log(`Getting enrollments for course: ${id}`);
