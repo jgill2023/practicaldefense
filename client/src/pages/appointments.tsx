@@ -283,7 +283,7 @@ export default function AppointmentsPage() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-8 md:px-12 lg:px-16 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2" data-testid="text-page-title">
             Appointment Management
@@ -358,7 +358,7 @@ export default function AppointmentsPage() {
                             </div>
                             <div className="flex items-center gap-1">
                               <DollarSign className="h-4 w-4 text-muted-foreground" />
-                              <span>${Number(type.price).toFixed(2)}</span>
+                              <span>${typeof type.price === 'string' ? parseFloat(type.price).toFixed(2) : Number(type.price).toFixed(2)}</span>
                             </div>
                           </div>
                         </div>
@@ -370,6 +370,26 @@ export default function AppointmentsPage() {
                             data-testid={`button-edit-type-${type.id}`}
                           >
                             <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setTypeForm({
+                                title: `${type.title} (Copy)`,
+                                description: type.description || '',
+                                durationMinutes: type.durationMinutes,
+                                price: type.price,
+                                requiresApproval: type.requiresApproval,
+                                isActive: type.isActive,
+                              });
+                              setEditingType(null);
+                              setShowTypeDialog(true);
+                            }}
+                            data-testid={`button-duplicate-type-${type.id}`}
+                            title="Duplicate"
+                          >
+                            <Plus className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
