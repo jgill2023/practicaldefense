@@ -178,15 +178,26 @@ export default function BookAppointmentPage() {
         throw new Error("Missing required fields");
       }
 
-      const body = {
-        instructorId,
-        appointmentTypeId: selectedType.id,
-        startTime: selectedSlot.startTime,
-        endTime: selectedSlot.endTime,
-      };
+      const response = await fetch("/api/appointments/book", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          instructorId,
+          appointmentTypeId: selectedType.id,
+          startTime: selectedSlot.startTime,
+          endTime: selectedSlot.endTime,
+        }),
+      });
 
-      const data = await apiRequest("POST", "/api/appointments/book", body);
-      return data;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `${response.status}: ${response.statusText}`);
+      }
+
+      return response.json();
     },
     onSuccess: (data) => {
       if (data.appointment) {
