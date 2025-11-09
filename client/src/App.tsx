@@ -22,9 +22,6 @@ import Reports from "@/pages/reports";
 import ScheduleList from "@/pages/schedule-list";
 import ScheduleCalendar from "@/pages/schedule-calendar";
 import ContactPage from "@/pages/contact";
-import ConcealedCarryPage from "@/pages/concealed-carry";
-import { OnlineConcealedCarryPage } from "@/pages/online-concealed-carry";
-import DefensiveHandgunPage from "@/pages/defensive-handgun";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import TermsOfServicePage from "@/pages/terms-of-service";
 import RefundPolicyPage from "@/pages/refund-policy";
@@ -55,9 +52,6 @@ function Router() {
       <Route path="/store" component={Storefront} />
       <Route path="/cart" component={CartPage} />
       <Route path="/contact" component={ContactPage} />
-      <Route path="/concealed-carry" component={ConcealedCarryPage} />
-      <Route path="/online-concealed-carry" component={OnlineConcealedCarryPage} />
-      <Route path="/defensive-handgun" component={DefensiveHandgunPage} />
       <Route path="/course-registration/:id" component={CourseRegistration} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/schedule-list" component={ScheduleList} />
