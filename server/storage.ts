@@ -843,8 +843,8 @@ export class DatabaseStorage implements IStorage {
         .delete(courseInformationForms)
         .where(eq(courseInformationForms.courseId, id));
 
-      // Delete promo code redemptions for enrollments in this course
-      console.log(`Deleting promo code redemptions for course: ${id}`);
+      // Get enrollment IDs for this course first
+      console.log(`Getting enrollments for course: ${id}`);
       const courseEnrollments = await db
         .select({ id: enrollments.id })
         .from(enrollments)
@@ -852,6 +852,15 @@ export class DatabaseStorage implements IStorage {
       
       if (courseEnrollments.length > 0) {
         const enrollmentIds = courseEnrollments.map(e => e.id);
+        
+        // Delete notification logs for these enrollments
+        console.log(`Deleting notification logs for course: ${id}`);
+        await db
+          .delete(notificationLogs)
+          .where(inArray(notificationLogs.enrollmentId, enrollmentIds));
+        
+        // Delete promo code redemptions for enrollments
+        console.log(`Deleting promo code redemptions for course: ${id}`);
         await db
           .delete(promoCodeRedemptions)
           .where(inArray(promoCodeRedemptions.enrollmentId, enrollmentIds));
