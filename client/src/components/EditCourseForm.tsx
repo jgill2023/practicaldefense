@@ -84,7 +84,19 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       price: course.price.toString(),
       depositAmount: course.depositAmount ? course.depositAmount.toString() : "",
       duration: course.duration,
-      category: typeof course.category === 'string' ? course.category : (course.category as any)?.name || "",
+      category: (() => {
+        // Handle different category formats
+        if (typeof course.category === 'string') return course.category;
+        if (course.category && typeof course.category === 'object' && 'name' in course.category) {
+          return (course.category as any).name as string;
+        }
+        // Fallback: find category by ID if we have categoryId
+        if (course.categoryId) {
+          const cat = categories.find(c => c.id === course.categoryId);
+          return cat?.name || "";
+        }
+        return "";
+      })(),
       classroomTime: course.classroomTime || "",
       rangeTime: course.rangeTime || "",
       rounds: course.rounds || 0,
@@ -96,6 +108,20 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
 
   // Re-sync form when course prop changes (e.g., after successful update)
   useEffect(() => {
+    const categoryName = (() => {
+      // Handle different category formats
+      if (typeof course.category === 'string') return course.category;
+      if (course.category && typeof course.category === 'object' && 'name' in course.category) {
+        return (course.category as any).name as string;
+      }
+      // Fallback: find category by ID if we have categoryId
+      if (course.categoryId) {
+        const cat = categories.find(c => c.id === course.categoryId);
+        return cat?.name || "";
+      }
+      return "";
+    })();
+    
     form.reset({
       title: course.title,
       briefDescription: course.briefDescription || "",
@@ -104,7 +130,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       price: course.price.toString(),
       depositAmount: course.depositAmount ? course.depositAmount.toString() : "",
       duration: course.duration,
-      category: typeof course.category === 'string' ? course.category : (course.category as any)?.name || "",
+      category: categoryName,
       classroomTime: course.classroomTime || "",
       rangeTime: course.rangeTime || "",
       rounds: course.rounds || 0,
@@ -112,13 +138,17 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       maxStudents: course.maxStudents,
       imageUrl: course.imageUrl || "",
     });
-  }, [course, form]);
+  }, [course, form, categories]);
 
   // Update course mutation
   const updateCourseMutation = useMutation({
     mutationFn: async (data: CourseFormData) => {
+      // Find the category ID from the category name
+      const selectedCategory = categories.find(c => c.name === data.category);
+      
       const courseData = {
         ...data,
+        categoryId: selectedCategory?.id || course.categoryId, // Use categoryId instead of category name
         price: parseFloat(data.price),
         depositAmount: data.depositAmount && data.depositAmount !== "" ? parseFloat(data.depositAmount) : undefined,
         imageUrl: uploadedImageUrl || data.imageUrl || undefined,

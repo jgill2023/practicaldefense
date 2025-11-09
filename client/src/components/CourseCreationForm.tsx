@@ -79,8 +79,12 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
 
   const createCourseMutation = useMutation({
     mutationFn: async (data: CourseFormData) => {
+      // Find the category ID from the category name
+      const selectedCategory = categories.find(c => c.name === data.category);
+      
       const courseData = {
         ...data,
+        categoryId: selectedCategory?.id, // Use categoryId instead of category name
         price: parseFloat(data.price),
         depositAmount: data.depositAmount && data.depositAmount !== "" ? parseFloat(data.depositAmount) : undefined,
         maxStudents: parseInt(data.maxStudents?.toString() || "20"),
