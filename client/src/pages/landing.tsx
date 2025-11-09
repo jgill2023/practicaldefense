@@ -14,6 +14,7 @@ import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
 import deductivePistolcraftImage from "@assets/Deductive-Pistol-Craft_1762671845456.jpg";
+import practiceForMasteryImage from "@assets/IMG_3599_1762666974182.png";
 import {
   Select,
   SelectContent,
@@ -280,7 +281,7 @@ export default function Landing() {
             <div className="grid md:grid-cols-2 gap-6 p-6">
               <div className="flex items-center">
                 <img 
-                  src={deductivePistolcraftImage}
+                  src={practiceForMasteryImage}
                   alt="Practice for Mastery Training"
                   className="w-full h-auto object-cover"
                 />
