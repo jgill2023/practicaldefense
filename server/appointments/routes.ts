@@ -61,7 +61,13 @@ appointmentRouter.get('/instructor/appointment-types', isAuthenticated, async (r
 appointmentRouter.post('/instructor/appointment-types', isAuthenticated, async (req: any, res) => {
   try {
     const instructorId = req.user.claims.sub;
-    const validatedData = insertAppointmentTypeSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(req.body);
+    // Parse price as number before validation
+    const requestData = {
+      ...req.body,
+      price: parseFloat(req.body.price),
+      durationMinutes: parseInt(req.body.durationMinutes),
+    };
+    const validatedData = insertAppointmentTypeSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(requestData);
     const data = { ...validatedData, instructorId };
     const appointmentType = await storage.createAppointmentType(data);
     res.status(201).json(appointmentType);
@@ -83,7 +89,16 @@ appointmentRouter.patch('/instructor/appointment-types/:id', isAuthenticated, as
       return res.status(403).json({ message: "Not authorized to modify this appointment type" });
     }
     
-    const appointmentType = await storage.updateAppointmentType(id, req.body);
+    // Parse numeric fields if present
+    const updateData = { ...req.body };
+    if (updateData.price !== undefined) {
+      updateData.price = parseFloat(updateData.price);
+    }
+    if (updateData.durationMinutes !== undefined) {
+      updateData.durationMinutes = parseInt(updateData.durationMinutes);
+    }
+    
+    const appointmentType = await storage.updateAppointmentType(id, updateData);
     res.json(appointmentType);
   } catch (error) {
     console.error("Error updating appointment type:", error);
