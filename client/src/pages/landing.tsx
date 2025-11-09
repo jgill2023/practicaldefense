@@ -208,7 +208,7 @@ export default function Landing() {
               onClick={() => {
                 const coursesSection = document.getElementById('courses');
                 if (coursesSection) {
-                  const yOffset = -120; // Adjust this value to fine-tune the scroll position
+                  const yOffset = -80; // Adjusted to show the top of the off-white area
                   const y = coursesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                   window.scrollTo({ top: y, behavior: 'smooth' });
                 }
