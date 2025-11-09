@@ -830,26 +830,38 @@ export class DatabaseStorage implements IStorage {
   async permanentlyDeleteCourse(id: string): Promise<void> {
     // Hard delete - permanently remove from database with cascade
     // First delete related data in proper order to maintain referential integrity
+    console.log(`Starting permanent deletion of course: ${id}`);
 
-    // Delete course information forms (will cascade to fields and responses)
-    await db
-      .delete(courseInformationForms)
-      .where(eq(courseInformationForms.courseId, id));
+    try {
+      // Delete course information forms (will cascade to fields and responses)
+      console.log(`Deleting course information forms for course: ${id}`);
+      await db
+        .delete(courseInformationForms)
+        .where(eq(courseInformationForms.courseId, id));
 
-    // Delete enrollments (references courseSchedules)
-    await db
-      .delete(enrollments)
-      .where(eq(enrollments.courseId, id));
+      // Delete enrollments (references courseSchedules)
+      console.log(`Deleting enrollments for course: ${id}`);
+      await db
+        .delete(enrollments)
+        .where(eq(enrollments.courseId, id));
 
-    // Delete course schedules (references courses)
-    await db
-      .delete(courseSchedules)
-      .where(eq(courseSchedules.courseId, id));
+      // Delete course schedules (references courses)
+      console.log(`Deleting course schedules for course: ${id}`);
+      await db
+        .delete(courseSchedules)
+        .where(eq(courseSchedules.courseId, id));
 
-    // Finally delete the course itself
-    await db
-      .delete(courses)
-      .where(eq(courses.id, id));
+      // Finally delete the course itself
+      console.log(`Deleting course record: ${id}`);
+      await db
+        .delete(courses)
+        .where(eq(courses.id, id));
+
+      console.log(`Successfully completed permanent deletion of course: ${id}`);
+    } catch (error) {
+      console.error(`Error during permanent deletion of course ${id}:`, error);
+      throw error;
+    }
   }
 
   async restoreCourse(id: string): Promise<Course> {

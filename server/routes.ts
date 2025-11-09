@@ -2183,6 +2183,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user?.claims?.sub;
       const courseId = req.params.courseId;
 
+      if (!userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
       // Since this is for deleted courses, we need to check directly in the database
       // as the regular getCourse won't return deleted courses
       const courses = await storage.getDeletedCoursesByInstructor(userId);
@@ -2192,10 +2196,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Course not found in deleted items or does not belong to instructor" });
       }
 
+      console.log(`Permanently deleting course: ${existingCourse.title} (${courseId})`);
       await storage.permanentlyDeleteCourse(courseId);
+      console.log(`Successfully deleted course: ${courseId}`);
+      
       res.json({ message: "Course permanently deleted" });
     } catch (error: any) {
       console.error("Error permanently deleting course:", error);
+      console.error("Error stack:", error.stack);
       res.status(500).json({ error: "Failed to permanently delete course: " + error.message });
     }
   });
