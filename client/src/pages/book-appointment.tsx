@@ -430,12 +430,11 @@ export default function BookAppointmentPage() {
                               <CalendarClock className="h-4 w-4" />
                               <span className="font-medium">
                                 {startTime.toLocaleTimeString('en-US', { 
-                                  hour: '2-digit', 
+                                  hour: 'numeric', 
                                   minute: '2-digit', 
-                                  hour12: true,
-                                  timeZoneName: 'short'
+                                  hour12: true
                                 })} - {endTime.toLocaleTimeString('en-US', { 
-                                  hour: '2-digit', 
+                                  hour: 'numeric', 
                                   minute: '2-digit', 
                                   hour12: true 
                                 })}
@@ -478,12 +477,11 @@ export default function BookAppointmentPage() {
                     <span className="text-muted-foreground">Time:</span>
                     <span className="font-medium">
                       {new Date(selectedSlot.startTime).toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
+                        hour: 'numeric', 
                         minute: '2-digit', 
-                        hour12: true,
-                        timeZoneName: 'short'
+                        hour12: true
                       })} - {new Date(selectedSlot.endTime).toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
+                        hour: 'numeric', 
                         minute: '2-digit', 
                         hour12: true 
                       })}
