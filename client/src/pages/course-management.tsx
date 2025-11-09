@@ -63,8 +63,7 @@ function RestoreCourseButton({ course }: { course: CourseWithSchedules }) {
 
   const restoreMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("PATCH", `/api/instructor/courses/${course.id}/restore`);
-      return response.json();
+      return await apiRequest("PATCH", `/api/instructor/courses/${course.id}/restore`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/deleted-courses"] });
@@ -105,8 +104,7 @@ function DeletePermanentlyButton({ course }: { course: CourseWithSchedules }) {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("DELETE", `/api/instructor/courses/${course.id}/permanent`);
-      return response.json();
+      return await apiRequest("DELETE", `/api/instructor/courses/${course.id}/permanent`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/deleted-courses"] });
