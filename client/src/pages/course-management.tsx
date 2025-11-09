@@ -478,6 +478,12 @@ export default function CourseManagement() {
     },
   });
 
+  // Function to handle creating an event for a specific course
+  const handleCreateEventForCourse = (course: CourseWithSchedules) => {
+    setSelectedCourseForEvent(course);
+    setShowCreateEventModal(true);
+  };
+
   // Render course table function
   const renderCourseTable = (type: 'active' | 'archived' | 'drafts' | 'unpublished', courseList: CourseWithSchedules[]) => {
     if (coursesLoading) {
@@ -560,7 +566,7 @@ export default function CourseManagement() {
                       <CourseManagementActions 
                         course={course}
                         onEditCourse={setEditingCourse}
-                        onCreateEvent={setSelectedCourseForEvent}
+                        onCreateEvent={handleCreateEventForCourse}
                       />
                     </div>
                   ) : (course.status === 'unpublished' || course.status === 'draft') ? (
@@ -570,14 +576,14 @@ export default function CourseManagement() {
                       <CourseManagementActions 
                         course={course}
                         onEditCourse={setEditingCourse}
-                        onCreateEvent={setSelectedCourseForEvent}
+                        onCreateEvent={handleCreateEventForCourse}
                       />
                     </div>
                   ) : (
                     <CourseManagementActions 
                       course={course}
                       onEditCourse={setEditingCourse}
-                      onCreateEvent={setSelectedCourseForEvent}
+                      onCreateEvent={handleCreateEventForCourse}
                       data-testid={`actions-course-${course.id}`}
                     />
                   )}

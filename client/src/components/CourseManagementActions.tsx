@@ -156,11 +156,11 @@ export function CourseManagementActions({ course, onEditCourse, onCreateEvent }:
           <DropdownMenuItem 
             onClick={() => publishCourseMutation.mutate({ 
               courseId: course.id, 
-              action: course.isActive ? 'unpublish' : 'publish' 
+              action: course.status === 'published' ? 'unpublish' : 'publish' 
             })}
             data-testid={`button-toggle-publish-${course.id}`}
           >
-            {course.isActive ? (
+            {course.status === 'published' ? (
               <>
                 <EyeOff className="mr-2 h-4 w-4" />
                 Unpublish
