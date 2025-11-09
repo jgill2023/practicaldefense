@@ -26,6 +26,7 @@ import PrivacyPolicyPage from "@/pages/privacy-policy";
 import TermsOfServicePage from "@/pages/terms-of-service";
 import RefundPolicyPage from "@/pages/refund-policy";
 import OnboardingPage from "@/pages/onboarding";
+import TheCrucible from "@/pages/the-crucible";
 import AppointmentsPage from "@/pages/appointments";
 import BookAppointmentPage from "@/pages/book-appointment";
 import NotFound from "@/pages/not-found";
@@ -59,6 +60,7 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/terms-of-service" component={TermsOfServicePage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />
+      <Route path="/the-crucible" component={TheCrucible} />
       <Route path="/book-appointment/:instructorId" component={BookAppointmentPage} />
       {isAuthenticated && (
         <>
