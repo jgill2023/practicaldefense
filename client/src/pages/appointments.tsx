@@ -415,67 +415,88 @@ export default function AppointmentsPage() {
           <TabsContent value="availability">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Weekly Availability</CardTitle>
-                    <CardDescription>
-                      Set your recurring weekly schedule for appointments
-                    </CardDescription>
-                  </div>
-                  <Button onClick={() => openTemplateDialog()} data-testid="button-create-template">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Schedule
-                  </Button>
-                </div>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Weekly hours
+                </CardTitle>
+                <CardDescription>
+                  Set when you are typically available for meetings
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {templatesLoading ? (
                   <div className="text-center py-8 text-muted-foreground">Loading...</div>
-                ) : weeklyTemplates.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No weekly schedule set. Click "Add Schedule" to define your availability.
-                  </div>
                 ) : (
-                  <div className="space-y-4">
-                    {groupedTemplates.map((day) => (
-                      day.templates.length > 0 && (
-                        <div key={day.value} className="border rounded-lg p-4">
-                          <h3 className="font-semibold mb-3">{day.label}</h3>
-                          <div className="space-y-2">
-                            {day.templates.map((template) => (
-                              <div
-                                key={template.id}
-                                className="flex items-center justify-between bg-muted/50 rounded p-3"
-                                data-testid={`card-template-${template.id}`}
-                              >
-                                <div className="flex items-center gap-4">
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium">
-                                      {template.startTime} - {template.endTime}
-                                    </span>
-                                  </div>
-                                  {!template.isActive && (
-                                    <Badge variant="secondary">Inactive</Badge>
-                                  )}
-                                  {template.requiresApproval && (
-                                    <Badge variant="outline">Requires Approval</Badge>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
+                  <div className="space-y-3">
+                    {DAYS_OF_WEEK.map((day) => {
+                      const dayTemplates = weeklyTemplates.filter(t => t.dayOfWeek === day.value && t.isActive);
+                      
+                      return (
+                        <div key={day.value} className="flex items-start gap-3">
+                          {/* Day Circle */}
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold text-sm">
+                            {day.label.charAt(0)}
+                          </div>
+
+                          {/* Time Slots or Unavailable */}
+                          <div className="flex-1 space-y-2">
+                            {dayTemplates.length === 0 ? (
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">Unavailable</span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 rounded-full"
+                                  onClick={() => {
+                                    setTemplateForm({
+                                      dayOfWeek: day.value,
+                                      startTime: '09:00',
+                                      endTime: '17:00',
+                                      requiresApproval: false,
+                                      isActive: true,
+                                    });
+                                    setEditingTemplate(null);
+                                    setShowTemplateDialog(true);
+                                  }}
+                                  data-testid={`button-add-${day.label.toLowerCase()}`}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              dayTemplates.map((template) => (
+                                <div
+                                  key={template.id}
+                                  className="flex items-center gap-2"
+                                  data-testid={`template-row-${template.id}`}
+                                >
+                                  {/* Start Time */}
+                                  <Input
+                                    type="time"
+                                    value={template.startTime}
+                                    className="w-32"
+                                    readOnly
                                     onClick={() => openTemplateDialog(template)}
-                                    data-testid={`button-edit-template-${template.id}`}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
+                                  />
+                                  
+                                  <span className="text-muted-foreground">—</span>
+                                  
+                                  {/* End Time */}
+                                  <Input
+                                    type="time"
+                                    value={template.endTime}
+                                    className="w-32"
+                                    readOnly
+                                    onClick={() => openTemplateDialog(template)}
+                                  />
+
+                                  {/* Action Buttons */}
                                   <Button
                                     variant="ghost"
                                     size="sm"
+                                    className="h-8 w-8 p-0"
                                     onClick={() => {
-                                      if (confirm('Delete this schedule? This cannot be undone.')) {
+                                      if (confirm('Delete this time slot?')) {
                                         deleteTemplateMutation.mutate(template.id);
                                       }
                                     }}
@@ -483,13 +504,34 @@ export default function AppointmentsPage() {
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
+                                  
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      setTemplateForm({
+                                        dayOfWeek: day.value,
+                                        startTime: template.startTime,
+                                        endTime: template.endTime,
+                                        requiresApproval: template.requiresApproval,
+                                        isActive: template.isActive,
+                                      });
+                                      setEditingTemplate(null);
+                                      setShowTemplateDialog(true);
+                                    }}
+                                    data-testid={`button-copy-template-${template.id}`}
+                                    title="Add another time slot"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
                                 </div>
-                              </div>
-                            ))}
+                              ))
+                            )}
                           </div>
                         </div>
-                      )
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
