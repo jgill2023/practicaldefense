@@ -13,7 +13,7 @@ import heroImage from "@assets/TacticalAdvantageHeader_1762624792996.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
-import deductivePistolcraftImage from "@assets/deductive-pistolcraft-instructor.jpg"; // Added import for the image
+import deductivePistolcraftImage from "@assets/Deductive-Pistol-Craft_1762671845456.jpg";
 import {
   Select,
   SelectContent,
