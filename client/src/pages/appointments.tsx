@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Plus, Edit, Trash2, Clock, DollarSign, CheckCircle, XCircle, CalendarClock } from "lucide-react";
+import { Plus, Edit, Trash2, Clock, DollarSign, CheckCircle, XCircle, CalendarClock, Bell } from "lucide-react";
 import type { User } from "@shared/schema";
 
 type AppointmentType = {
@@ -378,7 +378,7 @@ export default function AppointmentsPage() {
                             </div>
                             <div className="flex items-center gap-1">
                               <DollarSign className="h-4 w-4 text-muted-foreground" />
-                              <span>${typeof type.price === 'string' ? parseFloat(type.price).toFixed(2) : type.price?.toFixed ? type.price.toFixed(2) : '0.00'}</span>
+                              <span>${typeof type.price === 'string' ? parseFloat(type.price).toFixed(2) : (typeof type.price === 'number' ? type.price.toFixed(2) : '0.00')}</span>
                             </div>
                           </div>
                         </div>
