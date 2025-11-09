@@ -171,6 +171,10 @@ export interface IStorage {
   deleteCourse(id: string): Promise<Course>;
   restoreCourse(id: string): Promise<Course>;
   permanentlyDeleteCourse(id: string): Promise<void>;
+  publishCourse(id: string): Promise<Course>;
+  unpublishCourse(id: string): Promise<Course>;
+  archiveCourse(id: string): Promise<Course>;
+  reactivateCourse(id: string): Promise<Course>;
   getCourse(id: string): Promise<CourseWithSchedules | undefined>;
   getCourses(): Promise<CourseWithSchedules[]>;
   getCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]>;
@@ -872,6 +876,109 @@ export class DatabaseStorage implements IStorage {
       .where(eq(courses.id, id))
       .returning();
     return restoredCourse;
+  }
+
+  async publishCourse(id: string): Promise<Course> {
+    const [course] = await db.select().from(courses).where(eq(courses.id, id));
+    if (!course) {
+      throw new Error("Course not found");
+    }
+    if (course.deletedAt) {
+      throw new Error("Cannot publish a deleted course");
+    }
+    if (course.status === "archived") {
+      throw new Error("Cannot publish an archived course. Please reactivate it first.");
+    }
+    if (course.status !== "draft" && course.status !== "unpublished") {
+      throw new Error("Can only publish draft or unpublished courses");
+    }
+
+    const [publishedCourse] = await db
+      .update(courses)
+      .set({ 
+        status: "published", 
+        isActive: true, 
+        archivedAt: null,
+        updatedAt: new Date() 
+      })
+      .where(eq(courses.id, id))
+      .returning();
+    return publishedCourse;
+  }
+
+  async unpublishCourse(id: string): Promise<Course> {
+    const [course] = await db.select().from(courses).where(eq(courses.id, id));
+    if (!course) {
+      throw new Error("Course not found");
+    }
+    if (course.deletedAt) {
+      throw new Error("Cannot unpublish a deleted course");
+    }
+    if (course.status !== "published") {
+      throw new Error("Can only unpublish published courses");
+    }
+
+    const [unpublishedCourse] = await db
+      .update(courses)
+      .set({ 
+        status: "unpublished", 
+        isActive: false, 
+        archivedAt: null,
+        updatedAt: new Date() 
+      })
+      .where(eq(courses.id, id))
+      .returning();
+    return unpublishedCourse;
+  }
+
+  async archiveCourse(id: string): Promise<Course> {
+    const [course] = await db.select().from(courses).where(eq(courses.id, id));
+    if (!course) {
+      throw new Error("Course not found");
+    }
+    if (course.deletedAt) {
+      throw new Error("Cannot archive a deleted course");
+    }
+    if (course.status === "archived") {
+      throw new Error("Course is already archived");
+    }
+
+    const [archivedCourse] = await db
+      .update(courses)
+      .set({ 
+        status: "archived", 
+        isActive: false, 
+        archivedAt: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(eq(courses.id, id))
+      .returning();
+    return archivedCourse;
+  }
+
+  async reactivateCourse(id: string): Promise<Course> {
+    const [course] = await db.select().from(courses).where(eq(courses.id, id));
+    if (!course) {
+      throw new Error("Course not found");
+    }
+    if (course.deletedAt) {
+      throw new Error("Cannot reactivate a deleted course");
+    }
+    if (course.status !== "archived") {
+      throw new Error("Can only reactivate archived courses");
+    }
+
+    const [reactivatedCourse] = await db
+      .update(courses)
+      .set({ 
+        status: "unpublished", 
+        isActive: false, 
+        archivedAt: null,
+        updatedAt: new Date() 
+      })
+      .where(eq(courses.id, id))
+      .returning();
+    return reactivatedCourse;
   }
 
   async getDeletedCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]> {
