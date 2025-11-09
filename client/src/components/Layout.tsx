@@ -104,7 +104,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <nav className="hidden md:flex items-center space-x-8">
                 <Link href="/" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-home">Home</Link>
                 <a href="#about-us" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors">About Chris</a>
-                <Link href="/#courses" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-courses">Courses</Link>
+                <a href="/#courses" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={(e) => {
+                  const coursesSection = document.getElementById('courses');
+                  if (coursesSection && window.location.pathname === '/') {
+                    e.preventDefault();
+                    coursesSection.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}>Courses</a>
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
@@ -165,7 +171,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <nav className="flex flex-col space-y-2">
                 <Link href="/" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-home-mobile" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
                 <a href="#about-us" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2">About Chris</a>
-                <Link href="/#courses" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-courses-mobile" onClick={() => setIsMobileMenuOpen(false)}>Courses</Link>
+                <a href="/#courses" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-courses-mobile" onClick={(e) => {
+                  setIsMobileMenuOpen(false);
+                  const coursesSection = document.getElementById('courses');
+                  if (coursesSection && window.location.pathname === '/') {
+                    e.preventDefault();
+                    coursesSection.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}>Courses</a>
                 {/* Mobile Schedule with submenu */}
                 <div>
                   <button 
