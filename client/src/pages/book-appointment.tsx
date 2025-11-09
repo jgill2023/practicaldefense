@@ -29,7 +29,8 @@ type AppointmentType = {
 type TimeSlot = {
   startTime: string;
   endTime: string;
-  requiresApproval: boolean;
+  requiresApproval?: boolean;
+  isAvailable?: boolean;
 };
 
 export default function BookAppointmentPage() {
@@ -72,18 +73,30 @@ export default function BookAppointmentPage() {
   };
 
   const { data: availableSlots = [], isLoading: slotsLoading } = useQuery<TimeSlot[]>({
-    queryKey: ["/api/appointments/student/slots", instructorId, selectedType?.id, selectedDate ? formatLocalDate(selectedDate) : null],
+    queryKey: ["/api/appointments/available-slots", instructorId, selectedType?.id, selectedDate ? formatLocalDate(selectedDate) : null],
     queryFn: async ({ queryKey, signal }) => {
       const [, instructorIdParam, typeIdParam, dateStr] = queryKey;
       if (!typeIdParam || !dateStr) return [];
+      
+      // Create date range for the selected day
+      const startDate = dateStr;
+      const date = new Date(dateStr);
+      date.setDate(date.getDate() + 1);
+      const endDate = formatLocalDate(date);
+      
       const response = await fetch(
-        `/api/appointments/student/slots?instructorId=${instructorIdParam}&appointmentTypeId=${typeIdParam}&date=${dateStr}`,
+        `/api/appointments/available-slots?instructorId=${instructorIdParam}&appointmentTypeId=${typeIdParam}&startDate=${startDate}&endDate=${endDate}`,
         { credentials: "include", signal }
       );
       if (!response.ok) {
         throw new Error(`${response.status}: ${response.statusText}`);
       }
-      return response.json();
+      const allSlots = await response.json();
+      // Filter to only slots that are available and on the selected date
+      return allSlots.filter((slot: any) => {
+        const slotDate = new Date(slot.startTime);
+        return slot.isAvailable && formatLocalDate(slotDate) === dateStr;
+      });
     },
     enabled: isAuthenticated && !!instructorId && !!selectedType && !!selectedDate,
     retry: false,
@@ -98,25 +111,47 @@ export default function BookAppointmentPage() {
       const today = new Date();
       const promises = [];
 
-      for (let i = 0; i < 60; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() + i);
-        const dateStr = formatLocalDate(date);
+      const startDate = formatLocalDate(today);
+      const endDate = new Date(today);
+      endDate.setDate(today.getDate() + 60);
+      const endDateStr = formatLocalDate(endDate);
 
-        const promise = fetch(
-          `/api/appointments/student/slots?instructorId=${instructorId}&appointmentTypeId=${selectedType.id}&date=${dateStr}`,
-          { credentials: "include" }
-        )
-          .then(res => res.json())
-          .then(slots => {
-            map[dateStr] = slots.length > 0;
-          })
-          .catch(() => {
-            map[dateStr] = false;
+      const promise = fetch(
+        `/api/appointments/available-slots?instructorId=${instructorId}&appointmentTypeId=${selectedType.id}&startDate=${startDate}&endDate=${endDateStr}`,
+        { credentials: "include" }
+      )
+        .then(res => res.json())
+        .then(slots => {
+          // Group slots by date
+          slots.forEach((slot: any) => {
+            if (slot.isAvailable) {
+              const slotDate = new Date(slot.startTime);
+              const dateStr = formatLocalDate(slotDate);
+              map[dateStr] = true;
+            }
           });
+          
+          // Mark dates without slots as unavailable
+          for (let i = 0; i < 60; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+            const dateStr = formatLocalDate(date);
+            if (map[dateStr] === undefined) {
+              map[dateStr] = false;
+            }
+          }
+        })
+        .catch(() => {
+          // Mark all dates as unavailable on error
+          for (let i = 0; i < 60; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() + i);
+            const dateStr = formatLocalDate(date);
+            map[dateStr] = false;
+          }
+        });
 
-        promises.push(promise);
-      }
+      promises.push(promise);
 
       await Promise.all(promises);
       setAvailabilityMap(map);
@@ -127,21 +162,18 @@ export default function BookAppointmentPage() {
 
   const bookAppointmentMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedType || !selectedDate || !selectedSlot) {
+      if (!selectedType || !selectedSlot) {
         throw new Error("Missing required fields");
       }
-
-      const startDateTime = new Date(selectedDate);
-      const [hours, minutes] = selectedSlot.startTime.split(':');
-      startDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
       const body = {
         instructorId,
         appointmentTypeId: selectedType.id,
-        startTime: startDateTime.toISOString(),
+        startTime: selectedSlot.startTime,
+        endTime: selectedSlot.endTime,
       };
 
-      const data = await apiRequest("POST", "/api/appointments/student/book", body);
+      const data = await apiRequest("POST", "/api/appointments/book", body);
       return data;
     },
     onSuccess: (data) => {
@@ -381,7 +413,7 @@ export default function BookAppointmentPage() {
                           <div className="flex items-center gap-2">
                             <CalendarClock className="h-4 w-4" />
                             <span className="font-medium">
-                              {slot.startTime} - {slot.endTime}
+                              {new Date(slot.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })} - {new Date(slot.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                             </span>
                           </div>
                           {slot.requiresApproval && (
