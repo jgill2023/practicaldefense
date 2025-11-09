@@ -332,6 +332,34 @@ export default function Landing() {
               </div>
             </div>
           </div>
+
+          {/* Student Portal Section */}
+          <div className="bg-card rounded-lg overflow-hidden shadow-lg mt-8" data-testid="feature-student-portal">
+            <div className="grid md:grid-cols-2 gap-6 p-6">
+              <div className="flex items-center">
+                <img 
+                  src={laptopImage}
+                  alt="Student Portal Dashboard"
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+              <div className="flex flex-col justify-center">
+                <h3 className="font-semibold text-foreground mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '26px', letterSpacing: '0px', lineHeight: '1.5em' }}>
+                  Your Personal Training Hub
+                </h3>
+                <p className="text-muted-foreground mb-6" style={{ fontSize: '16px', lineHeight: '1.8em' }}>
+                  Manage your training journey with our comprehensive student portal. Track your course progress, view upcoming classes, manage payments, and access your certificates all in one place. Stay connected with automated reminders for license renewals and refresher courses to ensure you're always current and ready.
+                </p>
+                <Button 
+                  className="bg-black text-white hover:bg-black/90 w-fit rounded-sm"
+                  data-testid="button-view-student-portal"
+                  onClick={() => window.location.href = '/student-portal'}
+                >
+                  ACCESS YOUR PORTAL
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
