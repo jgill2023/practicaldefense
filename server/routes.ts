@@ -188,7 +188,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (coursesInCategory.length > 0) {
         return res.status(400).json({ 
           message: `Cannot delete category. ${coursesInCategory.length} course(s) are still using this category. Please reassign or delete those courses first.`,
-          coursesCount: coursesInCategory.length
+          coursesCount: coursesInCategory.length,
+          courses: coursesInCategory.map(c => ({
+            id: c.id,
+            title: c.title,
+            abbreviation: c.abbreviation,
+            scheduleCount: c.schedules?.length || 0
+          }))
         });
       }
 

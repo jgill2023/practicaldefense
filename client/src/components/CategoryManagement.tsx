@@ -95,35 +95,7 @@ export function CategoryManagement() {
     },
   });
 
-  const deleteCategoryMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/categories/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to delete category");
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
-      toast({
-        title: "Success",
-        description: "Category deleted successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  
 
   const reorderCategoriesMutation = useMutation({
     mutationFn: (items: { id: string; sortOrder: number }[]) =>
@@ -176,9 +148,42 @@ export function CategoryManagement() {
     });
   };
 
-  const handleDeleteCategory = (id: string) => {
-    if (confirm("Are you sure you want to delete this category? This action cannot be undone.")) {
-      deleteCategoryMutation.mutate(id);
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      const response = await fetch(`/api/categories/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.courses && data.courses.length > 0) {
+          // Show detailed error with course list
+          const courseList = data.courses
+            .map((c: any) => `• ${c.title} (${c.scheduleCount} schedule${c.scheduleCount !== 1 ? 's' : ''})`)
+            .join('\n');
+          
+          const message = `Cannot delete this category because the following ${data.coursesCount} course${data.coursesCount !== 1 ? 's are' : ' is'} still using it:\n\n${courseList}\n\nPlease reassign ${data.coursesCount === 1 ? 'this course' : 'these courses'} to a different category first, or edit each course in the Course Management page.`;
+          
+          alert(message);
+        } else {
+          throw new Error(data.message || "Failed to delete category");
+        }
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      toast({
+        title: "Success",
+        description: "Category deleted successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete category",
+        variant: "destructive",
+      });
     }
   };
 
@@ -323,7 +328,11 @@ export function CategoryManagement() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDeleteCategory(category.id)}
+                            onClick={() => {
+                              if (confirm("Are you sure you want to delete this category? This action cannot be undone.")) {
+                                handleDeleteCategory(category.id);
+                              }
+                            }}
                             className="text-red-600 hover:text-red-700"
                             data-testid={`button-delete-category-${category.id}`}
                           >
