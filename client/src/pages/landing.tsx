@@ -493,7 +493,7 @@ export default function Landing() {
       </section>
 
       {/* Footer - Positioned absolutely at bottom */}
-      <footer className="relative bg-black text-white py-8 mt-16">
+      <footer className="relative bg-black text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-sm">
             &copy; {new Date().getFullYear()} Tactical Advantage. All rights reserved.
