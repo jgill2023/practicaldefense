@@ -15,6 +15,7 @@ import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
 import deductivePistolcraftImage from "@assets/Deductive-Pistol-Craft_1762671845456.jpg";
 import practiceForMasteryImage from "@assets/Performance-Shooting_1762673186670.jpg";
+import performanceShootingImage from "@assets/performance-shooting_1762673442000.jpg";
 import {
   Select,
   SelectContent,
@@ -300,6 +301,34 @@ export default function Landing() {
                 >
                   LET'S TRAIN!
                 </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Shooting for the Concealed Carrier */}
+          <div className="bg-card rounded-lg overflow-hidden shadow-lg mt-8" data-testid="feature-performance-shooting">
+            <div className="grid md:grid-cols-2 gap-6 p-6">
+              <div className="flex flex-col justify-center">
+                <h3 className="font-semibold text-foreground mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '26px', letterSpacing: '0px', lineHeight: '1.5em' }}>
+                  Performance Shooting for the Concealed Carrier
+                </h3>
+                <p className="text-muted-foreground mb-6" style={{ fontSize: '16px', lineHeight: '1.8em' }}>
+                  Offering an in-depth exploration of performance concepts employed by highly-skilled practitioners, specifically competitive shooters. In Performance Shooting for the Concealed Carrier we delve into applying those metrics to benefit concealed carriers and defensive enthusiasts, unraveling the hows and whys behind integrating world-class shooting skills into defensive preparedness.
+                </p>
+                <Button 
+                  className="bg-black text-white hover:bg-black/90 w-fit rounded-sm"
+                  data-testid="button-learn-more-performance-shooting"
+                  onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  LET'S TRAIN!
+                </Button>
+              </div>
+              <div className="flex items-center">
+                <img 
+                  src={performanceShootingImage}
+                  alt="Performance Shooting for the Concealed Carrier"
+                  className="w-full h-auto object-cover"
+                />
               </div>
             </div>
           </div>
