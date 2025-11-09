@@ -89,22 +89,56 @@ export default function Landing() {
       return [];
     }
 
-    // First filter by category
+    // First filter out deleted courses and only show active, published courses with upcoming schedules
     let filtered = courses.filter(course => {
-      // Only show active courses
-      if (!course.isActive || course.status !== 'published') {
-        console.log(`Filtering out course ${course.title}: isActive=${course.isActive}, status=${course.status}`);
+      // Exclude deleted courses
+      if (course.deletedAt) {
+        console.log(`Filtering out deleted course ${course.title}`);
         return false;
       }
 
-      if (courseFilter === "all") return true;
-      return course.category === courseFilter || 
-             (typeof course.category === 'object' && course.category?.name === courseFilter);
+      // Only show active courses
+      if (!course.isActive) {
+        console.log(`Filtering out inactive course ${course.title}: isActive=${course.isActive}`);
+        return false;
+      }
+
+      // Only show published courses
+      if (course.status !== 'published') {
+        console.log(`Filtering out unpublished course ${course.title}: status=${course.status}`);
+        return false;
+      }
+
+      // Must have at least one upcoming schedule
+      const now = new Date();
+      const hasUpcomingSchedules = course.schedules && course.schedules.some(schedule => 
+        !schedule.deletedAt && 
+        new Date(schedule.startDate) > now &&
+        schedule.availableSpots > 0
+      );
+
+      if (!hasUpcomingSchedules) {
+        console.log(`Filtering out course ${course.title}: no upcoming schedules`);
+        return false;
+      }
+
+      return true;
     });
 
-    console.log(`After category filter: ${filtered.length} courses`);
+    console.log(`After basic filters: ${filtered.length} courses`);
 
-    // Then filter by home page visibility
+    // Apply category filter
+    if (courseFilter !== "all") {
+      filtered = filtered.filter(course => {
+        const categoryName = typeof course.category === 'string' 
+          ? course.category 
+          : course.category?.name || 'General';
+        return categoryName === courseFilter;
+      });
+      console.log(`After category filter (${courseFilter}): ${filtered.length} courses`);
+    }
+
+    // Filter by home page visibility
     filtered = filtered.filter(course => {
       const show = course.showOnHomePage !== false;
       if (!show) {

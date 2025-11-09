@@ -12,9 +12,13 @@ interface CourseCardProps {
 
 export function CourseCard({ course, onRegister }: CourseCardProps) {
 
-  // Find the next available schedule
+  // Find the next available schedule with available spots
   const nextSchedule = course.schedules
-    .filter(schedule => !schedule.deletedAt && new Date(schedule.startDate) > new Date())
+    .filter(schedule => 
+      !schedule.deletedAt && 
+      new Date(schedule.startDate) > new Date() &&
+      schedule.availableSpots > 0
+    )
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
 
   const getCategoryColor = (category: string | null) => {
