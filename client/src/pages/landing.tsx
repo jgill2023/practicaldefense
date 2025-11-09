@@ -204,18 +204,18 @@ export default function Landing() {
 
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
-          <h1 className="uppercase mb-4" style={{ fontSize: '80px', fontFamily: 'Montserrat, sans-serif', fontWeight: 700, letterSpacing: '3px', lineHeight: '1.1em' }}>
+          <h1 className="uppercase mb-4 text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, letterSpacing: '3px', lineHeight: '1.1em' }}>
             Tactical Advantage
           </h1>
-          <p className="uppercase mb-12" style={{ fontSize: '33px', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, letterSpacing: '3px', lineHeight: '1.3em' }}>
+          <p className="uppercase mb-12 text-xl sm:text-2xl md:text-3xl lg:text-4xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, letterSpacing: '3px', lineHeight: '1.3em' }}>
             Different by Design
           </p>
 
           <div className="flex justify-center mb-16">
             <Button 
               size="lg" 
-              className="bg-white text-black hover:bg-gray-200 px-8 py-3 rounded border-2 border-white transition-colors"
-              style={{ fontSize: '20px', fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
+              className="bg-white text-black hover:bg-gray-200 px-4 sm:px-8 py-3 rounded border-2 border-white transition-colors text-sm sm:text-base md:text-lg lg:text-xl"
+              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
               onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
               data-testid="button-browse-courses"
             >
