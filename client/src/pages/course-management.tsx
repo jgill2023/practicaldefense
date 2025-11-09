@@ -314,10 +314,10 @@ export default function CourseManagement() {
 
   // Categorize courses by status
   const categorizedCourseTypes = useMemo(() => {
-    const active: CourseWithSchedules[] = courses.filter(c => c.isActive === true);
-    const unpublished: CourseWithSchedules[] = courses.filter(c => c.isActive === false);
-    const archived: CourseWithSchedules[] = [];
-    const drafts: CourseWithSchedules[] = [];
+    const active: CourseWithSchedules[] = courses.filter(c => c.status === "published");
+    const unpublished: CourseWithSchedules[] = courses.filter(c => c.status === "unpublished");
+    const archived: CourseWithSchedules[] = courses.filter(c => c.status === "archived");
+    const drafts: CourseWithSchedules[] = courses.filter(c => c.status === "draft");
 
     return { active, unpublished, archived, drafts };
   }, [courses]);
