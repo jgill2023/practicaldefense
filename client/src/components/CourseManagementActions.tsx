@@ -63,7 +63,7 @@ export function CourseManagementActions({ course, onEditCourse, onCreateEvent }:
     },
   });
 
-  // Delete course mutation
+  // Delete course mutation (soft delete - moves to deleted tab)
   const deleteCourseMutation = useMutation({
     mutationFn: async (courseId: string) => {
       return await apiRequest("DELETE", `/api/instructor/courses/${courseId}`);
@@ -71,9 +71,11 @@ export function CourseManagementActions({ course, onEditCourse, onCreateEvent }:
     onSuccess: () => {
       toast({
         title: "Course Deleted",
-        description: "The course has been permanently deleted.",
+        description: "The course has been moved to the Deleted tab.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/deleted-courses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
     },
     onError: (error: any) => {
@@ -228,38 +230,22 @@ export function CourseManagementActions({ course, onEditCourse, onCreateEvent }:
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Course</AlertDialogTitle>
             <AlertDialogDescription>
-              {hasEnrollments ? (
-                <>
-                  Cannot delete "{course.title}" because it has existing enrollments. 
-                  Please archive the course instead to preserve student data.
-                </>
-              ) : hasSchedules ? (
-                <>
-                  Cannot delete "{course.title}" because it has existing events/schedules. 
-                  Please delete all events first or archive the course instead.
-                </>
-              ) : (
-                <>
-                  Are you sure you want to permanently delete "{course.title}"? 
-                  This action cannot be undone and will remove all course data.
-                </>
-              )}
+              Are you sure you want to delete "{course.title}"? 
+              The course will be moved to the Deleted tab where you can permanently delete it or restore it later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
-            {!hasSchedules && (
-              <AlertDialogAction
-                onClick={() => {
-                  deleteCourseMutation.mutate(course.id);
-                  setShowDeleteConfirm(false);
-                }}
-                className="bg-red-600 hover:bg-red-700"
-                data-testid="button-confirm-delete"
-              >
-                Delete Course
-              </AlertDialogAction>
-            )}
+            <AlertDialogAction
+              onClick={() => {
+                deleteCourseMutation.mutate(course.id);
+                setShowDeleteConfirm(false);
+              }}
+              className="bg-red-600 hover:bg-red-700"
+              data-testid="button-confirm-delete"
+            >
+              Delete Course
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
