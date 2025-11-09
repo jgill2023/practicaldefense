@@ -8,18 +8,8 @@ import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User, DollarS
 import { Layout } from "@/components/Layout";
 import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
-import type { CourseWithSchedules, AppSettings } from "@shared/schema";
-
-type AppointmentType = {
-  id: string;
-  instructorId: string;
-  title: string;
-  description: string | null;
-  durationMinutes: number;
-  price: number;
-  requiresApproval: boolean;
-  isActive: boolean;
-};
+import { BookingModal } from "@/components/BookingModal";
+import type { CourseWithSchedules, AppSettings, AppointmentType } from "@shared/schema";
 import heroImage from "@assets/TacticalAdvantageHeader_1762624792996.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
@@ -40,6 +30,8 @@ export default function Landing() {
   const [selectedCourse, setSelectedCourse] = useState<CourseWithSchedules | null>(null);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [courseFilter, setCourseFilter] = useState("all"); // Renamed from courseFilter to selectedCategory for clarity
+  const [selectedAppointmentType, setSelectedAppointmentType] = useState<AppointmentType | null>(null);
+  const [showBookingModal, setShowBookingModal] = useState(false);
 
   const { data: courses = [], isLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/courses"],
@@ -389,8 +381,7 @@ export default function Landing() {
               {appointmentTypes.map((type) => (
                 <Card 
                   key={type.id} 
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => setLocation(`/book-appointment/${instructorId}`)}
+                  className="hover:shadow-lg transition-shadow"
                   data-testid={`appointment-card-${type.id}`}
                 >
                   <CardHeader>
@@ -417,6 +408,10 @@ export default function Landing() {
                     </div>
                     <Button 
                       className="w-full bg-black text-white hover:bg-black/90"
+                      onClick={() => {
+                        setSelectedAppointmentType(type);
+                        setShowBookingModal(true);
+                      }}
                       data-testid={`button-book-${type.id}`}
                     >
                       Book Now
@@ -531,6 +526,17 @@ export default function Landing() {
           onClose={handleCloseModal}
         />
       )}
+
+      {/* Booking Modal */}
+      <BookingModal
+        appointmentType={selectedAppointmentType}
+        instructorId={instructorId}
+        open={showBookingModal}
+        onClose={() => {
+          setShowBookingModal(false);
+          setSelectedAppointmentType(null);
+        }}
+      />
     </Layout>
   );
 }
