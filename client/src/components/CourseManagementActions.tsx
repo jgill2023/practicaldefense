@@ -51,9 +51,12 @@ export function CourseManagementActions({ course, onEditCourse, onCreateEvent }:
         title: "Course Archived",
         description: "The course has been archived successfully.",
       });
+      // Invalidate all course-related queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
+      // Force refetch to ensure the archived course appears in the correct tab
+      queryClient.refetchQueries({ queryKey: ["/api/instructor/courses-detailed"] });
     },
     onError: (error) => {
       toast({
@@ -99,9 +102,12 @@ export function CourseManagementActions({ course, onEditCourse, onCreateEvent }:
         title: `Course ${action}`,
         description: `The course has been ${action} successfully.`,
       });
+      // Invalidate all course-related queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
+      // Force refetch to ensure the course appears in the correct tab
+      queryClient.refetchQueries({ queryKey: ["/api/instructor/courses-detailed"] });
     },
     onError: (error) => {
       toast({

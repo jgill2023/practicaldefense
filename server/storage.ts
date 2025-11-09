@@ -956,6 +956,19 @@ export class DatabaseStorage implements IStorage {
     return archivedCourse;
   }
 
+    const [archivedCourse] = await db
+      .update(courses)
+      .set({ 
+        status: "archived", 
+        isActive: false, 
+        archivedAt: new Date(),
+        updatedAt: new Date() 
+      })
+      .where(eq(courses.id, id))
+      .returning();
+    return archivedCourse;
+  }
+
   async reactivateCourse(id: string): Promise<Course> {
     const [course] = await db.select().from(courses).where(eq(courses.id, id));
     if (!course) {
