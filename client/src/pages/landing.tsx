@@ -10,7 +10,7 @@ import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
 import { BookingModal } from "@/components/BookingModal";
 import type { CourseWithSchedules, AppSettings, AppointmentType } from "@shared/schema";
-import heroImage from "@assets/TacticalAdvantageHeader_1762624792996.jpg";
+import heroImage from "@assets/TacticalAdvantageHeader_1762674118627.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
@@ -205,7 +205,14 @@ export default function Landing() {
               size="lg" 
               className="bg-white text-black hover:bg-gray-200 px-4 sm:px-8 py-3 rounded border-2 border-white transition-colors text-sm sm:text-base md:text-lg lg:text-xl"
               style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
-              onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => {
+                const coursesSection = document.getElementById('courses');
+                if (coursesSection) {
+                  const yOffset = -120; // Adjust this value to fine-tune the scroll position
+                  const y = coursesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                  window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+              }}
               data-testid="button-browse-courses"
             >
               LET'S TRAIN TOGETHER

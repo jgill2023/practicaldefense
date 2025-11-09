@@ -108,7 +108,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   const coursesSection = document.getElementById('courses');
                   if (coursesSection && window.location.pathname === '/') {
                     e.preventDefault();
-                    coursesSection.scrollIntoView({ behavior: 'smooth' });
+                    const yOffset = -120; // Offset to show the bottom of the previous section
+                    const y = coursesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>Courses</a>
                 <NavigationMenu>
@@ -176,7 +178,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   const coursesSection = document.getElementById('courses');
                   if (coursesSection && window.location.pathname === '/') {
                     e.preventDefault();
-                    coursesSection.scrollIntoView({ behavior: 'smooth' });
+                    const yOffset = -120; // Offset to show the bottom of the previous section
+                    const y = coursesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>Courses</a>
                 {/* Mobile Schedule with submenu */}
