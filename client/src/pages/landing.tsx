@@ -15,6 +15,7 @@ import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
 import deductivePistolcraftImage from "@assets/Deductive-Pistol-Craft_1762671845456.jpg";
 import practiceForMasteryImage from "@assets/Performance-Shooting_1762673186670.jpg";
+import performanceShootingImage from "@assets/Practical-Mastery-2025_1762674118627.jpg";
 import {
   Select,
   SelectContent,
@@ -324,7 +325,7 @@ export default function Landing() {
               </div>
               <div className="flex items-center">
                 <img 
-                  src={deductivePistolcraftImage}
+                  src={performanceShootingImage}
                   alt="Performance Shooting for the Concealed Carrier"
                   className="w-full h-auto object-cover"
                 />
