@@ -415,25 +415,38 @@ export default function BookAppointmentPage() {
                     </div>
                   ) : (
                     <div className="grid gap-2 max-h-96 overflow-y-auto pr-2">
-                      {availableSlots.map((slot, index) => (
-                        <Button
-                          key={index}
-                          variant="outline"
-                          onClick={() => handleSlotSelect(slot)}
-                          className="justify-between h-auto py-3"
-                          data-testid={`button-select-slot-${index}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <CalendarClock className="h-4 w-4" />
-                            <span className="font-medium">
-                              {new Date(slot.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })} - {new Date(slot.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                            </span>
-                          </div>
-                          {slot.requiresApproval && (
-                            <Badge variant="outline" className="text-xs">Approval Required</Badge>
-                          )}
-                        </Button>
-                      ))}
+                      {availableSlots.map((slot, index) => {
+                        const startTime = new Date(slot.startTime);
+                        const endTime = new Date(slot.endTime);
+                        return (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            onClick={() => handleSlotSelect(slot)}
+                            className="justify-between h-auto py-3"
+                            data-testid={`button-select-slot-${index}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <CalendarClock className="h-4 w-4" />
+                              <span className="font-medium">
+                                {startTime.toLocaleTimeString('en-US', { 
+                                  hour: '2-digit', 
+                                  minute: '2-digit', 
+                                  hour12: true,
+                                  timeZoneName: 'short'
+                                })} - {endTime.toLocaleTimeString('en-US', { 
+                                  hour: '2-digit', 
+                                  minute: '2-digit', 
+                                  hour12: true 
+                                })}
+                              </span>
+                            </div>
+                            {slot.requiresApproval && (
+                              <Badge variant="outline" className="text-xs">Approval Required</Badge>
+                            )}
+                          </Button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -463,7 +476,18 @@ export default function BookAppointmentPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Time:</span>
-                    <span className="font-medium">{selectedSlot.startTime} - {selectedSlot.endTime}</span>
+                    <span className="font-medium">
+                      {new Date(selectedSlot.startTime).toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        hour12: true,
+                        timeZoneName: 'short'
+                      })} - {new Date(selectedSlot.endTime).toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        hour12: true 
+                      })}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Duration:</span>
