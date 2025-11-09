@@ -172,19 +172,19 @@
 
 /* Professional button styles */
 .btn-professional {
-  @apply inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-ring disabled:opacity-50 disabled:pointer-events-none;
+  @apply inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-ring disabled:opacity-50 disabled:pointer-events-none text-black;
 }
 
 .btn-primary {
-  @apply btn-professional bg-primary text-black hover:bg-primary hover:opacity-90;
+  @apply btn-professional bg-primary hover:bg-primary hover:opacity-90;
 }
 
 .btn-secondary {
-  @apply btn-professional bg-secondary text-black hover:bg-secondary hover:opacity-90;
+  @apply btn-professional bg-secondary hover:bg-secondary hover:opacity-90;
 }
 
 .btn-accent {
-  @apply btn-professional bg-accent text-black hover:bg-accent hover:opacity-90;
+  @apply btn-professional bg-accent hover:bg-accent hover:opacity-90;
 }
 
 /* Professional card styles */

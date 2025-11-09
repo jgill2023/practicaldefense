@@ -960,17 +960,18 @@ export default function InstructorDashboard() {
               </h1>
               <p className="text-primary-foreground/80">Manage your training business efficiently</p>
             </div>
-            <div className="flex items-center space-x-4 mt-4 sm:mt-0">
+            <div className="flex items-center space-x-4 mt-4 sm:mt-0 overflow-x-auto">
               <Button 
                 variant="outline"
                 onClick={() => setLocation('/onboarding')}
                 data-testid="button-onboarding"
+                className="text-black whitespace-nowrap"
               >
                 <Settings className="mr-2 h-4 w-4" />
                 Onboarding
               </Button>
               <Button 
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                className="bg-accent text-black hover:bg-accent/90 whitespace-nowrap"
                 onClick={() => setLocation('/course-management')}
                 data-testid="button-manage-courses"
               >
@@ -978,7 +979,7 @@ export default function InstructorDashboard() {
                 Manage Courses
               </Button>
               <Button 
-                className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                className="bg-secondary text-black hover:bg-secondary/90 whitespace-nowrap"
                 data-testid="button-view-reports"
               >
                 <BarChart className="mr-2 h-4 w-4" />
