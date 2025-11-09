@@ -55,8 +55,10 @@ export default function AppointmentsPage() {
 
   const [showTypeDialog, setShowTypeDialog] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [showNotificationTemplateDialog, setShowNotificationTemplateDialog] = useState(false);
   const [editingType, setEditingType] = useState<AppointmentType | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<WeeklyTemplate | null>(null);
+  const [editingNotificationTemplate, setEditingNotificationTemplate] = useState<any | null>(null);
 
   const [typeForm, setTypeForm] = useState({
     title: '',
@@ -72,6 +74,15 @@ export default function AppointmentsPage() {
     startTime: '09:00',
     endTime: '17:00',
     requiresApproval: false,
+    isActive: true,
+  });
+
+  const [notificationTemplateForm, setNotificationTemplateForm] = useState({
+    eventType: 'booking_confirmed',
+    channelType: 'email',
+    recipientType: 'student',
+    subject: '',
+    body: '',
     isActive: true,
   });
 
@@ -568,7 +579,18 @@ export default function AppointmentsPage() {
                       Create email and SMS templates for appointment notifications
                     </CardDescription>
                   </div>
-                  <Button onClick={() => {/* TODO: Open notification template dialog */}} data-testid="button-create-notification-template">
+                  <Button onClick={() => {
+                    setEditingNotificationTemplate(null);
+                    setNotificationTemplateForm({
+                      eventType: 'booking_confirmed',
+                      channelType: 'email',
+                      recipientType: 'student',
+                      subject: '',
+                      body: '',
+                      isActive: true,
+                    });
+                    setShowNotificationTemplateDialog(true);
+                  }} data-testid="button-create-notification-template">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Template
                   </Button>
@@ -887,6 +909,111 @@ export default function AppointmentsPage() {
               </Button>
               <Button onClick={handleTemplateSave} data-testid="button-save-template">
                 {editingTemplate ? 'Update' : 'Create'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showNotificationTemplateDialog} onOpenChange={setShowNotificationTemplateDialog}>
+          <DialogContent data-testid="dialog-notification-template-form" className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingNotificationTemplate ? 'Edit Notification Template' : 'Create Notification Template'}
+              </DialogTitle>
+              <DialogDescription>
+                Configure email or SMS templates for appointment notifications
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="event-type">Event Type*</Label>
+                  <select
+                    id="event-type"
+                    className="w-full border border-input rounded-md px-3 py-2"
+                    value={notificationTemplateForm.eventType}
+                    onChange={(e) => setNotificationTemplateForm({ ...notificationTemplateForm, eventType: e.target.value })}
+                    data-testid="select-event-type"
+                  >
+                    <option value="booking_confirmed">Booking Confirmed</option>
+                    <option value="booking_cancelled">Booking Cancelled</option>
+                    <option value="booking_rescheduled">Booking Rescheduled</option>
+                    <option value="reminder">Reminder</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="channel-type">Channel Type*</Label>
+                  <select
+                    id="channel-type"
+                    className="w-full border border-input rounded-md px-3 py-2"
+                    value={notificationTemplateForm.channelType}
+                    onChange={(e) => setNotificationTemplateForm({ ...notificationTemplateForm, channelType: e.target.value })}
+                    data-testid="select-channel-type"
+                  >
+                    <option value="email">Email</option>
+                    <option value="sms">SMS</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="recipient-type">Recipient Type*</Label>
+                <select
+                  id="recipient-type"
+                  className="w-full border border-input rounded-md px-3 py-2"
+                  value={notificationTemplateForm.recipientType}
+                  onChange={(e) => setNotificationTemplateForm({ ...notificationTemplateForm, recipientType: e.target.value })}
+                  data-testid="select-recipient-type"
+                >
+                  <option value="student">Student</option>
+                  <option value="instructor">Instructor</option>
+                  <option value="both">Both</option>
+                </select>
+              </div>
+              {notificationTemplateForm.channelType === 'email' && (
+                <div>
+                  <Label htmlFor="subject">Subject*</Label>
+                  <Input
+                    id="subject"
+                    value={notificationTemplateForm.subject}
+                    onChange={(e) => setNotificationTemplateForm({ ...notificationTemplateForm, subject: e.target.value })}
+                    placeholder="Email subject line"
+                    data-testid="input-subject"
+                  />
+                </div>
+              )}
+              <div>
+                <Label htmlFor="body">Message Body*</Label>
+                <Textarea
+                  id="body"
+                  value={notificationTemplateForm.body}
+                  onChange={(e) => setNotificationTemplateForm({ ...notificationTemplateForm, body: e.target.value })}
+                  placeholder="Message content (you can use variables like {studentName}, {appointmentDate}, {appointmentTime})"
+                  rows={6}
+                  data-testid="input-body"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="notification-is-active">Active</Label>
+                <Switch
+                  id="notification-is-active"
+                  checked={notificationTemplateForm.isActive}
+                  onCheckedChange={(checked) => setNotificationTemplateForm({ ...notificationTemplateForm, isActive: checked })}
+                  data-testid="switch-notification-is-active"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNotificationTemplateDialog(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => {
+                toast({
+                  title: "Coming Soon",
+                  description: "Notification template creation will be implemented in the next update.",
+                });
+                setShowNotificationTemplateDialog(false);
+              }} data-testid="button-save-notification-template">
+                {editingNotificationTemplate ? 'Update' : 'Create'}
               </Button>
             </DialogFooter>
           </DialogContent>
