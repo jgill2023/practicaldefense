@@ -158,12 +158,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </NavigationMenuList>
                 </NavigationMenu>
                 <a href="/#section-schedule-training" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-virtual-training" onClick={(e) => {
-                  const scheduleSection = document.getElementById('section-schedule-training');
-                  if (scheduleSection && window.location.pathname === '/') {
+                  if (window.location.pathname === '/') {
                     e.preventDefault();
-                    const yOffset = -80;
-                    const y = scheduleSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                    window.scrollTo({ top: y, behavior: 'smooth' });
+                    const scheduleSection = document.getElementById('section-schedule-training');
+                    if (scheduleSection) {
+                      const yOffset = -80;
+                      const y = scheduleSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                      window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
                   }
                 }}>Virtual Training</a>
                 <Link href="/contact" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-contact">Contact Us</Link>
@@ -274,12 +276,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 <a href="/#section-schedule-training" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-virtual-training-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
-                  const scheduleSection = document.getElementById('section-schedule-training');
-                  if (scheduleSection && window.location.pathname === '/') {
+                  if (window.location.pathname === '/') {
                     e.preventDefault();
-                    const yOffset = -80;
-                    const y = scheduleSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                    window.scrollTo({ top: y, behavior: 'smooth' });
+                    const scheduleSection = document.getElementById('section-schedule-training');
+                    if (scheduleSection) {
+                      const yOffset = -80;
+                      const y = scheduleSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                      window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
                   }
                 }}>Virtual Training</a>
                 <Link href="/contact" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
