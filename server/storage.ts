@@ -843,6 +843,20 @@ export class DatabaseStorage implements IStorage {
         .delete(courseInformationForms)
         .where(eq(courseInformationForms.courseId, id));
 
+      // Delete promo code redemptions for enrollments in this course
+      console.log(`Deleting promo code redemptions for course: ${id}`);
+      const courseEnrollments = await db
+        .select({ id: enrollments.id })
+        .from(enrollments)
+        .where(eq(enrollments.courseId, id));
+      
+      if (courseEnrollments.length > 0) {
+        const enrollmentIds = courseEnrollments.map(e => e.id);
+        await db
+          .delete(promoCodeRedemptions)
+          .where(inArray(promoCodeRedemptions.enrollmentId, enrollmentIds));
+      }
+
       // Delete enrollments (references courseSchedules)
       console.log(`Deleting enrollments for course: ${id}`);
       await db
