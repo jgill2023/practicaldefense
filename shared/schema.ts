@@ -210,11 +210,128 @@ export const appSettings = pgTable("app_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// ============================================
+// APPOINTMENT SCHEDULING SYSTEM (Calendly-style)
+// ============================================
+
+// Appointment types that instructors can offer (e.g., "One-on-One Consultation", "Range Assessment")
+export const appointmentTypes = pgTable("appointment_types", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  durationMinutes: integer("duration_minutes").notNull(), // e.g., 30, 60, 90
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  requiresApproval: boolean("requires_approval").notNull().default(false), // Auto-confirm or require instructor approval
+  bufferBefore: integer("buffer_before").notNull().default(0), // Minutes before appointment
+  bufferAfter: integer("buffer_after").notNull().default(0), // Minutes after appointment
+  maxPartySize: integer("max_party_size").notNull().default(1), // Number of people allowed
+  color: varchar("color", { length: 7 }).default('#3b82f6'), // Hex color for calendar display
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").default(0), // For display ordering
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Weekly availability templates (e.g., "Available Mon-Fri 9am-5pm")
+export const instructorWeeklyTemplates = pgTable("instructor_weekly_templates", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id),
+  dayOfWeek: integer("day_of_week").notNull(), // 0 = Sunday, 1 = Monday, etc.
+  startTime: varchar("start_time", { length: 8 }).notNull(), // HH:MM:SS format
+  endTime: varchar("end_time", { length: 8 }).notNull(), // HH:MM:SS format
+  breaks: jsonb("breaks"), // Array of {startTime, endTime} for lunch/breaks
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Date-specific availability overrides (add/remove specific dates or date ranges)
+export const instructorAvailabilityOverrides = pgTable("instructor_availability_overrides", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id),
+  overrideType: varchar("override_type", { length: 20 }).notNull(), // 'add', 'remove', 'blackout'
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  startTime: varchar("start_time", { length: 8 }), // For 'add' type - HH:MM:SS format
+  endTime: varchar("end_time", { length: 8 }), // For 'add' type - HH:MM:SS format
+  reason: varchar("reason", { length: 255 }), // e.g., "Vacation", "Conference", "Extra hours"
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Individual appointment bookings
+export const instructorAppointments = pgTable("instructor_appointments", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  appointmentTypeId: uuid("appointment_type_id").notNull().references(() => appointmentTypes.id),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id),
+  studentId: varchar("student_id").references(() => users.id), // Nullable for draft appointments
+  studentInfo: jsonb("student_info"), // Store student data for draft appointments
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  status: varchar("status").notNull().default('pending'), // 'pending', 'confirmed', 'rejected', 'cancelled', 'completed'
+  partySize: integer("party_size").notNull().default(1),
+  // Payment tracking
+  paymentStatus: varchar("payment_status").notNull().default('pending'), // 'pending', 'paid', 'failed', 'refunded'
+  paymentIntentId: varchar("payment_intent_id"),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }),
+  // Status tracking
+  bookedAt: timestamp("booked_at").defaultNow(),
+  confirmedAt: timestamp("confirmed_at"),
+  rejectedAt: timestamp("rejected_at"),
+  rejectionReason: text("rejection_reason"),
+  cancelledAt: timestamp("cancelled_at"),
+  cancellationReason: text("cancellation_reason"),
+  cancelledBy: varchar("cancelled_by"), // 'student', 'instructor', 'system'
+  completedAt: timestamp("completed_at"),
+  // Notes
+  studentNotes: text("student_notes"), // Notes from student when booking
+  instructorNotes: text("instructor_notes"), // Private notes for instructor
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Notification templates for appointment events (customizable by instructor)
+export const appointmentNotificationTemplates = pgTable("appointment_notification_templates", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id),
+  eventType: varchar("event_type", { length: 50 }).notNull(), // 'booked', 'confirmed', 'rejected', 'cancelled', 'reminder'
+  recipientType: varchar("recipient_type", { length: 20 }).notNull(), // 'student', 'instructor'
+  channelType: varchar("channel_type", { length: 20 }).notNull(), // 'email', 'sms'
+  subject: varchar("subject", { length: 255 }), // For email only
+  body: text("body").notNull(), // Template with merge variables like {studentName}, {appointmentDate}, etc.
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Automatic reminder schedules (e.g., "Send reminder 24 hours before appointment")
+export const appointmentReminderSchedules = pgTable("appointment_reminder_schedules", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id),
+  reminderName: varchar("reminder_name", { length: 100 }).notNull(), // e.g., "24 Hour Reminder"
+  minutesBefore: integer("minutes_before").notNull(), // e.g., 1440 for 24 hours, 60 for 1 hour
+  templateId: uuid("template_id").references(() => appointmentNotificationTemplates.id),
+  sendEmail: boolean("send_email").notNull().default(true),
+  sendSms: boolean("send_sms").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const userRelations = relations(users, ({ many }) => ({
   coursesAsInstructor: many(courses),
   enrollments: many(enrollments),
   waitlistEntries: many(waitlist),
+  appointmentTypes: many(appointmentTypes),
+  weeklyTemplates: many(instructorWeeklyTemplates),
+  availabilityOverrides: many(instructorAvailabilityOverrides),
+  appointmentsAsInstructor: many(instructorAppointments, { relationName: 'instructorAppointments' }),
+  appointmentsAsStudent: many(instructorAppointments, { relationName: 'studentAppointments' }),
+  appointmentNotificationTemplates: many(appointmentNotificationTemplates),
+  appointmentReminderSchedules: many(appointmentReminderSchedules),
 }));
 
 export const categoryRelations = relations(categories, ({ many }) => ({
@@ -278,6 +395,65 @@ export const waitlistRelations = relations(waitlist, ({ one }) => ({
   }),
 }));
 
+// Appointment system relations
+export const appointmentTypeRelations = relations(appointmentTypes, ({ one, many }) => ({
+  instructor: one(users, {
+    fields: [appointmentTypes.instructorId],
+    references: [users.id],
+  }),
+  appointments: many(instructorAppointments),
+}));
+
+export const instructorWeeklyTemplateRelations = relations(instructorWeeklyTemplates, ({ one }) => ({
+  instructor: one(users, {
+    fields: [instructorWeeklyTemplates.instructorId],
+    references: [users.id],
+  }),
+}));
+
+export const instructorAvailabilityOverrideRelations = relations(instructorAvailabilityOverrides, ({ one }) => ({
+  instructor: one(users, {
+    fields: [instructorAvailabilityOverrides.instructorId],
+    references: [users.id],
+  }),
+}));
+
+export const instructorAppointmentRelations = relations(instructorAppointments, ({ one }) => ({
+  appointmentType: one(appointmentTypes, {
+    fields: [instructorAppointments.appointmentTypeId],
+    references: [appointmentTypes.id],
+  }),
+  instructor: one(users, {
+    fields: [instructorAppointments.instructorId],
+    references: [users.id],
+    relationName: 'instructorAppointments',
+  }),
+  student: one(users, {
+    fields: [instructorAppointments.studentId],
+    references: [users.id],
+    relationName: 'studentAppointments',
+  }),
+}));
+
+export const appointmentNotificationTemplateRelations = relations(appointmentNotificationTemplates, ({ one, many }) => ({
+  instructor: one(users, {
+    fields: [appointmentNotificationTemplates.instructorId],
+    references: [users.id],
+  }),
+  reminderSchedules: many(appointmentReminderSchedules),
+}));
+
+export const appointmentReminderScheduleRelations = relations(appointmentReminderSchedules, ({ one }) => ({
+  instructor: one(users, {
+    fields: [appointmentReminderSchedules.instructorId],
+    references: [users.id],
+  }),
+  template: one(appointmentNotificationTemplates, {
+    fields: [appointmentReminderSchedules.templateId],
+    references: [appointmentNotificationTemplates.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users);
 
@@ -323,6 +499,43 @@ export const insertAppSettingsSchema = createInsertSchema(appSettings).omit({
   homeCoursesLimit: z.number().int().min(1).max(50),
 });
 
+// Appointment system insert schemas
+export const insertAppointmentTypeSchema = createInsertSchema(appointmentTypes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInstructorWeeklyTemplateSchema = createInsertSchema(instructorWeeklyTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInstructorAvailabilityOverrideSchema = createInsertSchema(instructorAvailabilityOverrides).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInstructorAppointmentSchema = createInsertSchema(instructorAppointments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAppointmentNotificationTemplateSchema = createInsertSchema(appointmentNotificationTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAppointmentReminderScheduleSchema = createInsertSchema(appointmentReminderSchedules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -340,6 +553,31 @@ export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
 export type WaitlistEntry = typeof waitlist.$inferSelect;
 export type InsertAppSettings = z.infer<typeof insertAppSettingsSchema>;
 export type AppSettings = typeof appSettings.$inferSelect;
+
+// Appointment system types
+export type InsertAppointmentType = z.infer<typeof insertAppointmentTypeSchema>;
+export type AppointmentType = typeof appointmentTypes.$inferSelect;
+export type InsertInstructorWeeklyTemplate = z.infer<typeof insertInstructorWeeklyTemplateSchema>;
+export type InstructorWeeklyTemplate = typeof instructorWeeklyTemplates.$inferSelect;
+export type InsertInstructorAvailabilityOverride = z.infer<typeof insertInstructorAvailabilityOverrideSchema>;
+export type InstructorAvailabilityOverride = typeof instructorAvailabilityOverrides.$inferSelect;
+export type InsertInstructorAppointment = z.infer<typeof insertInstructorAppointmentSchema>;
+export type InstructorAppointment = typeof instructorAppointments.$inferSelect;
+export type InsertAppointmentNotificationTemplate = z.infer<typeof insertAppointmentNotificationTemplateSchema>;
+export type AppointmentNotificationTemplate = typeof appointmentNotificationTemplates.$inferSelect;
+export type InsertAppointmentReminderSchedule = z.infer<typeof insertAppointmentReminderScheduleSchema>;
+export type AppointmentReminderSchedule = typeof appointmentReminderSchedules.$inferSelect;
+
+// Extended appointment types with relations
+export type AppointmentTypeWithDetails = AppointmentType & {
+  instructor: User;
+};
+
+export type InstructorAppointmentWithDetails = InstructorAppointment & {
+  appointmentType: AppointmentType;
+  instructor: User;
+  student?: User;
+};
 
 // Extended types with relations
 export type CourseWithSchedules = Course & {

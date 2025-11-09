@@ -121,6 +121,27 @@ import {
   typeSmsListMemberWithUser,
   typeSmsBroadcastMessageWithDetails,
   typeSmsBroadcastDeliveryWithDetails,
+  // Appointment system imports
+  appointmentTypes,
+  instructorWeeklyTemplates,
+  instructorAvailabilityOverrides,
+  instructorAppointments,
+  appointmentNotificationTemplates,
+  appointmentReminderSchedules,
+  type AppointmentType,
+  type InsertAppointmentType,
+  type InstructorWeeklyTemplate,
+  type InsertInstructorWeeklyTemplate,
+  type InstructorAvailabilityOverride,
+  type InsertInstructorAvailabilityOverride,
+  type InstructorAppointment,
+  type InsertInstructorAppointment,
+  type AppointmentNotificationTemplate,
+  type InsertAppointmentNotificationTemplate,
+  type AppointmentReminderSchedule,
+  type InsertAppointmentReminderSchedule,
+  type AppointmentTypeWithDetails,
+  type InstructorAppointmentWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne, inArray } from "drizzle-orm";
@@ -495,6 +516,73 @@ export interface IStorage {
   // SMS Helper Methods
   getSmsListWithDetails(id: string): Promise<SmsListWithDetails | undefined>;
   getSmsBroadcastWithDeliveryStats(id: string): Promise<SmsBroadcastMessageWithDetails | undefined>;
+
+  // ============================================
+  // APPOINTMENT SYSTEM METHODS
+  // ============================================
+
+  // Appointment Type operations
+  createAppointmentType(data: InsertAppointmentType): Promise<AppointmentType>;
+  updateAppointmentType(id: string, data: Partial<InsertAppointmentType>): Promise<AppointmentType>;
+  deleteAppointmentType(id: string): Promise<void>;
+  getAppointmentType(id: string): Promise<AppointmentType | undefined>;
+  getAppointmentTypes(instructorId: string): Promise<AppointmentType[]>;
+  getActiveAppointmentTypes(instructorId: string): Promise<AppointmentType[]>;
+
+  // Instructor Weekly Template operations
+  createWeeklyTemplate(data: InsertInstructorWeeklyTemplate): Promise<InstructorWeeklyTemplate>;
+  updateWeeklyTemplate(id: string, data: Partial<InsertInstructorWeeklyTemplate>): Promise<InstructorWeeklyTemplate>;
+  deleteWeeklyTemplate(id: string): Promise<void>;
+  getWeeklyTemplate(id: string): Promise<InstructorWeeklyTemplate | undefined>;
+  getWeeklyTemplates(instructorId: string): Promise<InstructorWeeklyTemplate[]>;
+  getWeeklyTemplatesByDay(instructorId: string, dayOfWeek: number): Promise<InstructorWeeklyTemplate[]>;
+
+  // Instructor Availability Override operations
+  createAvailabilityOverride(data: InsertInstructorAvailabilityOverride): Promise<InstructorAvailabilityOverride>;
+  updateAvailabilityOverride(id: string, data: Partial<InsertInstructorAvailabilityOverride>): Promise<InstructorAvailabilityOverride>;
+  deleteAvailabilityOverride(id: string): Promise<void>;
+  getAvailabilityOverride(id: string): Promise<InstructorAvailabilityOverride | undefined>;
+  getAvailabilityOverrides(instructorId: string): Promise<InstructorAvailabilityOverride[]>;
+  getAvailabilityOverridesInRange(instructorId: string, startDate: Date, endDate: Date): Promise<InstructorAvailabilityOverride[]>;
+
+  // Instructor Appointment operations
+  createAppointment(data: InsertInstructorAppointment): Promise<InstructorAppointment>;
+  updateAppointment(id: string, data: Partial<InsertInstructorAppointment>): Promise<InstructorAppointment>;
+  cancelAppointment(id: string, cancelledBy: string, reason?: string): Promise<InstructorAppointment>;
+  getAppointment(id: string): Promise<InstructorAppointmentWithDetails | undefined>;
+  getAppointments(filters: {
+    instructorId?: string;
+    studentId?: string;
+    status?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<InstructorAppointmentWithDetails[]>;
+  getAppointmentsByInstructor(instructorId: string): Promise<InstructorAppointmentWithDetails[]>;
+  getAppointmentsByStudent(studentId: string): Promise<InstructorAppointmentWithDetails[]>;
+  getPendingAppointments(instructorId: string): Promise<InstructorAppointmentWithDetails[]>;
+  getUpcomingAppointments(instructorId: string, limit?: number): Promise<InstructorAppointmentWithDetails[]>;
+  approveAppointment(id: string): Promise<InstructorAppointment>;
+  rejectAppointment(id: string, reason: string): Promise<InstructorAppointment>;
+
+  // Appointment Notification Template operations
+  createAppointmentNotificationTemplate(data: InsertAppointmentNotificationTemplate): Promise<AppointmentNotificationTemplate>;
+  updateAppointmentNotificationTemplate(id: string, data: Partial<InsertAppointmentNotificationTemplate>): Promise<AppointmentNotificationTemplate>;
+  deleteAppointmentNotificationTemplate(id: string): Promise<void>;
+  getAppointmentNotificationTemplate(id: string): Promise<AppointmentNotificationTemplate | undefined>;
+  getAppointmentNotificationTemplates(instructorId: string): Promise<AppointmentNotificationTemplate[]>;
+  getAppointmentNotificationTemplateByEvent(instructorId: string, eventType: string, recipientType: string, channelType: string): Promise<AppointmentNotificationTemplate | undefined>;
+
+  // Appointment Reminder Schedule operations
+  createAppointmentReminderSchedule(data: InsertAppointmentReminderSchedule): Promise<AppointmentReminderSchedule>;
+  updateAppointmentReminderSchedule(id: string, data: Partial<InsertAppointmentReminderSchedule>): Promise<AppointmentReminderSchedule>;
+  deleteAppointmentReminderSchedule(id: string): Promise<void>;
+  getAppointmentReminderSchedule(id: string): Promise<AppointmentReminderSchedule | undefined>;
+  getAppointmentReminderSchedules(instructorId: string): Promise<AppointmentReminderSchedule[]>;
+  getActiveAppointmentReminderSchedules(instructorId: string): Promise<AppointmentReminderSchedule[]>;
+
+  // Appointment availability helper methods
+  getInstructorCourseSchedules(instructorId: string, startDate: Date, endDate: Date): Promise<CourseSchedule[]>;
+  checkAppointmentConflict(instructorId: string, startTime: Date, endTime: Date, excludeAppointmentId?: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4679,6 +4767,601 @@ export class DatabaseStorage implements IStorage {
     });
 
     return broadcast;
+  }
+
+  // ============================================
+  // APPOINTMENT SYSTEM IMPLEMENTATIONS
+  // ============================================
+
+  // Appointment Type operations
+  async createAppointmentType(data: InsertAppointmentType): Promise<AppointmentType> {
+    const [appointmentType] = await db
+      .insert(appointmentTypes)
+      .values(data)
+      .returning();
+
+    if (!appointmentType) {
+      throw new Error('Failed to create appointment type');
+    }
+
+    return appointmentType;
+  }
+
+  async updateAppointmentType(id: string, data: Partial<InsertAppointmentType>): Promise<AppointmentType> {
+    const [appointmentType] = await db
+      .update(appointmentTypes)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(appointmentTypes.id, id))
+      .returning();
+
+    if (!appointmentType) {
+      throw new Error('Appointment type not found');
+    }
+
+    return appointmentType;
+  }
+
+  async deleteAppointmentType(id: string): Promise<void> {
+    await db
+      .delete(appointmentTypes)
+      .where(eq(appointmentTypes.id, id));
+  }
+
+  async getAppointmentType(id: string): Promise<AppointmentType | undefined> {
+    const [appointmentType] = await db
+      .select()
+      .from(appointmentTypes)
+      .where(eq(appointmentTypes.id, id));
+
+    return appointmentType;
+  }
+
+  async getAppointmentTypes(instructorId: string): Promise<AppointmentType[]> {
+    return db
+      .select()
+      .from(appointmentTypes)
+      .where(eq(appointmentTypes.instructorId, instructorId))
+      .orderBy(asc(appointmentTypes.sortOrder), asc(appointmentTypes.title));
+  }
+
+  async getActiveAppointmentTypes(instructorId: string): Promise<AppointmentType[]> {
+    return db
+      .select()
+      .from(appointmentTypes)
+      .where(and(
+        eq(appointmentTypes.instructorId, instructorId),
+        eq(appointmentTypes.isActive, true)
+      ))
+      .orderBy(asc(appointmentTypes.sortOrder), asc(appointmentTypes.title));
+  }
+
+  // Instructor Weekly Template operations
+  async createWeeklyTemplate(data: InsertInstructorWeeklyTemplate): Promise<InstructorWeeklyTemplate> {
+    const [template] = await db
+      .insert(instructorWeeklyTemplates)
+      .values(data)
+      .returning();
+
+    if (!template) {
+      throw new Error('Failed to create weekly template');
+    }
+
+    return template;
+  }
+
+  async updateWeeklyTemplate(id: string, data: Partial<InsertInstructorWeeklyTemplate>): Promise<InstructorWeeklyTemplate> {
+    const [template] = await db
+      .update(instructorWeeklyTemplates)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(instructorWeeklyTemplates.id, id))
+      .returning();
+
+    if (!template) {
+      throw new Error('Weekly template not found');
+    }
+
+    return template;
+  }
+
+  async deleteWeeklyTemplate(id: string): Promise<void> {
+    await db
+      .delete(instructorWeeklyTemplates)
+      .where(eq(instructorWeeklyTemplates.id, id));
+  }
+
+  async getWeeklyTemplate(id: string): Promise<InstructorWeeklyTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(instructorWeeklyTemplates)
+      .where(eq(instructorWeeklyTemplates.id, id));
+
+    return template;
+  }
+
+  async getWeeklyTemplates(instructorId: string): Promise<InstructorWeeklyTemplate[]> {
+    return db
+      .select()
+      .from(instructorWeeklyTemplates)
+      .where(eq(instructorWeeklyTemplates.instructorId, instructorId))
+      .orderBy(asc(instructorWeeklyTemplates.dayOfWeek), asc(instructorWeeklyTemplates.startTime));
+  }
+
+  async getWeeklyTemplatesByDay(instructorId: string, dayOfWeek: number): Promise<InstructorWeeklyTemplate[]> {
+    return db
+      .select()
+      .from(instructorWeeklyTemplates)
+      .where(and(
+        eq(instructorWeeklyTemplates.instructorId, instructorId),
+        eq(instructorWeeklyTemplates.dayOfWeek, dayOfWeek),
+        eq(instructorWeeklyTemplates.isActive, true)
+      ))
+      .orderBy(asc(instructorWeeklyTemplates.startTime));
+  }
+
+  // Instructor Availability Override operations
+  async createAvailabilityOverride(data: InsertInstructorAvailabilityOverride): Promise<InstructorAvailabilityOverride> {
+    const [override] = await db
+      .insert(instructorAvailabilityOverrides)
+      .values(data)
+      .returning();
+
+    if (!override) {
+      throw new Error('Failed to create availability override');
+    }
+
+    return override;
+  }
+
+  async updateAvailabilityOverride(id: string, data: Partial<InsertInstructorAvailabilityOverride>): Promise<InstructorAvailabilityOverride> {
+    const [override] = await db
+      .update(instructorAvailabilityOverrides)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(instructorAvailabilityOverrides.id, id))
+      .returning();
+
+    if (!override) {
+      throw new Error('Availability override not found');
+    }
+
+    return override;
+  }
+
+  async deleteAvailabilityOverride(id: string): Promise<void> {
+    await db
+      .delete(instructorAvailabilityOverrides)
+      .where(eq(instructorAvailabilityOverrides.id, id));
+  }
+
+  async getAvailabilityOverride(id: string): Promise<InstructorAvailabilityOverride | undefined> {
+    const [override] = await db
+      .select()
+      .from(instructorAvailabilityOverrides)
+      .where(eq(instructorAvailabilityOverrides.id, id));
+
+    return override;
+  }
+
+  async getAvailabilityOverrides(instructorId: string): Promise<InstructorAvailabilityOverride[]> {
+    return db
+      .select()
+      .from(instructorAvailabilityOverrides)
+      .where(eq(instructorAvailabilityOverrides.instructorId, instructorId))
+      .orderBy(asc(instructorAvailabilityOverrides.startDate));
+  }
+
+  async getAvailabilityOverridesInRange(instructorId: string, startDate: Date, endDate: Date): Promise<InstructorAvailabilityOverride[]> {
+    return db
+      .select()
+      .from(instructorAvailabilityOverrides)
+      .where(and(
+        eq(instructorAvailabilityOverrides.instructorId, instructorId),
+        or(
+          and(
+            gte(instructorAvailabilityOverrides.startDate, startDate),
+            gte(endDate, instructorAvailabilityOverrides.startDate)
+          ),
+          and(
+            gte(instructorAvailabilityOverrides.endDate, startDate),
+            gte(endDate, instructorAvailabilityOverrides.endDate)
+          )
+        )
+      ))
+      .orderBy(asc(instructorAvailabilityOverrides.startDate));
+  }
+
+  // Instructor Appointment operations
+  async createAppointment(data: InsertInstructorAppointment): Promise<InstructorAppointment> {
+    const [appointment] = await db
+      .insert(instructorAppointments)
+      .values(data)
+      .returning();
+
+    if (!appointment) {
+      throw new Error('Failed to create appointment');
+    }
+
+    return appointment;
+  }
+
+  async updateAppointment(id: string, data: Partial<InsertInstructorAppointment>): Promise<InstructorAppointment> {
+    const [appointment] = await db
+      .update(instructorAppointments)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(instructorAppointments.id, id))
+      .returning();
+
+    if (!appointment) {
+      throw new Error('Appointment not found');
+    }
+
+    return appointment;
+  }
+
+  async cancelAppointment(id: string, cancelledBy: string, reason?: string): Promise<InstructorAppointment> {
+    const [appointment] = await db
+      .update(instructorAppointments)
+      .set({
+        status: 'cancelled',
+        cancelledAt: new Date(),
+        cancelledBy,
+        cancellationReason: reason || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(instructorAppointments.id, id))
+      .returning();
+
+    if (!appointment) {
+      throw new Error('Appointment not found');
+    }
+
+    return appointment;
+  }
+
+  async getAppointment(id: string): Promise<InstructorAppointmentWithDetails | undefined> {
+    return db.query.instructorAppointments.findFirst({
+      where: eq(instructorAppointments.id, id),
+      with: {
+        appointmentType: true,
+        instructor: true,
+        student: true,
+      },
+    });
+  }
+
+  async getAppointments(filters: {
+    instructorId?: string;
+    studentId?: string;
+    status?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<InstructorAppointmentWithDetails[]> {
+    const conditions = [];
+
+    if (filters.instructorId) {
+      conditions.push(eq(instructorAppointments.instructorId, filters.instructorId));
+    }
+
+    if (filters.studentId) {
+      conditions.push(eq(instructorAppointments.studentId, filters.studentId));
+    }
+
+    if (filters.status) {
+      conditions.push(eq(instructorAppointments.status, filters.status));
+    }
+
+    if (filters.startDate) {
+      conditions.push(gte(instructorAppointments.startTime, filters.startDate));
+    }
+
+    if (filters.endDate) {
+      conditions.push(gte(filters.endDate, instructorAppointments.endTime));
+    }
+
+    return db.query.instructorAppointments.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      with: {
+        appointmentType: true,
+        instructor: true,
+        student: true,
+      },
+      orderBy: [asc(instructorAppointments.startTime)],
+    });
+  }
+
+  async getAppointmentsByInstructor(instructorId: string): Promise<InstructorAppointmentWithDetails[]> {
+    return db.query.instructorAppointments.findMany({
+      where: eq(instructorAppointments.instructorId, instructorId),
+      with: {
+        appointmentType: true,
+        instructor: true,
+        student: true,
+      },
+      orderBy: [desc(instructorAppointments.startTime)],
+    });
+  }
+
+  async getAppointmentsByStudent(studentId: string): Promise<InstructorAppointmentWithDetails[]> {
+    return db.query.instructorAppointments.findMany({
+      where: eq(instructorAppointments.studentId, studentId),
+      with: {
+        appointmentType: true,
+        instructor: true,
+        student: true,
+      },
+      orderBy: [desc(instructorAppointments.startTime)],
+    });
+  }
+
+  async getPendingAppointments(instructorId: string): Promise<InstructorAppointmentWithDetails[]> {
+    return db.query.instructorAppointments.findMany({
+      where: and(
+        eq(instructorAppointments.instructorId, instructorId),
+        eq(instructorAppointments.status, 'pending')
+      ),
+      with: {
+        appointmentType: true,
+        instructor: true,
+        student: true,
+      },
+      orderBy: [asc(instructorAppointments.startTime)],
+    });
+  }
+
+  async getUpcomingAppointments(instructorId: string, limit: number = 10): Promise<InstructorAppointmentWithDetails[]> {
+    const now = new Date();
+    
+    return db.query.instructorAppointments.findMany({
+      where: and(
+        eq(instructorAppointments.instructorId, instructorId),
+        gte(instructorAppointments.startTime, now),
+        inArray(instructorAppointments.status, ['pending', 'confirmed'])
+      ),
+      with: {
+        appointmentType: true,
+        instructor: true,
+        student: true,
+      },
+      orderBy: [asc(instructorAppointments.startTime)],
+      limit,
+    });
+  }
+
+  async approveAppointment(id: string): Promise<InstructorAppointment> {
+    const [appointment] = await db
+      .update(instructorAppointments)
+      .set({
+        status: 'confirmed',
+        confirmedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(instructorAppointments.id, id))
+      .returning();
+
+    if (!appointment) {
+      throw new Error('Appointment not found');
+    }
+
+    return appointment;
+  }
+
+  async rejectAppointment(id: string, reason: string): Promise<InstructorAppointment> {
+    const [appointment] = await db
+      .update(instructorAppointments)
+      .set({
+        status: 'rejected',
+        rejectedAt: new Date(),
+        rejectionReason: reason,
+        updatedAt: new Date(),
+      })
+      .where(eq(instructorAppointments.id, id))
+      .returning();
+
+    if (!appointment) {
+      throw new Error('Appointment not found');
+    }
+
+    return appointment;
+  }
+
+  // Appointment Notification Template operations
+  async createAppointmentNotificationTemplate(data: InsertAppointmentNotificationTemplate): Promise<AppointmentNotificationTemplate> {
+    const [template] = await db
+      .insert(appointmentNotificationTemplates)
+      .values(data)
+      .returning();
+
+    if (!template) {
+      throw new Error('Failed to create appointment notification template');
+    }
+
+    return template;
+  }
+
+  async updateAppointmentNotificationTemplate(id: string, data: Partial<InsertAppointmentNotificationTemplate>): Promise<AppointmentNotificationTemplate> {
+    const [template] = await db
+      .update(appointmentNotificationTemplates)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(appointmentNotificationTemplates.id, id))
+      .returning();
+
+    if (!template) {
+      throw new Error('Appointment notification template not found');
+    }
+
+    return template;
+  }
+
+  async deleteAppointmentNotificationTemplate(id: string): Promise<void> {
+    await db
+      .delete(appointmentNotificationTemplates)
+      .where(eq(appointmentNotificationTemplates.id, id));
+  }
+
+  async getAppointmentNotificationTemplate(id: string): Promise<AppointmentNotificationTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(appointmentNotificationTemplates)
+      .where(eq(appointmentNotificationTemplates.id, id));
+
+    return template;
+  }
+
+  async getAppointmentNotificationTemplates(instructorId: string): Promise<AppointmentNotificationTemplate[]> {
+    return db
+      .select()
+      .from(appointmentNotificationTemplates)
+      .where(eq(appointmentNotificationTemplates.instructorId, instructorId))
+      .orderBy(asc(appointmentNotificationTemplates.eventType), asc(appointmentNotificationTemplates.channelType));
+  }
+
+  async getAppointmentNotificationTemplateByEvent(
+    instructorId: string,
+    eventType: string,
+    recipientType: string,
+    channelType: string
+  ): Promise<AppointmentNotificationTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(appointmentNotificationTemplates)
+      .where(and(
+        eq(appointmentNotificationTemplates.instructorId, instructorId),
+        eq(appointmentNotificationTemplates.eventType, eventType),
+        eq(appointmentNotificationTemplates.recipientType, recipientType),
+        eq(appointmentNotificationTemplates.channelType, channelType),
+        eq(appointmentNotificationTemplates.isActive, true)
+      ))
+      .limit(1);
+
+    return template;
+  }
+
+  // Appointment Reminder Schedule operations
+  async createAppointmentReminderSchedule(data: InsertAppointmentReminderSchedule): Promise<AppointmentReminderSchedule> {
+    const [schedule] = await db
+      .insert(appointmentReminderSchedules)
+      .values(data)
+      .returning();
+
+    if (!schedule) {
+      throw new Error('Failed to create appointment reminder schedule');
+    }
+
+    return schedule;
+  }
+
+  async updateAppointmentReminderSchedule(id: string, data: Partial<InsertAppointmentReminderSchedule>): Promise<AppointmentReminderSchedule> {
+    const [schedule] = await db
+      .update(appointmentReminderSchedules)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(appointmentReminderSchedules.id, id))
+      .returning();
+
+    if (!schedule) {
+      throw new Error('Appointment reminder schedule not found');
+    }
+
+    return schedule;
+  }
+
+  async deleteAppointmentReminderSchedule(id: string): Promise<void> {
+    await db
+      .delete(appointmentReminderSchedules)
+      .where(eq(appointmentReminderSchedules.id, id));
+  }
+
+  async getAppointmentReminderSchedule(id: string): Promise<AppointmentReminderSchedule | undefined> {
+    const [schedule] = await db
+      .select()
+      .from(appointmentReminderSchedules)
+      .where(eq(appointmentReminderSchedules.id, id));
+
+    return schedule;
+  }
+
+  async getAppointmentReminderSchedules(instructorId: string): Promise<AppointmentReminderSchedule[]> {
+    return db
+      .select()
+      .from(appointmentReminderSchedules)
+      .where(eq(appointmentReminderSchedules.instructorId, instructorId))
+      .orderBy(desc(appointmentReminderSchedules.minutesBefore));
+  }
+
+  async getActiveAppointmentReminderSchedules(instructorId: string): Promise<AppointmentReminderSchedule[]> {
+    return db
+      .select()
+      .from(appointmentReminderSchedules)
+      .where(and(
+        eq(appointmentReminderSchedules.instructorId, instructorId),
+        eq(appointmentReminderSchedules.isActive, true)
+      ))
+      .orderBy(desc(appointmentReminderSchedules.minutesBefore));
+  }
+
+  // Appointment availability helper methods
+  async getInstructorCourseSchedules(instructorId: string, startDate: Date, endDate: Date): Promise<CourseSchedule[]> {
+    return db
+      .select()
+      .from(courseSchedules)
+      .innerJoin(courses, eq(courseSchedules.courseId, courses.id))
+      .where(and(
+        eq(courses.instructorId, instructorId),
+        gte(courseSchedules.startDate, startDate),
+        gte(endDate, courseSchedules.endDate),
+        isNull(courseSchedules.deletedAt)
+      ))
+      .then(results => results.map(r => r.course_schedules));
+  }
+
+  async checkAppointmentConflict(
+    instructorId: string,
+    startTime: Date,
+    endTime: Date,
+    excludeAppointmentId?: string
+  ): Promise<boolean> {
+    const conditions = [
+      eq(instructorAppointments.instructorId, instructorId),
+      inArray(instructorAppointments.status, ['pending', 'confirmed']),
+      or(
+        and(
+          gte(instructorAppointments.startTime, startTime),
+          gte(endTime, instructorAppointments.startTime)
+        ),
+        and(
+          gte(instructorAppointments.endTime, startTime),
+          gte(endTime, instructorAppointments.endTime)
+        )
+      ),
+    ];
+
+    if (excludeAppointmentId) {
+      conditions.push(ne(instructorAppointments.id, excludeAppointmentId));
+    }
+
+    const [conflict] = await db
+      .select()
+      .from(instructorAppointments)
+      .where(and(...conditions))
+      .limit(1);
+
+    return !!conflict;
   }
 }
 
