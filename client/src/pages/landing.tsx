@@ -17,6 +17,7 @@ import dhcImage from "@assets/DHC_1757565361710.jpg";
 import deductivePistolcraftImage from "@assets/Deductive-Pistol-Craft_1762671845456.jpg";
 import practiceForMasteryImage from "@assets/Performance-Shooting_1762673186670.jpg";
 import performanceShootingImage from "@assets/Practical-Mastery-2025_1762674118627.jpg";
+import coachingBackgroundImage from "@assets/Main_1762715966076.jpg";
 import {
   Select,
   SelectContent,
@@ -457,13 +458,13 @@ export default function Landing() {
 
       {/* Virtual Coaching and Mental Management Section */}
       <section className="relative w-full py-24" style={{
-        backgroundImage: 'url(/coaching-bg.jpg)',
+        backgroundImage: `url(${coachingBackgroundImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }}>
         {/* Semi-transparent black overlay */}
-        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}></div>
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0, 0, 0, 0.65)' }}></div>
 
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
