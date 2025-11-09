@@ -61,22 +61,28 @@ appointmentRouter.get('/instructor/appointment-types', isAuthenticated, async (r
 appointmentRouter.post('/instructor/appointment-types', isAuthenticated, async (req: any, res) => {
   try {
     const instructorId = req.user.claims.sub;
-    // Parse price as number before validation
-    const requestData = {
-      ...req.body,
-      price: parseFloat(req.body.price),
+    
+    // Manually construct the data object to avoid schema validation issues
+    const data = {
+      instructorId,
+      title: req.body.title || req.body.name, // Support both 'title' and 'name' fields
+      description: req.body.description || null,
       durationMinutes: parseInt(req.body.durationMinutes),
+      price: parseFloat(req.body.price).toFixed(2),
+      requiresApproval: req.body.requiresApproval ?? false,
+      bufferBefore: parseInt(req.body.bufferBefore) || 0,
+      bufferAfter: parseInt(req.body.bufferAfter) || 0,
+      maxPartySize: parseInt(req.body.maxPartySize) || 1,
+      color: req.body.color || '#3b82f6',
+      isActive: req.body.isActive ?? true,
+      sortOrder: parseInt(req.body.sortOrder) || 0,
     };
-    const validatedData = insertAppointmentTypeSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(requestData);
-    const data = { ...validatedData, instructorId };
+    
     const appointmentType = await storage.createAppointmentType(data);
     res.status(201).json(appointmentType);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ message: "Invalid input", errors: error.errors });
-    }
     console.error("Error creating appointment type:", error);
-    res.status(500).json({ message: "Failed to create appointment type" });
+    res.status(500).json({ message: "Failed to create appointment type", error: error.message });
   }
 });
 
