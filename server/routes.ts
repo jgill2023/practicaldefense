@@ -2076,7 +2076,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Archive course endpoint (soft delete - sets archived flag)
+  // Archive course endpoint
   app.patch("/api/instructor/courses/:courseId/archive", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
@@ -2088,15 +2088,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
       }
 
-      const archivedCourse = await storage.updateCourse(courseId, { isActive: false });
+      const archivedCourse = await storage.archiveCourse(courseId);
       res.json({ message: "Course archived successfully", course: archivedCourse });
     } catch (error: any) {
       console.error("Error archiving course:", error);
-      res.status(500).json({ error: "Failed to archive course: " + error.message });
+      res.status(500).json({ error: error.message || "Failed to archive course" });
     }
   });
 
-  // Unpublish course endpoint (deactivate)
+  // Unpublish course endpoint
   app.patch("/api/instructor/courses/:courseId/unpublish", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
@@ -2108,15 +2108,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
       }
 
-      const unpublishedCourse = await storage.updateCourse(courseId, { isActive: false });
+      const unpublishedCourse = await storage.unpublishCourse(courseId);
       res.json({ message: "Course unpublished successfully", course: unpublishedCourse });
     } catch (error: any) {
       console.error("Error unpublishing course:", error);
-      res.status(500).json({ error: "Failed to unpublish course: " + error.message });
+      res.status(500).json({ error: error.message || "Failed to unpublish course" });
     }
   });
 
-  // Publish course endpoint (activate)
+  // Publish course endpoint
   app.patch("/api/instructor/courses/:courseId/publish", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
@@ -2128,11 +2128,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
       }
 
-      const publishedCourse = await storage.updateCourse(courseId, { isActive: true });
+      const publishedCourse = await storage.publishCourse(courseId);
       res.json({ message: "Course published successfully", course: publishedCourse });
     } catch (error: any) {
       console.error("Error publishing course:", error);
-      res.status(500).json({ error: "Failed to publish course: " + error.message });
+      res.status(500).json({ error: error.message || "Failed to publish course" });
+    }
+  });
+
+  // Reactivate course endpoint
+  app.patch("/api/instructor/courses/:courseId/reactivate", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const courseId = req.params.courseId;
+
+      // Verify the course belongs to the instructor
+      const existingCourse = await storage.getCourse(courseId);
+      if (!existingCourse || existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      }
+
+      const reactivatedCourse = await storage.reactivateCourse(courseId);
+      res.json({ message: "Course reactivated successfully", course: reactivatedCourse });
+    } catch (error: any) {
+      console.error("Error reactivating course:", error);
+      res.status(500).json({ error: error.message || "Failed to reactivate course" });
     }
   });
 
