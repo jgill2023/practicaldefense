@@ -95,12 +95,20 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
 
   // Fetch available slots for selected date
   const { data: availableSlots = [], isLoading: slotsLoading } = useQuery<TimeSlot[]>({
-    queryKey: ["/api/appointments/student/slots", instructorId, appointmentType?.id, selectedDate ? formatLocalDate(selectedDate) : null],
+    queryKey: ["/api/appointments/available-slots-day", instructorId, appointmentType?.id, selectedDate ? selectedDate.getTime() : null],
     queryFn: async ({ queryKey, signal }) => {
-      const [, instructorIdParam, typeIdParam, dateStr] = queryKey;
-      if (!typeIdParam || !dateStr) return [];
+      const [, instructorIdParam, typeIdParam, dateTimestamp] = queryKey;
+      if (!typeIdParam || !dateTimestamp || !selectedDate) return [];
+      
+      // Use the actual selectedDate object to avoid timezone issues
+      const dayStart = new Date(selectedDate);
+      dayStart.setHours(0, 0, 0, 0);
+      
+      const dayEnd = new Date(selectedDate);
+      dayEnd.setHours(23, 59, 59, 999);
+      
       const response = await fetch(
-        `/api/appointments/student/slots?instructorId=${instructorIdParam}&appointmentTypeId=${typeIdParam}&date=${dateStr}`,
+        `/api/appointments/available-slots?instructorId=${instructorIdParam}&appointmentTypeId=${typeIdParam}&startDate=${formatLocalDate(dayStart)}&endDate=${formatLocalDate(dayEnd)}`,
         { credentials: "include", signal }
       );
       if (!response.ok) {
