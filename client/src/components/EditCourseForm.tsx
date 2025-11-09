@@ -101,32 +101,42 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
         ...data,
         price: parseFloat(data.price),
         depositAmount: data.depositAmount && data.depositAmount !== "" ? parseFloat(data.depositAmount) : undefined,
-        imageUrl: data.imageUrl, // Use form value directly since it's updated on image upload
+        imageUrl: uploadedImageUrl || data.imageUrl || undefined,
       };
+      console.log("Updating course with data:", courseData);
       return await apiRequest("PUT", `/api/instructor/courses/${course.id}`, courseData);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log("Course update successful:", result);
       toast({
         title: "Course Updated",
         description: "Your course has been updated successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/courses"] }); // Invalidate homepage courses
       onCourseUpdated?.();
       onClose();
     },
     onError: (error: any) => {
+      console.error("Course update error:", error);
       toast({
         title: "Error",
-        description: "Failed to update course. Please try again.",
+        description: error.message || "Failed to update course. Please try again.",
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = (data: CourseFormData) => {
-    updateCourseMutation.mutate(data);
+    // Ensure imageUrl is included in the submission
+    const formData = {
+      ...data,
+      imageUrl: uploadedImageUrl || data.imageUrl || undefined,
+    };
+    console.log("Submitting course update with data:", formData);
+    updateCourseMutation.mutate(formData);
   };
 
   // Handle image upload
@@ -157,7 +167,12 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
 
           // Set the uploaded image URL for preview and form
           setUploadedImageUrl(data.objectPath);
-          form.setValue("imageUrl", data.objectPath);
+          form.setValue("imageUrl", data.objectPath, { 
+            shouldValidate: true,
+            shouldDirty: true 
+          });
+
+          console.log("Image uploaded successfully:", data.objectPath);
 
           toast({
             title: "Image Uploaded",
