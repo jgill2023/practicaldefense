@@ -353,8 +353,12 @@ export class AppointmentService {
       }
     }
 
-    const startTimeStr = `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}`;
-    const endTimeStr = `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`;
+    // Convert UTC times to instructor's timezone before extracting hours/minutes
+    const localStartTime = toZonedTime(startTime, INSTRUCTOR_TIMEZONE);
+    const localEndTime = toZonedTime(endTime, INSTRUCTOR_TIMEZONE);
+    
+    const startTimeStr = `${String(localStartTime.getHours()).padStart(2, '0')}:${String(localStartTime.getMinutes()).padStart(2, '0')}`;
+    const endTimeStr = `${String(localEndTime.getHours()).padStart(2, '0')}:${String(localEndTime.getMinutes()).padStart(2, '0')}`;
     
     const fitsInBlock = availableBlocks.some(block => {
       const blockStart = this.timeToMinutes(block.startTime);
