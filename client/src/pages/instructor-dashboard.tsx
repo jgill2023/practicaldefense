@@ -28,7 +28,7 @@ import { EventCreationForm } from "@/components/EventCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
 import { RosterDialog } from "@/components/RosterDialog";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, MessageSquare } from "lucide-react";
+import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, MessageSquare, CalendarClock } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 
@@ -984,6 +984,14 @@ export default function InstructorDashboard() {
               >
                 <BarChart className="mr-2 h-4 w-4" />
                 Reports
+              </Button>
+              <Button 
+                className="bg-white text-black border border-primary/20 hover:bg-gray-50 whitespace-nowrap"
+                onClick={() => setLocation('/appointments')}
+                data-testid="button-appointment-settings"
+              >
+                <CalendarClock className="mr-2 h-4 w-4" />
+                Appointments
               </Button>
             </div>
           </div>

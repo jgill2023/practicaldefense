@@ -29,6 +29,8 @@ import PrivacyPolicyPage from "@/pages/privacy-policy";
 import TermsOfServicePage from "@/pages/terms-of-service";
 import RefundPolicyPage from "@/pages/refund-policy";
 import OnboardingPage from "@/pages/onboarding";
+import AppointmentsPage from "@/pages/appointments";
+import BookAppointmentPage from "@/pages/book-appointment";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -63,6 +65,7 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/terms-of-service" component={TermsOfServicePage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />
+      <Route path="/book-appointment/:instructorId" component={BookAppointmentPage} />
       {isAuthenticated && (
         <>
           <Route path="/instructor-dashboard" component={InstructorDashboard} />
@@ -73,6 +76,7 @@ function Router() {
           <Route path="/promo-codes" component={PromoCodesPage} />
           <Route path="/communications" component={CommunicationsDashboardPage} />
           <Route path="/reports" component={Reports} />
+          <Route path="/appointments" component={AppointmentsPage} />
         </>
       )}
       {/* The student-portal route is now correctly registered and protected by authentication. */}
