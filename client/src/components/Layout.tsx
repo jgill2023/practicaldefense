@@ -413,7 +413,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="flex items-start space-x-2">
                   <span>✉️</span>
-                  <a href="mailto:chris@tacticaladv.com" className="transition-colors" style={{ color: '#e8e9eb' }}>chris@tacticaladv.com</a>
+                  <a href="mailto:Chris@TacticalAdv.com" className="transition-colors" style={{ color: '#e8e9eb' }}>Chris@TacticalAdv.com</a>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span className="text-success">📍</span>
