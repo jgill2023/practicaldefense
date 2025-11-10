@@ -252,32 +252,25 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           <div className="border rounded-lg p-4">
             <h3 className="font-semibold mb-4">Select a Date</h3>
             <style>{`
-              .calendar-day-available {
+              .booking-calendar .rdp-day_button {
                 position: relative;
               }
-              .calendar-day-available::before {
+              .booking-calendar .rdp-day_button.day-available::after {
                 content: '';
                 position: absolute;
-                top: 2px;
-                right: 2px;
-                width: 6px;
-                height: 6px;
+                bottom: 2px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 4px;
+                height: 4px;
                 border-radius: 50%;
                 background-color: #10b981;
               }
-              .calendar-day-unavailable {
-                position: relative;
-                opacity: 0.4;
-              }
-              .calendar-day-unavailable::after {
-                content: '';
-                position: absolute;
-                top: 50%;
-                left: 10%;
-                right: 10%;
-                height: 1px;
-                background-color: #ef4444;
-                transform: rotate(-45deg);
+              .booking-calendar .rdp-day_button.day-unavailable {
+                opacity: 0.5;
+                text-decoration: line-through;
+                text-decoration-color: #ef4444;
+                text-decoration-thickness: 1px;
               }
             `}</style>
             <Calendar
@@ -304,23 +297,24 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 },
               }}
               modifiersClassNames={{
-                available: "calendar-day-available",
-                unavailable: "calendar-day-unavailable",
+                available: "day-available",
+                unavailable: "day-unavailable",
               }}
-              className="rounded-md border"
+              className="booking-calendar rounded-md border w-full"
               data-testid="booking-calendar"
             />
             <div className="mt-4 space-y-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span>Available</span>
+                <div className="flex items-end justify-center w-6 h-6 border rounded">
+                  <div className="w-1 h-1 rounded-full bg-green-500 mb-0.5"></div>
+                </div>
+                <span>Available slots</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 relative opacity-40">
-                  <div className="absolute inset-0 bg-muted-foreground/20"></div>
-                  <div className="absolute top-1/2 left-0 right-0 h-px bg-red-500 transform -rotate-45"></div>
+                <div className="flex items-center justify-center w-6 h-6 border rounded opacity-50">
+                  <span className="line-through" style={{ textDecorationColor: '#ef4444' }}>15</span>
                 </div>
-                <span>Unavailable</span>
+                <span>No availability</span>
               </div>
             </div>
           </div>
