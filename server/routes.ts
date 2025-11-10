@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import Stripe from "stripe";
 import { z } from "zod";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, requireSuperadmin } from "./replitAuth";
+import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrSuperadmin } from "./replitAuth";
 import { db } from "./db";
 import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users } from "@shared/schema";
 import { eq, and, inArray, desc } from "drizzle-orm";
@@ -141,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -159,7 +159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -177,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -212,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -235,7 +235,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -268,7 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -310,7 +310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -333,7 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -773,7 +773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -1030,7 +1030,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -1128,7 +1128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -1148,7 +1148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const studentId = req.params.id;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -1209,7 +1209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check ownership: student owns enrollment or instructor has access
       const user = await storage.getUser(userId);
       const hasAccess = enrollment.studentId === userId || 
-                       (user?.role === 'instructor' && enrollment.course?.instructorId === userId);
+                       ((user?.role === 'instructor' || user?.role === 'superadmin') && (enrollment.course?.instructorId === userId || user?.role === 'superadmin'));
 
       if (!hasAccess) {
         return res.status(403).json({ message: "Access denied" });
@@ -1238,7 +1238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check ownership: either student owns it or instructor has access
       const user = await storage.getUser(userId);
       const hasAccess = enrollment.studentId === userId || 
-                       (user?.role === 'instructor' && enrollment.course?.instructorId === userId);
+                       ((user?.role === 'instructor' || user?.role === 'superadmin') && (enrollment.course?.instructorId === userId || user?.role === 'superadmin'));
 
       if (!hasAccess) {
         return res.status(403).json({ message: "Access denied" });
@@ -1305,7 +1305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check ownership: student owns enrollment or instructor has access
       const user = await storage.getUser(userId);
       const hasAccess = enrollment.studentId === userId || 
-                       (user?.role === 'instructor' && enrollment.course?.instructorId === userId);
+                       ((user?.role === 'instructor' || user?.role === 'superadmin') && (enrollment.course?.instructorId === userId || user?.role === 'superadmin'));
 
       if (!hasAccess) {
         return res.status(403).json({ message: "Access denied" });
@@ -1422,7 +1422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
+      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
       }
 
@@ -1462,7 +1462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
+      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
       }
 
@@ -1559,7 +1559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
+      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
       }
 
@@ -1699,7 +1699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.getUser(userId);
 
-      if (!user || (user.role !== 'instructor' && user.role !== 'admin')) {
+      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
       }
 
@@ -1834,7 +1834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -1857,7 +1857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -2615,7 +2615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -2637,7 +2637,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -2658,7 +2658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -3204,7 +3204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -3298,7 +3298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user?.claims?.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -3398,7 +3398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3416,7 +3416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3449,7 +3449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3481,7 +3481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3500,7 +3500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3518,7 +3518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3546,7 +3546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3574,7 +3574,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3593,7 +3593,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3645,7 +3645,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3753,7 +3753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3778,7 +3778,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3800,7 +3800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3831,7 +3831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3856,7 +3856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3886,7 +3886,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fetch course schedule and course to check instructor authorization
       const courseSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
       const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
-      const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
+      const isInstructor = (user?.role === 'instructor' || user?.role === 'superadmin') && (course?.instructorId === userId || user?.role === 'superadmin');
 
       if (!isOwner && !isInstructor) {
         return res.status(403).json({ error: "Unauthorized: Access denied" });
@@ -3917,7 +3917,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fetch course schedule and course to check instructor authorization
       const courseSchedule = await storage.getCourseSchedule(instance.enrollment.scheduleId);
       const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
-      const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
+      const isInstructor = (user?.role === 'instructor' || user?.role === 'superadmin') && (course?.instructorId === userId || user?.role === 'superadmin');
 
       if (!isOwner && !isInstructor) {
         return res.status(403).json({ error: "Unauthorized: Access denied" });
@@ -3949,7 +3949,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fetch course schedule and course to check instructor authorization
       const courseSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
       const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
-      const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
+      const isInstructor = (user?.role === 'instructor' || user?.role === 'superadmin') && (course?.instructorId === userId || user?.role === 'superadmin');
 
       if (!isOwner && !isInstructor) {
         return res.status(403).json({ error: "Unauthorized: Access denied" });
@@ -4041,7 +4041,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fetch course schedule and course to check instructor authorization
       const courseSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
       const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
-      const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
+      const isInstructor = (user?.role === 'instructor' || user?.role === 'superadmin') && (course?.instructorId === userId || user?.role === 'superadmin');
 
       if (!isOwner && !isInstructor) {
         return res.status(403).json({ error: "Unauthorized: Access denied" });
@@ -4072,7 +4072,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fetch course schedule and course to check instructor authorization
       const courseSchedule = await storage.getCourseSchedule(enrollment.scheduleId);
       const course = courseSchedule ? await storage.getCourse(courseSchedule.courseId) : null;
-      const isInstructor = user?.role === 'instructor' && course?.instructorId === userId;
+      const isInstructor = (user?.role === 'instructor' || user?.role === 'superadmin') && (course?.instructorId === userId || user?.role === 'superadmin');
 
       if (!isOwner && !isInstructor) {
         return res.status(403).json({ error: "Unauthorized: Access denied" });
@@ -4093,7 +4093,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -4123,7 +4123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to send SMS notifications
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4161,7 +4161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to check SMS status
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4189,7 +4189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to check account info
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4221,7 +4221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to send email notifications
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4264,7 +4264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Only allow instructors to send payment reminders
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor role required" });
       }
 
@@ -4337,7 +4337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor role required" });
       }
 
@@ -4532,7 +4532,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to view payment details
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4582,7 +4582,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to view available schedules
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4607,7 +4607,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to reschedule students
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4717,7 +4717,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to place students on hold
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4763,7 +4763,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4857,7 +4857,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to access communications dashboard
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4915,7 +4915,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to access communications
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4939,7 +4939,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to manage communications
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4964,7 +4964,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to manage communications
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4989,7 +4989,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to manage communications
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -5024,7 +5024,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to manage communications
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -5055,7 +5055,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to access SMS features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -5083,7 +5083,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to access SMS features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -5114,7 +5114,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to access SMS features
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -5137,7 +5137,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to send SMS
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -5190,7 +5190,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to access SMS stats
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -5209,7 +5209,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to access contacts
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -5903,7 +5903,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -5933,7 +5933,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -5961,7 +5961,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -5990,7 +5990,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6033,7 +6033,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6069,7 +6069,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6098,7 +6098,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6167,7 +6167,7 @@ jeremy@abqconcealedcarry.com
       const instructorId = req.user.claims.sub;
       const user = await storage.getUser(instructorId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6210,7 +6210,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6236,7 +6236,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6265,7 +6265,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6295,7 +6295,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6338,7 +6338,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6387,7 +6387,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6422,7 +6422,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6594,7 +6594,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -6814,7 +6814,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Only instructors can access credits" });
       }
 
@@ -6832,7 +6832,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Only instructors can access credit packages" });
       }
 
@@ -6850,7 +6850,7 @@ jeremy@abqconcealedcarry.com
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Only instructors can access credit transactions" });
       }
 
@@ -6874,7 +6874,7 @@ jeremy@abqconcealedcarry.com
       }
 
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Only instructors can purchase credits" });
       }
 
@@ -6926,7 +6926,7 @@ jeremy@abqconcealedcarry.com
       }
 
       const user = await storage.getUser(userId);
-      if (!user || user.role !== 'instructor') {
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
         return res.status(403).json({ message: "Only instructors can purchase credits" });
       }
 
@@ -6996,7 +6996,7 @@ jeremy@abqconcealedcarry.com
 
       // Verify the target user is an instructor
       const targetUser = await storage.getUser(instructorId);
-      if (!targetUser || targetUser.role !== 'instructor') {
+      if (!targetUser || (targetUser.role !== 'instructor' && targetUser.role !== 'superadmin')) {
         return res.status(400).json({ message: "Target user must be an instructor" });
       }
 

@@ -270,3 +270,25 @@ export const requireSuperadmin: RequestHandler = async (req, res, next) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const requireInstructorOrSuperadmin: RequestHandler = async (req, res, next) => {
+  const userId = (req.user as any)?.claims?.sub;
+  
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const { storage } = await import('./storage');
+    const user = await storage.getUser(userId);
+    
+    if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      return res.status(403).json({ message: "Forbidden: Instructor access required" });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Error checking instructor/superadmin status:', error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
