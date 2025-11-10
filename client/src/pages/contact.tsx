@@ -136,15 +136,6 @@ export default function ContactPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-3">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium" data-testid="text-phone">
-                      (505) 944-5247
-                    </p>
-                    <p className="text-sm text-muted-foreground">Call or Text</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="font-medium" data-testid="text-email">
@@ -159,7 +150,7 @@ export default function ContactPage() {
                     <p className="font-medium" data-testid="text-location">
                       Albuquerque, New Mexico
                     </p>
-                    <p className="text-sm text-muted-foreground">Call for specific range locations</p>
+                    <p className="text-sm text-muted-foreground">Contact us for specific range locations</p>
                   </div>
                 </div>
               </CardContent>
