@@ -1,12 +1,9 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Mail, Plus, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -38,12 +35,14 @@ type GrantCreditsForm = z.infer<typeof grantCreditsSchema>;
 
 export default function AdminCreditsPage() {
   const { toast } = useToast();
-  const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
   const [isGrantDialogOpen, setIsGrantDialogOpen] = useState(false);
 
   const { data: instructors, isLoading } = useQuery<Instructor[]>({
     queryKey: ['/api/admin/credits/instructors'],
   });
+
+  // Get the first instructor (main account)
+  const mainInstructor = instructors?.[0];
 
   const form = useForm<GrantCreditsForm>({
     resolver: zodResolver(grantCreditsSchema),
@@ -65,8 +64,8 @@ export default function AdminCreditsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/credits/instructors'] });
       toast({
-        title: "Credits Granted",
-        description: "Credits have been successfully added to the instructor's account.",
+        title: "Credits Added",
+        description: "Credits have been successfully added to your account.",
       });
       setIsGrantDialogOpen(false);
       form.reset();
@@ -75,33 +74,32 @@ export default function AdminCreditsPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to grant credits",
+        description: error.message || "Failed to add credits",
       });
     },
   });
 
   const handleGrantCredits = (data: GrantCreditsForm) => {
-    if (!selectedInstructor) return;
+    if (!mainInstructor) return;
     
     grantCreditsMutation.mutate({
-      instructorId: selectedInstructor.id,
+      instructorId: mainInstructor.id,
       ...data,
     });
   };
 
-  const openGrantDialog = (instructor: Instructor) => {
-    setSelectedInstructor(instructor);
+  const openGrantDialog = () => {
     form.reset({
       smsCredits: 0,
       emailCredits: 0,
-      description: `Admin credit grant for ${instructor.firstName} ${instructor.lastName}`,
+      description: "Admin credit grant",
     });
     setIsGrantDialogOpen(true);
   };
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto p-6">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
           <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
@@ -111,111 +109,83 @@ export default function AdminCreditsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <ShieldCheck className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold tracking-tight">Admin Credit Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Credit Management</h1>
         </div>
         <p className="text-muted-foreground">
-          Grant free credits to instructors for SMS and Email messaging.
+          View and manage messaging credits for your application.
         </p>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 mb-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-blue-600" />
+              SMS Credits
+            </CardTitle>
+            <CardDescription>Text message credits remaining</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold" data-testid="text-sms-credits">
+              {mainInstructor?.smsCredits?.toLocaleString() || 0}
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              {mainInstructor?.smsCredits && mainInstructor.smsCredits <= 10 
+                ? "⚠️ Low credits - consider adding more" 
+                : "Credits available for SMS notifications"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-green-600" />
+              Email Credits
+            </CardTitle>
+            <CardDescription>Email message credits remaining</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold" data-testid="text-email-credits">
+              {mainInstructor?.emailCredits?.toLocaleString() || 0}
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              {mainInstructor?.emailCredits && mainInstructor.emailCredits <= 50 
+                ? "⚠️ Low credits - consider adding more" 
+                : "Credits available for email notifications"}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Instructors</CardTitle>
+          <CardTitle>Add Credits</CardTitle>
           <CardDescription>
-            View and manage credit balances for all instructors
+            Grant additional messaging credits to your application
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Instructor</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead className="text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <MessageSquare className="h-4 w-4" />
-                    SMS Credits
-                  </div>
-                </TableHead>
-                <TableHead className="text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <Mail className="h-4 w-4" />
-                    Email Credits
-                  </div>
-                </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {instructors && instructors.length > 0 ? (
-                instructors.map((instructor) => (
-                  <TableRow key={instructor.id}>
-                    <TableCell className="font-medium">
-                      {instructor.firstName} {instructor.lastName}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {instructor.email}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge
-                        variant={
-                          instructor.smsCredits <= 10
-                            ? "destructive"
-                            : instructor.smsCredits <= 50
-                            ? "outline"
-                            : "default"
-                        }
-                      >
-                        {instructor.smsCredits.toLocaleString()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge
-                        variant={
-                          instructor.emailCredits <= 50
-                            ? "destructive"
-                            : instructor.emailCredits <= 200
-                            ? "outline"
-                            : "default"
-                        }
-                      >
-                        {instructor.emailCredits.toLocaleString()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        onClick={() => openGrantDialog(instructor)}
-                        data-testid={`button-grant-credits-${instructor.id}`}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Grant Credits
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    No instructors found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <Button 
+            onClick={openGrantDialog}
+            data-testid="button-add-credits"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Credits
+          </Button>
         </CardContent>
       </Card>
 
       <Dialog open={isGrantDialogOpen} onOpenChange={setIsGrantDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Grant Credits</DialogTitle>
+            <DialogTitle>Add Credits</DialogTitle>
             <DialogDescription>
-              Add free credits to {selectedInstructor?.firstName} {selectedInstructor?.lastName}'s account
+              Add free credits to your application account
             </DialogDescription>
           </DialogHeader>
           
@@ -238,7 +208,7 @@ export default function AdminCreditsPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Number of SMS message credits to grant
+                      Number of SMS message credits to add
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -262,7 +232,7 @@ export default function AdminCreditsPage() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Number of email message credits to grant
+                      Number of email message credits to add
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -277,7 +247,7 @@ export default function AdminCreditsPage() {
                     <FormLabel>Description (Optional)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Reason for granting credits..."
+                        placeholder="Reason for adding credits..."
                         {...field}
                         data-testid="input-description"
                       />
@@ -304,7 +274,7 @@ export default function AdminCreditsPage() {
                   disabled={grantCreditsMutation.isPending}
                   data-testid="button-submit-grant"
                 >
-                  {grantCreditsMutation.isPending ? "Granting..." : "Grant Credits"}
+                  {grantCreditsMutation.isPending ? "Adding..." : "Add Credits"}
                 </Button>
               </div>
             </form>
