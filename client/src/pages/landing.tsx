@@ -500,6 +500,25 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Registration Modal */}
+      {selectedCourse && (
+        <RegistrationModal
+          course={selectedCourse}
+          onClose={handleCloseModal}
+        />
+      )}
+
+      {/* Booking Modal */}
+      {selectedAppointmentType && (
+        <BookingModal
+          appointmentType={selectedAppointmentType}
+          onClose={() => {
+            setShowBookingModal(false);
+            setSelectedAppointmentType(null);
+          }}
+        />
+      )}
     </Layout>
   );
 }
