@@ -30,6 +30,10 @@ export default function TheCrucible() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              10 rounds, 2 targets, 1 reload on the move, precision under pressure. This is a test of your ability to maintain accuracy while transitioning between multiple skills under strict time constraints.
+            </p>
+            <Separator />
             <div>
               <h3 className="font-semibold mb-2">Gear Required:</h3>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
