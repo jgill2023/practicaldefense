@@ -6,7 +6,7 @@ import { z } from "zod";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrSuperadmin } from "./replitAuth";
 import { db } from "./db";
-import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users } from "@shared/schema";
+import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems } from "@shared/schema";
 import { eq, and, inArray, desc } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
@@ -2219,7 +2219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Permanently deleting course: ${existingCourse.title} (${courseId})`);
       await storage.permanentlyDeleteCourse(courseId);
       console.log(`Successfully deleted course: ${courseId}`);
-      
+
       res.json({ message: "Course permanently deleted" });
     } catch (error: any) {
       console.error("Error permanently deleting course:", error);
@@ -2662,7 +2662,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
-      await storage.deleteProduct(req.params.id);
+      const productId = req.params.id;
+
+      // First, remove this product from all carts
+      await db.delete(cartItems).where(eq(cartItems.productId, productId));
+
+      // Now delete the product
+      await storage.deleteProduct(productId);
+
       res.json({ message: "Product deleted successfully" });
     } catch (error) {
       console.error("Error deleting product:", error);
@@ -2717,7 +2724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Payment processing is not configured. Please complete the onboarding process and add your Stripe API key." 
       });
     }
-    
+
     try {
       const { enrollmentId, promoCode } = req.body;
       const userId = req.user?.claims?.sub;
@@ -5286,7 +5293,7 @@ jeremy@abqconcealedcarry.com
       if (!MessageSid || !From || !To) {
         console.error("Missing required fields in webhook data");
         res.type('text/xml');
-        return res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
+        return res.send('<?xml version="1.0" encoding="UTF-UTF-8"?><Response></Response>');
       }
 
       // Try to find the user by phone number (search ALL users, not just students)
