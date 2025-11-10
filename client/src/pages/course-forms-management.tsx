@@ -623,7 +623,7 @@ export default function CourseFormsManagement() {
 
                           <div className="flex items-center gap-2">
                             {form.isRequired && (
-                              <Badge variant="secondary">Required</Badge>
+                              <Badge className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent hover:bg-secondary/80 text-[#ffffff] bg-[#ff0000]">Required</Badge>
                             )}
                             <Badge variant="outline">
                               {form.fields.length} field{form.fields.length !== 1 ? 's' : ''}
