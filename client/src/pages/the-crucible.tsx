@@ -87,6 +87,9 @@ export default function TheCrucible() {
                 <p className="text-sm text-muted-foreground">1" head alpha on left</p>
               </div>
             </div>
+            <p className="text-muted-foreground">
+              Each classification level demands greater speed, precision, and control. Choose the path that matches your current skill level, and push yourself to advance when ready. Remember: this is as much a test of your mind as your marksmanship.
+            </p>
             <div className="bg-muted p-4 rounded-lg">
               <p className="text-sm font-medium">Scoring: Any round outside the designated aim area = failure. Two attempts allowed. Declare intended classification before the run.</p>
             </div>
