@@ -4608,7 +4608,12 @@ jeremy@abqconcealedcarry.com
   // Get all available schedules for cross-enrollment (all instructors' courses)
   app.get("/api/cross-enrollment/available-schedules", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      // Safely access user ID with proper null checks
+      const userId = req.user?.claims?.sub || req.claims?.sub;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
 
       // Only allow instructors to view cross-enrollment schedules
       const user = await storage.getUser(userId);
