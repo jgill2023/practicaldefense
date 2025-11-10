@@ -12,7 +12,7 @@ export default function TheCrucible() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4">The Crucible</h1>
-          <p className="text-muted-foreground text-[20px] font-bold">Welcome Competitor
+          <p className="text-muted-foreground font-normal text-[18px]">Welcome Competitor
           <br /><br />
           You believe you have mastered your craft? You believe you can apply skill under pressure? Do you believe you are prepared for what's next?  We shall see.
 
