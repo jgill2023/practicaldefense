@@ -311,7 +311,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 border-radius: 50%;
               }
               .booking-calendar .rdp-day_button.day-unavailable {
-                opacity: 0.4;
+                opacity: 0.5;
                 position: relative;
               }
               .booking-calendar .rdp-day_button.day-unavailable::before {
@@ -322,6 +322,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 width: 80%;
                 height: 80%;
                 background: linear-gradient(to top right, transparent 0%, transparent calc(50% - 1px), #ef4444 calc(50% - 1px), #ef4444 calc(50% + 1px), transparent calc(50% + 1px), transparent 100%);
+                pointer-events: none;
               }
               .booking-calendar .rdp-day_selected {
                 background-color: hsl(var(--primary));
@@ -363,15 +364,17 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             />
             <div className="mt-4 space-y-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
-                <div className="flex items-end justify-center w-6 h-6 border rounded">
-                  <div className="w-1 h-1 rounded-full bg-green-500 mb-0.5"></div>
+                <div className="flex items-center justify-center w-6 h-6 border-2 border-green-500 rounded-full">
+                  <span className="text-[10px]">15</span>
                 </div>
                 <span>Available slots</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-6 h-6 border rounded opacity-40 relative">
-                  <span>15</span>
-                  <div className="absolute top-1/2 left-1 right-1 h-px bg-red-500"></div>
+                <div className="flex items-center justify-center w-6 h-6 border rounded opacity-50 relative">
+                  <span className="text-[10px]">15</span>
+                  <div className="absolute top-0 left-0 w-full h-full" style={{
+                    background: 'linear-gradient(to top right, transparent 0%, transparent calc(50% - 0.5px), #ef4444 calc(50% - 0.5px), #ef4444 calc(50% + 0.5px), transparent calc(50% + 0.5px), transparent 100%)'
+                  }}></div>
                 </div>
                 <span>No availability</span>
               </div>
