@@ -300,6 +300,10 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 height: 2.5rem;
                 font-size: 0.875rem;
               }
+              .booking-calendar .day-available button {
+                border: 2px solid #10b981 !important;
+                border-radius: 50% !important;
+              }
               .booking-calendar .day-unavailable::before {
                 content: '';
                 position: absolute;
@@ -343,8 +347,8 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 },
               }}
               modifiersClassNames={{
-                available: "[&>button]:border-2 [&>button]:border-green-500 [&>button]:rounded-full",
-                unavailable: "[&>button]:opacity-50 [&>button]:relative day-unavailable",
+                available: "day-available",
+                unavailable: "day-unavailable",
               }}
               className="booking-calendar"
               data-testid="booking-calendar"
