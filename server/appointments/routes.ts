@@ -47,6 +47,24 @@ async function verifyAppointmentOwnership(appointmentId: string, instructorId: s
 // INSTRUCTOR ROUTES - Appointment Type Management
 // ============================================
 
+appointmentRouter.get('/instructor/:instructorId/appointments', isAuthenticated, async (req: any, res) => {
+  try {
+    const { instructorId } = req.params;
+    const currentUserId = req.user.claims.sub;
+    
+    // Verify the instructor is requesting their own appointments
+    if (instructorId !== currentUserId) {
+      return res.status(403).json({ message: "Not authorized to view these appointments" });
+    }
+    
+    const appointments = await storage.getAppointmentsByInstructor(instructorId);
+    res.json(appointments);
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    res.status(500).json({ message: "Failed to fetch appointments" });
+  }
+});
+
 appointmentRouter.get('/instructor/appointment-types', isAuthenticated, async (req: any, res) => {
   try {
     const instructorId = req.user.claims.sub;
@@ -397,33 +415,7 @@ appointmentRouter.get('/instructor/appointments', isAuthenticated, async (req: a
   try {
     const instructorId = req.user.claims.sub;
     const appointments = await storage.getAppointmentsByInstructor(instructorId);
-    
-    // Fetch student details and appointment type for each appointment
-    const enrichedAppointments = await Promise.all(
-      appointments.map(async (appointment) => {
-        const [student, appointmentType] = await Promise.all([
-          appointment.studentId ? storage.getUser(appointment.studentId) : null,
-          storage.getAppointmentType(appointment.appointmentTypeId)
-        ]);
-        
-        return {
-          ...appointment,
-          student: student ? {
-            id: student.id,
-            firstName: student.firstName,
-            lastName: student.lastName,
-            email: student.email,
-            phone: student.phone
-          } : null,
-          appointmentType: appointmentType ? {
-            title: appointmentType.title,
-            description: appointmentType.description
-          } : null
-        };
-      })
-    );
-    
-    res.json(enrichedAppointments);
+    res.json(appointments);
   } catch (error) {
     console.error("Error fetching appointments:", error);
     res.status(500).json({ message: "Failed to fetch appointments" });

@@ -27,11 +27,11 @@ import { EditScheduleForm } from "@/components/EditScheduleForm";
 import { EventCreationForm } from "@/components/EventCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
 import { RosterDialog } from "@/components/RosterDialog";
-import { StudentBookingsModal } from "@/components/StudentBookingsModal";
-import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
+import { isUnauthorizedError } from "@/lib/authUtils";
 import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, MessageSquare, CalendarClock } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
+import { AppointmentsModal } from "@/components/AppointmentsModal";
 
 // Placeholder for SmsNotificationModal component
 const SmsNotificationModal = ({ isOpen, onClose, studentName, phoneNumber }: any) => {
@@ -65,31 +65,30 @@ export default function InstructorDashboard() {
   const [smsModalOpen, setSmsModalOpen] = useState(false);
   const [selectedStudentForContact, setSelectedStudentForContact] = useState<any | null>(null);
 
-  // Bookings modal state
-  const [showBookingsModal, setShowBookingsModal] = useState(false);
-
+  // Appointments modal state
+  const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/courses"],
-    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
   });
 
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/instructor/enrollments"],
-    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
   });
 
   const { data: deletedCourses = [], isLoading: deletedCoursesLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/deleted-courses"],
-    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
   });
 
   const { data: deletedSchedules = [], isLoading: deletedSchedulesLoading } = useQuery<any[]>({
     queryKey: ["/api/instructor/deleted-schedules"],
-    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
   });
 
@@ -104,14 +103,14 @@ export default function InstructorDashboard() {
     totalAppointments: number;
   }>({
     queryKey: ["/api/instructor/dashboard-stats"],
-    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
   });
 
   // Fetch refund requests
   const { data: refundRequests = [] } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/instructor/refund-requests"],
-    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
+    enabled: isAuthenticated && (user as User)?.role === 'instructor',
     retry: false,
   });
 
@@ -533,7 +532,7 @@ export default function InstructorDashboard() {
   };
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user && (user as User)?.role !== 'instructor' && (user as User)?.role !== 'superadmin') {
+    if (!isLoading && isAuthenticated && user && (user as User)?.role !== 'instructor') {
       toast({
         title: "Unauthorized",
         description: "You need instructor access to view this page. Redirecting...",
@@ -1048,7 +1047,7 @@ export default function InstructorDashboard() {
 
           <Card
             className="cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => setShowBookingsModal(true)} // Open Bookings Modal
+            onClick={() => setShowAppointmentsModal(true)}
             data-testid="card-bookings"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1569,6 +1568,15 @@ export default function InstructorDashboard() {
         </DialogContent>
       </Dialog>
 
+      {/* Appointments Modal */}
+      {user && (
+        <AppointmentsModal
+          isOpen={showAppointmentsModal}
+          onClose={() => setShowAppointmentsModal(false)}
+          instructorId={(user as User).id}
+        />
+      )}
+
       {/* Online Students Modal */}
       <Dialog open={showOnlineStudentsModal} onOpenChange={setShowOnlineStudentsModal}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -1685,12 +1693,6 @@ export default function InstructorDashboard() {
           </Tabs>
         </DialogContent>
       </Dialog>
-
-      {/* Bookings Modal */}
-      <StudentBookingsModal
-        isOpen={showBookingsModal}
-        onClose={() => setShowBookingsModal(false)}
-      />
     </Layout>
   );
 }
