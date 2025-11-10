@@ -29,9 +29,14 @@ export function CrossEnrollmentModal({ isOpen, onClose, studentId, studentName }
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch available schedules
+  // Fetch available schedules from all instructors for cross-enrollment
   const { data: availableSchedules, isLoading: schedulesLoading } = useQuery({
-    queryKey: ['/api/instructor/available-schedules'],
+    queryKey: ['/api/cross-enrollment/available-schedules', studentId],
+    queryFn: async () => {
+      const response = await fetch(`/api/cross-enrollment/available-schedules?studentId=${studentId}`);
+      if (!response.ok) throw new Error('Failed to fetch schedules');
+      return response.json();
+    },
     enabled: isOpen,
   });
 
@@ -149,7 +154,7 @@ export function CrossEnrollmentModal({ isOpen, onClose, studentId, studentName }
                         value={schedule.id}
                         data-testid={`option-schedule-${schedule.id}`}
                       >
-                        {schedule.courseTitle} - {format(new Date(schedule.startDate), 'MMM d, yyyy')} at {schedule.startTime} ({schedule.availableSpots} spots available)
+                        {schedule.courseTitle} - {schedule.instructorName} - {format(new Date(schedule.startDate), 'MMM d, yyyy')} at {schedule.startTime} ({schedule.availableSpots} spots available)
                       </SelectItem>
                     );
                   })}
