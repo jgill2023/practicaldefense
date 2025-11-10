@@ -385,16 +385,8 @@ export default function Landing() {
                     </div>
                     <Button
                       size="lg"
-                      className="w-full touch-manipulation"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setSelectedAppointmentType(type);
-                        setShowBookingModal(true);
-                      }}
-                      onTouchEnd={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                      className="w-full"
+                      onClick={() => {
                         setSelectedAppointmentType(type);
                         setShowBookingModal(true);
                       }}

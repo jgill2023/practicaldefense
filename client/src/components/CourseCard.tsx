@@ -143,20 +143,10 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
 
         <Button 
           size="lg" 
-          className="w-full register-button touch-manipulation"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onRegister(course);
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onRegister(course);
-          }}
+          className="w-full register-button"
+          onClick={() => onRegister(course)}
           disabled={!nextSchedule}
           data-testid={`button-register-${course.id}`}
-          style={{ position: 'relative', zIndex: 10 }}
         >
           REGISTER NOW
           <ArrowRight className="ml-2 h-5 w-5" />
