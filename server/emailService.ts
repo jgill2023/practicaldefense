@@ -1,20 +1,47 @@
-// Email service using SendGrid integration
-import { MailService } from '@sendgrid/mail';
+// Email service using SendGrid connector
+import sgMail from '@sendgrid/mail';
 import { storage } from './storage';
 
-// Lazy initialization to avoid server crash on startup
-let mailService: MailService | null = null;
+let connectionSettings: any;
 
-function initializeMailService(): MailService {
-  if (!mailService) {
-    const apiKey = process.env.SENDGRID_API_KEY;
-    if (!apiKey) {
-      throw new Error("SENDGRID_API_KEY environment variable must be set for email sending");
-    }
-    mailService = new MailService();
-    mailService.setApiKey(apiKey);
+async function getCredentials() {
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME
+  const xReplitToken = process.env.REPL_IDENTITY 
+    ? 'repl ' + process.env.REPL_IDENTITY 
+    : process.env.WEB_REPL_RENEWAL 
+    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
+    : null;
+
+  if (!xReplitToken) {
+    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
   }
-  return mailService;
+
+  connectionSettings = await fetch(
+    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=sendgrid',
+    {
+      headers: {
+        'Accept': 'application/json',
+        'X_REPLIT_TOKEN': xReplitToken
+      }
+    }
+  ).then(res => res.json()).then(data => data.items?.[0]);
+
+  if (!connectionSettings || (!connectionSettings.settings.api_key || !connectionSettings.settings.from_email)) {
+    throw new Error('SendGrid not connected');
+  }
+  return {apiKey: connectionSettings.settings.api_key, email: connectionSettings.settings.from_email};
+}
+
+// WARNING: Never cache this client.
+// Access tokens expire, so a new client must be created each time.
+// Always call this function again to get a fresh client.
+async function getUncachableSendGridClient() {
+  const {apiKey, email} = await getCredentials();
+  sgMail.setApiKey(apiKey);
+  return {
+    client: sgMail,
+    fromEmail: email
+  };
 }
 
 interface EmailParams {
@@ -27,7 +54,7 @@ interface EmailParams {
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
-    const service = initializeMailService();
+    const {client} = await getUncachableSendGridClient();
     const emailData: any = {
       to: params.to,
       from: params.from,
@@ -39,7 +66,7 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       emailData.text = params.text;
     }
     
-    const response = await service.send(emailData);
+    const response = await client.send(emailData);
     
     // Log communication to database
     try {
@@ -55,13 +82,12 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
         deliveryStatus: 'sent',
         externalMessageId: messageId,
         sentAt: new Date(),
-        userId: null, // Will be resolved in API layer if user context is available
-        enrollmentId: null, // Will be resolved in API layer if enrollment context is available
-        courseId: null, // Will be resolved in API layer if course context is available
+        userId: null,
+        enrollmentId: null,
+        courseId: null,
       });
     } catch (logError) {
       console.error('Failed to log email communication:', logError);
-      // Don't fail the email send if logging fails
     }
     
     return true;
@@ -71,7 +97,6 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
   }
 }
 
-// Enhanced email service for notification system
 export interface NotificationEmailParams {
   to: string[];
   subject: string;
@@ -82,7 +107,6 @@ export interface NotificationEmailParams {
 }
 
 export class NotificationEmailService {
-  private static readonly DEFAULT_FROM_EMAIL = 'chris@tacticaladv.com';
   private static readonly DEFAULT_FROM_NAME = 'Chris Bean - Tactical Advantage';
 
   static async sendNotificationEmail(params: NotificationEmailParams): Promise<{
@@ -100,11 +124,11 @@ export class NotificationEmailService {
         };
       }
 
-      const service = initializeMailService();
-      const fromEmail = params.fromEmail || this.DEFAULT_FROM_EMAIL;
+      const {client, fromEmail: connectorFromEmail} = await getUncachableSendGridClient();
+      const fromEmail = params.fromEmail || connectorFromEmail;
       const fromName = params.fromName || this.DEFAULT_FROM_NAME;
 
-      const response = await service.send({
+      const response = await client.send({
         to: validEmails,
         from: {
           email: fromEmail,
@@ -145,13 +169,12 @@ export class NotificationEmailService {
             deliveryStatus: 'sent',
             externalMessageId: messageId,
             sentAt: new Date(),
-            userId: null, // Will be resolved in API layer if user context is available
-            enrollmentId: null, // Will be resolved in API layer if enrollment context is available
-            courseId: null, // Will be resolved in API layer if course context is available
+            userId: null,
+            enrollmentId: null,
+            courseId: null,
           });
         } catch (logError) {
           console.error('Failed to log email communication:', logError);
-          // Don't fail the email send if logging fails
         }
       }
 
@@ -180,9 +203,9 @@ export class NotificationEmailService {
 
   private static stripHtml(html: string): string {
     return html
-      .replace(/<[^>]*>/g, '') // Remove HTML tags
-      .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
-      .replace(/&amp;/g, '&')  // Replace HTML entities
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
