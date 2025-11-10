@@ -20,7 +20,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobileScheduleOpen, setIsMobileScheduleOpen] = useState(false);
   const { counts } = useCommunicationCounts();
 
 
@@ -124,45 +123,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>Courses</a>
-                <NavigationMenu>
-                  <NavigationMenuList>
-                    <NavigationMenuItem>
-                      <NavigationMenuTrigger className="text-base text-primary-foreground hover:text-[#A8ACB3] bg-transparent border-none data-[state=open]:bg-[#A8ACB3]/20">
-                        Schedule It!
-                      </NavigationMenuTrigger>
-                      <NavigationMenuContent>
-                        <div className="w-48 p-2 bg-[#A8ACB3]">
-                          <a href="/#course-listings" className="flex items-center space-x-2 w-full px-3 py-2 rounded text-black hover:text-[#292929] hover:bg-black/10 transition-colors" onClick={(e) => {
-                            if (window.location.pathname === '/') {
-                              e.preventDefault();
-                              const courseListingsSection = document.getElementById('course-listings');
-                              if (courseListingsSection) {
-                                const yOffset = -80;
-                                const y = courseListingsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                                window.scrollTo({ top: y, behavior: 'smooth' });
-                              }
-                            }
-                          }}>
-                            <Calendar className="h-4 w-4" />
-                            <span>Choose a Date</span>
-                          </a>
-                          <Link href="/schedule-list">
-                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded text-black hover:text-[#292929] hover:bg-black/10 transition-colors" data-testid="link-schedule-list">
-                              <List className="h-4 w-4" />
-                              <span>List View</span>
-                            </NavigationMenuLink>
-                          </Link>
-                          <Link href="/schedule-calendar">
-                            <NavigationMenuLink className="flex items-center space-x-2 w-full px-3 py-2 rounded text-black hover:text-[#292929] hover:bg-black/10 transition-colors" data-testid="link-schedule-calendar">
-                              <Calendar className="h-4 w-4" />
-                              <span>Calendar View</span>
-                            </NavigationMenuLink>
-                          </Link>
-                        </div>
-                      </NavigationMenuContent>
-                    </NavigationMenuItem>
-                  </NavigationMenuList>
-                </NavigationMenu>
+                <a href="/#course-listings" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={(e) => {
+                  if (window.location.pathname === '/') {
+                    e.preventDefault();
+                    const courseListingsSection = document.getElementById('course-listings');
+                    if (courseListingsSection) {
+                      const yOffset = -80;
+                      const y = courseListingsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                      window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
+                  }
+                }}>Schedule It!</a>
                 <a href="/#section-schedule-training" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-virtual-training" onClick={(e) => {
                   if (window.location.pathname === '/') {
                     e.preventDefault();
@@ -226,62 +197,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   }
                 }}>Courses</a>
                 <a href="/the-crucible" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-crucible-mobile" onClick={() => setIsMobileMenuOpen(false)}>The Crucible</a>
-                {/* Mobile Schedule with submenu */}
-                <div>
-                  <button 
-                    onClick={() => setIsMobileScheduleOpen(!isMobileScheduleOpen)}
-                    className="flex items-center justify-between w-full text-left text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2"
-                    data-testid="button-mobile-schedule"
-                  >
-                    <span>Schedule It!</span>
-                    {isMobileScheduleOpen ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                  </button>
-                  {isMobileScheduleOpen && (
-                    <div className="pl-4 py-2 space-y-2 border-l-2 border-primary-foreground/20">
-                      <a 
-                        href="/#course-listings" 
-                        className="flex items-center space-x-2 text-primary-foreground hover:text-[#A8ACB3] transition-colors py-1"
-                        onClick={(e) => {
-                          setIsMobileMenuOpen(false);
-                          if (window.location.pathname === '/') {
-                            e.preventDefault();
-                            const courseListingsSection = document.getElementById('course-listings');
-                            if (courseListingsSection) {
-                              const yOffset = -80;
-                              const y = courseListingsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                              window.scrollTo({ top: y, behavior: 'smooth' });
-                            }
-                          }
-                        }}
-                      >
-                        <Calendar className="h-4 w-4" />
-                        <span>Choose a Date</span>
-                      </a>
-                      <Link 
-                        href="/schedule-list" 
-                        className="flex items-center space-x-2 text-primary-foreground hover:text-[#A8ACB3] transition-colors py-1"
-                        data-testid="link-schedule-list-mobile"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <List className="h-4 w-4" />
-                        <span>List View</span>
-                      </Link>
-                      <Link 
-                        href="/schedule-calendar" 
-                        className="flex items-center space-x-2 text-primary-foreground hover:text-[#A8ACB3] transition-colors py-1"
-                        data-testid="link-schedule-calendar-mobile"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <Calendar className="h-4 w-4" />
-                        <span>Calendar View</span>
-                      </Link>
-                    </div>
-                  )}
-                </div>
+                <a 
+                  href="/#course-listings" 
+                  className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2"
+                  onClick={(e) => {
+                    setIsMobileMenuOpen(false);
+                    if (window.location.pathname === '/') {
+                      e.preventDefault();
+                      const courseListingsSection = document.getElementById('course-listings');
+                      if (courseListingsSection) {
+                        const yOffset = -80;
+                        const y = courseListingsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                      }
+                    }
+                  }}
+                >
+                  Schedule It!
+                </a>
                 <a href="/#section-schedule-training" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-virtual-training-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
                   if (window.location.pathname === '/') {
