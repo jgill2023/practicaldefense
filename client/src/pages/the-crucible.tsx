@@ -21,12 +21,12 @@ export default function TheCrucible() {
           Are you prepared to face The Crucible?</p>
         </div>
 
-        {/* Key Facts */}
+        {/* The Challenge */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5" />
-              Key Facts
+              The Challenge
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
