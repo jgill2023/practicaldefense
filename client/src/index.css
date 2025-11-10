@@ -331,6 +331,8 @@
 /* Professional button styles */
 .btn-professional {
   @apply inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-ring disabled:opacity-50 disabled:pointer-events-none text-black;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-primary {
@@ -348,6 +350,8 @@
 .register-button {
   @apply inline-flex items-center justify-center text-sm font-bold uppercase tracking-wide transition-colors focus-ring disabled:opacity-50 disabled:pointer-events-none bg-black text-white hover:bg-gray-800;
   border-radius: 0.25rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Professional card styles */
