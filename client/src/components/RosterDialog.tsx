@@ -265,7 +265,7 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
           <div className="space-y-6">
             {/* Course Summary */}
             <Card>
-              <CardHeader>
+              <CardHeader className="pr-8">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <FileText className="h-5 w-5" />
                   Course Information
