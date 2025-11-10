@@ -1,64 +1,16 @@
-// Email service using SendGrid connector
+// Email service using SendGrid API key
 import sgMail from '@sendgrid/mail';
 import { storage } from './storage';
 
-let connectionSettings: any;
+const DEFAULT_FROM_EMAIL = 'chris@tacticaladv.com';
+const DEFAULT_FROM_NAME = 'Chris Bean - Tactical Advantage';
 
-async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
-    : null;
-
-  if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+function initializeSendGrid() {
+  const apiKey = process.env.SENDGRID_API_KEY;
+  if (!apiKey) {
+    throw new Error('SENDGRID_API_KEY environment variable is required for email sending');
   }
-
-  const response = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=sendgrid',
-    {
-      headers: {
-        'Accept': 'application/json',
-        'X_REPLIT_TOKEN': xReplitToken
-      }
-    }
-  );
-  
-  const data = await response.json();
-  console.log('SendGrid connector response:', JSON.stringify(data, null, 2));
-  
-  connectionSettings = data.items?.[0];
-
-  if (!connectionSettings) {
-    throw new Error('SendGrid connection not found in connector response');
-  }
-  
-  console.log('Connection settings:', JSON.stringify(connectionSettings, null, 2));
-  
-  const apiKey = connectionSettings.settings?.api_key;
-  const fromEmail = connectionSettings.settings?.from_email;
-  
-  if (!apiKey || !fromEmail) {
-    throw new Error(`SendGrid not properly configured. API Key: ${apiKey ? 'present' : 'missing'}, From Email: ${fromEmail ? 'present' : 'missing'}`);
-  }
-  
-  console.log('API Key format check:', apiKey.substring(0, 3));
-  
-  return {apiKey, email: fromEmail};
-}
-
-// WARNING: Never cache this client.
-// Access tokens expire, so a new client must be created each time.
-// Always call this function again to get a fresh client.
-async function getUncachableSendGridClient() {
-  const {apiKey, email} = await getCredentials();
   sgMail.setApiKey(apiKey);
-  return {
-    client: sgMail,
-    fromEmail: email
-  };
 }
 
 interface EmailParams {
@@ -71,7 +23,7 @@ interface EmailParams {
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
-    const {client} = await getUncachableSendGridClient();
+    initializeSendGrid();
     const emailData: any = {
       to: params.to,
       from: params.from,
@@ -83,7 +35,7 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       emailData.text = params.text;
     }
     
-    const response = await client.send(emailData);
+    const response = await sgMail.send(emailData);
     
     // Log communication to database
     try {
@@ -124,8 +76,6 @@ export interface NotificationEmailParams {
 }
 
 export class NotificationEmailService {
-  private static readonly DEFAULT_FROM_NAME = 'Chris Bean - Tactical Advantage';
-
   static async sendNotificationEmail(params: NotificationEmailParams): Promise<{
     success: boolean;
     messageId?: string | undefined;
@@ -141,11 +91,11 @@ export class NotificationEmailService {
         };
       }
 
-      const {client, fromEmail: connectorFromEmail} = await getUncachableSendGridClient();
-      const fromEmail = params.fromEmail || connectorFromEmail;
-      const fromName = params.fromName || this.DEFAULT_FROM_NAME;
+      initializeSendGrid();
+      const fromEmail = params.fromEmail || DEFAULT_FROM_EMAIL;
+      const fromName = params.fromName || DEFAULT_FROM_NAME;
 
-      const response = await client.send({
+      const response = await sgMail.send({
         to: validEmails,
         from: {
           email: fromEmail,
