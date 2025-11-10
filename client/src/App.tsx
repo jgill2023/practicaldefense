@@ -62,27 +62,17 @@ function Router() {
       <Route path="/refund-policy" component={RefundPolicyPage} />
       <Route path="/the-crucible" component={TheCrucible} />
       <Route path="/book-appointment/:instructorId" component={BookAppointmentPage} />
-      {isAuthenticated && (
-        <>
-          <Route path="/instructor-dashboard" component={InstructorDashboard} />
-          <Route path="/onboarding" component={OnboardingPage} />
-          <Route path="/course-management" component={CourseManagement} />
-          <Route path="/course-forms-management" component={CourseFormsManagement} />
-          <Route path="/product-management" component={ProductManagement} />
-          <Route path="/promo-codes" component={PromoCodesPage} />
-          <Route path="/communications" component={CommunicationsDashboardPage} />
-          <Route path="/reports" component={Reports} />
-          <Route path="/appointments" component={AppointmentsPage} />
-        </>
-      )}
-      {/* The student-portal route is now correctly registered and protected by authentication. */}
-      {isAuthenticated && (
-        <Route path="/student-portal" component={StudentPortal} />
-      )}
-      {/* Add the Students page route */}
-      {isAuthenticated && (
-        <Route path="/students" component={StudentsPage} />
-      )}
+      <Route path="/instructor-dashboard" component={InstructorDashboard} />
+      <Route path="/onboarding" component={OnboardingPage} />
+      <Route path="/course-management" component={CourseManagement} />
+      <Route path="/course-forms-management" component={CourseFormsManagement} />
+      <Route path="/product-management" component={ProductManagement} />
+      <Route path="/promo-codes" component={PromoCodesPage} />
+      <Route path="/communications" component={CommunicationsDashboardPage} />
+      <Route path="/reports" component={Reports} />
+      <Route path="/appointments" component={AppointmentsPage} />
+      <Route path="/student-portal" component={StudentPortal} />
+      <Route path="/students" component={StudentsPage} />
       <Route component={NotFound} />
     </Switch>
   );
