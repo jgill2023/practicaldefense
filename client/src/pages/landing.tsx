@@ -517,15 +517,15 @@ export default function Landing() {
       )}
 
       {/* Booking Modal */}
-      {selectedAppointmentType && (
-        <BookingModal
-          appointmentType={selectedAppointmentType}
-          onClose={() => {
-            setShowBookingModal(false);
-            setSelectedAppointmentType(null);
-          }}
-        />
-      )}
+      <BookingModal
+        appointmentType={selectedAppointmentType}
+        instructorId={instructorId}
+        open={showBookingModal}
+        onClose={() => {
+          setShowBookingModal(false);
+          setSelectedAppointmentType(null);
+        }}
+      />
     </Layout>
   );
 }
