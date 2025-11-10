@@ -222,7 +222,11 @@ export default function TheCrucible() {
                 <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">8</div>
                 <div className="flex-1">
                   <h4 className="font-semibold mb-1">Finish & Scoring</h4>
-                  <p className="text-sm text-muted-foreground">Any round outside designated areas = failure for that run. Two attempts total. Both runs must be clean for hat recognition.</p>
+                  <p className="text-sm text-muted-foreground">This is a no fail drill. Any round that misses its designated target area (the head alpha, body alpha, or the 3x5 card) results in a failure.
+
+                  Each competitor is granted two attempts. To be classified above LAOCH, both runs must be successful and without any misses.
+
+                  The declaration is the key. You must accurately assess your own ability AND execute the drill flawlessly. Your performance should be foreseeable and repeatable, demonstrating true ownership of your skills. The ability to "call your shot" is the ultimate measure of proficiency in this drill.</p>
                 </div>
               </div>
             </div>
