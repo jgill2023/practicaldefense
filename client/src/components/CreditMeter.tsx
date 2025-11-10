@@ -4,6 +4,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Mail, ShoppingCart, TrendingDown, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { hasInstructorPrivileges } from "@/lib/authUtils";
 
 interface CreditBalance {
   smsCredits: number;
@@ -15,8 +17,11 @@ interface CreditMeterProps {
 }
 
 export function CreditMeter({ onPurchaseClick }: CreditMeterProps) {
+  const { user, isAuthenticated } = useAuth();
+  
   const { data: credits, isLoading } = useQuery<CreditBalance>({
     queryKey: ['/api/credits/balance'],
+    enabled: isAuthenticated && !!user && hasInstructorPrivileges(user),
   });
 
   if (isLoading) {

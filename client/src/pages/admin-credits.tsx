@@ -13,6 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Layout } from "@/components/Layout";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Instructor {
   id: string;
@@ -36,14 +37,17 @@ type GrantCreditsForm = z.infer<typeof grantCreditsSchema>;
 
 export default function AdminCreditsPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isGrantDialogOpen, setIsGrantDialogOpen] = useState(false);
 
   const { data: instructors, isLoading } = useQuery<Instructor[]>({
     queryKey: ['/api/admin/credits/instructors'],
   });
 
-  // Get the first instructor (main account)
-  const mainInstructor = instructors?.[0];
+  // Get the current user's instructor record, fallback to first instructor
+  const mainInstructor = user
+    ? instructors?.find(instructor => instructor.id === user.id) || instructors?.[0]
+    : instructors?.[0];
 
   const form = useForm<GrantCreditsForm>({
     resolver: zodResolver(grantCreditsSchema),
