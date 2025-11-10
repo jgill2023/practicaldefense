@@ -359,8 +359,13 @@ export default function Landing() {
               {appointmentTypes.map((type) => (
                 <Card
                   key={type.id}
-                  className="hover:shadow-lg transition-shadow"
+                  className="md:hover:shadow-lg transition-shadow cursor-pointer active:shadow-2xl"
                   data-testid={`appointment-card-${type.id}`}
+                  onClick={() => {
+                    console.log('Appointment card clicked!', type.title);
+                    setSelectedAppointmentType(type);
+                    setShowBookingModal(true);
+                  }}
                 >
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
@@ -386,8 +391,10 @@ export default function Landing() {
                     </div>
                     <Button
                       size="lg"
-                      className="w-full"
-                      onClick={() => {
+                      className="w-full min-h-[44px]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('Book Now button clicked!', type.title);
                         setSelectedAppointmentType(type);
                         setShowBookingModal(true);
                       }}
