@@ -171,7 +171,7 @@ export default function TheCrucible() {
                 <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">2</div>
                 <div className="flex-1">
                   <h4 className="font-semibold mb-1">Declaration</h4>
-                  <p className="text-sm text-muted-foreground">Verbally declare which classification you are attempting.</p>
+                  <p className="text-sm text-muted-foreground">Before starting, the shooter must declare their performance. Laoch, Gallowglass, Seanalair. We do NOT believe in luck at Tactical Advantage. Calling your performance is a must to be considered for classification. Competitors are afforded 2 attempts.  For HAT tiers BOTH runs must be successful.</p>
                 </div>
               </div>
 
