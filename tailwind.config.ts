@@ -142,5 +142,13 @@ export default {
   plugins: [
     require("tailwindcss-animate"), 
     require("@tailwindcss/typography"),
+    function({ addUtilities }: any) {
+      addUtilities({
+        '.touch-manipulation': {
+          'touch-action': 'manipulation',
+          '-webkit-tap-highlight-color': 'transparent',
+        },
+      });
+    },
   ],
 } satisfies Config;

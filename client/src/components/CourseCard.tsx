@@ -142,8 +142,9 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
         </div>
 
         <Button 
+          type="button"
           size="lg" 
-          className="w-full register-button"
+          className="w-full register-button min-h-[44px]"
           onClick={() => onRegister(course)}
           disabled={!nextSchedule}
           data-testid={`button-register-${course.id}`}

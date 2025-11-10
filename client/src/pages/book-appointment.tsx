@@ -314,8 +314,9 @@ export default function BookAppointmentPage() {
                     </div>
                   </div>
                   <Button
+                    type="button"
                     onClick={() => handleBookNow(type)}
-                    className="w-full"
+                    className="w-full min-h-[44px]"
                     data-testid={`button-book-${type.id}`}
                   >
                     Book Now
