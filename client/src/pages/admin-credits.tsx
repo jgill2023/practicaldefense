@@ -56,11 +56,7 @@ export default function AdminCreditsPage() {
 
   const grantCreditsMutation = useMutation({
     mutationFn: async (data: GrantCreditsForm & { instructorId: string }) => {
-      return apiRequest(`/api/admin/credits/grant`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return apiRequest('POST', '/api/admin/credits/grant', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/credits/instructors'] });
