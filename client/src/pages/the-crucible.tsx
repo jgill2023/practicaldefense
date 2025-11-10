@@ -87,35 +87,58 @@ export default function TheCrucible() {
                 <p className="text-sm text-muted-foreground">1" head alpha on left</p>
               </div>
             </div>
-            <p className="text-muted-foreground">Laoch (Warrior)
+            <div className="space-y-6">
+              {/* Laoch */}
+              <div className="border-l-4 border-primary pl-4">
+                <h3 className="font-bold text-lg mb-2">Laoch (Warrior)</h3>
+                <p className="text-sm text-muted-foreground italic mb-3">(Pronounced: LAY-ok)</p>
+                <div className="space-y-2 text-sm">
+                  <p className="text-muted-foreground">
+                    <strong>Description:</strong> This classification is for the determined competitor who has a solid foundation in marksmanship and weapon handling. The Laoch has the skill, but not yet the mastery. This tier focuses on fundamental precision under moderate pressure and introduces the core concepts of cognitive load.
+                  </p>
+                  <p className="text-muted-foreground">
+                    <strong>Difficulty:</strong> Moderate. Requires solid fundamentals and a calm demeanor.
+                  </p>
+                  <p className="text-muted-foreground">
+                    <strong>Prizing:</strong> A custom Crucible decal and certificate of declaration for classification.
+                  </p>
+                </div>
+              </div>
 
-            (Pronounced: LAY-ok)
+              {/* Gallowglass */}
+              <div className="border-l-4 border-secondary pl-4">
+                <h3 className="font-bold text-lg mb-2">Gallowglass (Mercenary)</h3>
+                <p className="text-sm text-muted-foreground italic mb-3">(Pronounced: GAH-loh-glass)</p>
+                <div className="space-y-2 text-sm">
+                  <p className="text-muted-foreground">
+                    <strong>Description:</strong> The Gallowglass is the seasoned warrior, the professional. You are not only skilled but adaptable. This tier significantly increases the time pressure for the scenario, requiring advanced throttle control and the ability to rapidly process and react to new information.
+                  </p>
+                  <p className="text-muted-foreground">
+                    <strong>Difficulty:</strong> High. Requires excellent precision, a high degree of emotional control, and the ability to think under significant time pressure.
+                  </p>
+                  <p className="text-muted-foreground">
+                    <strong>Prizing:</strong> A custom crucible decal, certificate of declaration for classification, a premium fitted an embroidered Black Hat. Your name immortalized on this site as recognition of your achievement.
+                  </p>
+                </div>
+              </div>
 
-            Description: This classification is for the determined competitor who has a solid foundation in marksmanship and weapon handling. The Laoch has the skill, but not yet the mastery. This tier focuses on fundamental precision under moderate pressure and introduces the core concepts of cognitive load.
-
-            Difficulty: Moderate. Requires solid fundamentals and a calm demeanor.
-
-            Prizing: A custom Crucible decal and certificate of declaration for classification.
-
-            Gallowglass (Mercenary)
-
-            (Pronounced: GAH-loh-glass)
-
-            Description: The Gallowglass is the seasoned warrior, the professional. You are not only skilled but adaptable. This tier significantly increases the time pressure for the scenario, requiring advanced throttle control and the ability to rapidly process and react to new information.
-
-            Difficulty: High. Requires excellent precision, a high degree of emotional control, and the ability to think under significant time pressure.
-
-            Prizing: A custom crucible decal, certificate of declaration for classification, a premium fitted an embroidered Black Hat.  Your name immortalized on this site as recognition of your achievement
-
-            Seanalair (Old Warrior / Elder)
-
-            (Pronounced: SHAN-uh-lair)
-
-            Description: This is the classification of the master. The Seanalair has seen it all, and possesses the mental fortitude and emotional control to perform flawlessly under extreme stress. This tier is not about speed; it is about perfect execution despite maximum cognitive load and pressure. The challenges presented here will test your development, your discipline, and your ability to apply skills without a second thought.
-
-            Difficulty: Extreme. Success in this tier is a testament to true mastery.
-
-            Prizing: Prizing: A custom crucible decal, certificate of declaration for classification, a premium fitted an embroidered White Hat.  Your name immortalized on this site as recognition of your achievement</p>
+              {/* Seanalair */}
+              <div className="border-l-4 border-destructive pl-4">
+                <h3 className="font-bold text-lg mb-2">Seanalair (Old Warrior / Elder)</h3>
+                <p className="text-sm text-muted-foreground italic mb-3">(Pronounced: SHAN-uh-lair)</p>
+                <div className="space-y-2 text-sm">
+                  <p className="text-muted-foreground">
+                    <strong>Description:</strong> This is the classification of the master. The Seanalair has seen it all, and possesses the mental fortitude and emotional control to perform flawlessly under extreme stress. This tier is not about speed; it is about perfect execution despite maximum cognitive load and pressure. The challenges presented here will test your development, your discipline, and your ability to apply skills without a second thought.
+                  </p>
+                  <p className="text-muted-foreground">
+                    <strong>Difficulty:</strong> Extreme. Success in this tier is a testament to true mastery.
+                  </p>
+                  <p className="text-muted-foreground">
+                    <strong>Prizing:</strong> A custom crucible decal, certificate of declaration for classification, a premium fitted an embroidered White Hat. Your name immortalized on this site as recognition of your achievement.
+                  </p>
+                </div>
+              </div>
+            </div>
             <div className="bg-muted p-4 rounded-lg">
               <p className="text-sm font-medium">Scoring: Any round outside the designated aim area = failure. Two attempts allowed. Declare intended classification before the run.</p>
             </div>
