@@ -63,6 +63,9 @@ export default function TheCrucible() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              Choose your level and prove your skill. Each classification requires increasing speed and precision. Seanalair adds the ultimate test: a 1-inch head shot under time pressure.
+            </p>
             <div className="grid md:grid-cols-3 gap-4">
               <div className="p-4 border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
