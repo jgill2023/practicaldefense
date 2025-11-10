@@ -76,7 +76,7 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
     : getImageUrl(getCategoryName());
 
   return (
-    <Card className="overflow-hidden border border-border hover:shadow-xl transition-shadow w-full" data-testid={`course-card-${course.id}`}>
+    <Card className="overflow-hidden border border-border md:hover:shadow-xl transition-shadow w-full" data-testid={`course-card-${course.id}`}>
       <div className="relative w-full h-40 sm:h-48 bg-muted">
         <img 
           src={displayImageUrl} 
@@ -144,8 +144,17 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
         <Button 
           type="button"
           size="lg" 
-          className="w-full register-button min-h-[44px]"
-          onClick={() => onRegister(course)}
+          className="w-full register-button min-h-[44px] relative z-10"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRegister(course);
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!nextSchedule) return;
+            onRegister(course);
+          }}
           disabled={!nextSchedule}
           data-testid={`button-register-${course.id}`}
         >
