@@ -39,7 +39,7 @@ export default function TheCrucible() {
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                 <li>Service-grade pistol</li>
                 <li>IWB holster (shot from concealment)</li>
-                <li>Minimum 2 magazines</li>
+                <li>Minimum 2 magazines, 10 rounds</li>
                 <li>Eye and ear protection</li>
               </ul>
             </div>
