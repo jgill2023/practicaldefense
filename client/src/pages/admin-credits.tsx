@@ -26,8 +26,8 @@ interface Instructor {
 }
 
 const grantCreditsSchema = z.object({
-  smsCredits: z.number().int().min(0).default(0),
-  emailCredits: z.number().int().min(0).default(0),
+  smsCredits: z.coerce.number().int().min(0).default(0),
+  emailCredits: z.coerce.number().int().min(0).default(0),
   description: z.string().optional(),
 }).refine(data => data.smsCredits > 0 || data.emailCredits > 0, {
   message: "At least one credit type must be greater than zero",
