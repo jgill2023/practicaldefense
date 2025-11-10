@@ -60,7 +60,7 @@ export const users = pgTable("users", {
   enableSmsAnnouncements: boolean("enable_sms_announcements").default(false), // SMS for general announcements
   // Instructor-specific settings
   replyToEmail: varchar("reply_to_email"), // Custom reply-to email for instructor communications
-  role: varchar("role").notNull().default('student'), // 'student' or 'instructor'
+  role: varchar("role").notNull().default('student'), // 'student', 'instructor', or 'superadmin'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -2126,7 +2126,8 @@ export const creditTransactionTypeEnum = pgEnum("credit_transaction_type", [
   "usage", 
   "refund", 
   "adjustment", 
-  "initial_grant"
+  "initial_grant",
+  "admin_grant"
 ]);
 
 // Instructor credits - tracks current balance for each instructor
@@ -2167,6 +2168,7 @@ export const creditTransactions = pgTable("credit_transactions", {
   stripePaymentIntentId: varchar("stripe_payment_intent_id"),
   packageId: varchar("package_id").references(() => creditPackages.id),
   communicationId: uuid("communication_id").references(() => communications.id),
+  grantedByUserId: varchar("granted_by_user_id").references(() => users.id), // For admin grants
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow(),
 });

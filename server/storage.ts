@@ -615,7 +615,18 @@ export interface IStorage {
     stripePaymentIntentId?: string;
     packageId?: string;
     description?: string;
+    transactionType?: 'purchase' | 'admin_grant';
+    grantedByUserId?: string;
   }): Promise<{ credits: InstructorCredits; transaction: CreditTransaction }>;
+  
+  getAllInstructorsWithCredits(): Promise<Array<{
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    smsCredits: number;
+    emailCredits: number;
+  }>>;
   
   deductCredits(instructorId: string, smsCredits: number, emailCredits: number, data: {
     communicationId?: string;
@@ -5646,6 +5657,8 @@ export class DatabaseStorage implements IStorage {
       stripePaymentIntentId?: string;
       packageId?: string;
       description?: string;
+      transactionType?: 'purchase' | 'admin_grant';
+      grantedByUserId?: string;
     }
   ): Promise<{ credits: InstructorCredits; transaction: CreditTransaction }> {
     // Ensure instructor has a credits record
@@ -5671,7 +5684,7 @@ export class DatabaseStorage implements IStorage {
       .insert(creditTransactions)
       .values({
         instructorId,
-        transactionType: 'purchase',
+        transactionType: data.transactionType || 'purchase',
         smsCredits,
         emailCredits,
         balanceAfterSms: updatedCredits.smsCredits,
@@ -5679,7 +5692,8 @@ export class DatabaseStorage implements IStorage {
         amount: data.amount?.toString(),
         stripePaymentIntentId: data.stripePaymentIntentId,
         packageId: data.packageId,
-        description: data.description || `Purchased ${smsCredits} SMS credits and ${emailCredits} email credits`,
+        grantedByUserId: data.grantedByUserId,
+        description: data.description || `${data.transactionType === 'admin_grant' ? 'Admin granted' : 'Purchased'} ${smsCredits} SMS credits and ${emailCredits} email credits`,
       })
       .returning();
 
@@ -5688,6 +5702,38 @@ export class DatabaseStorage implements IStorage {
     }
 
     return { credits: updatedCredits, transaction };
+  }
+  
+  async getAllInstructorsWithCredits(): Promise<Array<{
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    smsCredits: number;
+    emailCredits: number;
+  }>> {
+    const instructors = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        role: users.role,
+        smsCredits: instructorCredits.smsCredits,
+        emailCredits: instructorCredits.emailCredits,
+      })
+      .from(users)
+      .leftJoin(instructorCredits, eq(users.id, instructorCredits.instructorId))
+      .where(eq(users.role, 'instructor'));
+
+    return instructors.map(i => ({
+      id: i.id,
+      email: i.email || '',
+      firstName: i.firstName || '',
+      lastName: i.lastName || '',
+      smsCredits: i.smsCredits || 0,
+      emailCredits: i.emailCredits || 0,
+    }));
   }
 
   async deductCredits(

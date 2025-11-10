@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import Stripe from "stripe";
 import { z } from "zod";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, requireSuperadmin } from "./replitAuth";
 import { db } from "./db";
 import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users } from "@shared/schema";
 import { eq, and, inArray, desc } from "drizzle-orm";
@@ -6962,6 +6962,63 @@ jeremy@abqconcealedcarry.com
     } catch (error) {
       console.error("Error confirming credit purchase:", error);
       res.status(500).json({ message: "Failed to confirm credit purchase" });
+    }
+  });
+
+  // ============================================
+  // SUPERADMIN CREDIT MANAGEMENT ROUTES
+  // ============================================
+
+  // Get all instructors with their credit balances
+  app.get('/api/admin/credits/instructors', isAuthenticated, requireSuperadmin, async (req: any, res) => {
+    try {
+      const instructors = await storage.getAllInstructorsWithCredits();
+      res.json(instructors);
+    } catch (error) {
+      console.error("Error fetching instructors with credits:", error);
+      res.status(500).json({ message: "Failed to fetch instructors" });
+    }
+  });
+
+  // Grant credits to an instructor (superadmin only)
+  app.post('/api/admin/credits/grant', isAuthenticated, requireSuperadmin, async (req: any, res) => {
+    try {
+      const superadminId = req.user.claims.sub;
+      const { instructorId, smsCredits, emailCredits, description } = req.body;
+
+      if (!instructorId) {
+        return res.status(400).json({ message: "Instructor ID is required" });
+      }
+
+      if ((smsCredits === undefined || smsCredits < 0) && (emailCredits === undefined || emailCredits < 0)) {
+        return res.status(400).json({ message: "At least one credit type must be a positive number" });
+      }
+
+      // Verify the target user is an instructor
+      const targetUser = await storage.getUser(instructorId);
+      if (!targetUser || targetUser.role !== 'instructor') {
+        return res.status(400).json({ message: "Target user must be an instructor" });
+      }
+
+      const result = await storage.addCredits(
+        instructorId,
+        smsCredits || 0,
+        emailCredits || 0,
+        {
+          transactionType: 'admin_grant',
+          grantedByUserId: superadminId,
+          description: description || `Admin granted ${smsCredits || 0} SMS and ${emailCredits || 0} email credits`,
+        }
+      );
+
+      res.json({
+        success: true,
+        credits: result.credits,
+        transaction: result.transaction,
+      });
+    } catch (error) {
+      console.error("Error granting credits:", error);
+      res.status(500).json({ message: "Failed to grant credits" });
     }
   });
 

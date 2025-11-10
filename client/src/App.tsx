@@ -29,6 +29,7 @@ import OnboardingPage from "@/pages/onboarding";
 import TheCrucible from "@/pages/the-crucible";
 import AppointmentsPage from "@/pages/appointments";
 import BookAppointmentPage from "@/pages/book-appointment";
+import AdminCreditsPage from "@/pages/admin-credits";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -71,6 +72,7 @@ function Router() {
       <Route path="/communications" component={CommunicationsDashboardPage} />
       <Route path="/reports" component={Reports} />
       <Route path="/appointments" component={AppointmentsPage} />
+      <Route path="/admin/credits" component={AdminCreditsPage} />
       <Route path="/student-portal" component={StudentPortal} />
       <Route path="/students" component={StudentsPage} />
       <Route component={NotFound} />

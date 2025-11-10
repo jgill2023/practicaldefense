@@ -248,3 +248,25 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return;
   }
 };
+
+export const requireSuperadmin: RequestHandler = async (req, res, next) => {
+  const userId = (req.user as any)?.claims?.sub;
+  
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const { storage } = await import('./storage');
+    const user = await storage.getUser(userId);
+    
+    if (!user || user.role !== 'superadmin') {
+      return res.status(403).json({ message: "Forbidden: Superadmin access required" });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Error checking superadmin status:', error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

@@ -64,6 +64,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-products">
                     Products
                   </Link>
+                  {user?.role === 'superadmin' && (
+                    <Link href="/admin/credits" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-admin-credits">
+                      Admin Credits
+                    </Link>
+                  )}
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -337,6 +342,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                               Products
                             </Button>
                           </Link>
+                          {user?.role === 'superadmin' && (
+                            <Link href="/admin/credits" className="block">
+                              <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-admin-credits-mobile">
+                                Admin Credits
+                              </Button>
+                            </Link>
+                          )}
                         </>
                       ) : (
                         <Link href="/student-portal" className="block">
