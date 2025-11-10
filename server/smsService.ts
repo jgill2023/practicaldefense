@@ -42,34 +42,82 @@ export async function sendSms(params: SmsParams): Promise<{
   error?: string;
 }> {
   try {
+    // Deduct credits BEFORE sending if instructorId is provided
+    let creditTransactionId: string | undefined;
+    if (params.instructorId) {
+      try {
+        const result = await storage.deductCredits(params.instructorId, 1, 0, {
+          description: `Sending SMS to ${params.to}`,
+        });
+        creditTransactionId = result.transaction.id;
+      } catch (creditError: any) {
+        console.error('Error deducting SMS credits:', creditError);
+        // Return structured error for insufficient credits
+        if (creditError.message?.includes('Insufficient')) {
+          return {
+            success: false,
+            error: 'Insufficient SMS credits. Please purchase more credits to continue sending messages.',
+          };
+        }
+        return {
+          success: false,
+          error: 'Unable to process SMS credits. Please try again or contact support.',
+        };
+      }
+    }
+
+    // Credits successfully deducted, now send the message
     const client = initializeTwilioClient();
     const fromNumber = params.from || process.env.TWILIO_PHONE_NUMBER!;
     
-    const response = await client.messages.create({
-      to: params.to,
-      from: fromNumber,
-      body: params.body,
-      mediaUrl: params.mediaUrl,
-    });
+    let response;
+    try {
+      response = await client.messages.create({
+        to: params.to,
+        from: fromNumber,
+        body: params.body,
+        mediaUrl: params.mediaUrl,
+      });
+    } catch (twilioError: any) {
+      // Send failed - refund the credit if it was deducted
+      if (params.instructorId && creditTransactionId) {
+        try {
+          await storage.refundCredits(params.instructorId, creditTransactionId, `SMS send failed: ${twilioError.message}`);
+        } catch (refundError) {
+          console.error('Failed to refund SMS credit after send failure:', refundError);
+        }
+      }
+      throw twilioError;
+    }
 
     // Log communication to database with proper userId for threading
     try {
-      await storage.createCommunication({
+      const communication = await storage.createCommunication({
         type: 'sms',
         direction: 'outbound',
-        purpose: params.purpose || null, // Include purpose if provided for analytics/filtering
+        purpose: params.purpose || null,
         fromAddress: fromNumber,
         toAddress: params.to,
-        subject: null, // SMS doesn't have subjects
+        subject: null,
         content: params.body,
-        htmlContent: null, // SMS is plain text only
+        htmlContent: null,
         deliveryStatus: 'sent',
         externalMessageId: response.sid,
         sentAt: new Date(),
-        userId: params.studentId || params.instructorId || null, // Use studentId for proper threading, fallback to instructorId
-        enrollmentId: null, // Will be resolved in API layer if enrollment context is available
-        courseId: null, // Will be resolved in API layer if course context is available
+        userId: params.studentId || params.instructorId || null,
+        enrollmentId: null,
+        courseId: null,
       });
+      
+      // Update transaction with communication ID if we deducted credits
+      if (params.instructorId && creditTransactionId && communication.id) {
+        // This is a best-effort update, don't fail if it doesn't work
+        try {
+          await storage.updateCreditTransactionCommunication(creditTransactionId, communication.id);
+        } catch (updateError) {
+          console.error('Failed to link transaction to communication:', updateError);
+        }
+      }
     } catch (logError) {
       console.error('Failed to log SMS communication:', logError);
       // Don't fail the SMS send if logging fails

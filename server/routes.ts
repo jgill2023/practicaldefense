@@ -6804,6 +6804,167 @@ jeremy@abqconcealedcarry.com
     }
   });
 
+  // ============================================
+  // CREDIT SYSTEM ROUTES
+  // ============================================
+
+  // Get instructor credit balance
+  app.get('/api/credits/balance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Only instructors can access credits" });
+      }
+
+      const credits = await storage.ensureInstructorCredits(userId);
+      res.json(credits);
+    } catch (error) {
+      console.error("Error fetching credit balance:", error);
+      res.status(500).json({ message: "Failed to fetch credit balance" });
+    }
+  });
+
+  // Get available credit packages
+  app.get('/api/credits/packages', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Only instructors can access credit packages" });
+      }
+
+      const packages = await storage.getActiveCreditPackages();
+      res.json(packages);
+    } catch (error) {
+      console.error("Error fetching credit packages:", error);
+      res.status(500).json({ message: "Failed to fetch credit packages" });
+    }
+  });
+
+  // Get credit transaction history
+  app.get('/api/credits/transactions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Only instructors can access credit transactions" });
+      }
+
+      const limit = parseInt(req.query.limit as string) || 50;
+      const transactions = await storage.getCreditTransactions(userId, limit);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching credit transactions:", error);
+      res.status(500).json({ message: "Failed to fetch credit transactions" });
+    }
+  });
+
+  // Create payment intent for credit purchase
+  app.post('/api/credits/create-payment-intent', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { packageId } = req.body;
+
+      if (!packageId) {
+        return res.status(400).json({ message: "Package ID is required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Only instructors can purchase credits" });
+      }
+
+      const pkg = await storage.getCreditPackage(packageId);
+      if (!pkg) {
+        return res.status(404).json({ message: "Credit package not found" });
+      }
+
+      if (!pkg.isActive) {
+        return res.status(400).json({ message: "This credit package is no longer available" });
+      }
+
+      // Create Stripe payment intent
+      const amountInCents = Math.round(parseFloat(pkg.price) * 100);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amountInCents,
+        currency: "usd",
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          instructorId: userId,
+          packageId: pkg.id,
+          smsCredits: pkg.smsCredits.toString(),
+          emailCredits: pkg.emailCredits.toString(),
+          packageName: pkg.name,
+        },
+      });
+
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        amount: parseFloat(pkg.price),
+        packageName: pkg.name,
+        smsCredits: pkg.smsCredits,
+        emailCredits: pkg.emailCredits,
+      });
+    } catch (error) {
+      console.error("Error creating credit payment intent:", error);
+      res.status(500).json({ message: "Failed to create payment intent" });
+    }
+  });
+
+  // Confirm credit purchase after payment
+  app.post('/api/credits/confirm-purchase', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { paymentIntentId } = req.body;
+
+      if (!paymentIntentId) {
+        return res.status(400).json({ message: "Payment intent ID is required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user || user.role !== 'instructor') {
+        return res.status(403).json({ message: "Only instructors can purchase credits" });
+      }
+
+      // Retrieve the payment intent from Stripe
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ message: "Payment has not been completed" });
+      }
+
+      // Verify this payment intent belongs to this instructor
+      if (paymentIntent.metadata.instructorId !== userId) {
+        return res.status(403).json({ message: "This payment intent does not belong to you" });
+      }
+
+      // Add credits to instructor's account
+      const smsCredits = parseInt(paymentIntent.metadata.smsCredits || '0');
+      const emailCredits = parseInt(paymentIntent.metadata.emailCredits || '0');
+      const packageId = paymentIntent.metadata.packageId;
+
+      const result = await storage.addCredits(userId, smsCredits, emailCredits, {
+        amount: paymentIntent.amount / 100,
+        stripePaymentIntentId: paymentIntentId,
+        packageId,
+        description: `Purchased ${paymentIntent.metadata.packageName}`,
+      });
+
+      res.json({
+        success: true,
+        credits: result.credits,
+        transaction: result.transaction,
+      });
+    } catch (error) {
+      console.error("Error confirming credit purchase:", error);
+      res.status(500).json({ message: "Failed to confirm credit purchase" });
+    }
+  });
+
   // Mount appointment routes
   app.use('/api/appointments', appointmentRouter);
 

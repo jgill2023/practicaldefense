@@ -142,6 +142,18 @@ import {
   type InsertAppointmentReminderSchedule,
   type AppointmentTypeWithDetails,
   type InstructorAppointmentWithDetails,
+  // Credit system imports
+  instructorCredits,
+  creditPackages,
+  creditTransactions,
+  type InstructorCredits,
+  type InsertInstructorCredits,
+  type CreditPackage,
+  type InsertCreditPackage,
+  type CreditTransaction,
+  type InsertCreditTransaction,
+  type InstructorCreditsWithDetails,
+  type CreditTransactionWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne, inArray } from "drizzle-orm";
@@ -587,6 +599,40 @@ export interface IStorage {
   // Appointment availability helper methods
   getInstructorCourseSchedules(instructorId: string, startDate: Date, endDate: Date): Promise<CourseSchedule[]>;
   checkAppointmentConflict(instructorId: string, startTime: Date, endTime: Date, excludeAppointmentId?: string): Promise<boolean>;
+
+  // ============================================
+  // CREDIT SYSTEM METHODS
+  // ============================================
+
+  // Credit balance operations
+  getInstructorCredits(instructorId: string): Promise<InstructorCredits | undefined>;
+  createInstructorCredits(instructorId: string): Promise<InstructorCredits>;
+  ensureInstructorCredits(instructorId: string): Promise<InstructorCredits>;
+
+  // Credit transaction operations
+  addCredits(instructorId: string, smsCredits: number, emailCredits: number, data: {
+    amount?: number;
+    stripePaymentIntentId?: string;
+    packageId?: string;
+    description?: string;
+  }): Promise<{ credits: InstructorCredits; transaction: CreditTransaction }>;
+  
+  deductCredits(instructorId: string, smsCredits: number, emailCredits: number, data: {
+    communicationId?: string;
+    description?: string;
+  }): Promise<{ credits: InstructorCredits; transaction: CreditTransaction }>;
+
+  refundCredits(instructorId: string, transactionId: string, refundReason?: string): Promise<{ credits: InstructorCredits; transaction: CreditTransaction }>;
+  updateCreditTransactionCommunication(transactionId: string, communicationId: string): Promise<void>;
+
+  // Credit package operations
+  getCreditPackages(): Promise<CreditPackage[]>;
+  getActiveCreditPackages(): Promise<CreditPackage[]>;
+  getCreditPackage(id: string): Promise<CreditPackage | undefined>;
+
+  // Credit transaction history
+  getCreditTransactions(instructorId: string, limit?: number): Promise<CreditTransactionWithDetails[]>;
+  getCreditTransaction(id: string): Promise<CreditTransactionWithDetails | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5551,6 +5597,303 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
 
     return !!conflict;
+  }
+
+  // ============================================
+  // CREDIT SYSTEM METHODS IMPLEMENTATION
+  // ============================================
+
+  async getInstructorCredits(instructorId: string): Promise<InstructorCredits | undefined> {
+    const [credits] = await db
+      .select()
+      .from(instructorCredits)
+      .where(eq(instructorCredits.instructorId, instructorId));
+    
+    return credits;
+  }
+
+  async createInstructorCredits(instructorId: string): Promise<InstructorCredits> {
+    const [credits] = await db
+      .insert(instructorCredits)
+      .values({
+        instructorId,
+        smsCredits: 0,
+        emailCredits: 0,
+      })
+      .returning();
+
+    if (!credits) {
+      throw new Error('Failed to create instructor credits');
+    }
+
+    return credits;
+  }
+
+  async ensureInstructorCredits(instructorId: string): Promise<InstructorCredits> {
+    const existing = await this.getInstructorCredits(instructorId);
+    if (existing) {
+      return existing;
+    }
+    return this.createInstructorCredits(instructorId);
+  }
+
+  async addCredits(
+    instructorId: string,
+    smsCredits: number,
+    emailCredits: number,
+    data: {
+      amount?: number;
+      stripePaymentIntentId?: string;
+      packageId?: string;
+      description?: string;
+    }
+  ): Promise<{ credits: InstructorCredits; transaction: CreditTransaction }> {
+    // Ensure instructor has a credits record
+    await this.ensureInstructorCredits(instructorId);
+
+    // Update credits balance
+    const [updatedCredits] = await db
+      .update(instructorCredits)
+      .set({
+        smsCredits: sql`${instructorCredits.smsCredits} + ${smsCredits}`,
+        emailCredits: sql`${instructorCredits.emailCredits} + ${emailCredits}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(instructorCredits.instructorId, instructorId))
+      .returning();
+
+    if (!updatedCredits) {
+      throw new Error('Failed to update credits');
+    }
+
+    // Create transaction record
+    const [transaction] = await db
+      .insert(creditTransactions)
+      .values({
+        instructorId,
+        transactionType: 'purchase',
+        smsCredits,
+        emailCredits,
+        balanceAfterSms: updatedCredits.smsCredits,
+        balanceAfterEmail: updatedCredits.emailCredits,
+        amount: data.amount?.toString(),
+        stripePaymentIntentId: data.stripePaymentIntentId,
+        packageId: data.packageId,
+        description: data.description || `Purchased ${smsCredits} SMS credits and ${emailCredits} email credits`,
+      })
+      .returning();
+
+    if (!transaction) {
+      throw new Error('Failed to create transaction record');
+    }
+
+    return { credits: updatedCredits, transaction };
+  }
+
+  async deductCredits(
+    instructorId: string,
+    smsCredits: number,
+    emailCredits: number,
+    data: {
+      communicationId?: string;
+      description?: string;
+    }
+  ): Promise<{ credits: InstructorCredits; transaction: CreditTransaction }> {
+    // Ensure instructor has a credits record
+    await this.ensureInstructorCredits(instructorId);
+
+    // Atomically update credits balance with a check to prevent negative balances
+    // This prevents race conditions by checking and updating in a single query
+    const [updatedCredits] = await db
+      .update(instructorCredits)
+      .set({
+        smsCredits: sql`${instructorCredits.smsCredits} - ${smsCredits}`,
+        emailCredits: sql`${instructorCredits.emailCredits} - ${emailCredits}`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(instructorCredits.instructorId, instructorId),
+          sql`${instructorCredits.smsCredits} >= ${smsCredits}`,
+          sql`${instructorCredits.emailCredits} >= ${emailCredits}`
+        )
+      )
+      .returning();
+
+    if (!updatedCredits) {
+      // Get current balance to provide helpful error message
+      const currentCredits = await this.getInstructorCredits(instructorId);
+      if (!currentCredits) {
+        throw new Error('Instructor credits record not found');
+      }
+      
+      if (currentCredits.smsCredits < smsCredits) {
+        throw new Error(`Insufficient SMS credits. Available: ${currentCredits.smsCredits}, Required: ${smsCredits}`);
+      }
+      if (currentCredits.emailCredits < emailCredits) {
+        throw new Error(`Insufficient email credits. Available: ${currentCredits.emailCredits}, Required: ${emailCredits}`);
+      }
+      
+      throw new Error('Failed to deduct credits');
+    }
+
+    // Create transaction record (negative values for usage)
+    const [transaction] = await db
+      .insert(creditTransactions)
+      .values({
+        instructorId,
+        transactionType: 'usage',
+        smsCredits: -smsCredits,
+        emailCredits: -emailCredits,
+        balanceAfterSms: updatedCredits.smsCredits,
+        balanceAfterEmail: updatedCredits.emailCredits,
+        communicationId: data.communicationId,
+        description: data.description || `Used ${smsCredits} SMS credits and ${emailCredits} email credits`,
+      })
+      .returning();
+
+    if (!transaction) {
+      throw new Error('Failed to create transaction record');
+    }
+
+    return { credits: updatedCredits, transaction };
+  }
+
+  async refundCredits(
+    instructorId: string,
+    transactionId: string,
+    refundReason?: string
+  ): Promise<{ credits: InstructorCredits; transaction: CreditTransaction }> {
+    // Get original transaction
+    const [originalTransaction] = await db
+      .select()
+      .from(creditTransactions)
+      .where(eq(creditTransactions.id, transactionId));
+
+    if (!originalTransaction) {
+      throw new Error('Original transaction not found');
+    }
+
+    // Handle different transaction types
+    let updatedCredits;
+    if (originalTransaction.transactionType === 'purchase') {
+      // Deduct the credits (reverse the purchase)
+      [updatedCredits] = await db
+        .update(instructorCredits)
+        .set({
+          smsCredits: sql`${instructorCredits.smsCredits} - ${originalTransaction.smsCredits}`,
+          emailCredits: sql`${instructorCredits.emailCredits} - ${originalTransaction.emailCredits}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(instructorCredits.instructorId, instructorId))
+        .returning();
+    } else if (originalTransaction.transactionType === 'usage') {
+      // Add the credits back (reverse the usage deduction)
+      // Note: usage transactions have negative values, so we add them back
+      [updatedCredits] = await db
+        .update(instructorCredits)
+        .set({
+          smsCredits: sql`${instructorCredits.smsCredits} + ${Math.abs(originalTransaction.smsCredits)}`,
+          emailCredits: sql`${instructorCredits.emailCredits} + ${Math.abs(originalTransaction.emailCredits)}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(instructorCredits.instructorId, instructorId))
+        .returning();
+    } else {
+      throw new Error(`Cannot refund transaction type: ${originalTransaction.transactionType}`);
+    }
+
+    if (!updatedCredits) {
+      throw new Error('Failed to refund credits');
+    }
+
+    // Create refund transaction record
+    const [transaction] = await db
+      .insert(creditTransactions)
+      .values({
+        instructorId,
+        transactionType: 'refund',
+        smsCredits: originalTransaction.transactionType === 'usage' 
+          ? Math.abs(originalTransaction.smsCredits) 
+          : -originalTransaction.smsCredits,
+        emailCredits: originalTransaction.transactionType === 'usage'
+          ? Math.abs(originalTransaction.emailCredits)
+          : -originalTransaction.emailCredits,
+        balanceAfterSms: updatedCredits.smsCredits,
+        balanceAfterEmail: updatedCredits.emailCredits,
+        amount: originalTransaction.amount,
+        stripePaymentIntentId: originalTransaction.stripePaymentIntentId,
+        description: refundReason || `Refund for transaction ${transactionId}`,
+      })
+      .returning();
+
+    if (!transaction) {
+      throw new Error('Failed to create refund record');
+    }
+
+    return { credits: updatedCredits, transaction };
+  }
+
+  async updateCreditTransactionCommunication(
+    transactionId: string,
+    communicationId: string
+  ): Promise<void> {
+    await db
+      .update(creditTransactions)
+      .set({ communicationId })
+      .where(eq(creditTransactions.id, transactionId));
+  }
+
+  async getCreditPackages(): Promise<CreditPackage[]> {
+    return db
+      .select()
+      .from(creditPackages)
+      .orderBy(asc(creditPackages.sortOrder));
+  }
+
+  async getActiveCreditPackages(): Promise<CreditPackage[]> {
+    return db
+      .select()
+      .from(creditPackages)
+      .where(eq(creditPackages.isActive, true))
+      .orderBy(asc(creditPackages.sortOrder));
+  }
+
+  async getCreditPackage(id: string): Promise<CreditPackage | undefined> {
+    const [pkg] = await db
+      .select()
+      .from(creditPackages)
+      .where(eq(creditPackages.id, id));
+    
+    return pkg;
+  }
+
+  async getCreditTransactions(instructorId: string, limit: number = 50): Promise<CreditTransactionWithDetails[]> {
+    const transactions = await db.query.creditTransactions.findMany({
+      where: eq(creditTransactions.instructorId, instructorId),
+      with: {
+        instructor: true,
+        package: true,
+        communication: true,
+      },
+      orderBy: [desc(creditTransactions.createdAt)],
+      limit,
+    });
+
+    return transactions as CreditTransactionWithDetails[];
+  }
+
+  async getCreditTransaction(id: string): Promise<CreditTransactionWithDetails | undefined> {
+    const transaction = await db.query.creditTransactions.findFirst({
+      where: eq(creditTransactions.id, id),
+      with: {
+        instructor: true,
+        package: true,
+        communication: true,
+      },
+    });
+
+    return transaction as CreditTransactionWithDetails | undefined;
   }
 }
 

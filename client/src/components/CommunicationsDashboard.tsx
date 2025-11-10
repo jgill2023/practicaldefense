@@ -56,6 +56,8 @@ import "react-quill/dist/quill.snow.css";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationsManagement } from "@/components/NotificationsManagement";
+import { CreditMeter } from "@/components/CreditMeter";
+import { PurchaseCreditsDialog } from "@/components/PurchaseCreditsDialog";
 
 // Types for communication data
 interface Communication {
@@ -165,6 +167,9 @@ export function CommunicationsDashboard() {
   const hasMountedRef = useRef(false);
   const lastFiltersRef = useRef<string>('');
   const suppressNotificationsRef = useRef(false);
+
+  // Credit system state
+  const [isPurchaseCreditsDialogOpen, setIsPurchaseCreditsDialogOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1115,6 +1120,19 @@ export function CommunicationsDashboard() {
           Track all emails and SMS messages sent and received, with status indicators and flagging for follow-up.
         </p>
       </div>
+
+      {/* Credit Meter */}
+      {user && user.role === 'instructor' && (
+        <CreditMeter onPurchaseClick={() => setIsPurchaseCreditsDialogOpen(true)} />
+      )}
+
+      {/* Purchase Credits Dialog */}
+      {user && user.role === 'instructor' && (
+        <PurchaseCreditsDialog
+          open={isPurchaseCreditsDialogOpen}
+          onOpenChange={setIsPurchaseCreditsDialogOpen}
+        />
+      )}
 
       {/* Filter Controls */}
       <Card className="mb-6">

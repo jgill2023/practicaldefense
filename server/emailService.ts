@@ -19,10 +19,39 @@ interface EmailParams {
   subject: string;
   text?: string;
   html?: string;
+  instructorId?: string; // Add instructor ID for credit tracking
 }
 
-export async function sendEmail(params: EmailParams): Promise<boolean> {
+export async function sendEmail(params: EmailParams): Promise<{
+  success: boolean;
+  error?: string;
+}> {
   try {
+    // Deduct credits BEFORE sending if instructorId is provided
+    let creditTransactionId: string | undefined;
+    if (params.instructorId) {
+      try {
+        const result = await storage.deductCredits(params.instructorId, 0, 1, {
+          description: `Sending email to ${params.to}`,
+        });
+        creditTransactionId = result.transaction.id;
+      } catch (creditError: any) {
+        console.error('Error deducting email credits:', creditError);
+        // Return structured error for insufficient credits
+        if (creditError.message?.includes('Insufficient')) {
+          return {
+            success: false,
+            error: 'Insufficient email credits. Please purchase more credits to continue sending messages.',
+          };
+        }
+        return {
+          success: false,
+          error: 'Unable to process email credits. Please try again or contact support.',
+        };
+      }
+    }
+
+    // Credits successfully deducted, now send the email
     initializeSendGrid();
     const emailData: any = {
       to: params.to,
@@ -35,12 +64,25 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       emailData.text = params.text;
     }
     
-    const response = await sgMail.send(emailData);
+    let response;
+    try {
+      response = await sgMail.send(emailData);
+    } catch (sendGridError: any) {
+      // Send failed - refund the credit if it was deducted
+      if (params.instructorId && creditTransactionId) {
+        try {
+          await storage.refundCredits(params.instructorId, creditTransactionId, `Email send failed: ${sendGridError.message}`);
+        } catch (refundError) {
+          console.error('Failed to refund email credit after send failure:', refundError);
+        }
+      }
+      throw sendGridError;
+    }
     
     // Log communication to database
     try {
       const messageId = response[0]?.headers?.['x-message-id'] as string | undefined;
-      await storage.createCommunication({
+      const communication = await storage.createCommunication({
         type: 'email',
         direction: 'outbound',
         fromAddress: params.from,
@@ -51,18 +93,32 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
         deliveryStatus: 'sent',
         externalMessageId: messageId,
         sentAt: new Date(),
-        userId: null,
+        userId: params.instructorId || null,
         enrollmentId: null,
         courseId: null,
       });
+      
+      // Update transaction with communication ID if we deducted credits
+      if (params.instructorId && creditTransactionId && communication.id) {
+        // This is a best-effort update, don't fail if it doesn't work
+        try {
+          await storage.updateCreditTransactionCommunication(creditTransactionId, communication.id);
+        } catch (updateError) {
+          console.error('Failed to link transaction to communication:', updateError);
+        }
+      }
     } catch (logError) {
       console.error('Failed to log email communication:', logError);
+      // Don't fail the email send if logging fails
     }
     
-    return true;
-  } catch (error) {
+    return { success: true };
+  } catch (error: any) {
     console.error('SendGrid email error:', error);
-    return false;
+    return {
+      success: false,
+      error: error.message || 'Unknown email sending error',
+    };
   }
 }
 

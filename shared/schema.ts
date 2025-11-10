@@ -2117,3 +2117,121 @@ const productSchema = z.object({
   tags: z.array(z.string()).default([]),
   sortOrder: z.number().int().min(0).default(0),
 });
+
+// CREDIT SYSTEM TABLES
+
+// Credit transaction type enum
+export const creditTransactionTypeEnum = pgEnum("credit_transaction_type", [
+  "purchase", 
+  "usage", 
+  "refund", 
+  "adjustment", 
+  "initial_grant"
+]);
+
+// Instructor credits - tracks current balance for each instructor
+export const instructorCredits = pgTable("instructor_credits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  instructorId: varchar("instructor_id").notNull().unique().references(() => users.id),
+  smsCredits: integer("sms_credits").notNull().default(0),
+  emailCredits: integer("email_credits").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Credit packages - defines available packages for purchase
+export const creditPackages = pgTable("credit_packages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  smsCredits: integer("sms_credits").notNull().default(0),
+  emailCredits: integer("email_credits").notNull().default(0),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").default(0),
+  isPopular: boolean("is_popular").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Credit transactions - audit trail for all credit activity
+export const creditTransactions = pgTable("credit_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id),
+  transactionType: creditTransactionTypeEnum("transaction_type").notNull(),
+  smsCredits: integer("sms_credits").notNull().default(0),
+  emailCredits: integer("email_credits").notNull().default(0),
+  balanceAfterSms: integer("balance_after_sms").notNull(),
+  balanceAfterEmail: integer("balance_after_email").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  packageId: varchar("package_id").references(() => creditPackages.id),
+  communicationId: uuid("communication_id").references(() => communications.id),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations for credit system
+export const instructorCreditsRelations = relations(instructorCredits, ({ one }) => ({
+  instructor: one(users, {
+    fields: [instructorCredits.instructorId],
+    references: [users.id],
+  }),
+}));
+
+export const creditTransactionsRelations = relations(creditTransactions, ({ one }) => ({
+  instructor: one(users, {
+    fields: [creditTransactions.instructorId],
+    references: [users.id],
+  }),
+  package: one(creditPackages, {
+    fields: [creditTransactions.packageId],
+    references: [creditPackages.id],
+  }),
+  communication: one(communications, {
+    fields: [creditTransactions.communicationId],
+    references: [communications.id],
+  }),
+}));
+
+// Insert schemas for credit system
+export const insertInstructorCreditsSchema = createInsertSchema(instructorCredits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCreditPackageSchema = createInsertSchema(creditPackages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCreditTransactionSchema = createInsertSchema(creditTransactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for credit system
+export type InsertInstructorCredits = z.infer<typeof insertInstructorCreditsSchema>;
+export type InstructorCredits = typeof instructorCredits.$inferSelect;
+
+export type InsertCreditPackage = z.infer<typeof insertCreditPackageSchema>;
+export type CreditPackage = typeof creditPackages.$inferSelect;
+
+export type InsertCreditTransaction = z.infer<typeof insertCreditTransactionSchema>;
+export type CreditTransaction = typeof creditTransactions.$inferSelect;
+
+// Extended types with relations
+export type InstructorCreditsWithDetails = InstructorCredits & {
+  instructor?: User;
+};
+
+export type CreditTransactionWithDetails = CreditTransaction & {
+  instructor?: User;
+  package?: CreditPackage;
+  communication?: Communication;
+};
+
+// Credit transaction types
+export type CreditTransactionType = 'purchase' | 'usage' | 'refund' | 'adjustment' | 'initial_grant';
