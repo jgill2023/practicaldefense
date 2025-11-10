@@ -379,16 +379,16 @@ export default function BookAppointmentPage() {
                         const noAvailability = availabilityMap[dateStr] === false && date >= new Date(new Date().setHours(0, 0, 0, 0));
                         
                         return (
-                          <div className="relative">
+                          <div className="relative w-9 h-9 flex items-center justify-center">
                             {hasAvailability && (
-                              <div className="absolute inset-0 rounded-full border-2 border-green-500 pointer-events-none" />
+                              <div className="absolute inset-0 rounded-full border-2 border-green-500 pointer-events-none z-0" />
                             )}
                             {noAvailability && (
-                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <div className="w-full h-0.5 bg-red-500 rotate-45" />
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                                <div className="w-full h-[2px] bg-red-500 rotate-45 origin-center" />
                               </div>
                             )}
-                            <button {...props} className={cn("relative z-10", props.className)} />
+                            <button {...props} className={cn("relative z-10 w-full h-full", props.className)} />
                           </div>
                         );
                       },
