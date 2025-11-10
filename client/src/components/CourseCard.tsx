@@ -76,8 +76,8 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
     : getImageUrl(getCategoryName());
 
   return (
-    <Card className="overflow-hidden border border-border hover:shadow-xl transition-shadow w-full" data-testid={`course-card-${course.id}`}>
-      <div className="relative w-full h-40 sm:h-48 bg-muted">
+    <Card className="overflow-hidden border border-border hover:shadow-xl transition-shadow w-full relative" data-testid={`course-card-${course.id}`}>
+      <div className="relative w-full h-40 sm:h-48 bg-muted pointer-events-none">
         <img 
           src={displayImageUrl} 
           alt={course.title}
@@ -92,7 +92,7 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
           }}
         />
       </div>
-      <CardContent className="p-4 sm:p-6">
+      <CardContent className="p-4 sm:p-6 pointer-events-none">
         <div className="flex items-center justify-between mb-4">
           <Badge className={getCategoryColor(getCategoryName())} data-testid={`badge-category-${course.id}`}>
             {getCategoryName()}
@@ -141,17 +141,26 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
           </div>
         </div>
 
-        <Button 
-          type="button"
-          size="lg" 
-          className="w-full register-button min-h-[44px]"
-          onClick={() => onRegister(course)}
-          disabled={!nextSchedule}
-          data-testid={`button-register-${course.id}`}
-        >
-          REGISTER NOW
-          <ArrowRight className="ml-2 h-5 w-5" />
-        </Button>
+        <div className="pointer-events-auto relative z-10">
+          <Button 
+            type="button"
+            size="lg" 
+            className="w-full register-button min-h-[44px]"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onRegister(course);
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+            }}
+            disabled={!nextSchedule}
+            data-testid={`button-register-${course.id}`}
+          >
+            REGISTER NOW
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

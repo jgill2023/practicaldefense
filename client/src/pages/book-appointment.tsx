@@ -302,7 +302,7 @@ export default function BookAppointmentPage() {
                     <CardDescription>{type.description}</CardDescription>
                   )}
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pointer-events-none">
                   <div className="space-y-3 mb-4">
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4 text-muted-foreground" />
@@ -313,14 +313,23 @@ export default function BookAppointmentPage() {
                       <span>${Number(type.price).toFixed(2)}</span>
                     </div>
                   </div>
-                  <Button
-                    type="button"
-                    onClick={() => handleBookNow(type)}
-                    className="w-full min-h-[44px]"
-                    data-testid={`button-book-${type.id}`}
-                  >
-                    Book Now
-                  </Button>
+                  <div className="pointer-events-auto relative z-10">
+                    <Button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleBookNow(type);
+                      }}
+                      onTouchStart={(e) => {
+                        e.stopPropagation();
+                      }}
+                      className="w-full min-h-[44px]"
+                      data-testid={`button-book-${type.id}`}
+                    >
+                      Book Now
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))
