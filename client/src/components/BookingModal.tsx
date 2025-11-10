@@ -252,13 +252,64 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           <div className="border rounded-lg p-4">
             <h3 className="font-semibold mb-4">Select a Date</h3>
             <style>{`
+              .booking-calendar {
+                width: 100%;
+              }
+              .booking-calendar .rdp-months {
+                width: 100%;
+              }
+              .booking-calendar .rdp-month {
+                width: 100%;
+              }
+              .booking-calendar .rdp-caption {
+                display: flex;
+                justify-content: center;
+                padding: 0;
+                margin-bottom: 1rem;
+              }
+              .booking-calendar .rdp-caption_label {
+                font-size: 1rem;
+                font-weight: 600;
+              }
+              .booking-calendar .rdp-nav {
+                position: absolute;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+              }
+              .booking-calendar .rdp-nav_button {
+                width: 2rem;
+                height: 2rem;
+              }
+              .booking-calendar .rdp-table {
+                width: 100%;
+                max-width: 100%;
+              }
+              .booking-calendar .rdp-head_cell {
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-align: center;
+                padding: 0.25rem;
+              }
+              .booking-calendar .rdp-cell {
+                text-align: center;
+                padding: 2px;
+              }
+              .booking-calendar .rdp-day {
+                width: 2.5rem;
+                height: 2.5rem;
+                font-size: 0.875rem;
+                border-radius: 0.375rem;
+              }
               .booking-calendar .rdp-day_button {
                 position: relative;
+                width: 100%;
+                height: 100%;
               }
               .booking-calendar .rdp-day_button.day-available::after {
                 content: '';
                 position: absolute;
-                bottom: 2px;
+                bottom: 3px;
                 left: 50%;
                 transform: translateX(-50%);
                 width: 4px;
@@ -267,10 +318,25 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 background-color: #10b981;
               }
               .booking-calendar .rdp-day_button.day-unavailable {
-                opacity: 0.5;
-                text-decoration: line-through;
-                text-decoration-color: #ef4444;
-                text-decoration-thickness: 1px;
+                opacity: 0.4;
+                position: relative;
+              }
+              .booking-calendar .rdp-day_button.day-unavailable::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 10%;
+                right: 10%;
+                height: 1px;
+                background-color: #ef4444;
+                transform: translateY(-50%);
+              }
+              .booking-calendar .rdp-day_selected {
+                background-color: hsl(var(--primary));
+                color: hsl(var(--primary-foreground));
+              }
+              .booking-calendar .rdp-day_today {
+                font-weight: 600;
               }
             `}</style>
             <Calendar
@@ -300,7 +366,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 available: "day-available",
                 unavailable: "day-unavailable",
               }}
-              className="booking-calendar rounded-md border w-full"
+              className="booking-calendar"
               data-testid="booking-calendar"
             />
             <div className="mt-4 space-y-2 text-xs text-muted-foreground">
@@ -311,8 +377,9 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 <span>Available slots</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-6 h-6 border rounded opacity-50">
-                  <span className="line-through" style={{ textDecorationColor: '#ef4444' }}>15</span>
+                <div className="flex items-center justify-center w-6 h-6 border rounded opacity-40 relative">
+                  <span>15</span>
+                  <div className="absolute top-1/2 left-1 right-1 h-px bg-red-500"></div>
                 </div>
                 <span>No availability</span>
               </div>
