@@ -221,7 +221,7 @@ export default function TheCrucible() {
               <div className="flex gap-3">
                 <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">8</div>
                 <div className="flex-1">
-                  <h4 className="font-semibold mb-1">Finish & Scoring</h4>
+                  <h4 className="font-semibold mb-1">Scoring & Classification</h4>
                   <p className="text-sm text-muted-foreground">This is a no fail drill. Any round that misses its designated target area (the head alpha, body alpha, or the 3x5 card) results in a failure.
 
                   Each competitor is granted two attempts. To be classified above LAOCH, both runs must be successful and without any misses.
