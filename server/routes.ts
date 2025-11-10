@@ -3925,7 +3925,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/waiver-templates/:id", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/admin/waiver-templates/:id", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
       const { id } = req.params;
@@ -3936,16 +3936,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
-      // Validate request body
-      const updateData = {
+      // Validate request body - use partial schema for updates
+      const updateData = insertWaiverTemplateSchema.partial().parse({
         ...req.body,
         updatedBy: userId,
-      };
+      });
 
       const template = await storage.updateWaiverTemplate(id, updateData);
       res.json(template);
     } catch (error: any) {
       console.error("Error updating waiver template:", error);
+
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Validation failed", details: error.errors });
+      }
+
       res.status(500).json({ error: "Failed to update waiver template" });
     }
   });

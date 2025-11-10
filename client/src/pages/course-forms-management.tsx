@@ -306,7 +306,16 @@ export default function CourseFormsManagement() {
     mutationFn: async (data: InsertWaiverTemplate) => {
       const url = editingWaiver ? `/api/admin/waiver-templates/${editingWaiver.id}` : "/api/admin/waiver-templates";
       const method = editingWaiver ? "PATCH" : "POST";
-      return await apiRequest(method, url, data);
+      
+      // Ensure data is properly structured
+      const payload = {
+        ...data,
+        content: data.content || '',
+        courseIds: data.courseIds || [],
+        categoryIds: data.categoryIds || [],
+      };
+      
+      return await apiRequest(method, url, payload);
     },
     onSuccess: () => {
       toast({
