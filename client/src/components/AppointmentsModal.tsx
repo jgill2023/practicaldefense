@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarClock, Clock, Mail, Phone, User } from "lucide-react";
 import { format } from "date-fns";
 import { StudentProfileModal } from "./StudentProfileModal";
+import { SmsNotificationModal } from "./SmsNotificationModal";
+import { EmailNotificationModal } from "./EmailNotificationModal";
 
 interface Appointment {
   id: string;
@@ -38,6 +40,16 @@ interface AppointmentsModalProps {
 export function AppointmentsModal({ isOpen, onClose, instructorId }: AppointmentsModalProps) {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [showStudentProfile, setShowStudentProfile] = useState(false);
+  const [smsModal, setSmsModal] = useState<{ isOpen: boolean; name: string; phone: string }>({
+    isOpen: false,
+    name: "",
+    phone: ""
+  });
+  const [emailModal, setEmailModal] = useState<{ isOpen: boolean; name: string; email: string }>({
+    isOpen: false,
+    name: "",
+    email: ""
+  });
 
   const { data: appointments = [], isLoading, isError } = useQuery<Appointment[]>({
     queryKey: [`/api/appointments/instructor/${instructorId}/appointments`],
@@ -147,13 +159,43 @@ export function AppointmentsModal({ isOpen, onClose, instructorId }: Appointment
                           {appointment.student && (
                             <>
                               <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4" />
-                                <span className="truncate">{appointment.student.email}</span>
+                                <Mail className="h-4 w-4 flex-shrink-0" />
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEmailModal({
+                                      isOpen: true,
+                                      name: `${appointment.student!.firstName} ${appointment.student!.lastName}`,
+                                      email: appointment.student!.email
+                                    });
+                                  }}
+                                  className="truncate text-blue-600 hover:text-blue-800 hover:underline text-left"
+                                  data-testid={`button-email-${appointment.id}`}
+                                >
+                                  {appointment.student.email}
+                                </button>
                               </div>
 
                               <div className="flex items-center gap-2">
-                                <Phone className="h-4 w-4" />
-                                <span>{formatPhoneNumber(appointment.student.phone)}</span>
+                                <Phone className="h-4 w-4 flex-shrink-0" />
+                                {appointment.student.phone ? (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSmsModal({
+                                        isOpen: true,
+                                        name: `${appointment.student!.firstName} ${appointment.student!.lastName}`,
+                                        phone: appointment.student!.phone!
+                                      });
+                                    }}
+                                    className="text-green-600 hover:text-green-800 hover:underline text-left"
+                                    data-testid={`button-sms-${appointment.id}`}
+                                  >
+                                    {formatPhoneNumber(appointment.student.phone)}
+                                  </button>
+                                ) : (
+                                  <span>N/A</span>
+                                )}
                               </div>
                             </>
                           )}
@@ -189,13 +231,27 @@ export function AppointmentsModal({ isOpen, onClose, instructorId }: Appointment
           }}
           studentId={selectedStudentId}
           onEmailClick={(name, email) => {
-            // This will be handled by the StudentProfileModal component
+            setEmailModal({ isOpen: true, name, email });
           }}
           onSmsClick={(name, phone) => {
-            // This will be handled by the StudentProfileModal component
+            setSmsModal({ isOpen: true, name, phone });
           }}
         />
       )}
+
+      <SmsNotificationModal
+        isOpen={smsModal.isOpen}
+        onClose={() => setSmsModal({ ...smsModal, isOpen: false })}
+        studentName={smsModal.name}
+        phoneNumber={smsModal.phone}
+      />
+
+      <EmailNotificationModal
+        isOpen={emailModal.isOpen}
+        onClose={() => setEmailModal({ ...emailModal, isOpen: false })}
+        studentName={emailModal.name}
+        emailAddress={emailModal.email}
+      />
     </>
   );
 }
