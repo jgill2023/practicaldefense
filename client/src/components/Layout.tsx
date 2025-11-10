@@ -134,17 +134,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     }
                   }
                 }}>Schedule It!</a>
-                <a href="/#section-schedule-training" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-virtual-training" onClick={(e) => {
-                  if (window.location.pathname === '/') {
-                    e.preventDefault();
-                    const scheduleSection = document.getElementById('section-schedule-training');
-                    if (scheduleSection) {
-                      const yOffset = -80;
-                      const y = scheduleSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                      window.scrollTo({ top: y, behavior: 'smooth' });
-                    }
-                  }
-                }}>Virtual Training</a>
+                <Link href="/book-appointment/43575331" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-virtual-training">Virtual Training</Link>
                 <a href="/the-crucible" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors">The Crucible</a>
                 <Link href="/contact" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-contact">Contact Us</Link>
               </nav>
@@ -215,18 +205,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 >
                   Schedule It!
                 </a>
-                <a href="/#section-schedule-training" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-virtual-training-mobile" onClick={(e) => {
-                  setIsMobileMenuOpen(false);
-                  if (window.location.pathname === '/') {
-                    e.preventDefault();
-                    const scheduleSection = document.getElementById('section-schedule-training');
-                    if (scheduleSection) {
-                      const yOffset = -80;
-                      const y = scheduleSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                      window.scrollTo({ top: y, behavior: 'smooth' });
-                    }
-                  }
-                }}>Virtual Training</a>
+                <Link href="/book-appointment/43575331" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-virtual-training-mobile" onClick={() => setIsMobileMenuOpen(false)}>Virtual Training</Link>
                 <Link href="/contact" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
 
                 {/* Mobile auth buttons */}
