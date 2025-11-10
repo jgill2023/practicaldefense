@@ -290,7 +290,11 @@ export default function BookAppointmentPage() {
             </div>
           ) : (
             appointmentTypes.map((type) => (
-              <Card key={type.id} className="relative md:hover:shadow-lg">
+              <Card 
+                key={type.id} 
+                className="relative md:hover:shadow-lg cursor-pointer active:shadow-2xl"
+                onClick={() => handleBookNow(type)}
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
                     <CardTitle className="text-xl">{type.title}</CardTitle>
@@ -319,12 +323,7 @@ export default function BookAppointmentPage() {
                       e.stopPropagation();
                       handleBookNow(type);
                     }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleBookNow(type);
-                    }}
-                    className="w-full min-h-[44px] relative z-10"
+                    className="w-full min-h-[44px]"
                     data-testid={`button-book-${type.id}`}
                   >
                     Book Now

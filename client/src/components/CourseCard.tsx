@@ -75,8 +75,17 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
     ? course.imageUrl 
     : getImageUrl(getCategoryName());
 
+  const handleCardClick = () => {
+    if (!nextSchedule) return;
+    onRegister(course);
+  };
+
   return (
-    <Card className="overflow-hidden border border-border md:hover:shadow-xl transition-shadow w-full" data-testid={`course-card-${course.id}`}>
+    <Card 
+      className="overflow-hidden border border-border md:hover:shadow-xl transition-shadow w-full cursor-pointer active:shadow-2xl" 
+      data-testid={`course-card-${course.id}`}
+      onClick={handleCardClick}
+    >
       <div className="relative w-full h-40 sm:h-48 bg-muted">
         <img 
           src={displayImageUrl} 
@@ -144,15 +153,9 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
         <Button 
           type="button"
           size="lg" 
-          className="w-full register-button min-h-[44px] relative z-10"
+          className="w-full register-button min-h-[44px]"
           onClick={(e) => {
             e.stopPropagation();
-            onRegister(course);
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (!nextSchedule) return;
             onRegister(course);
           }}
           disabled={!nextSchedule}
