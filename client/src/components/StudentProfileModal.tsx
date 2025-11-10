@@ -1,13 +1,15 @@
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Phone, Calendar, Award, X, CheckCircle, XCircle, Clock, RotateCcw } from "lucide-react";
+import { User, Mail, Phone, Calendar, Award, X, CheckCircle, XCircle, Clock, RotateCcw, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
+import { EnrollmentFeedbackModal } from "./EnrollmentFeedbackModal";
 
 interface StudentProfileModalProps {
   isOpen: boolean;
@@ -60,6 +62,11 @@ export function StudentProfileModal({
   onEmailClick,
   onSmsClick
 }: StudentProfileModalProps) {
+  const [feedbackModal, setFeedbackModal] = useState<{ isOpen: boolean; enrollmentId: string }>({ 
+    isOpen: false, 
+    enrollmentId: "" 
+  });
+
   const { data: profile, isLoading, isError } = useQuery<StudentProfile>({
     queryKey: [`/api/students/${studentId}/profile`],
     enabled: isOpen && !!studentId,
@@ -225,7 +232,8 @@ export function StudentProfileModal({
                       return (
                         <div
                           key={enrollment.id}
-                          className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                          className="border rounded-lg p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                          onClick={() => setFeedbackModal({ isOpen: true, enrollmentId: enrollment.id })}
                           data-testid={`enrollment-${enrollment.id}`}
                         >
                           <div className="flex items-start justify-between gap-4">
@@ -239,6 +247,7 @@ export function StudentProfileModal({
                                     </span>
                                   )}
                                 </h4>
+                                <FileText className="h-4 w-4 text-muted-foreground" />
                               </div>
                               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
@@ -255,6 +264,9 @@ export function StudentProfileModal({
                                   Completed: {format(new Date(enrollment.completionDate), "MMM d, yyyy")}
                                 </div>
                               )}
+                              <div className="text-xs text-blue-600 mt-2">
+                                Click to view/add feedback & notes
+                              </div>
                             </div>
                             <Badge className={`${status.color} flex items-center gap-1.5 px-3 py-1`}>
                               <StatusIcon className="h-3.5 w-3.5" />
@@ -270,6 +282,14 @@ export function StudentProfileModal({
             </Card>
           </div>
         ) : null}
+
+        <EnrollmentFeedbackModal
+          isOpen={feedbackModal.isOpen}
+          onClose={() => setFeedbackModal({ ...feedbackModal, isOpen: false })}
+          enrollmentId={feedbackModal.enrollmentId}
+          userRole="instructor"
+          isInstructor={true}
+        />
       </DialogContent>
     </Dialog>
   );

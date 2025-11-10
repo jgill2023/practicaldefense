@@ -24,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import type { EnrollmentWithDetails, User, CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { useLocation } from "wouter";
 import { StudentBookingsModal } from "@/components/StudentBookingsModal";
+import { EnrollmentFeedbackModal } from "@/components/EnrollmentFeedbackModal";
 
 // Types for the query responses
 type PaymentBalanceResponse = {
@@ -2165,6 +2166,12 @@ export default function StudentPortal() {
   // State for the bookings modal
   const [showBookingsModal, setShowBookingsModal] = useState(false);
 
+  // State for the feedback modal
+  const [feedbackModal, setFeedbackModal] = useState<{ isOpen: boolean; enrollmentId: string }>({ 
+    isOpen: false, 
+    enrollmentId: "" 
+  });
+
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/student/enrollments"],
     enabled: isAuthenticated,
@@ -2548,11 +2555,19 @@ export default function StudentPortal() {
               ) : enrollments.length > 0 ? (
                 <div className="space-y-4">
                   {enrollments.slice(0, 5).map(enrollment => (
-                    <div key={enrollment.id} className="p-4 bg-muted rounded-lg">
+                    <div 
+                      key={enrollment.id} 
+                      className="p-4 bg-muted rounded-lg hover:bg-muted/80 cursor-pointer transition-colors"
+                      onClick={() => setFeedbackModal({ isOpen: true, enrollmentId: enrollment.id })}
+                      data-testid={`enrollment-history-${enrollment.id}`}
+                    >
                       <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold text-card-foreground" data-testid={`text-history-course-${enrollment.id}`}>
-                          {enrollment.course.title}
-                        </h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-card-foreground" data-testid={`text-history-course-${enrollment.id}`}>
+                            {enrollment.course.title}
+                          </h4>
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                        </div>
                         <Badge
                           variant={
                             enrollment.status === 'completed' ? 'default' :
@@ -2567,8 +2582,17 @@ export default function StudentPortal() {
                         <div>Completed: {enrollment.schedule?.endDate ? new Date(enrollment.schedule.endDate).toLocaleDateString() : 'TBD'}</div>
                         <div>Instructor: Course instructor</div>
                       </div>
+                      <div className="text-xs text-blue-600 mt-2">
+                        Click to view instructor feedback & add your notes
+                      </div>
                       {enrollment.status === 'completed' && (
-                        <Button variant="outline" size="sm" className="mt-3" data-testid={`button-download-certificate-${enrollment.id}`}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-3" 
+                          onClick={(e) => e.stopPropagation()}
+                          data-testid={`button-download-certificate-${enrollment.id}`}
+                        >
                           <Award className="mr-2 h-4 w-4" />
                           Download Certificate
                         </Button>
@@ -2723,6 +2747,15 @@ export default function StudentPortal() {
           enrollment={selectedEnrollmentForUnenroll}
         />
       )}
+
+      {/* Enrollment Feedback Modal */}
+      <EnrollmentFeedbackModal
+        isOpen={feedbackModal.isOpen}
+        onClose={() => setFeedbackModal({ ...feedbackModal, isOpen: false })}
+        enrollmentId={feedbackModal.enrollmentId}
+        userRole="student"
+        isInstructor={false}
+      />
     </Layout>
   );
 }

@@ -13,6 +13,7 @@ import { EmailNotificationModal } from "./EmailNotificationModal";
 import { PaymentDetailsModal } from "./PaymentDetailsModal";
 import { PaymentReminderModal } from "./PaymentReminderModal";
 import { RescheduleModal } from "./RescheduleModal";
+import { EnrollmentFeedbackModal } from "./EnrollmentFeedbackModal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface RosterData {
@@ -76,6 +77,7 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
     studentPhone: '',
     reminderType: '' as 'waiver' | 'form'
   });
+  const [feedbackModal, setFeedbackModal] = useState<{ isOpen: boolean; enrollmentId: string; studentName: string }>({ isOpen: false, enrollmentId: "", studentName: "" });
 
 
   const { data: rosterData, isLoading, error } = useQuery<RosterData>({
@@ -514,6 +516,14 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem
+                                  onClick={() => setFeedbackModal({ isOpen: true, enrollmentId: student.enrollmentId, studentName: `${student.firstName} ${student.lastName}` })}
+                                  className="group"
+                                  data-testid={`dropdown-feedback-${student.studentId}`}
+                                >
+                                  <FileText className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                                  Feedback & Notes
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
                                   onClick={() => alert('Certificate management coming soon')}
                                   className="group"
                                   data-testid={`dropdown-certificate-${student.studentId}`}
@@ -674,6 +684,14 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
           enrollmentId={rescheduleModal.enrollmentId}
           currentCourse={rescheduleModal.currentCourse}
           currentScheduleDate={rescheduleModal.currentScheduleDate}
+        />
+
+        <EnrollmentFeedbackModal
+          isOpen={feedbackModal.isOpen}
+          onClose={() => setFeedbackModal({ ...feedbackModal, isOpen: false })}
+          enrollmentId={feedbackModal.enrollmentId}
+          userRole="instructor"
+          isInstructor={true}
         />
       </DialogContent>
     </Dialog>

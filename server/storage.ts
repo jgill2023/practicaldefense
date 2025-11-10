@@ -4,6 +4,7 @@ import {
   courses,
   courseSchedules,
   enrollments,
+  courseEnrollmentFeedback,
   appSettings,
   courseInformationForms,
   courseInformationFormFields,
@@ -31,6 +32,8 @@ import {
   type InsertCourseSchedule,
   type Enrollment,
   type InsertEnrollment,
+  type CourseEnrollmentFeedback,
+  type InsertCourseEnrollmentFeedback,
   type AppSettings,
   type InsertAppSettings,
   type CourseWithSchedules,
@@ -210,6 +213,12 @@ export interface IStorage {
   getEnrollmentsByStudent(studentId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByInstructor(instructorId: string): Promise<EnrollmentWithDetails[]>;
   getEnrollmentsByCourse(courseId: string): Promise<EnrollmentWithDetails[]>;
+
+  // Course Enrollment Feedback operations
+  createOrUpdateEnrollmentFeedback(enrollmentId: string, feedback: Partial<InsertCourseEnrollmentFeedback>): Promise<CourseEnrollmentFeedback>;
+  getEnrollmentFeedback(enrollmentId: string): Promise<CourseEnrollmentFeedback | undefined>;
+  updateInstructorFeedback(enrollmentId: string, instructorId: string, feedback: { positive?: string; opportunities?: string; actionPlan?: string }): Promise<CourseEnrollmentFeedback>;
+  updateStudentNotes(enrollmentId: string, notes: string): Promise<CourseEnrollmentFeedback>;
   getStudentsByInstructor(instructorId: string): Promise<{
     current: any[];
     former: any[];
@@ -1417,6 +1426,69 @@ export class DatabaseStorage implements IStorage {
       orderBy: desc(enrollments.createdAt),
     });
     return enrollmentList;
+  }
+
+  // Course Enrollment Feedback operations
+  async createOrUpdateEnrollmentFeedback(enrollmentId: string, feedback: Partial<InsertCourseEnrollmentFeedback>): Promise<CourseEnrollmentFeedback> {
+    // Check if feedback already exists
+    const existing = await db.query.courseEnrollmentFeedback.findFirst({
+      where: eq(courseEnrollmentFeedback.enrollmentId, enrollmentId),
+    });
+
+    if (existing) {
+      // Update existing feedback
+      const [updated] = await db
+        .update(courseEnrollmentFeedback)
+        .set({ ...feedback, updatedAt: new Date() })
+        .where(eq(courseEnrollmentFeedback.enrollmentId, enrollmentId))
+        .returning();
+      return updated;
+    } else {
+      // Create new feedback
+      const [created] = await db
+        .insert(courseEnrollmentFeedback)
+        .values({ enrollmentId, ...feedback })
+        .returning();
+      return created;
+    }
+  }
+
+  async getEnrollmentFeedback(enrollmentId: string): Promise<CourseEnrollmentFeedback | undefined> {
+    const feedback = await db.query.courseEnrollmentFeedback.findFirst({
+      where: eq(courseEnrollmentFeedback.enrollmentId, enrollmentId),
+    });
+    return feedback;
+  }
+
+  async updateInstructorFeedback(
+    enrollmentId: string,
+    instructorId: string,
+    feedback: { positive?: string; opportunities?: string; actionPlan?: string }
+  ): Promise<CourseEnrollmentFeedback> {
+    const updateData: any = {
+      instructorId,
+      instructorFeedbackDate: new Date(),
+      updatedAt: new Date(),
+    };
+
+    if (feedback.positive !== undefined) {
+      updateData.instructorFeedbackPositive = feedback.positive;
+    }
+    if (feedback.opportunities !== undefined) {
+      updateData.instructorFeedbackOpportunities = feedback.opportunities;
+    }
+    if (feedback.actionPlan !== undefined) {
+      updateData.instructorFeedbackActionPlan = feedback.actionPlan;
+    }
+
+    return this.createOrUpdateEnrollmentFeedback(enrollmentId, updateData);
+  }
+
+  async updateStudentNotes(enrollmentId: string, notes: string): Promise<CourseEnrollmentFeedback> {
+    return this.createOrUpdateEnrollmentFeedback(enrollmentId, {
+      studentNotes: notes,
+      studentNotesDate: new Date(),
+    });
   }
 
   async getStudentsByInstructor(instructorId: string): Promise<{

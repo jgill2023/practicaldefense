@@ -195,6 +195,23 @@ export const enrollments = pgTable("enrollments", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Course enrollment feedback - instructor feedback and student notes
+export const courseEnrollmentFeedback = pgTable("course_enrollment_feedback", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  enrollmentId: uuid("enrollment_id").notNull().unique().references(() => enrollments.id, { onDelete: "cascade" }),
+  // Instructor feedback fields
+  instructorFeedbackPositive: text("instructor_feedback_positive"), // Positive feedback
+  instructorFeedbackOpportunities: text("instructor_feedback_opportunities"), // Areas of opportunity
+  instructorFeedbackActionPlan: text("instructor_feedback_action_plan"), // Action plan
+  instructorId: varchar("instructor_id").references(() => users.id), // Who provided the feedback
+  instructorFeedbackDate: timestamp("instructor_feedback_date"), // When instructor last updated feedback
+  // Student notes field
+  studentNotes: text("student_notes"), // Student's own notes/reflections
+  studentNotesDate: timestamp("student_notes_date"), // When student last updated notes
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Waitlist management for when events are full
 export const waitlist = pgTable("waitlist", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -387,6 +404,21 @@ export const enrollmentRelations = relations(enrollments, ({ one }) => ({
     fields: [enrollments.scheduleId],
     references: [courseSchedules.id],
   }),
+  feedback: one(courseEnrollmentFeedback, {
+    fields: [enrollments.id],
+    references: [courseEnrollmentFeedback.enrollmentId],
+  }),
+}));
+
+export const courseEnrollmentFeedbackRelations = relations(courseEnrollmentFeedback, ({ one }) => ({
+  enrollment: one(enrollments, {
+    fields: [courseEnrollmentFeedback.enrollmentId],
+    references: [enrollments.id],
+  }),
+  instructor: one(users, {
+    fields: [courseEnrollmentFeedback.instructorId],
+    references: [users.id],
+  }),
 }));
 
 export const waitlistRelations = relations(waitlist, ({ one }) => ({
@@ -491,6 +523,12 @@ export const insertEnrollmentSchema = createInsertSchema(enrollments).omit({
   updatedAt: true,
 });
 
+export const insertCourseEnrollmentFeedbackSchema = createInsertSchema(courseEnrollmentFeedback).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertWaitlistSchema = createInsertSchema(waitlist).omit({
   id: true,
   createdAt: true,
@@ -554,6 +592,8 @@ export type InsertEventSession = z.infer<typeof insertEventSessionSchema>;
 export type EventSession = typeof eventSessions.$inferSelect;
 export type InsertEnrollment = z.infer<typeof insertEnrollmentSchema>;
 export type Enrollment = typeof enrollments.$inferSelect;
+export type InsertCourseEnrollmentFeedback = z.infer<typeof insertCourseEnrollmentFeedbackSchema>;
+export type CourseEnrollmentFeedback = typeof courseEnrollmentFeedback.$inferSelect;
 export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
 export type WaitlistEntry = typeof waitlist.$inferSelect;
 export type InsertAppSettings = z.infer<typeof insertAppSettingsSchema>;
@@ -600,6 +640,7 @@ export type EnrollmentWithDetails = Enrollment & {
   course: Course;
   schedule: CourseSchedule;
   student: User | null; // Nullable for draft enrollments
+  feedback?: CourseEnrollmentFeedback | null; // Optional feedback from instructor and student
 };
 
 export type WaitlistWithUser = WaitlistEntry & {

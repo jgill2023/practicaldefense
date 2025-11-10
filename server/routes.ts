@@ -1319,6 +1319,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enrollment feedback endpoints
+  
+  // Get feedback for an enrollment
+  app.get("/api/enrollments/:enrollmentId/feedback", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.claims?.sub;
+      const enrollmentId = req.params.enrollmentId;
+
+      // Verify enrollment exists and user has access
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+
+      // Check access: student, instructor of the course, or superadmin
+      const user = await storage.getUser(userId);
+      const hasAccess = 
+        enrollment.studentId === userId || 
+        (user?.role === 'instructor' && enrollment.course?.instructorId === userId) ||
+        user?.role === 'superadmin';
+
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const feedback = await storage.getEnrollmentFeedback(enrollmentId);
+      res.json(feedback || null);
+    } catch (error) {
+      console.error("Error fetching enrollment feedback:", error);
+      res.status(500).json({ message: "Failed to fetch enrollment feedback" });
+    }
+  });
+
+  // Instructor updates feedback for an enrollment
+  app.patch("/api/instructor/enrollments/:enrollmentId/feedback", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.claims?.sub;
+      const enrollmentId = req.params.enrollmentId;
+      const { positive, opportunities, actionPlan } = req.body;
+
+      // Verify enrollment exists
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+
+      // Verify instructor access
+      const user = await storage.getUser(userId);
+      const isInstructor = 
+        (user?.role === 'instructor' && enrollment.course?.instructorId === userId) ||
+        user?.role === 'superadmin';
+
+      if (!isInstructor) {
+        return res.status(403).json({ message: "Only instructors can update feedback" });
+      }
+
+      const feedback = await storage.updateInstructorFeedback(enrollmentId, userId, {
+        positive,
+        opportunities,
+        actionPlan,
+      });
+
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error updating instructor feedback:", error);
+      res.status(500).json({ message: "Failed to update instructor feedback" });
+    }
+  });
+
+  // Student updates their notes for an enrollment
+  app.patch("/api/enrollments/:enrollmentId/student-notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub || req.claims?.sub;
+      const enrollmentId = req.params.enrollmentId;
+      const { notes } = req.body;
+
+      // Verify enrollment exists and belongs to this student
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+
+      if (enrollment.studentId !== userId) {
+        return res.status(403).json({ message: "You can only update your own notes" });
+      }
+
+      const feedback = await storage.updateStudentNotes(enrollmentId, notes || '');
+      res.json(feedback);
+    } catch (error) {
+      console.error("Error updating student notes:", error);
+      res.status(500).json({ message: "Failed to update student notes" });
+    }
+  });
+
   // Submit enrollment form responses
   app.post("/api/enrollment-form-submissions", isAuthenticated, async (req: any, res) => {
     try {
