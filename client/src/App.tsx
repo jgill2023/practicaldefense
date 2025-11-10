@@ -31,6 +31,56 @@ import AppointmentsPage from "@/pages/appointments";
 import BookAppointmentPage from "@/pages/book-appointment";
 import AdminCreditsPage from "@/pages/admin-credits";
 import NotFound from "@/pages/not-found";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+
+// Assuming ProtectedRouteProps and Alert components are defined elsewhere
+// For this example, let's define a placeholder for ProtectedRouteProps
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requireInstructor?: boolean;
+}
+
+function ProtectedRoute({ children, requireInstructor = false }: ProtectedRouteProps) {
+  const { user, isLoading } = useAuth();
+  const [location] = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    window.location.href = '/api/login';
+    return null;
+  }
+
+  if (requireInstructor && user.role !== 'instructor' && user.role !== 'superadmin') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Unauthorized</AlertTitle>
+          <AlertDescription>
+            You need instructor access to view this page. Redirecting...
+          </AlertDescription>
+        </Alert>
+        {setTimeout(() => {
+          window.location.href = '/';
+        }, 2000) && null}
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 
 function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
