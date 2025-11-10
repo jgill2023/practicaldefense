@@ -41,7 +41,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
 import type { CourseWithSchedules, CourseScheduleWithSessions, User, AppSettings, InsertAppSettings } from "@shared/schema";
 import { insertAppSettingsSchema } from "@shared/schema";
 import 'react-big-calendar/lib/css/react-big-calendar.css';
