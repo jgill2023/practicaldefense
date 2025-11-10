@@ -59,10 +59,21 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     return `${year}-${month}-${day}`;
   };
 
-  // Get start and end of current displayed month
+  // Get start and end of current displayed month, including overflow dates from adjacent months
   const getMonthRange = (month: Date) => {
-    const start = new Date(month.getFullYear(), month.getMonth(), 1);
-    const end = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+    // Get first day of the month
+    const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+    // Get last day of the month
+    const lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+    
+    // Extend to include dates from previous month that might show in the calendar
+    const start = new Date(firstDay);
+    start.setDate(start.getDate() - 7); // Go back 7 days to catch previous month overflow
+    
+    // Extend to include dates from next month that might show in the calendar
+    const end = new Date(lastDay);
+    end.setDate(end.getDate() + 7); // Go forward 7 days to catch next month overflow
+    
     return { start, end };
   };
 
