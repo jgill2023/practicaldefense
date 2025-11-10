@@ -79,10 +79,10 @@ export default function Landing() {
 
   // Filter and sort courses based on home page settings and category filter
   const sortedAndFilteredCourses = useMemo(() => {
-    console.log('Filtering courses:', { 
-      totalCourses: courses?.length, 
-      courseFilter, 
-      appSettings 
+    console.log('Filtering courses:', {
+      totalCourses: courses?.length,
+      courseFilter,
+      appSettings
     });
 
     if (!courses || courses.length === 0) {
@@ -112,8 +112,8 @@ export default function Landing() {
 
       // Must have at least one upcoming schedule
       const now = new Date();
-      const hasUpcomingSchedules = course.schedules && course.schedules.some(schedule => 
-        !schedule.deletedAt && 
+      const hasUpcomingSchedules = course.schedules && course.schedules.some(schedule =>
+        !schedule.deletedAt &&
         new Date(schedule.startDate) > now &&
         schedule.availableSpots > 0
       );
@@ -131,8 +131,8 @@ export default function Landing() {
     // Apply category filter
     if (courseFilter !== "all") {
       filtered = filtered.filter(course => {
-        const categoryName = typeof course.category === 'string' 
-          ? course.category 
+        const categoryName = typeof course.category === 'string'
+          ? course.category
           : course.category?.name || 'General';
         return categoryName === courseFilter;
       });
@@ -178,7 +178,7 @@ export default function Landing() {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0">
-          <div 
+          <div
             className="w-full h-full bg-cover bg-center"
             style={{
               backgroundImage: `url(${heroImage})`,
@@ -201,8 +201,8 @@ export default function Landing() {
           </p>
 
           <div className="flex justify-center mb-16">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="bg-white text-black hover:bg-gray-200 px-4 sm:px-8 py-3 rounded border-2 border-white transition-colors text-sm sm:text-base md:text-lg lg:text-xl"
               style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
               onClick={() => {
@@ -252,7 +252,7 @@ export default function Landing() {
                 <p className="text-muted-foreground mb-6" style={{ fontSize: '16px', lineHeight: '1.8em' }}>
                   We tailor the definition of proficiency to our clients' strengths and blind spots, forging a personalized path based on evidence, ability, and individual goals. Our program delves into fundamentals, emphasizing quantifiable metrics to validate theories. Grip, trigger control, sighting, practice, goal setting, and performance tracking are integral components, ensuring a comprehensive exploration of pistolcraft tailored to individual needs.
                 </p>
-                <Button 
+                <Button
                   className="bg-black text-white hover:bg-black/90 w-fit rounded-sm"
                   data-testid="button-learn-more-pistolcraft"
                   onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
@@ -261,7 +261,7 @@ export default function Landing() {
                 </Button>
               </div>
               <div className="flex items-center">
-                <img 
+                <img
                   src={deductivePistolcraftImage}
                   alt="Deductive Pistolcraft Instructor"
                   className="w-full h-auto object-cover"
@@ -274,7 +274,7 @@ export default function Landing() {
           <div className="bg-card rounded-lg overflow-hidden shadow-lg" data-testid="feature-practice-mastery">
             <div className="grid md:grid-cols-2 gap-6 p-6">
               <div className="flex items-center">
-                <img 
+                <img
                   src={practiceForMasteryImage}
                   alt="Practice for Mastery Training"
                   className="w-full h-auto object-cover"
@@ -287,7 +287,7 @@ export default function Landing() {
                 <p className="text-muted-foreground mb-6" style={{ fontSize: '16px', lineHeight: '1.8em' }}>
                   "Practice for Mastery" is designed to assist our students in crafting a training plan geared towards achieving high-performance goals with a firearm. This program integrates both dry and live fire techniques, showcasing immediate improvements in performance. As participants advance through the curriculum, the emphasis transitions from immediate performance gains to sustained growth.
                 </p>
-                <Button 
+                <Button
                   className="bg-black text-white hover:bg-black/90 w-fit rounded-sm"
                   data-testid="button-learn-more-practice-mastery"
                   onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
@@ -308,7 +308,7 @@ export default function Landing() {
                 <p className="text-muted-foreground mb-6" style={{ fontSize: '16px', lineHeight: '1.8em' }}>
                   Offering an in-depth exploration of performance concepts employed by highly-skilled practitioners, specifically competitive shooters. In Performance Shooting for the Concealed Carrier we delve into applying those metrics to benefit concealed carriers and defensive enthusiasts, unraveling the hows and whys behind integrating world-class shooting skills into defensive preparedness.
                 </p>
-                <Button 
+                <Button
                   className="bg-black text-white hover:bg-black/90 w-fit rounded-sm"
                   data-testid="button-learn-more-performance-shooting"
                   onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
@@ -317,7 +317,7 @@ export default function Landing() {
                 </Button>
               </div>
               <div className="flex items-center">
-                <img 
+                <img
                   src={performanceShootingImage}
                   alt="Performance Shooting for the Concealed Carrier"
                   className="w-full h-auto object-cover"
@@ -356,8 +356,8 @@ export default function Landing() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {appointmentTypes.map((type) => (
-                <Card 
-                  key={type.id} 
+                <Card
+                  key={type.id}
                   className="hover:shadow-lg transition-shadow"
                   data-testid={`appointment-card-${type.id}`}
                 >
@@ -383,9 +383,18 @@ export default function Landing() {
                         <span className="font-semibold">${Number(type.price).toFixed(2)}</span>
                       </div>
                     </div>
-                    <Button 
-                      className="w-full bg-black text-white hover:bg-black/90"
-                      onClick={() => {
+                    <Button
+                      size="lg"
+                      className="w-full touch-manipulation"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedAppointmentType(type);
+                        setShowBookingModal(true);
+                      }}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         setSelectedAppointmentType(type);
                         setShowBookingModal(true);
                       }}
@@ -415,7 +424,7 @@ export default function Landing() {
 
           {/* Course Filter Tabs - Mobile Responsive */}
           <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-12 px-2">
-            <Button 
+            <Button
               variant={courseFilter === "all" ? "default" : "outline"}
               onClick={() => setCourseFilter("all")}
               data-testid="filter-all"
@@ -452,9 +461,9 @@ export default function Landing() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               {sortedAndFilteredCourses.map(course => (
-                <CourseCard 
-                  key={course.id} 
-                  course={course} 
+                <CourseCard
+                  key={course.id}
+                  course={course}
                   onRegister={handleRegisterCourse}
                 />
               ))}

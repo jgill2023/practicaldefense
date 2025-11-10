@@ -149,6 +149,11 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
             e.stopPropagation();
             onRegister(course);
           }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onRegister(course);
+          }}
           disabled={!nextSchedule}
           data-testid={`button-register-${course.id}`}
           style={{ position: 'relative', zIndex: 10 }}

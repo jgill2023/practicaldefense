@@ -119,6 +119,14 @@
   .touch-manipulation {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Ensure buttons work on mobile */
+  button {
+    touch-action: manipulation;
   }
 }
 
