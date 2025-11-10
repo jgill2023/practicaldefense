@@ -71,25 +71,25 @@ export default function InstructorDashboard() {
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/courses"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/instructor/enrollments"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 
   const { data: deletedCourses = [], isLoading: deletedCoursesLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/deleted-courses"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 
   const { data: deletedSchedules = [], isLoading: deletedSchedulesLoading } = useQuery<any[]>({
     queryKey: ["/api/instructor/deleted-schedules"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 
@@ -104,14 +104,14 @@ export default function InstructorDashboard() {
     totalAppointments: number;
   }>({
     queryKey: ["/api/instructor/dashboard-stats"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 
   // Fetch refund requests
   const { data: refundRequests = [] } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/instructor/refund-requests"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 

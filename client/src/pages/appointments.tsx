@@ -88,25 +88,25 @@ export default function AppointmentsPage() {
 
   const { data: appointmentTypes = [], isLoading: typesLoading } = useQuery<AppointmentType[]>({
     queryKey: ["/api/appointments/instructor/appointment-types"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 
   const { data: weeklyTemplates = [], isLoading: templatesLoading } = useQuery<WeeklyTemplate[]>({
     queryKey: ["/api/appointments/instructor/weekly-templates"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 
   const { data: notificationTemplates = [], isLoading: notificationTemplatesLoading } = useQuery<any[]>({
     queryKey: ["/api/appointments/instructor/notification-templates"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 
   const { data: reminderSchedules = [], isLoading: reminderSchedulesLoading } = useQuery<any[]>({
     queryKey: ["/api/appointments/instructor/reminder-schedules"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 

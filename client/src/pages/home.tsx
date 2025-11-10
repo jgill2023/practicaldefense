@@ -5,6 +5,7 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, BookOpen, Users, TrendingUp } from "lucide-react";
+import { hasInstructorPrivileges } from "@/lib/authUtils";
 
 export default function Home() {
   const { user, isLoading } = useAuth();
@@ -13,7 +14,7 @@ export default function Home() {
   useEffect(() => {
     if (!isLoading && user) {
       // Redirect based on user role
-      if (user?.role === 'instructor') {
+      if (hasInstructorPrivileges(user)) {
         setLocation('/instructor-dashboard');
       } else {
         setLocation('/student-portal');

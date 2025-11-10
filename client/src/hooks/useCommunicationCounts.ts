@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { hasInstructorPrivileges } from "@/lib/authUtils";
 
 interface CommunicationCounts {
   total: number;
@@ -28,7 +29,7 @@ export function useCommunicationCounts() {
         flagged: data.data?.filter((c: any) => c.isFlagged).length || 0,
       };
     },
-    enabled: isAuthenticated && (user as any)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as any),
     refetchInterval: 60000, // Refetch every minute for navigation counters
     staleTime: 30000, // Consider data stale after 30 seconds
   });

@@ -27,7 +27,7 @@ export default function Reports() {
   // Fetch dashboard statistics
   const { data: dashboardStats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/instructor/dashboard-stats"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 

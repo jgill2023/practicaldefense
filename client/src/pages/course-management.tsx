@@ -404,28 +404,28 @@ export default function CourseManagement() {
   // Fetch instructor's courses with detailed schedules
   const { data: courses = [], isLoading: coursesLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/courses-detailed"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 
   // Fetch app settings
   const { data: appSettings } = useQuery<AppSettings>({
     queryKey: ["/api/app-settings"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 
   // Fetch deleted courses
   const { data: deletedCourses = [], isLoading: deletedCoursesLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/deleted-courses"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 
   // Fetch categories for visibility controls
   const { data: categories = [] } = useQuery<any[]>({
     queryKey: ["/api/categories"],
-    enabled: isAuthenticated && (user as User)?.role === 'instructor',
+    enabled: isAuthenticated && hasInstructorPrivileges(user as User),
     retry: false,
   });
 
