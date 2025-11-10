@@ -68,20 +68,33 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
 
   const { start: monthStart, end: monthEnd } = getMonthRange(currentMonth);
 
+  // Debug enabled conditions
+  console.log('Query enabled conditions:', {
+    isAuthenticated,
+    instructorId: !!instructorId,
+    appointmentType: !!appointmentType,
+    open,
+    monthStart: formatLocalDate(monthStart),
+    monthEnd: formatLocalDate(monthEnd)
+  });
+
   // Fetch all available slots for the month to determine day availability
-  const { data: monthSlots = [] } = useQuery<any[]>({
+  const { data: monthSlots = [], isLoading: monthLoading, error: monthError } = useQuery<any[]>({
     queryKey: ["/api/appointments/available-slots", instructorId, appointmentType?.id, formatLocalDate(monthStart), formatLocalDate(monthEnd)],
     queryFn: async ({ queryKey, signal }) => {
       const [, instructorIdParam, typeIdParam, startDate, endDate] = queryKey;
+      console.log('Fetching month slots:', { instructorIdParam, typeIdParam, startDate, endDate });
       if (!typeIdParam || !startDate || !endDate) return [];
-      const response = await fetch(
-        `/api/appointments/available-slots?instructorId=${instructorIdParam}&appointmentTypeId=${typeIdParam}&startDate=${startDate}&endDate=${endDate}`,
-        { credentials: "include", signal }
-      );
+      const url = `/api/appointments/available-slots?instructorId=${instructorIdParam}&appointmentTypeId=${typeIdParam}&startDate=${startDate}&endDate=${endDate}`;
+      console.log('Month slots URL:', url);
+      const response = await fetch(url, { credentials: "include", signal });
+      console.log('Month slots response:', response.status);
       if (!response.ok) return [];
-      return response.json();
+      const data = await response.json();
+      console.log('Month slots data:', data);
+      return data;
     },
-    enabled: isAuthenticated && !!instructorId && !!appointmentType,
+    enabled: isAuthenticated && !!instructorId && !!appointmentType && open,
     retry: false,
   });
 
@@ -92,6 +105,10 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     const dateKey = formatLocalDate(slotDate);
     dayAvailability[dateKey] = true;
   });
+  
+  // Debug logging
+  console.log('Month slots:', monthSlots.length);
+  console.log('Day availability:', dayAvailability);
 
   // Fetch available slots for selected date
   const { data: availableSlots = [], isLoading: slotsLoading } = useQuery<TimeSlot[]>({
