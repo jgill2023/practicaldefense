@@ -156,7 +156,7 @@ import {
   type CreditTransactionWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne, inArray } from "drizzle-orm";
+import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne, inArray, notInArray } from "drizzle-orm";
 import Stripe from 'stripe';
 
 export interface IStorage {
@@ -419,6 +419,7 @@ export interface IStorage {
 
   // Roster and scheduling operations
   getInstructorAvailableSchedules(instructorId: string, excludeEnrollmentId?: string): Promise<any[]>;
+  getAllAvailableSchedules(excludeStudentId?: string): Promise<any[]>;
 
   // Course notification signup operations
   createCourseNotificationSignup(signup: InsertCourseNotificationSignup): Promise<CourseNotificationSignup>;
@@ -1922,6 +1923,97 @@ export class DatabaseStorage implements IStorage {
       maxSpots: schedule.maxSpots,
       availableSpots: Math.max(0, schedule.maxSpots - Number(schedule.enrolledCount))
     }));
+  }
+
+  async getAllAvailableSchedules(excludeStudentId?: string): Promise<any[]> {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Get all schedules that the student is already enrolled in, so we can exclude them
+    let excludeScheduleIds: string[] = [];
+
+    if (excludeStudentId) {
+      const studentEnrollments = await db.query.enrollments.findMany({
+        where: and(
+          eq(enrollments.studentId, excludeStudentId),
+          eq(enrollments.status, 'confirmed')
+        ),
+        columns: {
+          scheduleId: true,
+        }
+      });
+
+      excludeScheduleIds = studentEnrollments.map(e => e.scheduleId);
+    }
+
+    // Get all active course schedules from any instructor that are in the future
+    const whereConditions = [
+      eq(courses.isActive, true),
+      isNull(courses.deletedAt),
+      isNull(courseSchedules.deletedAt),
+      gte(courseSchedules.startDate, startOfToday),
+    ];
+
+    // Exclude schedules the student is already enrolled in
+    if (excludeScheduleIds.length > 0) {
+      whereConditions.push(notInArray(courseSchedules.id, excludeScheduleIds));
+    }
+
+    const availableSchedules = await db
+      .select({
+        id: courseSchedules.id,
+        courseId: courseSchedules.courseId,
+        courseTitle: courses.title,
+        instructorName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+        startDate: courseSchedules.startDate,
+        endDate: courseSchedules.endDate,
+        startTime: courseSchedules.startTime,
+        endTime: courseSchedules.endTime,
+        location: courseSchedules.location,
+        maxSpots: courseSchedules.maxSpots,
+        enrolledCount: sql<number>`CAST(COALESCE(COUNT(DISTINCT ${enrollments.id}), 0) AS INTEGER)`
+      })
+      .from(courseSchedules)
+      .leftJoin(courses, eq(courseSchedules.courseId, courses.id))
+      .leftJoin(users, eq(courses.instructorId, users.id))
+      .leftJoin(enrollments, and(
+        eq(enrollments.scheduleId, courseSchedules.id),
+        eq(enrollments.status, 'confirmed')
+      ))
+      .where(and(...whereConditions))
+      .groupBy(
+        courseSchedules.id,
+        courseSchedules.courseId,
+        courses.title,
+        users.firstName,
+        users.lastName,
+        courseSchedules.startDate,
+        courseSchedules.endDate,
+        courseSchedules.startTime,
+        courseSchedules.endTime,
+        courseSchedules.location,
+        courseSchedules.maxSpots
+      )
+      .orderBy(courseSchedules.startDate, courseSchedules.startTime);
+
+    console.log(`Found ${availableSchedules.length} total available schedules (excluding student ${excludeStudentId})`);
+
+    // Calculate available spots and filter out full schedules
+    return availableSchedules
+      .map(schedule => ({
+        id: schedule.id,
+        courseId: schedule.courseId,
+        courseTitle: schedule.courseTitle,
+        instructorName: schedule.instructorName,
+        startDate: schedule.startDate,
+        endDate: schedule.endDate,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        location: schedule.location,
+        maxSpots: schedule.maxSpots,
+        availableSpots: Math.max(0, schedule.maxSpots - Number(schedule.enrolledCount))
+      }))
+      .filter(schedule => schedule.availableSpots > 0);
   }
 
   // Course notification signup operations
@@ -4028,6 +4120,97 @@ export class DatabaseStorage implements IStorage {
       maxSpots: schedule.maxSpots,
       availableSpots: Math.max(0, schedule.maxSpots - Number(schedule.enrolledCount))
     }));
+  }
+
+  async getAllAvailableSchedules(excludeStudentId?: string): Promise<any[]> {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Get all schedules that the student is already enrolled in, so we can exclude them
+    let excludeScheduleIds: string[] = [];
+
+    if (excludeStudentId) {
+      const studentEnrollments = await db.query.enrollments.findMany({
+        where: and(
+          eq(enrollments.studentId, excludeStudentId),
+          eq(enrollments.status, 'confirmed')
+        ),
+        columns: {
+          scheduleId: true,
+        }
+      });
+
+      excludeScheduleIds = studentEnrollments.map(e => e.scheduleId);
+    }
+
+    // Get all active course schedules from any instructor that are in the future
+    const whereConditions = [
+      eq(courses.isActive, true),
+      isNull(courses.deletedAt),
+      isNull(courseSchedules.deletedAt),
+      gte(courseSchedules.startDate, startOfToday),
+    ];
+
+    // Exclude schedules the student is already enrolled in
+    if (excludeScheduleIds.length > 0) {
+      whereConditions.push(notInArray(courseSchedules.id, excludeScheduleIds));
+    }
+
+    const availableSchedules = await db
+      .select({
+        id: courseSchedules.id,
+        courseId: courseSchedules.courseId,
+        courseTitle: courses.title,
+        instructorName: sql<string>`${users.firstName} || ' ' || ${users.lastName}`,
+        startDate: courseSchedules.startDate,
+        endDate: courseSchedules.endDate,
+        startTime: courseSchedules.startTime,
+        endTime: courseSchedules.endTime,
+        location: courseSchedules.location,
+        maxSpots: courseSchedules.maxSpots,
+        enrolledCount: sql<number>`CAST(COALESCE(COUNT(DISTINCT ${enrollments.id}), 0) AS INTEGER)`
+      })
+      .from(courseSchedules)
+      .leftJoin(courses, eq(courseSchedules.courseId, courses.id))
+      .leftJoin(users, eq(courses.instructorId, users.id))
+      .leftJoin(enrollments, and(
+        eq(enrollments.scheduleId, courseSchedules.id),
+        eq(enrollments.status, 'confirmed')
+      ))
+      .where(and(...whereConditions))
+      .groupBy(
+        courseSchedules.id,
+        courseSchedules.courseId,
+        courses.title,
+        users.firstName,
+        users.lastName,
+        courseSchedules.startDate,
+        courseSchedules.endDate,
+        courseSchedules.startTime,
+        courseSchedules.endTime,
+        courseSchedules.location,
+        courseSchedules.maxSpots
+      )
+      .orderBy(courseSchedules.startDate, courseSchedules.startTime);
+
+    console.log(`Found ${availableSchedules.length} total available schedules (excluding student ${excludeStudentId})`);
+
+    // Calculate available spots and filter out full schedules
+    return availableSchedules
+      .map(schedule => ({
+        id: schedule.id,
+        courseId: schedule.courseId,
+        courseTitle: schedule.courseTitle,
+        instructorName: schedule.instructorName,
+        startDate: schedule.startDate,
+        endDate: schedule.endDate,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        location: schedule.location,
+        maxSpots: schedule.maxSpots,
+        availableSpots: Math.max(0, schedule.maxSpots - Number(schedule.enrolledCount))
+      }))
+      .filter(schedule => schedule.availableSpots > 0);
   }
 
   // Course notification signup operations

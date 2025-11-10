@@ -4582,7 +4582,7 @@ jeremy@abqconcealedcarry.com
     }
   });
 
-  // Get available schedules for rescheduling
+  // Get available schedules for rescheduling (instructor's courses only)
   app.get("/api/instructor/available-schedules", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.claims.sub;
@@ -4602,6 +4602,29 @@ jeremy@abqconcealedcarry.com
     } catch (error: any) {
       console.error("Error fetching available schedules:", error);
       res.status(500).json({ error: "Failed to fetch available schedules" });
+    }
+  });
+
+  // Get all available schedules for cross-enrollment (all instructors' courses)
+  app.get("/api/cross-enrollment/available-schedules", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.claims.sub;
+
+      // Only allow instructors to view cross-enrollment schedules
+      const user = await storage.getUser(userId);
+      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      }
+
+      const { studentId } = req.query;
+
+      // Get all active course schedules from any instructor, excluding student's current enrollments
+      const schedules = await storage.getAllAvailableSchedules(studentId as string);
+
+      res.json(schedules);
+    } catch (error: any) {
+      console.error("Error fetching cross-enrollment schedules:", error);
+      res.status(500).json({ error: "Failed to fetch cross-enrollment schedules" });
     }
   });
 
