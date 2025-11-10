@@ -6811,7 +6811,7 @@ jeremy@abqconcealedcarry.com
   // Get instructor credit balance
   app.get('/api/credits/balance', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
       if (!user || user.role !== 'instructor') {
@@ -6829,7 +6829,7 @@ jeremy@abqconcealedcarry.com
   // Get available credit packages
   app.get('/api/credits/packages', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
       if (!user || user.role !== 'instructor') {
@@ -6847,7 +6847,7 @@ jeremy@abqconcealedcarry.com
   // Get credit transaction history
   app.get('/api/credits/transactions', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
 
       if (!user || user.role !== 'instructor') {
@@ -6866,7 +6866,7 @@ jeremy@abqconcealedcarry.com
   // Create payment intent for credit purchase
   app.post('/api/credits/create-payment-intent', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const { packageId } = req.body;
 
       if (!packageId) {
@@ -6918,7 +6918,7 @@ jeremy@abqconcealedcarry.com
   // Confirm credit purchase after payment
   app.post('/api/credits/confirm-purchase', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.claims.sub;
       const { paymentIntentId } = req.body;
 
       if (!paymentIntentId) {
