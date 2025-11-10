@@ -78,13 +78,13 @@ export default function BookAppointmentPage() {
     queryFn: async ({ queryKey, signal }) => {
       const [, instructorIdParam, typeIdParam, dateStr] = queryKey;
       if (!typeIdParam || !dateStr) return [];
-      
+
       // Create date range for the selected day
       const startDate = dateStr;
       const date = new Date(dateStr);
       date.setDate(date.getDate() + 1);
       const endDate = formatLocalDate(date);
-      
+
       const response = await fetch(
         `/api/appointments/available-slots?instructorId=${instructorIdParam}&appointmentTypeId=${typeIdParam}&startDate=${startDate}&endDate=${endDate}`,
         { credentials: "include", signal }
@@ -95,18 +95,18 @@ export default function BookAppointmentPage() {
       const allSlots = await response.json();
       console.log('All slots from API:', allSlots);
       console.log('Selected date string:', dateStr);
-      
+
       // Filter to only slots that are available and on the selected date
       const filtered = allSlots.filter((slot: any) => {
         if (!slot.isAvailable) return false;
-        
+
         // Parse the ISO string and extract date in local timezone
         const slotDate = new Date(slot.startTime);
         const slotDateStr = formatLocalDate(slotDate);
         console.log(`Slot start: ${slot.startTime}, formatted: ${slotDateStr}, match: ${slotDateStr === dateStr}`);
         return slotDateStr === dateStr;
       });
-      
+
       console.log('Filtered slots:', filtered);
       return filtered;
     },
@@ -142,7 +142,7 @@ export default function BookAppointmentPage() {
               map[dateStr] = true;
             }
           });
-          
+
           // Mark dates without slots as unavailable
           for (let i = 0; i < 60; i++) {
             const date = new Date(today);
@@ -256,6 +256,22 @@ export default function BookAppointmentPage() {
     setSelectedSlot(null);
   }
 
+  // Removed instructor-only restriction
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to book an appointment. Redirecting...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = '/api/login';
+      }, 2000);
+      return;
+    }
+  }, [isAuthenticated, authLoading, toast]);
+
+
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -344,7 +360,7 @@ export default function BookAppointmentPage() {
                 Select a date and time for your appointment
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="grid md:grid-cols-2 gap-6 py-4">
               {/* Left Column - Calendar */}
               <div className="space-y-4">
@@ -377,7 +393,7 @@ export default function BookAppointmentPage() {
                         const dateStr = formatLocalDate(date);
                         const hasAvailability = availabilityMap[dateStr] === true;
                         const noAvailability = availabilityMap[dateStr] === false && date >= new Date(new Date().setHours(0, 0, 0, 0));
-                        
+
                         return (
                           <div className="relative w-9 h-9 flex items-center justify-center">
                             {hasAvailability && (
@@ -396,7 +412,7 @@ export default function BookAppointmentPage() {
                     className="rounded-md border p-3"
                   />
                 </div>
-                
+
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full border-2 border-green-500" />
@@ -419,7 +435,7 @@ export default function BookAppointmentPage() {
                   <h4 className="font-semibold mb-3">
                     {selectedDate ? formattedDate : 'Select a date'}
                   </h4>
-                  
+
                   {!selectedDate ? (
                     <div className="text-center py-8 text-muted-foreground">
                       Please select a date to see available time slots
@@ -438,7 +454,7 @@ export default function BookAppointmentPage() {
                       {availableSlots.map((slot, index) => {
                         const startTime = new Date(slot.startTime);
                         const endTime = new Date(slot.endTime);
-                        
+
                         // Format time in 12-hour format with AM/PM
                         const formatTime = (date: Date) => {
                           return date.toLocaleTimeString('en-US', { 
@@ -447,7 +463,7 @@ export default function BookAppointmentPage() {
                             hour12: true 
                           });
                         };
-                        
+
                         return (
                           <Button
                             key={index}
