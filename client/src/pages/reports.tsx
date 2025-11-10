@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart, Users, DollarSign, TrendingUp, Calendar, MessageSquare, AlertTriangle, Download } from "lucide-react";
 import type { User } from "@shared/schema";
 import { format } from "date-fns";
+import { hasInstructorPrivileges } from "@/lib/authUtils";
 
 interface DashboardStats {
   upcomingCourses: number;
@@ -34,7 +35,7 @@ export default function Reports() {
     return <div>Please log in to view reports.</div>;
   }
 
-  if ((user as User)?.role !== 'instructor') {
+  if (!hasInstructorPrivileges(user as User)) {
     return <div>Access denied. Instructor privileges required.</div>;
   }
 

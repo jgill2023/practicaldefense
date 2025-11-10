@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
 import { Plus, Edit, Trash2, Clock, DollarSign, CheckCircle, XCircle, CalendarClock, Bell } from "lucide-react";
 import type { User } from "@shared/schema";
 
@@ -283,7 +283,7 @@ export default function AppointmentsPage() {
     );
   }
 
-  if ((user as User)?.role !== 'instructor') {
+  if (!hasInstructorPrivileges(user as User)) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">

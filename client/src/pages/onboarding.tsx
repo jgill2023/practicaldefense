@@ -4,13 +4,14 @@ import { InstructorOnboarding } from "@/components/InstructorOnboarding";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
+import { hasInstructorPrivileges } from "@/lib/authUtils";
 
 export default function OnboardingPage() {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading && (!user || user.role !== 'instructor')) {
+    if (!isLoading && (!user || !hasInstructorPrivileges(user))) {
       setLocation('/');
     }
   }, [user, isLoading, setLocation]);
