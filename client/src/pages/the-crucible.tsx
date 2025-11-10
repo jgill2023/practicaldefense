@@ -197,7 +197,7 @@ export default function TheCrucible() {
                   <h4 className="font-semibold mb-1">Left Target (Shots 1–5)</h4>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                     <li>Shot 1: draw and fire one shot into left-target head alpha (1" head alpha for Seanalair if attempting).</li>
-                    <li>Shots 2–5: four body shots on left target.</li>
+                    <li>Shots 2–5: Transition to the body alpha of the left target and fire four shots.</li>
                   </ul>
                 </div>
               </div>
