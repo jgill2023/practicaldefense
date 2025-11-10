@@ -224,7 +224,7 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 pr-8">
         <DialogHeader className="pr-8">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
