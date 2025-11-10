@@ -401,10 +401,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <h4 className="font-semibold mb-4">Contact</h4>
               <div className="space-y-2 text-primary-foreground/80">
                 <div className="flex items-start space-x-2">
-                  <span className="text-success">📞</span>
-                  <a href="tel:+15059445247" className="transition-colors" style={{ color: '#e8e9eb' }}>(505) 944-5247</a>
-                </div>
-                <div className="flex items-start space-x-2">
                   <span>✉️</span>
                   <a href="mailto:Chris@TacticalAdv.com" className="transition-colors" style={{ color: '#e8e9eb' }}>Chris@TacticalAdv.com</a>
                 </div>
