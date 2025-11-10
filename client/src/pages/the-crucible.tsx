@@ -187,7 +187,7 @@ export default function TheCrucible() {
                 <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">4</div>
                 <div className="flex-1">
                   <h4 className="font-semibold mb-1">Start Signal</h4>
-                  <p className="text-sm text-muted-foreground">On the beep, draw and begin.</p>
+                  <p className="text-sm text-muted-foreground">Upon the start signal (e.g., a timer beep), the shooter will begin the course of fire.</p>
                 </div>
               </div>
 
