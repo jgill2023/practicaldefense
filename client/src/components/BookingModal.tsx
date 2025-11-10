@@ -68,31 +68,18 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
 
   const { start: monthStart, end: monthEnd } = getMonthRange(currentMonth);
 
-  // Debug enabled conditions
-  console.log('Query enabled conditions:', {
-    isAuthenticated,
-    instructorId: !!instructorId,
-    appointmentType: !!appointmentType,
-    open,
-    monthStart: formatLocalDate(monthStart),
-    monthEnd: formatLocalDate(monthEnd)
-  });
-
   // Fetch all available slots for the month to determine day availability
-  const { data: monthSlots = [], isLoading: monthLoading, error: monthError } = useQuery<any[]>({
+  const { data: monthSlots = [] } = useQuery<any[]>({
     queryKey: ["/api/appointments/available-slots", instructorId, appointmentType?.id, formatLocalDate(monthStart), formatLocalDate(monthEnd)],
     queryFn: async ({ queryKey, signal }) => {
       const [, instructorIdParam, typeIdParam, startDate, endDate] = queryKey;
-      console.log('Fetching month slots:', { instructorIdParam, typeIdParam, startDate, endDate });
       if (!typeIdParam || !startDate || !endDate) return [];
-      const url = `/api/appointments/available-slots?instructorId=${instructorIdParam}&appointmentTypeId=${typeIdParam}&startDate=${startDate}&endDate=${endDate}`;
-      console.log('Month slots URL:', url);
-      const response = await fetch(url, { credentials: "include", signal });
-      console.log('Month slots response:', response.status);
+      const response = await fetch(
+        `/api/appointments/available-slots?instructorId=${instructorIdParam}&appointmentTypeId=${typeIdParam}&startDate=${startDate}&endDate=${endDate}`,
+        { credentials: "include", signal }
+      );
       if (!response.ok) return [];
-      const data = await response.json();
-      console.log('Month slots data:', data);
-      return data;
+      return response.json();
     },
     enabled: isAuthenticated && !!instructorId && !!appointmentType && open,
     retry: false,
@@ -105,10 +92,6 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     const dateKey = formatLocalDate(slotDate);
     dayAvailability[dateKey] = true;
   });
-  
-  // Debug logging
-  console.log('Month slots:', monthSlots.length);
-  console.log('Day availability:', dayAvailability);
 
   // Fetch available slots for selected date
   const { data: availableSlots = [], isLoading: slotsLoading } = useQuery<TimeSlot[]>({
@@ -316,22 +299,16 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 width: 2.5rem;
                 height: 2.5rem;
                 font-size: 0.875rem;
-                border-radius: 0.375rem;
               }
-              .booking-calendar .rdp-day_button {
-                position: relative;
-                width: 100%;
-                height: 100%;
+              .booking-calendar .rdp-day.day-available {
+                border: 2px solid #10b981 !important;
+                border-radius: 50% !important;
               }
-              .booking-calendar .rdp-day_button.day-available {
-                border: 2px solid #10b981;
-                border-radius: 50%;
-              }
-              .booking-calendar .rdp-day_button.day-unavailable {
+              .booking-calendar .rdp-day.day-unavailable {
                 opacity: 0.5;
                 position: relative;
               }
-              .booking-calendar .rdp-day_button.day-unavailable::before {
+              .booking-calendar .rdp-day.day-unavailable::before {
                 content: '';
                 position: absolute;
                 top: 10%;
@@ -340,6 +317,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 height: 80%;
                 background: linear-gradient(to top right, transparent 0%, transparent calc(50% - 1px), #ef4444 calc(50% - 1px), #ef4444 calc(50% + 1px), transparent calc(50% + 1px), transparent 100%);
                 pointer-events: none;
+                z-index: 1;
               }
               .booking-calendar .rdp-day_selected {
                 background-color: hsl(var(--primary));
