@@ -12,8 +12,8 @@ export default function TheCrucible() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4">The Crucible</h1>
-          <p className="text-xl text-muted-foreground">Welcome Competitor
-
+          <p className="text-muted-foreground text-[20px] font-bold">Welcome Competitor
+          <br /><br />
           You believe you have mastered your craft? You believe you can apply skill under pressure? Do you believe you are prepared for what's next?  We shall see.
 
           The Crucible is not a test of brute speed or sheer force. It is a crucible—a severe test of character and skill in shooting. This challenge is designed to push you to the limits of your cognitive ability, forcing you to apply significant throttle control, precision, and emotional discipline in a short but complex course of fire. This is a mental challenge first, and a shooting challenge second.
