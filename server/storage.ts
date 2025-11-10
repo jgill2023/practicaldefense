@@ -5724,7 +5724,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(users)
       .leftJoin(instructorCredits, eq(users.id, instructorCredits.instructorId))
-      .where(eq(users.role, 'instructor'));
+      .where(or(eq(users.role, 'instructor'), eq(users.role, 'superadmin')));
 
     return instructors.map(i => ({
       id: i.id,
