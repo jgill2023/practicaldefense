@@ -2546,13 +2546,27 @@ export class DatabaseStorage implements IStorage {
       e => e.refundRequested && !e.refundProcessed
     ).length;
 
+    // Count total appointments (confirmed and pending)
+    const appointments = await db.query.instructorAppointments.findMany({
+      where: and(
+        eq(instructorAppointments.instructorId, instructorId),
+        or(
+          eq(instructorAppointments.status, 'confirmed'),
+          eq(instructorAppointments.status, 'pending')
+        )
+      ),
+    });
+    const totalAppointments = appointments.length;
+
     return {
       upcomingCourses,
       onlineStudents,
       allStudents,
       totalRevenue: Math.round(totalRevenue * 100) / 100,
       outstandingRevenue: Math.round(outstandingRevenue * 100) / 100,
+      totalAppointments,
       refundRequests,
+      totalAppointments,
     };
   }
 
