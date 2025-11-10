@@ -323,6 +323,9 @@ export const appointmentNotificationTemplates = pgTable("appointment_notificatio
   channelType: varchar("channel_type", { length: 20 }).notNull(), // 'email', 'sms'
   subject: varchar("subject", { length: 255 }), // For email only
   body: text("body").notNull(), // Template with merge variables like {studentName}, {appointmentDate}, etc.
+  // Available variables: {studentName}, {studentFirstName}, {studentLastName}, {studentEmail},
+  // {appointmentType}, {appointmentDate}, {appointmentTime}, {appointmentDuration},
+  // {instructorName}, {price}
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

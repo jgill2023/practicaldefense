@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
 import { Plus, Edit, Trash2, Clock, DollarSign, CheckCircle, XCircle, CalendarClock, Bell } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { User } from "@shared/schema";
 
 type AppointmentType = {
@@ -85,6 +86,26 @@ export default function AppointmentsPage() {
     body: '',
     isActive: true,
   });
+
+  const availableVariables = [
+    { key: '{studentName}', description: 'Student\'s full name' },
+    { key: '{studentFirstName}', description: 'Student\'s first name' },
+    { key: '{studentLastName}', description: 'Student\'s last name' },
+    { key: '{studentEmail}', description: 'Student\'s email address' },
+    { key: '{appointmentType}', description: 'Type of appointment' },
+    { key: '{appointmentDate}', description: 'Date of appointment (e.g., Monday, January 15, 2024)' },
+    { key: '{appointmentTime}', description: 'Time of appointment (e.g., 2:00 PM - 3:00 PM)' },
+    { key: '{appointmentDuration}', description: 'Duration in minutes' },
+    { key: '{instructorName}', description: 'Instructor\'s full name' },
+    { key: '{price}', description: 'Appointment price' },
+  ];
+
+  const insertVariable = (variable: string, field: 'subject' | 'body') => {
+    setNotificationTemplateForm(prev => ({
+      ...prev,
+      [field]: prev[field] + variable
+    }));
+  };
 
   const { data: appointmentTypes = [], isLoading: typesLoading } = useQuery<AppointmentType[]>({
     queryKey: ["/api/appointments/instructor/appointment-types"],
@@ -969,27 +990,84 @@ export default function AppointmentsPage() {
                   <option value="both">Both</option>
                 </select>
               </div>
-              {notificationTemplateForm.channelType === 'email' && (
-                <div>
-                  <Label htmlFor="subject">Subject*</Label>
-                  <Input
-                    id="subject"
-                    value={notificationTemplateForm.subject}
-                    onChange={(e) => setNotificationTemplateForm({ ...notificationTemplateForm, subject: e.target.value })}
-                    placeholder="Email subject line"
-                    data-testid="input-subject"
-                  />
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="notification-subject">Subject*</Label>
+                  {notificationTemplateForm.channelType === 'email' && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="sm" type="button">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Insert Variable
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80" align="end">
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-sm">Available Variables</h4>
+                          <div className="space-y-1 max-h-60 overflow-y-auto">
+                            {availableVariables.map((variable) => (
+                              <button
+                                key={variable.key}
+                                type="button"
+                                onClick={() => insertVariable(variable.key, 'subject')}
+                                className="w-full text-left px-2 py-1.5 hover:bg-muted rounded text-sm"
+                              >
+                                <div className="font-mono text-xs text-primary">{variable.key}</div>
+                                <div className="text-xs text-muted-foreground">{variable.description}</div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  )}
                 </div>
-              )}
-              <div>
-                <Label htmlFor="body">Message Body*</Label>
+                <Input
+                  id="notification-subject"
+                  value={notificationTemplateForm.subject}
+                  onChange={(e) => setNotificationTemplateForm({ ...notificationTemplateForm, subject: e.target.value })}
+                  placeholder="Email subject line"
+                  disabled={notificationTemplateForm.channelType === 'sms'}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="notification-body">Message Body*</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="sm" type="button">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Insert Variable
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80" align="end">
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-sm">Available Variables</h4>
+                        <div className="space-y-1 max-h-60 overflow-y-auto">
+                          {availableVariables.map((variable) => (
+                            <button
+                              key={variable.key}
+                              type="button"
+                              onClick={() => insertVariable(variable.key, 'body')}
+                              className="w-full text-left px-2 py-1.5 hover:bg-muted rounded text-sm"
+                            >
+                              <div className="font-mono text-xs text-primary">{variable.key}</div>
+                              <div className="text-xs text-muted-foreground">{variable.description}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
                 <Textarea
-                  id="body"
+                  id="notification-body"
                   value={notificationTemplateForm.body}
                   onChange={(e) => setNotificationTemplateForm({ ...notificationTemplateForm, body: e.target.value })}
-                  placeholder="Message content (you can use variables like {studentName}, {appointmentDate}, {appointmentTime})"
+                  placeholder="Message content - use the 'Insert Variable' button above to add dynamic fields"
                   rows={6}
-                  data-testid="input-body"
                 />
               </div>
               <div className="flex items-center justify-between">
