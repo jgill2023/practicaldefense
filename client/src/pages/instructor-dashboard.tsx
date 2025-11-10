@@ -27,6 +27,7 @@ import { EditScheduleForm } from "@/components/EditScheduleForm";
 import { EventCreationForm } from "@/components/EventCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
 import { RosterDialog } from "@/components/RosterDialog";
+import { StudentBookingsModal } from "@/components/StudentBookingsModal";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, MessageSquare, CalendarClock } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
@@ -63,6 +64,10 @@ export default function InstructorDashboard() {
   // SMS notification modal states
   const [smsModalOpen, setSmsModalOpen] = useState(false);
   const [selectedStudentForContact, setSelectedStudentForContact] = useState<any | null>(null);
+
+  // Bookings modal state
+  const [showBookingsModal, setShowBookingsModal] = useState(false);
+
 
   const { data: courses = [], isLoading: coursesLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/instructor/courses"],
@@ -1043,7 +1048,7 @@ export default function InstructorDashboard() {
 
           <Card
             className="cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => setLocation('/appointments')}
+            onClick={() => setShowBookingsModal(true)} // Open Bookings Modal
             data-testid="card-bookings"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1680,6 +1685,12 @@ export default function InstructorDashboard() {
           </Tabs>
         </DialogContent>
       </Dialog>
+
+      {/* Bookings Modal */}
+      <StudentBookingsModal
+        isOpen={showBookingsModal}
+        onClose={() => setShowBookingsModal(false)}
+      />
     </Layout>
   );
 }

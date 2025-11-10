@@ -397,7 +397,33 @@ appointmentRouter.get('/instructor/appointments', isAuthenticated, async (req: a
   try {
     const instructorId = req.user.claims.sub;
     const appointments = await storage.getAppointmentsByInstructor(instructorId);
-    res.json(appointments);
+    
+    // Fetch student details and appointment type for each appointment
+    const enrichedAppointments = await Promise.all(
+      appointments.map(async (appointment) => {
+        const [student, appointmentType] = await Promise.all([
+          appointment.studentId ? storage.getUserById(appointment.studentId) : null,
+          storage.getAppointmentType(appointment.appointmentTypeId)
+        ]);
+        
+        return {
+          ...appointment,
+          student: student ? {
+            id: student.id,
+            firstName: student.firstName,
+            lastName: student.lastName,
+            email: student.email,
+            phone: student.phone
+          } : null,
+          appointmentType: appointmentType ? {
+            title: appointmentType.title,
+            description: appointmentType.description
+          } : null
+        };
+      })
+    );
+    
+    res.json(enrichedAppointments);
   } catch (error) {
     console.error("Error fetching appointments:", error);
     res.status(500).json({ message: "Failed to fetch appointments" });

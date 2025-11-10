@@ -23,6 +23,7 @@ import { Calendar, Clock, FileText, Download, BookOpen, Award, Target } from "lu
 import { Separator } from "@/components/ui/separator";
 import type { EnrollmentWithDetails, User, CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { useLocation } from "wouter";
+import { StudentBookingsModal } from "@/components/StudentBookingsModal";
 
 // Types for the query responses
 type PaymentBalanceResponse = {
@@ -2161,6 +2162,9 @@ export default function StudentPortal() {
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
   const [selectedEnrollmentForUnenroll, setSelectedEnrollmentForUnenroll] = useState<EnrollmentWithDetails | null>(null);
 
+  // State for the bookings modal
+  const [showBookingsModal, setShowBookingsModal] = useState(false);
+
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/student/enrollments"],
     enabled: isAuthenticated,
@@ -2362,8 +2366,8 @@ export default function StudentPortal() {
 
           <Card
             className="cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => totalRemainingBalance > 0 && setIsRemainingBalanceModalOpen(true)}
-            data-testid="card-remaining-balance"
+            onClick={() => setShowBookingsModal(true)}
+            data-testid="card-bookings"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Remaining Balance</CardTitle>
