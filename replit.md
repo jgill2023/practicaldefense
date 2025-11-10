@@ -27,7 +27,22 @@ This is a template for firearms instructors. New instructors should:
 The application utilizes Neon PostgreSQL as its relational database. Drizzle ORM is used for type-safe queries and schema management, with Drizzle Kit for migrations. Key entities include Users (with license management and role-based access), Courses, Course Schedules, Enrollments (with payment status), Sessions, App Settings, Course Information Forms, and Student Form Responses.
 
 ## Authentication and Authorization
-Authentication is provided by Replit Auth with OpenID Connect. The system uses server-side sessions stored in PostgreSQL and implements role-based access control (student/instructor) with middleware-protected routes, HTTPS enforcement, secure cookies, and CSRF protection.
+Authentication is provided by Replit Auth with OpenID Connect. The system uses server-side sessions stored in PostgreSQL and implements role-based access control (student/instructor/superadmin) with middleware-protected routes, HTTPS enforcement, secure cookies, and CSRF protection.
+
+### Role Hierarchy
+The platform supports three user roles with distinct privilege levels:
+- **Student**: Access to student portal, course browsing, and enrollment management
+- **Instructor**: Full access to instructor dashboard, course management, student management, communications, and all administrative features
+- **Superadmin**: Inherits all instructor privileges plus exclusive access to superadmin-only features (credit management, system administration)
+
+Superadmin role is implemented through shared authorization helpers:
+- Backend: `requireInstructorOrSuperadmin` middleware allows both instructors and superadmins to access instructor-protected routes
+- Frontend: `hasInstructorPrivileges(user)` utility function enables consistent role checking across all components and pages
+
+To designate a superadmin account:
+```sql
+UPDATE users SET role = 'superadmin' WHERE email = 'your@email.com';
+```
 
 ## Administrative Settings System
 Instructors can manage global application configurations, such as home page course display limits, through an admin settings system. These settings are stored in PostgreSQL and feature real-time updates via cache invalidation and server-side validation.
