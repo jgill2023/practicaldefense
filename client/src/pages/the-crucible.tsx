@@ -160,7 +160,7 @@ export default function TheCrucible() {
                 <div className="flex-1">
                   <h4 className="font-semibold mb-1">Setup</h4>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                    <li>Place targets 1 yard apart. Mark shooter position 5 yards from left target.</li>
+                    <li>Place two Tactical Advantage targets 1 yard apart. Shooter's starting position is 5 yards in n front of the left target.</li>
                     <li>Insert 3×5 card in right target alpha zone (or set 1" head alpha on left for Seanalair).</li>
                     <li>Holster concealed (IWB), mags loaded, eye/ear protection on.</li>
                   </ul>
