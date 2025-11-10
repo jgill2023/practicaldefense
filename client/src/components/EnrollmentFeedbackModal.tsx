@@ -49,25 +49,21 @@ export function EnrollmentFeedbackModal({
     enabled: isOpen,
   });
 
-  // Update form when feedback is loaded
+  // Update form when feedback is loaded or modal opens
   useEffect(() => {
-    if (feedback) {
+    if (isOpen && feedback) {
       setInstructorFeedback({
         positive: feedback.instructorFeedbackPositive || "",
         opportunities: feedback.instructorFeedbackOpportunities || "",
         actionPlan: feedback.instructorFeedbackActionPlan || "",
       });
       setStudentNotes(feedback.studentNotes || "");
-    }
-  }, [feedback]);
-
-  // Reset form when modal closes
-  useEffect(() => {
-    if (!isOpen) {
+    } else if (isOpen && !feedback) {
+      // Reset to empty when opening with no feedback
       setInstructorFeedback({ positive: "", opportunities: "", actionPlan: "" });
       setStudentNotes("");
     }
-  }, [isOpen]);
+  }, [isOpen, feedback]);
 
   // Mutation for instructor feedback
   const updateInstructorFeedbackMutation = useMutation({
