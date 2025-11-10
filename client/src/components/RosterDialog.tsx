@@ -224,9 +224,9 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 pr-12">
-        <DialogHeader className="pr-12">
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 pr-16">
+        <DialogHeader className="pr-16">
+          <DialogTitle className="flex items-center gap-2 pr-8">
             <FileText className="h-5 w-5" />
             Course Roster
           </DialogTitle>
@@ -265,13 +265,13 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
           <div className="space-y-6">
             {/* Course Summary */}
             <Card>
-              <CardHeader className="pr-8">
+              <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <FileText className="h-5 w-5" />
                   Course Information
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pr-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Course</p>
