@@ -219,6 +219,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>Courses</a>
+                <a href="/the-crucible" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-crucible-mobile" onClick={() => setIsMobileMenuOpen(false)}>The Crucible</a>
                 {/* Mobile Schedule with submenu */}
                 <div>
                   <button 
