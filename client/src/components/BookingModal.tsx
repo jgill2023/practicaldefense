@@ -306,16 +306,9 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 width: 100%;
                 height: 100%;
               }
-              .booking-calendar .rdp-day_button.day-available::after {
-                content: '';
-                position: absolute;
-                bottom: 3px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 4px;
-                height: 4px;
+              .booking-calendar .rdp-day_button.day-available {
+                border: 2px solid #10b981;
                 border-radius: 50%;
-                background-color: #10b981;
               }
               .booking-calendar .rdp-day_button.day-unavailable {
                 opacity: 0.4;
@@ -324,12 +317,11 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
               .booking-calendar .rdp-day_button.day-unavailable::before {
                 content: '';
                 position: absolute;
-                top: 50%;
+                top: 10%;
                 left: 10%;
-                right: 10%;
-                height: 1px;
-                background-color: #ef4444;
-                transform: translateY(-50%);
+                width: 80%;
+                height: 80%;
+                background: linear-gradient(to top right, transparent 0%, transparent calc(50% - 1px), #ef4444 calc(50% - 1px), #ef4444 calc(50% + 1px), transparent calc(50% + 1px), transparent 100%);
               }
               .booking-calendar .rdp-day_selected {
                 background-color: hsl(var(--primary));
