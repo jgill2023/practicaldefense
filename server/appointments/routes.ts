@@ -402,7 +402,7 @@ appointmentRouter.get('/instructor/appointments', isAuthenticated, async (req: a
     const enrichedAppointments = await Promise.all(
       appointments.map(async (appointment) => {
         const [student, appointmentType] = await Promise.all([
-          appointment.studentId ? storage.getUserById(appointment.studentId) : null,
+          appointment.studentId ? storage.getUser(appointment.studentId) : null,
           storage.getAppointmentType(appointment.appointmentTypeId)
         ]);
         
