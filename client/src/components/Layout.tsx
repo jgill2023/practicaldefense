@@ -316,7 +316,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/schedule-list" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
                 <Link href="/student-portal" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-student-dashboard">Student Dashboard</Link>
                 <a href="#resources" className="block transition-colors" style={{ color: '#e8e9eb' }}>Resources</a>
-                <Link href="/store" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-shop">The Crucible</Link>
+                <Link href="/the-crucible" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-crucible">The Crucible</Link>
               </div>
             </div>
 
