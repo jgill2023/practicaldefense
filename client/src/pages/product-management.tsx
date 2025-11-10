@@ -52,6 +52,9 @@ export default function ProductManagement() {
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
   const [editingProduct, setEditingProduct] = useState<ProductWithDetails | null>(null);
+  const [deleteProductDialogOpen, setDeleteProductDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<ProductWithDetails | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   // Fetch categories
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
@@ -171,6 +174,9 @@ export default function ProductManagement() {
     mutationFn: (id: string) => apiRequest('DELETE', `/api/products/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      setDeleteProductDialogOpen(false);
+      setProductToDelete(null);
+      setDeleteConfirmText("");
       toast({ title: "Product deleted successfully" });
     },
     onError: (error: any) => {
@@ -249,6 +255,18 @@ export default function ProductManagement() {
       updateProductMutation.mutate({ id: editingProduct.id, data: transformedData });
     } else {
       createProductMutation.mutate(transformedData);
+    }
+  };
+
+  const handleDeleteProduct = (product: ProductWithDetails) => {
+    setProductToDelete(product);
+    setDeleteConfirmText("");
+    setDeleteProductDialogOpen(true);
+  };
+
+  const confirmDeleteProduct = () => {
+    if (deleteConfirmText === "DELETE" && productToDelete) {
+      deleteProductMutation.mutate(productToDelete.id);
     }
   };
 
@@ -391,7 +409,7 @@ export default function ProductManagement() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => deleteProductMutation.mutate(product.id)}
+                              onClick={() => handleDeleteProduct(product)}
                               data-testid={`button-delete-product-${product.id}`}
                             >
                               <Trash2 className="w-3 h-3" />
@@ -586,6 +604,61 @@ export default function ProductManagement() {
               </div>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Product Confirmation Dialog */}
+      <Dialog open={deleteProductDialogOpen} onOpenChange={setDeleteProductDialogOpen}>
+        <DialogContent className="max-w-md" data-testid="delete-product-dialog">
+          <DialogHeader>
+            <DialogTitle>Delete Product</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              <p className="mb-2">You are about to permanently delete:</p>
+              <p className="font-semibold text-foreground">"{productToDelete?.name}"</p>
+            </div>
+            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-sm text-destructive font-medium mb-2">⚠️ Warning</p>
+              <p className="text-sm text-muted-foreground">
+                This action cannot be undone. The product and all its associated data will be permanently removed.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-delete-text" className="text-sm font-medium">
+                Type <code className="bg-muted px-1 py-0.5 rounded text-xs">DELETE</code> to confirm:
+              </Label>
+              <Input
+                id="confirm-delete-text"
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type DELETE here"
+                data-testid="input-confirm-delete-product"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteProductDialogOpen(false);
+                  setProductToDelete(null);
+                  setDeleteConfirmText("");
+                }}
+                data-testid="button-cancel-delete-product"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDeleteProduct}
+                disabled={deleteConfirmText !== "DELETE" || deleteProductMutation.isPending}
+                data-testid="button-confirm-delete-product"
+              >
+                {deleteProductMutation.isPending ? "Deleting..." : "Delete Permanently"}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
