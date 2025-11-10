@@ -41,6 +41,23 @@ Stripe is integrated for secure payment processing, utilizing Stripe Elements fo
 ## Refund Processing
 The platform features comprehensive refund management integrated with Stripe. Instructors can process refunds for student enrollments through the instructor portal. The system supports full or partial refunds, validates refund amounts, stores refund reasons, and automatically updates enrollment payment status. When a refund is processed, the system creates a Stripe refund transaction, stores refund details (amount and reason) in the database, and triggers automatic notifications to students via the notification engine.
 
+## Communications Credit System
+The platform includes a comprehensive credit tracking and purchasing system for managing SMS and email communications. Instructors must purchase credits to send messages through the communications dashboard. The system features atomic credit deduction with database-level constraints to prevent race conditions and negative balances. Credits can be purchased through Stripe-integrated packages or granted by superadmins. Every credit transaction is recorded with complete audit trails including purchase history, usage tracking, and refunds.
+
+### Superadmin Credit Management
+Superadmin accounts have elevated privileges to manually grant free message credits to instructors without payment. This administrative feature includes:
+- **Instructor Overview**: View all instructors with current SMS and email credit balances in a centralized dashboard
+- **Credit Granting**: Award free credits to instructors with customizable amounts and optional descriptions
+- **Audit Trail**: All admin grants are tracked with the `admin_grant` transaction type and include the granting superadmin's user ID (`grantedByUserId`) for complete accountability
+- **Access Control**: Admin credit management routes are protected by `requireSuperadmin` middleware, ensuring only authorized users can grant credits
+
+To designate a superadmin account, update the user's role in the database:
+```sql
+UPDATE users SET role = 'superadmin' WHERE email = 'your@email.com';
+```
+
+The Admin Credits page is accessible via the navigation menu (visible only to superadmin users) at `/admin/credits`.
+
 ## Development and Build System
 The project uses Vite for fast development and optimized production builds, TypeScript for strict type checking, and path aliases for organized imports.
 
