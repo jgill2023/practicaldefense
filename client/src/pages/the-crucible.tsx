@@ -206,7 +206,7 @@ export default function TheCrucible() {
                 <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">6</div>
                 <div className="flex-1">
                   <h4 className="font-semibold mb-1">Reload</h4>
-                  <p className="text-sm text-muted-foreground">While moving to the right target, perform a magazine change safely.</p>
+                  <p className="text-sm text-muted-foreground">While transitioning your focus and body position to the right target, perform a reload. This reload does not need to be from slidelock.</p>
                 </div>
               </div>
 
