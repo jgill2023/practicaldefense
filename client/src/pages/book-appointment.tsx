@@ -243,6 +243,7 @@ export default function BookAppointmentPage() {
   }
 
   function handleBookNow(type: AppointmentType) {
+    console.log('handleBookNow called!', type.title);
     setSelectedType(type);
     setSelectedDate(undefined);
     setSelectedSlot(null);

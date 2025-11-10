@@ -163,6 +163,7 @@ export default function Landing() {
   }, [courses, courseFilter, appSettings]);
 
   const handleRegisterCourse = (course: CourseWithSchedules) => {
+    console.log('handleRegisterCourse called!', course.title);
     setSelectedCourse(course);
     setShowRegistrationModal(true);
   };

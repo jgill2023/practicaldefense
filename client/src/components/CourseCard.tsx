@@ -75,7 +75,8 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
     ? course.imageUrl 
     : getImageUrl(getCategoryName());
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    console.log('Card clicked!', { course: course.title, hasSchedule: !!nextSchedule });
     if (!nextSchedule) return;
     onRegister(course);
   };
