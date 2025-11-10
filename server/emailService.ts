@@ -158,7 +158,7 @@ export class NotificationEmailService {
         body: error.response?.body,
         headers: error.response?.headers,
       };
-      console.error('Failed to send notification email:', errorDetails);
+      console.error('Failed to send notification email:', JSON.stringify(errorDetails, null, 2));
       
       
       return {
