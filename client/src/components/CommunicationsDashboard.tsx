@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { hasInstructorPrivileges } from "@/lib/authUtils";
 import { 
   Mail, 
   MessageSquare, 
@@ -203,7 +204,7 @@ export function CommunicationsDashboard() {
   // Query for SMS templates
   const { data: smsTemplates } = useQuery({
     queryKey: ['/api/admin/notification-templates'],
-    enabled: user?.role === 'instructor',
+    enabled: hasInstructorPrivileges(user),
   });
 
   // Mutations for status changes
@@ -1122,12 +1123,12 @@ export function CommunicationsDashboard() {
       </div>
 
       {/* Credit Meter */}
-      {user && user.role === 'instructor' && (
+      {user && hasInstructorPrivileges(user) && (
         <CreditMeter onPurchaseClick={() => setIsPurchaseCreditsDialogOpen(true)} />
       )}
 
       {/* Purchase Credits Dialog */}
-      {user && user.role === 'instructor' && (
+      {user && hasInstructorPrivileges(user) && (
         <PurchaseCreditsDialog
           open={isPurchaseCreditsDialogOpen}
           onOpenChange={setIsPurchaseCreditsDialogOpen}

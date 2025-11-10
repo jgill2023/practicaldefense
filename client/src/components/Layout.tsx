@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunicationCounts } from "@/hooks/useCommunicationCounts";
+import { hasInstructorPrivileges } from "@/lib/authUtils";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -307,7 +308,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </Button>
                   ) : (
                     <div className="space-y-2">
-                      {(user as any)?.role === 'instructor' ? (
+                      {hasInstructorPrivileges(user as any) ? (
                         <>
                           <Link href="/instructor-dashboard" className="block">
                             <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard-mobile">
