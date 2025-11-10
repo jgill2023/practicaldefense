@@ -64,8 +64,8 @@ export function CreditMeter({ onPurchaseClick }: CreditMeterProps) {
   const emailStatus = getCreditColor(emailCredits, EMAIL_WARNING_THRESHOLD, EMAIL_CRITICAL_THRESHOLD);
 
   // Calculate percentage for progress bars (using reasonable maximums for display)
-  const smsPercentage = getPercentage(smsCredits, 500);
-  const emailPercentage = getPercentage(emailCredits, 2000);
+  const smsPercentage = getPercentage(smsCredits, 200);
+  const emailPercentage = getPercentage(emailCredits, 300);
 
   return (
     <Card className="mb-6 border-2" data-testid="credit-meter">
