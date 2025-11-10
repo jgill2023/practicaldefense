@@ -287,10 +287,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       </div>
-
       {/* Main Content */}
       <main>{children}</main>
-
       {/* Footer */}
       <footer className="bg-primary text-primary-foreground py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -318,7 +316,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/schedule-list" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
                 <Link href="/student-portal" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-student-dashboard">Student Dashboard</Link>
                 <a href="#resources" className="block transition-colors" style={{ color: '#e8e9eb' }}>Resources</a>
-                <Link href="/store" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-shop">Shop</Link>
+                <Link href="/store" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-shop">The Crucible</Link>
               </div>
             </div>
 
