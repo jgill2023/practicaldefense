@@ -300,7 +300,10 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 height: 2.5rem;
                 font-size: 0.875rem;
               }
-              .booking-calendar .day-available button {
+              .booking-calendar .day-available,
+              .booking-calendar .day-available > *,
+              .booking-calendar .day-available button,
+              .booking-calendar .day-available .rdp-day {
                 border: 2px solid #10b981 !important;
                 border-radius: 50% !important;
               }
