@@ -124,7 +124,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>Courses</a>
-                <a href="/the-crucible" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors">The Crucible</a>
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
@@ -175,6 +174,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     }
                   }
                 }}>Virtual Training</a>
+                <a href="/the-crucible" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors">The Crucible</a>
                 <Link href="/contact" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-contact">Contact Us</Link>
               </nav>
 
