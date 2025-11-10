@@ -214,7 +214,7 @@ export default function TheCrucible() {
                 <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">7</div>
                 <div className="flex-1">
                   <h4 className="font-semibold mb-1">Right Target (Shots 6–10)</h4>
-                  <p className="text-sm text-muted-foreground">Engage the 3×5 card in the right target alpha with five shots.</p>
+                  <p className="text-sm text-muted-foreground">Shots 6-10: Fire five shots into the 3x5 card placed within the alpha zone of the right target.</p>
                 </div>
               </div>
 
