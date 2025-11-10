@@ -75,7 +75,7 @@ export default function TheCrucible() {
               <div className="p-4 border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-bold">Gallowglass</h3>
-                  <Badge className="bg-[#ffffff]">PAR 6.0s</Badge>
+                  <Badge className="bg-[#bdbdbd]">PAR 6.0s</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">Advanced classification</p>
               </div>
