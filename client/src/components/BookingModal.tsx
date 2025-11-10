@@ -300,21 +300,13 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 height: 2.5rem;
                 font-size: 0.875rem;
               }
-              .booking-calendar .rdp-day.day-available {
-                border: 2px solid #10b981 !important;
-                border-radius: 50% !important;
-              }
-              .booking-calendar .rdp-day.day-unavailable {
-                opacity: 0.5;
-                position: relative;
-              }
-              .booking-calendar .rdp-day.day-unavailable::before {
+              .booking-calendar .day-unavailable::before {
                 content: '';
                 position: absolute;
-                top: 10%;
-                left: 10%;
-                width: 80%;
-                height: 80%;
+                top: 15%;
+                left: 15%;
+                width: 70%;
+                height: 70%;
                 background: linear-gradient(to top right, transparent 0%, transparent calc(50% - 1px), #ef4444 calc(50% - 1px), #ef4444 calc(50% + 1px), transparent calc(50% + 1px), transparent 100%);
                 pointer-events: none;
                 z-index: 1;
@@ -351,8 +343,8 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 },
               }}
               modifiersClassNames={{
-                available: "day-available",
-                unavailable: "day-unavailable",
+                available: "[&>button]:border-2 [&>button]:border-green-500 [&>button]:rounded-full",
+                unavailable: "[&>button]:opacity-50 [&>button]:relative day-unavailable",
               }}
               className="booking-calendar"
               data-testid="booking-calendar"
