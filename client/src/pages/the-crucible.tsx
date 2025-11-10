@@ -179,7 +179,7 @@ export default function TheCrucible() {
                 <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">3</div>
                 <div className="flex-1">
                   <h4 className="font-semibold mb-1">Ready</h4>
-                  <p className="text-sm text-muted-foreground">Start at the 5-yard line, handgun holstered.</p>
+                  <p className="text-sm text-muted-foreground">The shooter begins at the five-yard line in front of the left target, with the handgun holstered and ready.</p>
                 </div>
               </div>
 
