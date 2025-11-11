@@ -181,7 +181,7 @@ export default function AboutChris() {
         </div>
       </section>
       {/* One-on-One Training Section */}
-      <section className="py-20 bg-background pt-[30px] pb-[30px]">
+      <section className="py-20 pt-[30px] pb-[30px] bg-[#f7f7f7]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl text-foreground mb-4 font-semibold">LET'S TRAIN TOGETHER</h2>
