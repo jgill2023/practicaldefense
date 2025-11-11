@@ -105,7 +105,7 @@ export default function AboutChris() {
         </div>
       </section>
       {/* Skills and Certifications Section */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-muted/30 pt-[80px] pb-[80px]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">
             Skills, Qualifications, and Certifications
