@@ -89,7 +89,7 @@ export default function AboutChris() {
 
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center pl-[0px] pr-[0px] mt-[40px] mb-[40px] pt-[20px] pb-[20px]">
             <h1 className="lg:text-5xl text-white mb-6 font-semibold text-[42px]">ABOUT CHRIS</h1>
             <p className="text-white/90 max-w-3xl mx-auto mb-8 text-[22px]">
               Christopher, Co-Director of Active Self Protection, excels in firearms training, 
