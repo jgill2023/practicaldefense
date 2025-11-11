@@ -50,29 +50,24 @@ export function EnrollmentFeedbackModal({
     staleTime: 0, // Always refetch to ensure fresh data
   });
 
-  // Update form when feedback is loaded or modal opens
+  // Reset form state immediately when enrollmentId changes
   useEffect(() => {
-    if (isOpen && feedback) {
+    // Always reset form when enrollmentId changes to prevent showing stale data
+    setInstructorFeedback({ positive: "", opportunities: "", actionPlan: "" });
+    setStudentNotes("");
+  }, [enrollmentId]);
+
+  // Update form when feedback is loaded
+  useEffect(() => {
+    if (isOpen && !isLoading && feedback) {
       setInstructorFeedback({
         positive: feedback.instructorFeedbackPositive || "",
         opportunities: feedback.instructorFeedbackOpportunities || "",
         actionPlan: feedback.instructorFeedbackActionPlan || "",
       });
       setStudentNotes(feedback.studentNotes || "");
-    } else if (isOpen && !feedback) {
-      // Reset to empty when opening with no feedback
-      setInstructorFeedback({ positive: "", opportunities: "", actionPlan: "" });
-      setStudentNotes("");
     }
-  }, [isOpen, feedback, enrollmentId]); // Add enrollmentId to dependencies
-
-  // Reset form state when enrollmentId changes
-  useEffect(() => {
-    if (isOpen) {
-      setInstructorFeedback({ positive: "", opportunities: "", actionPlan: "" });
-      setStudentNotes("");
-    }
-  }, [enrollmentId, isOpen]);
+  }, [isOpen, isLoading, feedback]);
 
   // Mutation for instructor feedback
   const updateInstructorFeedbackMutation = useMutation({
