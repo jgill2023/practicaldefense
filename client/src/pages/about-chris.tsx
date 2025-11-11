@@ -146,8 +146,11 @@ export default function AboutChris() {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }}>
+        {/* Black overlay */}
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0, 0, 0, 0.65)' }}></div>
+
         {/* Content Container */}
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-[#05000000]">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-[#05000000]">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column - Empty */}
             <div></div>
