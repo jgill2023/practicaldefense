@@ -156,7 +156,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     e.preventDefault();
                     const headerHeight = 64; // Main header height
                     const secondaryMenuHeight = isAuthenticated ? 40 : 0; // Secondary menu only shows when logged in
-                    const yOffset = -(headerHeight + secondaryMenuHeight); // Position section header at top of viewport
+                    const yOffset = -(headerHeight + secondaryMenuHeight + 50); // Account for section padding-top
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
@@ -230,7 +230,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   if (appointmentsSection && window.location.pathname === '/') {
                     e.preventDefault();
                     const headerHeight = 64; // Main header height
-                    const yOffset = -headerHeight; // Position section header at top of viewport
+                    const yOffset = -(headerHeight + 50); // Account for section padding-top
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
