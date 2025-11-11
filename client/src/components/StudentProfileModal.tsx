@@ -42,6 +42,17 @@ interface StudentProfile {
   enrollmentHistory: EnrollmentHistory[];
 }
 
+interface StudentAppointment {
+  id: string;
+  appointmentTypeTitle: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  paymentStatus: string;
+  durationMinutes: number;
+  price: number;
+}
+
 // Phone number formatting utility
 function formatPhoneNumber(phone: string | undefined | null): string {
   if (!phone) return '';
@@ -69,6 +80,11 @@ export function StudentProfileModal({
 
   const { data: profile, isLoading, isError } = useQuery<StudentProfile>({
     queryKey: [`/api/students/${studentId}/profile`],
+    enabled: isOpen && !!studentId,
+  });
+
+  const { data: upcomingAppointments = [], isLoading: appointmentsLoading, isError: appointmentsError } = useQuery<StudentAppointment[]>({
+    queryKey: [`/api/students/${studentId}/upcoming-appointments`],
     enabled: isOpen && !!studentId,
   });
 
@@ -204,6 +220,73 @@ export function StudentProfileModal({
                     )}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Separator />
+
+            {/* Upcoming Bookings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Upcoming Bookings</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {upcomingAppointments.length} upcoming appointment{upcomingAppointments.length !== 1 ? 's' : ''}
+                </p>
+              </CardHeader>
+              <CardContent>
+                {appointmentsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : appointmentsError ? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 text-destructive mx-auto mb-4" />
+                    <p className="text-destructive font-semibold mb-2">Failed to load appointments</p>
+                    <p className="text-muted-foreground text-sm">Unable to retrieve upcoming appointments. Please try again.</p>
+                  </div>
+                ) : upcomingAppointments.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No upcoming appointments</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {upcomingAppointments.map((appointment) => (
+                      <div
+                        key={appointment.id}
+                        className="border rounded-lg p-4 bg-purple-50 dark:bg-purple-950"
+                        data-testid={`appointment-${appointment.id}`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-semibold">{appointment.appointmentTypeTitle}</h4>
+                              <Badge className={appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                                {appointment.status}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                <span>{format(new Date(appointment.startTime), "MMM d, yyyy 'at' h:mm a")}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                <span>{appointment.durationMinutes} min</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-lg">${Number(appointment.price).toFixed(2)}</div>
+                            <Badge variant="outline" className="mt-1">
+                              {appointment.paymentStatus}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 

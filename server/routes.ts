@@ -6,8 +6,8 @@ import { z } from "zod";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrSuperadmin } from "./replitAuth";
 import { db } from "./db";
-import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems } from "@shared/schema";
-import { eq, and, inArray, desc } from "drizzle-orm";
+import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems, instructorAppointments } from "@shared/schema";
+import { eq, and, inArray, desc, gte } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, insertCourseNotificationSignupSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
@@ -1119,6 +1119,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error fetching student profile:', error);
       res.status(500).send({ message: 'Failed to fetch student profile' });
+    }
+  });
+
+  // Get upcoming appointments for a student
+  app.get('/api/students/:studentId/upcoming-appointments', isAuthenticated, async (req, res) => {
+    const { studentId } = req.params;
+
+    try {
+      // Get student's upcoming appointments
+      const now = new Date();
+      const studentAppointments = await db.query.instructorAppointments.findMany({
+        where: and(
+          eq(instructorAppointments.studentId, studentId),
+          gte(instructorAppointments.startTime, now)
+        ),
+        with: {
+          appointmentType: true,
+        },
+        orderBy: (instructorAppointments, { asc }) => [asc(instructorAppointments.startTime)],
+      });
+
+      const upcomingAppointments = studentAppointments.map(appointment => ({
+        id: appointment.id,
+        appointmentTypeTitle: appointment.appointmentType?.title || 'Unknown',
+        startTime: appointment.startTime.toISOString(),
+        endTime: appointment.endTime.toISOString(),
+        status: appointment.status,
+        paymentStatus: appointment.paymentStatus,
+        durationMinutes: appointment.appointmentType?.durationMinutes || 0,
+        price: appointment.appointmentType?.price || 0,
+      }));
+
+      res.json(upcomingAppointments);
+    } catch (error: any) {
+      console.error('Error fetching upcoming appointments:', error);
+      res.status(500).send({ message: 'Failed to fetch upcoming appointments' });
     }
   });
 
