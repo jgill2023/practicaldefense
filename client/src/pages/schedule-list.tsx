@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
@@ -24,13 +25,31 @@ export default function ScheduleList() {
   // Helper function to safely get category name
   const getCategoryName = (category: any): string => {
     if (!category) return 'General';
-    // If it's a string (old format), return it
     if (typeof category === 'string') return category || 'General';
-    // If it's an object (new format), return the name
     if (typeof category === 'object' && 'name' in category) {
       return (category as any).name as string;
     }
     return 'General';
+  };
+
+  // Helper to get fallback image URL based on category
+  const getImageUrl = (category: any) => {
+    const categoryName = getCategoryName(category);
+    const categoryLower = categoryName.toLowerCase();
+
+    if (categoryLower.includes('concealed') || categoryLower.includes('ccw') || categoryLower.includes('nm concealed')) {
+      return 'https://images.unsplash.com/photo-1593784991095-a205069470b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+    }
+
+    if (categoryLower.includes('defensive') || categoryLower.includes('handgun')) {
+      return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+    }
+
+    if (categoryLower.includes('advanced')) {
+      return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+    }
+
+    return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
   };
 
   // Fetch courses with schedules
@@ -68,6 +87,7 @@ export default function ScheduleList() {
               courseCategory: course.category,
               courseDuration: course.duration,
               courseMaxStudents: course.maxStudents,
+              courseImageUrl: course.imageUrl,
             });
           }
         });
@@ -248,85 +268,112 @@ export default function ScheduleList() {
               </CardContent>
             </Card>
           ) : (
-            filteredSchedules.map((schedule) => (
-              <Card key={schedule.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="text-xl font-semibold text-foreground" data-testid={`text-course-title-${schedule.courseId}`}>
-                            {schedule.courseTitle}
-                          </h3>
-                          {schedule.courseBrief && (
-                            <p className="text-muted-foreground mt-1 line-clamp-2">
-                              {schedule.courseBrief}
-                            </p>
-                          )}
-                        </div>
-                        <Badge variant="secondary" className="ml-4">
-                          {getCategoryName(schedule.courseCategory)}
-                        </Badge>
-                      </div>
-                      
-                      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span data-testid={`text-date-${schedule.id}`}>
-                            {formatDateSafe(schedule.startDate)}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span data-testid={`text-time-${schedule.id}`}>
-                            {schedule.startTime} - {schedule.endTime}
-                          </span>
-                        </div>
-                        
-                        {schedule.location && (
-                          <div className="flex items-center space-x-2">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span data-testid={`text-location-${schedule.id}`}>
-                              {schedule.location}
-                            </span>
+            filteredSchedules.map((schedule) => {
+              const displayImageUrl = schedule.courseImageUrl && schedule.courseImageUrl.trim() !== '' 
+                ? schedule.courseImageUrl 
+                : getImageUrl(schedule.courseCategory);
+
+              return (
+                <Card key={schedule.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="flex flex-col md:flex-row">
+                    {/* Image Section */}
+                    <div className="relative w-full md:w-72 h-48 md:h-auto bg-muted flex-shrink-0">
+                      <img 
+                        src={displayImageUrl} 
+                        alt={schedule.courseTitle}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src !== getImageUrl(schedule.courseCategory)) {
+                            target.src = getImageUrl(schedule.courseCategory);
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {/* Content Section */}
+                    <CardContent className="flex-1 p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h3 className="text-2xl font-semibold text-foreground mb-2" data-testid={`text-course-title-${schedule.courseId}`}>
+                                {schedule.courseTitle}
+                              </h3>
+                              
+                              {/* Date prominently displayed below title */}
+                              <div className="flex items-center space-x-2 text-lg font-medium text-muted-foreground mb-3">
+                                <Calendar className="h-5 w-5" />
+                                <span data-testid={`text-date-${schedule.id}`}>
+                                  {formatDateSafe(schedule.startDate)}
+                                </span>
+                              </div>
+
+                              {schedule.courseBrief && (
+                                <p className="text-muted-foreground mt-2 line-clamp-2 mb-3">
+                                  {schedule.courseBrief}
+                                </p>
+                              )}
+                            </div>
+                            <Badge variant="secondary" className="ml-4">
+                              {getCategoryName(schedule.courseCategory)}
+                            </Badge>
                           </div>
-                        )}
+                          
+                          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 text-sm">
+                            <div className="flex items-center space-x-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span data-testid={`text-time-${schedule.id}`}>
+                                {schedule.startTime} - {schedule.endTime}
+                              </span>
+                            </div>
+                            
+                            {schedule.location && (
+                              <div className="flex items-center space-x-2">
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                <span data-testid={`text-location-${schedule.id}`}>
+                                  {schedule.location}
+                                </span>
+                              </div>
+                            )}
+                            
+                            <div className="flex items-center space-x-2">
+                              <Users className="h-4 w-4 text-muted-foreground" />
+                              <span data-testid={`text-spots-${schedule.id}`}>
+                                {schedule.availableSpots}/{schedule.maxSpots} spots
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                         
-                        <div className="flex items-center space-x-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <span data-testid={`text-spots-${schedule.id}`}>
-                            {schedule.availableSpots}/{schedule.maxSpots} spots
-                          </span>
+                        <div className="flex items-center space-x-4 lg:ml-6">
+                          <div className="text-right">
+                            <div className="flex items-center text-2xl font-bold text-foreground">
+                              <DollarSign className="h-5 w-5" />
+                              {schedule.coursePrice.toFixed(2)}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {schedule.courseDuration}
+                            </p>
+                          </div>
+                          
+                          <Link href={`/course-registration/${schedule.courseId}`}>
+                            <Button 
+                              className="whitespace-nowrap"
+                              disabled={schedule.availableSpots === 0}
+                              data-testid={`button-register-${schedule.courseId}`}
+                            >
+                              {schedule.availableSpots === 0 ? "Full" : "Register"}
+                            </Button>
+                          </Link>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <div className="flex items-center text-2xl font-bold text-foreground">
-                          <DollarSign className="h-5 w-5" />
-                          {schedule.coursePrice.toFixed(2)}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {schedule.courseDuration}
-                        </p>
-                      </div>
-                      
-                      <Link href={`/course-registration/${schedule.courseId}`}>
-                        <Button 
-                          className="whitespace-nowrap"
-                          disabled={schedule.availableSpots === 0}
-                          data-testid={`button-register-${schedule.courseId}`}
-                        >
-                          {schedule.availableSpots === 0 ? "Full" : "Register"}
-                        </Button>
-                      </Link>
-                    </div>
+                    </CardContent>
                   </div>
-                </CardContent>
-              </Card>
-            ))
+                </Card>
+              );
+            })
           )}
         </div>
 
