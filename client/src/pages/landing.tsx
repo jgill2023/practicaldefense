@@ -227,7 +227,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Results-Driven Training Section - Separate white section */}
       <section className="bg-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -239,7 +238,6 @@ export default function Landing() {
           </p>
         </div>
       </section>
-
       {/* Training Programs */}
       <section id="courses" className="bg-muted py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -328,14 +326,11 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Schedule Your Training Section */}
       <section className="py-20 bg-muted/30" data-testid="section-schedule-training">
         <div className="max-w-5xl mx-auto px-3 sm:px-5 lg:px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-              Schedule Your Training
-            </h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">One-on-One Training</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Book one-on-one training sessions tailored to your specific needs and schedule.
             </p>
@@ -409,7 +404,6 @@ export default function Landing() {
           )}
         </div>
       </section>
-
       {/* Course Listings */}
       <section id="course-listings" className="py-20">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
@@ -471,7 +465,6 @@ export default function Landing() {
           )}
         </div>
       </section>
-
       {/* Virtual Coaching and Mental Management Section */}
       <section className="relative w-full py-24" style={{
         backgroundImage: `url(${coachingBackgroundImage})`,
@@ -507,7 +500,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Registration Modal */}
       {selectedCourse && (
         <RegistrationModal
@@ -515,7 +507,6 @@ export default function Landing() {
           onClose={handleCloseModal}
         />
       )}
-
       {/* Booking Modal */}
       <BookingModal
         appointmentType={selectedAppointmentType}
