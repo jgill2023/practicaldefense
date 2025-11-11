@@ -219,7 +219,7 @@ export default function AboutChris() {
                   className="w-full bg-black text-white hover:bg-black/90 py-6 text-base rounded-none"
                   onClick={() => {
                     setSelectedAppointmentType({
-                      id: 'in-person',
+                      id: 'd8239134-dffd-46f8-bde0-145c2c6830e5',
                       instructorId: '43575331',
                       title: '1-Hour In-Person Coaching Session',
                       description: 'One hour, in-person coaching session.',
@@ -257,7 +257,7 @@ export default function AboutChris() {
                   className="w-full bg-black text-white hover:bg-black/90 py-6 text-base rounded-none"
                   onClick={() => {
                     setSelectedAppointmentType({
-                      id: 'virtual',
+                      id: '6360ccd3-4cda-4224-ac11-74ca97a40500',
                       instructorId: '43575331',
                       title: '1-Hour Virtual Coaching Session',
                       description: '1-Hour Virtual Coaching Session',
