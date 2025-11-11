@@ -133,14 +133,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         <ul className="grid w-[150px] gap-1 p-2">
                           <li>
                             <NavigationMenuLink asChild>
-                              <Link href="/schedule-list" className="block select-none rounded-md p-2 text-sm leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                              <Link href="/schedule-list" className="block select-none rounded-md p-2 text-[14px] leading-none no-underline outline-none transition-colors text-black hover:text-gray-600">
                                 List View
                               </Link>
                             </NavigationMenuLink>
                           </li>
                           <li>
                             <NavigationMenuLink asChild>
-                              <Link href="/schedule-calendar" className="block select-none rounded-md p-2 text-sm leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                              <Link href="/schedule-calendar" className="block select-none rounded-md p-2 text-[14px] leading-none no-underline outline-none transition-colors text-black hover:text-gray-600">
                                 Calendar View
                               </Link>
                             </NavigationMenuLink>
