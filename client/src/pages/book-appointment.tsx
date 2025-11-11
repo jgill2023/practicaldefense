@@ -288,9 +288,7 @@ export default function BookAppointmentPage() {
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" data-testid="text-page-title">
-            Book an Appointment
-          </h1>
+          <h1 className="text-3xl font-bold mb-2" data-testid="text-page-title">Book a One-on-One Coaching Session</h1>
           <p className="text-muted-foreground">
             Select an appointment type and choose an available time slot
           </p>
