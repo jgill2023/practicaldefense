@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -6,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Phone, Calendar, Award, X, CheckCircle, XCircle, Clock, RotateCcw, FileText } from "lucide-react";
+import { User, Mail, Phone, Calendar, Award, X, CheckCircle, XCircle, Clock, RotateCcw, FileText, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
-import { EnrollmentFeedbackModal } from "./EnrollmentFeedbackModal";
+import { EnrollmentFeedbackModal } from "@/components/EnrollmentFeedbackModal";
+import { EmailNotificationModal } from "@/components/EmailNotificationModal";
+import { SmsNotificationModal } from "@/components/SmsNotificationModal";
 
 interface StudentProfileModalProps {
   isOpen: boolean;
@@ -66,17 +67,21 @@ function formatPhoneNumber(phone: string | undefined | null): string {
   return phone;
 }
 
-export function StudentProfileModal({ 
-  isOpen, 
-  onClose, 
+export function StudentProfileModal({
+  isOpen,
+  onClose,
   studentId,
   onEmailClick,
   onSmsClick
 }: StudentProfileModalProps) {
-  const [feedbackModal, setFeedbackModal] = useState<{ isOpen: boolean; enrollmentId: string }>({ 
-    isOpen: false, 
-    enrollmentId: "" 
+  const [feedbackModal, setFeedbackModal] = useState<{ isOpen: boolean; enrollmentId: string }>({
+    isOpen: false,
+    enrollmentId: ""
   });
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showSmsModal, setShowSmsModal] = useState(false);
+  const [selectedAppointmentForEmail, setSelectedAppointmentForEmail] = useState<any>(null);
+  const [selectedAppointmentForSms, setSelectedAppointmentForSms] = useState<any>(null);
 
   const { data: profile, isLoading, isError } = useQuery<StudentProfile>({
     queryKey: [`/api/students/${studentId}/profile`],
@@ -276,11 +281,31 @@ export function StudentProfileModal({
                               </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-lg">${Number(appointment.price).toFixed(2)}</div>
-                            <Badge variant="outline" className="mt-1">
-                              {appointment.paymentStatus}
-                            </Badge>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedAppointmentForEmail(appointment);
+                                setShowEmailModal(true);
+                              }}
+                              className="h-8 w-8 p-0"
+                              data-testid={`button-email-appointment-${appointment.id}`}
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedAppointmentForSms(appointment);
+                                setShowSmsModal(true);
+                              }}
+                              className="h-8 w-8 p-0"
+                              data-testid={`button-sms-appointment-${appointment.id}`}
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -311,7 +336,7 @@ export function StudentProfileModal({
                     {profile.enrollmentHistory.map((enrollment) => {
                       const status = getCompletionStatus(enrollment);
                       const StatusIcon = status.icon;
-                      
+
                       return (
                         <div
                           key={enrollment.id}
@@ -366,14 +391,53 @@ export function StudentProfileModal({
           </div>
         ) : null}
 
-        <EnrollmentFeedbackModal
-          isOpen={feedbackModal.isOpen}
-          onClose={() => setFeedbackModal({ ...feedbackModal, isOpen: false })}
-          enrollmentId={feedbackModal.enrollmentId}
-          userRole="instructor"
-          isInstructor={true}
-        />
+        {/* Enrollment Feedback Modal */}
+        {selectedEnrollmentForFeedback && (
+          <EnrollmentFeedbackModal
+            enrollmentId={selectedEnrollmentForFeedback}
+            isOpen={feedbackModal.isOpen}
+            onClose={() => {
+              setFeedbackModal({ ...feedbackModal, isOpen: false });
+            }}
+          />
+        )}
       </DialogContent>
+
+      {/* Email Notification Modal */}
+      {selectedAppointmentForEmail && profile && (
+        <EmailNotificationModal
+          isOpen={showEmailModal}
+          onClose={() => {
+            setShowEmailModal(false);
+            setSelectedAppointmentForEmail(null);
+          }}
+          studentName={`${profile.firstName} ${profile.lastName}`}
+          emailAddress={profile.email}
+          appointmentDetails={{
+            title: selectedAppointmentForEmail.appointmentTypeTitle,
+            startTime: selectedAppointmentForEmail.startTime,
+            endTime: selectedAppointmentForEmail.endTime,
+          }}
+        />
+      )}
+
+      {/* SMS Notification Modal */}
+      {selectedAppointmentForSms && profile && (
+        <SmsNotificationModal
+          isOpen={showSmsModal}
+          onClose={() => {
+            setShowSmsModal(false);
+            setSelectedAppointmentForSms(null);
+          }}
+          studentName={`${profile.firstName} ${profile.lastName}`}
+          phoneNumber={profile.phone || ''}
+          appointmentDetails={{
+            title: selectedAppointmentForSms.appointmentTypeTitle,
+            startTime: selectedAppointmentForSms.startTime,
+            endTime: selectedAppointmentForSms.endTime,
+          }}
+        />
+      )}
     </Dialog>
   );
 }
