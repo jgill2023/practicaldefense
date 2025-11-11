@@ -408,9 +408,7 @@ export default function Landing() {
       <section id="course-listings" className="py-20">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">
-              Choose a Date and Time
-            </h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">Upcoming Courses</h2>
             <p className="text-lg text-muted-foreground max-w-4xl mx-auto">
               Select from our upcoming courses that work best for your schedule.
             </p>
