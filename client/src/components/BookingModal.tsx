@@ -59,21 +59,10 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     return `${year}-${month}-${day}`;
   };
 
-  // Get start and end of current displayed month, including overflow dates from adjacent months
+  // Get start and end of current displayed month
   const getMonthRange = (month: Date) => {
-    // Get first day of the month
-    const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
-    // Get last day of the month
-    const lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-    
-    // Extend to include dates from previous month that might show in the calendar
-    const start = new Date(firstDay);
-    start.setDate(start.getDate() - 7); // Go back 7 days to catch previous month overflow
-    
-    // Extend to include dates from next month that might show in the calendar
-    const end = new Date(lastDay);
-    end.setDate(end.getDate() + 7); // Go forward 7 days to catch next month overflow
-    
+    const start = new Date(month.getFullYear(), month.getMonth(), 1);
+    const end = new Date(month.getFullYear(), month.getMonth() + 1, 0);
     return { start, end };
   };
 
@@ -92,7 +81,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
       if (!response.ok) return [];
       return response.json();
     },
-    enabled: isAuthenticated && !!instructorId && !!appointmentType && open,
+    enabled: isAuthenticated && !!instructorId && !!appointmentType,
     retry: false,
   });
 
@@ -232,7 +221,17 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" data-testid="booking-modal">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{appointmentType.title}</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-2xl">{appointmentType.title}</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              data-testid="button-close-modal"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
             <div className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
@@ -300,24 +299,41 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 width: 2.5rem;
                 height: 2.5rem;
                 font-size: 0.875rem;
+                border-radius: 0.375rem;
+                position: relative;
               }
-              .booking-calendar .day-available,
-              .booking-calendar .day-available > *,
-              .booking-calendar .day-available button,
-              .booking-calendar .day-available .rdp-day {
-                border: 2px solid #10b981 !important;
-                border-radius: 50% !important;
+              .booking-calendar .rdp-day_button {
+                position: relative;
+                width: 100%;
+                height: 100%;
               }
-              .booking-calendar .day-unavailable::before {
+              .booking-calendar .rdp-day.day-available::after {
                 content: '';
                 position: absolute;
-                top: 15%;
-                left: 15%;
-                width: 70%;
-                height: 70%;
-                background: linear-gradient(to top right, transparent 0%, transparent calc(50% - 1px), #ef4444 calc(50% - 1px), #ef4444 calc(50% + 1px), transparent calc(50% + 1px), transparent 100%);
+                bottom: 4px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background-color: #10b981;
                 pointer-events: none;
-                z-index: 1;
+                z-index: 10;
+              }
+              .booking-calendar .rdp-day.day-unavailable {
+                opacity: 0.4;
+              }
+              .booking-calendar .rdp-day.day-unavailable::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 15%;
+                right: 15%;
+                height: 1.5px;
+                background-color: #ef4444;
+                transform: translateY(-50%);
+                pointer-events: none;
+                z-index: 10;
               }
               .booking-calendar .rdp-day_selected {
                 background-color: hsl(var(--primary));
@@ -354,22 +370,24 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 available: "day-available",
                 unavailable: "day-unavailable",
               }}
+              classNames={{
+                day: "rdp-day",
+              }}
               className="booking-calendar"
               data-testid="booking-calendar"
             />
             <div className="mt-4 space-y-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-6 h-6 border-2 border-green-500 rounded-full">
-                  <span className="text-[10px]">15</span>
+                <div className="flex items-end justify-center w-6 h-6 border rounded relative">
+                  <span className="text-xs">1</span>
+                  <div className="absolute bottom-0.5 w-1 h-1 rounded-full bg-green-500"></div>
                 </div>
                 <span>Available slots</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-6 h-6 border rounded opacity-50 relative">
-                  <span className="text-[10px]">15</span>
-                  <div className="absolute top-0 left-0 w-full h-full" style={{
-                    background: 'linear-gradient(to top right, transparent 0%, transparent calc(50% - 0.5px), #ef4444 calc(50% - 0.5px), #ef4444 calc(50% + 0.5px), transparent calc(50% + 0.5px), transparent 100%)'
-                  }}></div>
+                <div className="flex items-center justify-center w-6 h-6 border rounded opacity-40 relative">
+                  <span className="text-xs">15</span>
+                  <div className="absolute top-1/2 left-1.5 right-1.5 h-px bg-red-500"></div>
                 </div>
                 <span>No availability</span>
               </div>
