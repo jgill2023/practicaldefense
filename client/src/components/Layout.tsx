@@ -154,7 +154,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
                     e.preventDefault();
-                    const yOffset = -100;
+                    const headerHeight = 64; // Main header height
+                    const secondaryMenuHeight = 40; // Secondary menu height for logged in users
+                    const yOffset = -(headerHeight + secondaryMenuHeight + 20); // Extra 20px padding
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
@@ -227,7 +229,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
                     e.preventDefault();
-                    const yOffset = -100;
+                    const headerHeight = 64; // Main header height
+                    const yOffset = -(headerHeight + 20); // Extra 20px padding
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
