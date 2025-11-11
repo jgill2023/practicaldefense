@@ -148,13 +148,18 @@ export default function AboutChris() {
       }}>
         {/* Content Container */}
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="flex justify-center lg:justify-end">
-            {/* Text Overlay Box */}
-            <div className="bg-white/95 backdrop-blur-sm p-8 lg:p-12 shadow-xl max-w-2xl w-full lg:w-auto">
-              <blockquote className="text-xl lg:text-2xl font-medium text-gray-900 leading-relaxed">
-                "I love coaching and teaching others in the art of firearms because it empowers them 
-                with skills and confidence for self-protection."
-              </blockquote>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column - Empty */}
+            <div></div>
+            
+            {/* Right Column - Text Overlay Box */}
+            <div className="flex items-center justify-center lg:justify-start">
+              <div className="bg-white/95 backdrop-blur-sm p-8 lg:p-12 shadow-xl max-w-2xl w-full">
+                <blockquote className="text-xl lg:text-2xl font-medium text-gray-900 leading-relaxed">
+                  "I love coaching and teaching others in the art of firearms because it empowers them 
+                  with skills and confidence for self-protection."
+                </blockquote>
+              </div>
             </div>
           </div>
         </div>
