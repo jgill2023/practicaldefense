@@ -305,8 +305,8 @@ export default function BookAppointmentPage() {
             </div>
           ) : (
             appointmentTypes.map((type) => (
-              <Card 
-                key={type.id} 
+              <Card
+                key={type.id}
                 className="relative md:hover:shadow-lg cursor-pointer active:shadow-2xl"
                 onClick={() => handleBookNow(type)}
               >
@@ -455,10 +455,10 @@ export default function BookAppointmentPage() {
 
                         // Format time in 12-hour format with AM/PM
                         const formatTime = (date: Date) => {
-                          return date.toLocaleTimeString('en-US', { 
-                            hour: 'numeric', 
-                            minute: '2-digit', 
-                            hour12: true 
+                          return date.toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
                           });
                         };
 
@@ -512,14 +512,14 @@ export default function BookAppointmentPage() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Time:</span>
                     <span className="font-medium">
-                      {new Date(selectedSlot.startTime).toLocaleTimeString('en-US', { 
-                        hour: 'numeric', 
-                        minute: '2-digit', 
+                      {new Date(selectedSlot.startTime).toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
                         hour12: true
-                      })} - {new Date(selectedSlot.endTime).toLocaleTimeString('en-US', { 
-                        hour: 'numeric', 
-                        minute: '2-digit', 
-                        hour12: true 
+                      })} - {new Date(selectedSlot.endTime).toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
                       })}
                     </span>
                   </div>
