@@ -90,9 +90,7 @@ export default function AboutChris() {
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6">
-              About Christopher Bean
-            </h1>
+            <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6">ABOUT CHRIS</h1>
             <p className="text-xl text-white/90 max-w-3xl mx-auto mb-8">
               Christopher, Co-Director of Active Self Protection, excels in firearms training, 
               corporate leadership, and curriculum development.
@@ -119,7 +117,6 @@ export default function AboutChris() {
           </Card>
         </div>
       </section>
-
       {/* Stats Section */}
       <section className="py-16 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -143,7 +140,6 @@ export default function AboutChris() {
           </div>
         </div>
       </section>
-
       {/* Quote Section */}
       <section className="py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -153,7 +149,6 @@ export default function AboutChris() {
           </blockquote>
         </div>
       </section>
-
       {/* Skills and Certifications Section */}
       <section className="py-16 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -231,7 +226,6 @@ export default function AboutChris() {
           </div>
         </div>
       </section>
-
       {/* Contact Form Section */}
       <section className="py-20">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
