@@ -90,7 +90,7 @@ export default function AboutChris() {
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6">ABOUT CHRIS</h1>
+            <h1 className="lg:text-5xl text-white mb-6 font-semibold text-[42px]">ABOUT CHRIS</h1>
             <p className="text-xl text-white/90 max-w-3xl mx-auto mb-8">
               Christopher, Co-Director of Active Self Protection, excels in firearms training, 
               corporate leadership, and curriculum development.
@@ -98,7 +98,6 @@ export default function AboutChris() {
           </div>
         </div>
       </section>
-
       {/* I'm Christopher Bean Section */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
