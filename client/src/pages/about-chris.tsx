@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Award, Target, TrendingUp, BookOpen, CalendarClock, Clock } from "lucide-react";
 import aboutHeaderImage from "@assets/AboutHeader_1762855149831.jpg";
 import aboutQuoteImage from "@assets/About2_1762856231913.jpg";
+import { AppointmentsModal } from "@/components/AppointmentsModal";
 
 export default function AboutChris() {
+  const [isAppointmentsModalOpen, setIsAppointmentsModalOpen] = useState(false);
+  
   const stats = [
     { value: "25,000+", label: "Hrs of Training Received", icon: BookOpen },
     { value: "500+", label: "Students Coached", icon: Target },
@@ -211,7 +215,7 @@ export default function AboutChris() {
                 </div>
                 <Button
                   className="w-full bg-black text-white hover:bg-black/90 py-6 text-base rounded-none"
-                  onClick={() => window.location.href = '/book-appointment/43575331'}
+                  onClick={() => setIsAppointmentsModalOpen(true)}
                   data-testid="button-book-in-person"
                 >
                   Book Now
@@ -237,7 +241,7 @@ export default function AboutChris() {
                 </div>
                 <Button
                   className="w-full bg-black text-white hover:bg-black/90 py-6 text-base rounded-none"
-                  onClick={() => window.location.href = '/book-appointment/43575331'}
+                  onClick={() => setIsAppointmentsModalOpen(true)}
                   data-testid="button-book-virtual"
                 >
                   Book Now
@@ -247,6 +251,13 @@ export default function AboutChris() {
           </div>
         </div>
       </section>
+
+      {/* Appointments Modal */}
+      <AppointmentsModal
+        isOpen={isAppointmentsModalOpen}
+        onClose={() => setIsAppointmentsModalOpen(false)}
+        instructorId="43575331"
+      />
     </Layout>
   );
 }
