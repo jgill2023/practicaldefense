@@ -366,7 +366,7 @@ export default function Landing() {
                     <CardTitle className="flex items-center justify-between">
                       <span>{type.title}</span>
                       {type.requiresApproval && (
-                        <Badge variant="outline" className="text-xs">Approval Required</Badge>
+                        <Badge variant="outline" className="text-xs text-center">Approval Required</Badge>
                       )}
                     </CardTitle>
                   </CardHeader>
@@ -409,9 +409,6 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">Upcoming Courses</h2>
-            <p className="text-lg text-muted-foreground max-w-4xl mx-auto">
-              Select from our upcoming courses that work best for your schedule.
-            </p>
           </div>
 
           {/* Course Filter Tabs - Mobile Responsive */}
