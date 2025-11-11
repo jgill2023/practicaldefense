@@ -122,19 +122,16 @@ export default function AboutChris() {
             {/* Right Column - 2x2 Stats Grid */}
             <div className="grid grid-cols-2 gap-4">
               {stats.slice(0, 4).map((stat, index) => {
-                const Icon = stat.icon;
+                const borderColors = ['border-cyan-500', 'border-blue-500', 'border-blue-600', 'border-orange-500'];
                 return (
-                  <Card key={index} className="text-center">
-                    <CardContent className="pt-6">
-                      <Icon className="h-10 w-10 mx-auto mb-3 text-primary" />
-                      <div className="text-2xl font-bold text-foreground mb-1">
-                        {stat.value}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {stat.label}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div key={index} className={`border-l-4 ${borderColors[index]} pl-4 py-4 bg-card rounded-r`}>
+                    <div className="text-3xl font-bold text-foreground mb-1">
+                      {stat.value}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {stat.label}
+                    </div>
+                  </div>
                 );
               })}
             </div>
