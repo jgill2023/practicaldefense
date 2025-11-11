@@ -147,7 +147,7 @@ export default function AboutChris() {
         backgroundRepeat: 'no-repeat'
       }}>
         {/* Content Container */}
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-[#0500007a]">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-[#05000000]">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column - Empty */}
             <div></div>
