@@ -130,24 +130,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         The Schedule
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
-                        <ul className="grid w-[200px] gap-3 p-4">
+                        <ul className="grid w-[150px] gap-1 p-2">
                           <li>
                             <NavigationMenuLink asChild>
-                              <Link href="/schedule-list" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                                <div className="text-sm font-medium leading-none">List View</div>
-                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                  View courses in a list
-                                </p>
+                              <Link href="/schedule-list" className="block select-none rounded-md p-2 text-sm leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                                List View
                               </Link>
                             </NavigationMenuLink>
                           </li>
                           <li>
                             <NavigationMenuLink asChild>
-                              <Link href="/schedule-calendar" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
-                                <div className="text-sm font-medium leading-none">Calendar View</div>
-                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                                  View courses in a calendar
-                                </p>
+                              <Link href="/schedule-calendar" className="block select-none rounded-md p-2 text-sm leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                                Calendar View
                               </Link>
                             </NavigationMenuLink>
                           </li>
