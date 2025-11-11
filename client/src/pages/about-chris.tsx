@@ -185,7 +185,7 @@ export default function AboutChris() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl text-foreground mb-4 font-semibold">LET'S TRAIN TOGETHER</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto ml-[0px] mr-[0px]">
               Book one-on-one training sessions tailored to your specific needs and schedule.
             </p>
           </div>
