@@ -1,74 +1,11 @@
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Award, Target, TrendingUp, BookOpen } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { Award, Target, TrendingUp, BookOpen, CalendarClock } from "lucide-react";
 import aboutHeaderImage from "@assets/AboutHeader_1762855149831.jpg";
 import aboutQuoteImage from "@assets/About2_1762856231913.jpg";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-const contactFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  subject: z.string().min(1, "Please select a subject"),
-  message: z.string().min(10, "Message must be at least 10 characters"),
-});
-
-type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 export default function AboutChris() {
-  const { toast } = useToast();
-
-  const form = useForm<ContactFormValues>({
-    resolver: zodResolver(contactFormSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      subject: "",
-      message: "",
-    },
-  });
-
-  const handleSubmit = async (values: ContactFormValues) => {
-    try {
-      // TODO: Integrate with backend API for contact form submission
-      // For now, show success message
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Message Sent",
-        description: "Thank you for reaching out. I'll get back to you soon!",
-      });
-      
-      form.reset();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const stats = [
     { value: "25,000+", label: "Hrs of Training Received", icon: BookOpen },
     { value: "500+", label: "Students Coached", icon: Target },
@@ -243,101 +180,29 @@ export default function AboutChris() {
           </div>
         </div>
       </section>
-      {/* Contact Form Section */}
-      <section className="py-20">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Appointment Booking Section */}
+      <section className="py-20 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
               Let's Train Together
             </h2>
-            <p className="text-lg text-muted-foreground">
-              Have questions or ready to start your training journey? Reach out and let's connect.
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Ready to elevate your skills? Book a one-on-one training session tailored to your needs.
             </p>
           </div>
 
-          <Card>
-            <CardContent className="pt-6">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} data-testid="input-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address</FormLabel>
-                        <FormControl>
-                          <Input type="email" {...field} data-testid="input-email" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="subject"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Subject</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger data-testid="select-subject">
-                              <SelectValue placeholder="Select a subject" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="consultation">Consultation</SelectItem>
-                            <SelectItem value="blog-writing">Blog Writing</SelectItem>
-                            <SelectItem value="copy-writing">Copy Writing</SelectItem>
-                            <SelectItem value="training">Training Inquiry</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="message"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Message</FormLabel>
-                        <FormControl>
-                          <Textarea rows={6} {...field} data-testid="textarea-message" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={form.formState.isSubmitting}
-                    data-testid="button-submit-message"
-                  >
-                    {form.formState.isSubmitting ? "Sending..." : "Submit Message"}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+          <div className="flex justify-center">
+            <Button
+              size="lg"
+              className="text-lg px-8 py-6 bg-black text-white hover:bg-black/90"
+              onClick={() => window.location.href = '/book-appointment/43575331'}
+              data-testid="button-book-training"
+            >
+              <CalendarClock className="mr-2 h-5 w-5" />
+              Book a Training Session
+            </Button>
+          </div>
         </div>
       </section>
     </Layout>
