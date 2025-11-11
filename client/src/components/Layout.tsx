@@ -154,7 +154,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
                     e.preventDefault();
-                    const yOffset = -80;
+                    const yOffset = -100;
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
@@ -227,7 +227,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
                     e.preventDefault();
-                    const yOffset = -80;
+                    const yOffset = -100;
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
