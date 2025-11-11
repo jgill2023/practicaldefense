@@ -174,46 +174,9 @@ export default function AboutChris() {
             Skills, Qualifications, and Certifications
           </h2>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Awards */}
-            <div>
-              <div className="mb-4">
-                <h3 className="text-xl font-semibold">
-                  Awards
-                </h3>
-              </div>
-              <div>
-                <ul className="space-y-2 text-muted-foreground">
-                  <li>• PSTC 102 – Top Gun</li>
-                  <li>• PSTC 103 – Top Gun</li>
-                  <li>• TriggerPrep Media – Vice Card Patch Holder #33</li>
-                  <li>• Gabe White Training – Dark Pin (SHO)</li>
-                  <li>• Sub-Second Club Patch Holder</li>
-                  <li>• Jail-Break Challenge Patch Holder</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Student-Level Certifications */}
-            <div>
-              <div className="mb-4">
-                <h3 className="text-xl font-semibold">
-                  Student-Level Certifications & Training
-                </h3>
-              </div>
-              <div>
-                <ul className="space-y-2 text-muted-foreground">
-                  <li>• Glock Armorer</li>
-                  <li>• NAEMT – First On The Scene (Plank Holder)</li>
-                  <li>• Stop The Bleed</li>
-                  <li>• HSI-CPR / First Aid</li>
-                  <li>• ASHI Advanced Bleeding Control</li>
-                </ul>
-              </div>
-            </div>
-
+          <div className="space-y-8">
             {/* Instructor-Level Certifications - Full Width */}
-            <div className="md:col-span-2">
+            <div className="border border-border p-6">
               <div className="mb-4">
                 <h3 className="text-xl font-semibold text-center">
                   Instructor-Level Certifications & Training
@@ -235,6 +198,45 @@ export default function AboutChris() {
                     <p>• Applied Fundamentals Certified Instructor – <em>NLT</em></p>
                     <p>• ASPIC Certified Instructor – <em>Active Self Protection</em></p>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Awards */}
+              <div className="border border-border p-6">
+                <div className="mb-4">
+                  <h3 className="text-xl font-semibold">
+                    Awards
+                  </h3>
+                </div>
+                <div>
+                  <ul className="space-y-2 text-muted-foreground">
+                    <li>• PSTC 102 – Top Gun</li>
+                    <li>• PSTC 103 – Top Gun</li>
+                    <li>• TriggerPrep Media – Vice Card Patch Holder #33</li>
+                    <li>• Gabe White Training – Dark Pin (SHO)</li>
+                    <li>• Sub-Second Club Patch Holder</li>
+                    <li>• Jail-Break Challenge Patch Holder</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Student-Level Certifications */}
+              <div className="border border-border p-6">
+                <div className="mb-4">
+                  <h3 className="text-xl font-semibold">
+                    Student-Level Certifications & Training
+                  </h3>
+                </div>
+                <div>
+                  <ul className="space-y-2 text-muted-foreground">
+                    <li>• Glock Armorer</li>
+                    <li>• NAEMT – First On The Scene (Plank Holder)</li>
+                    <li>• Stop The Bleed</li>
+                    <li>• HSI-CPR / First Aid</li>
+                    <li>• ASHI Advanced Bleeding Control</li>
+                  </ul>
                 </div>
               </div>
             </div>
