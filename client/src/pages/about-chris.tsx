@@ -81,7 +81,7 @@ export default function AboutChris() {
       <section className="relative py-20" style={{
         backgroundImage: `url(${aboutHeaderImage})`,
         backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        backgroundPosition: 'center top',
         backgroundRepeat: 'no-repeat'
       }}>
         {/* Black overlay */}
