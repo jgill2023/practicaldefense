@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import aboutHeaderImage from "@assets/AboutHeader_1762855149831.jpg";
 import {
   Form,
   FormControl,
@@ -77,13 +78,22 @@ export default function AboutChris() {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-background to-muted/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-20" style={{
+        backgroundImage: `url(${aboutHeaderImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}>
+        {/* Black overlay */}
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0, 0, 0, 0.65)' }}></div>
+
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-6">
+            <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6">
               About Christopher Bean
             </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+            <p className="text-xl text-white/90 max-w-3xl mx-auto mb-8">
               Christopher, Co-Director of Active Self Protection, excels in firearms training, 
               corporate leadership, and curriculum development.
             </p>
