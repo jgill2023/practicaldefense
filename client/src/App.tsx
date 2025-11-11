@@ -30,6 +30,7 @@ import TheCrucible from "@/pages/the-crucible";
 import AppointmentsPage from "@/pages/appointments";
 import BookAppointmentPage from "@/pages/book-appointment";
 import AdminCreditsPage from "@/pages/admin-credits";
+import AboutChris from "@/pages/about-chris";
 import NotFound from "@/pages/not-found";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -104,6 +105,7 @@ function Router() {
       <Route path="/store" component={Storefront} />
       <Route path="/cart" component={CartPage} />
       <Route path="/contact" component={ContactPage} />
+      <Route path="/about-chris" component={AboutChris} />
       <Route path="/course-registration/:id" component={CourseRegistration} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/schedule-list" component={ScheduleList} />

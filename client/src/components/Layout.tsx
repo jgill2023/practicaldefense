@@ -113,7 +113,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <a href="#about-us" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors">About Chris</a>
+                <Link href="/about-chris" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-about-chris">About Chris</Link>
                 <a href="/#courses" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={(e) => {
                   const coursesSection = document.getElementById('courses');
                   if (coursesSection && window.location.pathname === '/') {
@@ -175,7 +175,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <a href="#about-us" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2">About Chris</a>
+                <Link href="/about-chris" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-about-chris-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Chris</Link>
                 <a href="/#courses" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-courses-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
                   const coursesSection = document.getElementById('courses');
