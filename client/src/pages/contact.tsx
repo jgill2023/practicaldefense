@@ -138,9 +138,7 @@ export default function ContactPage() {
                 <div className="flex items-center space-x-3">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="font-medium" data-testid="text-email">
-                      chris@tacticaladv.com
-                    </p>
+                    <p className="font-medium" data-testid="text-email">Chris@TacticalAdv.com</p>
                     <p className="text-sm text-muted-foreground">Email us anytime</p>
                   </div>
                 </div>
