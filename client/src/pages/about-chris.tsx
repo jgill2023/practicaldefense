@@ -11,7 +11,7 @@ import type { AppointmentType } from "@shared/schema";
 export default function AboutChris() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [selectedAppointmentType, setSelectedAppointmentType] = useState<AppointmentType | null>(null);
-  
+
   const stats = [
     { value: "25,000+", label: "Hrs of Training Received", icon: BookOpen },
     { value: "500+", label: "Students Coached", icon: Target },
@@ -46,7 +46,7 @@ export default function AboutChris() {
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-12">I'M CHRISTOPHER BEAN</h2>
-          
+
           <div className="grid md:grid-cols-2 gap-8 items-start">
             {/* Left Column - Text Content */}
             <div className="space-y-4 text-muted-foreground">
@@ -97,7 +97,7 @@ export default function AboutChris() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column - Empty */}
             <div></div>
-            
+
             {/* Right Column - Text Overlay Box */}
             <div className="flex items-center justify-center lg:justify-start ml-[0px] mr-[0px] pl-[0px] pr-[0px] pt-[100px] pb-[100px]">
               <div className="p-8 lg:p-12 max-w-2xl w-full pl-[0px] pr-[0px] pt-[0px] pb-[0px]">
