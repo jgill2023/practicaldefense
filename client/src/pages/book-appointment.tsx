@@ -316,7 +316,7 @@ export default function BookAppointmentPage() {
                   <div className="flex items-start justify-between mb-2">
                     <CardTitle className="text-xl">{type.title}</CardTitle>
                     {type.requiresApproval && (
-                      <Badge variant="outline" className="text-xs">Approval Required</Badge>
+                      <Badge variant="outline" className="text-xs text-center">Approval Required</Badge>
                     )}
                   </div>
                   {type.description && (
