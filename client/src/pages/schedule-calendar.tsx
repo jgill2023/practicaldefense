@@ -11,8 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { List, Filter, Search, MapPin, Users, DollarSign, Clock, X } from "lucide-react";
 import { Link } from "wouter";
-import type { CourseWithSchedules } from "@shared/schema";
+import type { CourseWithSchedules, AppointmentType } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
+import { BookingModal } from "@/components/BookingModal";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
@@ -46,6 +47,9 @@ export default function ScheduleCalendar() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [priceFilter, setPriceFilter] = useState("all");
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedAppointmentType, setSelectedAppointmentType] = useState<AppointmentType | null>(null);
+  const instructorId = "43575331";
 
   // Helper function to safely get category name
   const getCategoryName = (category: any): string => {
@@ -67,6 +71,11 @@ export default function ScheduleCalendar() {
   // Fetch categories for filtering
   const { data: categories = [] } = useQuery<any[]>({
     queryKey: ["/api/categories"],
+  });
+
+  // Fetch appointment types for booking
+  const { data: appointmentTypes = [] } = useQuery<AppointmentType[]>({
+    queryKey: ["/api/appointments/types", instructorId],
   });
 
   // Convert courses to calendar events
@@ -320,6 +329,53 @@ export default function ScheduleCalendar() {
           </CardContent>
         </Card>
 
+        {/* One-on-One Training Section */}
+        <section className="mt-20 py-20 bg-muted/30 rounded-lg">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">Book a One-on-One Coaching Session</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Schedule personalized training sessions tailored to your specific needs and goals.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {appointmentTypes.map((appointmentType) => (
+              <Card key={appointmentType.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{appointmentType.title}</span>
+                    {appointmentType.requiresApproval && (
+                      <Badge variant="outline" className="text-xs">Approval Required</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">{appointmentType.description}</p>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center text-sm">
+                      <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>{appointmentType.durationMinutes} minutes</span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="font-semibold">${Number(appointmentType.price).toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      setSelectedAppointmentType(appointmentType);
+                      setShowBookingModal(true);
+                    }}
+                  >
+                    Book Now
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
         {/* Event Details Modal */}
         <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
           <DialogContent className="max-w-md">
@@ -395,6 +451,17 @@ export default function ScheduleCalendar() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Booking Modal */}
+        <BookingModal
+          appointmentType={selectedAppointmentType}
+          instructorId={instructorId}
+          open={showBookingModal}
+          onClose={() => {
+            setShowBookingModal(false);
+            setSelectedAppointmentType(null);
+          }}
+        />
       </div>
     </Layout>
   );

@@ -123,17 +123,39 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>Courses</a>
-                <a href="/#course-listings" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={(e) => {
-                  if (window.location.pathname === '/') {
-                    e.preventDefault();
-                    const courseListingsSection = document.getElementById('course-listings');
-                    if (courseListingsSection) {
-                      const yOffset = -80;
-                      const y = courseListingsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                      window.scrollTo({ top: y, behavior: 'smooth' });
-                    }
-                  }
-                }}>Schedule It!</a>
+                <NavigationMenu>
+                  <NavigationMenuList>
+                    <NavigationMenuItem>
+                      <NavigationMenuTrigger className="bg-transparent text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors">
+                        The Schedule
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <ul className="grid w-[200px] gap-3 p-4">
+                          <li>
+                            <NavigationMenuLink asChild>
+                              <Link href="/schedule-list" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                                <div className="text-sm font-medium leading-none">List View</div>
+                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                  View courses in a list
+                                </p>
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                          <li>
+                            <NavigationMenuLink asChild>
+                              <Link href="/schedule-calendar" className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                                <div className="text-sm font-medium leading-none">Calendar View</div>
+                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                  View courses in a calendar
+                                </p>
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                        </ul>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  </NavigationMenuList>
+                </NavigationMenu>
                 <Link href="/book-appointment/43575331" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-virtual-training">Virtual Training</Link>
                 <a href="/the-crucible" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors">The Crucible</a>
                 <Link href="/contact" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-contact">Contact Us</Link>
@@ -187,24 +209,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   }
                 }}>Courses</a>
                 <a href="/the-crucible" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-crucible-mobile" onClick={() => setIsMobileMenuOpen(false)}>The Crucible</a>
-                <a 
-                  href="/#course-listings" 
-                  className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2"
-                  onClick={(e) => {
-                    setIsMobileMenuOpen(false);
-                    if (window.location.pathname === '/') {
-                      e.preventDefault();
-                      const courseListingsSection = document.getElementById('course-listings');
-                      if (courseListingsSection) {
-                        const yOffset = -80;
-                        const y = courseListingsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                        window.scrollTo({ top: y, behavior: 'smooth' });
-                      }
-                    }
-                  }}
-                >
-                  Schedule It!
-                </a>
+                <div className="py-2">
+                  <div className="text-primary-foreground font-medium mb-2">The Schedule</div>
+                  <div className="pl-4 space-y-2">
+                    <Link href="/schedule-list" className="block text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                      List View
+                    </Link>
+                    <Link href="/schedule-calendar" className="block text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                      Calendar View
+                    </Link>
+                  </div>
+                </div>
                 <Link href="/book-appointment/43575331" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-virtual-training-mobile" onClick={() => setIsMobileMenuOpen(false)}>Virtual Training</Link>
                 <Link href="/contact" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
 
