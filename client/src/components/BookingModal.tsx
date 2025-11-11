@@ -232,17 +232,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" data-testid="booking-modal">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl">{appointmentType.title}</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              data-testid="button-close-modal"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="text-2xl">{appointmentType.title}</DialogTitle>
           <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
             <div className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
