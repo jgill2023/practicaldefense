@@ -210,7 +210,7 @@ export default function AboutChris() {
                   $85.00
                 </div>
                 <Button
-                  className="w-full bg-black text-white hover:bg-black/90 py-6 text-base"
+                  className="w-full bg-black text-white hover:bg-black/90 py-6 text-base rounded-none"
                   onClick={() => window.location.href = '/book-appointment/43575331'}
                   data-testid="button-book-in-person"
                 >
@@ -236,7 +236,7 @@ export default function AboutChris() {
                   $65.00
                 </div>
                 <Button
-                  className="w-full bg-black text-white hover:bg-black/90 py-6 text-base"
+                  className="w-full bg-black text-white hover:bg-black/90 py-6 text-base rounded-none"
                   onClick={() => window.location.href = '/book-appointment/43575331'}
                   data-testid="button-book-virtual"
                 >
