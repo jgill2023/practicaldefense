@@ -327,7 +327,7 @@ export default function Landing() {
         </div>
       </section>
       {/* Schedule Your Training Section */}
-      <section className="py-20 bg-muted/30 pt-[50px] pb-[50px]" data-testid="section-schedule-training">
+      <section id="appointments" className="py-20 bg-muted/30 pt-[50px] pb-[50px]" data-testid="section-schedule-training">
         <div className="max-w-5xl mx-auto px-3 sm:px-5 lg:px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">One-on-One Training</h2>
