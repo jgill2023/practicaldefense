@@ -173,14 +173,13 @@ export default function AboutChris() {
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Awards */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="h-6 w-6 text-primary" />
+            <div>
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold">
                   Awards
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h3>
+              </div>
+              <div>
                 <ul className="space-y-2 text-muted-foreground">
                   <li>• PSTC 102 – Top Gun</li>
                   <li>• PSTC 103 – Top Gun</li>
@@ -189,18 +188,17 @@ export default function AboutChris() {
                   <li>• Sub-Second Club Patch Holder</li>
                   <li>• Jail-Break Challenge Patch Holder</li>
                 </ul>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Student-Level Certifications */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-6 w-6 text-primary" />
+            <div>
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold">
                   Student-Level Certifications & Training
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h3>
+              </div>
+              <div>
                 <ul className="space-y-2 text-muted-foreground">
                   <li>• Glock Armorer</li>
                   <li>• NAEMT – First On The Scene (Plank Holder)</li>
@@ -208,18 +206,17 @@ export default function AboutChris() {
                   <li>• HSI-CPR / First Aid</li>
                   <li>• ASHI Advanced Bleeding Control</li>
                 </ul>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Instructor-Level Certifications - Full Width */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-6 w-6 text-primary" />
+            <div className="md:col-span-2">
+              <div className="mb-4">
+                <h3 className="text-xl font-semibold">
                   Instructor-Level Certifications & Training
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                </h3>
+              </div>
+              <div>
                 <div className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-muted-foreground">
                   <div className="space-y-2">
                     <p>• Certified Instructor LI/LII – <em>Mental Management Systems</em></p>
@@ -236,8 +233,8 @@ export default function AboutChris() {
                     <p>• ASPIC Certified Instructor – <em>Active Self Protection</em></p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </section>
