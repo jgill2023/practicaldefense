@@ -198,7 +198,7 @@ export default function AboutChris() {
             <Card className="relative">
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-2xl">1-Hour In-Person Coaching Session</CardTitle>
+                  <CardTitle className="text-2xl">1-Hour Coaching Session</CardTitle>
                   <span className="px-3 py-1 text-xs font-medium border border-foreground rounded-full whitespace-nowrap">
                     Approval Required
                   </span>
@@ -277,7 +277,6 @@ export default function AboutChris() {
           </div>
         </div>
       </section>
-
       {/* Booking Modal */}
       <BookingModal
         appointmentType={selectedAppointmentType}
