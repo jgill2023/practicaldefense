@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Award, Target, TrendingUp, BookOpen, CalendarClock, Clock } from "lucide-react";
 import aboutHeaderImage from "@assets/AboutHeader_1762855149831.jpg";
 import aboutQuoteImage from "@assets/About2_1762856231913.jpg";
-import { AppointmentsModal } from "@/components/AppointmentsModal";
+import { BookingModal } from "@/components/BookingModal";
+import type { AppointmentType } from "@shared/schema";
 
 export default function AboutChris() {
-  const [isAppointmentsModalOpen, setIsAppointmentsModalOpen] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [selectedAppointmentType, setSelectedAppointmentType] = useState<AppointmentType | null>(null);
   
   const stats = [
     { value: "25,000+", label: "Hrs of Training Received", icon: BookOpen },
@@ -215,7 +217,19 @@ export default function AboutChris() {
                 </div>
                 <Button
                   className="w-full bg-black text-white hover:bg-black/90 py-6 text-base rounded-none"
-                  onClick={() => setIsAppointmentsModalOpen(true)}
+                  onClick={() => {
+                    setSelectedAppointmentType({
+                      id: 'in-person',
+                      instructorId: '43575331',
+                      title: '1-Hour In-Person Coaching Session',
+                      description: 'One hour, in-person coaching session.',
+                      durationMinutes: 60,
+                      price: 85.00,
+                      requiresApproval: true,
+                      isActive: true
+                    });
+                    setIsBookingModalOpen(true);
+                  }}
                   data-testid="button-book-in-person"
                 >
                   Book Now
@@ -241,7 +255,19 @@ export default function AboutChris() {
                 </div>
                 <Button
                   className="w-full bg-black text-white hover:bg-black/90 py-6 text-base rounded-none"
-                  onClick={() => setIsAppointmentsModalOpen(true)}
+                  onClick={() => {
+                    setSelectedAppointmentType({
+                      id: 'virtual',
+                      instructorId: '43575331',
+                      title: '1-Hour Virtual Coaching Session',
+                      description: '1-Hour Virtual Coaching Session',
+                      durationMinutes: 60,
+                      price: 65.00,
+                      requiresApproval: false,
+                      isActive: true
+                    });
+                    setIsBookingModalOpen(true);
+                  }}
                   data-testid="button-book-virtual"
                 >
                   Book Now
@@ -252,11 +278,15 @@ export default function AboutChris() {
         </div>
       </section>
 
-      {/* Appointments Modal */}
-      <AppointmentsModal
-        isOpen={isAppointmentsModalOpen}
-        onClose={() => setIsAppointmentsModalOpen(false)}
+      {/* Booking Modal */}
+      <BookingModal
+        appointmentType={selectedAppointmentType}
         instructorId="43575331"
+        open={isBookingModalOpen}
+        onClose={() => {
+          setIsBookingModalOpen(false);
+          setSelectedAppointmentType(null);
+        }}
       />
     </Layout>
   );
