@@ -46,7 +46,8 @@ export function EnrollmentFeedbackModal({
   // Fetch existing feedback
   const { data: feedback, isLoading } = useQuery<FeedbackData>({
     queryKey: ['/api/enrollments', enrollmentId, 'feedback'],
-    enabled: isOpen,
+    enabled: isOpen && !!enrollmentId,
+    staleTime: 0, // Always refetch to ensure fresh data
   });
 
   // Update form when feedback is loaded or modal opens
@@ -63,7 +64,15 @@ export function EnrollmentFeedbackModal({
       setInstructorFeedback({ positive: "", opportunities: "", actionPlan: "" });
       setStudentNotes("");
     }
-  }, [isOpen, feedback]);
+  }, [isOpen, feedback, enrollmentId]); // Add enrollmentId to dependencies
+
+  // Reset form state when enrollmentId changes
+  useEffect(() => {
+    if (isOpen) {
+      setInstructorFeedback({ positive: "", opportunities: "", actionPlan: "" });
+      setStudentNotes("");
+    }
+  }, [enrollmentId, isOpen]);
 
   // Mutation for instructor feedback
   const updateInstructorFeedbackMutation = useMutation({
