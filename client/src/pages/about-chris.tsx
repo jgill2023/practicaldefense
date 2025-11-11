@@ -1,7 +1,7 @@
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Award, Target, TrendingUp, BookOpen, CalendarClock } from "lucide-react";
+import { Award, Target, TrendingUp, BookOpen, CalendarClock, Clock } from "lucide-react";
 import aboutHeaderImage from "@assets/AboutHeader_1762855149831.jpg";
 import aboutQuoteImage from "@assets/About2_1762856231913.jpg";
 
@@ -180,28 +180,75 @@ export default function AboutChris() {
           </div>
         </div>
       </section>
-      {/* Appointment Booking Section */}
-      <section className="py-20 bg-muted/30">
+      {/* One-on-One Training Section */}
+      <section className="py-20 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-              Let's Train Together
+              One-on-One Training
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Ready to elevate your skills? Book a one-on-one training session tailored to your needs.
+              Book one-on-one training sessions tailored to your specific needs and schedule.
             </p>
           </div>
 
-          <div className="flex justify-center">
-            <Button
-              size="lg"
-              className="text-lg px-8 py-6 bg-black text-white hover:bg-black/90"
-              onClick={() => window.location.href = '/book-appointment/43575331'}
-              data-testid="button-book-training"
-            >
-              <CalendarClock className="mr-2 h-5 w-5" />
-              Book a Training Session
-            </Button>
+          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+            {/* In-Person Coaching Card */}
+            <Card className="relative">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-2xl">1-Hour In-Person Coaching Session</CardTitle>
+                  <span className="px-3 py-1 text-xs font-medium border border-foreground rounded-full whitespace-nowrap">
+                    Approval Required
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">
+                  One hour, in-person coaching session.
+                </p>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="h-5 w-5" />
+                  <span>60 minutes</span>
+                </div>
+                <div className="text-2xl font-bold text-foreground">
+                  $85.00
+                </div>
+                <Button
+                  className="w-full bg-black text-white hover:bg-black/90 py-6 text-base"
+                  onClick={() => window.location.href = '/book-appointment/43575331'}
+                  data-testid="button-book-in-person"
+                >
+                  Book Now
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Virtual Coaching Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">1-Hour Virtual Coaching Session</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">
+                  1-Hour Virtual Coaching Session
+                </p>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="h-5 w-5" />
+                  <span>60 minutes</span>
+                </div>
+                <div className="text-2xl font-bold text-foreground">
+                  $65.00
+                </div>
+                <Button
+                  className="w-full bg-black text-white hover:bg-black/90 py-6 text-base"
+                  onClick={() => window.location.href = '/book-appointment/43575331'}
+                  data-testid="button-book-virtual"
+                >
+                  Book Now
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
