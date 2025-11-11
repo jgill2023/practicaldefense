@@ -154,8 +154,8 @@ export default function AboutChris() {
             
             {/* Right Column - Text Overlay Box */}
             <div className="flex items-center justify-center lg:justify-start ml-[0px] mr-[0px] pl-[0px] pr-[0px] pt-[100px] pb-[100px]">
-              <div className="backdrop-blur-sm p-8 lg:p-12 shadow-xl max-w-2xl w-full bg-[#ffffff00] text-[#ffffff] pl-[0px] pr-[0px] pt-[0px] pb-[0px]">
-                <blockquote className="lg:text-2xl font-medium text-[#ffffff] text-[32px] text-right bg-[#00000000]">
+              <div className="p-8 lg:p-12 max-w-2xl w-full pl-[0px] pr-[0px] pt-[0px] pb-[0px]">
+                <blockquote className="lg:text-2xl font-medium text-[#ffffff] text-[32px] text-right" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                   "I love coaching and teaching others in the art of firearms because it empowers them 
                   with skills and confidence for self-protection."
                 </blockquote>
