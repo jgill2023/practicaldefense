@@ -147,7 +147,7 @@ export default function AboutChris() {
         backgroundRepeat: 'no-repeat'
       }}>
         {/* Black overlay */}
-        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0, 0, 0, 0.65)' }}></div>
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}></div>
 
         {/* Content Container */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-[#05000000]">
@@ -158,7 +158,7 @@ export default function AboutChris() {
             {/* Right Column - Text Overlay Box */}
             <div className="flex items-center justify-center lg:justify-start ml-[0px] mr-[0px] pl-[0px] pr-[0px] pt-[100px] pb-[100px]">
               <div className="p-8 lg:p-12 max-w-2xl w-full pl-[0px] pr-[0px] pt-[0px] pb-[0px]">
-                <blockquote className="lg:text-2xl font-medium text-[#ffffff] text-[32px] text-right" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                <blockquote className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium text-[#ffffff] text-right" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                   "I love coaching and teaching others in the art of firearms because it empowers them 
                   with skills and confidence for self-protection."
                 </blockquote>
