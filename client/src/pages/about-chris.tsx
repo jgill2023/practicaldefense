@@ -101,11 +101,11 @@ export default function AboutChris() {
       {/* I'm Christopher Bean Section */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="max-w-4xl mx-auto">
-            <CardHeader>
-              <CardTitle className="text-2xl">I'm Christopher Bean</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-muted-foreground">
+          <h2 className="text-3xl font-bold text-center mb-12">I'm Christopher Bean</h2>
+          
+          <div className="grid md:grid-cols-2 gap-8 items-start">
+            {/* Left Column - Text Content */}
+            <div className="space-y-4 text-muted-foreground">
               <p>
                 As Co-Director of the Active Self Protection Instructor Certification program, I am a 
                 dedicated and proven firearms instructor committed to delivering quantifiable and repeatable 
@@ -117,30 +117,27 @@ export default function AboutChris() {
                 performance. As a sought-after mentor, I have guided many top-tier motivators and accomplished 
                 professionals across various fields to reach their highest potential.
               </p>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-      {/* Stats Section */}
-      <section className="py-16 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <Card key={index} className="text-center">
-                  <CardContent className="pt-6">
-                    <Icon className="h-12 w-12 mx-auto mb-4 text-primary" />
-                    <div className="text-4xl font-bold text-foreground mb-2">
-                      {stat.value}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {stat.label}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            </div>
+
+            {/* Right Column - 2x2 Stats Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {stats.slice(0, 4).map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <Card key={index} className="text-center">
+                    <CardContent className="pt-6">
+                      <Icon className="h-10 w-10 mx-auto mb-3 text-primary" />
+                      <div className="text-2xl font-bold text-foreground mb-1">
+                        {stat.value}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {stat.label}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
