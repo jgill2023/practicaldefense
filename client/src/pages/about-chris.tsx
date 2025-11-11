@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import aboutHeaderImage from "@assets/AboutHeader_1762855149831.jpg";
+import aboutQuoteImage from "@assets/About2_1762856231913.jpg";
 import {
   Form,
   FormControl,
@@ -139,12 +140,23 @@ export default function AboutChris() {
         </div>
       </section>
       {/* Quote Section */}
-      <section className="py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <blockquote className="text-2xl lg:text-3xl font-semibold text-foreground italic">
-            "I love coaching and teaching others in the art of firearms because it empowers them 
-            with skills and confidence for self-protection."
-          </blockquote>
+      <section className="relative min-h-[400px] lg:min-h-[500px] flex items-center" style={{
+        backgroundImage: `url(${aboutQuoteImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}>
+        {/* Content Container */}
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="flex justify-center lg:justify-end">
+            {/* Text Overlay Box */}
+            <div className="bg-white/95 backdrop-blur-sm p-8 lg:p-12 rounded-lg shadow-xl max-w-2xl w-full lg:w-auto">
+              <blockquote className="text-xl lg:text-2xl font-medium text-gray-900 leading-relaxed">
+                "I love coaching and teaching others in the art of firearms because it empowers them 
+                with skills and confidence for self-protection."
+              </blockquote>
+            </div>
+          </div>
         </div>
       </section>
       {/* Skills and Certifications Section */}
