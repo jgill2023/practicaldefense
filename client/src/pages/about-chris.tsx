@@ -215,7 +215,7 @@ export default function AboutChris() {
             {/* Instructor-Level Certifications - Full Width */}
             <div className="md:col-span-2">
               <div className="mb-4">
-                <h3 className="text-xl font-semibold">
+                <h3 className="text-xl font-semibold text-center">
                   Instructor-Level Certifications & Training
                 </h3>
               </div>
