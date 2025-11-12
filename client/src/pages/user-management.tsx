@@ -817,7 +817,7 @@ export default function UserManagementPage() {
                   }
                 }}
                 disabled={deleteConfirmText !== "DELETE" || deleteUserMutation.isPending}
-                className="!bg-[#ff0000] hover:!bg-[#ff0000]/90 !text-white"
+                className="!bg-[#ff0000] hover:!bg-[#ff0000]/90 !text-white font-semibold"
                 data-testid="button-confirm-delete"
               >
                 {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
