@@ -386,7 +386,7 @@ export default function Landing() {
                     </div>
                     <Button
                       size="lg"
-                      className="w-full min-h-[44px]"
+                      className="w-full min-h-[44px] rounded-none"
                       onClick={(e) => {
                         e.stopPropagation();
                         console.log('Book Now button clicked!', type.title);
@@ -395,7 +395,7 @@ export default function Landing() {
                       }}
                       data-testid={`button-book-${type.id}`}
                     >
-                      Book Now
+                      BOOK NOW
                     </Button>
                   </CardContent>
                 </Card>
