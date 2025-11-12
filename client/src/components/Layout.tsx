@@ -226,7 +226,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     e.preventDefault();
                     const headerHeight = 64; // Main header height
                     // Scroll up to show Performance Shooting card (approximately 800-900px above on mobile)
-                    const yOffset = -(headerHeight + 850);
+                    const yOffset = -(headerHeight + 770);
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
