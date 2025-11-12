@@ -76,7 +76,7 @@ export default function TheCrucible() {
                 <div className="p-4 border border-zinc-700 rounded-lg bg-zinc-800">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-bold text-white">Gallowglass</h3>
-                    <Badge className="bg-[#bdbdbd]">PAR 6.0s</Badge>
+                    <Badge className="bg-[#bdbdbd] text-[#000000]">PAR 6.0s</Badge>
                   </div>
                   <p className="text-sm text-gray-300">Advanced classification</p>
                 </div>
@@ -380,7 +380,7 @@ export default function TheCrucible() {
           {/* Collaborator Appreciation */}
           <Card className="mt-8 bg-zinc-900 border-zinc-700">
             <CardHeader>
-              <CardTitle className="text-white">Collaborator Appreciation</CardTitle>
+              <CardTitle className="text-white text-center">Collaborator Appreciation</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <p className="text-gray-300 text-center mx-auto max-w-4xl">
