@@ -118,7 +118,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   const coursesSection = document.getElementById('courses');
                   if (coursesSection && window.location.pathname === '/') {
                     e.preventDefault();
-                    const yOffset = -80; // Adjusted to show the top of the off-white area
+                    const headerHeight = 64;
+                    const secondaryMenuHeight = isAuthenticated ? 40 : 0;
+                    // Scroll up to show the bottom of Results-Driven Training section
+                    const yOffset = -(headerHeight + secondaryMenuHeight + 200);
                     const y = coursesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
@@ -208,7 +211,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   const coursesSection = document.getElementById('courses');
                   if (coursesSection && window.location.pathname === '/') {
                     e.preventDefault();
-                    const yOffset = -80;
+                    const headerHeight = 64;
+                    // Scroll up to show the bottom of Results-Driven Training section on mobile
+                    const yOffset = -(headerHeight + 200);
                     const y = coursesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
