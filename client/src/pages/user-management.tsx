@@ -119,7 +119,7 @@ export default function UserManagementPage() {
 
   const createUserMutation = useMutation({
     mutationFn: async (data: CreateUserForm) => {
-      return await apiRequest("/api/admin/users", "POST", data);
+      return await apiRequest("POST", "/api/admin/users", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
@@ -142,7 +142,7 @@ export default function UserManagementPage() {
 
   const approveUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      return await apiRequest(`/api/admin/users/${userId}/approve`, "PATCH");
+      return await apiRequest("PATCH", `/api/admin/users/${userId}/approve`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
@@ -163,7 +163,7 @@ export default function UserManagementPage() {
 
   const rejectUserMutation = useMutation({
     mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
-      return await apiRequest(`/api/admin/users/${userId}/reject`, "PATCH", { reason });
+      return await apiRequest("PATCH", `/api/admin/users/${userId}/reject`, { reason });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
@@ -187,7 +187,7 @@ export default function UserManagementPage() {
 
   const editUserMutation = useMutation({
     mutationFn: async ({ userId, data }: { userId: string; data: EditUserForm }) => {
-      return await apiRequest(`/api/admin/users/${userId}`, "PATCH", data);
+      return await apiRequest("PATCH", `/api/admin/users/${userId}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
@@ -211,7 +211,7 @@ export default function UserManagementPage() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      return await apiRequest(`/api/admin/users/${userId}`, "DELETE");
+      return await apiRequest("DELETE", `/api/admin/users/${userId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
@@ -235,7 +235,7 @@ export default function UserManagementPage() {
 
   const passwordResetMutation = useMutation({
     mutationFn: async (userId: string) => {
-      return await apiRequest(`/api/admin/users/${userId}/reset-password`, "POST");
+      return await apiRequest("POST", `/api/admin/users/${userId}/reset-password`);
     },
     onSuccess: () => {
       toast({
