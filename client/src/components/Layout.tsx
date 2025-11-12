@@ -153,8 +153,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     e.preventDefault();
                     const headerHeight = 64; // Main header height
                     const secondaryMenuHeight = isAuthenticated ? 40 : 0; // Secondary menu only shows when logged in
-                    // Scroll up to show Performance Shooting card
-                    const yOffset = -(headerHeight + secondaryMenuHeight + 800);
+                    // Scroll to appointments section (One-on-One Training is at the top of this section)
+                    const yOffset = -(headerHeight + secondaryMenuHeight);
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
