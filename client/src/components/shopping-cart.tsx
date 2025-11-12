@@ -99,25 +99,10 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
     }
   };
 
-  const CartTrigger = trigger || (
-    <Button variant="outline" size="sm" className="relative" data-testid="cart-trigger">
-      <ShoppingCart className="w-4 h-4" />
-      {cartItems.length > 0 && (
-        <Badge 
-          variant="destructive" 
-          className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-          data-testid="cart-badge"
-        >
-          {cartItems.reduce((sum: number, item: CartItemWithDetails) => sum + item.quantity, 0)}
-        </Badge>
-      )}
-    </Button>
-  );
-
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        {CartTrigger}
+        {trigger}
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-lg" data-testid="cart-sheet">
         <SheetHeader>
