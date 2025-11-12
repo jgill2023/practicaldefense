@@ -114,15 +114,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   }
                 }}>Home</a>
                 <Link href="/about-chris" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-about-chris">About Chris</Link>
-                <a href="/#courses" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={(e) => {
-                  const coursesSection = document.getElementById('courses');
-                  if (coursesSection && window.location.pathname === '/') {
+                <a href="/#results-driven-training" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={(e) => {
+                  const resultsSection = document.getElementById('results-driven-training');
+                  if (resultsSection && window.location.pathname === '/') {
                     e.preventDefault();
                     const headerHeight = 64;
                     const secondaryMenuHeight = isAuthenticated ? 40 : 0;
-                    // Scroll up to show the bottom of Results-Driven Training section
-                    const yOffset = -(headerHeight + secondaryMenuHeight + 400);
-                    const y = coursesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                    const yOffset = -(headerHeight + secondaryMenuHeight);
+                    const y = resultsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>Courses</a>
@@ -206,15 +205,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   }
                 }}>Home</a>
                 <Link href="/about-chris" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-about-chris-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Chris</Link>
-                <a href="/#courses" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-courses-mobile" onClick={(e) => {
+                <a href="/#results-driven-training" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-courses-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
-                  const coursesSection = document.getElementById('courses');
-                  if (coursesSection && window.location.pathname === '/') {
+                  const resultsSection = document.getElementById('results-driven-training');
+                  if (resultsSection && window.location.pathname === '/') {
                     e.preventDefault();
                     const headerHeight = 64;
-                    // Scroll up to show the bottom of Results-Driven Training section on mobile
-                    const yOffset = -(headerHeight + 300);
-                    const y = coursesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                    const yOffset = -headerHeight;
+                    const y = resultsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>Courses</a>
