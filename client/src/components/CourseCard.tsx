@@ -154,7 +154,7 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
         <Button 
           type="button"
           size="lg" 
-          className="w-full register-button min-h-[44px]"
+          className="w-full register-button min-h-[44px] rounded-none"
           onClick={(e) => {
             e.stopPropagation();
             onRegister(course);
