@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunicationCounts } from "@/hooks/useCommunicationCounts";
-import { hasInstructorPrivileges } from "@/lib/authUtils";
+import { hasInstructorPrivileges, canCreateAccounts, isInstructorOrHigher } from "@/lib/authUtils";
+import { usePendingUsersCount } from "@/hooks/usePendingUsersCount";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -21,6 +22,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { counts } = useCommunicationCounts();
+  const { pendingCount } = usePendingUsersCount();
 
 
 
@@ -64,6 +66,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-products">
                     Products
                   </Link>
+                  {canCreateAccounts(user) && (
+                    <Link href="/admin/users" className="text-sm font-medium text-foreground hover:text-primary transition-colors relative" data-testid="link-secondary-user-management">
+                      User Management
+                      {pendingCount > 0 && (
+                        <Badge 
+                          variant="destructive" 
+                          className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
+                          data-testid="badge-pending-users-desktop"
+                        >
+                          {pendingCount > 99 ? '99+' : pendingCount}
+                        </Badge>
+                      )}
+                    </Link>
+                  )}
                   {user?.role === 'superadmin' && (
                     <Link href="/admin/credits" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-admin-credits">
                       Admin Credits
@@ -280,6 +296,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
                               Products
                             </Button>
                           </Link>
+                          {canCreateAccounts(user as any) && (
+                            <Link href="/admin/users" className="block">
+                              <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary relative" data-testid="link-user-management-mobile">
+                                User Management
+                                {pendingCount > 0 && (
+                                  <Badge 
+                                    variant="destructive" 
+                                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-[20px]"
+                                    data-testid="badge-pending-users-mobile"
+                                  >
+                                    {pendingCount > 99 ? '99+' : pendingCount}
+                                  </Badge>
+                                )}
+                              </Button>
+                            </Link>
+                          )}
                           {user?.role === 'superadmin' && (
                             <Link href="/admin/credits" className="block">
                               <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-admin-credits-mobile">

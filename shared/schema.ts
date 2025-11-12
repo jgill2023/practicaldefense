@@ -26,6 +26,12 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
+// User status enum for account approval workflow
+export const userStatusEnum = pgEnum("user_status", ["pending", "active", "suspended", "rejected"]);
+
+// User role enum
+export const userRoleEnum = pgEnum("user_role", ["student", "instructor", "admin", "superadmin"]);
+
 // User storage table for Replit Auth
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -60,7 +66,11 @@ export const users = pgTable("users", {
   enableSmsAnnouncements: boolean("enable_sms_announcements").default(false), // SMS for general announcements
   // Instructor-specific settings
   replyToEmail: varchar("reply_to_email"), // Custom reply-to email for instructor communications
-  role: varchar("role").notNull().default('student'), // 'student', 'instructor', or 'superadmin'
+  role: userRoleEnum("role").notNull().default('student'), // 'student', 'instructor', 'admin', or 'superadmin'
+  // Account status for approval workflow
+  userStatus: userStatusEnum("user_status").notNull().default('pending'), // 'pending', 'active', 'suspended', or 'rejected'
+  statusUpdatedAt: timestamp("status_updated_at"),
+  statusReason: text("status_reason"), // Reason for suspension or rejection
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

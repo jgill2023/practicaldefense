@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import Stripe from "stripe";
 import { z } from "zod";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrSuperadmin } from "./replitAuth";
+import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrSuperadmin, requireAdmin, requireInstructorOrHigher, requireActiveAccount } from "./replitAuth";
 import { db } from "./db";
 import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems, instructorAppointments } from "@shared/schema";
 import { eq, and, inArray, desc, gte } from "drizzle-orm";
@@ -122,6 +122,151 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error updating profile:", error);
       res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // ============================================
+  // USER MANAGEMENT ROUTES (Admin/Superadmin)
+  // ============================================
+
+  // Get all users (Admin+)
+  app.get('/api/admin/users', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Get pending users count (Instructor+)
+  app.get('/api/admin/users/pending/count', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      const count = await storage.getPendingUsersCount();
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching pending users count:", error);
+      res.status(500).json({ message: "Failed to fetch pending users count" });
+    }
+  });
+
+  // Create user manually (Admin+)
+  app.post('/api/admin/users', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const createUserSchema = z.object({
+        email: z.string().email("Invalid email address"),
+        firstName: z.string().min(1, "First name is required"),
+        lastName: z.string().min(1, "Last name is required"),
+        role: z.enum(['student', 'instructor', 'admin', 'superadmin']),
+        userStatus: z.enum(['pending', 'active', 'suspended', 'rejected']).default('active'),
+      });
+
+      const validatedData = createUserSchema.parse(req.body);
+      
+      // Only superadmins can create other superadmins
+      const adminId = req.user.claims.sub;
+      const admin = await storage.getUser(adminId);
+      
+      if (validatedData.role === 'superadmin' && admin?.role !== 'superadmin') {
+        return res.status(403).json({ message: "Only superadmins can create other superadmins" });
+      }
+
+      const newUser = await storage.createUser({
+        ...validatedData,
+        statusUpdatedAt: new Date(),
+      });
+
+      res.json(newUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  // Approve user (Instructor+)
+  app.patch('/api/admin/users/:userId/approve', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const updatedUser = await storage.updateUser(userId, {
+        userStatus: 'active',
+        statusUpdatedAt: new Date(),
+        statusReason: null,
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error approving user:", error);
+      res.status(500).json({ message: "Failed to approve user" });
+    }
+  });
+
+  // Reject user (Instructor+)
+  app.patch('/api/admin/users/:userId/reject', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { reason } = req.body;
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const updatedUser = await storage.updateUser(userId, {
+        userStatus: 'rejected',
+        statusUpdatedAt: new Date(),
+        statusReason: reason || 'Application rejected',
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error rejecting user:", error);
+      res.status(500).json({ message: "Failed to reject user" });
+    }
+  });
+
+  // Update user role (Admin+)
+  app.patch('/api/admin/users/:userId/role', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { role } = req.body;
+      
+      const roleSchema = z.enum(['student', 'instructor', 'admin', 'superadmin']);
+      const validatedRole = roleSchema.parse(role);
+      
+      // Only superadmins can assign superadmin role
+      const adminId = req.user.claims.sub;
+      const admin = await storage.getUser(adminId);
+      
+      if (validatedRole === 'superadmin' && admin?.role !== 'superadmin') {
+        return res.status(403).json({ message: "Only superadmins can assign superadmin role" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const updatedUser = await storage.updateUser(userId, {
+        role: validatedRole,
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid role", errors: error.errors });
+      }
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
     }
   });
 

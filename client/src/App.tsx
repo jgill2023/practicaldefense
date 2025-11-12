@@ -30,10 +30,13 @@ import TheCrucible from "@/pages/the-crucible";
 import AppointmentsPage from "@/pages/appointments";
 import BookAppointmentPage from "@/pages/book-appointment";
 import AdminCreditsPage from "@/pages/admin-credits";
+import UserManagementPage from "@/pages/user-management";
+import PendingApprovalPage from "@/pages/pending-approval";
 import AboutChris from "@/pages/about-chris";
 import NotFound from "@/pages/not-found";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { isInstructorOrHigher } from "@/lib/authUtils";
 
 // Assuming ProtectedRouteProps and Alert components are defined elsewhere
 // For this example, let's define a placeholder for ProtectedRouteProps
@@ -62,7 +65,7 @@ function ProtectedRoute({ children, requireInstructor = false }: ProtectedRouteP
     return null;
   }
 
-  if (requireInstructor && user.role !== 'instructor' && user.role !== 'superadmin') {
+  if (requireInstructor && !isInstructorOrHigher(user)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <Alert variant="destructive" className="max-w-md">
@@ -99,8 +102,18 @@ function Router() {
     );
   }
 
+  // Redirect pending users to approval page except for allowed routes
+  if (isAuthenticated && user?.userStatus === 'pending') {
+    const allowedPaths = ['/pending-approval', '/contact', '/about-chris', '/privacy-policy', '/terms-of-service', '/refund-policy', '/the-crucible', '/'];
+    if (!allowedPaths.includes(location) && location !== '/') {
+      window.location.href = '/pending-approval';
+      return null;
+    }
+  }
+
   return (
     <Switch>
+      <Route path="/pending-approval" component={PendingApprovalPage} />
       <Route path="/" component={Landing} />
       <Route path="/store" component={Storefront} />
       <Route path="/cart" component={CartPage} />
@@ -125,6 +138,7 @@ function Router() {
       <Route path="/reports" component={Reports} />
       <Route path="/appointments" component={AppointmentsPage} />
       <Route path="/admin/credits" component={AdminCreditsPage} />
+      <Route path="/admin/users" component={UserManagementPage} />
       <Route path="/student-portal" component={StudentPortal} />
       <Route path="/students" component={StudentsPage} />
       <Route component={NotFound} />

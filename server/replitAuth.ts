@@ -107,7 +107,7 @@ async function upsertUser(
     
     await storage.updateUser(claims["sub"], updateData);
   } else {
-    // For new users, set the validated role
+    // For new users, set the validated role and pending status (requires approval)
     console.log("upsertUser - creating new user with data:", {
       id: claims["sub"],
       email: claims["email"],
@@ -115,6 +115,7 @@ async function upsertUser(
       lastName: claims["last_name"],
       profileImageUrl: claims["profile_image_url"],
       role: role,
+      userStatus: 'pending', // New accounts start as pending
     });
     try {
       const result = await storage.upsertUser({
@@ -124,6 +125,8 @@ async function upsertUser(
         lastName: claims["last_name"],
         profileImageUrl: claims["profile_image_url"],
         role: role,
+        userStatus: 'pending', // New accounts require approval
+        statusUpdatedAt: new Date(), // Set timestamp when status is set
       });
       console.log("upsertUser - created user result:", result);
     } catch (error) {
@@ -282,13 +285,87 @@ export const requireInstructorOrSuperadmin: RequestHandler = async (req, res, ne
     const { storage } = await import('./storage');
     const user = await storage.getUser(userId);
     
-    if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+    if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
       return res.status(403).json({ message: "Forbidden: Instructor access required" });
     }
     
     next();
   } catch (error) {
-    console.error('Error checking instructor/superadmin status:', error);
+    console.error('Error checking instructor/admin/superadmin status:', error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const requireAdmin: RequestHandler = async (req, res, next) => {
+  const userId = (req.user as any)?.claims?.sub;
+  
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const { storage } = await import('./storage');
+    const user = await storage.getUser(userId);
+    
+    if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
+      return res.status(403).json({ message: "Forbidden: Admin access required" });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const requireInstructorOrHigher: RequestHandler = async (req, res, next) => {
+  const userId = (req.user as any)?.claims?.sub;
+  
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const { storage } = await import('./storage');
+    const user = await storage.getUser(userId);
+    
+    if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
+      return res.status(403).json({ message: "Forbidden: Instructor access required" });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Error checking instructor/admin/superadmin status:', error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const requireActiveAccount: RequestHandler = async (req, res, next) => {
+  const userId = (req.user as any)?.claims?.sub;
+  
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    const { storage } = await import('./storage');
+    const user = await storage.getUser(userId);
+    
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    if (user.userStatus !== 'active') {
+      return res.status(403).json({ 
+        message: "Account approval required",
+        status: user.userStatus,
+        reason: user.statusReason 
+      });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Error checking account status:', error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
