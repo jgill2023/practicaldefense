@@ -29,18 +29,46 @@ The application utilizes Neon PostgreSQL as its relational database. Drizzle ORM
 ## Authentication and Authorization
 Authentication is provided by Replit Auth with OpenID Connect. The system uses server-side sessions stored in PostgreSQL and implements role-based access control (student/instructor/superadmin) with middleware-protected routes, HTTPS enforcement, secure cookies, and CSRF protection.
 
-### Role Hierarchy
-The platform supports three user roles with distinct privilege levels:
-- **Student**: Access to student portal, course browsing, and enrollment management
-- **Instructor**: Full access to instructor dashboard, course management, student management, communications, and all administrative features
-- **Superadmin**: Inherits all instructor privileges plus exclusive access to superadmin-only features (credit management, system administration)
+### Role Hierarchy and User Management
+The platform implements a comprehensive four-tier role hierarchy with strict privilege levels:
+- **Student**: Access to student portal, course browsing, enrollment, and personal profile management
+- **Instructor**: Inherits student privileges plus full access to instructor dashboard, course management, student management, communications, and scheduling features
+- **Admin**: Inherits all instructor privileges plus user account management, including creating accounts and approving/rejecting pending registrations
+- **Super Admin**: Inherits all admin and instructor privileges plus exclusive access to system administration features (credit management, advanced settings)
 
-Superadmin role is implemented through shared authorization helpers:
-- Backend: `requireInstructorOrSuperadmin` middleware allows both instructors and superadmins to access instructor-protected routes
-- Frontend: `hasInstructorPrivileges(user)` utility function enables consistent role checking across all components and pages
+Permission helpers enforce the hierarchy consistently:
+- Backend middleware: `requireInstructorOrHigher`, `requireAdminOrHigher`, `requireSuperadmin`, `requireActiveAccount`
+- Frontend utilities: `isInstructorOrHigher(user)`, `isAdminOrHigher(user)`, `isSuperAdmin(user)`, `canCreateAccounts(user)`, `isActiveAccount(user)`
 
-To designate a superadmin account:
+### User Status and Pending Approval Workflow
+All user accounts have a status that controls access to the platform:
+- **pending**: New self-registrations default to pending status and must be approved by Instructor/Admin/Super Admin before gaining access
+- **active**: Approved accounts with full access to features based on their role
+- **suspended**: Temporarily restricted accounts (future feature)
+- **rejected**: Denied registrations with optional reason stored
+
+Pending users can only access:
+- Landing page and public information pages
+- Pending approval status page (`/pending-approval`)
+- Contact and support pages
+
+### User Management Interface
+Admin and Super Admin users can access the User Management page (`/admin/users`) which provides:
+- **User Listing**: Complete user directory with role, status, and account details
+- **Filtering**: Quick filter by user status (All, Pending, Active, Suspended, Rejected)
+- **Pending Badge Counter**: Real-time notification in navigation showing pending approval count
+- **Manual Account Creation**: Create accounts directly with any role and active status (Admin+ only)
+- **Approve/Reject Actions**: Process pending registrations with optional rejection reasons
+- **Role Visibility**: Color-coded role badges for quick identification
+
+The system tracks status changes with timestamps (`statusUpdatedAt`) and reasons (`statusReason`) for audit purposes.
+
+To designate role elevations:
 ```sql
+-- Promote to Admin
+UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
+
+-- Promote to Super Admin
 UPDATE users SET role = 'superadmin' WHERE email = 'your@email.com';
 ```
 
