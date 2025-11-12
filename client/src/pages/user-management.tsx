@@ -586,7 +586,7 @@ export default function UserManagementPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
                                 onClick={() => handleDeleteUser(user)}
-                                className="text-destructive focus:text-destructive"
+                                className="focus:text-destructive text-[#ff0000]"
                                 data-testid={`action-delete-${user.id}`}
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
