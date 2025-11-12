@@ -233,7 +233,7 @@ export default function Landing() {
           <h2 className="text-3xl lg:text-4xl mb-6 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, color: '#000' }}>
             <span className="line-through">Traditional</span> Results-Driven Training
           </h2>
-          <p className="text-lg max-w-4xl mx-auto" style={{ color: '#000' }}>
+          <p className="max-w-4xl mx-auto text-[20px]" style={{ color: '#000' }}>
             We pride ourselves on results-driven training that is tailored to, and for, the individual student.
           </p>
         </div>
