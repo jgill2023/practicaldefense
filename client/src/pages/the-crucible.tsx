@@ -383,7 +383,7 @@ export default function TheCrucible() {
               <CardTitle className="text-white">Collaborator Appreciation</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <p className="text-gray-300">
+              <p className="text-gray-300 text-justify">
                 At Tactical Advantage, we pride ourselves on due diligence, testing, and peer review. There are many incredible instructors we have been fortunate to train, work and learn from. With that said, The Crucible, was developed over more than a year. During that time, significant input was gathered and implemented from some of the most prominent trainers, shooters and training conglomerates operating in the shooting realm today. Either BETA testing or providing valuable feedback. Those listed below have in no small way had dramatic impact on the development of The Crucible. I thank them for their wisdom and most of all their friendship.
               </p>
               <div className="grid md:grid-cols-3 gap-4">
