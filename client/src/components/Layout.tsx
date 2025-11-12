@@ -156,7 +156,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     e.preventDefault();
                     const headerHeight = 64; // Main header height
                     const secondaryMenuHeight = isAuthenticated ? 40 : 0; // Secondary menu only shows when logged in
-                    const yOffset = -(headerHeight + secondaryMenuHeight + 50); // Account for section padding-top
+                    // Scroll up to show Performance Shooting card (approximately 600-700px above appointments section)
+                    const yOffset = -(headerHeight + secondaryMenuHeight + 650);
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
@@ -230,7 +231,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   if (appointmentsSection && window.location.pathname === '/') {
                     e.preventDefault();
                     const headerHeight = 64; // Main header height
-                    const yOffset = -(headerHeight - 10); // Minimal offset to show full section header
+                    // Scroll up to show Performance Shooting card (approximately 800-900px above on mobile)
+                    const yOffset = -(headerHeight + 850);
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
