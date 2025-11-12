@@ -231,8 +231,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   if (appointmentsSection && window.location.pathname === '/') {
                     e.preventDefault();
                     const headerHeight = 64; // Main header height
-                    // Scroll up to show Performance Shooting card (approximately 800-900px above on mobile)
-                    const yOffset = -(headerHeight + 850);
+                    // Scroll up to show Performance Shooting card (approximately 700-750px above on mobile)
+                    const yOffset = -(headerHeight + 700);
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
