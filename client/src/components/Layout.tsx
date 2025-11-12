@@ -205,14 +205,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   }
                 }}>Home</a>
                 <Link href="/about-chris" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-about-chris-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Chris</Link>
-                <a href="/#results-driven-training" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-courses-mobile" onClick={(e) => {
+                <a href="/#courses" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-courses-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
-                  const resultsSection = document.getElementById('results-driven-training');
-                  if (resultsSection && window.location.pathname === '/') {
+                  const firstCourseCard = document.querySelector('[data-testid="feature-deductive-pistolcraft"]');
+                  if (firstCourseCard && window.location.pathname === '/') {
                     e.preventDefault();
                     const headerHeight = 64;
                     const yOffset = -headerHeight;
-                    const y = resultsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                    const y = firstCourseCard.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>Courses</a>
