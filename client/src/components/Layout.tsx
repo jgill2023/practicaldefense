@@ -230,7 +230,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   if (appointmentsSection && window.location.pathname === '/') {
                     e.preventDefault();
                     const headerHeight = 64; // Main header height
-                    const yOffset = -(headerHeight + 20); // Reduced offset to show section heading
+                    const yOffset = -(headerHeight - 10); // Minimal offset to show full section header
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
