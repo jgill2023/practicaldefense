@@ -586,7 +586,7 @@ export default function UserManagementPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
                                 onClick={() => handleDeleteUser(user)}
-                                className="text-[#ff0000] focus:text-[#ff0000]"
+                                className="!text-[#ff0000] focus:!text-[#ff0000] hover:!text-[#ff0000]"
                                 data-testid={`action-delete-${user.id}`}
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
@@ -817,7 +817,7 @@ export default function UserManagementPage() {
                   }
                 }}
                 disabled={deleteConfirmText !== "DELETE" || deleteUserMutation.isPending}
-                className="bg-[#ff0000] hover:bg-[#ff0000]/90 text-white"
+                className="!bg-[#ff0000] hover:!bg-[#ff0000]/90 !text-white"
                 data-testid="button-confirm-delete"
               >
                 {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
