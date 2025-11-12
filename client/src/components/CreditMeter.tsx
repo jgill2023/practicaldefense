@@ -92,15 +92,7 @@ export function CreditMeter({ onPurchaseClick }: CreditMeterProps) {
               </Badge>
             )}
           </div>
-          <Button
-            onClick={onPurchaseClick}
-            size="sm"
-            variant={smsStatus === "destructive" || emailStatus === "destructive" ? "default" : "outline"}
-            data-testid="button-purchase-credits"
-          >
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            Purchase Credits
-          </Button>
+          
         </div>
 
         <div className="space-y-4">
