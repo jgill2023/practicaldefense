@@ -213,7 +213,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     e.preventDefault();
                     const headerHeight = 64;
                     // Scroll up to show the bottom of Results-Driven Training section on mobile
-                    const yOffset = -(headerHeight + 200);
+                    const yOffset = -(headerHeight + 100);
                     const y = coursesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
