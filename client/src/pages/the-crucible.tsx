@@ -376,6 +376,47 @@ export default function TheCrucible() {
               </ul>
             </CardContent>
           </Card>
+
+          {/* Collaborator Appreciation */}
+          <Card className="mt-8 bg-zinc-900 border-zinc-700">
+            <CardHeader>
+              <CardTitle className="text-white">Collaborator Appreciation</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <p className="text-gray-300">
+                At Tactical Advantage, we pride ourselves on due diligence, testing, and peer review. There are many incredible instructors we have been fortunate to train, work and learn from. With that said, The Crucible, was developed over more than a year. During that time, significant input was gathered and implemented from some of the most prominent trainers, shooters and training conglomerates operating in the shooting realm today. Either BETA testing or providing valuable feedback. Those listed below have in no small way had dramatic impact on the development of The Crucible. I thank them for their wisdom and most of all their friendship.
+              </p>
+              <div className="grid md:grid-cols-3 gap-4">
+                <ul className="space-y-2 text-gray-300">
+                  <li>Memphis Beech</li>
+                  <li>Gabe White</li>
+                  <li>Derek Wright</li>
+                  <li>Derek Watkins</li>
+                  <li>Dan Brady</li>
+                  <li>Guy Naimo</li>
+                </ul>
+                <ul className="space-y-2 text-gray-300">
+                  <li>Hunter Freeland</li>
+                  <li>Tim Herron</li>
+                  <li>John Correia</li>
+                  <li>Neil Weidner</li>
+                  <li>Scotty Cronin</li>
+                  <li>Jonathan Willis</li>
+                </ul>
+                <ul className="space-y-2 text-gray-300">
+                  <li>Dr. Jimmy Turner</li>
+                  <li>Jeff Whitaker</li>
+                  <li>Jim Shanahan</li>
+                  <li>Dan Kushner</li>
+                  <li>Riley Bowman</li>
+                  <li>Jesse Johnson</li>
+                </ul>
+              </div>
+              <p className="text-gray-300 text-center font-semibold mt-4">
+                Many many more!
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </Layout>
