@@ -270,6 +270,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Edit user (Admin+)
+  app.patch('/api/admin/users/:userId', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const adminId = req.user.claims.sub;
+      const admin = await storage.getUser(adminId);
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const editUserSchema = z.object({
+        email: z.string().email("Invalid email address").optional(),
+        firstName: z.string().min(1, "First name is required").optional(),
+        lastName: z.string().min(1, "Last name is required").optional(),
+        preferredName: z.string().optional(),
+        phone: z.string().optional(),
+        role: z.enum(['student', 'instructor', 'admin', 'superadmin']).optional(),
+        userStatus: z.enum(['pending', 'active', 'suspended', 'rejected']).optional(),
+      });
+
+      const validatedData = editUserSchema.parse(req.body);
+      
+      // Only superadmins can assign superadmin role
+      if (validatedData.role === 'superadmin' && admin?.role !== 'superadmin') {
+        return res.status(403).json({ message: "Only superadmins can assign superadmin role" });
+      }
+
+      const updatedUser = await storage.updateUser(userId, validatedData);
+      res.json(updatedUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Send password reset (Admin+)
+  app.post('/api/admin/users/:userId/reset-password', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Note: Replit Auth handles authentication, so we don't have a traditional password reset
+      // This endpoint is a placeholder for future integration with password reset functionality
+      // For now, we'll just return a success message indicating the admin should direct the user to re-authenticate
+      
+      res.json({ 
+        message: "Password reset requested. The user should log out and log back in through Replit Auth.",
+        user: { email: user.email, firstName: user.firstName, lastName: user.lastName }
+      });
+    } catch (error) {
+      console.error("Error sending password reset:", error);
+      res.status(500).json({ message: "Failed to send password reset" });
+    }
+  });
+
+  // Delete user (Admin+)
+  app.delete('/api/admin/users/:userId', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const adminId = req.user.claims.sub;
+      
+      // Prevent self-deletion
+      if (userId === adminId) {
+        return res.status(400).json({ message: "You cannot delete your own account" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      await storage.deleteUser(userId);
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   // Category routes
   app.get('/api/categories', async (req, res) => {
     try {

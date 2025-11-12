@@ -736,6 +736,10 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
   async updateStudent(id: string, data: { 
     email?: string;
     phone?: string; 
