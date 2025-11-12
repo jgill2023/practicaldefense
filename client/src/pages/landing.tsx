@@ -242,7 +242,7 @@ export default function Landing() {
       <section id="courses" className="bg-muted py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Deductive Pistolcraft */}
-          <div className="bg-card rounded-lg overflow-hidden shadow-lg mb-8" data-testid="feature-deductive-pistolcraft">
+          <div id="deductive-pistolcraft" className="bg-card rounded-lg overflow-hidden shadow-lg mb-8 scroll-mt-28" data-testid="feature-deductive-pistolcraft">
             <div className="grid md:grid-cols-2 gap-6 p-6">
               <div className="flex flex-col justify-center">
                 <h3 className="font-semibold text-foreground mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '26px', letterSpacing: '0px', lineHeight: '1.5em' }}>

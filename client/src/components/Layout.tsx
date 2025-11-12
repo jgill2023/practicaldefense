@@ -114,17 +114,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   }
                 }}>Home</a>
                 <Link href="/about-chris" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-about-chris">About Chris</Link>
-                <a href="/#results-driven-training" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={(e) => {
-                  const resultsSection = document.getElementById('results-driven-training');
-                  if (resultsSection && window.location.pathname === '/') {
+                <a href="/#deductive-pistolcraft" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={(e) => {
+                  if (window.location.pathname === '/') {
                     e.preventDefault();
-                    const headerHeight = 64;
-                    const secondaryMenuHeight = isAuthenticated ? 40 : 0;
-                    const yOffset = -(headerHeight + secondaryMenuHeight);
-                    const y = resultsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                    window.scrollTo({ top: y, behavior: 'smooth' });
+                    document.getElementById('deductive-pistolcraft')?.scrollIntoView({ behavior: 'smooth' });
                   }
-                }}>Courses</a>
+                }} data-testid="link-courses">Courses</a>
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
@@ -205,15 +200,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   }
                 }}>Home</a>
                 <Link href="/about-chris" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-about-chris-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Chris</Link>
-                <a href="/#courses" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-courses-mobile" onClick={(e) => {
+                <a href="/#deductive-pistolcraft" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-courses-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
-                  const firstCourseCard = document.querySelector('[data-testid="feature-deductive-pistolcraft"]');
-                  if (firstCourseCard && window.location.pathname === '/') {
+                  if (window.location.pathname === '/') {
                     e.preventDefault();
-                    const headerHeight = 64;
-                    const yOffset = -headerHeight;
-                    const y = firstCourseCard.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                    window.scrollTo({ top: y, behavior: 'smooth' });
+                    document.getElementById('deductive-pistolcraft')?.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}>Courses</a>
                 <a href="/the-crucible" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-crucible-mobile" onClick={() => setIsMobileMenuOpen(false)}>The Crucible</a>
