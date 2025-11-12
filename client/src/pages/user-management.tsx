@@ -38,12 +38,21 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { UserPlus, Check, X, Filter, Shield } from "lucide-react";
+import { UserPlus, Check, X, Filter, Shield, MoreVertical, Edit, Trash2, KeyRound } from "lucide-react";
 import type { User } from "@shared/schema";
 
 const createUserSchema = z.object({
@@ -54,7 +63,18 @@ const createUserSchema = z.object({
   userStatus: z.enum(["pending", "active", "suspended", "rejected"]).default("active"),
 });
 
+const editUserSchema = z.object({
+  email: z.string().email("Invalid email address").optional(),
+  firstName: z.string().min(1, "First name is required").optional(),
+  lastName: z.string().min(1, "Last name is required").optional(),
+  preferredName: z.string().optional(),
+  phone: z.string().optional(),
+  role: z.enum(["student", "instructor", "admin", "superadmin"]).optional(),
+  userStatus: z.enum(["pending", "active", "suspended", "rejected"]).optional(),
+});
+
 type CreateUserForm = z.infer<typeof createUserSchema>;
+type EditUserForm = z.infer<typeof editUserSchema>;
 
 export default function UserManagementPage() {
   const { toast } = useToast();
@@ -62,8 +82,12 @@ export default function UserManagementPage() {
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const form = useForm<CreateUserForm>({
     resolver: zodResolver(createUserSchema),
@@ -71,6 +95,19 @@ export default function UserManagementPage() {
       email: "",
       firstName: "",
       lastName: "",
+      role: "student",
+      userStatus: "active",
+    },
+  });
+
+  const editForm = useForm<EditUserForm>({
+    resolver: zodResolver(editUserSchema),
+    defaultValues: {
+      email: "",
+      firstName: "",
+      lastName: "",
+      preferredName: "",
+      phone: "",
       role: "student",
       userStatus: "active",
     },
@@ -147,6 +184,99 @@ export default function UserManagementPage() {
       });
     },
   });
+
+  const editUserMutation = useMutation({
+    mutationFn: async ({ userId, data }: { userId: string; data: EditUserForm }) => {
+      return await apiRequest(`/api/admin/users/${userId}`, "PATCH", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/pending/count"] });
+      setEditDialogOpen(false);
+      setSelectedUser(null);
+      editForm.reset();
+      toast({
+        title: "User updated",
+        description: "The user account has been updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to update user",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest(`/api/admin/users/${userId}`, "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/pending/count"] });
+      setDeleteDialogOpen(false);
+      setSelectedUser(null);
+      setDeleteConfirmText("");
+      toast({
+        title: "User deleted",
+        description: "The user account has been permanently deleted",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to delete user",
+      });
+    },
+  });
+
+  const passwordResetMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest(`/api/admin/users/${userId}/reset-password`, "POST");
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password reset requested",
+        description: "The user should log out and log back in through Replit Auth",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to send password reset",
+      });
+    },
+  });
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    editForm.reset({
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      preferredName: user.preferredName || "",
+      phone: user.phone || "",
+      role: user.role,
+      userStatus: user.userStatus,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleDeleteUser = (user: User) => {
+    setSelectedUser(user);
+    setDeleteConfirmText("");
+    setDeleteDialogOpen(true);
+  };
+
+  const onEditSubmit = (data: EditUserForm) => {
+    if (selectedUser) {
+      editUserMutation.mutate({ userId: selectedUser.id, data });
+    }
+  };
 
   const filteredUsers = users.filter((user) => {
     if (statusFilter !== "all" && user.userStatus !== statusFilter) return false;
@@ -400,38 +530,71 @@ export default function UserManagementPage() {
                         {new Date(user.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        {user.userStatus === "pending" && (
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => approveUserMutation.mutate(user.id)}
-                              disabled={approveUserMutation.isPending}
-                              data-testid={`button-approve-${user.id}`}
-                            >
-                              <Check className="w-4 h-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => {
-                                setSelectedUserId(user.id);
-                                setRejectDialogOpen(true);
-                              }}
-                              disabled={rejectUserMutation.isPending}
-                              data-testid={`button-reject-${user.id}`}
-                            >
-                              <X className="w-4 h-4 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
-                        )}
-                        {user.userStatus === "rejected" && user.statusReason && (
-                          <span className="text-sm text-muted-foreground" data-testid={`reason-${user.id}`}>
-                            {user.statusReason}
-                          </span>
-                        )}
+                        <div className="flex gap-2 justify-end items-center">
+                          {user.userStatus === "pending" && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => approveUserMutation.mutate(user.id)}
+                                disabled={approveUserMutation.isPending}
+                                data-testid={`button-approve-${user.id}`}
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                  setSelectedUserId(user.id);
+                                  setRejectDialogOpen(true);
+                                }}
+                                disabled={rejectUserMutation.isPending}
+                                data-testid={`button-reject-${user.id}`}
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          {user.userStatus === "rejected" && user.statusReason && (
+                            <span className="text-sm text-muted-foreground mr-2" data-testid={`reason-${user.id}`}>
+                              {user.statusReason}
+                            </span>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" data-testid={`button-actions-${user.id}`}>
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleEditUser(user)} data-testid={`action-edit-${user.id}`}>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit User
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => passwordResetMutation.mutate(user.id)}
+                                data-testid={`action-reset-${user.id}`}
+                              >
+                                <KeyRound className="w-4 h-4 mr-2" />
+                                Send Password Reset
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteUser(user)}
+                                className="text-destructive focus:text-destructive"
+                                data-testid={`action-delete-${user.id}`}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete User
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -486,6 +649,182 @@ export default function UserManagementPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Edit User Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent data-testid="dialog-edit-user">
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+              <DialogDescription>
+                Update user information, role, and account status
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+                <FormField
+                  control={editForm.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-edit-firstname" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-edit-lastname" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" data-testid="input-edit-email" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone (optional)</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-edit-phone" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-edit-role">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="student">Student</SelectItem>
+                          <SelectItem value="instructor">Instructor</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="superadmin">Super Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="userStatus"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Account Status</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-edit-status">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="suspended">Suspended</SelectItem>
+                          <SelectItem value="rejected">Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditDialogOpen(false)}
+                    data-testid="button-cancel-edit"
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={editUserMutation.isPending} data-testid="button-save-edit">
+                    {editUserMutation.isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete User Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent data-testid="dialog-delete-user">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete User Account</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete <strong>{selectedUser?.firstName} {selectedUser?.lastName}</strong> ({selectedUser?.email}) 
+                and all associated data. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-muted-foreground mb-2">
+                To confirm deletion, please type <strong>DELETE</strong> below:
+              </p>
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type DELETE to confirm"
+                className="font-mono"
+                data-testid="input-delete-confirm"
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel 
+                onClick={() => {
+                  setDeleteDialogOpen(false);
+                  setDeleteConfirmText("");
+                  setSelectedUser(null);
+                }}
+                data-testid="button-cancel-delete"
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (selectedUser && deleteConfirmText === "DELETE") {
+                    deleteUserMutation.mutate(selectedUser.id);
+                  }
+                }}
+                disabled={deleteConfirmText !== "DELETE" || deleteUserMutation.isPending}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                data-testid="button-confirm-delete"
+              >
+                {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );
