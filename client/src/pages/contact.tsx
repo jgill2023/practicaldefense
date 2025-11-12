@@ -358,10 +358,7 @@ export default function ContactPage() {
               <CardContent className="space-y-4">
                 <div>
                   <h4 className="font-semibold mb-2">What training programs do you offer?</h4>
-                  <p className="text-sm text-muted-foreground">
-                    We offer New Mexico Concealed Carry courses, defensive handgun training, 
-                    renewal classes, refresher courses, and private instruction.
-                  </p>
+                  <p className="text-sm text-muted-foreground">We offer a variety of specialized firearms training and mental management courses.</p>
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">How do I register for a course?</h4>
