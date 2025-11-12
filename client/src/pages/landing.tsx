@@ -230,7 +230,7 @@ export default function Landing() {
       {/* Results-Driven Training Section - Separate white section */}
       <section id="results-driven-training" className="bg-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl lg:text-4xl mb-6 uppercase" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, color: '#000' }}>
+          <h2 className="lg:text-4xl mb-6 uppercase text-[32px]" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, color: '#000' }}>
             <span className="line-through">Traditional</span> Results-Driven Training
           </h2>
           <p className="max-w-4xl mx-auto text-[20px]" style={{ color: '#000' }}>
