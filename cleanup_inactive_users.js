@@ -49,7 +49,7 @@ async function cleanupInactiveUsers() {
     
     // Check if any users have courses assigned
     const coursesForDeletedUsers = await db.query.courses.findMany({
-      where: sql`${courses.instructorId} IN (${sql.join(userIdsToDelete.map(id => sql`${id}`), sql`, `)})`,
+      where: sql`${courses.instructorId} = ANY(ARRAY[${userIdsToDelete.map(id => `'${id}'`).join(',')}]::text[])`,
     });
     
     if (coursesForDeletedUsers.length > 0) {
@@ -59,22 +59,25 @@ async function cleanupInactiveUsers() {
       });
       
       console.log(`\n🔄 Reassigning courses to super admin: ${superAdmin.email}...`);
-      await db.update(courses)
-        .set({ instructorId: superAdmin.id })
-        .where(sql`${courses.instructorId} IN (${sql.join(userIdsToDelete.map(id => sql`${id}`), sql`, `)})`);
+      
+      // Reassign each course individually
+      for (const course of coursesForDeletedUsers) {
+        await db.update(courses)
+          .set({ instructorId: superAdmin.id })
+          .where(eq(courses.id, course.id));
+      }
       
       console.log(`✅ Courses reassigned successfully`);
     }
     
-    // Now delete users
+    // Now delete users one by one
     console.log('\n🗑️  Deleting users without enrollments...');
     
-    await db
-      .delete(users)
-      .where(and(
-        sql`${users.id} IN (${sql.join(userIdsToDelete.map(id => sql`${id}`), sql`, `)})`,
-        notInArray(users.role, ['superadmin'])
-      ));
+    for (const userId of userIdsToDelete) {
+      await db
+        .delete(users)
+        .where(eq(users.id, userId));
+    }
     
     console.log(`✅ Successfully deleted ${usersToDelete.length} user(s)`);
     
