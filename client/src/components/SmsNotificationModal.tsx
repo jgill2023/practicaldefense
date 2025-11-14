@@ -16,11 +16,11 @@ interface SmsNotificationModalProps {
   phoneNumber: string;
 }
 
-export function SmsNotificationModal({ 
-  isOpen, 
-  onClose, 
-  studentName, 
-  phoneNumber 
+export function SmsNotificationModal({
+  isOpen,
+  onClose,
+  studentName,
+  phoneNumber
 }: SmsNotificationModalProps) {
   const [message, setMessage] = useState("");
   const { toast } = useToast();
@@ -92,6 +92,16 @@ export function SmsNotificationModal({
   const maxLength = 1600; // Twilio's SMS limit
   const isOverLimit = characterCount > maxLength;
 
+  const availableVariables = [
+    { label: "{{ student.firstName }}", value: "{{ student.firstName }}" },
+    { label: "{{ student.lastName }}", value: "{{ student.lastName }}" },
+    { label: "{{ course.name }}", value: "{{ course.name }}" },
+    { label: "{{ schedule.startDate }}", value: "{{ schedule.startDate }}" },
+    { label: "{{ appointmentType.title }}", value: "{{ appointmentType.title }}" },
+    { label: "{{ appointment.startTime }}", value: "{{ appointment.startTime }}" },
+    { label: "{{ appointment.endTime }}", value: "{{ appointment.endTime }}" },
+  ];
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -146,6 +156,26 @@ export function SmsNotificationModal({
                 Message exceeds SMS character limit
               </p>
             )}
+          </div>
+
+          {/* Variables */}
+          <div className="space-y-2">
+            <Label htmlFor="variables" className="text-sm font-medium">
+              Available Variables
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {availableVariables.map((variable) => (
+                <Button
+                  key={variable.value}
+                  variant="outline"
+                  size="xs"
+                  onClick={() => setMessage(message + variable.value)}
+                  className="text-xs"
+                >
+                  {variable.label}
+                </Button>
+              ))}
+            </div>
           </div>
 
           {/* Action Buttons */}

@@ -35,7 +35,10 @@ export function EmailNotificationModal({
     { key: "student.firstName", label: "Student First Name", value: studentName.split(' ')[0] || studentName },
     { key: "student.lastName", label: "Student Last Name", value: studentName.split(' ').slice(1).join(' ') || "" },
     { key: "course.name", label: "Course Name", value: "Course Name" },
-    { key: "schedule.startDate", label: "Schedule Date", value: "Schedule Date" }
+    { key: "schedule.startDate", label: "Schedule Date", value: "Schedule Date" },
+    { key: "appointmentType.title", label: "Appointment Type", value: "Appointment Type" },
+    { key: "appointment.startTime", label: "Appointment Start Time", value: "Appointment Start Time" },
+    { key: "appointment.endTime", label: "Appointment End Time", value: "Appointment End Time" },
   ];
 
   // Function to insert variable into editor
