@@ -374,6 +374,20 @@ export class NotificationEngine {
         duration: `${appointmentType.durationMinutes} minutes`,
         price: `$${Number(appointmentType.price).toFixed(2)}`,
       },
+      schedule: {
+        startDate: appointmentDate,
+        endDate: appointmentDate,
+        startTime: startTimeFormatted,
+        endTime: endTimeFormatted,
+        location: appointmentType.location || '',
+        maxSpots: 1,
+        availableSpots: 1,
+        dayOfWeek: '',
+        arrivalTime: '',
+        rangeName: '',
+        classroomName: '',
+        googleMapsLink: '',
+      },
       system: this.SYSTEM_VARIABLES
     };
 
@@ -481,7 +495,7 @@ export class NotificationEngine {
         variables = { 
           student: variables.student || courseVars.student,
           course: courseVars.course,
-          schedule: courseVars.schedule,
+          schedule: variables.schedule || courseVars.schedule, // Keep appointment schedule if exists
           enrollment: courseVars.enrollment,
           refund: courseVars.refund,
           questionnaire: courseVars.questionnaire,
