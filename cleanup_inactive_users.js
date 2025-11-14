@@ -1,7 +1,7 @@
 
 import { db } from './server/db.js';
-import { users, enrollments } from './shared/schema.js';
-import { eq, notInArray, sql } from 'drizzle-orm';
+import { users, enrollments, courses } from './shared/schema.js';
+import { eq, and, notInArray, sql } from 'drizzle-orm';
 
 async function cleanupInactiveUsers() {
   try {
@@ -21,6 +21,14 @@ async function cleanupInactiveUsers() {
     const allUsers = await db.query.users.findMany();
     console.log(`📊 Total users in database: ${allUsers.length}`);
     
+    // Find a super admin to reassign courses to
+    const superAdmin = allUsers.find(u => u.role === 'superadmin');
+    if (!superAdmin) {
+      console.error('❌ No super admin found. Cannot reassign courses.');
+      process.exit(1);
+    }
+    console.log(`\n✅ Found super admin: ${superAdmin.firstName} ${superAdmin.lastName} (${superAdmin.email})`);
+    
     // Filter users to delete: no enrollments AND not super admin
     const usersToDelete = allUsers.filter(user => 
       !enrolledUserIds.includes(user.id) && 
@@ -37,18 +45,38 @@ async function cleanupInactiveUsers() {
       console.log(`  - ${user.firstName} ${user.lastName} (${user.email}) - Role: ${user.role}`);
     });
     
-    // Delete users
-    console.log('\n🗑️  Deleting users without enrollments...');
-    
     const userIdsToDelete = usersToDelete.map(u => u.id);
     
-    if (userIdsToDelete.length > 0) {
-      await db
-        .delete(users)
-        .where(notInArray(users.id, [...enrolledUserIds, ...allUsers.filter(u => u.role === 'superadmin').map(u => u.id)]));
+    // Check if any users have courses assigned
+    const coursesForDeletedUsers = await db.query.courses.findMany({
+      where: sql`${courses.instructorId} IN (${sql.join(userIdsToDelete.map(id => sql`${id}`), sql`, `)})`,
+    });
+    
+    if (coursesForDeletedUsers.length > 0) {
+      console.log(`\n📚 Found ${coursesForDeletedUsers.length} course(s) that need to be reassigned:`);
+      coursesForDeletedUsers.forEach(course => {
+        console.log(`  - ${course.title} (ID: ${course.id})`);
+      });
       
-      console.log(`✅ Successfully deleted ${usersToDelete.length} user(s)`);
+      console.log(`\n🔄 Reassigning courses to super admin: ${superAdmin.email}...`);
+      await db.update(courses)
+        .set({ instructorId: superAdmin.id })
+        .where(sql`${courses.instructorId} IN (${sql.join(userIdsToDelete.map(id => sql`${id}`), sql`, `)})`);
+      
+      console.log(`✅ Courses reassigned successfully`);
     }
+    
+    // Now delete users
+    console.log('\n🗑️  Deleting users without enrollments...');
+    
+    await db
+      .delete(users)
+      .where(and(
+        sql`${users.id} IN (${sql.join(userIdsToDelete.map(id => sql`${id}`), sql`, `)})`,
+        notInArray(users.role, ['superadmin'])
+      ));
+    
+    console.log(`✅ Successfully deleted ${usersToDelete.length} user(s)`);
     
     // Verify super admins are still present
     const remainingSuperAdmins = await db.query.users.findMany({
