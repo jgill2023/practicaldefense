@@ -316,7 +316,7 @@ export default function ScheduleList() {
                                 </p>
                               )}
                             </div>
-                            <Badge className="ml-4 bg-[#05176b] text-[#ffffff]">
+                            <Badge className="ml-4 text-[#ffffff] bg-[#02057d]">
                               {getCategoryName(schedule.courseCategory)}
                             </Badge>
                           </div>
