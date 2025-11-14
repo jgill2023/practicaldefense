@@ -14,8 +14,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, User, Bell, MessageSquare, ShoppingCart } from "lucide-react";
-import { ShoppingCartComponent } from "@/components/shopping-cart";
+import { Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, User, Bell, MessageSquare } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuth();
@@ -179,9 +178,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/contact" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-contact">Contact Us</Link>
               </nav>
 
-              {/* Desktop auth buttons and cart */}
+              {/* Desktop auth buttons */}
               <div className="hidden md:flex items-center space-x-4">
-                <ShoppingCartComponent />
                 {!isAuthenticated && (
                   <Button 
                     className="bg-accent text-accent-foreground hover:bg-accent/90"
