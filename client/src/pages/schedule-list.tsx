@@ -360,7 +360,7 @@ export default function ScheduleList() {
                           
                           <Link href={`/course-registration/${schedule.courseId}`}>
                             <Button 
-                              className="whitespace-nowrap"
+                              className="whitespace-nowrap bg-[#010c84]"
                               disabled={schedule.availableSpots === 0}
                               data-testid={`button-register-${schedule.courseId}`}
                             >
