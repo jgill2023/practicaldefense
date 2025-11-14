@@ -18,6 +18,7 @@ interface SmsNotificationModalProps {
   enrollmentId?: string;
   courseId?: string;
   scheduleId?: string;
+  appointmentId?: string;
 }
 
 export function SmsNotificationModal({
@@ -28,7 +29,8 @@ export function SmsNotificationModal({
   studentId,
   enrollmentId,
   courseId,
-  scheduleId
+  scheduleId,
+  appointmentId
 }: SmsNotificationModalProps) {
   const [message, setMessage] = useState("");
   const { toast } = useToast();
@@ -41,7 +43,8 @@ export function SmsNotificationModal({
         studentId,
         enrollmentId,
         courseId,
-        scheduleId
+        scheduleId,
+        appointmentId
       });
     },
     onSuccess: (data) => {

@@ -40,15 +40,19 @@ interface AppointmentsModalProps {
 export function AppointmentsModal({ isOpen, onClose, instructorId }: AppointmentsModalProps) {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [showStudentProfile, setShowStudentProfile] = useState(false);
-  const [smsModal, setSmsModal] = useState<{ isOpen: boolean; name: string; phone: string }>({
+  const [smsModal, setSmsModal] = useState<{ isOpen: boolean; name: string; phone: string; appointmentId?: string; studentId?: string }>({
     isOpen: false,
     name: "",
-    phone: ""
+    phone: "",
+    appointmentId: undefined,
+    studentId: undefined
   });
-  const [emailModal, setEmailModal] = useState<{ isOpen: boolean; name: string; email: string }>({
+  const [emailModal, setEmailModal] = useState<{ isOpen: boolean; name: string; email: string; appointmentId?: string; studentId?: string }>({
     isOpen: false,
     name: "",
-    email: ""
+    email: "",
+    appointmentId: undefined,
+    studentId: undefined
   });
 
   const { data: appointments = [], isLoading, isError } = useQuery<Appointment[]>({
@@ -166,7 +170,9 @@ export function AppointmentsModal({ isOpen, onClose, instructorId }: Appointment
                                     setEmailModal({
                                       isOpen: true,
                                       name: `${appointment.student!.firstName} ${appointment.student!.lastName}`,
-                                      email: appointment.student!.email
+                                      email: appointment.student!.email,
+                                      appointmentId: appointment.id,
+                                      studentId: appointment.student!.id
                                     });
                                   }}
                                   className="truncate text-blue-600 hover:text-blue-800 hover:underline text-left"
@@ -185,7 +191,9 @@ export function AppointmentsModal({ isOpen, onClose, instructorId }: Appointment
                                       setSmsModal({
                                         isOpen: true,
                                         name: `${appointment.student!.firstName} ${appointment.student!.lastName}`,
-                                        phone: appointment.student!.phone!
+                                        phone: appointment.student!.phone!,
+                                        appointmentId: appointment.id,
+                                        studentId: appointment.student!.id
                                       });
                                     }}
                                     className="text-green-600 hover:text-green-800 hover:underline text-left"
@@ -244,6 +252,8 @@ export function AppointmentsModal({ isOpen, onClose, instructorId }: Appointment
         onClose={() => setSmsModal({ ...smsModal, isOpen: false })}
         studentName={smsModal.name}
         phoneNumber={smsModal.phone}
+        appointmentId={smsModal.appointmentId}
+        studentId={smsModal.studentId}
       />
 
       <EmailNotificationModal
@@ -251,6 +261,8 @@ export function AppointmentsModal({ isOpen, onClose, instructorId }: Appointment
         onClose={() => setEmailModal({ ...emailModal, isOpen: false })}
         studentName={emailModal.name}
         emailAddress={emailModal.email}
+        appointmentId={emailModal.appointmentId}
+        studentId={emailModal.studentId}
       />
     </>
   );

@@ -4502,7 +4502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
-      const { to, message, purpose = 'educational' } = req.body;
+      const { to, message, purpose = 'educational', studentId, enrollmentId, courseId, scheduleId, appointmentId } = req.body;
 
       if (!to || !Array.isArray(to) || to.length === 0) {
         return res.status(400).json({ error: "At least one phone number is required" });
@@ -4512,12 +4512,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Message content is required" });
       }
 
+      // Always process template variables (even if no context is provided)
+      let processedMessage = message.trim();
+      try {
+        const { NotificationEngine } = await import('./notificationEngine');
+        const variables = await NotificationEngine.buildVariablesFromContext({
+          studentId,
+          enrollmentId,
+          courseId,
+          scheduleId,
+          appointmentId,
+          instructorId: userId
+        });
+        processedMessage = NotificationEngine.processTemplate(processedMessage, variables);
+      } catch (contextError: any) {
+        console.error('Error building notification context:', contextError);
+        return res.status(400).json({ 
+          error: `Failed to process template variables: ${contextError.message || 'Invalid context data'}`
+        });
+      }
+      
+      // Check for unresolved template placeholders
+      if (processedMessage.includes('{{')) {
+        const unresolvedTokens = processedMessage.match(/\{\{[^}]+\}\}/g) || [];
+        console.warn('Unresolved template tokens found in SMS:', unresolvedTokens);
+        return res.status(400).json({ 
+          error: `Message contains unresolved template variables: ${unresolvedTokens.join(', ')}. Please provide the necessary context data (studentId, appointmentId, enrollmentId, courseId, or scheduleId) to resolve these variables, or remove them from your message.`
+        });
+      }
+
       // Import SMS service
       const { NotificationSmsService } = await import('./smsService');
 
       const result = await NotificationSmsService.sendNotificationSms({
         to,
-        message: message.trim(),
+        message: processedMessage,
         instructorId: userId,
         purpose,
       });
@@ -4600,7 +4629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
-      const { to, subject, content, isHtml = false } = req.body;
+      const { to, subject, content, isHtml = false, studentId, enrollmentId, courseId, scheduleId, appointmentId } = req.body;
 
       if (!to || !Array.isArray(to) || to.length === 0) {
         return res.status(400).json({ error: "At least one email address is required" });
@@ -4614,14 +4643,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email content is required" });
       }
 
+      // Always process template variables (even if no context is provided)
+      let processedSubject = subject.trim();
+      let processedContent = content.trim();
+      try {
+        const { NotificationEngine } = await import('./notificationEngine');
+        const variables = await NotificationEngine.buildVariablesFromContext({
+          studentId,
+          enrollmentId,
+          courseId,
+          scheduleId,
+          appointmentId,
+          instructorId: userId
+        });
+        processedSubject = NotificationEngine.processTemplate(processedSubject, variables);
+        processedContent = NotificationEngine.processTemplate(processedContent, variables);
+      } catch (contextError: any) {
+        console.error('Error building notification context:', contextError);
+        return res.status(400).json({ 
+          error: `Failed to process template variables: ${contextError.message || 'Invalid context data'}`
+        });
+      }
+      
+      // Check for unresolved template placeholders
+      const subjectHasTokens = processedSubject.includes('{{');
+      const contentHasTokens = processedContent.includes('{{');
+      if (subjectHasTokens || contentHasTokens) {
+        const unresolvedTokens = [
+          ...(processedSubject.match(/\{\{[^}]+\}\}/g) || []),
+          ...(processedContent.match(/\{\{[^}]+\}\}/g) || [])
+        ];
+        console.warn('Unresolved template tokens found in email:', unresolvedTokens);
+        return res.status(400).json({ 
+          error: `Email contains unresolved template variables: ${unresolvedTokens.join(', ')}. Please provide the necessary context data (studentId, appointmentId, enrollmentId, courseId, or scheduleId) to resolve these variables, or remove them from your message.`
+        });
+      }
+
       // Import email service
       const { NotificationEmailService } = await import('./emailService');
 
       const result = await NotificationEmailService.sendNotificationEmail({
         to,
-        subject: subject.trim(),
-        htmlContent: isHtml ? content.trim() : `<pre>${content.trim()}</pre>`,
-        textContent: isHtml ? undefined : content.trim(),
+        subject: processedSubject,
+        htmlContent: isHtml ? processedContent : `<pre>${processedContent}</pre>`,
+        textContent: isHtml ? undefined : processedContent,
         fromName: `${user.firstName} ${user.lastName} - Practical Defense Training`,
       });
 

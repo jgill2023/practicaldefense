@@ -391,6 +391,121 @@ export class NotificationEngine {
   }
 
   /**
+   * Build notification variables from context (used for manual notifications)
+   * Fetches data based on provided context IDs and merges variables from all sources
+   * Throws an error if required data cannot be found
+   */
+  static async buildVariablesFromContext(context: {
+    studentId?: string;
+    enrollmentId?: string;
+    courseId?: string;
+    scheduleId?: string;
+    appointmentId?: string;
+    instructorId?: string;
+  }): Promise<NotificationVariables> {
+    let variables: NotificationVariables = {
+      system: this.SYSTEM_VARIABLES
+    };
+
+    try {
+      // Fetch data in parallel where possible
+      const [student, enrollment, course, schedule, appointment] = await Promise.all([
+        context.studentId ? storage.getUser(context.studentId) : null,
+        context.enrollmentId ? storage.getEnrollment(context.enrollmentId) : null,
+        context.courseId ? storage.getCourse(context.courseId) : null,
+        context.scheduleId ? storage.getCourseSchedule(context.scheduleId) : null,
+        context.appointmentId ? storage.getAppointment(context.appointmentId) : null,
+      ]);
+
+      // Validate that explicitly requested data was found
+      if (context.studentId && !student) {
+        throw new Error(`Student not found for ID: ${context.studentId}`);
+      }
+      if (context.enrollmentId && !enrollment) {
+        throw new Error(`Enrollment not found for ID: ${context.enrollmentId}`);
+      }
+      if (context.courseId && !course) {
+        throw new Error(`Course not found for ID: ${context.courseId}`);
+      }
+      if (context.scheduleId && !schedule) {
+        throw new Error(`Schedule not found for ID: ${context.scheduleId}`);
+      }
+      if (context.appointmentId && !appointment) {
+        throw new Error(`Appointment not found for ID: ${context.appointmentId}`);
+      }
+
+      // If we have an appointment, build appointment-specific variables
+      if (appointment) {
+        const [appointmentType, appointmentStudent, instructor] = await Promise.all([
+          storage.getAppointmentType(appointment.appointmentTypeId),
+          appointment.studentId ? storage.getUser(appointment.studentId) : null,
+          context.instructorId ? storage.getUser(context.instructorId) : null,
+        ]);
+
+        // Validate required appointment data
+        if (!appointmentType) {
+          throw new Error(`Appointment type not found for appointment ID: ${context.appointmentId}`);
+        }
+        if (!appointmentStudent) {
+          throw new Error(`Student not found for appointment ID: ${context.appointmentId}`);
+        }
+
+        const appointmentVars = await this.buildAppointmentNotificationVariables(
+          appointment,
+          appointmentType,
+          appointmentStudent,
+          instructor || undefined
+        );
+        // Merge appointment variables
+        variables = { ...variables, ...appointmentVars };
+      }
+
+      // If we have student/enrollment/course/schedule data, build course-related variables
+      // Get student from direct ID or enrollment
+      let courseStudent = student;
+      if (!courseStudent && enrollment) {
+        courseStudent = await storage.getUser((enrollment as any).userId);
+      }
+      
+      // Build course variables if we have a student (even without course/enrollment data)
+      // This ensures student template variables are always populated when studentId is provided
+      if (courseStudent) {
+        const courseVars = await this.buildNotificationVariables(
+          courseStudent,
+          course || undefined,
+          schedule || undefined,
+          enrollment || undefined,
+          []
+        );
+        // Merge course variables (but don't overwrite appointment variables if they exist)
+        variables = { 
+          student: variables.student || courseVars.student,
+          course: courseVars.course,
+          schedule: courseVars.schedule,
+          enrollment: courseVars.enrollment,
+          refund: courseVars.refund,
+          questionnaire: courseVars.questionnaire,
+          appointment: variables.appointment, // Keep appointment if exists
+          appointmentType: variables.appointmentType, // Keep appointmentType if exists
+          instructor: variables.instructor || courseVars.instructor,
+          system: variables.system
+        };
+      }
+
+    } catch (error) {
+      console.error('Error building variables from context:', error);
+      // Re-throw validation errors so routes can handle them
+      if (error instanceof Error && (error.message.includes('not found') || error.message.includes('Student') || error.message.includes('Appointment'))) {
+        throw error;
+      }
+      // For other errors, return partial variables - processTemplate will leave unresolved placeholders
+      console.warn('Returning partial variables due to error:', error);
+    }
+
+    return variables;
+  }
+
+  /**
    * Send notification based on template
    */
   static async sendNotification(params: {

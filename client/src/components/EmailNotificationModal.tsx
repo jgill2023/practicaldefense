@@ -16,13 +16,23 @@ interface EmailNotificationModalProps {
   onClose: () => void;
   studentName: string;
   emailAddress: string;
+  studentId?: string;
+  enrollmentId?: string;
+  courseId?: string;
+  scheduleId?: string;
+  appointmentId?: string;
 }
 
 export function EmailNotificationModal({ 
   isOpen, 
   onClose, 
   studentName, 
-  emailAddress 
+  emailAddress,
+  studentId,
+  enrollmentId,
+  courseId,
+  scheduleId,
+  appointmentId
 }: EmailNotificationModalProps) {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -57,7 +67,12 @@ export function EmailNotificationModal({
         to: [data.emailAddress],
         subject: data.subject,
         content: data.message,
-        isHtml: data.isHtml
+        isHtml: data.isHtml,
+        studentId,
+        enrollmentId,
+        courseId,
+        scheduleId,
+        appointmentId
       });
     },
     onSuccess: (data) => {
