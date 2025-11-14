@@ -119,7 +119,7 @@ export function InstructorOnboarding() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-semibold">Step 3: Add to Replit Secrets</h3>
+                <h3 className="font-semibold">Step 3: Add Environment Variable</h3>
                 <div className="space-y-3 bg-muted p-4 rounded-lg">
                   <div className="space-y-2">
                     <Label>Secret Key Name</Label>
@@ -138,7 +138,7 @@ export function InstructorOnboarding() {
                     <Label>Your Stripe Secret Key</Label>
                     <Input placeholder="sk_test_..." className="bg-background" />
                     <p className="text-xs text-muted-foreground">
-                      Paste your Stripe secret key here, then add it to Replit Secrets with the key name above.
+                      Add this environment variable to your hosting platform's secrets/environment variables configuration.
                     </p>
                   </div>
                 </div>
@@ -187,7 +187,7 @@ export function InstructorOnboarding() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-semibold">Step 3: Add to Replit Secrets</h3>
+                <h3 className="font-semibold">Step 3: Add Environment Variables</h3>
                 <div className="space-y-3 bg-muted p-4 rounded-lg">
                   <div className="space-y-2">
                     <Label>Account SID</Label>
@@ -268,7 +268,7 @@ export function InstructorOnboarding() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="font-semibold">Step 3: Add to Replit Secrets</h3>
+                <h3 className="font-semibold">Step 3: Add Environment Variable</h3>
                 <div className="space-y-3 bg-muted p-4 rounded-lg">
                   <div className="space-y-2">
                     <Label>SendGrid API Key</Label>
