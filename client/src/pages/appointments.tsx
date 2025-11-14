@@ -396,9 +396,6 @@ export default function AppointmentsPage() {
                             ) : (
                               <Badge variant="secondary">Inactive</Badge>
                             )}
-                            {type.requiresApproval && (
-                              <Badge variant="outline">Requires Approval</Badge>
-                            )}
                           </div>
                           {type.description && (
                             <p className="text-sm text-muted-foreground mb-2">{type.description}</p>
