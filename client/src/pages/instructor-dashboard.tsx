@@ -34,8 +34,10 @@ import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 import { AppointmentsModal } from "@/components/AppointmentsModal";
 
 // Placeholder for SmsNotificationModal component
-const SmsNotificationModal = ({ isOpen, onClose, studentName, phoneNumber }: any) => {
+const SmsNotificationModal = ({ isOpen, onClose, studentName, phoneNumber, studentId, enrollmentId, courseId, scheduleId }: any) => {
   // This is a placeholder. Replace with the actual component import if available.
+  // The backend NotificationEngine will use studentId, enrollmentId, courseId, and scheduleId
+  // to correctly substitute template variables for the SMS.
   return null;
 };
 
@@ -62,8 +64,7 @@ export default function InstructorDashboard() {
   const [showOnlineStudentsModal, setShowOnlineStudentsModal] = useState(false);
 
   // SMS notification modal states
-  const [smsModalOpen, setSmsModalOpen] = useState(false);
-  const [selectedStudentForContact, setSelectedStudentForContact] = useState<any | null>(null);
+  const [smsModalData, setSmsModalData] = useState<any | null>(null);
 
   // Appointments modal state
   const [showAppointmentsModal, setShowAppointmentsModal] = useState(false);
@@ -807,6 +808,24 @@ export default function InstructorDashboard() {
                       data-testid={`button-delete-schedule-${schedule.id}`}
                     >
                       <Trash2 className="h-4 w-4" />
+                    </Button>
+
+                    {/* SMS Button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-blue-500"
+                      onClick={() => setSmsModalData({
+                          studentName: `${schedule.course.title} - ${schedule.startDate ? formatDateShort(schedule.startDate) : 'Unknown Date'}`,
+                          phoneNumber: schedule.course.instructor?.phone || '', // Assuming instructor's phone for now, needs proper implementation
+                          studentId: null, // Placeholder, needs actual student ID
+                          enrollmentId: null, // Placeholder, needs actual enrollment ID
+                          courseId: schedule.course.id,
+                          scheduleId: schedule.id
+                        })}
+                      data-testid={`button-sms-schedule-${schedule.id}`}
+                    >
+                      <MessageSquare className="h-4 w-4" />
                     </Button>
                   </div>
                 </td>

@@ -163,11 +163,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const validatedData = createUserSchema.parse(req.body);
-      
+
       // Only superadmins can create other superadmins
       const adminId = req.user.claims.sub;
       const admin = await storage.getUser(adminId);
-      
+
       if (validatedData.role === 'superadmin' && admin?.role !== 'superadmin') {
         return res.status(403).json({ message: "Only superadmins can create other superadmins" });
       }
@@ -191,7 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/admin/users/:userId/approve', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
       const { userId } = req.params;
-      
+
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -215,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const { reason } = req.body;
-      
+
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -239,14 +239,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const { role } = req.body;
-      
+
       const roleSchema = z.enum(['student', 'instructor', 'admin', 'superadmin']);
       const validatedRole = roleSchema.parse(role);
-      
+
       // Only superadmins can assign superadmin role
       const adminId = req.user.claims.sub;
       const admin = await storage.getUser(adminId);
-      
+
       if (validatedRole === 'superadmin' && admin?.role !== 'superadmin') {
         return res.status(403).json({ message: "Only superadmins can assign superadmin role" });
       }
@@ -276,7 +276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId } = req.params;
       const adminId = req.user.claims.sub;
       const admin = await storage.getUser(adminId);
-      
+
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -293,7 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const validatedData = editUserSchema.parse(req.body);
-      
+
       // Only superadmins can assign superadmin role
       if (validatedData.role === 'superadmin' && admin?.role !== 'superadmin') {
         return res.status(403).json({ message: "Only superadmins can assign superadmin role" });
@@ -314,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/users/:userId/reset-password', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { userId } = req.params;
-      
+
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -323,8 +323,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Note: Replit Auth handles authentication, so we don't have a traditional password reset
       // This endpoint is a placeholder for future integration with password reset functionality
       // For now, we'll just return a success message indicating the admin should direct the user to re-authenticate
-      
-      res.json({ 
+
+      res.json({
         message: "Password reset requested. The user should log out and log back in through Replit Auth.",
         user: { email: user.email, firstName: user.firstName, lastName: user.lastName }
       });
@@ -339,7 +339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const adminId = req.user.claims.sub;
-      
+
       // Prevent self-deletion
       if (userId === adminId) {
         return res.status(400).json({ message: "You cannot delete your own account" });
@@ -419,7 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const coursesInCategory = courses.filter(c => c.categoryId === req.params.id);
 
       if (coursesInCategory.length > 0) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: `Cannot delete category. ${coursesInCategory.length} course(s) are still using this category. Please reassign or delete those courses first.`,
           coursesCount: coursesInCategory.length,
           courses: coursesInCategory.map(c => ({
@@ -749,11 +749,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json({ 
-        success: true, 
-        message: requestRefund && daysUntilClass > 21 
-          ? "Successfully unenrolled. Refund request has been submitted." 
-          : "Successfully unenrolled from course" 
+      res.json({
+        success: true,
+        message: requestRefund && daysUntilClass > 21
+          ? "Successfully unenrolled. Refund request has been submitted."
+          : "Successfully unenrolled from course"
       });
     } catch (error) {
       console.error("Error unenrolling student:", error);
@@ -784,7 +784,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const availableSchedules = course.schedules
-        .filter(schedule => 
+        .filter(schedule =>
           !schedule.deletedAt &&
           schedule.id !== enrollment.scheduleId &&
           new Date(schedule.startDate) >= startOfToday &&
@@ -836,9 +836,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // TODO: Send notification to instructor about transfer request
       // This can be implemented later using the notification system
 
-      res.json({ 
-        success: true, 
-        message: "Transfer request submitted successfully" 
+      res.json({
+        success: true,
+        message: "Transfer request submitted successfully"
       });
     } catch (error) {
       console.error("Error submitting transfer request:", error);
@@ -871,9 +871,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // TODO: Send notification to instructor about hold request
       // This can be implemented later using the notification system
 
-      res.json({ 
-        success: true, 
-        message: "Hold request submitted successfully" 
+      res.json({
+        success: true,
+        message: "Hold request submitted successfully"
       });
     } catch (error) {
       console.error("Error submitting hold request:", error);
@@ -917,10 +917,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const formatDate = (dateString: string | Date) => {
           const date = new Date(dateString);
-          return date.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+          return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
           });
         };
 
@@ -966,7 +966,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const signup = await storage.createCourseNotificationSignup(validatedData);
-      res.status(201).json({ 
+      res.status(201).json({
         success: true,
         message: "Successfully signed up for notifications",
         signup
@@ -1038,7 +1038,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // DEPRECATED: Legacy course registration endpoint - Use the new secure flow instead
   // This endpoint bypassed security checks and is now disabled
   app.post('/api/course-registration', async (req: any, res) => {
-    res.status(410).json({ 
+    res.status(410).json({
       message: "This endpoint has been deprecated for security reasons. Please use the new registration flow: /api/course-registration/initiate",
       newEndpoint: "/api/course-registration/initiate"
     });
@@ -1447,10 +1447,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert date strings to proper format for database
       const updateData = {
         ...validatedData,
-        concealedCarryLicenseExpiration: validatedData.concealedCarryLicenseExpiration 
+        concealedCarryLicenseExpiration: validatedData.concealedCarryLicenseExpiration
           ? new Date(validatedData.concealedCarryLicenseExpiration).toISOString()
           : undefined,
-        concealedCarryLicenseIssued: validatedData.concealedCarryLicenseIssued 
+        concealedCarryLicenseIssued: validatedData.concealedCarryLicenseIssued
           ? new Date(validatedData.concealedCarryLicenseIssued).toISOString()
           : undefined,
       };
@@ -1477,7 +1477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check ownership: student owns enrollment or instructor has access
       const user = await storage.getUser(userId);
-      const hasAccess = enrollment.studentId === userId || 
+      const hasAccess = enrollment.studentId === userId ||
                        ((user?.role === 'instructor' || user?.role === 'superadmin') && (enrollment.course?.instructorId === userId || user?.role === 'superadmin'));
 
       if (!hasAccess) {
@@ -1506,7 +1506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check ownership: either student owns it or instructor has access
       const user = await storage.getUser(userId);
-      const hasAccess = enrollment.studentId === userId || 
+      const hasAccess = enrollment.studentId === userId ||
                        ((user?.role === 'instructor' || user?.role === 'superadmin') && (enrollment.course?.instructorId === userId || user?.role === 'superadmin'));
 
       if (!hasAccess) {
@@ -1573,7 +1573,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check ownership: student owns enrollment or instructor has access
       const user = await storage.getUser(userId);
-      const hasAccess = enrollment.studentId === userId || 
+      const hasAccess = enrollment.studentId === userId ||
                        ((user?.role === 'instructor' || user?.role === 'superadmin') && (enrollment.course?.instructorId === userId || user?.role === 'superadmin'));
 
       if (!hasAccess) {
@@ -1589,7 +1589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enrollment feedback endpoints
-  
+
   // Get feedback for an enrollment
   app.get("/api/enrollments/:enrollmentId/feedback", isAuthenticated, async (req: any, res) => {
     try {
@@ -1604,8 +1604,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check access: student, instructor of the course, or superadmin
       const user = await storage.getUser(userId);
-      const hasAccess = 
-        enrollment.studentId === userId || 
+      const hasAccess =
+        enrollment.studentId === userId ||
         (user?.role === 'instructor' && enrollment.course?.instructorId === userId) ||
         user?.role === 'superadmin';
 
@@ -1636,7 +1636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Verify instructor access
       const user = await storage.getUser(userId);
-      const isInstructor = 
+      const isInstructor =
         (user?.role === 'instructor' && enrollment.course?.instructorId === userId) ||
         user?.role === 'superadmin';
 
@@ -1718,7 +1718,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store form responses
       await db
         .update(enrollments)
-        .set({ 
+        .set({
           formSubmissionData: formResponses,
           formSubmittedAt: new Date()
         })
@@ -1793,7 +1793,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Format schedules for export selection
       const schedules = courses
-        .flatMap(course => 
+        .flatMap(course =>
           course.schedules
             .filter(schedule => !schedule.deletedAt) // Only active schedules
             .map(schedule => ({
@@ -1836,9 +1836,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (format === 'csv') {
         // Generate CSV
         const headers = [
-          'Student ID', 'First Name', 'Last Name', 'Email', 'Phone', 
+          'Student ID', 'First Name', 'Last Name', 'Email', 'Phone',
           'Date of Birth', 'License Expiration', 'Course Title', 'Course Code',
-          'Schedule Date', 'Start Time', 'End Time', 'Payment Status', 
+          'Schedule Date', 'Start Time', 'End Time', 'Payment Status',
           'Enrollment Status', 'Category', 'Registration Date'
         ];
 
@@ -1875,9 +1875,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // All Students sheet (combined)
         const allStudentsSheet = workbook.addWorksheet('All Students');
         const headers = [
-          'Student ID', 'First Name', 'Last Name', 'Email', 'Phone', 
+          'Student ID', 'First Name', 'Last Name', 'Email', 'Phone',
           'Date of Birth', 'License Expiration', 'Course Title', 'Course Code',
-          'Schedule Date', 'Start Time', 'End Time', 'Payment Status', 
+          'Schedule Date', 'Start Time', 'End Time', 'Payment Status',
           'Enrollment Status', 'Category', 'Registration Date'
         ];
         allStudentsSheet.addRow(headers);
@@ -1887,7 +1887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           allStudentsSheet.addRow([
             row.studentId, row.firstName, row.lastName, row.email, row.phone,
             row.dateOfBirth, row.licenseExpiration, row.courseTitle, row.courseAbbreviation,
-            row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime, 
+            row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime,
             row.paymentStatus, row.enrollmentStatus, row.category, row.registrationDate
           ]);
         });
@@ -1932,7 +1932,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Check if credentials are available
         if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-          return res.json({ 
+          return res.json({
             message: "Google Sheets integration not configured. Please contact administrator to set up service account credentials.",
             action: "setup_required"
           });
@@ -2036,7 +2036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Google Sheets API error:', googleError);
 
         if (googleError.message?.includes('credentials')) {
-          return res.json({ 
+          return res.json({
             message: "Google Sheets credentials not properly configured. Please contact administrator.",
             action: "setup_required"
           });
@@ -2077,21 +2077,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = await storage.getRosterExportData(userId, scheduleId, courseId);
 
       // Filter out any remaining null/incomplete enrollments from current list
-      data.current = data.current.filter(student => 
+      data.current = data.current.filter(student =>
         student && student.studentId && student.firstName && student.lastName
       );
 
       console.log(`Roster data - Current: ${data.current.length}, Former: ${data.former.length}`);
 
       // Get course details for price calculation
-      const course = scheduleId 
+      const course = scheduleId
         ? await storage.getCourseSchedule(scheduleId).then(async schedule => {
             if (schedule) {
               return await storage.getCourse(schedule.courseId);
             }
             return null;
           })
-        : courseId 
+        : courseId
           ? await storage.getCourse(courseId)
           : null;
 
@@ -2103,7 +2103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const studentWaiverInstances = await db.query.waiverInstances.findMany({
           where: eq(waiverInstances.enrollmentId, student.enrollmentId),
         });
-        const waiverStatus = studentWaiverInstances.length > 0 
+        const waiverStatus = studentWaiverInstances.length > 0
           ? (studentWaiverInstances.some(w => w.status === 'signed') ? 'signed' : 'pending')
           : 'not_started';
 
@@ -2125,10 +2125,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If formSubmittedAt is set and there are required forms, it's completed
         // If no required forms, it's not_applicable
         // Otherwise check if formSubmissionData exists
-        const formStatus = totalRequiredForms === 0 
+        const formStatus = totalRequiredForms === 0
           ? 'not_applicable'
           : enrollment?.formSubmittedAt || enrollment?.formSubmissionData
-            ? 'completed' 
+            ? 'completed'
             : 'not_started';
 
         return {
@@ -2203,7 +2203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get all enrollments for instructor's courses that have refund requests
       const enrollments = await storage.getEnrollmentsByInstructor(userId);
-      const refundRequests = enrollments.filter(e => 
+      const refundRequests = enrollments.filter(e =>
         e.refundRequested && !e.refundProcessed
       );
 
@@ -2284,9 +2284,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('Stripe refund created:', stripeRefund.id);
         } catch (stripeError: any) {
           console.error('Stripe refund error:', stripeError);
-          return res.status(500).json({ 
-            message: "Failed to process Stripe refund", 
-            error: stripeError.message 
+          return res.status(500).json({
+            message: "Failed to process Stripe refund",
+            error: stripeError.message
           });
         }
       }
@@ -2316,8 +2316,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Don't fail the request if notification fails
       }
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: "Refund processed successfully",
         stripeRefundId: stripeRefund?.id,
         amountRefunded: stripeRefund ? stripeRefund.amount / 100 : null,
@@ -2359,8 +2359,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ uploadURL });
     } catch (error) {
       console.error("Error getting upload URL:", error);
-      res.status(500).json({ 
-        error: "Failed to get upload URL. Object storage may not be configured properly." 
+      res.status(500).json({
+        error: "Failed to get upload URL. Object storage may not be configured properly."
       });
     }
   });
@@ -2795,7 +2795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const query = `
-        UPDATE course_schedules 
+        UPDATE course_schedules
         SET ${updateParts.join(", ")}
         WHERE id = $${values.length + 1}
         RETURNING *
@@ -3083,8 +3083,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe payment routes
   app.post("/api/create-payment-intent", isAuthenticated, async (req: any, res) => {
     if (!stripe) {
-      return res.status(503).json({ 
-        message: "Payment processing is not configured. Please complete the onboarding process and add your Stripe API key." 
+      return res.status(503).json({
+        message: "Payment processing is not configured. Please complete the onboarding process and add your Stripe API key."
       });
     }
 
@@ -3138,9 +3138,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`✅ Promo code applied: ${promoCode}, discount: $${discountAmount}, final amount: $${finalPaymentAmount}`);
         } else {
           console.log(`❌ Invalid promo code: ${promoCode}, error: ${validation.error}`);
-          return res.status(400).json({ 
+          return res.status(400).json({
             message: `Invalid promo code: ${validation.error}`,
-            errorCode: validation.errorCode 
+            errorCode: validation.errorCode
           });
         }
       }
@@ -3165,7 +3165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             address: {
               country: 'US',
               state: 'NM',
-              city: 'Albuquerque', 
+              city: 'Albuquerque',
               postal_code: '87120', // Albuquerque zip code
             },
             address_source: 'billing',
@@ -3184,7 +3184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           total_dollars: taxCalculation?.amount_total ? (taxCalculation.amount_total / 100) : 0,
           tax_amount_exclusive_cents: taxCalculation?.tax_amount_exclusive,
           tax_dollars: taxCalculation?.tax_amount_exclusive ? (taxCalculation.tax_amount_exclusive / 100) : 0,
-          tax_rate_calculated: taxCalculation?.tax_amount_exclusive && finalPaymentAmount ? 
+          tax_rate_calculated: taxCalculation?.tax_amount_exclusive && finalPaymentAmount ?
             ((taxCalculation.tax_amount_exclusive / 100) / finalPaymentAmount * 100).toFixed(4) + '%' : '0%'
         });
 
@@ -3221,7 +3221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
 
-      res.json({ 
+      res.json({
         clientSecret: paymentIntent.client_secret,
         originalAmount: paymentAmount,
         subtotal: finalPaymentAmount,
@@ -4095,10 +4095,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       const successful = results.filter(Boolean);
-      res.json({ 
-        message: "Notifications sent successfully", 
+      res.json({
+        message: "Notifications sent successfully",
         sent: successful.length,
-        total: recipients.length 
+        total: recipients.length
       });
     } catch (error: any) {
       console.error("Error sending notification:", error);
@@ -4757,10 +4757,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const formatDate = (dateString: string | Date) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         });
       };
 
@@ -5303,9 +5303,9 @@ jeremy@abqconcealedcarry.com
       });
     } catch (error: any) {
       console.error("Error fetching communications:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to fetch communications",
-        error: error.message 
+        error: error.message
       });
     }
   });
@@ -5342,7 +5342,7 @@ jeremy@abqconcealedcarry.com
 
       // Only allow instructors to manage communications
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      if (!user || (user.role !== 'instructor' && user.role !== 'supersuperadmin')) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -5632,7 +5632,7 @@ jeremy@abqconcealedcarry.com
       // Search filter
       if (search) {
         const searchLower = search.toString().toLowerCase();
-        contacts = contacts.filter(contact => 
+        contacts = contacts.filter(contact =>
           `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchLower) ||
           contact.email?.toLowerCase().includes(searchLower) ||
           contact.phone?.includes(search.toString())
@@ -5689,7 +5689,7 @@ jeremy@abqconcealedcarry.com
       if (!MessageSid || !From || !To) {
         console.error("Missing required fields in webhook data");
         res.type('text/xml');
-        return res.send('<?xml version="1.0" encoding="UTF-UTF-8"?><Response></Response>');
+        return res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
       }
 
       // Try to find the user by phone number (search ALL users, not just students)
@@ -5697,7 +5697,7 @@ jeremy@abqconcealedcarry.com
       const users = await storage.getAllUsers();
       console.log(`Found ${users.length} users in database`);
 
-      const matchingUser = users.find(u => 
+      const matchingUser = users.find(u =>
         u.phone && u.phone.replace(/\D/g, '') === From.replace(/\D/g, '')
       );
       console.log("Matching user:", matchingUser ? `Found: ${matchingUser.id}` : 'Not found');
@@ -6146,10 +6146,10 @@ jeremy@abqconcealedcarry.com
       // Clear the user's cart
       await storage.clearCart(userId);
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         orderId: order.id,
-        message: "Order completed successfully" 
+        message: "Order completed successfully"
       });
     } catch (error: any) {
       console.error("Error completing checkout:", error);
@@ -6280,20 +6280,20 @@ jeremy@abqconcealedcarry.com
           `,
         });
 
-        res.json({ 
-          success: true, 
-          message: "Your message has been sent successfully. We'll get back to you within 24 hours." 
+        res.json({
+          success: true,
+          message: "Your message has been sent successfully. We'll get back to you within 24 hours."
         });
       } else {
         console.error("Failed to send contact form email:", result.error);
-        res.status(500).json({ 
-          error: "Failed to send your message. Please try again or contact us directly." 
+        res.status(500).json({
+          error: "Failed to send your message. Please try again or contact us directly."
         });
       }
     } catch (error: any) {
       console.error("Contact form submission error:", error);
-      res.status(500).json({ 
-        error: "An error occurred while sending your message. Please try again." 
+      res.status(500).json({
+        error: "An error occurred while sending your message. Please try again."
       });
     }
   });
@@ -6453,8 +6453,8 @@ jeremy@abqconcealedcarry.com
 
       // Only allow deleting custom lists
       if (existingList.listType !== 'custom') {
-        return res.status(400).json({ 
-          message: "Cannot delete course schedule lists. Only custom lists can be deleted." 
+        return res.status(400).json({
+          message: "Cannot delete course schedule lists. Only custom lists can be deleted."
         });
       }
 
@@ -6549,7 +6549,7 @@ jeremy@abqconcealedcarry.com
       }
 
       // Add members
-      const addedMembers = membersToAdd.length > 0 
+      const addedMembers = membersToAdd.length > 0
         ? await storage.addSmsListMembers(membersToAdd)
         : [];
 
@@ -6593,8 +6593,8 @@ jeremy@abqconcealedcarry.com
         const member = members.find(m => m.userId === userId);
 
         if (member && member.autoAdded) {
-          return res.status(400).json({ 
-            message: "Cannot remove auto-added members from course schedule lists" 
+          return res.status(400).json({
+            message: "Cannot remove auto-added members from course schedule lists"
           });
         }
       }

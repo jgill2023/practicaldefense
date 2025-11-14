@@ -14,13 +14,21 @@ interface SmsNotificationModalProps {
   onClose: () => void;
   studentName: string;
   phoneNumber: string;
+  studentId?: string;
+  enrollmentId?: string;
+  courseId?: string;
+  scheduleId?: string;
 }
 
 export function SmsNotificationModal({
   isOpen,
   onClose,
   studentName,
-  phoneNumber
+  phoneNumber,
+  studentId,
+  enrollmentId,
+  courseId,
+  scheduleId
 }: SmsNotificationModalProps) {
   const [message, setMessage] = useState("");
   const { toast } = useToast();
@@ -29,7 +37,11 @@ export function SmsNotificationModal({
     mutationFn: async (data: { message: string; phoneNumber: string }) => {
       return await apiRequest("POST", "/api/notifications/sms", {
         to: [data.phoneNumber],
-        message: data.message
+        message: data.message,
+        studentId,
+        enrollmentId,
+        courseId,
+        scheduleId
       });
     },
     onSuccess: (data) => {
