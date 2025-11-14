@@ -9,7 +9,9 @@ import {
   type CourseSchedule,
   type EnrollmentWithDetails,
   type StudentFormResponse,
-  type InsertNotificationLog
+  type InsertNotificationLog,
+  type InstructorAppointment,
+  type AppointmentType
 } from '@shared/schema';
 
 export interface NotificationVariables {
@@ -311,6 +313,78 @@ export class NotificationEngine {
           variables.questionnaire![key] = response.response;
         }
       });
+    }
+
+    return variables;
+  }
+
+  /**
+   * Build notification variables from appointment data
+   */
+  static async buildAppointmentNotificationVariables(
+    appointment: InstructorAppointment,
+    appointmentType: AppointmentType,
+    student: User,
+    instructor?: User
+  ): Promise<NotificationVariables> {
+    // Parse appointment times
+    const startTime = new Date(appointment.startTime);
+    const endTime = new Date(appointment.endTime);
+
+    // Extract time strings in HH:MM format from Date objects for formatTime helper
+    const startTimeHHMM = `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}`;
+    const endTimeHHMM = `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`;
+
+    // Format using existing helper methods
+    const startTimeFormatted = this.formatTime(startTimeHHMM);
+    const endTimeFormatted = this.formatTime(endTimeHHMM);
+    const appointmentTime = `${startTimeFormatted} - ${endTimeFormatted}`;
+
+    // Format date using locale for readability
+    const appointmentDate = this.safeFormatDate(appointment.startTime, 'locale') || '';
+
+    const variables: NotificationVariables = {
+      student: {
+        name: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
+        firstName: student.firstName || '',
+        lastName: student.lastName || '',
+        email: student.email || '',
+        phone: student.phone || '',
+        address: student.streetAddress || '',
+        city: student.city || '',
+        state: student.state || '',
+        zipCode: student.zipCode || '',
+        licenseNumber: '',
+        licenseExpiration: this.safeFormatDate(student.concealedCarryLicenseExpiration) || '',
+      },
+      appointment: {
+        startDate: this.safeFormatDate(appointment.startTime) || '',
+        startTime: startTimeFormatted,
+        endTime: endTimeFormatted,
+        date: appointmentDate,
+        time: appointmentTime,
+        duration: `${appointmentType.durationMinutes} minutes`,
+        status: appointment.status,
+        studentNotes: appointment.studentNotes || undefined,
+        partySize: appointment.partySize || 1,
+      },
+      appointmentType: {
+        title: appointmentType.title,
+        description: appointmentType.description || undefined,
+        duration: `${appointmentType.durationMinutes} minutes`,
+        price: `$${Number(appointmentType.price).toFixed(2)}`,
+      },
+      system: this.SYSTEM_VARIABLES
+    };
+
+    if (instructor) {
+      variables.instructor = {
+        name: `${instructor.firstName || ''} ${instructor.lastName || ''}`.trim(),
+        firstName: instructor.firstName || '',
+        lastName: instructor.lastName || '',
+        email: instructor.email || '',
+        phone: instructor.phone || '',
+      };
     }
 
     return variables;
