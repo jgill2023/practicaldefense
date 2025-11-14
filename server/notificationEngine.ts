@@ -46,6 +46,30 @@ export interface NotificationVariables {
     classroomName?: string;
     googleMapsLink?: string;
   };
+  appointment?: {
+    startDate: string;
+    startTime: string;
+    endTime: string;
+    date: string;
+    time: string;
+    duration: string;
+    status: string;
+    studentNotes?: string;
+    partySize?: number;
+  };
+  appointmentType?: {
+    title: string;
+    description?: string;
+    duration: string;
+    price: string;
+  };
+  instructor?: {
+    name: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+    phone?: string;
+  };
   enrollment?: {
     paymentStatus: string;
     amountPaid: number;
@@ -114,6 +138,28 @@ export class NotificationEngine {
     rangeName: 'schedule.rangeName',
     classroomName: 'schedule.classroomName',
     googleMapsLink: 'schedule.googleMapsLink',
+    
+    // Appointment aliases
+    appointmentDate: 'appointment.date',
+    appointmentTime: 'appointment.time',
+    appointmentStartTime: 'appointment.startTime',
+    appointmentEndTime: 'appointment.endTime',
+    appointmentDuration: 'appointment.duration',
+    appointmentStatus: 'appointment.status',
+    appointmentNotes: 'appointment.studentNotes',
+    
+    // Appointment Type aliases
+    appointmentTypeName: 'appointmentType.title',
+    appointmentTypeTitle: 'appointmentType.title',
+    appointmentTypeDescription: 'appointmentType.description',
+    appointmentTypePrice: 'appointmentType.price',
+    
+    // Instructor aliases
+    instructorName: 'instructor.name',
+    instructorFirstName: 'instructor.firstName',
+    instructorLastName: 'instructor.lastName',
+    instructorEmail: 'instructor.email',
+    instructorPhone: 'instructor.phone',
     
     // Enrollment aliases
     paymentStatus: 'enrollment.paymentStatus',
