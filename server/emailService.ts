@@ -2,8 +2,8 @@
 import sgMail from '@sendgrid/mail';
 import { storage } from './storage';
 
-const DEFAULT_FROM_EMAIL = 'jeremy@abqconcealedcarry.com';
-const DEFAULT_FROM_NAME = 'Jeremy Gill - Practical Defense Training';
+const DEFAULT_FROM_EMAIL = 'info@tacticaladv.com';
+const DEFAULT_FROM_NAME = 'Tactical Advantage';
 
 function initializeSendGrid() {
   const apiKey = process.env.SENDGRID_API_KEY;
