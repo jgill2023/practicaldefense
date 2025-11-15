@@ -1062,8 +1062,8 @@ function EnhancedEnrollmentCard({
           {enrollment.course.title}
         </h4>
         <Badge 
-          variant={enrollment.status === 'confirmed' ? undefined : 'outline'}
-          className={enrollment.status === 'confirmed' ? 'bg-[#0400ff] text-[#ffffff]' : ''}
+          variant={enrollment.status === 'confirmed' ? 'secondary' : 'outline'}
+          className={enrollment.status === 'confirmed' ? 'bg-[#0400ff] text-white' : ''}
         >
           {enrollment.status === 'confirmed' ? 'Confirmed' : enrollment.status}
         </Badge>
