@@ -32,6 +32,7 @@ import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Ar
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 import { AppointmentsModal } from "@/components/AppointmentsModal";
+import { getEnrollmentStatusClassName } from "@/lib/statusColors";
 
 // Placeholder for SmsNotificationModal component
 const SmsNotificationModal = ({ isOpen, onClose, studentName, phoneNumber, studentId, enrollmentId, courseId, scheduleId }: any) => {
@@ -1682,9 +1683,7 @@ export default function InstructorDashboard() {
                                 </Badge>
                               </td>
                               <td className="px-6 py-4 text-center">
-                                <Badge
-                                  variant={enrollment.status === 'confirmed' ? 'default' : 'secondary'}
-                                >
+                                <Badge className={getEnrollmentStatusClassName(enrollment.status)}>
                                   {enrollment.status}
                                 </Badge>
                               </td>

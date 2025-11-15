@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { EnrollmentFeedbackModal } from "@/components/EnrollmentFeedbackModal";
 import { EmailNotificationModal } from "@/components/EmailNotificationModal";
 import { SmsNotificationModal } from "@/components/SmsNotificationModal";
+import { getEnrollmentStatusClassName, getAppointmentStatusClassName } from "@/lib/statusColors";
 
 interface StudentProfileModalProps {
   isOpen: boolean;
@@ -266,7 +267,7 @@ export function StudentProfileModal({
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <h4 className="font-semibold">{appointment.appointmentTypeTitle}</h4>
-                              <Badge className={appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                              <Badge className={getAppointmentStatusClassName(appointment.status)}>
                                 {appointment.status}
                               </Badge>
                             </div>

@@ -25,6 +25,7 @@ import type { EnrollmentWithDetails, User, CourseWithSchedules, CourseSchedule }
 import { useLocation } from "wouter";
 import { StudentBookingsModal } from "@/components/StudentBookingsModal";
 import { EnrollmentFeedbackModal } from "@/components/EnrollmentFeedbackModal";
+import { getEnrollmentStatusClassName } from "@/lib/statusColors";
 
 // Types for the query responses
 type PaymentBalanceResponse = {
@@ -1061,11 +1062,8 @@ function EnhancedEnrollmentCard({
         <h4 className="font-semibold text-card-foreground" data-testid={`text-course-title-${enrollment.id}`}>
           {enrollment.course.title}
         </h4>
-        <Badge 
-          variant={enrollment.status === 'confirmed' ? 'secondary' : 'outline'}
-          className={enrollment.status === 'confirmed' ? 'bg-[#0400ff] text-white' : ''}
-        >
-          {enrollment.status === 'confirmed' ? 'Confirmed' : enrollment.status}
+        <Badge className={getEnrollmentStatusClassName(enrollment.status)}>
+          {enrollment.status}
         </Badge>
       </div>
 
@@ -2571,13 +2569,7 @@ export default function StudentPortal() {
                           </h4>
                           <FileText className="h-4 w-4 text-muted-foreground" />
                         </div>
-                        <Badge
-                          variant={
-                            enrollment.status === 'completed' ? 'default' :
-                            enrollment.status === 'confirmed' ? 'secondary' :
-                            'outline'
-                          }
-                        >
+                        <Badge className={getEnrollmentStatusClassName(enrollment.status)}>
                           {enrollment.status}
                         </Badge>
                       </div>
