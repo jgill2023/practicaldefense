@@ -1061,7 +1061,10 @@ function EnhancedEnrollmentCard({
         <h4 className="font-semibold text-card-foreground" data-testid={`text-course-title-${enrollment.id}`}>
           {enrollment.course.title}
         </h4>
-        <Badge variant="outline">
+        <Badge 
+          variant={enrollment.status === 'confirmed' ? undefined : 'outline'}
+          className={enrollment.status === 'confirmed' ? 'bg-[#0400ff] text-[#ffffff]' : ''}
+        >
           {enrollment.status === 'confirmed' ? 'Confirmed' : enrollment.status}
         </Badge>
       </div>
