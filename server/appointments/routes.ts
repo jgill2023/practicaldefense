@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { storage } from '../storage';
 import { appointmentService } from './service';
-import { isAuthenticated } from '../replitAuth';
+import { isAuthenticated } from '../customAuth';
 import { 
   insertAppointmentTypeSchema,
   insertInstructorWeeklyTemplateSchema,
@@ -50,7 +50,7 @@ async function verifyAppointmentOwnership(appointmentId: string, instructorId: s
 appointmentRouter.get('/instructor/:instructorId/appointments', isAuthenticated, async (req: any, res) => {
   try {
     const { instructorId } = req.params;
-    const currentUserId = req.user.claims.sub;
+    const currentUserId = req.user.id;
     
     // Verify the instructor is requesting their own appointments
     if (instructorId !== currentUserId) {
@@ -67,7 +67,7 @@ appointmentRouter.get('/instructor/:instructorId/appointments', isAuthenticated,
 
 appointmentRouter.get('/instructor/appointment-types', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     const types = await storage.getAppointmentTypes(instructorId);
     res.json(types);
   } catch (error) {
@@ -78,7 +78,7 @@ appointmentRouter.get('/instructor/appointment-types', isAuthenticated, async (r
 
 appointmentRouter.post('/instructor/appointment-types', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     // Manually construct the data object to avoid schema validation issues
     const data = {
@@ -107,7 +107,7 @@ appointmentRouter.post('/instructor/appointment-types', isAuthenticated, async (
 appointmentRouter.patch('/instructor/appointment-types/:id', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyAppointmentTypeOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to modify this appointment type" });
@@ -133,7 +133,7 @@ appointmentRouter.patch('/instructor/appointment-types/:id', isAuthenticated, as
 appointmentRouter.delete('/instructor/appointment-types/:id', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyAppointmentTypeOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to delete this appointment type" });
@@ -153,7 +153,7 @@ appointmentRouter.delete('/instructor/appointment-types/:id', isAuthenticated, a
 
 appointmentRouter.get('/instructor/weekly-templates', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     const templates = await storage.getWeeklyTemplates(instructorId);
     res.json(templates);
   } catch (error) {
@@ -164,7 +164,7 @@ appointmentRouter.get('/instructor/weekly-templates', isAuthenticated, async (re
 
 appointmentRouter.post('/instructor/weekly-templates', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     const validatedData = insertInstructorWeeklyTemplateSchema.omit({ id: true, createdAt: true, updatedAt: true, instructorId: true }).parse(req.body);
     const data = { ...validatedData, instructorId };
     const template = await storage.createWeeklyTemplate(data);
@@ -181,7 +181,7 @@ appointmentRouter.post('/instructor/weekly-templates', isAuthenticated, async (r
 appointmentRouter.patch('/instructor/weekly-templates/:id', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyWeeklyTemplateOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to modify this weekly template" });
@@ -198,7 +198,7 @@ appointmentRouter.patch('/instructor/weekly-templates/:id', isAuthenticated, asy
 appointmentRouter.delete('/instructor/weekly-templates/:id', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyWeeklyTemplateOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to delete this weekly template" });
@@ -218,7 +218,7 @@ appointmentRouter.delete('/instructor/weekly-templates/:id', isAuthenticated, as
 
 appointmentRouter.get('/instructor/availability-overrides', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     const overrides = await storage.getAvailabilityOverrides(instructorId);
     res.json(overrides);
   } catch (error) {
@@ -229,7 +229,7 @@ appointmentRouter.get('/instructor/availability-overrides', isAuthenticated, asy
 
 appointmentRouter.post('/instructor/availability-overrides', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     const validatedData = insertInstructorAvailabilityOverrideSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(req.body);
     const data = { ...validatedData, instructorId };
     const override = await storage.createAvailabilityOverride(data);
@@ -246,7 +246,7 @@ appointmentRouter.post('/instructor/availability-overrides', isAuthenticated, as
 appointmentRouter.patch('/instructor/availability-overrides/:id', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyAvailabilityOverrideOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to modify this availability override" });
@@ -263,7 +263,7 @@ appointmentRouter.patch('/instructor/availability-overrides/:id', isAuthenticate
 appointmentRouter.delete('/instructor/availability-overrides/:id', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyAvailabilityOverrideOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to delete this availability override" });
@@ -283,7 +283,7 @@ appointmentRouter.delete('/instructor/availability-overrides/:id', isAuthenticat
 
 appointmentRouter.get('/instructor/notification-templates', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     const templates = await storage.getAppointmentNotificationTemplates(instructorId);
     res.json(templates);
   } catch (error) {
@@ -294,7 +294,7 @@ appointmentRouter.get('/instructor/notification-templates', isAuthenticated, asy
 
 appointmentRouter.post('/instructor/notification-templates', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     const validatedData = insertAppointmentNotificationTemplateSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(req.body);
     const data = { ...validatedData, instructorId };
     const template = await storage.createAppointmentNotificationTemplate(data);
@@ -311,7 +311,7 @@ appointmentRouter.post('/instructor/notification-templates', isAuthenticated, as
 appointmentRouter.patch('/instructor/notification-templates/:id', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyNotificationTemplateOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to modify this notification template" });
@@ -328,7 +328,7 @@ appointmentRouter.patch('/instructor/notification-templates/:id', isAuthenticate
 appointmentRouter.delete('/instructor/notification-templates/:id', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyNotificationTemplateOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to delete this notification template" });
@@ -348,7 +348,7 @@ appointmentRouter.delete('/instructor/notification-templates/:id', isAuthenticat
 
 appointmentRouter.get('/instructor/reminder-schedules', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     const schedules = await storage.getAppointmentReminderSchedules(instructorId);
     res.json(schedules);
   } catch (error) {
@@ -359,7 +359,7 @@ appointmentRouter.get('/instructor/reminder-schedules', isAuthenticated, async (
 
 appointmentRouter.post('/instructor/reminder-schedules', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     const validatedData = insertAppointmentReminderScheduleSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(req.body);
     const data = { ...validatedData, instructorId };
     const schedule = await storage.createAppointmentReminderSchedule(data);
@@ -376,7 +376,7 @@ appointmentRouter.post('/instructor/reminder-schedules', isAuthenticated, async 
 appointmentRouter.patch('/instructor/reminder-schedules/:id', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyReminderScheduleOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to modify this reminder schedule" });
@@ -393,7 +393,7 @@ appointmentRouter.patch('/instructor/reminder-schedules/:id', isAuthenticated, a
 appointmentRouter.delete('/instructor/reminder-schedules/:id', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyReminderScheduleOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to delete this reminder schedule" });
@@ -413,7 +413,7 @@ appointmentRouter.delete('/instructor/reminder-schedules/:id', isAuthenticated, 
 
 appointmentRouter.get('/instructor/appointments', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     const appointments = await storage.getAppointmentsByInstructor(instructorId);
     res.json(appointments);
   } catch (error) {
@@ -424,7 +424,7 @@ appointmentRouter.get('/instructor/appointments', isAuthenticated, async (req: a
 
 appointmentRouter.get('/instructor/appointments/pending', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     const appointments = await storage.getPendingAppointments(instructorId);
     res.json(appointments);
   } catch (error) {
@@ -435,7 +435,7 @@ appointmentRouter.get('/instructor/appointments/pending', isAuthenticated, async
 
 appointmentRouter.get('/instructor/appointments/upcoming', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
     const appointments = await storage.getUpcomingAppointments(instructorId, limit);
     res.json(appointments);
@@ -448,7 +448,7 @@ appointmentRouter.get('/instructor/appointments/upcoming', isAuthenticated, asyn
 appointmentRouter.post('/instructor/appointments/:id/approve', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyAppointmentOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to approve this appointment" });
@@ -465,7 +465,7 @@ appointmentRouter.post('/instructor/appointments/:id/approve', isAuthenticated, 
 appointmentRouter.post('/instructor/appointments/:id/reject', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyAppointmentOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to reject this appointment" });
@@ -483,7 +483,7 @@ appointmentRouter.post('/instructor/appointments/:id/reject', isAuthenticated, a
 appointmentRouter.post('/instructor/appointments/:id/cancel', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const instructorId = req.user.claims.sub;
+    const instructorId = req.user.id;
     
     if (!await verifyAppointmentOwnership(id, instructorId)) {
       return res.status(403).json({ message: "Not authorized to cancel this appointment" });
@@ -559,7 +559,7 @@ appointmentRouter.get('/available-slots', async (req, res) => {
 
 appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
   try {
-    const studentId = req.user.claims.sub;
+    const studentId = req.user.id;
     const { 
       instructorId, 
       appointmentTypeId, 
@@ -596,7 +596,7 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
 
 appointmentRouter.get('/my-appointments', isAuthenticated, async (req: any, res) => {
   try {
-    const studentId = req.user.claims.sub;
+    const studentId = req.user.id;
     const appointments = await storage.getAppointmentsByStudent(studentId);
     res.json(appointments);
   } catch (error) {
@@ -608,7 +608,7 @@ appointmentRouter.get('/my-appointments', isAuthenticated, async (req: any, res)
 appointmentRouter.post('/:id/cancel', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const studentId = req.user.claims.sub;
+    const studentId = req.user.id;
     const { reason } = req.body;
     
     const appointment = await storage.getAppointment(id);
