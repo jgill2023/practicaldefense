@@ -404,7 +404,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-primary-foreground/80">
-            <p>&copy; {new Date().getFullYear()} Tactical Advantage. Powered by InstructorOps</p>
+            <p>&copy; {new Date().getFullYear()} Tactical Advantage</p>
           </div>
         </div>
       </footer>
