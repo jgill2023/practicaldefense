@@ -295,7 +295,7 @@ appointmentRouter.get('/instructor/notification-templates', isAuthenticated, asy
 appointmentRouter.post('/instructor/notification-templates', isAuthenticated, async (req: any, res) => {
   try {
     const instructorId = req.user.id;
-    const validatedData = insertAppointmentNotificationTemplateSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(req.body);
+    const validatedData = insertAppointmentNotificationTemplateSchema.omit({ id: true, createdAt: true, updatedAt: true, instructorId: true }).parse(req.body);
     const data = { ...validatedData, instructorId };
     const template = await storage.createAppointmentNotificationTemplate(data);
     res.status(201).json(template);
