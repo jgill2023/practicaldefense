@@ -55,8 +55,6 @@ authRouter.post("/signup", async (req, res) => {
     }
 
     const passwordHash = await hashPassword(password);
-    const verificationToken = generateToken();
-    const verificationExpiry = getTokenExpiry(24);
 
     const [newUser] = await db
       .insert(users)
@@ -65,19 +63,15 @@ authRouter.post("/signup", async (req, res) => {
         passwordHash,
         firstName,
         lastName,
-        emailVerificationToken: verificationToken,
-        emailVerificationExpiry: verificationExpiry,
-        isEmailVerified: false,
+        isEmailVerified: true,
         role: "student",
         userStatus: "pending",
         statusUpdatedAt: new Date(),
       })
       .returning();
 
-    await sendVerificationEmail(email, firstName, verificationToken);
-
     res.status(201).json({
-      message: "Account created successfully. Please check your email to verify your account.",
+      message: "Account created successfully. You can now log in.",
       userId: newUser.id,
     });
   } catch (error: any) {
@@ -146,13 +140,6 @@ authRouter.post("/login", async (req, res) => {
 
     if (!isValidPassword) {
       return res.status(401).json({ message: "Invalid email or password" });
-    }
-
-    if (!user.isEmailVerified) {
-      return res.status(403).json({
-        message: "Please verify your email before logging in",
-        emailNotVerified: true,
-      });
     }
 
     const session = req.session as any;
