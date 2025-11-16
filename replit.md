@@ -101,6 +101,51 @@ UPDATE users SET role = 'superadmin' WHERE email = 'your@email.com';
 
 The Admin Credits page is accessible via the navigation menu (visible only to superadmin users) at `/admin/credits`.
 
+## SMS Consent Management System
+The platform implements comprehensive SMS consent and opt-out management to ensure legal compliance and respect user preferences. The system integrates consent collection, filtering, webhook handling, and student preference management.
+
+### Consent Collection via Terms of Service
+- SMS consent is integrated into the Terms of Service checkbox during registration
+- Users must accept the Terms (which includes SMS consent language) to create an account
+- The `smsConsent` field defaults to `true` when users accept Terms during registration
+- No separate SMS checkbox is required - consent is embedded in the Terms agreement
+
+### Automatic SMS Filtering
+- All SMS broadcasts automatically exclude students where `smsConsent=false`
+- Instructors receive real-time notifications showing the count of excluded students before sending
+- The filtering system honors both the master `smsConsent` flag and individual notification preferences
+- Phone number normalization ensures reliable matching across different formats (E.164, 10-digit, formatted)
+
+### Twilio STOP Message Handling
+- Webhook endpoint (`/api/twilio/sms-webhook`) processes Twilio STOP messages automatically
+- When students text STOP (or variations: STOPALL, UNSUBSCRIBE, CANCEL, END, QUIT), the system:
+  - Normalizes the incoming phone number to E.164 format for reliable matching
+  - Updates the user's `smsConsent` field to `false` in the database
+  - Syncs with Twilio's block list to ensure compliance
+- All inbound SMS messages are logged in the communications table for audit purposes
+
+### Student SMS Preferences Dashboard
+Students can manage their SMS preferences through the Student Portal profile settings:
+- **Master SMS Consent Toggle**: Top-level control to enable/disable all SMS communications
+- **Cascading Preference Controls**: When SMS consent is disabled, all sub-preferences are automatically disabled:
+  - SMS Course & License Reminders
+  - SMS Payment Notifications
+  - SMS Announcements
+- Profile updates properly persist `smsConsent` changes through validated backend endpoints
+
+### Phone Number Normalization
+To ensure reliable STOP message handling and user matching:
+- **Normalization Function**: `normalizePhoneNumber()` converts all phone formats to E.164 (+1XXXXXXXXXX)
+- **Database Lookup**: `getUserByPhone()` uses normalized comparison to handle format differences
+- **Twilio Integration**: Webhook normalizes incoming phone numbers before database lookup
+- This prevents STOP message failures due to format mismatches between storage and Twilio
+
+### Compliance and Audit Trail
+- All SMS consent changes are tracked with timestamps and reasons
+- Inbound SMS messages (including STOP replies) are logged with message SIDs and user associations
+- Instructors can review excluded student counts to ensure proper filtering
+- The system maintains complete audit trails for compliance verification
+
 ## Development and Build System
 The project uses Vite for fast development and optimized production builds, TypeScript for strict type checking, and path aliases for organized imports.
 
