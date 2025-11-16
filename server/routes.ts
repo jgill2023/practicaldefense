@@ -4516,9 +4516,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
 
-      // Only allow instructors to send SMS notifications
+      // Only allow instructors and above to send SMS notifications
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      const allowedRoles = ['instructor', 'admin', 'superadmin'];
+      if (!user || !allowedRoles.includes(user.role)) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4637,9 +4638,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user?.claims?.sub;
 
-      // Only allow instructors to check SMS status
+      // Only allow instructors and above to check SMS status
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      const allowedRoles = ['instructor', 'admin', 'superadmin'];
+      if (!user || !allowedRoles.includes(user.role)) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -4660,14 +4662,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Debug Twilio account info (instructors only)
+  // Debug Twilio account info (instructors and above)
   app.get("/api/debug/twilio-info", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
 
-      // Only allow instructors to check account info
+      // Only allow instructors and above to check account info
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      const allowedRoles = ['instructor', 'admin', 'superadmin'];
+      if (!user || !allowedRoles.includes(user.role)) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -5654,9 +5657,10 @@ jeremy@abqconcealedcarry.com
       const userId = req.user?.claims?.sub;
       const { sid } = req.params;
 
-      // Only allow instructors to access SMS features
+      // Only allow instructors and above to access SMS features
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      const allowedRoles = ['instructor', 'admin', 'superadmin'];
+      if (!user || !allowedRoles.includes(user.role)) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
@@ -5677,9 +5681,10 @@ jeremy@abqconcealedcarry.com
     try {
       const userId = req.user?.claims?.sub;
 
-      // Only allow instructors to send SMS
+      // Only allow instructors and above to send SMS
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      const allowedRoles = ['instructor', 'admin', 'superadmin'];
+      if (!user || !allowedRoles.includes(user.role)) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 
