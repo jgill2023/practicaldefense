@@ -4,7 +4,8 @@ import { randomUUID } from "crypto";
 import Stripe from "stripe";
 import { z } from "zod";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrSuperadmin, requireAdmin, requireInstructorOrHigher, requireActiveAccount } from "./replitAuth";
+import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrHigher, requireActiveAccount, requireAdminOrHigherOrHigher } from "./customAuth";
+import { authRouter } from "./auth/routes";
 import { db } from "./db";
 import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems, instructorAppointments } from "@shared/schema";
 import { eq, and, inArray, desc, gte } from "drizzle-orm";
@@ -34,24 +35,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      console.log("Auth route - userId:", userId);
-      console.log("Auth route - user claims:", req.user.claims);
-      const user = await storage.getUser(userId);
-      console.log("Auth route - found user:", user);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  app.use('/api/auth', authRouter);
 
   // Profile update route
   app.put('/api/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
 
       // Validate the request body
       const profileUpdateSchema = z.object({
@@ -130,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============================================
 
   // Get all users (Admin+)
-  app.get('/api/admin/users', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.get('/api/admin/users', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -152,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create user manually (Admin+)
-  app.post('/api/admin/users', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/users', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const createUserSchema = z.object({
         email: z.string().email("Invalid email address"),
@@ -165,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = createUserSchema.parse(req.body);
 
       // Only superadmins can create other superadmins
-      const adminId = req.user.claims.sub;
+      const adminId = req.user.id;
       const admin = await storage.getUser(adminId);
 
       if (validatedData.role === 'superadmin' && admin?.role !== 'superadmin') {
@@ -235,7 +224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user role (Admin+)
-  app.patch('/api/admin/users/:userId/role', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.patch('/api/admin/users/:userId/role', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const { userId } = req.params;
       const { role } = req.body;
@@ -244,7 +233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedRole = roleSchema.parse(role);
 
       // Only superadmins can assign superadmin role
-      const adminId = req.user.claims.sub;
+      const adminId = req.user.id;
       const admin = await storage.getUser(adminId);
 
       if (validatedRole === 'superadmin' && admin?.role !== 'superadmin') {
@@ -271,10 +260,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Edit user (Admin+)
-  app.patch('/api/admin/users/:userId', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.patch('/api/admin/users/:userId', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const { userId } = req.params;
-      const adminId = req.user.claims.sub;
+      const adminId = req.user.id;
       const admin = await storage.getUser(adminId);
 
       const user = await storage.getUser(userId);
@@ -311,7 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send password reset (Admin+)
-  app.post('/api/admin/users/:userId/reset-password', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.post('/api/admin/users/:userId/reset-password', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const { userId } = req.params;
 
@@ -335,10 +324,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete user (Admin+)
-  app.delete('/api/admin/users/:userId', isAuthenticated, requireAdmin, async (req: any, res) => {
+  app.delete('/api/admin/users/:userId', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const { userId } = req.params;
-      const adminId = req.user.claims.sub;
+      const adminId = req.user.id;
 
       // Prevent self-deletion
       if (userId === adminId) {
@@ -371,7 +360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/categories', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -389,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/categories/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -407,7 +396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/categories/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -442,7 +431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reorder categories endpoint
   app.post('/api/categories/reorder', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -465,7 +454,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Toggle category home page visibility
   app.patch('/api/categories/:id/home-visibility', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -498,7 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/app-settings', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -540,7 +529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/courses', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -563,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Toggle course home page visibility
   app.patch('/api/courses/:id/home-visibility', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -594,7 +583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/instructor/courses', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const courses = await storage.getCoursesByInstructor(userId);
       res.json(courses);
     } catch (error) {
@@ -606,7 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get courses with detailed schedule information for calendar display
   app.get('/api/instructor/courses-detailed', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const courses = await storage.getCoursesByInstructor(userId);
       res.json(courses);
     } catch (error) {
@@ -618,7 +607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get deleted courses for instructor
   app.get('/api/instructor/deleted-courses', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const courses = await storage.getDeletedCoursesByInstructor(userId);
       res.json(courses);
     } catch (error) {
@@ -630,7 +619,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get deleted schedules for instructor
   app.get('/api/instructor/deleted-schedules', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const schedules = await storage.getDeletedSchedulesByInstructor(userId);
       res.json(schedules);
     } catch (error) {
@@ -642,7 +631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Student unenrollment endpoint
   app.post('/api/student/enrollments/:enrollmentId/unenroll', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { enrollmentId } = req.params;
       const { requestRefund } = req.body;
 
@@ -765,7 +754,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get available schedules for student transfer (same course, future dates only)
   app.get('/api/student/available-schedules/:courseId/:enrollmentId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { courseId, enrollmentId } = req.params;
 
       // Verify enrollment belongs to user
@@ -814,7 +803,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Student request to transfer to a different schedule
   app.post('/api/student/enrollments/:enrollmentId/request-transfer', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { enrollmentId } = req.params;
       const { newScheduleId, notes } = req.body;
 
@@ -849,7 +838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Student request to be placed on hold
   app.post('/api/student/enrollments/:enrollmentId/request-hold', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { enrollmentId } = req.params;
       const { notes } = req.body;
 
@@ -884,7 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course schedule routes
   app.post('/api/courses/:courseId/schedules', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const course = await storage.getCourse(req.params.courseId);
 
       if (!course || course.instructorId !== userId) {
@@ -983,7 +972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get notification signups for a course (instructor only)
   app.get('/api/instructor/courses/:courseId/notification-signups', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const courseId = req.params.courseId;
 
       // Verify instructor has access to this course
@@ -1003,7 +992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete notification signup (instructor only)
   app.delete('/api/instructor/notification-signups/:signupId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -1021,7 +1010,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enrollment routes
   app.post('/api/enrollments', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const validatedData = insertEnrollmentSchema.parse({
         ...req.body,
         studentId: userId,
@@ -1057,7 +1046,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If user is authenticated, use their existing account
       if (req.isAuthenticated()) {
-        userId = req.user.claims.sub;
+        userId = req.user.id;
       } else {
         // For non-authenticated users, handle account creation if requested
         // but keep draft enrollment with studentId=null until proper login
@@ -1129,7 +1118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check ownership: either authenticated user owns it, or it's a guest enrollment
       if (req.isAuthenticated()) {
-        const userId = req.user.claims.sub;
+        const userId = req.user.id;
         // For authenticated users, allow access to:
         // 1. Enrollments they own (studentId matches)
         // 2. Draft enrollments (studentId is null) that they can claim
@@ -1167,7 +1156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check ownership: either authenticated user owns it, guest user matches email, or it's a draft enrollment
       if (req.isAuthenticated()) {
-        const userId = req.user.claims.sub;
+        const userId = req.user.id;
         if (enrollment.studentId !== userId) {
           return res.status(403).json({ message: "Access denied - enrollment ownership required" });
         }
@@ -1238,7 +1227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/student/enrollments', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const enrollments = await storage.getEnrollmentsByStudent(userId);
       res.json(enrollments);
     } catch (error) {
@@ -1249,7 +1238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/instructor/enrollments', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const enrollments = await storage.getEnrollmentsByInstructor(userId);
       res.json(enrollments);
     } catch (error) {
@@ -1260,7 +1249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/course-form-fields/reorder', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -1394,7 +1383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all students with enrollments (for instructor view)
   app.get('/api/students', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -1413,7 +1402,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/students/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const studentId = req.params.id;
       const user = await storage.getUser(userId);
 
@@ -2217,7 +2206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Process refund through Stripe and update enrollment
   app.post('/api/instructor/refund-requests/:enrollmentId/process', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -2975,7 +2964,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/products', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -2997,7 +2986,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put('/api/products/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -3018,7 +3007,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/products/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -3571,7 +3560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Duplicate course form to another course
   app.post('/api/course-forms/:formId/duplicate', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -4774,7 +4763,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send payment reminder for specific enrollment
   app.post("/api/instructor/send-payment-reminder", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -5228,7 +5217,7 @@ jeremy@abqconcealedcarry.com
   // Cross-enrollment endpoint for enrolling students into courses
   app.post('/api/instructor/enrollments', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -5842,7 +5831,7 @@ jeremy@abqconcealedcarry.com
 
   app.post('/api/product-categories', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const user = await storage.getUser(req.user.id);
       if (user?.role !== 'instructor') {
         return res.status(403).json({ error: "Only instructors can create product categories" });
       }
@@ -5861,7 +5850,7 @@ jeremy@abqconcealedcarry.com
 
   app.put('/api/product-categories/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const user = await storage.getUser(req.user.id);
       if (user?.role !== 'instructor') {
         return res.status(403).json({ error: "Only instructors can update product categories" });
       }
@@ -5880,7 +5869,7 @@ jeremy@abqconcealedcarry.com
 
   app.delete('/api/product-categories/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const user = await storage.getUser(req.user.id);
       if (user?.role !== 'instructor') {
         return res.status(403).json({ error: "Only instructors can delete product categories" });
       }
@@ -5927,7 +5916,7 @@ jeremy@abqconcealedcarry.com
 
   app.post('/api/products', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const user = await storage.getUser(req.user.id);
       if (user?.role !== 'instructor') {
         return res.status(403).json({ error: "Only instructors can create products" });
       }
@@ -5950,7 +5939,7 @@ jeremy@abqconcealedcarry.com
 
   app.put('/api/products/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const user = await storage.getUser(req.user.id);
       if (user?.role !== 'instructor') {
         return res.status(403).json({ error: "Only instructors can update products" });
       }
@@ -5973,7 +5962,7 @@ jeremy@abqconcealedcarry.com
 
   app.delete('/api/products/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const user = await storage.getUser(req.user.id);
       if (user?.role !== 'instructor') {
         return res.status(403).json({ error: "Only instructors can delete products" });
       }
@@ -5999,7 +5988,7 @@ jeremy@abqconcealedcarry.com
 
   app.post('/api/products/:productId/variants', isAuthenticated, async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.user.claims.sub);
+      const user = await storage.getUser(req.user.id);
       if (user?.role !== 'instructor') {
         return res.status(403).json({ error: "Only instructors can create product variants" });
       }
@@ -6125,7 +6114,7 @@ jeremy@abqconcealedcarry.com
   // E-commerce Orders Routes
   app.get('/api/ecommerce-orders', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       let orders;
@@ -6146,7 +6135,7 @@ jeremy@abqconcealedcarry.com
 
   app.get('/api/ecommerce-orders/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       const order = await storage.getEcommerceOrder(req.params.id);
 
@@ -6169,7 +6158,7 @@ jeremy@abqconcealedcarry.com
   // Checkout completion endpoint
   app.post('/api/checkout/complete', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { paymentIntentId } = req.body;
 
       if (!paymentIntentId) {
@@ -6368,7 +6357,7 @@ jeremy@abqconcealedcarry.com
   // 1. GET /api/sms-lists - Get all lists for authenticated instructor
   app.get('/api/sms-lists', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6398,7 +6387,7 @@ jeremy@abqconcealedcarry.com
   // 2. GET /api/sms-lists/:listId - Get single list with full details
   app.get('/api/sms-lists/:listId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6426,7 +6415,7 @@ jeremy@abqconcealedcarry.com
   // 3. POST /api/sms-lists - Create a new custom list
   app.post('/api/sms-lists', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6455,7 +6444,7 @@ jeremy@abqconcealedcarry.com
   // 4. PATCH /api/sms-lists/:listId - Update list details
   app.patch('/api/sms-lists/:listId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6498,7 +6487,7 @@ jeremy@abqconcealedcarry.com
   // 5. DELETE /api/sms-lists/:listId - Delete a list
   app.delete('/api/sms-lists/:listId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6534,7 +6523,7 @@ jeremy@abqconcealedcarry.com
   // 6. GET /api/sms-lists/:listId/members - Get all members of a list
   app.get('/api/sms-lists/:listId/members', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6563,7 +6552,7 @@ jeremy@abqconcealedcarry.com
   // 7. POST /api/sms-lists/:listId/members - Add member(s) to list
   app.post('/api/sms-lists/:listId/members', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6632,7 +6621,7 @@ jeremy@abqconcealedcarry.com
   // 8. DELETE /api/sms-lists/:listId/members/:userId - Remove member from list
   app.delete('/api/sms-lists/:listId/members/:userId', isAuthenticated, async (req: any, res) => {
     try {
-      const instructorId = req.user.claims.sub;
+      const instructorId = req.user.id;
       const user = await storage.getUser(instructorId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6675,7 +6664,7 @@ jeremy@abqconcealedcarry.com
   // 9. GET /api/sms-lists/search?q=query - Search lists by name/tags
   app.get('/api/sms-lists/search', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6701,7 +6690,7 @@ jeremy@abqconcealedcarry.com
   // 1. GET /api/sms-lists/:listId/broadcasts - Get all broadcast messages for a list
   app.get('/api/sms-lists/:listId/broadcasts', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6730,7 +6719,7 @@ jeremy@abqconcealedcarry.com
   // 2. GET /api/broadcasts/:broadcastId - Get single broadcast with full details
   app.get('/api/broadcasts/:broadcastId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6760,7 +6749,7 @@ jeremy@abqconcealedcarry.com
   // 3. POST /api/sms-lists/:listId/broadcasts - Create new broadcast (draft)
   app.post('/api/sms-lists/:listId/broadcasts', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6803,7 +6792,7 @@ jeremy@abqconcealedcarry.com
   // 4. PATCH /api/broadcasts/:broadcastId - Update broadcast message
   app.patch('/api/broadcasts/:broadcastId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6852,7 +6841,7 @@ jeremy@abqconcealedcarry.com
   // 5. DELETE /api/broadcasts/:broadcastId - Delete a broadcast
   app.delete('/api/broadcasts/:broadcastId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -6887,7 +6876,7 @@ jeremy@abqconcealedcarry.com
   // 6. POST /api/broadcasts/:broadcastId/send - Send broadcast to all list members
   app.post('/api/broadcasts/:broadcastId/send', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -7059,7 +7048,7 @@ jeremy@abqconcealedcarry.com
   // 7. GET /api/broadcasts/:broadcastId/deliveries - Get delivery status for a broadcast
   app.get('/api/broadcasts/:broadcastId/deliveries', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -7279,7 +7268,7 @@ jeremy@abqconcealedcarry.com
   // Get instructor credit balance
   app.get('/api/credits/balance', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -7297,7 +7286,7 @@ jeremy@abqconcealedcarry.com
   // Get available credit packages
   app.get('/api/credits/packages', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -7315,7 +7304,7 @@ jeremy@abqconcealedcarry.com
   // Get credit transaction history
   app.get('/api/credits/transactions', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -7334,7 +7323,7 @@ jeremy@abqconcealedcarry.com
   // Create payment intent for credit purchase
   app.post('/api/credits/create-payment-intent', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { packageId } = req.body;
 
       if (!packageId) {
@@ -7386,7 +7375,7 @@ jeremy@abqconcealedcarry.com
   // Confirm credit purchase after payment
   app.post('/api/credits/confirm-purchase', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { paymentIntentId } = req.body;
 
       if (!paymentIntentId) {
@@ -7451,7 +7440,7 @@ jeremy@abqconcealedcarry.com
   // Grant credits to an instructor (superadmin only)
   app.post('/api/admin/credits/grant', isAuthenticated, requireSuperadmin, async (req: any, res) => {
     try {
-      const superadminId = req.user.claims.sub;
+      const superadminId = req.user.id;
       const { instructorId, smsCredits, emailCredits, description } = req.body;
 
       if (!instructorId) {
