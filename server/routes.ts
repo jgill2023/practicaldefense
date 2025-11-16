@@ -1046,7 +1046,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let accountCreated = false;
 
       // If user is authenticated, use their existing account
-      if (req.isAuthenticated()) {
+      if (req.user && req.user.id) {
         userId = req.user.id;
       } else {
         // For non-authenticated users, handle account creation if requested

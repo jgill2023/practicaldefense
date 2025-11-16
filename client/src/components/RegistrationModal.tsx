@@ -120,7 +120,6 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
     lastName: '',
     email: '',
     phone: '',
-    dateOfBirth: '',
     agreeToTerms: false,
     paymentOption: 'full' as 'full' | 'deposit',
     password: '',
@@ -147,7 +146,6 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
         lastName: (user as any)?.lastName || '',
         email: (user as any)?.email || '',
         phone: (user as any)?.phone || '',
-        dateOfBirth: formatDateForInput((user as any)?.dateOfBirth) || '',
         createAccount: false,
       }));
     }
@@ -275,7 +273,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
       }
     }
 
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.dateOfBirth) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
       toast({
         title: "Required Fields Missing",
         description: "Please fill in all required student information fields",
@@ -302,7 +300,6 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
         lastName: formData.lastName,
         email: formData.email,
         phone: formData.phone,
-        dateOfBirth: formData.dateOfBirth,
       },
       accountCreation: !isAuthenticated && formData.createAccount ? {
         password: formData.password,
@@ -398,7 +395,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
 
     setSelectedSchedule(schedule);
 
-    if (formData.firstName && formData.lastName && formData.email && formData.phone && formData.dateOfBirth && formData.agreeToTerms) {
+    if (formData.firstName && formData.lastName && formData.email && formData.phone && formData.agreeToTerms) {
       await createDraftEnrollment(schedule);
     }
   };
@@ -416,7 +413,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
   };
 
   useEffect(() => {
-    if (selectedSchedule && formData.firstName && formData.lastName && formData.email && formData.phone && formData.dateOfBirth && formData.agreeToTerms && !isDraftCreated) {
+    if (selectedSchedule && formData.firstName && formData.lastName && formData.email && formData.phone && formData.agreeToTerms && !isDraftCreated) {
       createDraftEnrollment(selectedSchedule);
     }
   }, [formData, selectedSchedule, isDraftCreated]);
@@ -564,18 +561,6 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
                   onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                   required
                   data-testid="input-phone"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
-                  required
-                  data-testid="input-date-of-birth"
                 />
               </div>
             </CardContent>
