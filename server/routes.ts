@@ -1387,7 +1387,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const user = await storage.getUser(userId);
 
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      const allowedRoles = ['instructor', 'admin', 'superadmin'];
+      if (!user || !allowedRoles.includes(user.role)) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
@@ -1407,7 +1408,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const studentId = req.params.id;
       const user = await storage.getUser(userId);
 
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      const allowedRoles = ['instructor', 'admin', 'superadmin'];
+      if (!user || !allowedRoles.includes(user.role)) {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
