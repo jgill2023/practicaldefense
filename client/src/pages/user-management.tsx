@@ -243,7 +243,7 @@ export default function UserManagementPage() {
     onSuccess: () => {
       toast({
         title: "Password reset requested",
-        description: "The user should log out and log back in through Replit Auth",
+        description: "The user should log out and log back in to reset their password",
       });
     },
     onError: (error: any) => {

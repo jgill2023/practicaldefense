@@ -319,12 +319,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Note: Replit Auth handles authentication, so we don't have a traditional password reset
-      // This endpoint is a placeholder for future integration with password reset functionality
-      // For now, we'll just return a success message indicating the admin should direct the user to re-authenticate
+      // Note: Authentication system handles password management
+      // This endpoint notifies the admin that the user should re-authenticate to reset their password
 
       res.json({
-        message: "Password reset requested. The user should log out and log back in through Replit Auth.",
+        message: "Password reset requested. The user should log out and log back in to reset their password.",
         user: { email: user.email, firstName: user.firstName, lastName: user.lastName }
       });
     } catch (error) {
