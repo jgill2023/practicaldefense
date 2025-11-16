@@ -6,6 +6,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
+import Login from "@/pages/Login";
+import Signup from "@/pages/Signup";
+import VerifyEmail from "@/pages/VerifyEmail";
+import ResetPassword from "@/pages/ResetPassword";
 import InstructorDashboard from "@/pages/instructor-dashboard";
 import CourseManagement from "@/pages/course-management";
 import CourseFormsManagement from "@/pages/course-forms-management";
@@ -61,7 +65,7 @@ function ProtectedRoute({ children, requireInstructor = false }: ProtectedRouteP
   }
 
   if (!user) {
-    window.location.href = '/api/login';
+    window.location.href = '/login';
     return null;
   }
 
@@ -113,6 +117,10 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
+      <Route path="/verify-email" component={VerifyEmail} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route path="/pending-approval" component={PendingApprovalPage} />
       <Route path="/" component={Landing} />
       <Route path="/store" component={Storefront} />
