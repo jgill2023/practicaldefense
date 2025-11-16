@@ -3784,11 +3784,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notification Templates Routes
   app.get("/api/admin/notification-templates", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
 
-      // Only allow instructors to access admin features
+      // Only allow instructors and above to access admin features
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      const allowedRoles = ['instructor', 'admin', 'superadmin'];
+      if (!user || !allowedRoles.includes(user.role)) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3802,11 +3803,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/notification-templates", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
 
-      // Only allow instructors to access admin features
+      // Only allow instructors and above to access admin features
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      const allowedRoles = ['instructor', 'admin', 'superadmin'];
+      if (!user || !allowedRoles.includes(user.role)) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3834,12 +3836,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/admin/notification-templates/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
       const { id } = req.params;
 
-      // Only allow instructors to access admin features
+      // Only allow instructors and above to access admin features
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      const allowedRoles = ['instructor', 'admin', 'superadmin'];
+      if (!user || !allowedRoles.includes(user.role)) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
@@ -3866,12 +3869,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/admin/notification-templates/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
       const { id } = req.params;
 
-      // Only allow instructors to access admin features
+      // Only allow instructors and above to access admin features
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      const allowedRoles = ['instructor', 'admin', 'superadmin'];
+      if (!user || !allowedRoles.includes(user.role)) {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
