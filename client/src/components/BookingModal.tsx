@@ -206,7 +206,12 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
       return await apiRequest("POST", "/api/appointments/book-with-signup", body);
     },
     onSuccess: (data) => {
-      if (data.appointment) {
+      // Handle both response formats:
+      // - /book endpoint returns appointment directly
+      // - /book-with-signup returns { appointment, isNewUser, linkedExistingAccount, etc. }
+      const appointment = data.appointment || data;
+      
+      if (appointment && appointment.id) {
         // Extract flags (may be undefined for authenticated user bookings via /book endpoint)
         const { 
           isNewUser = false, 
