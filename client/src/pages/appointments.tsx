@@ -207,6 +207,44 @@ export default function AppointmentsPage() {
     onError: handleMutationError,
   });
 
+  const createNotificationTemplateMutation = useMutation({
+    mutationFn: async (data: typeof notificationTemplateForm) => {
+      await apiRequest("POST", "/api/appointments/instructor/notification-templates", data);
+    },
+    onSuccess: () => {
+      toast({ title: "Notification Template Created", description: "Template created successfully." });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments/instructor/notification-templates"] });
+      setShowNotificationTemplateDialog(false);
+      resetNotificationTemplateForm();
+    },
+    onError: handleMutationError,
+  });
+
+  const updateNotificationTemplateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof notificationTemplateForm }) => {
+      await apiRequest("PATCH", `/api/appointments/instructor/notification-templates/${id}`, data);
+    },
+    onSuccess: () => {
+      toast({ title: "Notification Template Updated", description: "Template updated successfully." });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments/instructor/notification-templates"] });
+      setShowNotificationTemplateDialog(false);
+      setEditingNotificationTemplate(null);
+      resetNotificationTemplateForm();
+    },
+    onError: handleMutationError,
+  });
+
+  const deleteNotificationTemplateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/appointments/instructor/notification-templates/${id}`);
+    },
+    onSuccess: () => {
+      toast({ title: "Notification Template Deleted", description: "Template deleted successfully." });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments/instructor/notification-templates"] });
+    },
+    onError: handleMutationError,
+  });
+
   function handleMutationError(error: any) {
     if (isUnauthorizedError(error)) {
       toast({
@@ -241,6 +279,17 @@ export default function AppointmentsPage() {
       startTime: '09:00',
       endTime: '17:00',
       requiresApproval: false,
+      isActive: true,
+    });
+  }
+
+  function resetNotificationTemplateForm() {
+    setNotificationTemplateForm({
+      eventType: 'booking_confirmed',
+      channelType: 'email',
+      recipientType: 'student',
+      subject: '',
+      body: '',
       isActive: true,
     });
   }
@@ -657,7 +706,18 @@ export default function AppointmentsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {/* TODO: Edit template */}}
+                            onClick={() => {
+                              setEditingNotificationTemplate(template);
+                              setNotificationTemplateForm({
+                                eventType: template.eventType,
+                                channelType: template.channelType,
+                                recipientType: template.recipientType,
+                                subject: template.subject || '',
+                                body: template.body,
+                                isActive: template.isActive,
+                              });
+                              setShowNotificationTemplateDialog(true);
+                            }}
                             data-testid={`button-edit-notification-template-${template.id}`}
                           >
                             <Edit className="h-4 w-4" />
@@ -665,7 +725,8 @@ export default function AppointmentsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {/* TODO: Delete template */}}
+                            onClick={() => deleteNotificationTemplateMutation.mutate(template.id)}
+                            disabled={deleteNotificationTemplateMutation.isPending}
                             data-testid={`button-delete-notification-template-${template.id}`}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -1081,13 +1142,20 @@ export default function AppointmentsPage() {
               <Button variant="outline" onClick={() => setShowNotificationTemplateDialog(false)}>
                 Cancel
               </Button>
-              <Button onClick={() => {
-                toast({
-                  title: "Coming Soon",
-                  description: "Notification template creation will be implemented in the next update.",
-                });
-                setShowNotificationTemplateDialog(false);
-              }} data-testid="button-save-notification-template">
+              <Button 
+                onClick={() => {
+                  if (editingNotificationTemplate) {
+                    updateNotificationTemplateMutation.mutate({ 
+                      id: editingNotificationTemplate.id, 
+                      data: notificationTemplateForm 
+                    });
+                  } else {
+                    createNotificationTemplateMutation.mutate(notificationTemplateForm);
+                  }
+                }} 
+                disabled={createNotificationTemplateMutation.isPending || updateNotificationTemplateMutation.isPending}
+                data-testid="button-save-notification-template"
+              >
                 {editingNotificationTemplate ? 'Update' : 'Create'}
               </Button>
             </DialogFooter>
