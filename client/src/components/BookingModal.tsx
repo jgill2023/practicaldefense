@@ -177,11 +177,12 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
 
       // If not authenticated, create account + book in one request
       // Validate form fields
-      if (!bookingForm.firstName || !bookingForm.lastName || !bookingForm.email || !bookingForm.password) {
-        throw new Error("Please fill in all required fields");
+      if (!bookingForm.firstName || !bookingForm.lastName || !bookingForm.email) {
+        throw new Error("Please fill in name and email");
       }
 
-      if (bookingForm.password.length < 8) {
+      // Password is optional - if not provided, guest booking is created
+      if (bookingForm.password && bookingForm.password.length < 8) {
         throw new Error("Password must be at least 8 characters long");
       }
 
@@ -191,7 +192,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         lastName: bookingForm.lastName,
         email: bookingForm.email,
         phone: bookingForm.phone,
-        password: bookingForm.password,
+        password: bookingForm.password || undefined, // Optional password
         // Appointment booking fields
         instructorId,
         appointmentTypeId: appointmentType.id,
@@ -204,15 +205,30 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     },
     onSuccess: (data) => {
       if (data.appointment) {
-        const wasNewSignup = !isAuthenticated && data.user;
+        // Extract flags (may be undefined for authenticated user bookings via /book endpoint)
+        const { 
+          isNewUser = false, 
+          linkedExistingAccount = false, 
+          needsPasswordSetup = false, 
+          autoLoggedIn = false 
+        } = data;
+        
+        let description = "";
+        if (linkedExistingAccount) {
+          description = "Your appointment has been linked to your existing account! Login to view it in your dashboard.";
+        } else if (isNewUser && needsPasswordSetup) {
+          description = "Appointment booked! Check your email for a link to set up your password.";
+        } else if (isNewUser) {
+          description = "Account created and appointment booked! You'll receive a confirmation email shortly.";
+        } else if (appointmentType?.requiresApproval) {
+          description = "Your appointment request has been submitted and is pending instructor approval.";
+        } else {
+          description = "Your appointment has been confirmed! You'll receive a confirmation email shortly.";
+        }
         
         toast({
           title: appointmentType?.requiresApproval ? "Booking Requested" : "Booking Confirmed",
-          description: wasNewSignup
-            ? "Account created and appointment booked! You'll receive a confirmation email shortly."
-            : appointmentType?.requiresApproval
-              ? "Your appointment request has been submitted and is pending instructor approval."
-              : "Your appointment has been confirmed! You'll receive a confirmation email shortly.",
+          description,
         });
 
         // Invalidate all appointment-related queries
@@ -225,9 +241,10 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           }
         });
         
-        // If new signup, reload to update auth state
-        if (wasNewSignup) {
-          setTimeout(() => window.location.reload(), 1000);
+        // Only reload if user was auto-logged in (new user with password)
+        // For authenticated users or linked accounts, just close the modal
+        if (autoLoggedIn === true) {
+          setTimeout(() => window.location.reload(), 1500);
         } else {
           onClose();
         }
@@ -591,20 +608,22 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             {!isAuthenticated && (
               <div className="space-y-2">
                 <Label htmlFor="password">
-                  Create Password <span className="text-destructive">*</span>
+                  Create Password (Optional)
                 </Label>
                 <Input
                   id="password"
                   type="password"
                   value={bookingForm.password}
                   onChange={(e) => setBookingForm(prev => ({ ...prev, password: e.target.value }))}
-                  required
                   minLength={8}
-                  placeholder="Minimum 8 characters"
+                  placeholder="Leave blank to receive password setup email"
                   data-testid="input-password"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Your account will be created when you complete the booking
+                  {bookingForm.password 
+                    ? "Your account will be created when you complete the booking"
+                    : "We'll email you a link to set up your password after booking"
+                  }
                 </p>
               </div>
             )}

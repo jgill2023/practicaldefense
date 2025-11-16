@@ -611,7 +611,7 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
     } = req.body;
     
     // Validate required fields
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !email) {
       return res.status(400).json({ message: "Missing required account information" });
     }
     
@@ -619,31 +619,69 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
       return res.status(400).json({ message: "Missing required booking information" });
     }
 
-    // Check if email already exists
-    const existingUser = await storage.getUserByEmail(email.toLowerCase());
-    if (existingUser) {
-      return res.status(400).json({ message: "Email already registered. Please login instead." });
+    // Validate password length if provided
+    if (password && password.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters long" });
     }
 
-    // Create new user account
-    const { hashPassword } = await import('../customAuth');
-    const passwordHash = await hashPassword(password);
-    
-    const newUser = await storage.createUser({
-      email: email.toLowerCase(),
-      passwordHash,
-      firstName,
-      lastName,
-      phone: phone || null,
-      role: 'student',
-      userStatus: 'pending',
-      isEmailVerified: true,
-    });
+    let user;
+    let isNewUser = false;
+    let needsPasswordSetup = false;
 
-    // Book appointment for the new user
+    // Check if user already exists (former student)
+    const existingUser = await storage.getUserByEmail(email.toLowerCase());
+    
+    if (existingUser) {
+      // User exists - automatically link appointment to their account
+      user = existingUser;
+      console.log(`Auto-linking appointment to existing account: ${user.email}`);
+    } else {
+      // New user - create account
+      const { hashPassword, generateToken, getTokenExpiry } = await import('../customAuth');
+      const { sendPasswordResetEmail } = await import('../emailService');
+      
+      let passwordHash: string;
+      let resetToken: string | null = null;
+      let resetExpiry: Date | null = null;
+      
+      if (password) {
+        // User provided a password
+        passwordHash = await hashPassword(password);
+      } else {
+        // Guest booking - create account with temporary password and send setup email
+        const tempPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12);
+        passwordHash = await hashPassword(tempPassword);
+        resetToken = generateToken();
+        resetExpiry = getTokenExpiry(1); // 1 hour expiry
+        needsPasswordSetup = true;
+      }
+      
+      user = await storage.createUser({
+        email: email.toLowerCase(),
+        passwordHash,
+        firstName,
+        lastName,
+        phone: phone || null,
+        role: 'student',
+        userStatus: 'pending',
+        isEmailVerified: true,
+        passwordResetToken: resetToken,
+        passwordResetExpiry: resetExpiry,
+      });
+      
+      isNewUser = true;
+      
+      // Send password setup email for guest bookings
+      if (needsPasswordSetup && resetToken) {
+        await sendPasswordResetEmail(user.email, user.firstName || 'User', resetToken);
+        console.log(`Password setup email sent to ${user.email}`);
+      }
+    }
+
+    // Book appointment for the user
     const result = await appointmentService.bookAppointment({
       instructorId,
-      studentId: newUser.id,
+      studentId: user.id,
       appointmentTypeId,
       startTime: new Date(startTime),
       endTime: new Date(endTime),
@@ -652,22 +690,30 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
     });
 
     if (!result.success) {
-      // If booking fails, we could delete the user here, but let's keep the account
       return res.status(400).json({ message: result.error });
     }
 
-    // Auto-login the new user
-    const session = req.session as any;
-    session.userId = newUser.id;
+    // Only auto-login for NEW users who provided a password
+    // Do NOT auto-login existing users (security risk) or guest bookings (need to set password first)
+    const shouldAutoLogin = isNewUser && password && !needsPasswordSetup;
+    
+    if (shouldAutoLogin) {
+      const session = req.session as any;
+      session.userId = user.id;
+    }
 
     res.status(201).json({ 
       appointment: result.appointment,
       user: {
-        id: newUser.id,
-        email: newUser.email,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-      }
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+      isNewUser,
+      linkedExistingAccount: !isNewUser,
+      needsPasswordSetup,
+      autoLoggedIn: shouldAutoLogin,
     });
   } catch (error) {
     console.error("Error in book-with-signup:", error);
