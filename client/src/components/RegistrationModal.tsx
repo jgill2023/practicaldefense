@@ -122,6 +122,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
     phone: '',
     dateOfBirth: '',
     agreeToTerms: false,
+    smsConsent: false,
     paymentOption: 'full' as 'full' | 'deposit',
     password: '',
     confirmPassword: '',
@@ -565,6 +566,23 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
                   required
                   data-testid="input-phone"
                 />
+              </div>
+
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="smsConsent"
+                  checked={formData.smsConsent}
+                  onCheckedChange={(checked) =>
+                    setFormData(prev => ({ ...prev, smsConsent: checked as boolean }))
+                  }
+                  data-testid="checkbox-sms-consent"
+                />
+                <label
+                  htmlFor="smsConsent"
+                  className="text-sm text-muted-foreground leading-tight cursor-pointer"
+                >
+                  I agree to receive class reminders, schedule updates, and confirmations via phone call and/or text message
+                </label>
               </div>
 
               <div>
