@@ -2214,7 +2214,7 @@ export default function StudentPortal() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/login";
       }, 2000);
       return;
     }

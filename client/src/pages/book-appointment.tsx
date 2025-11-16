@@ -222,7 +222,7 @@ export default function BookAppointmentPage() {
           description: "Session expired. Redirecting to login...",
           variant: "destructive",
         });
-        setTimeout(() => window.location.href = "/api/login", 500);
+        setTimeout(() => window.location.href = "/login", 500);
         return;
       }
       toast({
@@ -265,7 +265,7 @@ export default function BookAppointmentPage() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = '/api/login';
+        window.location.href = '/login';
       }, 2000);
       return;
     }

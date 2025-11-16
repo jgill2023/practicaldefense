@@ -214,7 +214,7 @@ export default function AppointmentsPage() {
         description: "Session expired. Redirecting to login...",
         variant: "destructive",
       });
-      setTimeout(() => window.location.href = "/api/login", 500);
+      setTimeout(() => window.location.href = "/login", 500);
       return;
     }
     toast({

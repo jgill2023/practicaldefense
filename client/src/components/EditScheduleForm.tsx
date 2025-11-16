@@ -156,7 +156,7 @@ export function EditScheduleForm({ schedule, isOpen, onClose, onScheduleUpdated 
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }

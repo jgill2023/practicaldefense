@@ -165,7 +165,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           description: "Session expired. Redirecting to login...",
           variant: "destructive",
         });
-        setTimeout(() => window.location.href = "/api/login", 500);
+        setTimeout(() => window.location.href = "/login", 500);
         return;
       }
       toast({
@@ -197,7 +197,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             <div className="space-y-3">
               <Button
                 className="w-full bg-black text-white hover:bg-black/90"
-                onClick={() => window.location.href = '/api/login'}
+                onClick={() => window.location.href = '/login'}
                 data-testid="button-login"
               >
                 Log In

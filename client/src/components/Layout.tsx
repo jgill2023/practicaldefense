@@ -25,8 +25,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 
 
-  const handleLogout = () => {
-    window.location.href = '/api/logout';
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/login';
+    }
   };
 
   return (
@@ -183,7 +192,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {!isAuthenticated && (
                   <Button 
                     className="bg-accent text-accent-foreground hover:bg-accent/90"
-                    onClick={() => window.location.href = '/api/login'}
+                    onClick={() => window.location.href = '/login'}
                     data-testid="button-login"
                   >
                     Login
@@ -252,7 +261,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   {!isAuthenticated ? (
                     <Button 
                       className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
-                      onClick={() => window.location.href = '/api/login'}
+                      onClick={() => window.location.href = '/login'}
                       data-testid="button-login-mobile"
                     >
                       Login
