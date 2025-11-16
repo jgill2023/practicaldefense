@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { randomUUID } from "crypto";
 import Stripe from "stripe";
 import { z } from "zod";
-import { storage } from "./storage";
+import { storage, normalizePhoneNumber } from "./storage";
 import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrHigher, requireActiveAccount, requireAdminOrHigher } from "./customAuth";
 import { authRouter } from "./auth/routes";
 import { db } from "./db";
@@ -61,6 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         preferredContactMethods: z.array(z.string()).optional(),
         enableLicenseExpirationReminder: z.boolean().optional(),
         enableRefresherReminder: z.boolean().optional(),
+        smsConsent: z.boolean().optional(),
         enableSmsNotifications: z.boolean().optional(),
         enableSmsReminders: z.boolean().optional(),
         enableSmsPaymentNotices: z.boolean().optional(),
@@ -4530,17 +4531,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Filter out students who haven't consented to SMS notifications
+      const phoneNumbers = to.filter((phone: string) => phone && phone.trim().length > 0);
+      const consentedPhones: string[] = [];
+      const excludedPhones: string[] = [];
+      const excludedStudents: Array<{ name: string; phone: string }> = [];
+
+      // Check SMS consent for each phone number
+      for (const phone of phoneNumbers) {
+        try {
+          // Look up user by phone number
+          const student = await storage.getUserByPhone(phone);
+          
+          if (student) {
+            // Check if student has SMS consent
+            if (student.smsConsent === true) {
+              consentedPhones.push(phone);
+            } else {
+              excludedPhones.push(phone);
+              excludedStudents.push({
+                name: `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'Unknown',
+                phone: phone
+              });
+            }
+          } else {
+            // If no user found for this phone number, include it (might be a guest or manual entry)
+            consentedPhones.push(phone);
+          }
+        } catch (lookupError) {
+          console.error(`Error looking up user for phone ${phone}:`, lookupError);
+          // On error, include the number to avoid blocking legitimate sends
+          consentedPhones.push(phone);
+        }
+      }
+
+      // If all students have opted out, return early
+      if (consentedPhones.length === 0) {
+        return res.json({
+          success: false,
+          error: 'All recipients have opted out of SMS notifications',
+          excludedCount: excludedStudents.length,
+          excludedStudents,
+          sentCount: 0,
+          failedCount: 0,
+        });
+      }
+
       // Import SMS service
       const { NotificationSmsService } = await import('./smsService');
 
       const result = await NotificationSmsService.sendNotificationSms({
-        to,
+        to: consentedPhones,
         message: processedMessage,
         instructorId: userId,
         purpose,
       });
 
-      res.json(result);
+      // Add exclusion information to the result
+      const enhancedResult = {
+        ...result,
+        excludedCount: excludedStudents.length,
+        excludedStudents: excludedStudents.length > 0 ? excludedStudents : undefined,
+        totalRecipients: phoneNumbers.length,
+      };
+
+      res.json(enhancedResult);
     } catch (error: any) {
       console.error("Error sending SMS notification:", error);
       res.status(500).json({ error: "Failed to send SMS notification" });
@@ -5746,15 +5801,33 @@ jeremy@abqconcealedcarry.com
         return res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
       }
 
-      // Try to find the user by phone number (search ALL users, not just students)
-      console.log("Looking for matching user...");
-      const users = await storage.getAllUsers();
-      console.log(`Found ${users.length} users in database`);
-
-      const matchingUser = users.find(u =>
-        u.phone && u.phone.replace(/\D/g, '') === From.replace(/\D/g, '')
-      );
+      // Try to find the user by phone number using normalized phone number comparison
+      console.log("Looking for matching user using normalized phone:", From);
+      const normalizedFromPhone = normalizePhoneNumber(From);
+      console.log("Normalized phone number:", normalizedFromPhone);
+      
+      const matchingUser = normalizedFromPhone ? await storage.getUserByPhone(normalizedFromPhone) : undefined;
       console.log("Matching user:", matchingUser ? `Found: ${matchingUser.id}` : 'Not found');
+
+      // Handle STOP messages (opt-out from SMS)
+      const normalizedBody = (Body || '').trim().toUpperCase();
+      const stopKeywords = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT'];
+      if (stopKeywords.includes(normalizedBody)) {
+        console.log("STOP message detected - updating SMS consent");
+        
+        if (matchingUser) {
+          try {
+            await storage.updateUser(matchingUser.id, {
+              smsConsent: false,
+            });
+            console.log(`✓ SMS consent updated to false for user ${matchingUser.id}`);
+          } catch (updateError) {
+            console.error("Error updating SMS consent:", updateError);
+          }
+        } else {
+          console.warn("STOP message received but no matching user found");
+        }
+      }
 
       // Save the incoming SMS to the communications table
       const communicationData = {

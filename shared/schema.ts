@@ -69,7 +69,8 @@ export const users = pgTable("users", {
   // 2-year refresher reminder (24 months after license issued date)
   refresherReminderDays: integer("refresher_reminder_days").default(60), // 30 or 60 days
   enableRefresherReminder: boolean("enable_refresher_reminder").default(true),
-  // SMS notification preferences
+  // SMS consent and notification preferences
+  smsConsent: boolean("sms_consent").notNull().default(true), // Tracks whether user consented to SMS via Terms of Service
   enableSmsNotifications: boolean("enable_sms_notifications").default(true), // Master SMS toggle
   enableSmsReminders: boolean("enable_sms_reminders").default(true), // SMS for course/license reminders
   enableSmsPaymentNotices: boolean("enable_sms_payment_notices").default(false), // SMS for payment updates

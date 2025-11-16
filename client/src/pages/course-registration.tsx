@@ -138,7 +138,6 @@ export default function CourseRegistration() {
     phone: '',
     dateOfBirth: '',
     agreeToTerms: false,
-    smsConsent: false,
     paymentOption: 'full' as 'full' | 'deposit', // Default to full payment
     // Account creation fields (for non-authenticated users)
     password: '',
@@ -655,23 +654,6 @@ export default function CourseRegistration() {
                 />
               </div>
 
-              <div className="flex items-start space-x-2">
-                <Checkbox
-                  id="smsConsent"
-                  checked={formData.smsConsent}
-                  onCheckedChange={(checked) =>
-                    setFormData(prev => ({ ...prev, smsConsent: checked as boolean }))
-                  }
-                  data-testid="checkbox-sms-consent"
-                />
-                <label
-                  htmlFor="smsConsent"
-                  className="text-sm text-muted-foreground leading-tight cursor-pointer"
-                >
-                  I agree to receive class reminders, schedule updates, and confirmations via phone call and/or text message
-                </label>
-              </div>
-
               <div>
                 <Label htmlFor="dateOfBirth">Date of Birth *</Label>
                 <Input
@@ -1080,7 +1062,7 @@ export default function CourseRegistration() {
                   >
                     Terms of Service
                   </button>
-                  {' '}and{' '}
+                  ,{' '}
                   <button
                     type="button"
                     onClick={() => setPolicyModalOpen('privacy')}
@@ -1088,7 +1070,7 @@ export default function CourseRegistration() {
                   >
                     Privacy Policy
                   </button>
-                  . I also acknowledge the{' '}
+                  , and{' '}
                   <button
                     type="button"
                     onClick={() => setPolicyModalOpen('refund')}
@@ -1096,7 +1078,7 @@ export default function CourseRegistration() {
                   >
                     Refund Policy
                   </button>
-                  . I understand the risks associated with firearms training and accept full responsibility for my participation.
+                  . I also consent to receive text messages related to my class registration, reminders, and important updates from Tactical Advantage. Message and data rates may apply. You may reply STOP at anytime to unsubscribe from SMS notifications.
                 </label>
               </div>
             </CardContent>

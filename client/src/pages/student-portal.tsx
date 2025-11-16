@@ -57,6 +57,7 @@ const editProfileSchema = z.object({
   preferredContactMethods: z.array(z.string()).optional(),
   enableLicenseExpirationReminder: z.boolean().optional(),
   enableRefresherReminder: z.boolean().optional(),
+  smsConsent: z.boolean().optional(),
   enableSmsNotifications: z.boolean().optional(),
   enableSmsReminders: z.boolean().optional(),
   enableSmsPaymentNotices: z.boolean().optional(),
@@ -1284,6 +1285,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
       preferredContactMethods: user.preferredContactMethods || [],
       enableLicenseExpirationReminder: user.enableLicenseExpirationReminder ?? true,
       enableRefresherReminder: user.enableRefresherReminder ?? true,
+      smsConsent: user.smsConsent ?? true,
       enableSmsNotifications: user.enableSmsNotifications ?? true,
       enableSmsReminders: user.enableSmsReminders ?? true,
       enableSmsPaymentNotices: user.enableSmsPaymentNotices ?? false,
@@ -1657,6 +1659,30 @@ function EditProfileDialog({ isOpen, onClose, user }: {
               <div className="space-y-3">
                 <FormField
                   control={form.control}
+                  name="smsConsent"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border-2 border-primary p-3 shadow-sm bg-primary/5">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-medium">
+                          SMS Consent
+                        </FormLabel>
+                        <FormDescription>
+                          Allow Tactical Advantage to send SMS messages to your phone. You agreed to this when registering. Reply STOP to opt out.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-sms-consent"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="enableSmsNotifications"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
@@ -1672,6 +1698,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          disabled={!form.watch("smsConsent")}
                           data-testid="switch-sms-notifications"
                         />
                       </FormControl>
@@ -1696,7 +1723,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
-                          disabled={!form.watch("enableSmsNotifications")}
+                          disabled={!form.watch("smsConsent") || !form.watch("enableSmsNotifications")}
                           data-testid="switch-sms-reminders"
                         />
                       </FormControl>
@@ -1721,7 +1748,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
-                          disabled={!form.watch("enableSmsNotifications")}
+                          disabled={!form.watch("smsConsent") || !form.watch("enableSmsNotifications")}
                           data-testid="switch-sms-payment-notices"
                         />
                       </FormControl>
@@ -1746,7 +1773,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
-                          disabled={!form.watch("enableSmsNotifications")}
+                          disabled={!form.watch("smsConsent") || !form.watch("enableSmsNotifications")}
                           data-testid="switch-sms-announcements"
                         />
                       </FormControl>

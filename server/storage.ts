@@ -162,10 +162,43 @@ import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne, inArray, notInArray } from "drizzle-orm";
 import Stripe from 'stripe';
 
+/**
+ * Normalizes a phone number to E.164 format for consistent storage and comparison
+ * @param phone - Phone number in any format
+ * @returns Normalized phone number in E.164 format (+1XXXXXXXXXX) or null if invalid
+ */
+export function normalizePhoneNumber(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, '');
+  
+  // Must have at least 10 digits for a valid US phone number
+  if (digits.length < 10) return null;
+  
+  // If it's exactly 10 digits, assume US and add +1
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+  
+  // If it's 11 digits and starts with 1, format as +1XXXXXXXXXX
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return `+${digits}`;
+  }
+  
+  // If it already has a country code, ensure it starts with +
+  if (digits.length > 10) {
+    return `+${digits}`;
+  }
+  
+  return null;
+}
+
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByPhone(phone: string): Promise<User | undefined>;
   getAllStudents(): Promise<User[]>;
   getAllUsers(): Promise<User[]>;
   getPendingUsersCount(): Promise<number>;
@@ -668,6 +701,21 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserByPhone(phone: string): Promise<User | undefined> {
+    const normalizedSearchPhone = normalizePhoneNumber(phone);
+    if (!normalizedSearchPhone) return undefined;
+    
+    // Get all users and filter by normalized phone number
+    // This handles cases where phone numbers are stored in different formats
+    const allUsers = await db.select().from(users);
+    const user = allUsers.find(u => {
+      const normalizedStoredPhone = normalizePhoneNumber(u.phone);
+      return normalizedStoredPhone === normalizedSearchPhone;
+    });
+    
     return user;
   }
 

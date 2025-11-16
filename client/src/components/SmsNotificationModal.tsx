@@ -49,9 +49,16 @@ export function SmsNotificationModal({
     },
     onSuccess: (data) => {
       if (data.success) {
+        let description = `Message sent to ${studentName}`;
+        
+        // Add information about excluded students if any
+        if (data.excludedCount && data.excludedCount > 0) {
+          description += `. Note: ${data.excludedCount} recipient(s) excluded (opted out of SMS)`;
+        }
+        
         toast({
           title: "SMS Sent Successfully",
-          description: `Message sent to ${studentName}`,
+          description,
         });
         setMessage("");
         onClose();
