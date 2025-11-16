@@ -7,8 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { Clock, DollarSign, CheckCircle, X } from "lucide-react";
+import { Clock, DollarSign, CheckCircle, X, LogIn } from "lucide-react";
 import type { AppointmentType } from "@shared/schema";
 
 type TimeSlot = {
@@ -43,16 +46,48 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  
+  // Booking form state
+  const [bookingForm, setBookingForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    notes: '',
+  });
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (!open) {
       setSelectedDate(undefined);
       setSelectedSlot(null);
-      setShowLoginPrompt(false);
+      setShowBookingForm(false);
+      setBookingForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        password: '',
+        notes: '',
+      });
     }
   }, [open]);
+
+  // Pre-populate form for authenticated users
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setBookingForm(prev => ({
+        ...prev,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        password: '', // Don't pre-populate password
+      }));
+    }
+  }, [isAuthenticated, user]);
 
   const formatLocalDate = (date: Date): string => {
     const year = date.getFullYear();
@@ -128,36 +163,74 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         throw new Error("Missing required fields");
       }
 
-      // The selectedSlot already contains ISO timestamps from the API
-      // Just use them directly
+      // If authenticated, book directly
+      if (isAuthenticated) {
+        const body = {
+          instructorId,
+          appointmentTypeId: appointmentType.id,
+          startTime: selectedSlot.startTime,
+          endTime: selectedSlot.endTime,
+          studentNotes: bookingForm.notes,
+        };
+        return await apiRequest("POST", "/api/appointments/book", body);
+      }
+
+      // If not authenticated, create account + book in one request
+      // Validate form fields
+      if (!bookingForm.firstName || !bookingForm.lastName || !bookingForm.email || !bookingForm.password) {
+        throw new Error("Please fill in all required fields");
+      }
+
+      if (bookingForm.password.length < 8) {
+        throw new Error("Password must be at least 8 characters long");
+      }
+
       const body = {
+        // Account creation fields
+        firstName: bookingForm.firstName,
+        lastName: bookingForm.lastName,
+        email: bookingForm.email,
+        phone: bookingForm.phone,
+        password: bookingForm.password,
+        // Appointment booking fields
         instructorId,
         appointmentTypeId: appointmentType.id,
         startTime: selectedSlot.startTime,
         endTime: selectedSlot.endTime,
+        studentNotes: bookingForm.notes,
       };
 
-      const data = await apiRequest("POST", "/api/appointments/book", body);
-      return data;
+      return await apiRequest("POST", "/api/appointments/book-with-signup", body);
     },
     onSuccess: (data) => {
       if (data.appointment) {
+        const wasNewSignup = !isAuthenticated && data.user;
+        
         toast({
           title: appointmentType?.requiresApproval ? "Booking Requested" : "Booking Confirmed",
-          description: appointmentType?.requiresApproval
-            ? "Your appointment request has been submitted and is pending instructor approval."
-            : "Your appointment has been confirmed! You'll receive a confirmation email shortly.",
+          description: wasNewSignup
+            ? "Account created and appointment booked! You'll receive a confirmation email shortly."
+            : appointmentType?.requiresApproval
+              ? "Your appointment request has been submitted and is pending instructor approval."
+              : "Your appointment has been confirmed! You'll receive a confirmation email shortly.",
         });
 
         // Invalidate all appointment-related queries
         queryClient.invalidateQueries({ queryKey: ["/api/appointments/my-appointments"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
         queryClient.invalidateQueries({ 
           predicate: (query) => {
             const key = query.queryKey[0];
             return typeof key === 'string' && key.startsWith('/api/appointments/available-slots');
           }
         });
-        onClose();
+        
+        // If new signup, reload to update auth state
+        if (wasNewSignup) {
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          onClose();
+        }
       }
     },
     onError: (error: any) => {
@@ -179,11 +252,12 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   });
 
   const handleBooking = () => {
-    // If not authenticated, show login prompt instead of booking
-    if (!isAuthenticated) {
-      setShowLoginPrompt(true);
-      return;
-    }
+    // Show booking form when user clicks confirm
+    setShowBookingForm(true);
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     bookAppointmentMutation.mutate();
   };
 
@@ -435,42 +509,138 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         </div>
       </DialogContent>
 
-      {/* Login/Signup Prompt Dialog */}
-      <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
-        <DialogContent className="max-w-md" data-testid="booking-modal-login-required">
+      {/* Booking Form Dialog */}
+      <Dialog open={showBookingForm} onOpenChange={setShowBookingForm}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="booking-form-dialog">
           <DialogHeader>
-            <DialogTitle>Login or Create an Account</DialogTitle>
+            <DialogTitle>Complete Your Booking</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <p className="text-muted-foreground mb-6">
-              Please log in or create an account to complete your booking
-            </p>
-            <div className="space-y-3">
+
+          {!isAuthenticated && (
+            <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
+              <LogIn className="h-4 w-4" />
+              <span>Returning student?</span>
               <Button
-                className="w-full bg-black text-white hover:bg-black/90"
+                variant="link"
+                className="h-auto p-0 text-sm font-semibold"
                 onClick={() => window.location.href = '/login'}
-                data-testid="button-login"
+                data-testid="button-login-link"
               >
-                Log In
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => window.location.href = '/signup'}
-                data-testid="button-signup"
-              >
-                Create Account
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full"
-                onClick={() => setShowLoginPrompt(false)}
-                data-testid="button-cancel-login"
-              >
-                Cancel
+                Login to autopopulate
               </Button>
             </div>
-          </div>
+          )}
+
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">
+                  First Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="firstName"
+                  value={bookingForm.firstName}
+                  onChange={(e) => setBookingForm(prev => ({ ...prev, firstName: e.target.value }))}
+                  required
+                  disabled={isAuthenticated}
+                  data-testid="input-first-name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">
+                  Last Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="lastName"
+                  value={bookingForm.lastName}
+                  onChange={(e) => setBookingForm(prev => ({ ...prev, lastName: e.target.value }))}
+                  required
+                  disabled={isAuthenticated}
+                  data-testid="input-last-name"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">
+                Email <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={bookingForm.email}
+                onChange={(e) => setBookingForm(prev => ({ ...prev, email: e.target.value }))}
+                required
+                disabled={isAuthenticated}
+                data-testid="input-email"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={bookingForm.phone}
+                onChange={(e) => setBookingForm(prev => ({ ...prev, phone: e.target.value }))}
+                disabled={isAuthenticated}
+                data-testid="input-phone"
+              />
+            </div>
+
+            {!isAuthenticated && (
+              <div className="space-y-2">
+                <Label htmlFor="password">
+                  Create Password <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={bookingForm.password}
+                  onChange={(e) => setBookingForm(prev => ({ ...prev, password: e.target.value }))}
+                  required
+                  minLength={8}
+                  placeholder="Minimum 8 characters"
+                  data-testid="input-password"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Your account will be created when you complete the booking
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Special Requests or Notes</Label>
+              <Textarea
+                id="notes"
+                value={bookingForm.notes}
+                onChange={(e) => setBookingForm(prev => ({ ...prev, notes: e.target.value }))}
+                rows={3}
+                placeholder="Any special requirements or questions..."
+                data-testid="textarea-notes"
+              />
+            </div>
+
+            <div className="border-t pt-4 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Total</span>
+                <span className="text-lg font-bold">${Number(appointmentType?.price || 0).toFixed(2)}</span>
+              </div>
+              <Button
+                type="submit"
+                className="w-full bg-black text-white hover:bg-black/90"
+                disabled={bookAppointmentMutation.isPending}
+                data-testid="button-submit-booking"
+              >
+                {bookAppointmentMutation.isPending ? "Processing..." : "Complete Booking"}
+              </Button>
+              {appointmentType?.requiresApproval && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Your booking will be pending instructor approval
+                </p>
+              )}
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </Dialog>

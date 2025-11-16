@@ -594,6 +594,87 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
   }
 });
 
+appointmentRouter.post('/book-with-signup', async (req: any, res) => {
+  try {
+    const { 
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+      instructorId, 
+      appointmentTypeId, 
+      startTime, 
+      endTime, 
+      studentNotes, 
+      partySize 
+    } = req.body;
+    
+    // Validate required fields
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ message: "Missing required account information" });
+    }
+    
+    if (!instructorId || !appointmentTypeId || !startTime || !endTime) {
+      return res.status(400).json({ message: "Missing required booking information" });
+    }
+
+    // Check if email already exists
+    const existingUser = await storage.getUserByEmail(email.toLowerCase());
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already registered. Please login instead." });
+    }
+
+    // Create new user account
+    const { hashPassword } = await import('../customAuth');
+    const passwordHash = await hashPassword(password);
+    
+    const newUser = await storage.createUser({
+      email: email.toLowerCase(),
+      passwordHash,
+      firstName,
+      lastName,
+      phone: phone || null,
+      role: 'student',
+      userStatus: 'pending',
+      isEmailVerified: true,
+    });
+
+    // Book appointment for the new user
+    const result = await appointmentService.bookAppointment({
+      instructorId,
+      studentId: newUser.id,
+      appointmentTypeId,
+      startTime: new Date(startTime),
+      endTime: new Date(endTime),
+      studentNotes,
+      partySize,
+    });
+
+    if (!result.success) {
+      // If booking fails, we could delete the user here, but let's keep the account
+      return res.status(400).json({ message: result.error });
+    }
+
+    // Auto-login the new user
+    const session = req.session as any;
+    session.userId = newUser.id;
+
+    res.status(201).json({ 
+      appointment: result.appointment,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+      }
+    });
+  } catch (error) {
+    console.error("Error in book-with-signup:", error);
+    res.status(500).json({ message: "Failed to create account and book appointment" });
+  }
+});
+
 appointmentRouter.get('/my-appointments', isAuthenticated, async (req: any, res) => {
   try {
     const studentId = req.user.id;
