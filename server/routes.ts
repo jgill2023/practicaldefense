@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import Stripe from "stripe";
 import { z } from "zod";
 import { storage, normalizePhoneNumber } from "./storage";
-import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrHigher, requireActiveAccount, requireAdminOrHigher } from "./customAuth";
+import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrHigher, requireActiveAccount, requireAdminOrHigher, generateToken, getTokenExpiry } from "./customAuth";
 import { authRouter } from "./auth/routes";
 import { db } from "./db";
 import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems, instructorAppointments } from "@shared/schema";
@@ -14,7 +14,7 @@ import { ObjectPermission } from "./objectAcl";
 import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, insertCourseNotificationSignupSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
 import { sendSms } from "./smsService";
 import { CourseNotificationEngine, NotificationEngine } from "./notificationEngine";
-import { NotificationEmailService } from "./emailService";
+import { NotificationEmailService, sendPasswordResetEmail } from "./emailService";
 import { appointmentRouter } from "./appointments/routes";
 import "./types"; // Import type declarations
 
@@ -319,11 +319,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Note: Authentication system handles password management
-      // This endpoint notifies the admin that the user should re-authenticate to reset their password
+      // Generate password reset token
+      const resetToken = generateToken();
+      const resetExpiry = getTokenExpiry(1); // 1 hour expiry
+
+      // Update user with reset token
+      await storage.updateUser(userId, {
+        passwordResetToken: resetToken,
+        passwordResetExpiry: resetExpiry,
+      });
+
+      // Send password reset email
+      const emailSent = await sendPasswordResetEmail(
+        user.email,
+        user.firstName || 'User',
+        resetToken
+      );
+
+      if (!emailSent) {
+        return res.status(500).json({ 
+          message: "Failed to send password reset email. Please check email configuration." 
+        });
+      }
 
       res.json({
-        message: "Password reset requested. The user should log out and log back in to reset their password.",
+        message: "Password reset email sent successfully.",
         user: { email: user.email, firstName: user.firstName, lastName: user.lastName }
       });
     } catch (error) {

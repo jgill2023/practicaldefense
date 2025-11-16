@@ -242,8 +242,8 @@ export default function UserManagementPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Password reset requested",
-        description: "The user should log out and log back in to reset their password",
+        title: "Password reset email sent",
+        description: "A password reset link has been sent to the user's email address",
       });
     },
     onError: (error: any) => {
