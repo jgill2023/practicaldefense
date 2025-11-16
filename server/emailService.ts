@@ -240,3 +240,188 @@ export class NotificationEmailService {
     return emailRegex.test(email.trim());
   }
 }
+
+// Authentication-related email functions (no credits required)
+const APP_URL = process.env.REPLIT_DEV_DOMAIN 
+  ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+  : "http://localhost:5000";
+
+async function sendAuthEmail(to: string, subject: string, html: string): Promise<boolean> {
+  try {
+    initializeSendGrid();
+    await sgMail.send({
+      to,
+      from: { email: DEFAULT_FROM_EMAIL, name: DEFAULT_FROM_NAME },
+      subject,
+      html,
+    });
+    console.log(`Auth email sent successfully to ${to}`);
+    return true;
+  } catch (error: any) {
+    console.error("Error sending auth email:", error.response?.body || error);
+    return false;
+  }
+}
+
+export async function sendVerificationEmail(
+  email: string,
+  firstName: string,
+  token: string
+): Promise<boolean> {
+  const verificationUrl = `${APP_URL}/verify-email?token=${token}`;
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Verify Your Email</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
+        <h1 style="color: #2c3e50; margin-bottom: 20px;">Welcome to Tactical Advantage!</h1>
+        
+        <p style="font-size: 16px;">Hi ${firstName},</p>
+        
+        <p style="font-size: 16px;">
+          Thank you for signing up! Please verify your email address to complete your registration.
+        </p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${verificationUrl}" 
+             style="display: inline-block; background-color: #007bff; color: white; padding: 14px 28px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+            Verify Email Address
+          </a>
+        </div>
+        
+        <p style="font-size: 14px; color: #666;">
+          Or copy and paste this link into your browser:<br>
+          <a href="${verificationUrl}" style="color: #007bff; word-break: break-all;">${verificationUrl}</a>
+        </p>
+        
+        <p style="font-size: 14px; color: #666; margin-top: 30px;">
+          This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.
+        </p>
+        
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        
+        <p style="font-size: 12px; color: #999; text-align: center;">
+          Tactical Advantage - Professional Firearms Training<br>
+          This is an automated message, please do not reply.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return await sendAuthEmail(email, "Verify Your Email - Tactical Advantage", html);
+}
+
+export async function sendPasswordResetEmail(
+  email: string,
+  firstName: string,
+  token: string
+): Promise<boolean> {
+  const resetUrl = `${APP_URL}/reset-password?token=${token}`;
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Reset Your Password</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
+        <h1 style="color: #2c3e50; margin-bottom: 20px;">Password Reset Request</h1>
+        
+        <p style="font-size: 16px;">Hi ${firstName},</p>
+        
+        <p style="font-size: 16px;">
+          We received a request to reset your password. Click the button below to create a new password.
+        </p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" 
+             style="display: inline-block; background-color: #dc3545; color: white; padding: 14px 28px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+            Reset Password
+          </a>
+        </div>
+        
+        <p style="font-size: 14px; color: #666;">
+          Or copy and paste this link into your browser:<br>
+          <a href="${resetUrl}" style="color: #dc3545; word-break: break-all;">${resetUrl}</a>
+        </p>
+        
+        <p style="font-size: 14px; color: #666; margin-top: 30px;">
+          This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
+        </p>
+        
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        
+        <p style="font-size: 12px; color: #999; text-align: center;">
+          Tactical Advantage - Professional Firearms Training<br>
+          This is an automated message, please do not reply.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return await sendAuthEmail(email, "Reset Your Password - Tactical Advantage", html);
+}
+
+export async function sendWelcomeEmail(
+  email: string,
+  firstName: string
+): Promise<boolean> {
+  const loginUrl = `${APP_URL}/login`;
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Welcome to Tactical Advantage</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
+        <h1 style="color: #2c3e50; margin-bottom: 20px;">Welcome to Tactical Advantage!</h1>
+        
+        <p style="font-size: 16px;">Hi ${firstName},</p>
+        
+        <p style="font-size: 16px;">
+          Your email has been verified successfully! You can now access your account and explore our firearms training courses.
+        </p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${loginUrl}" 
+             style="display: inline-block; background-color: #28a745; color: white; padding: 14px 28px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+            Go to Login
+          </a>
+        </div>
+        
+        <p style="font-size: 16px; color: #666;">
+          <strong>Note:</strong> Your account is pending approval. You'll receive another email once an administrator has reviewed and approved your account.
+        </p>
+        
+        <p style="font-size: 14px; color: #666; margin-top: 30px;">
+          If you have any questions, feel free to contact us.
+        </p>
+        
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        
+        <p style="font-size: 12px; color: #999; text-align: center;">
+          Tactical Advantage - Professional Firearms Training<br>
+          This is an automated message, please do not reply.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return await sendAuthEmail(email, "Welcome to Tactical Advantage!", html);
+}

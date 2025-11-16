@@ -32,10 +32,20 @@ export const userStatusEnum = pgEnum("user_status", ["pending", "active", "suspe
 // User role enum
 export const userRoleEnum = pgEnum("user_role", ["student", "instructor", "admin", "superadmin"]);
 
-// User storage table for Replit Auth
+// User storage table
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
+  email: varchar("email").unique().notNull(),
+  // Password authentication fields
+  passwordHash: varchar("password_hash", { length: 255 }),
+  // Email verification fields
+  isEmailVerified: boolean("is_email_verified").notNull().default(false),
+  emailVerificationToken: varchar("email_verification_token", { length: 255 }),
+  emailVerificationExpiry: timestamp("email_verification_expiry"),
+  // Password reset fields
+  passwordResetToken: varchar("password_reset_token", { length: 255 }),
+  passwordResetExpiry: timestamp("password_reset_expiry"),
+  // Profile fields
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   preferredName: varchar("preferred_name"), // Nickname
