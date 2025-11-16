@@ -2269,6 +2269,12 @@ export default function StudentPortal() {
     ? Math.round((completedEnrollments.length / enrollments.length) * 100)
     : 0;
 
+  // Calculate upcoming appointments (future appointments that are confirmed or pending)
+  const upcomingAppointments = appointments.filter(apt => 
+    new Date(apt.startTime) > new Date() && 
+    (apt.status === 'confirmed' || apt.status === 'pending')
+  );
+
   // Query to get payment balances for all enrollments
   const enrollmentIds = enrollments.map(e => e.id);
   const { data: paymentBalances = [] } = useQuery<Array<{ enrollmentId: string; hasRemainingBalance: boolean; remainingBalance: number }>>({
@@ -2375,12 +2381,12 @@ export default function StudentPortal() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Upcoming Appointments</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary" data-testid="text-total-courses">{enrollments.length}</div>
-              <p className="text-sm text-muted-foreground">Enrolled courses</p>
+              <div className="text-3xl font-bold text-primary" data-testid="text-upcoming-appointments">{upcomingAppointments.length}</div>
+              <p className="text-sm text-muted-foreground">Scheduled bookings</p>
             </CardContent>
           </Card>
 
