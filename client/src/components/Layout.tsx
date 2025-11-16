@@ -48,31 +48,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-center h-10">
                 <nav className="flex items-center space-x-6">
-                  <Link href="/instructor-dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-dashboard">
-                    Dashboard
-                  </Link>
-                  <Link href="/students" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-students">
-                    Students
-                  </Link>
-                  <Link href="/communications" className="text-sm font-medium text-foreground hover:text-primary transition-colors relative" data-testid="link-secondary-communication">
-                    Communication
-                    {counts.unread > 0 && (
-                      <Badge 
-                        variant="destructive" 
-                        className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
-                      >
-                        {counts.unread > 99 ? '99+' : counts.unread}
-                      </Badge>
-                    )}
-                  </Link>
-                  <Link href="/reports" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-reports">
-                    Reports
-                  </Link>
+                  {isInstructorOrHigher(user) && (
+                    <>
+                      <Link href="/instructor-dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-dashboard">
+                        Dashboard
+                      </Link>
+                      <Link href="/students" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-students">
+                        Students
+                      </Link>
+                      <Link href="/communications" className="text-sm font-medium text-foreground hover:text-primary transition-colors relative" data-testid="link-secondary-communication">
+                        Communication
+                        {counts.unread > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
+                          >
+                            {counts.unread > 99 ? '99+' : counts.unread}
+                          </Badge>
+                        )}
+                      </Link>
+                      <Link href="/reports" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-reports">
+                        Reports
+                      </Link>
+                      <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-products">
+                        Products
+                      </Link>
+                    </>
+                  )}
                   <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-student-dashboard">
                     Student Dashboard
-                  </Link>
-                  <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-products">
-                    Products
                   </Link>
                   {canCreateAccounts(user) && (
                     <Link href="/admin/users" className="text-sm font-medium text-foreground hover:text-primary transition-colors relative" data-testid="link-secondary-user-management">
