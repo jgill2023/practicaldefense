@@ -241,6 +241,7 @@ authRouter.post("/reset-password", async (req, res) => {
         passwordHash,
         passwordResetToken: null,
         passwordResetExpiry: null,
+        isEmailVerified: true,
         updatedAt: new Date(),
       })
       .where(eq(users.id, user.id));
