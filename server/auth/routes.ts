@@ -104,6 +104,10 @@ authRouter.post("/verify-email", async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired verification token" });
     }
 
+    if (user.isEmailVerified) {
+      return res.status(400).json({ message: "Email already verified. Please log in." });
+    }
+
     await db
       .update(users)
       .set({
