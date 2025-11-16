@@ -43,12 +43,14 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   // Reset state when modal opens/closes
   useEffect(() => {
     if (!open) {
       setSelectedDate(undefined);
       setSelectedSlot(null);
+      setShowLoginPrompt(false);
     }
   }, [open]);
 
@@ -81,7 +83,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
       if (!response.ok) return [];
       return response.json();
     },
-    enabled: isAuthenticated && !!instructorId && !!appointmentType,
+    enabled: !!instructorId && !!appointmentType,
     retry: false,
   });
 
@@ -116,7 +118,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
       }
       return response.json();
     },
-    enabled: isAuthenticated && !!instructorId && !!appointmentType && !!selectedDate,
+    enabled: !!instructorId && !!appointmentType && !!selectedDate,
     retry: false,
   });
 
@@ -177,45 +179,15 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   });
 
   const handleBooking = () => {
+    // If not authenticated, show login prompt instead of booking
+    if (!isAuthenticated) {
+      setShowLoginPrompt(true);
+      return;
+    }
     bookAppointmentMutation.mutate();
   };
 
   if (!appointmentType) return null;
-
-  // Show login prompt for unauthenticated users
-  if (!isAuthenticated) {
-    return (
-      <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-        <DialogContent className="max-w-md" data-testid="booking-modal-login-required">
-          <DialogHeader>
-            <DialogTitle>Login Required</DialogTitle>
-          </DialogHeader>
-          <div className="text-center py-8">
-            <p className="text-muted-foreground mb-6">
-              Please log in to book an appointment
-            </p>
-            <div className="space-y-3">
-              <Button
-                className="w-full bg-black text-white hover:bg-black/90"
-                onClick={() => window.location.href = '/login'}
-                data-testid="button-login"
-              >
-                Log In
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={onClose}
-                data-testid="button-cancel"
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -462,6 +434,45 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           </div>
         </div>
       </DialogContent>
+
+      {/* Login/Signup Prompt Dialog */}
+      <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
+        <DialogContent className="max-w-md" data-testid="booking-modal-login-required">
+          <DialogHeader>
+            <DialogTitle>Login or Create an Account</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground mb-6">
+              Please log in or create an account to complete your booking
+            </p>
+            <div className="space-y-3">
+              <Button
+                className="w-full bg-black text-white hover:bg-black/90"
+                onClick={() => window.location.href = '/login'}
+                data-testid="button-login"
+              >
+                Log In
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => window.location.href = '/signup'}
+                data-testid="button-signup"
+              >
+                Create Account
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => setShowLoginPrompt(false)}
+                data-testid="button-cancel-login"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
