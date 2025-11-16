@@ -4514,7 +4514,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Simple SMS notification for roster
   app.post("/api/notifications/sms", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
 
       // Only allow instructors and above to send SMS notifications
       const user = await storage.getUser(userId);
