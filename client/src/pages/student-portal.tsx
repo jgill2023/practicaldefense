@@ -2206,6 +2206,13 @@ export default function StudentPortal() {
     retry: false,
   });
 
+  // Fetch student appointments
+  const { data: appointments = [], isLoading: appointmentsLoading } = useQuery<any[]>({
+    queryKey: ["/api/appointments/my-appointments"],
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
   // Add license expiration warning calculation
   const getLicenseWarning = () => {
     const typedUser = user as User;
@@ -2627,6 +2634,86 @@ export default function StudentPortal() {
                   <BookOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-medium text-muted-foreground mb-2">No course history</h3>
                   <p className="text-sm text-muted-foreground">Your completed courses will appear here</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* My Appointments */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calendar className="mr-2 h-5 w-5" />
+                My Appointments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {appointmentsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2].map(i => (
+                    <div key={i} className="animate-pulse p-4 bg-muted rounded-lg">
+                      <div className="h-4 bg-muted-foreground/20 rounded w-2/3 mb-2" />
+                      <div className="h-3 bg-muted-foreground/20 rounded w-1/2" />
+                    </div>
+                  ))}
+                </div>
+              ) : appointments.length > 0 ? (
+                <div className="space-y-4">
+                  {appointments.map(appointment => (
+                    <div 
+                      key={appointment.id} 
+                      className="p-4 bg-muted rounded-lg"
+                      data-testid={`appointment-${appointment.id}`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 className="font-semibold text-card-foreground" data-testid={`text-appointment-type-${appointment.id}`}>
+                            {appointment.appointmentType.title}
+                          </h4>
+                          {appointment.appointmentType.description && (
+                            <p className="text-sm text-muted-foreground mt-1">{appointment.appointmentType.description}</p>
+                          )}
+                        </div>
+                        <Badge className={
+                          appointment.status === 'confirmed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                          appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                          appointment.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                          'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                        }>
+                          {appointment.status}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          {new Date(appointment.startTime).toLocaleDateString('en-US', { 
+                            weekday: 'short', 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          {new Date(appointment.startTime).toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit', 
+                            hour12: true 
+                          })} - {new Date(appointment.endTime).toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit', 
+                            hour12: true 
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium text-muted-foreground mb-2">No appointments</h3>
+                  <p className="text-sm text-muted-foreground">Your booked appointments will appear here</p>
                 </div>
               )}
             </CardContent>
