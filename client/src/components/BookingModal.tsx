@@ -171,6 +171,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           startTime: selectedSlot.startTime,
           endTime: selectedSlot.endTime,
           studentNotes: bookingForm.notes,
+          partySize: 1, // Default party size for appointments
         };
         return await apiRequest("POST", "/api/appointments/book", body);
       }
