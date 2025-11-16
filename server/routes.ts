@@ -122,7 +122,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all users (Admin+)
   app.get('/api/admin/users', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
-      const users = await storage.getAllUsers();
+      const currentUserId = req.user.id;
+      const currentUser = await storage.getUser(currentUserId);
+      
+      let users = await storage.getAllUsers();
+      
+      // Filter out superadmin users for non-superadmin viewers
+      if (currentUser?.role !== 'superadmin') {
+        users = users.filter(user => user.role !== 'superadmin');
+      }
+      
       res.json(users);
     } catch (error) {
       console.error("Error fetching users:", error);

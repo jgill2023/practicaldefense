@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,8 @@ type EditUserForm = z.infer<typeof editUserSchema>;
 
 export default function UserManagementPage() {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.role === 'superadmin';
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -402,7 +405,7 @@ export default function UserManagementPage() {
                             <SelectItem value="student">Student</SelectItem>
                             <SelectItem value="instructor">Instructor</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="superadmin">Super Admin</SelectItem>
+                            {isSuperAdmin && <SelectItem value="superadmin">Super Admin</SelectItem>}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -487,7 +490,7 @@ export default function UserManagementPage() {
                     <SelectItem value="student">Student</SelectItem>
                     <SelectItem value="instructor">Instructor</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="superadmin">Super Admin</SelectItem>
+                    {isSuperAdmin && <SelectItem value="superadmin">Super Admin</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
@@ -729,7 +732,7 @@ export default function UserManagementPage() {
                           <SelectItem value="student">Student</SelectItem>
                           <SelectItem value="instructor">Instructor</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="superadmin">Super Admin</SelectItem>
+                          {isSuperAdmin && <SelectItem value="superadmin">Super Admin</SelectItem>}
                         </SelectContent>
                       </Select>
                       <FormMessage />
