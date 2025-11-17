@@ -54,13 +54,6 @@ export function InstructorOnboarding() {
         </p>
       </div>
 
-      <Alert>
-        <AlertDescription>
-          All secret keys should be added to the <strong>Secrets</strong> tool in Replit. 
-          Never commit secrets to your code or share them publicly.
-        </AlertDescription>
-      </Alert>
-
       <Tabs defaultValue="stripe" className="w-full">
         <TabsList className="grid w-full grid-cols-1">
           <TabsTrigger value="stripe">
