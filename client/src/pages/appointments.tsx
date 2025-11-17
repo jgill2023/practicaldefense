@@ -1063,7 +1063,7 @@ export default function AppointmentsPage() {
                       <PopoverContent className="w-80" align="end">
                         <div className="space-y-2">
                           <h4 className="font-semibold text-sm">Available Variables</h4>
-                          <div className="space-y-1 max-h-60 overflow-y-auto">
+                          <div className="space-y-1 max-h-96 overflow-y-auto">
                             {availableVariables.map((variable) => (
                               <button
                                 key={variable.key}
@@ -1103,7 +1103,7 @@ export default function AppointmentsPage() {
                     <PopoverContent className="w-80" align="end">
                       <div className="space-y-2">
                         <h4 className="font-semibold text-sm">Available Variables</h4>
-                        <div className="space-y-1 max-h-60 overflow-y-auto">
+                        <div className="space-y-1 max-h-96 overflow-y-auto">
                           {availableVariables.map((variable) => (
                             <button
                               key={variable.key}
