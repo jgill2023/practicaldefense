@@ -34,6 +34,8 @@ interface PaymentDetails {
   transactionId?: string;
   courseName: string;
   scheduleDate: string;
+  taxAmount?: number | null;
+  taxRate?: number | null;
   paymentHistory: Array<{
     id: string;
     amount: number;
@@ -252,6 +254,33 @@ export function PaymentDetailsModal({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Tax Breakdown */}
+                {paymentDetails.taxAmount != null && paymentDetails.taxAmount > 0 ? (
+                  <div className="space-y-2 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Subtotal (Course Price)</span>
+                      <span className="font-medium" data-testid="text-subtotal-amount">
+                        {formatCurrency(paymentDetails.totalAmount - paymentDetails.taxAmount)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Sales Tax{paymentDetails.taxRate ? ` (${(paymentDetails.taxRate * 100).toFixed(2)}%)` : ''}
+                      </span>
+                      <span className="font-medium" data-testid="text-tax-amount">
+                        {formatCurrency(paymentDetails.taxAmount)}
+                      </span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between font-semibold">
+                      <span>Total with Tax</span>
+                      <span data-testid="text-total-with-tax">
+                        {formatCurrency(paymentDetails.totalAmount)}
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
                     <p className="text-sm text-muted-foreground">Total Amount</p>
