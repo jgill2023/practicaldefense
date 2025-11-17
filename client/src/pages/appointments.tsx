@@ -88,16 +88,16 @@ export default function AppointmentsPage() {
   });
 
   const availableVariables = [
-    { key: '{studentName}', description: 'Student\'s full name' },
-    { key: '{studentFirstName}', description: 'Student\'s first name' },
-    { key: '{studentLastName}', description: 'Student\'s last name' },
-    { key: '{studentEmail}', description: 'Student\'s email address' },
-    { key: '{appointmentType}', description: 'Type of appointment' },
-    { key: '{appointmentDate}', description: 'Date of appointment (e.g., Monday, January 15, 2024)' },
-    { key: '{appointmentTime}', description: 'Time of appointment (e.g., 2:00 PM - 3:00 PM)' },
-    { key: '{appointmentDuration}', description: 'Duration in minutes' },
-    { key: '{instructorName}', description: 'Instructor\'s full name' },
-    { key: '{price}', description: 'Appointment price' },
+    { key: '{{studentName}}', description: 'Student\'s full name' },
+    { key: '{{studentFirstName}}', description: 'Student\'s first name' },
+    { key: '{{studentLastName}}', description: 'Student\'s last name' },
+    { key: '{{studentEmail}}', description: 'Student\'s email address' },
+    { key: '{{appointmentType}}', description: 'Type of appointment' },
+    { key: '{{appointmentDate}}', description: 'Date of appointment (e.g., Monday, January 15, 2024)' },
+    { key: '{{appointmentTime}}', description: 'Time of appointment (e.g., 2:00 PM - 3:00 PM)' },
+    { key: '{{appointmentDuration}}', description: 'Duration in minutes' },
+    { key: '{{instructorName}}', description: 'Instructor\'s full name' },
+    { key: '{{price}}', description: 'Appointment price' },
   ];
 
   const insertVariable = (variable: string, field: 'subject' | 'body') => {

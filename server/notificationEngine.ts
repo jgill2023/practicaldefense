@@ -194,12 +194,12 @@ export class NotificationEngine {
   /**
    * Process template variables and replace them in content
    * Supports both flat ({{firstName}}) and nested ({{student.firstName}}) variable names
+   * Also supports single braces {firstName} for backward compatibility
    */
   static processTemplate(content: string, variables: NotificationVariables): string {
     let processedContent = content;
 
-    // Replace all variable placeholders with actual values
-    processedContent = processedContent.replace(/\{\{([^}]+)\}\}/g, (match, placeholder) => {
+    const replaceVariable = (placeholder: string): string => {
       const trimmedPath = placeholder.trim();
       
       // Try nested path first
@@ -213,7 +213,19 @@ export class NotificationEngine {
         }
       }
       
-      return value !== undefined ? String(value) : match;
+      return value !== undefined ? String(value) : '';
+    };
+
+    // Replace double braces first {{var}}
+    processedContent = processedContent.replace(/\{\{([^}]+)\}\}/g, (match, placeholder) => {
+      const result = replaceVariable(placeholder);
+      return result || match;
+    });
+
+    // Then replace single braces {var} (only if not already part of double braces)
+    processedContent = processedContent.replace(/\{([^{}]+)\}/g, (match, placeholder) => {
+      const result = replaceVariable(placeholder);
+      return result || match;
     });
 
     return processedContent;
