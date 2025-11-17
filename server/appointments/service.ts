@@ -433,6 +433,8 @@ export class AppointmentService {
     totalPrice?: number;
     paymentIntentId?: string;
     stripePaymentIntentId?: string;
+    taxAmount?: string | null;
+    taxRate?: string | null;
   }): Promise<{ success: boolean; appointment?: InstructorAppointment; error?: string }> {
     const validation = await this.validateAppointmentBooking(
       data.instructorId,
@@ -468,6 +470,8 @@ export class AppointmentService {
         totalPrice: data.totalPrice || null,
         paymentIntentId: data.paymentIntentId || null,
         stripePaymentIntentId: data.stripePaymentIntentId || null,
+        taxAmount: data.taxAmount || null,
+        taxRate: data.taxRate || null,
       });
 
       return { success: true, appointment };

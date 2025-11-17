@@ -580,7 +580,7 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
       return res.status(503).json({ message: "Payment processing is not configured" });
     }
 
-    const { instructorId, appointmentTypeId, startTime, endTime, durationHours } = req.body;
+    const { instructorId, appointmentTypeId, startTime, endTime, durationHours, billingAddress } = req.body;
 
     if (!instructorId || !appointmentTypeId || !startTime || !endTime) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -613,10 +613,18 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
       amount = Number(appointmentType.price);
     }
 
-    // Create PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
+    // Skip payment intent creation for free appointments
+    if (amount <= 0) {
+      return res.json({ clientSecret: null, amount: 0, isFree: true });
+    }
+
+    // Create PaymentIntent with automatic tax calculation
+    const paymentIntentParams: any = {
       amount: Math.round(amount * 100), // Convert to cents
       currency: "usd",
+      automatic_tax: {
+        enabled: true,
+      },
       metadata: {
         instructorId,
         appointmentTypeId,
@@ -624,9 +632,30 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
         endTime: new Date(endTime).toISOString(),
         ...(durationHours && { durationHours: String(durationHours) }),
       },
-    });
+    };
 
-    res.json({ clientSecret: paymentIntent.client_secret });
+    // Add billing address if provided (required for tax calculation)
+    if (billingAddress) {
+      paymentIntentParams.shipping = {
+        name: billingAddress.name,
+        address: {
+          line1: billingAddress.line1,
+          line2: billingAddress.line2 || undefined,
+          city: billingAddress.city,
+          state: billingAddress.state,
+          postal_code: billingAddress.postal_code,
+          country: billingAddress.country || 'US',
+        },
+      };
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+
+    res.json({ 
+      clientSecret: paymentIntent.client_secret,
+      amount: paymentIntent.amount,
+      taxAmount: paymentIntent.automatic_tax?.tax_amount || null,
+    });
   } catch (error) {
     console.error("Error creating payment intent:", error);
     res.status(500).json({ message: "Failed to create payment intent" });
@@ -704,6 +733,15 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
       return res.status(400).json({ message: "Payment has not been completed" });
     }
 
+    // Extract tax information from PaymentIntent
+    const taxAmount = paymentIntent.automatic_tax?.tax_amount 
+      ? (paymentIntent.automatic_tax.tax_amount / 100).toString() 
+      : null;
+    const subtotal = (paymentIntent.amount - (paymentIntent.automatic_tax?.tax_amount || 0)) / 100;
+    const taxRate = taxAmount && subtotal > 0 
+      ? (parseFloat(taxAmount) / subtotal).toString()
+      : null;
+
     const result = await appointmentService.bookAppointment({
       instructorId,
       studentId,
@@ -716,6 +754,8 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
       totalPrice,
       paymentIntentId,
       stripePaymentIntentId: paymentIntentId,
+      taxAmount,
+      taxRate,
     });
 
     if (!result.success) {
@@ -789,6 +829,15 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
       return res.status(400).json({ message: "Payment has not been completed" });
     }
 
+    // Extract tax information from PaymentIntent
+    const taxAmount = paymentIntent.automatic_tax?.tax_amount 
+      ? (paymentIntent.automatic_tax.tax_amount / 100).toString() 
+      : null;
+    const subtotal = (paymentIntent.amount - (paymentIntent.automatic_tax?.tax_amount || 0)) / 100;
+    const taxRate = taxAmount && subtotal > 0 
+      ? (parseFloat(taxAmount) / subtotal).toString()
+      : null;
+
     let user;
     let isNewUser = false;
     let needsPasswordSetup = false;
@@ -856,6 +905,8 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
       totalPrice,
       paymentIntentId,
       stripePaymentIntentId: paymentIntentId,
+      taxAmount,
+      taxRate,
     });
 
     if (!result.success) {
