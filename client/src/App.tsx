@@ -29,7 +29,6 @@ import ContactPage from "@/pages/contact";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import TermsOfServicePage from "@/pages/terms-of-service";
 import RefundPolicyPage from "@/pages/refund-policy";
-import OnboardingPage from "@/pages/onboarding";
 import TheCrucible from "@/pages/the-crucible";
 import AppointmentsPage from "@/pages/appointments";
 import BookAppointmentPage from "@/pages/book-appointment";
@@ -137,7 +136,6 @@ function Router() {
       <Route path="/the-crucible" component={TheCrucible} />
       <Route path="/book-appointment/:instructorId" component={BookAppointmentPage} />
       <Route path="/instructor-dashboard" component={InstructorDashboard} />
-      <Route path="/onboarding" component={OnboardingPage} />
       <Route path="/course-management" component={CourseManagement} />
       <Route path="/course-forms-management" component={CourseFormsManagement} />
       <Route path="/product-management" component={ProductManagement} />

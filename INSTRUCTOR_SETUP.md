@@ -12,8 +12,7 @@ Welcome! This guide will help you set up your own firearms training platform usi
 
 1. **Fork this Repl** to create your own copy
 2. **Log in as an instructor** (you'll be assigned the instructor role automatically on first login)
-3. **Click the "Onboarding" button** on your instructor dashboard
-4. **Follow the onboarding wizard** to set up Stripe payment processing
+3. **Add your Stripe secret key** to Replit Secrets (see instructions below)
 
 ## Required Setup
 
@@ -114,12 +113,11 @@ For issues or questions:
 
 ## Next Steps
 
-1. Complete the onboarding process
-2. Add your first course category
-3. Create your first course
-4. Set up your notification templates
-5. Test the registration flow
-6. Go live!
+1. Add your first course category
+2. Create your first course
+3. Set up your notification templates (optional)
+4. Test the registration flow
+5. Go live!
 
 ---
 

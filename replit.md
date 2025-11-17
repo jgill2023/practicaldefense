@@ -19,10 +19,9 @@ The server uses a RESTful API design with Node.js and Express.js, written in Typ
 This is a template for firearms instructors. New instructors should:
 
 1. Fork this Repl to create their own instance
-2. Complete the onboarding process via the "Onboarding" button on the instructor dashboard
-3. Add required Stripe secret via Replit Secrets
-4. Optionally add Twilio and SendGrid secrets for advanced communications features
-5. See INSTRUCTOR_SETUP.md for detailed setup instructions
+2. Add required Stripe secret via Replit Secrets
+3. Optionally add Twilio and SendGrid secrets for advanced communications features
+4. See INSTRUCTOR_SETUP.md for detailed setup instructions
 
 ## Data Storage Solutions
 The application utilizes Neon PostgreSQL as its relational database. Drizzle ORM is used for type-safe queries and schema management, with Drizzle Kit for migrations. Key entities include Users (with license management and role-based access), Courses, Course Schedules, Enrollments (with payment status), Sessions, App Settings, Course Information Forms, and Student Form Responses.
