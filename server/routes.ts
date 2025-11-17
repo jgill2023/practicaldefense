@@ -2460,15 +2460,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Archive course endpoint
-  app.patch("/api/instructor/courses/:courseId/archive", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/instructor/courses/:courseId/archive", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
+      const userRole = req.user.role;
       const courseId = req.params.courseId;
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins and superadmins can manage any course)
       const existingCourse = await storage.getCourse(courseId);
-      if (!existingCourse || existingCourse.instructorId !== userId) {
-        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      if (!existingCourse) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      
+      // Only instructors need to own the course; admins and superadmins can manage any course
+      if (userRole === 'instructor' && existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course does not belong to instructor" });
       }
 
       const archivedCourse = await storage.archiveCourse(courseId);
@@ -2480,15 +2486,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Unpublish course endpoint
-  app.patch("/api/instructor/courses/:courseId/unpublish", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/instructor/courses/:courseId/unpublish", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
+      const userRole = req.user.role;
       const courseId = req.params.courseId;
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins and superadmins can manage any course)
       const existingCourse = await storage.getCourse(courseId);
-      if (!existingCourse || existingCourse.instructorId !== userId) {
-        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      if (!existingCourse) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      
+      // Only instructors need to own the course; admins and superadmins can manage any course
+      if (userRole === 'instructor' && existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course does not belong to instructor" });
       }
 
       const unpublishedCourse = await storage.unpublishCourse(courseId);
@@ -2500,15 +2512,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Publish course endpoint
-  app.patch("/api/instructor/courses/:courseId/publish", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/instructor/courses/:courseId/publish", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
+      const userRole = req.user.role;
       const courseId = req.params.courseId;
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins and superadmins can manage any course)
       const existingCourse = await storage.getCourse(courseId);
-      if (!existingCourse || existingCourse.instructorId !== userId) {
-        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      if (!existingCourse) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      
+      // Only instructors need to own the course; admins and superadmins can manage any course
+      if (userRole === 'instructor' && existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course does not belong to instructor" });
       }
 
       const publishedCourse = await storage.publishCourse(courseId);
@@ -2520,15 +2538,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reactivate course endpoint
-  app.patch("/api/instructor/courses/:courseId/reactivate", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/instructor/courses/:courseId/reactivate", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
+      const userRole = req.user.role;
       const courseId = req.params.courseId;
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins and superadmins can manage any course)
       const existingCourse = await storage.getCourse(courseId);
-      if (!existingCourse || existingCourse.instructorId !== userId) {
-        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      if (!existingCourse) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      
+      // Only instructors need to own the course; admins and superadmins can manage any course
+      if (userRole === 'instructor' && existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course does not belong to instructor" });
       }
 
       const reactivatedCourse = await storage.reactivateCourse(courseId);
@@ -2543,12 +2567,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/instructor/courses/:courseId/duplicate", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      const userRole = req.user.role;
       const courseId = req.params.courseId;
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins and superadmins can manage any course)
       const existingCourse = await storage.getCourse(courseId);
-      if (!existingCourse || existingCourse.instructorId !== userId) {
-        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      if (!existingCourse) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      
+      // Only instructors need to own the course; admins and superadmins can manage any course
+      if (userRole === 'instructor' && existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course does not belong to instructor" });
       }
 
       const duplicatedCourse = await storage.duplicateCourse(courseId);
@@ -2563,12 +2593,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/instructor/courses/:courseId", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      const userRole = req.user.role;
       const courseId = req.params.courseId;
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins and superadmins can manage any course)
       const existingCourse = await storage.getCourse(courseId);
-      if (!existingCourse || existingCourse.instructorId !== userId) {
-        return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
+      if (!existingCourse) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      
+      // Only instructors need to own the course; admins and superadmins can manage any course
+      if (userRole === 'instructor' && existingCourse.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Course does not belong to instructor" });
       }
 
       // Perform soft delete
@@ -2584,19 +2620,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/instructor/courses/:courseId/permanent", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      const userRole = req.user.role;
       const courseId = req.params.courseId;
 
       if (!userId) {
         return res.status(401).json({ error: "Authentication required" });
       }
 
-      // Since this is for deleted courses, we need to check directly in the database
-      // as the regular getCourse won't return deleted courses
-      const courses = await storage.getDeletedCoursesByInstructor(userId);
-      const existingCourse = courses.find(c => c.id === courseId);
-
-      if (!existingCourse) {
-        return res.status(403).json({ error: "Unauthorized: Course not found in deleted items or does not belong to instructor" });
+      // Admins and superadmins can delete any deleted course; instructors need ownership
+      let existingCourse;
+      
+      if (userRole === 'admin' || userRole === 'superadmin') {
+        // For admins/superadmins, fetch course by ID (getCourse returns deleted courses too)
+        existingCourse = await storage.getCourse(courseId);
+        
+        if (!existingCourse || !existingCourse.deletedAt) {
+          return res.status(404).json({ error: "Course not found in deleted items" });
+        }
+      } else {
+        // For instructors, check they own the deleted course
+        const instructorDeletedCourses = await storage.getDeletedCoursesByInstructor(userId);
+        existingCourse = instructorDeletedCourses.find(c => c.id === courseId);
+        
+        if (!existingCourse) {
+          return res.status(403).json({ error: "Unauthorized: Course not found in deleted items or does not belong to instructor" });
+        }
       }
 
       console.log(`Permanently deleting course: ${existingCourse.title} (${courseId})`);
@@ -2615,14 +2663,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/instructor/courses/:courseId/restore", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
       const userId = req.user.id;
+      const userRole = req.user.role;
       const courseId = req.params.courseId;
 
-      // Verify the course exists in deleted items and belongs to the instructor
-      const deletedCourses = await storage.getDeletedCoursesByInstructor(userId);
-      const existingCourse = deletedCourses.find(c => c.id === courseId);
-
-      if (!existingCourse) {
-        return res.status(403).json({ error: "Unauthorized: Course not found in deleted items or does not belong to instructor" });
+      // Admins and superadmins can restore any deleted course; instructors need ownership
+      let existingCourse;
+      
+      if (userRole === 'admin' || userRole === 'superadmin') {
+        // For admins/superadmins, fetch course by ID (getCourse returns deleted courses too)
+        existingCourse = await storage.getCourse(courseId);
+        
+        if (!existingCourse || !existingCourse.deletedAt) {
+          return res.status(404).json({ error: "Course not found in deleted items" });
+        }
+      } else {
+        // For instructors, check they own the deleted course
+        const instructorDeletedCourses = await storage.getDeletedCoursesByInstructor(userId);
+        existingCourse = instructorDeletedCourses.find(c => c.id === courseId);
+        
+        if (!existingCourse) {
+          return res.status(403).json({ error: "Unauthorized: Course not found in deleted items or does not belong to instructor" });
+        }
       }
 
       const restoredCourse = await storage.restoreCourse(courseId);
