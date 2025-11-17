@@ -996,70 +996,161 @@ export class DatabaseStorage implements IStorage {
 
   async permanentlyDeleteCourse(id: string): Promise<void> {
     // Hard delete - permanently remove from database with cascade
-    // First delete related data in proper order to maintain referential integrity
     console.log(`Starting permanent deletion of course: ${id}`);
 
     try {
-      // Delete notification schedules for this course (references notification_templates and courses)
-      console.log(`Deleting notification schedules for course: ${id}`);
-      await db
-        .delete(notificationSchedules)
-        .where(eq(notificationSchedules.courseId, id));
+      // Get all schedule IDs for this course
+      const courseScheduleList = await db
+        .select({ id: courseSchedules.id })
+        .from(courseSchedules)
+        .where(eq(courseSchedules.courseId, id));
+      
+      const scheduleIds = courseScheduleList.map(s => s.id);
 
-      // Delete notification templates for this course
-      console.log(`Deleting notification templates for course: ${id}`);
-      await db
-        .delete(notificationTemplates)
-        .where(eq(notificationTemplates.courseId, id));
-
-      // Delete course information forms (will cascade to fields and responses)
-      console.log(`Deleting course information forms for course: ${id}`);
-      await db
-        .delete(courseInformationForms)
-        .where(eq(courseInformationForms.courseId, id));
-
-      // Delete course notification signups
-      console.log(`Deleting course notification signups for course: ${id}`);
-      await db
-        .delete(courseNotificationSignups)
-        .where(eq(courseNotificationSignups.courseId, id));
-
-      // Get enrollment IDs for this course first
-      console.log(`Getting enrollments for course: ${id}`);
+      // Get all enrollment IDs for this course
       const courseEnrollments = await db
         .select({ id: enrollments.id })
         .from(enrollments)
         .where(eq(enrollments.courseId, id));
       
-      if (courseEnrollments.length > 0) {
-        const enrollmentIds = courseEnrollments.map(e => e.id);
-        
-        // Delete notification logs for these enrollments
+      const enrollmentIds = courseEnrollments.map(e => e.id);
+
+      // Delete in proper order to avoid foreign key constraint violations
+
+      // 1. Delete waiver signatures (references waiver_instances)
+      if (enrollmentIds.length > 0) {
+        console.log(`Deleting waiver signatures for course: ${id}`);
+        await db.execute(sql`
+          DELETE FROM waiver_signatures 
+          WHERE instance_id IN (
+            SELECT id FROM waiver_instances 
+            WHERE enrollment_id IN (${sql.join(enrollmentIds.map(id => sql`${id}`), sql`, `)})
+          )
+        `);
+
+        // 2. Delete waiver instances (references enrollments)
+        console.log(`Deleting waiver instances for course: ${id}`);
+        await db
+          .delete(waiverInstances)
+          .where(inArray(waiverInstances.enrollmentId, enrollmentIds));
+
+        // 3. Delete student form responses (references enrollments)
+        console.log(`Deleting student form responses for course: ${id}`);
+        await db
+          .delete(studentFormResponses)
+          .where(inArray(studentFormResponses.enrollmentId, enrollmentIds));
+
+        // 4. Delete notification logs (references enrollments)
         console.log(`Deleting notification logs for course: ${id}`);
         await db
           .delete(notificationLogs)
           .where(inArray(notificationLogs.enrollmentId, enrollmentIds));
-        
-        // Delete promo code redemptions for enrollments
+
+        // 5. Delete course enrollment feedback (references enrollments)
+        console.log(`Deleting enrollment feedback for course: ${id}`);
+        await db
+          .delete(courseEnrollmentFeedback)
+          .where(inArray(courseEnrollmentFeedback.enrollmentId, enrollmentIds));
+
+        // 6. Delete promo code redemptions (references enrollments)
         console.log(`Deleting promo code redemptions for course: ${id}`);
         await db
           .delete(promoCodeRedemptions)
           .where(inArray(promoCodeRedemptions.enrollmentId, enrollmentIds));
       }
 
-      // Delete enrollments (references courseSchedules)
+      // 7. Delete course notification delivery logs (references schedules)
+      if (scheduleIds.length > 0) {
+        console.log(`Deleting course notification delivery logs for course: ${id}`);
+        await db
+          .delete(courseNotificationDeliveryLogs)
+          .where(inArray(courseNotificationDeliveryLogs.scheduleId, scheduleIds));
+      }
+
+      // 8. Delete course notification signups (references courses)
+      console.log(`Deleting course notification signups for course: ${id}`);
+      await db
+        .delete(courseNotificationSignups)
+        .where(eq(courseNotificationSignups.courseId, id));
+
+      // 9. Delete SMS lists tied to schedules
+      if (scheduleIds.length > 0) {
+        console.log(`Deleting SMS lists for course schedules: ${id}`);
+        const smsListsToDelete = await db
+          .select({ id: smsLists.id })
+          .from(smsLists)
+          .where(inArray(smsLists.scheduleId, scheduleIds));
+        
+        const smsListIds = smsListsToDelete.map(l => l.id);
+        
+        if (smsListIds.length > 0) {
+          // Delete SMS broadcast deliveries
+          await db.execute(sql`
+            DELETE FROM sms_broadcast_deliveries 
+            WHERE broadcast_id IN (
+              SELECT id FROM sms_broadcast_messages 
+              WHERE list_id IN (${sql.join(smsListIds.map(id => sql`${id}`), sql`, `)})
+            )
+          `);
+          
+          // Delete SMS broadcast messages
+          await db
+            .delete(smsBroadcastMessages)
+            .where(inArray(smsBroadcastMessages.listId, smsListIds));
+          
+          // Delete SMS list members
+          await db
+            .delete(smsListMembers)
+            .where(inArray(smsListMembers.listId, smsListIds));
+          
+          // Delete SMS lists
+          await db
+            .delete(smsLists)
+            .where(inArray(smsLists.id, smsListIds));
+        }
+      }
+
+      // 10. Delete enrollments (references courseSchedules)
       console.log(`Deleting enrollments for course: ${id}`);
       await db
         .delete(enrollments)
         .where(eq(enrollments.courseId, id));
 
-      // Delete course schedules (references courses)
+      // 11. Delete notification schedules (references courses)
+      console.log(`Deleting notification schedules for course: ${id}`);
+      await db
+        .delete(notificationSchedules)
+        .where(eq(notificationSchedules.courseId, id));
+
+      // 12. Delete notification templates (references courses)
+      console.log(`Deleting notification templates for course: ${id}`);
+      await db
+        .delete(notificationTemplates)
+        .where(eq(notificationTemplates.courseId, id));
+
+      // 13. Delete course information form fields (references forms)
+      console.log(`Deleting course information form fields for course: ${id}`);
+      await db.execute(sql`
+        DELETE FROM course_information_form_fields 
+        WHERE form_id IN (
+          SELECT id FROM course_information_forms 
+          WHERE course_id = ${id}
+        )
+      `);
+
+      // 14. Delete course information forms (references courses)
+      console.log(`Deleting course information forms for course: ${id}`);
+      await db
+        .delete(courseInformationForms)
+        .where(eq(courseInformationForms.courseId, id));
+
+      // 15. Delete course schedules (references courses)
       console.log(`Deleting course schedules for course: ${id}`);
       await db
         .delete(courseSchedules)
         .where(eq(courseSchedules.courseId, id));
 
-      // Finally delete the course itself
+      // 16. Finally delete the course itself
       console.log(`Deleting course record: ${id}`);
       await db
         .delete(courses)
