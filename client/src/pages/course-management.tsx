@@ -654,7 +654,7 @@ export default function CourseManagement() {
     };
   };
 
-  if (!isAuthenticated || ((user as User)?.role !== 'instructor' && (user as User)?.role !== 'superadmin')) {
+  if (!isAuthenticated || !hasInstructorPrivileges(user as User)) {
     return (
       <Layout>
         <div className="min-h-screen flex items-center justify-center">
