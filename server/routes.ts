@@ -4873,7 +4873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subject: processedSubject,
         htmlContent: isHtml ? processedContent : `<pre>${processedContent}</pre>`,
         textContent: isHtml ? undefined : processedContent,
-        fromName: `${user.firstName} ${user.lastName} - Practical Defense Training`,
+        fromName: 'Chris Bean | Tactical Advantage',
       });
 
       res.json(result);
@@ -4923,7 +4923,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subject: subject.trim(),
           htmlContent: `<div style="font-family: Arial, sans-serif;">${message.trim().replace(/\n/g, '<br>')}</div>`,
           textContent: message.trim(),
-          fromName: `${user.firstName} ${user.lastName} - Practical Defense Training`,
+          fromName: 'Chris Bean | Tactical Advantage',
         });
 
         results.results.push({ method: 'email', ...emailResult });
