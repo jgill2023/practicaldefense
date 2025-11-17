@@ -741,8 +741,8 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
     const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
     const subtotalInCents = paymentIntent.amount - totalTaxInCents;
     
-    // Store tax amount in cents (as string) and rate with fixed precision
-    const taxAmount = totalTaxInCents > 0 ? totalTaxInCents.toString() : null;
+    // Store tax amount in dollars (DECIMAL column) and rate with fixed precision
+    const taxAmount = totalTaxInCents > 0 ? (totalTaxInCents / 100).toFixed(2) : null;
     const taxRate = totalTaxInCents > 0 && subtotalInCents > 0
       ? (totalTaxInCents / subtotalInCents).toFixed(4)
       : null;
@@ -838,8 +838,8 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
     const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
     const subtotalInCents = paymentIntent.amount - totalTaxInCents;
     
-    // Store tax amount in cents (as string) and rate with fixed precision
-    const taxAmount = totalTaxInCents > 0 ? totalTaxInCents.toString() : null;
+    // Store tax amount in dollars (DECIMAL column) and rate with fixed precision
+    const taxAmount = totalTaxInCents > 0 ? (totalTaxInCents / 100).toFixed(2) : null;
     const taxRate = totalTaxInCents > 0 && subtotalInCents > 0
       ? (totalTaxInCents / subtotalInCents).toFixed(4)
       : null;

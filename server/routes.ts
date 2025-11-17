@@ -2296,30 +2296,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Process Stripe refund if payment was made
       let stripeRefund = null;
+      let refundSubtotalInCents = 0;
+      let refundTaxInCents = 0;
+      
       if (enrollment.stripePaymentIntentId && enrollment.paymentStatus === 'paid') {
         try {
-          // Calculate refund amount in cents
-          const schedule = await storage.getCourseSchedule(enrollment.scheduleId);
-          const coursePrice = schedule?.price || course.price || 0;
+          // Get the original PaymentIntent to determine what was actually paid
+          const paymentIntent = await stripe.paymentIntents.retrieve(enrollment.stripePaymentIntentId);
+          const totalPaidInCents = paymentIntent.amount;
+          
+          // Get tax information from enrollment (stored as DECIMAL dollars in database)
+          const originalTaxInDollars = enrollment.taxAmount 
+            ? parseFloat(enrollment.taxAmount.toString()) 
+            : 0;
+          const originalTaxInCents = Math.round(originalTaxInDollars * 100);
+          
+          // Calculate original subtotal from actual payment (total - tax)
+          const originalSubtotalInCents = totalPaidInCents - originalTaxInCents;
+          
+          // Validate subtotal is non-negative
+          if (originalSubtotalInCents < 0) {
+            console.error('Invalid payment data: tax exceeds total', {
+              totalPaid: totalPaidInCents / 100,
+              tax: originalTaxInCents / 100,
+            });
+            return res.status(500).json({ message: "Invalid payment data - tax exceeds total" });
+          }
+          
+          // Get tax rate, or derive it from actual payment amounts if missing (legacy data)
+          let originalTaxRate = enrollment.taxRate 
+            ? parseFloat(enrollment.taxRate.toString()) 
+            : 0;
+          
+          // Handle legacy enrollments: if taxAmount exists but taxRate is missing, derive from actual payment
+          if (originalTaxInCents > 0 && originalTaxRate === 0 && originalSubtotalInCents > 0) {
+            originalTaxRate = originalTaxInCents / originalSubtotalInCents;
+            console.log(`Derived tax rate ${originalTaxRate.toFixed(4)} from actual payment (subtotal: ${originalSubtotalInCents / 100}, tax: ${originalTaxInCents / 100})`);
+          }
 
-          // If refund amount is provided, use it; otherwise refund full amount
-          const amountToRefund = refundAmount ? Math.round(refundAmount * 100) : Math.round(coursePrice * 100);
-
-          // Create refund in Stripe
-          stripeRefund = await stripe.refunds.create({
-            payment_intent: enrollment.stripePaymentIntentId,
-            amount: amountToRefund,
-            reason: 'requested_by_customer', // Stripe only allows: 'duplicate' | 'fraudulent' | 'requested_by_customer'
-            metadata: {
-              enrollmentId: enrollment.id,
-              studentId: enrollment.studentId || '',
-              courseId: enrollment.courseId,
-              scheduleId: enrollment.scheduleId,
-              refundReason: refundReason || 'Student requested refund',
+          if (refundAmount) {
+            // PARTIAL REFUND: Treat refundAmount as total (tax-inclusive) for backwards compatibility
+            const totalRefundInCents = Math.round(refundAmount * 100);
+            
+            // Validate refund amount doesn't exceed original payment (use actual PaymentIntent amount)
+            if (totalRefundInCents > totalPaidInCents) {
+              return res.status(400).json({ 
+                message: `Refund amount cannot exceed the original payment of $${(totalPaidInCents / 100).toFixed(2)}` 
+              });
             }
-          });
+            
+            // Back-calculate subtotal and tax from total using original tax rate
+            // Total = Subtotal + Tax, where Tax = Subtotal * TaxRate
+            // Total = Subtotal * (1 + TaxRate)
+            // Subtotal = Total / (1 + TaxRate)
+            if (originalTaxRate > 0) {
+              refundSubtotalInCents = Math.round(totalRefundInCents / (1 + originalTaxRate));
+              refundTaxInCents = totalRefundInCents - refundSubtotalInCents;
+              
+              // Validate prorated tax is non-negative
+              if (refundTaxInCents < 0) {
+                console.error('Invalid refund calculation: negative tax', {
+                  totalRefund: totalRefundInCents / 100,
+                  subtotal: refundSubtotalInCents / 100,
+                  tax: refundTaxInCents / 100,
+                  taxRate: originalTaxRate,
+                });
+                return res.status(500).json({ message: "Invalid refund calculation - negative tax amount" });
+              }
+            } else {
+              // No tax - full amount is subtotal
+              refundSubtotalInCents = totalRefundInCents;
+              refundTaxInCents = 0;
+            }
+            
+            console.log('Partial refund calculation:', {
+              refundSubtotal: refundSubtotalInCents / 100,
+              refundTax: refundTaxInCents / 100,
+              totalRefund: totalRefundInCents / 100,
+              originalPrice: coursePriceInCents / 100,
+              originalTax: originalTaxInCents / 100,
+            });
 
-          console.log('Stripe refund created:', stripeRefund.id);
+            // Create refund in Stripe with explicit amount (subtotal + tax)
+            stripeRefund = await stripe.refunds.create({
+              payment_intent: enrollment.stripePaymentIntentId,
+              amount: totalRefundInCents,
+              reason: 'requested_by_customer',
+              metadata: {
+                enrollmentId: enrollment.id,
+                studentId: enrollment.studentId || '',
+                courseId: enrollment.courseId,
+                scheduleId: enrollment.scheduleId,
+                refundReason: refundReason || 'Student requested refund',
+                refundSubtotal: (refundSubtotalInCents / 100).toString(),
+                refundTax: (refundTaxInCents / 100).toString(),
+              }
+            });
+          } else {
+            // FULL REFUND: Let Stripe refund the entire PaymentIntent (includes all tax)
+            // Don't specify amount - Stripe will refund the full captured amount
+            refundSubtotalInCents = originalSubtotalInCents;
+            refundTaxInCents = originalTaxInCents;
+
+            console.log('Full refund:', {
+              refundSubtotal: refundSubtotalInCents / 100,
+              refundTax: refundTaxInCents / 100,
+              total: (refundSubtotalInCents + refundTaxInCents) / 100,
+            });
+
+            stripeRefund = await stripe.refunds.create({
+              payment_intent: enrollment.stripePaymentIntentId,
+              reason: 'requested_by_customer',
+              metadata: {
+                enrollmentId: enrollment.id,
+                studentId: enrollment.studentId || '',
+                courseId: enrollment.courseId,
+                scheduleId: enrollment.scheduleId,
+                refundReason: refundReason || 'Student requested refund',
+                refundType: 'full',
+              }
+            });
+          }
+
+          console.log('Stripe refund created:', stripeRefund.id, 'Amount:', stripeRefund.amount / 100);
         } catch (stripeError: any) {
           console.error('Stripe refund error:', stripeError);
           return res.status(500).json({
@@ -2329,7 +2428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Update enrollment with refund information
+      // Update enrollment with refund information including tax breakdown
       await storage.updateEnrollment(enrollmentId, {
         refundProcessed: true,
         refundProcessedAt: new Date(),
@@ -2359,6 +2458,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Refund processed successfully",
         stripeRefundId: stripeRefund?.id,
         amountRefunded: stripeRefund ? stripeRefund.amount / 100 : null,
+        breakdown: {
+          subtotal: refundSubtotalInCents / 100,
+          tax: refundTaxInCents / 100,
+          total: stripeRefund ? stripeRefund.amount / 100 : 0,
+        }
       });
     } catch (error) {
       console.error("Error processing refund:", error);
@@ -3351,8 +3455,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
       const subtotalInCents = paymentIntent.amount - totalTaxInCents;
       
-      // Store tax amount in cents (as string) and rate with fixed precision
-      const taxAmount = totalTaxInCents > 0 ? totalTaxInCents.toString() : null;
+      // Store tax amount in dollars (DECIMAL column) and rate with fixed precision
+      const taxAmount = totalTaxInCents > 0 ? (totalTaxInCents / 100).toFixed(2) : null;
       const taxRate = totalTaxInCents > 0 && subtotalInCents > 0
         ? (totalTaxInCents / subtotalInCents).toFixed(4)
         : null;
@@ -5151,10 +5255,23 @@ jeremy@abqconcealedcarry.com
       // Get payment balance info
       const paymentBalance = await storage.getPaymentBalance(enrollmentId);
 
+      // Calculate tax information (taxAmount stored as DECIMAL dollars in database)
+      const coursePriceInDollars = parseFloat(course.price);
+      const taxAmountInDollars = enrollment.taxAmount 
+        ? parseFloat(enrollment.taxAmount.toString()) 
+        : null;
+      const taxRateValue = enrollment.taxRate 
+        ? parseFloat(enrollment.taxRate.toString())
+        : null;
+      const totalWithTax = coursePriceInDollars + (taxAmountInDollars || 0);
+
       const paymentDetails = {
         enrollmentId: enrollment.id,
         paymentStatus: enrollment.paymentStatus,
-        totalAmount: parseFloat(course.price),
+        subtotal: coursePriceInDollars,
+        taxAmount: taxAmountInDollars,
+        taxRate: taxRateValue,
+        totalAmount: totalWithTax,
         amountPaid: paymentBalance.paidAmount || 0,
         remainingBalance: paymentBalance.remainingBalance || 0,
         paymentDate: enrollment.paymentDate,
@@ -7618,8 +7735,8 @@ jeremy@abqconcealedcarry.com
       const subtotalInCents = paymentIntent.amount - totalTaxInCents;
       const subtotal = subtotalInCents / 100;
       
-      // Store tax amount in cents (as string) and rate with fixed precision
-      const taxAmount = totalTaxInCents > 0 ? totalTaxInCents.toString() : null;
+      // Store tax amount in dollars (DECIMAL column) and rate with fixed precision
+      const taxAmount = totalTaxInCents > 0 ? (totalTaxInCents / 100).toFixed(2) : null;
       const taxRate = totalTaxInCents > 0 && subtotalInCents > 0
         ? (totalTaxInCents / subtotalInCents).toFixed(4)
         : null;
