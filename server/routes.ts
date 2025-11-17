@@ -2540,9 +2540,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Duplicate course endpoint
-  app.post("/api/instructor/courses/:courseId/duplicate", isAuthenticated, async (req: any, res) => {
+  app.post("/api/instructor/courses/:courseId/duplicate", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
       const courseId = req.params.courseId;
 
       // Verify the course belongs to the instructor
@@ -2560,9 +2560,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete course endpoint (soft delete)
-  app.delete("/api/instructor/courses/:courseId", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/instructor/courses/:courseId", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
       const courseId = req.params.courseId;
 
       // Verify the course belongs to the instructor
@@ -2581,9 +2581,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Permanently delete course endpoint (hard delete)
-  app.delete("/api/instructor/courses/:courseId/permanent", isAuthenticated, async (req: any, res) => {
+  app.delete("/api/instructor/courses/:courseId/permanent", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
       const courseId = req.params.courseId;
 
       if (!userId) {
@@ -2612,9 +2612,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Restore course endpoint (undelete)
-  app.patch("/api/instructor/courses/:courseId/restore", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/instructor/courses/:courseId/restore", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
       const courseId = req.params.courseId;
 
       // Verify the course exists in deleted items and belongs to the instructor
