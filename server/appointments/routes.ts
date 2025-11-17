@@ -651,10 +651,14 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
 
     const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
 
+    // Calculate total tax from amount_details.taxes array (in cents)
+    const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
+
+    // Return dollars to frontend (cents / 100)
     res.json({ 
       clientSecret: paymentIntent.client_secret,
-      amount: paymentIntent.amount,
-      taxAmount: paymentIntent.automatic_tax?.tax_amount || null,
+      amount: paymentIntent.amount / 100,
+      taxAmount: totalTaxInCents / 100,
     });
   } catch (error) {
     console.error("Error creating payment intent:", error);
@@ -733,13 +737,14 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
       return res.status(400).json({ message: "Payment has not been completed" });
     }
 
-    // Extract tax information from PaymentIntent
-    const taxAmount = paymentIntent.automatic_tax?.tax_amount 
-      ? (paymentIntent.automatic_tax.tax_amount / 100).toString() 
-      : null;
-    const subtotal = (paymentIntent.amount - (paymentIntent.automatic_tax?.tax_amount || 0)) / 100;
-    const taxRate = taxAmount && subtotal > 0 
-      ? (parseFloat(taxAmount) / subtotal).toString()
+    // Extract tax information from PaymentIntent (keep as numbers for calculations)
+    const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
+    const subtotalInCents = paymentIntent.amount - totalTaxInCents;
+    
+    // Store tax amount in cents (as string) and rate with fixed precision
+    const taxAmount = totalTaxInCents > 0 ? totalTaxInCents.toString() : null;
+    const taxRate = totalTaxInCents > 0 && subtotalInCents > 0
+      ? (totalTaxInCents / subtotalInCents).toFixed(4)
       : null;
 
     const result = await appointmentService.bookAppointment({
@@ -829,13 +834,14 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
       return res.status(400).json({ message: "Payment has not been completed" });
     }
 
-    // Extract tax information from PaymentIntent
-    const taxAmount = paymentIntent.automatic_tax?.tax_amount 
-      ? (paymentIntent.automatic_tax.tax_amount / 100).toString() 
-      : null;
-    const subtotal = (paymentIntent.amount - (paymentIntent.automatic_tax?.tax_amount || 0)) / 100;
-    const taxRate = taxAmount && subtotal > 0 
-      ? (parseFloat(taxAmount) / subtotal).toString()
+    // Extract tax information from PaymentIntent (keep as numbers for calculations)
+    const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
+    const subtotalInCents = paymentIntent.amount - totalTaxInCents;
+    
+    // Store tax amount in cents (as string) and rate with fixed precision
+    const taxAmount = totalTaxInCents > 0 ? totalTaxInCents.toString() : null;
+    const taxRate = totalTaxInCents > 0 && subtotalInCents > 0
+      ? (totalTaxInCents / subtotalInCents).toFixed(4)
       : null;
 
     let user;

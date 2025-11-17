@@ -3296,16 +3296,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
 
-      const taxAmount = paymentIntent.automatic_tax?.tax_amount || 0;
+      // Calculate total tax from amount_details.taxes array (in cents)
+      const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
       
+      // Return dollars to frontend for UI compatibility
       res.json({
         clientSecret: paymentIntent.client_secret,
-        originalAmount: paymentAmount,
-        subtotal: finalPaymentAmount,
-        discountAmount,
-        tax: taxAmount / 100,
-        total: paymentIntent.amount / 100,
-        tax_included: taxAmount > 0,
+        originalAmount: paymentAmount, // dollars
+        subtotal: finalPaymentAmount, // dollars
+        discountAmount, // dollars
+        tax: totalTaxInCents / 100, // dollars
+        total: paymentIntent.amount / 100, // dollars
+        tax_included: totalTaxInCents > 0,
         promoCode: promoCodeInfo
       });
     } catch (error: any) {
@@ -3345,15 +3347,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Payment verification failed - currency mismatch" });
       }
 
-      // Extract tax information from PaymentIntent
-      const taxAmount = paymentIntent.automatic_tax?.tax_amount 
-        ? (paymentIntent.automatic_tax.tax_amount / 100).toString() 
-        : null;
-      const taxInCents = paymentIntent.automatic_tax?.tax_amount || 0;
-      const subtotalInCents = paymentIntent.amount - taxInCents;
-      const subtotal = subtotalInCents / 100;
-      const taxRate = taxAmount && subtotal > 0 
-        ? (parseFloat(taxAmount) / subtotal).toString()
+      // Extract tax information from PaymentIntent (keep as numbers for calculations)
+      const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
+      const subtotalInCents = paymentIntent.amount - totalTaxInCents;
+      
+      // Store tax amount in cents (as string) and rate with fixed precision
+      const taxAmount = totalTaxInCents > 0 ? totalTaxInCents.toString() : null;
+      const taxRate = totalTaxInCents > 0 && subtotalInCents > 0
+        ? (totalTaxInCents / subtotalInCents).toFixed(4)
         : null;
 
       // Determine payment status based on payment option
@@ -7529,11 +7530,16 @@ jeremy@abqconcealedcarry.com
         return res.status(400).json({ message: "This credit package is no longer available" });
       }
 
-      // Create Stripe payment intent
+      const { billingAddress } = req.body;
+
+      // Create Stripe payment intent with automatic tax
       const amountInCents = Math.round(parseFloat(pkg.price) * 100);
-      const paymentIntent = await stripe.paymentIntents.create({
+      const paymentIntentParams: any = {
         amount: amountInCents,
         currency: "usd",
+        automatic_tax: {
+          enabled: true,
+        },
         automatic_payment_methods: { enabled: true },
         metadata: {
           instructorId: userId,
@@ -7542,11 +7548,34 @@ jeremy@abqconcealedcarry.com
           emailCredits: pkg.emailCredits.toString(),
           packageName: pkg.name,
         },
-      });
+      };
 
+      // Add billing address if provided (required for accurate tax calculation)
+      if (billingAddress) {
+        paymentIntentParams.shipping = {
+          name: billingAddress.name,
+          address: {
+            line1: billingAddress.line1,
+            line2: billingAddress.line2 || undefined,
+            city: billingAddress.city,
+            state: billingAddress.state,
+            postal_code: billingAddress.postal_code,
+            country: billingAddress.country || 'US',
+          },
+        };
+      }
+
+      const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+
+      // Calculate total tax from amount_details.taxes array (in cents)
+      const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
+
+      // Return dollars to frontend for UI compatibility
       res.json({
         clientSecret: paymentIntent.client_secret,
-        amount: parseFloat(pkg.price),
+        amount: parseFloat(pkg.price), // dollars
+        tax: totalTaxInCents / 100, // dollars
+        total: paymentIntent.amount / 100, // dollars
         packageName: pkg.name,
         smsCredits: pkg.smsCredits,
         emailCredits: pkg.emailCredits,
@@ -7584,16 +7613,29 @@ jeremy@abqconcealedcarry.com
         return res.status(403).json({ message: "This payment intent does not belong to you" });
       }
 
+      // Extract tax information from PaymentIntent (keep as numbers for calculations)
+      const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
+      const subtotalInCents = paymentIntent.amount - totalTaxInCents;
+      const subtotal = subtotalInCents / 100;
+      
+      // Store tax amount in cents (as string) and rate with fixed precision
+      const taxAmount = totalTaxInCents > 0 ? totalTaxInCents.toString() : null;
+      const taxRate = totalTaxInCents > 0 && subtotalInCents > 0
+        ? (totalTaxInCents / subtotalInCents).toFixed(4)
+        : null;
+
       // Add credits to instructor's account
       const smsCredits = parseInt(paymentIntent.metadata.smsCredits || '0');
       const emailCredits = parseInt(paymentIntent.metadata.emailCredits || '0');
       const packageId = paymentIntent.metadata.packageId;
 
       const result = await storage.addCredits(userId, smsCredits, emailCredits, {
-        amount: paymentIntent.amount / 100,
+        amount: subtotal,
         stripePaymentIntentId: paymentIntentId,
         packageId,
         description: `Purchased ${paymentIntent.metadata.packageName}`,
+        taxAmount,
+        taxRate,
       });
 
       res.json({
