@@ -139,26 +139,7 @@ export function InstructorOnboarding() {
         </TabsContent>
       </Tabs>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>How to Add Secrets in Replit</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <ol className="list-decimal list-inside space-y-2 text-sm">
-            <li>In your Replit workspace, click the <strong>Tools</strong> icon in the left sidebar</li>
-            <li>Select <strong>Secrets</strong> from the menu</li>
-            <li>Click <strong>+ New Secret</strong></li>
-            <li>Enter the key name (e.g., STRIPE_SECRET_KEY)</li>
-            <li>Paste the secret value</li>
-            <li>Click <strong>Add Secret</strong></li>
-          </ol>
-          <Alert>
-            <AlertDescription>
-              After adding all required secrets, restart your application for the changes to take effect.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      
     </div>
   );
 }
