@@ -150,14 +150,19 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
 
   // Fetch all available slots for the month to determine day availability
   const { data: monthSlots = [] } = useQuery<any[]>({
-    queryKey: ["/api/appointments/available-slots", instructorId, appointmentType?.id, formatLocalDate(monthStart), formatLocalDate(monthEnd)],
+    queryKey: ["/api/appointments/available-slots", instructorId, appointmentType?.id, formatLocalDate(monthStart), formatLocalDate(monthEnd), selectedDurationHours],
     queryFn: async ({ queryKey, signal }) => {
-      const [, instructorIdParam, typeIdParam, startDate, endDate] = queryKey;
+      const [, instructorIdParam, typeIdParam, startDate, endDate, durationHours] = queryKey;
       if (!typeIdParam || !startDate || !endDate) return [];
-      const response = await fetch(
-        `/api/appointments/available-slots?instructorId=${instructorIdParam}&appointmentTypeId=${typeIdParam}&startDate=${startDate}&endDate=${endDate}`,
-        { credentials: "include", signal }
-      );
+      const url = new URL('/api/appointments/available-slots', window.location.origin);
+      url.searchParams.set('instructorId', String(instructorIdParam));
+      url.searchParams.set('appointmentTypeId', String(typeIdParam));
+      url.searchParams.set('startDate', String(startDate));
+      url.searchParams.set('endDate', String(endDate));
+      if ((appointmentType as any)?.isVariableDuration && durationHours) {
+        url.searchParams.set('durationHours', String(durationHours));
+      }
+      const response = await fetch(url.toString(), { credentials: "include", signal });
       if (!response.ok) return [];
       return response.json();
     },
@@ -175,9 +180,9 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
 
   // Fetch available slots for selected date
   const { data: availableSlots = [], isLoading: slotsLoading } = useQuery<TimeSlot[]>({
-    queryKey: ["/api/appointments/available-slots-day", instructorId, appointmentType?.id, selectedDate ? selectedDate.getTime() : null],
+    queryKey: ["/api/appointments/available-slots-day", instructorId, appointmentType?.id, selectedDate ? selectedDate.getTime() : null, selectedDurationHours],
     queryFn: async ({ queryKey, signal }) => {
-      const [, instructorIdParam, typeIdParam, dateTimestamp] = queryKey;
+      const [, instructorIdParam, typeIdParam, dateTimestamp, durationHours] = queryKey;
       if (!typeIdParam || !dateTimestamp || !selectedDate) return [];
       
       // Use the actual selectedDate object to avoid timezone issues
@@ -187,10 +192,16 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
       const dayEnd = new Date(selectedDate);
       dayEnd.setHours(23, 59, 59, 999);
       
-      const response = await fetch(
-        `/api/appointments/available-slots?instructorId=${instructorIdParam}&appointmentTypeId=${typeIdParam}&startDate=${formatLocalDate(dayStart)}&endDate=${formatLocalDate(dayEnd)}`,
-        { credentials: "include", signal }
-      );
+      const url = new URL('/api/appointments/available-slots', window.location.origin);
+      url.searchParams.set('instructorId', String(instructorIdParam));
+      url.searchParams.set('appointmentTypeId', String(typeIdParam));
+      url.searchParams.set('startDate', formatLocalDate(dayStart));
+      url.searchParams.set('endDate', formatLocalDate(dayEnd));
+      if ((appointmentType as any)?.isVariableDuration && durationHours) {
+        url.searchParams.set('durationHours', String(durationHours));
+      }
+      
+      const response = await fetch(url.toString(), { credentials: "include", signal });
       if (!response.ok) {
         throw new Error(`${response.status}: ${response.statusText}`);
       }
@@ -381,6 +392,35 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             )}
           </div>
         </DialogHeader>
+
+        {/* Duration Selector (for variable duration appointments) */}
+        {(appointmentType as any).isVariableDuration && (
+          <div className="mt-4 p-4 border rounded-lg bg-muted/50">
+            <Label htmlFor="duration-select-main" className="text-sm font-medium mb-2 block">
+              Select Duration
+            </Label>
+            <select
+              id="duration-select-main"
+              className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
+              value={selectedDurationHours}
+              onChange={(e) => {
+                setSelectedDurationHours(Number(e.target.value));
+                // Reset slot selection when duration changes
+                setSelectedSlot(null);
+              }}
+              data-testid="select-duration-main"
+            >
+              {getDurationOptions().map(hours => (
+                <option key={hours} value={hours}>
+                  {hours} {hours === 1 ? 'hour' : 'hours'} - ${(Number((appointmentType as any).pricePerHour) * hours).toFixed(2)}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground mt-2">
+              Time slots will show {selectedDurationHours}-hour blocks at ${Number((appointmentType as any).pricePerHour).toFixed(2)}/hour
+            </p>
+          </div>
+        )}
 
         <div className="grid md:grid-cols-2 gap-6 mt-4">
           {/* Left Column - Calendar */}
@@ -574,27 +614,6 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             {selectedSlot && (
               <div className="mt-6 space-y-3">
                 <div className="border-t pt-4">
-                  {(appointmentType as any).isVariableDuration && (
-                    <div className="mb-4">
-                      <Label htmlFor="duration-select" className="text-sm font-medium">
-                        Select Duration
-                      </Label>
-                      <select
-                        id="duration-select"
-                        className="w-full border border-input rounded-md px-3 py-2 mt-1 text-sm"
-                        value={selectedDurationHours}
-                        onChange={(e) => setSelectedDurationHours(Number(e.target.value))}
-                        data-testid="select-duration"
-                      >
-                        {getDurationOptions().map(hours => (
-                          <option key={hours} value={hours}>
-                            {hours} {hours === 1 ? 'hour' : 'hours'}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  
                   {(appointmentType as any).isVariableDuration ? (
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between text-sm text-muted-foreground">

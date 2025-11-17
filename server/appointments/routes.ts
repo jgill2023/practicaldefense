@@ -566,7 +566,7 @@ appointmentRouter.get('/types/:instructorId', async (req, res) => {
 
 appointmentRouter.get('/available-slots', async (req, res) => {
   try {
-    const { instructorId, appointmentTypeId, startDate, endDate } = req.query;
+    const { instructorId, appointmentTypeId, startDate, endDate, durationHours } = req.query;
     
     if (!instructorId || !appointmentTypeId || !startDate || !endDate) {
       return res.status(400).json({ message: "Missing required parameters" });
@@ -577,12 +577,21 @@ appointmentRouter.get('/available-slots', async (req, res) => {
       return res.status(404).json({ message: "Appointment type not found" });
     }
 
+    // For variable duration appointments, use the requested duration
+    // For fixed duration appointments, use the appointment type's duration
+    let durationMinutes: number;
+    if ((appointmentType as any).isVariableDuration && durationHours) {
+      durationMinutes = parseInt(durationHours as string) * 60;
+    } else {
+      durationMinutes = appointmentType.durationMinutes;
+    }
+
     const slots = await appointmentService.generateAvailableSlots(
       instructorId as string,
       appointmentTypeId as string,
       new Date(startDate as string),
       new Date(endDate as string),
-      appointmentType.durationMinutes
+      durationMinutes
     );
 
     res.json(slots);
