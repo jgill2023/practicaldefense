@@ -666,6 +666,58 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
   }
 });
 
+// Update PaymentIntent with billing address and return tax breakdown
+appointmentRouter.post('/update-payment-intent-address', async (req, res) => {
+  try {
+    if (!stripe) {
+      return res.status(503).json({ message: "Payment processing is not configured" });
+    }
+
+    const { paymentIntentId, billingAddress } = req.body;
+
+    if (!paymentIntentId || !billingAddress) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // Update PaymentIntent with billing address and trigger tax calculation
+    const updateParams: any = {
+      shipping: {
+        name: billingAddress.name || 'Customer',
+        address: {
+          line1: billingAddress.line1,
+          line2: billingAddress.line2 || undefined,
+          city: billingAddress.city,
+          state: billingAddress.state,
+          postal_code: billingAddress.postal_code,
+          country: billingAddress.country || 'US',
+        },
+      },
+      automatic_tax: {
+        enabled: true,
+      },
+    };
+
+    const paymentIntent = await stripe.paymentIntents.update(paymentIntentId, updateParams);
+
+    // Retrieve the PaymentIntent again to ensure we have the latest tax calculations
+    const retrievedIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    // Calculate total tax from amount_details.taxes array (in cents)
+    const totalTaxInCents = retrievedIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
+    const subtotalInCents = retrievedIntent.amount - totalTaxInCents;
+
+    // Return tax breakdown in dollars
+    res.json({
+      subtotal: subtotalInCents / 100,
+      tax: totalTaxInCents / 100,
+      total: retrievedIntent.amount / 100,
+    });
+  } catch (error) {
+    console.error("Error updating payment intent with billing address:", error);
+    res.status(500).json({ message: "Failed to update payment intent" });
+  }
+});
+
 appointmentRouter.get('/available-slots', async (req, res) => {
   try {
     const { instructorId, appointmentTypeId, startDate, endDate, durationHours } = req.query;

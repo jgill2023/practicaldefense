@@ -57,6 +57,11 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   const [selectedDurationHours, setSelectedDurationHours] = useState<number>(2); // For variable duration appointments
   const [clientSecret, setClientSecret] = useState<string>("");
   const [paymentIntentId, setPaymentIntentId] = useState<string>("");
+  const [taxBreakdown, setTaxBreakdown] = useState<{
+    subtotal: number;
+    tax: number;
+    total: number;
+  } | null>(null);
   
   // Booking form state
   const [bookingForm, setBookingForm] = useState({
@@ -66,6 +71,15 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     phone: '',
     password: '',
     notes: '',
+  });
+
+  // Billing address state
+  const [billingAddress, setBillingAddress] = useState({
+    line1: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country: 'US',
   });
 
   // Initialize duration based on appointment type
@@ -82,6 +96,16 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
       setSelectedDate(undefined);
       setSelectedSlot(null);
       setShowBookingForm(false);
+      setClientSecret("");
+      setPaymentIntentId("");
+      setTaxBreakdown(null);
+      setBillingAddress({
+        line1: '',
+        city: '',
+        state: '',
+        postal_code: '',
+        country: 'US',
+      });
       // Reset to the appointment type's minimum hours, or default to 2
       const minHours = (appointmentType as any)?.minimumDurationHours || 2;
       setSelectedDurationHours(minHours);
@@ -109,6 +133,37 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
       }));
     }
   }, [isAuthenticated, user]);
+
+  // Calculate tax when billing address is complete and PaymentIntent exists
+  useEffect(() => {
+    const calculateTax = async () => {
+      if (!paymentIntentId || !billingAddress.line1 || !billingAddress.city || 
+          !billingAddress.state || !billingAddress.postal_code) {
+        return;
+      }
+
+      try {
+        const response = await apiRequest("POST", "/api/appointments/update-payment-intent-address", {
+          paymentIntentId,
+          billingAddress: {
+            name: `${bookingForm.firstName} ${bookingForm.lastName}`.trim() || 'Customer',
+            ...billingAddress,
+          },
+        });
+
+        setTaxBreakdown({
+          subtotal: response.subtotal,
+          tax: response.tax,
+          total: response.total,
+        });
+      } catch (error) {
+        console.error('Failed to calculate tax:', error);
+        // Keep tax breakdown as null to show fallback UI
+      }
+    };
+
+    calculateTax();
+  }, [paymentIntentId, billingAddress, bookingForm.firstName, bookingForm.lastName]);
 
   const formatLocalDate = (date: Date): string => {
     const year = date.getFullYear();
@@ -360,6 +415,9 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
 
           if (response.clientSecret) {
             setClientSecret(response.clientSecret);
+            // Extract PaymentIntent ID from client secret (format: pi_xxx_secret_yyy)
+            const piId = response.clientSecret.split('_secret_')[0];
+            setPaymentIntentId(piId);
           }
         } catch (error: any) {
           toast({
@@ -584,16 +642,125 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           </div>
         )}
 
+        {/* Billing Address Section */}
+        <div className="border-t pt-4 space-y-4">
+          <Label className="text-sm font-medium">Billing Address</Label>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="billing-line1" className="text-sm">
+                Street Address <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="billing-line1"
+                value={billingAddress.line1}
+                onChange={(e) => setBillingAddress(prev => ({ ...prev, line1: e.target.value }))}
+                placeholder="123 Main St"
+                required
+                data-testid="input-billing-line1"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="billing-city" className="text-sm">
+                  City <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="billing-city"
+                  value={billingAddress.city}
+                  onChange={(e) => setBillingAddress(prev => ({ ...prev, city: e.target.value }))}
+                  placeholder="San Francisco"
+                  required
+                  data-testid="input-billing-city"
+                />
+              </div>
+              <div>
+                <Label htmlFor="billing-state" className="text-sm">
+                  State <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="billing-state"
+                  value={billingAddress.state}
+                  onChange={(e) => setBillingAddress(prev => ({ ...prev, state: e.target.value }))}
+                  placeholder="CA"
+                  maxLength={2}
+                  required
+                  data-testid="input-billing-state"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="billing-postal" className="text-sm">
+                  ZIP Code <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="billing-postal"
+                  value={billingAddress.postal_code}
+                  onChange={(e) => setBillingAddress(prev => ({ ...prev, postal_code: e.target.value }))}
+                  placeholder="94102"
+                  required
+                  data-testid="input-billing-postal"
+                />
+              </div>
+              <div>
+                <Label htmlFor="billing-country" className="text-sm">
+                  Country
+                </Label>
+                <Input
+                  id="billing-country"
+                  value={billingAddress.country}
+                  onChange={(e) => setBillingAddress(prev => ({ ...prev, country: e.target.value }))}
+                  placeholder="US"
+                  maxLength={2}
+                  data-testid="input-billing-country"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="border-t pt-4">
           <Label className="text-sm font-medium mb-2 block">Payment Information</Label>
           <PaymentElement />
         </div>
 
         <div className="border-t pt-4 space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">Total</span>
-            <span className="text-lg font-bold">${getTotalPrice().toFixed(2)}</span>
-          </div>
+          {taxBreakdown ? (
+            <>
+              <div className="space-y-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="font-medium" data-testid="text-booking-subtotal">
+                    ${taxBreakdown.subtotal.toFixed(2)}
+                  </span>
+                </div>
+                {taxBreakdown.tax > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Sales Tax</span>
+                    <span className="font-medium" data-testid="text-booking-tax">
+                      ${taxBreakdown.tax.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center font-semibold border-t pt-2">
+                  <span>Total</span>
+                  <span data-testid="text-booking-total">
+                    ${taxBreakdown.total.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Subtotal</span>
+                <span className="text-lg font-bold">${getTotalPrice().toFixed(2)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Tax will be calculated and added at checkout based on your billing address
+              </p>
+            </>
+          )}
           <Button
             type="submit"
             className="w-full bg-black text-white hover:bg-black/90"
