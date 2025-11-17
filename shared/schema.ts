@@ -263,13 +263,18 @@ export const appointmentTypes = pgTable("appointment_types", {
   instructorId: varchar("instructor_id").notNull().references(() => users.id),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  durationMinutes: integer("duration_minutes").notNull(), // e.g., 30, 60, 90
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  durationMinutes: integer("duration_minutes").notNull(), // e.g., 30, 60, 90 - base duration for fixed, or used as slot increment for variable
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(), // Fixed price or price per hour when isVariableDuration is true
   requiresApproval: boolean("requires_approval").notNull().default(false), // Auto-confirm or require instructor approval
   bufferBefore: integer("buffer_before").notNull().default(0), // Minutes before appointment
   bufferAfter: integer("buffer_after").notNull().default(0), // Minutes after appointment
   maxPartySize: integer("max_party_size").notNull().default(1), // Number of people allowed
   color: varchar("color", { length: 7 }).default('#3b82f6'), // Hex color for calendar display
+  // Variable duration fields
+  isVariableDuration: boolean("is_variable_duration").notNull().default(false), // Enable variable-duration booking
+  minimumDurationHours: integer("minimum_duration_hours"), // Minimum hours for variable duration (e.g., 2)
+  durationIncrementMinutes: integer("duration_increment_minutes"), // Increment in minutes (e.g., 60 for 1-hour increments)
+  pricePerHour: decimal("price_per_hour", { precision: 10, scale: 2 }), // Price per hour for variable duration bookings
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").default(0), // For display ordering
   createdAt: timestamp("created_at").defaultNow(),
@@ -314,6 +319,9 @@ export const instructorAppointments = pgTable("instructor_appointments", {
   endTime: timestamp("end_time").notNull(),
   status: varchar("status").notNull().default('pending'), // 'pending', 'confirmed', 'rejected', 'cancelled', 'completed'
   partySize: integer("party_size").notNull().default(1),
+  // Variable duration support
+  actualDurationMinutes: integer("actual_duration_minutes"), // Actual duration selected by student (for variable-duration appointments)
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }), // Total price calculated (for variable-duration appointments)
   // Payment tracking
   paymentStatus: varchar("payment_status").notNull().default('pending'), // 'pending', 'paid', 'failed', 'refunded'
   paymentIntentId: varchar("payment_intent_id"),

@@ -47,6 +47,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [selectedDurationHours, setSelectedDurationHours] = useState<number>(2); // For variable duration appointments
   
   // Booking form state
   const [bookingForm, setBookingForm] = useState({
@@ -58,12 +59,23 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     notes: '',
   });
 
+  // Initialize duration based on appointment type
+  useEffect(() => {
+    if (appointmentType && (appointmentType as any).isVariableDuration) {
+      const minHours = (appointmentType as any).minimumDurationHours || 2;
+      setSelectedDurationHours(minHours);
+    }
+  }, [appointmentType]);
+
   // Reset state when modal opens/closes
   useEffect(() => {
     if (!open) {
       setSelectedDate(undefined);
       setSelectedSlot(null);
       setShowBookingForm(false);
+      // Reset to the appointment type's minimum hours, or default to 2
+      const minHours = (appointmentType as any)?.minimumDurationHours || 2;
+      setSelectedDurationHours(minHours);
       setBookingForm({
         firstName: '',
         lastName: '',
@@ -73,7 +85,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         notes: '',
       });
     }
-  }, [open]);
+  }, [open, appointmentType]);
 
   // Pre-populate form for authenticated users
   useEffect(() => {
@@ -94,6 +106,37 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  };
+
+  // Generate duration options for variable-duration appointments
+  const getDurationOptions = () => {
+    if (!(appointmentType as any)?.isVariableDuration) return [];
+    
+    const minHours = (appointmentType as any).minimumDurationHours || 2;
+    const incrementMinutes = (appointmentType as any).durationIncrementMinutes || 60;
+    const incrementHours = incrementMinutes / 60;
+    
+    const options = [];
+    for (let hours = minHours; hours <= minHours + 6; hours += incrementHours) {
+      options.push(hours);
+    }
+    return options;
+  };
+
+  // Calculate total price for the booking
+  const getTotalPrice = () => {
+    if ((appointmentType as any)?.isVariableDuration) {
+      const pricePerHour = Number((appointmentType as any).pricePerHour || 0);
+      return pricePerHour * selectedDurationHours;
+    }
+    return Number(appointmentType?.price || 0);
+  };
+
+  // Calculate end time for variable duration
+  const getCalculatedEndTime = (startTime: string, durationHours: number) => {
+    const start = new Date(startTime);
+    const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+    return end.toISOString();
   };
 
   // Get start and end of current displayed month
@@ -165,13 +208,16 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
 
       // If authenticated, book directly
       if (isAuthenticated) {
+        const isVariableDuration = (appointmentType as any).isVariableDuration;
         const body = {
           instructorId,
           appointmentTypeId: appointmentType.id,
           startTime: selectedSlot.startTime,
-          endTime: selectedSlot.endTime,
+          endTime: isVariableDuration ? getCalculatedEndTime(selectedSlot.startTime, selectedDurationHours) : selectedSlot.endTime,
           studentNotes: bookingForm.notes,
           partySize: 1, // Default party size for appointments
+          actualDurationMinutes: isVariableDuration ? selectedDurationHours * 60 : undefined,
+          totalPrice: isVariableDuration ? getTotalPrice() : undefined,
         };
         return await apiRequest("POST", "/api/appointments/book", body);
       }
@@ -187,6 +233,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         throw new Error("Password must be at least 8 characters long");
       }
 
+      const isVariableDuration = (appointmentType as any).isVariableDuration;
       const body = {
         // Account creation fields
         firstName: bookingForm.firstName,
@@ -198,9 +245,11 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         instructorId,
         appointmentTypeId: appointmentType.id,
         startTime: selectedSlot.startTime,
-        endTime: selectedSlot.endTime,
+        endTime: isVariableDuration ? getCalculatedEndTime(selectedSlot.startTime, selectedDurationHours) : selectedSlot.endTime,
         studentNotes: bookingForm.notes,
         partySize: 1, // Default party size for appointments
+        actualDurationMinutes: isVariableDuration ? selectedDurationHours * 60 : undefined,
+        totalPrice: isVariableDuration ? getTotalPrice() : undefined,
       };
 
       return await apiRequest("POST", "/api/appointments/book-with-signup", body);
@@ -303,14 +352,30 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             </Button>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              <span>{appointmentType.durationMinutes} minutes</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <DollarSign className="h-4 w-4" />
-              <span className="font-semibold">${Number(appointmentType.price).toFixed(2)}</span>
-            </div>
+            {(appointmentType as any).isVariableDuration ? (
+              <>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  <span>{(appointmentType as any).minimumDurationHours}+ hours</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <DollarSign className="h-4 w-4" />
+                  <span className="font-semibold">${Number((appointmentType as any).pricePerHour).toFixed(2)}/hour</span>
+                </div>
+                <Badge variant="outline" className="text-xs">Variable Duration</Badge>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  <span>{appointmentType.durationMinutes} minutes</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <DollarSign className="h-4 w-4" />
+                  <span className="font-semibold">${Number(appointmentType.price).toFixed(2)}</span>
+                </div>
+              </>
+            )}
             {appointmentType.requiresApproval && (
               <Badge variant="outline" className="text-xs">Approval Required</Badge>
             )}
@@ -509,10 +574,45 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             {selectedSlot && (
               <div className="mt-6 space-y-3">
                 <div className="border-t pt-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-sm font-medium">Total</span>
-                    <span className="text-lg font-bold">${Number(appointmentType.price).toFixed(2)}</span>
-                  </div>
+                  {(appointmentType as any).isVariableDuration && (
+                    <div className="mb-4">
+                      <Label htmlFor="duration-select" className="text-sm font-medium">
+                        Select Duration
+                      </Label>
+                      <select
+                        id="duration-select"
+                        className="w-full border border-input rounded-md px-3 py-2 mt-1 text-sm"
+                        value={selectedDurationHours}
+                        onChange={(e) => setSelectedDurationHours(Number(e.target.value))}
+                        data-testid="select-duration"
+                      >
+                        {getDurationOptions().map(hours => (
+                          <option key={hours} value={hours}>
+                            {hours} {hours === 1 ? 'hour' : 'hours'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  
+                  {(appointmentType as any).isVariableDuration ? (
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>${Number((appointmentType as any).pricePerHour).toFixed(2)}/hour × {selectedDurationHours} hours</span>
+                        <span>${(Number((appointmentType as any).pricePerHour) * selectedDurationHours).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center border-t pt-2">
+                        <span className="text-sm font-medium">Total</span>
+                        <span className="text-lg font-bold">${getTotalPrice().toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-sm font-medium">Total</span>
+                      <span className="text-lg font-bold">${Number(appointmentType.price).toFixed(2)}</span>
+                    </div>
+                  )}
+                  
                   <Button
                     className="w-full bg-black text-white hover:bg-black/90"
                     onClick={handleBooking}

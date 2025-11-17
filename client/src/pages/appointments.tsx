@@ -27,6 +27,10 @@ type AppointmentType = {
   price: number;
   requiresApproval: boolean;
   isActive: boolean;
+  isVariableDuration?: boolean;
+  minimumDurationHours?: number;
+  durationIncrementMinutes?: number;
+  pricePerHour?: number;
 };
 
 type WeeklyTemplate = {
@@ -68,6 +72,10 @@ export default function AppointmentsPage() {
     price: 0,
     requiresApproval: false,
     isActive: true,
+    isVariableDuration: false,
+    minimumDurationHours: 2,
+    durationIncrementMinutes: 60,
+    pricePerHour: 0,
   });
 
   const [templateForm, setTemplateForm] = useState({
@@ -294,6 +302,10 @@ export default function AppointmentsPage() {
       price: 0,
       requiresApproval: false,
       isActive: true,
+      isVariableDuration: false,
+      minimumDurationHours: 2,
+      durationIncrementMinutes: 60,
+      pricePerHour: 0,
     });
   }
 
@@ -328,6 +340,10 @@ export default function AppointmentsPage() {
         price: type.price,
         requiresApproval: type.requiresApproval,
         isActive: type.isActive,
+        isVariableDuration: (type as any).isVariableDuration || false,
+        minimumDurationHours: (type as any).minimumDurationHours || 2,
+        durationIncrementMinutes: (type as any).durationIncrementMinutes || 60,
+        pricePerHour: (type as any).pricePerHour || 0,
       });
     } else {
       setEditingType(null);
@@ -474,14 +490,30 @@ export default function AppointmentsPage() {
                             <p className="text-sm text-muted-foreground mb-2">{type.description}</p>
                           )}
                           <div className="flex items-center gap-4 text-sm">
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4 text-muted-foreground" />
-                              <span>{type.durationMinutes} min</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-semibold">${Number(type.price).toFixed(2)}</span>
-                            </div>
+                            {type.isVariableDuration ? (
+                              <>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4 text-muted-foreground" />
+                                  <span>{type.minimumDurationHours}+ hours</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                  <span className="font-semibold">${Number(type.pricePerHour || 0).toFixed(2)}/hour</span>
+                                </div>
+                                <Badge variant="outline" className="text-xs">Variable Duration</Badge>
+                              </>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4 text-muted-foreground" />
+                                  <span>{type.durationMinutes} min</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                  <span className="font-semibold">${Number(type.price).toFixed(2)}</span>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -504,6 +536,10 @@ export default function AppointmentsPage() {
                                 price: type.price,
                                 requiresApproval: type.requiresApproval,
                                 isActive: type.isActive,
+                                isVariableDuration: type.isVariableDuration || false,
+                                minimumDurationHours: type.minimumDurationHours || 2,
+                                durationIncrementMinutes: type.durationIncrementMinutes || 60,
+                                pricePerHour: type.pricePerHour || 0,
                               });
                               setEditingType(null);
                               setShowTypeDialog(true);
@@ -882,32 +918,97 @@ export default function AppointmentsPage() {
                   data-testid="input-type-description"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center justify-between p-3 bg-muted rounded-md">
                 <div>
-                  <Label htmlFor="duration">Duration (minutes)*</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    min="15"
-                    step="15"
-                    value={typeForm.durationMinutes}
-                    onChange={(e) => setTypeForm({ ...typeForm, durationMinutes: parseInt(e.target.value) || 30 })}
-                    data-testid="input-type-duration"
-                  />
+                  <Label htmlFor="is-variable-duration" className="font-semibold">Variable Duration</Label>
+                  <p className="text-sm text-muted-foreground">Allow students to choose appointment length</p>
                 </div>
-                <div>
-                  <Label htmlFor="price">Price ($)*</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={typeForm.price}
-                    onChange={(e) => setTypeForm({ ...typeForm, price: parseFloat(e.target.value) || 0 })}
-                    data-testid="input-type-price"
-                  />
-                </div>
+                <Switch
+                  id="is-variable-duration"
+                  checked={typeForm.isVariableDuration}
+                  onCheckedChange={(checked) => setTypeForm({ ...typeForm, isVariableDuration: checked })}
+                  data-testid="switch-type-is-variable-duration"
+                />
               </div>
+
+              {!typeForm.isVariableDuration ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="duration">Duration (minutes)*</Label>
+                    <Input
+                      id="duration"
+                      type="number"
+                      min="15"
+                      step="15"
+                      value={typeForm.durationMinutes}
+                      onChange={(e) => setTypeForm({ ...typeForm, durationMinutes: parseInt(e.target.value) || 30 })}
+                      data-testid="input-type-duration"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="price">Price ($)*</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={typeForm.price}
+                      onChange={(e) => setTypeForm({ ...typeForm, price: parseFloat(e.target.value) || 0 })}
+                      data-testid="input-type-price"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4 p-4 border rounded-md">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="minimum-hours">Minimum Hours*</Label>
+                      <Input
+                        id="minimum-hours"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={typeForm.minimumDurationHours}
+                        onChange={(e) => setTypeForm({ ...typeForm, minimumDurationHours: parseInt(e.target.value) || 2 })}
+                        data-testid="input-type-minimum-hours"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Minimum appointment length</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="increment-minutes">Increment (minutes)*</Label>
+                      <select
+                        id="increment-minutes"
+                        className="w-full border border-input rounded-md px-3 py-2 text-sm"
+                        value={typeForm.durationIncrementMinutes}
+                        onChange={(e) => setTypeForm({ ...typeForm, durationIncrementMinutes: parseInt(e.target.value) })}
+                        data-testid="select-type-increment"
+                      >
+                        <option value="30">30 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="90">1.5 hours</option>
+                        <option value="120">2 hours</option>
+                      </select>
+                      <p className="text-xs text-muted-foreground mt-1">Duration increases in these steps</p>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="price-per-hour">Price Per Hour ($)*</Label>
+                    <Input
+                      id="price-per-hour"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={typeForm.pricePerHour}
+                      onChange={(e) => setTypeForm({ ...typeForm, pricePerHour: parseFloat(e.target.value) || 0 })}
+                      data-testid="input-type-price-per-hour"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Total price will be calculated: ${typeForm.pricePerHour.toFixed(2)}/hour × hours selected
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <Label htmlFor="requires-approval">Require approval before confirming</Label>
                 <Switch

@@ -288,11 +288,38 @@ export class AppointmentService {
     }
 
     const actualDurationMinutes = (endTime.getTime() - startTime.getTime()) / 60000;
-    if (actualDurationMinutes !== appointmentType.durationMinutes) {
-      return { 
-        valid: false, 
-        reason: `Appointment duration must be exactly ${appointmentType.durationMinutes} minutes` 
-      };
+    
+    // Check duration validation based on appointment type
+    if ((appointmentType as any).isVariableDuration) {
+      // Variable duration validation
+      const minimumDurationHours = (appointmentType as any).minimumDurationHours || 2;
+      const minimumDurationMinutes = minimumDurationHours * 60;
+      const incrementMinutes = (appointmentType as any).durationIncrementMinutes || 60;
+      
+      // Check minimum duration
+      if (actualDurationMinutes < minimumDurationMinutes) {
+        return {
+          valid: false,
+          reason: `Appointment must be at least ${minimumDurationHours} hours`
+        };
+      }
+      
+      // Check that duration follows the increment pattern
+      const durationAboveMinimum = actualDurationMinutes - minimumDurationMinutes;
+      if (durationAboveMinimum % incrementMinutes !== 0) {
+        return {
+          valid: false,
+          reason: `Appointment duration must be in ${incrementMinutes}-minute increments`
+        };
+      }
+    } else {
+      // Fixed duration validation
+      if (actualDurationMinutes !== appointmentType.durationMinutes) {
+        return { 
+          valid: false, 
+          reason: `Appointment duration must be exactly ${appointmentType.durationMinutes} minutes` 
+        };
+      }
     }
 
     const hasConflict = await storage.checkAppointmentConflict(
@@ -402,6 +429,8 @@ export class AppointmentService {
     endTime: Date;
     studentNotes?: string;
     partySize?: number;
+    actualDurationMinutes?: number;
+    totalPrice?: number;
   }): Promise<{ success: boolean; appointment?: InstructorAppointment; error?: string }> {
     const validation = await this.validateAppointmentBooking(
       data.instructorId,
@@ -433,6 +462,8 @@ export class AppointmentService {
         partySize: data.partySize || 1,
         status,
         paymentStatus: 'pending',
+        actualDurationMinutes: data.actualDurationMinutes || null,
+        totalPrice: data.totalPrice || null,
       });
 
       return { success: true, appointment };

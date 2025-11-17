@@ -601,7 +601,9 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
       startTime, 
       endTime, 
       studentNotes, 
-      partySize 
+      partySize,
+      actualDurationMinutes,
+      totalPrice
     } = req.body;
     
     if (!instructorId || !appointmentTypeId || !startTime || !endTime) {
@@ -616,6 +618,8 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
       endTime: new Date(endTime),
       studentNotes,
       partySize,
+      actualDurationMinutes,
+      totalPrice,
     });
 
     if (!result.success) {
@@ -654,7 +658,9 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
       startTime, 
       endTime, 
       studentNotes, 
-      partySize 
+      partySize,
+      actualDurationMinutes,
+      totalPrice
     } = req.body;
     
     // Validate required fields
@@ -734,6 +740,8 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
       endTime: new Date(endTime),
       studentNotes,
       partySize,
+      actualDurationMinutes,
+      totalPrice,
     });
 
     if (!result.success) {
