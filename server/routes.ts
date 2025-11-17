@@ -7,8 +7,8 @@ import { storage, normalizePhoneNumber } from "./storage";
 import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrHigher, requireActiveAccount, requireAdminOrHigher, generateToken, getTokenExpiry } from "./customAuth";
 import { authRouter } from "./auth/routes";
 import { db } from "./db";
-import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems, instructorAppointments } from "@shared/schema";
-import { eq, and, inArray, desc, gte } from "drizzle-orm";
+import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems, instructorAppointments, courses } from "@shared/schema";
+import { eq, and, inArray, desc, gte, isNotNull } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, insertCourseNotificationSignupSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
@@ -634,11 +634,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get deleted courses for instructor
-  app.get('/api/instructor/deleted-courses', isAuthenticated, async (req: any, res) => {
+  app.get('/api/instructor/deleted-courses', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const courses = await storage.getDeletedCoursesByInstructor(userId);
-      res.json(courses);
+      const userRole = req.user.role;
+      
+      let deletedCourses;
+      if (userRole === 'admin' || userRole === 'superadmin') {
+        // Admins and superadmins can see all deleted courses from all instructors
+        deletedCourses = await db.query.courses.findMany({
+          where: isNotNull(courses.deletedAt),
+          with: {
+            schedules: true,
+            instructor: true,
+            category: true,
+          },
+          orderBy: desc(courses.deletedAt),
+        });
+      } else {
+        // Instructors only see their own deleted courses
+        deletedCourses = await storage.getDeletedCoursesByInstructor(userId);
+      }
+      
+      res.json(deletedCourses);
     } catch (error) {
       console.error("Error fetching deleted courses:", error);
       res.status(500).json({ message: "Failed to fetch deleted courses" });
