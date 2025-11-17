@@ -151,12 +151,20 @@ export class NotificationEngine {
     appointmentNotes: 'appointment.studentNotes',
     
     // Appointment Type aliases
+    appointmentType: 'appointmentType.title',
     appointmentTypeName: 'appointmentType.title',
     appointmentTypeTitle: 'appointmentType.title',
     appointmentTypeDescription: 'appointmentType.description',
     appointmentTypePrice: 'appointmentType.price',
+    appointmentTypeDuration: 'appointmentType.duration',
+    price: 'appointmentType.price',
     
     // Instructor aliases
+    studentName: 'student.name',
+    studentFirstName: 'student.firstName',
+    studentLastName: 'student.lastName',
+    studentEmail: 'student.email',
+    studentPhone: 'student.phone',
     instructorName: 'instructor.name',
     instructorFirstName: 'instructor.firstName',
     instructorLastName: 'instructor.lastName',
@@ -821,9 +829,9 @@ export class NotificationEngine {
 
         // Replace template variables
         const subject = template.subject 
-          ? this.replaceVariables(template.subject, variables)
+          ? NotificationEngine.processTemplate(template.subject, variables)
           : `Appointment ${params.eventType.replace('booking_', '').replace('_', ' ')}`;
-        const body = this.replaceVariables(template.body, variables);
+        const body = NotificationEngine.processTemplate(template.body, variables);
 
         // Send via appropriate channel
         if (template.channelType === 'email') {
