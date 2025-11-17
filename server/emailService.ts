@@ -3,7 +3,7 @@ import sgMail from '@sendgrid/mail';
 import { storage } from './storage';
 
 const DEFAULT_FROM_EMAIL = 'info@tacticaladv.com';
-const DEFAULT_FROM_NAME = 'Tactical Advantage';
+const DEFAULT_FROM_NAME = 'Christopher Bean | Tactical Advantage';
 
 function initializeSendGrid() {
   const apiKey = process.env.SENDGRID_API_KEY;
