@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { storage } from '../storage';
 import { appointmentService } from './service';
 import { isAuthenticated } from '../customAuth';
+import { NotificationEngine } from '../notificationEngine';
 import { 
   insertAppointmentTypeSchema,
   insertInstructorWeeklyTemplateSchema,
@@ -491,6 +492,16 @@ appointmentRouter.post('/instructor/appointments/:id/cancel', isAuthenticated, a
     
     const { reason } = req.body;
     const appointment = await storage.cancelAppointment(id, instructorId, reason);
+    
+    // Send cancellation notification
+    await NotificationEngine.sendAppointmentNotification({
+      eventType: 'booking_cancelled',
+      appointmentId: id,
+      instructorId,
+    }).catch(err => {
+      console.error('Failed to send cancellation notification:', err);
+    });
+    
     res.json(appointment);
   } catch (error) {
     console.error("Error canceling appointment:", error);
@@ -585,6 +596,18 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
 
     if (!result.success) {
       return res.status(400).json({ message: result.error });
+    }
+
+    // Send notification for booking confirmation
+    if (result.appointment) {
+      await NotificationEngine.sendAppointmentNotification({
+        eventType: 'booking_confirmed',
+        appointmentId: result.appointment.id,
+        instructorId,
+      }).catch(err => {
+        console.error('Failed to send booking confirmation notification:', err);
+        // Don't fail the booking if notification fails
+      });
     }
 
     res.status(201).json(result.appointment);
@@ -693,6 +716,18 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
       return res.status(400).json({ message: result.error });
     }
 
+    // Send notification for booking confirmation
+    if (result.appointment) {
+      await NotificationEngine.sendAppointmentNotification({
+        eventType: 'booking_confirmed',
+        appointmentId: result.appointment.id,
+        instructorId,
+      }).catch(err => {
+        console.error('Failed to send booking confirmation notification:', err);
+        // Don't fail the booking if notification fails
+      });
+    }
+
     // Only auto-login for NEW users who provided a password
     // Do NOT auto-login existing users (security risk) or guest bookings (need to set password first)
     const shouldAutoLogin = isNewUser && password && !needsPasswordSetup;
@@ -748,6 +783,16 @@ appointmentRouter.post('/:id/cancel', isAuthenticated, async (req: any, res) => 
     }
 
     const cancelledAppointment = await storage.cancelAppointment(id, studentId, reason);
+    
+    // Send cancellation notification
+    await NotificationEngine.sendAppointmentNotification({
+      eventType: 'booking_cancelled',
+      appointmentId: id,
+      instructorId: appointment.instructorId,
+    }).catch(err => {
+      console.error('Failed to send cancellation notification:', err);
+    });
+    
     res.json(cancelledAppointment);
   } catch (error) {
     console.error("Error canceling appointment:", error);

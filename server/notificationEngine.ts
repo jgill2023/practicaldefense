@@ -767,6 +767,149 @@ export class NotificationEngine {
   }
 
   /**
+   * Send appointment notification based on event type
+   */
+  static async sendAppointmentNotification(params: {
+    eventType: 'booking_confirmed' | 'booking_cancelled' | 'booking_rescheduled' | 'reminder';
+    appointmentId: string;
+    instructorId: string;
+  }): Promise<void> {
+    try {
+      const appointment = await storage.getAppointment(params.appointmentId);
+      if (!appointment) {
+        console.error(`Appointment ${params.appointmentId} not found`);
+        return;
+      }
+
+      // Get active notification templates for this event type and instructor
+      const allTemplates = await storage.getAppointmentNotificationTemplates(params.instructorId);
+      const templates = allTemplates.filter(t => 
+        t.eventType === params.eventType && t.isActive
+      );
+
+      if (templates.length === 0) {
+        console.log(`No active notification templates found for event: ${params.eventType}`);
+        return;
+      }
+
+      // Get appointment details
+      const [appointmentType, student, instructor] = await Promise.all([
+        storage.getAppointmentType(appointment.appointmentTypeId),
+        storage.getUser(appointment.studentId),
+        storage.getUser(appointment.instructorId),
+      ]);
+
+      if (!appointmentType || !student || !instructor) {
+        console.error('Failed to load appointment details');
+        return;
+      }
+
+      // Build variables for template
+      const variables = this.buildAppointmentVariables(
+        appointment,
+        appointmentType,
+        student,
+        instructor
+      );
+
+      // Send each active template
+      for (const template of templates) {
+        if (!template.isActive) continue;
+
+        // Determine recipient based on recipientType
+        const recipient = template.recipientType === 'instructor' ? instructor : student;
+
+        // Replace template variables
+        const subject = template.subject 
+          ? this.replaceVariables(template.subject, variables)
+          : `Appointment ${params.eventType.replace('booking_', '').replace('_', ' ')}`;
+        const body = this.replaceVariables(template.body, variables);
+
+        // Send via appropriate channel
+        if (template.channelType === 'email') {
+          await NotificationEmailService.sendNotificationEmail({
+            to: recipient.email,
+            subject,
+            body,
+            instructorId: params.instructorId,
+          });
+        } else if (template.channelType === 'sms' && recipient.phone) {
+          await NotificationSmsService.sendNotificationSms({
+            to: recipient.phone,
+            body,
+            instructorId: params.instructorId,
+          });
+        }
+      }
+
+      console.log(`Sent appointment notifications for event: ${params.eventType}`);
+    } catch (error) {
+      console.error('Failed to send appointment notification:', error);
+    }
+  }
+
+  /**
+   * Build variables for appointment notification templates
+   */
+  private static buildAppointmentVariables(
+    appointment: InstructorAppointment,
+    appointmentType: AppointmentType,
+    student: User,
+    instructor: User
+  ): NotificationVariables {
+    const startDate = new Date(appointment.startTime);
+    const endDate = new Date(appointment.endTime);
+    const durationMinutes = (endDate.getTime() - startDate.getTime()) / 60000;
+
+    return {
+      student: {
+        name: `${student.firstName} ${student.lastName}`,
+        firstName: student.firstName || '',
+        lastName: student.lastName || '',
+        email: student.email,
+        phone: student.phone || '',
+      },
+      instructor: {
+        name: `${instructor.firstName} ${instructor.lastName}`,
+        firstName: instructor.firstName || '',
+        lastName: instructor.lastName || '',
+        email: instructor.email,
+        phone: instructor.phone || '',
+      },
+      appointment: {
+        startDate: this.safeFormatDate(startDate) || '',
+        startTime: this.formatTime(startDate.toTimeString().slice(0, 5)),
+        endTime: this.formatTime(endDate.toTimeString().slice(0, 5)),
+        date: startDate.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        time: `${this.formatTime(startDate.toTimeString().slice(0, 5))} - ${this.formatTime(endDate.toTimeString().slice(0, 5))}`,
+        duration: `${durationMinutes} minutes`,
+        status: appointment.status,
+        studentNotes: appointment.studentNotes || '',
+        partySize: appointment.partySize || 1,
+      },
+      appointmentType: {
+        title: appointmentType.title,
+        description: appointmentType.description || '',
+        duration: `${appointmentType.durationMinutes} minutes`,
+        price: `$${appointmentType.price.toFixed(2)}`,
+      },
+      system: {
+        companyName: 'Tactical Advantage',
+        companyPhone: instructor.phone || '',
+        companyEmail: instructor.email,
+        website: 'Tactical Advantage',
+        websiteUrl: process.env.REPLIT_DOMAINS || 'https://tacticaladv.com',
+        currentDate: new Date().toLocaleDateString('en-US'),
+      },
+    };
+  }
+
+  /**
    * Validate user's contact preferences for the given notification type
    */
   private static validateContactPreferences(user: User, notificationType: string): boolean {
