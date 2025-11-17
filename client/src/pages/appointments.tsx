@@ -101,10 +101,34 @@ export default function AppointmentsPage() {
   ];
 
   const insertVariable = (variable: string, field: 'subject' | 'body') => {
-    setNotificationTemplateForm(prev => ({
-      ...prev,
-      [field]: prev[field] + variable
-    }));
+    // Get the input/textarea element
+    const element = document.getElementById(`notification-${field}`) as HTMLInputElement | HTMLTextAreaElement;
+    
+    if (element) {
+      const start = element.selectionStart || 0;
+      const end = element.selectionEnd || 0;
+      const currentValue = element.value;
+      
+      // Insert variable at cursor position
+      const newValue = currentValue.substring(0, start) + variable + currentValue.substring(end);
+      
+      setNotificationTemplateForm(prev => ({
+        ...prev,
+        [field]: newValue
+      }));
+      
+      // Set cursor position after the inserted variable
+      setTimeout(() => {
+        element.focus();
+        element.setSelectionRange(start + variable.length, start + variable.length);
+      }, 0);
+    } else {
+      // Fallback to appending if element not found
+      setNotificationTemplateForm(prev => ({
+        ...prev,
+        [field]: prev[field] + variable
+      }));
+    }
   };
 
   const { data: appointmentTypes = [], isLoading: typesLoading } = useQuery<AppointmentType[]>({
