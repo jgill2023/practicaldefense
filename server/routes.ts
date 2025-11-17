@@ -3426,18 +3426,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course Information Forms API Routes
 
   // Get forms for a course
-  app.get("/api/course-forms/:courseId", async (req, res) => {
+  app.get("/api/course-forms/:courseId", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
       const { courseId } = req.params;
+      const userId = req.user.id;
+      const userRole = req.user.role;
 
-      const userId = req.user?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Verify instructor owns the course
+      // Verify instructor owns the course (admins and superadmins can access any course)
       const course = await storage.getCourse(courseId);
-      if (!course || course.instructorId !== userId) {
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+      
+      // Only instructors need to own the course; admins and superadmins can access any course
+      if (userRole === 'instructor' && course.instructorId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -3451,7 +3457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create a new course information form
-  app.post("/api/course-forms", async (req, res) => {
+  app.post("/api/course-forms", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
       // Validate request body with Zod
       const validatedData = insertCourseInformationFormSchema.parse({
@@ -3461,14 +3467,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true
       });
 
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
+      const userRole = req.user.role;
+
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Verify instructor owns the course
+      // Verify instructor owns the course (admins and superadmins can manage any course)
       const course = await storage.getCourse(validatedData.courseId);
-      if (!course || course.instructorId !== userId) {
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+      
+      // Only instructors need to own the course; admins and superadmins can manage any course
+      if (userRole === 'instructor' && course.instructorId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -3482,19 +3495,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update a course information form
-  app.patch("/api/course-forms/:id", async (req, res) => {
+  app.patch("/api/course-forms/:id", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
       const { id } = req.params;
       const { title, description, isRequired } = req.body;
+      const userId = req.user.id;
+      const userRole = req.user.role;
 
-      const userId = req.user?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Verify instructor owns the form's course
+      // Verify instructor owns the form's course (admins and superadmins can manage any course)
       const form = await storage.getCourseInformationForm(id);
-      if (!form || form.course.instructorId !== userId) {
+      if (!form) {
+        return res.status(404).json({ message: "Form not found" });
+      }
+      
+      // Only instructors need to own the course; admins and superadmins can manage any course
+      if (userRole === 'instructor' && form.course.instructorId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -3512,18 +3531,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete a course information form
-  app.delete("/api/course-forms/:id", async (req, res) => {
+  app.delete("/api/course-forms/:id", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
       const { id } = req.params;
+      const userId = req.user.id;
+      const userRole = req.user.role;
 
-      const userId = req.user?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Verify instructor owns the form's course
+      // Verify instructor owns the form's course (admins and superadmins can manage any course)
       const form = await storage.getCourseInformationForm(id);
-      if (!form || form.course.instructorId !== userId) {
+      if (!form) {
+        return res.status(404).json({ message: "Form not found" });
+      }
+      
+      // Only instructors need to own the course; admins and superadmins can manage any course
+      if (userRole === 'instructor' && form.course.instructorId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
