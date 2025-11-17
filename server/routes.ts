@@ -3188,7 +3188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const { enrollmentId, promoCode } = req.body;
+      const { enrollmentId, promoCode, billingAddress } = req.body;
       const userId = req.user?.claims?.sub;
 
       // Fetch enrollment to calculate correct payment amount server-side
@@ -3244,68 +3244,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Calculate tax using Stripe Tax Calculation API on the discounted amount
-      let taxCalculation = null;
-      let taxAmount = 0;
-      let finalAmount = Math.round(finalPaymentAmount * 100);
-
-      try {
-        // Use Stripe Tax to calculate taxes based on your dashboard settings
-        console.log('Attempting Stripe Tax calculation for Albuquerque, NM...');
-
-        taxCalculation = await stripe.tax.calculations.create({
-          currency: 'usd',
-          line_items: [{
-            amount: Math.round(finalPaymentAmount * 100),
-            tax_code: 'txcd_10401000', // Online education services
-            reference: `course-${enrollment.courseId}-${enrollment.paymentOption || 'full'}`,
-          }],
-          customer_details: {
-            address: {
-              country: 'US',
-              state: 'NM',
-              city: 'Albuquerque',
-              postal_code: '87120', // Albuquerque zip code
-            },
-            address_source: 'billing',
-          },
+      // Skip payment intent creation for free enrollments (after promo code)
+      if (finalPaymentAmount <= 0) {
+        return res.json({ 
+          clientSecret: null, 
+          originalAmount: paymentAmount,
+          subtotal: finalPaymentAmount,
+          discountAmount,
+          tax: 0,
+          total: 0,
+          tax_included: false,
+          promoCode: promoCodeInfo,
+          isFree: true 
         });
-
-        console.log('✅ Stripe Tax Calculation Success:', {
-          original_amount: paymentAmount,
-          discounted_amount: finalPaymentAmount,
-          discount_applied: discountAmount,
-          promo_code: promoCode || 'none',
-          subtotal_cents: Math.round(finalPaymentAmount * 100),
-          subtotal_dollars: finalPaymentAmount,
-          tax_calculation_id: taxCalculation?.id,
-          amount_total_cents: taxCalculation?.amount_total,
-          total_dollars: taxCalculation?.amount_total ? (taxCalculation.amount_total / 100) : 0,
-          tax_amount_exclusive_cents: taxCalculation?.tax_amount_exclusive,
-          tax_dollars: taxCalculation?.tax_amount_exclusive ? (taxCalculation.tax_amount_exclusive / 100) : 0,
-          tax_rate_calculated: taxCalculation?.tax_amount_exclusive && finalPaymentAmount ?
-            ((taxCalculation.tax_amount_exclusive / 100) / finalPaymentAmount * 100).toFixed(4) + '%' : '0%'
-        });
-
-        if (taxCalculation && taxCalculation.amount_total) {
-          finalAmount = taxCalculation.amount_total;
-          taxAmount = taxCalculation.tax_amount_exclusive || 0;
-        }
-      } catch (taxError: any) {
-        console.error('❌ Stripe Tax calculation failed:', {
-          error_message: taxError.message,
-          error_type: taxError.type,
-          error_code: taxError.code,
-          error_decline_code: taxError.decline_code,
-          full_error: taxError
-        });
-        // Continue without tax if calculation fails - using 0% tax
-        console.log('Proceeding with 0% tax due to Stripe Tax API error');
       }
 
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: finalAmount,
+      // Create PaymentIntent with automatic tax calculation
+      const paymentIntentParams: any = {
+        amount: Math.round(finalPaymentAmount * 100), // Discounted amount before tax
         currency: "usd",
+        automatic_tax: {
+          enabled: true,
+        },
         automatic_payment_methods: { enabled: true },
         metadata: {
           enrollmentId,
@@ -3313,20 +3273,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           scheduleId: enrollment.scheduleId,
           studentId: userId,
           paymentOption: enrollment.paymentOption || 'full',
-          tax_calculation_id: taxCalculation?.id || null,
           promo_code: promoCode || null,
           original_amount: paymentAmount.toString(),
           discount_amount: discountAmount.toString(),
         },
-      });
+      };
 
+      // Add billing address if provided (required for accurate tax calculation)
+      if (billingAddress) {
+        paymentIntentParams.shipping = {
+          name: billingAddress.name,
+          address: {
+            line1: billingAddress.line1,
+            line2: billingAddress.line2 || undefined,
+            city: billingAddress.city,
+            state: billingAddress.state,
+            postal_code: billingAddress.postal_code,
+            country: billingAddress.country || 'US',
+          },
+        };
+      }
+
+      const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+
+      const taxAmount = paymentIntent.automatic_tax?.tax_amount || 0;
+      
       res.json({
         clientSecret: paymentIntent.client_secret,
         originalAmount: paymentAmount,
         subtotal: finalPaymentAmount,
         discountAmount,
         tax: taxAmount / 100,
-        total: finalAmount / 100,
+        total: paymentIntent.amount / 100,
         tax_included: taxAmount > 0,
         promoCode: promoCodeInfo
       });
@@ -3367,37 +3345,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Payment verification failed - currency mismatch" });
       }
 
-      // Get course details for payment amount verification
-      const course = await storage.getCourse(enrollment.courseId);
-      if (!course) {
-        return res.status(404).json({ message: "Course not found" });
-      }
-
-      // Calculate expected payment amount for verification
-      let expectedAmount: number;
-      const coursePrice = parseFloat(course.price);
-
-      if (enrollment.paymentOption === 'deposit' && course.depositAmount) {
-        expectedAmount = parseFloat(course.depositAmount);
-      } else {
-        expectedAmount = coursePrice;
-      }
-
-      // Verify payment amount matches expectations (within 1 cent tolerance for rounding)
-      const paidAmount = paymentIntent.amount / 100; // Convert from cents
-      if (Math.abs(paidAmount - expectedAmount) > 0.01) {
-        console.error(`Payment amount mismatch: expected ${expectedAmount}, got ${paidAmount}`);
-        return res.status(400).json({ message: "Payment amount verification failed" });
-      }
+      // Extract tax information from PaymentIntent
+      const taxAmount = paymentIntent.automatic_tax?.tax_amount 
+        ? (paymentIntent.automatic_tax.tax_amount / 100).toString() 
+        : null;
+      const taxInCents = paymentIntent.automatic_tax?.tax_amount || 0;
+      const subtotalInCents = paymentIntent.amount - taxInCents;
+      const subtotal = subtotalInCents / 100;
+      const taxRate = taxAmount && subtotal > 0 
+        ? (parseFloat(taxAmount) / subtotal).toString()
+        : null;
 
       // Determine payment status based on payment option
       const paymentStatus = enrollment.paymentOption === 'deposit' ? 'deposit' : 'paid';
 
-      // Update enrollment status
+      // Update enrollment status with tax information
       const updatedEnrollment = await storage.updateEnrollment(enrollmentId, {
         status: 'confirmed',
         paymentStatus,
         paymentIntentId,
+        taxAmount,
+        taxRate,
       });
 
       res.json(updatedEnrollment);
