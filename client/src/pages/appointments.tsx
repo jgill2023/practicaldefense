@@ -888,7 +888,7 @@ export default function AppointmentsPage() {
         </Tabs>
 
         <Dialog open={showTypeDialog} onOpenChange={setShowTypeDialog}>
-          <DialogContent data-testid="dialog-type-form">
+          <DialogContent data-testid="dialog-type-form" className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingType ? 'Edit Appointment Type' : 'Create Appointment Type'}
