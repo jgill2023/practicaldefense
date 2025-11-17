@@ -4806,11 +4806,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Simple email notification for roster
   app.post("/api/notifications/email", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user.id;
 
-      // Only allow instructors to send email notifications
+      // Only allow instructors and above to send email notifications
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
+      const allowedRoles = ['instructor', 'admin', 'superadmin'];
+      if (!user || !allowedRoles.includes(user.role)) {
         return res.status(403).json({ error: "Unauthorized: Instructor access required" });
       }
 

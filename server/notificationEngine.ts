@@ -836,16 +836,17 @@ export class NotificationEngine {
         // Send via appropriate channel
         if (template.channelType === 'email') {
           await NotificationEmailService.sendNotificationEmail({
-            to: recipient.email,
+            to: [recipient.email],
             subject,
-            body,
-            instructorId: params.instructorId,
+            htmlContent: body,
+            textContent: body,
           });
         } else if (template.channelType === 'sms' && recipient.phone) {
           await NotificationSmsService.sendNotificationSms({
-            to: recipient.phone,
-            body,
+            to: [recipient.phone],
+            message: body,
             instructorId: params.instructorId,
+            purpose: 'administrative',
           });
         }
       }
