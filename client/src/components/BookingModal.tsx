@@ -12,7 +12,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Clock, DollarSign, CheckCircle, X, LogIn } from "lucide-react";
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import type { AppointmentType } from "@shared/schema";
+
+// Initialize Stripe
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
+  : null;
 
 type TimeSlot = {
   startTime: string; // ISO string from API
@@ -48,6 +55,8 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [selectedDurationHours, setSelectedDurationHours] = useState<number>(2); // For variable duration appointments
+  const [clientSecret, setClientSecret] = useState<string>("");
+  const [paymentIntentId, setPaymentIntentId] = useState<string>("");
   
   // Booking form state
   const [bookingForm, setBookingForm] = useState({
@@ -754,22 +763,10 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Special Requests or Notes</Label>
-              <Textarea
-                id="notes"
-                value={bookingForm.notes}
-                onChange={(e) => setBookingForm(prev => ({ ...prev, notes: e.target.value }))}
-                rows={3}
-                placeholder="Any special requirements or questions..."
-                data-testid="textarea-notes"
-              />
-            </div>
-
             <div className="border-t pt-4 space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Total</span>
-                <span className="text-lg font-bold">${Number(appointmentType?.price || 0).toFixed(2)}</span>
+                <span className="text-lg font-bold">${getTotalPrice().toFixed(2)}</span>
               </div>
               <Button
                 type="submit"

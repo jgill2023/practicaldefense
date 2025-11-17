@@ -431,6 +431,8 @@ export class AppointmentService {
     partySize?: number;
     actualDurationMinutes?: number;
     totalPrice?: number;
+    paymentIntentId?: string;
+    stripePaymentIntentId?: string;
   }): Promise<{ success: boolean; appointment?: InstructorAppointment; error?: string }> {
     const validation = await this.validateAppointmentBooking(
       data.instructorId,
@@ -461,9 +463,11 @@ export class AppointmentService {
         studentNotes: data.studentNotes || null,
         partySize: data.partySize || 1,
         status,
-        paymentStatus: 'pending',
+        paymentStatus: data.paymentIntentId ? 'paid' : 'pending',
         actualDurationMinutes: data.actualDurationMinutes || null,
         totalPrice: data.totalPrice || null,
+        paymentIntentId: data.paymentIntentId || null,
+        stripePaymentIntentId: data.stripePaymentIntentId || null,
       });
 
       return { success: true, appointment };

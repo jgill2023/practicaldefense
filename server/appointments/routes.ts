@@ -1,9 +1,18 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import Stripe from 'stripe';
 import { storage } from '../storage';
 import { appointmentService } from './service';
 import { isAuthenticated } from '../customAuth';
 import { NotificationEngine } from '../notificationEngine';
+
+// Initialize Stripe
+let stripe: Stripe | null = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-08-27.basil",
+  });
+}
 import { 
   insertAppointmentTypeSchema,
   insertInstructorWeeklyTemplateSchema,
@@ -564,6 +573,66 @@ appointmentRouter.get('/types/:instructorId', async (req, res) => {
   }
 });
 
+// Create Stripe PaymentIntent for appointment booking
+appointmentRouter.post('/create-payment-intent', async (req, res) => {
+  try {
+    if (!stripe) {
+      return res.status(503).json({ message: "Payment processing is not configured" });
+    }
+
+    const { instructorId, appointmentTypeId, startTime, endTime, durationHours } = req.body;
+
+    if (!instructorId || !appointmentTypeId || !startTime || !endTime) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // Get appointment type to calculate price
+    const appointmentType = await storage.getAppointmentType(appointmentTypeId);
+    if (!appointmentType) {
+      return res.status(404).json({ message: "Appointment type not found" });
+    }
+
+    // Validate slot is still available
+    const validation = await appointmentService.validateAppointmentBooking(
+      instructorId,
+      appointmentTypeId,
+      new Date(startTime),
+      new Date(endTime)
+    );
+
+    if (!validation.valid) {
+      return res.status(400).json({ message: validation.reason });
+    }
+
+    // Calculate total amount
+    let amount: number;
+    if ((appointmentType as any).isVariableDuration && durationHours) {
+      const pricePerHour = Number((appointmentType as any).pricePerHour || 0);
+      amount = pricePerHour * durationHours;
+    } else {
+      amount = Number(appointmentType.price);
+    }
+
+    // Create PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: "usd",
+      metadata: {
+        instructorId,
+        appointmentTypeId,
+        startTime: new Date(startTime).toISOString(),
+        endTime: new Date(endTime).toISOString(),
+        ...(durationHours && { durationHours: String(durationHours) }),
+      },
+    });
+
+    res.json({ clientSecret: paymentIntent.client_secret });
+  } catch (error) {
+    console.error("Error creating payment intent:", error);
+    res.status(500).json({ message: "Failed to create payment intent" });
+  }
+});
+
 appointmentRouter.get('/available-slots', async (req, res) => {
   try {
     const { instructorId, appointmentTypeId, startDate, endDate, durationHours } = req.query;
@@ -612,11 +681,27 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
       studentNotes, 
       partySize,
       actualDurationMinutes,
-      totalPrice
+      totalPrice,
+      paymentIntentId
     } = req.body;
     
     if (!instructorId || !appointmentTypeId || !startTime || !endTime) {
       return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    if (!paymentIntentId) {
+      return res.status(400).json({ message: "Payment is required" });
+    }
+
+    // Verify payment with Stripe
+    if (!stripe) {
+      return res.status(503).json({ message: "Payment processing is not configured" });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    
+    if (paymentIntent.status !== 'succeeded') {
+      return res.status(400).json({ message: "Payment has not been completed" });
     }
 
     const result = await appointmentService.bookAppointment({
@@ -629,6 +714,8 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
       partySize,
       actualDurationMinutes,
       totalPrice,
+      paymentIntentId,
+      stripePaymentIntentId: paymentIntentId,
     });
 
     if (!result.success) {
@@ -669,7 +756,8 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
       studentNotes, 
       partySize,
       actualDurationMinutes,
-      totalPrice
+      totalPrice,
+      paymentIntentId
     } = req.body;
     
     // Validate required fields
@@ -681,9 +769,24 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
       return res.status(400).json({ message: "Missing required booking information" });
     }
 
+    if (!paymentIntentId) {
+      return res.status(400).json({ message: "Payment is required" });
+    }
+
     // Validate password length if provided
     if (password && password.length < 8) {
       return res.status(400).json({ message: "Password must be at least 8 characters long" });
+    }
+
+    // Verify payment with Stripe
+    if (!stripe) {
+      return res.status(503).json({ message: "Payment processing is not configured" });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    
+    if (paymentIntent.status !== 'succeeded') {
+      return res.status(400).json({ message: "Payment has not been completed" });
     }
 
     let user;
@@ -751,6 +854,8 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
       partySize,
       actualDurationMinutes,
       totalPrice,
+      paymentIntentId,
+      stripePaymentIntentId: paymentIntentId,
     });
 
     if (!result.success) {
