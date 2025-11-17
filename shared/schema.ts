@@ -208,6 +208,8 @@ export const enrollments = pgTable("enrollments", {
   refundProcessedAt: timestamp("refund_processed_at"),
   refundAmount: varchar("refund_amount"), // Amount refunded (formatted string, e.g., "$165.00")
   refundReason: text("refund_reason"), // Reason for refund provided by instructor
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }),
+  taxRate: decimal("tax_rate", { precision: 5, scale: 4 }), // e.g., 0.0825 for 8.25%
   notes: text("notes"),
   // Form submission tracking
   formSubmissionData: jsonb("form_submission_data"),
@@ -327,6 +329,8 @@ export const instructorAppointments = pgTable("instructor_appointments", {
   paymentIntentId: varchar("payment_intent_id"),
   stripePaymentIntentId: varchar("stripe_payment_intent_id"),
   amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }),
+  taxRate: decimal("tax_rate", { precision: 5, scale: 4 }), // e.g., 0.0825 for 8.25%
   // Status tracking
   bookedAt: timestamp("booked_at").defaultNow(),
   confirmedAt: timestamp("confirmed_at"),
@@ -2238,6 +2242,8 @@ export const creditTransactions = pgTable("credit_transactions", {
   balanceAfterSms: integer("balance_after_sms").notNull(),
   balanceAfterEmail: integer("balance_after_email").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }),
+  taxRate: decimal("tax_rate", { precision: 5, scale: 4 }), // e.g., 0.0825 for 8.25%
   stripePaymentIntentId: varchar("stripe_payment_intent_id"),
   packageId: varchar("package_id").references(() => creditPackages.id),
   communicationId: uuid("communication_id").references(() => communications.id),
