@@ -202,18 +202,20 @@ export class NotificationEngine {
     const replaceVariable = (placeholder: string): string => {
       const trimmedPath = placeholder.trim();
       
-      // Try nested path first
-      let value = this.getNestedValue(variables, trimmedPath);
-      
-      // If not found and doesn't contain a dot, try flat alias map
-      if (value === undefined && !trimmedPath.includes('.')) {
+      // If it's a flat alias (no dots), try the alias map first
+      if (!trimmedPath.includes('.')) {
         const nestedPath = this.FLAT_ALIAS_MAP[trimmedPath];
         if (nestedPath) {
-          value = this.getNestedValue(variables, nestedPath);
+          const value = this.getNestedValue(variables, nestedPath);
+          if (value !== undefined) {
+            return String(value);
+          }
         }
       }
       
-      return value !== undefined ? String(value) : '';
+      // Otherwise try the path directly
+      const value = this.getNestedValue(variables, trimmedPath);
+      return value !== undefined && typeof value !== 'object' ? String(value) : '';
     };
 
     // Replace double braces first {{var}}
