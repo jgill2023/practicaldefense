@@ -14,34 +14,58 @@ import {
 
 export const appointmentRouter = Router();
 
-async function verifyAppointmentTypeOwnership(typeId: string, instructorId: string): Promise<boolean> {
+async function verifyAppointmentTypeOwnership(typeId: string, user: any): Promise<boolean> {
+  // Admin and superadmin can access all appointment types
+  if (user.role === 'admin' || user.role === 'superadmin') {
+    return true;
+  }
   const appointmentType = await storage.getAppointmentType(typeId);
-  return appointmentType?.instructorId === instructorId;
+  return appointmentType?.instructorId === user.id;
 }
 
-async function verifyWeeklyTemplateOwnership(templateId: string, instructorId: string): Promise<boolean> {
+async function verifyWeeklyTemplateOwnership(templateId: string, user: any): Promise<boolean> {
+  // Admin and superadmin can access all templates
+  if (user.role === 'admin' || user.role === 'superadmin') {
+    return true;
+  }
   const template = await storage.getWeeklyTemplate(templateId);
-  return template?.instructorId === instructorId;
+  return template?.instructorId === user.id;
 }
 
-async function verifyAvailabilityOverrideOwnership(overrideId: string, instructorId: string): Promise<boolean> {
+async function verifyAvailabilityOverrideOwnership(overrideId: string, user: any): Promise<boolean> {
+  // Admin and superadmin can access all overrides
+  if (user.role === 'admin' || user.role === 'superadmin') {
+    return true;
+  }
   const override = await storage.getAvailabilityOverride(overrideId);
-  return override?.instructorId === instructorId;
+  return override?.instructorId === user.id;
 }
 
-async function verifyNotificationTemplateOwnership(templateId: string, instructorId: string): Promise<boolean> {
+async function verifyNotificationTemplateOwnership(templateId: string, user: any): Promise<boolean> {
+  // Admin and superadmin can access all notification templates
+  if (user.role === 'admin' || user.role === 'superadmin') {
+    return true;
+  }
   const template = await storage.getAppointmentNotificationTemplate(templateId);
-  return template?.instructorId === instructorId;
+  return template?.instructorId === user.id;
 }
 
-async function verifyReminderScheduleOwnership(scheduleId: string, instructorId: string): Promise<boolean> {
+async function verifyReminderScheduleOwnership(scheduleId: string, user: any): Promise<boolean> {
+  // Admin and superadmin can access all reminder schedules
+  if (user.role === 'admin' || user.role === 'superadmin') {
+    return true;
+  }
   const schedule = await storage.getAppointmentReminderSchedule(scheduleId);
-  return schedule?.instructorId === instructorId;
+  return schedule?.instructorId === user.id;
 }
 
-async function verifyAppointmentOwnership(appointmentId: string, instructorId: string): Promise<boolean> {
+async function verifyAppointmentOwnership(appointmentId: string, user: any): Promise<boolean> {
+  // Admin and superadmin can access all appointments
+  if (user.role === 'admin' || user.role === 'superadmin') {
+    return true;
+  }
   const appointment = await storage.getAppointment(appointmentId);
-  return appointment?.instructorId === instructorId;
+  return appointment?.instructorId === user.id;
 }
 
 // ============================================
@@ -110,7 +134,7 @@ appointmentRouter.patch('/instructor/appointment-types/:id', isAuthenticated, as
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyAppointmentTypeOwnership(id, instructorId)) {
+    if (!await verifyAppointmentTypeOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to modify this appointment type" });
     }
     
@@ -136,7 +160,7 @@ appointmentRouter.delete('/instructor/appointment-types/:id', isAuthenticated, a
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyAppointmentTypeOwnership(id, instructorId)) {
+    if (!await verifyAppointmentTypeOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to delete this appointment type" });
     }
     
@@ -184,7 +208,7 @@ appointmentRouter.patch('/instructor/weekly-templates/:id', isAuthenticated, asy
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyWeeklyTemplateOwnership(id, instructorId)) {
+    if (!await verifyWeeklyTemplateOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to modify this weekly template" });
     }
     
@@ -201,7 +225,7 @@ appointmentRouter.delete('/instructor/weekly-templates/:id', isAuthenticated, as
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyWeeklyTemplateOwnership(id, instructorId)) {
+    if (!await verifyWeeklyTemplateOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to delete this weekly template" });
     }
     
@@ -249,7 +273,7 @@ appointmentRouter.patch('/instructor/availability-overrides/:id', isAuthenticate
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyAvailabilityOverrideOwnership(id, instructorId)) {
+    if (!await verifyAvailabilityOverrideOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to modify this availability override" });
     }
     
@@ -266,7 +290,7 @@ appointmentRouter.delete('/instructor/availability-overrides/:id', isAuthenticat
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyAvailabilityOverrideOwnership(id, instructorId)) {
+    if (!await verifyAvailabilityOverrideOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to delete this availability override" });
     }
     
@@ -314,7 +338,7 @@ appointmentRouter.patch('/instructor/notification-templates/:id', isAuthenticate
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyNotificationTemplateOwnership(id, instructorId)) {
+    if (!await verifyNotificationTemplateOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to modify this notification template" });
     }
     
@@ -331,7 +355,7 @@ appointmentRouter.delete('/instructor/notification-templates/:id', isAuthenticat
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyNotificationTemplateOwnership(id, instructorId)) {
+    if (!await verifyNotificationTemplateOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to delete this notification template" });
     }
     
@@ -379,7 +403,7 @@ appointmentRouter.patch('/instructor/reminder-schedules/:id', isAuthenticated, a
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyReminderScheduleOwnership(id, instructorId)) {
+    if (!await verifyReminderScheduleOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to modify this reminder schedule" });
     }
     
@@ -396,7 +420,7 @@ appointmentRouter.delete('/instructor/reminder-schedules/:id', isAuthenticated, 
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyReminderScheduleOwnership(id, instructorId)) {
+    if (!await verifyReminderScheduleOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to delete this reminder schedule" });
     }
     
@@ -451,7 +475,7 @@ appointmentRouter.post('/instructor/appointments/:id/approve', isAuthenticated, 
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyAppointmentOwnership(id, instructorId)) {
+    if (!await verifyAppointmentOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to approve this appointment" });
     }
     
@@ -468,7 +492,7 @@ appointmentRouter.post('/instructor/appointments/:id/reject', isAuthenticated, a
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyAppointmentOwnership(id, instructorId)) {
+    if (!await verifyAppointmentOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to reject this appointment" });
     }
     
@@ -486,7 +510,7 @@ appointmentRouter.post('/instructor/appointments/:id/cancel', isAuthenticated, a
     const { id } = req.params;
     const instructorId = req.user.id;
     
-    if (!await verifyAppointmentOwnership(id, instructorId)) {
+    if (!await verifyAppointmentOwnership(id, req.user)) {
       return res.status(403).json({ message: "Not authorized to cancel this appointment" });
     }
     
