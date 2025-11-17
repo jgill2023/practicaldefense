@@ -896,7 +896,7 @@ export class NotificationEngine {
         title: appointmentType.title,
         description: appointmentType.description || '',
         duration: `${appointmentType.durationMinutes} minutes`,
-        price: `$${appointmentType.price.toFixed(2)}`,
+        price: `$${Number(appointmentType.price).toFixed(2)}`,
       },
       system: {
         companyName: 'Tactical Advantage',
