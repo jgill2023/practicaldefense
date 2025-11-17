@@ -13,13 +13,13 @@ Welcome! This guide will help you set up your own firearms training platform usi
 1. **Fork this Repl** to create your own copy
 2. **Log in as an instructor** (you'll be assigned the instructor role automatically on first login)
 3. **Click the "Onboarding" button** on your instructor dashboard
-4. **Follow the onboarding wizard** to set up your integrations
+4. **Follow the onboarding wizard** to set up Stripe payment processing
 
 ## Required Setup
 
-### 1. Stripe (Required)
+### Stripe Payment Processing (Required)
 
-Stripe handles all payment processing for course enrollments and merchandise.
+Stripe handles all payment processing for course enrollments and merchandise. This is the only required integration for the onboarding process.
 
 **Steps:**
 1. Sign up at [https://stripe.com](https://stripe.com)
@@ -30,9 +30,11 @@ Stripe handles all payment processing for course enrollments and merchandise.
 
 **Important:** Configure tax settings in your Stripe dashboard for automatic tax calculation.
 
-## Optional Integrations
+## Advanced Optional Integrations
 
-### 2. Twilio (Optional - SMS Notifications)
+The following integrations are optional and can be set up after completing the initial onboarding process:
+
+### Twilio (Optional - SMS Notifications)
 
 Enable SMS notifications for course reminders and student communications.
 
@@ -44,7 +46,7 @@ Enable SMS notifications for course reminders and student communications.
    - `TWILIO_AUTH_TOKEN`
    - `TWILIO_PHONE_NUMBER`
 
-### 3. SendGrid (Optional - Email Notifications)
+### SendGrid (Optional - Email Notifications)
 
 Professional email notifications for course communications.
 
