@@ -344,6 +344,37 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     },
   });
 
+  // Create payment intent when booking form opens
+  useEffect(() => {
+    if (showBookingForm && selectedSlot && appointmentType && !clientSecret) {
+      const createPaymentIntent = async () => {
+        try {
+          const isVariableDuration = (appointmentType as any).isVariableDuration;
+          const response = await apiRequest("POST", "/api/appointments/create-payment-intent", {
+            instructorId,
+            appointmentTypeId: appointmentType.id,
+            startTime: selectedSlot.startTime,
+            endTime: isVariableDuration ? getCalculatedEndTime(selectedSlot.startTime, selectedDurationHours) : selectedSlot.endTime,
+            durationHours: isVariableDuration ? selectedDurationHours : undefined,
+          });
+
+          if (response.clientSecret) {
+            setClientSecret(response.clientSecret);
+          }
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "Failed to initialize payment",
+            variant: "destructive",
+          });
+          setShowBookingForm(false);
+        }
+      };
+
+      createPaymentIntent();
+    }
+  }, [showBookingForm, selectedSlot, appointmentType]);
+
   const handleBooking = () => {
     // Show booking form when user clicks confirm
     setShowBookingForm(true);
@@ -353,6 +384,231 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     e.preventDefault();
     bookAppointmentMutation.mutate();
   };
+
+  // Payment Form Component - renders inside Elements provider
+  function PaymentFormContent() {
+    const stripe = useStripe();
+    const elements = useElements();
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const handlePaymentSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (!stripe || !elements) {
+        return;
+      }
+
+      // Validate form fields for non-authenticated users
+      if (!isAuthenticated) {
+        if (!bookingForm.firstName || !bookingForm.lastName || !bookingForm.email) {
+          toast({
+            title: "Error",
+            description: "Please fill in all required fields",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (bookingForm.password && bookingForm.password.length < 8) {
+          toast({
+            title: "Error",
+            description: "Password must be at least 8 characters long",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      setIsProcessing(true);
+
+      try {
+        // Confirm payment
+        const { error, paymentIntent } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: `${window.location.origin}/appointments`, // Redirect after payment
+          },
+          redirect: 'if_required',
+        });
+
+        if (error) {
+          toast({
+            title: "Payment Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+          setIsProcessing(false);
+          return;
+        }
+
+        if (paymentIntent && paymentIntent.status === 'succeeded') {
+          // Payment successful, now book the appointment
+          try {
+            const isVariableDuration = (appointmentType as any).isVariableDuration;
+            const bookingData = {
+              instructorId,
+              appointmentTypeId: appointmentType.id,
+              startTime: selectedSlot!.startTime,
+              endTime: isVariableDuration ? getCalculatedEndTime(selectedSlot!.startTime, selectedDurationHours) : selectedSlot!.endTime,
+              partySize: 1,
+              actualDurationMinutes: isVariableDuration ? selectedDurationHours * 60 : undefined,
+              totalPrice: isVariableDuration ? getTotalPrice() : undefined,
+              paymentIntentId: paymentIntent.id,
+            };
+
+            let response;
+            if (isAuthenticated) {
+              response = await apiRequest("POST", "/api/appointments/book", bookingData);
+            } else {
+              response = await apiRequest("POST", "/api/appointments/book-with-signup", {
+                ...bookingData,
+                firstName: bookingForm.firstName,
+                lastName: bookingForm.lastName,
+                email: bookingForm.email,
+                phone: bookingForm.phone,
+                password: bookingForm.password || undefined,
+              });
+            }
+
+            toast({
+              title: "Booking Confirmed",
+              description: "Your payment was successful and your appointment has been booked!",
+            });
+
+            // Invalidate queries
+            queryClient.invalidateQueries({ queryKey: ["/api/appointments/my-appointments"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+            // Close dialogs
+            setShowBookingForm(false);
+            onClose();
+          } catch (bookingError: any) {
+            toast({
+              title: "Booking Failed",
+              description: bookingError.message || "Payment succeeded but booking failed. Please contact support.",
+              variant: "destructive",
+            });
+          }
+        }
+      } catch (paymentError: any) {
+        toast({
+          title: "Error",
+          description: paymentError.message || "An error occurred",
+          variant: "destructive",
+        });
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    return (
+      <form onSubmit={handlePaymentSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="firstName">
+              First Name <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="firstName"
+              value={bookingForm.firstName}
+              onChange={(e) => setBookingForm(prev => ({ ...prev, firstName: e.target.value }))}
+              required
+              disabled={isAuthenticated}
+              data-testid="input-first-name"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastName">
+              Last Name <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="lastName"
+              value={bookingForm.lastName}
+              onChange={(e) => setBookingForm(prev => ({ ...prev, lastName: e.target.value }))}
+              required
+              disabled={isAuthenticated}
+              data-testid="input-last-name"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">
+            Email <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            value={bookingForm.email}
+            onChange={(e) => setBookingForm(prev => ({ ...prev, email: e.target.value }))}
+            required
+            disabled={isAuthenticated}
+            data-testid="input-email"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone</Label>
+          <Input
+            id="phone"
+            type="tel"
+            value={bookingForm.phone}
+            onChange={(e) => setBookingForm(prev => ({ ...prev, phone: e.target.value }))}
+            disabled={isAuthenticated}
+            data-testid="input-phone"
+          />
+        </div>
+
+        {!isAuthenticated && (
+          <div className="space-y-2">
+            <Label htmlFor="password">
+              Create Password (Optional)
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              value={bookingForm.password}
+              onChange={(e) => setBookingForm(prev => ({ ...prev, password: e.target.value }))}
+              minLength={8}
+              placeholder="Leave blank to receive password setup email"
+              data-testid="input-password"
+            />
+            <p className="text-xs text-muted-foreground">
+              {bookingForm.password 
+                ? "Your account will be created when you complete the booking"
+                : "We'll email you a link to set up your password after booking"
+              }
+            </p>
+          </div>
+        )}
+
+        <div className="border-t pt-4">
+          <Label className="text-sm font-medium mb-2 block">Payment Information</Label>
+          <PaymentElement />
+        </div>
+
+        <div className="border-t pt-4 space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">Total</span>
+            <span className="text-lg font-bold">${getTotalPrice().toFixed(2)}</span>
+          </div>
+          <Button
+            type="submit"
+            className="w-full bg-black text-white hover:bg-black/90"
+            disabled={isProcessing || !stripe || !elements}
+            data-testid="button-submit-booking"
+          >
+            {isProcessing ? "Processing..." : "Complete Booking"}
+          </Button>
+          {appointmentType?.requiresApproval && (
+            <p className="text-xs text-muted-foreground text-center">
+              Your booking will be pending instructor approval
+            </p>
+          )}
+        </div>
+      </form>
+    );
+  }
 
   if (!appointmentType) return null;
 
@@ -661,7 +917,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         </div>
       </DialogContent>
 
-      {/* Booking Form Dialog */}
+      {/* Booking Form Dialog with Stripe Payment */}
       <Dialog open={showBookingForm} onOpenChange={setShowBookingForm}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="booking-form-dialog">
           <DialogHeader>
@@ -683,106 +939,15 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             </div>
           )}
 
-          <form onSubmit={handleFormSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">
-                  First Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="firstName"
-                  value={bookingForm.firstName}
-                  onChange={(e) => setBookingForm(prev => ({ ...prev, firstName: e.target.value }))}
-                  required
-                  disabled={isAuthenticated}
-                  data-testid="input-first-name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">
-                  Last Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="lastName"
-                  value={bookingForm.lastName}
-                  onChange={(e) => setBookingForm(prev => ({ ...prev, lastName: e.target.value }))}
-                  required
-                  disabled={isAuthenticated}
-                  data-testid="input-last-name"
-                />
-              </div>
+          {clientSecret && stripePromise ? (
+            <Elements stripe={stripePromise} options={{ clientSecret }}>
+              <PaymentFormContent />
+            </Elements>
+          ) : (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading payment form"/>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">
-                Email <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={bookingForm.email}
-                onChange={(e) => setBookingForm(prev => ({ ...prev, email: e.target.value }))}
-                required
-                disabled={isAuthenticated}
-                data-testid="input-email"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={bookingForm.phone}
-                onChange={(e) => setBookingForm(prev => ({ ...prev, phone: e.target.value }))}
-                disabled={isAuthenticated}
-                data-testid="input-phone"
-              />
-            </div>
-
-            {!isAuthenticated && (
-              <div className="space-y-2">
-                <Label htmlFor="password">
-                  Create Password (Optional)
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={bookingForm.password}
-                  onChange={(e) => setBookingForm(prev => ({ ...prev, password: e.target.value }))}
-                  minLength={8}
-                  placeholder="Leave blank to receive password setup email"
-                  data-testid="input-password"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {bookingForm.password 
-                    ? "Your account will be created when you complete the booking"
-                    : "We'll email you a link to set up your password after booking"
-                  }
-                </p>
-              </div>
-            )}
-
-            <div className="border-t pt-4 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Total</span>
-                <span className="text-lg font-bold">${getTotalPrice().toFixed(2)}</span>
-              </div>
-              <Button
-                type="submit"
-                className="w-full bg-black text-white hover:bg-black/90"
-                disabled={bookAppointmentMutation.isPending}
-                data-testid="button-submit-booking"
-              >
-                {bookAppointmentMutation.isPending ? "Processing..." : "Complete Booking"}
-              </Button>
-              {appointmentType?.requiresApproval && (
-                <p className="text-xs text-muted-foreground text-center">
-                  Your booking will be pending instructor approval
-                </p>
-              )}
-            </div>
-          </form>
+          )}
         </DialogContent>
       </Dialog>
     </Dialog>
