@@ -475,9 +475,11 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
               description: "Your payment was successful and your appointment has been booked!",
             });
 
-            // Invalidate queries
+            // Invalidate queries to refresh availability and user data
             queryClient.invalidateQueries({ queryKey: ["/api/appointments/my-appointments"] });
             queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/appointments/available-slots"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/appointments/available-slots-day"] });
 
             // Close dialogs
             setShowBookingForm(false);
