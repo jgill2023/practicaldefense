@@ -6520,7 +6520,7 @@ Please respond to ${email} based on their preferred contact method: ${preferredC
             <p>If you have any urgent questions, please feel free to call us at <strong>(505) 944-5247</strong>.</p>
 
             <p>Best regards,<br>
-            <strong>Jeremy Gill</strong><br>
+            <strong>Christopher Bean | Tactical Advantage</strong><br>
             Practical Defense Training<br>
             jeremy@abqconcealedcarry.com<br>
             (505) 944-5247</p>
@@ -6544,7 +6544,7 @@ Preferred Contact Method: ${preferredContact || 'Email'}
 If you have any urgent questions, please feel free to call us at (505) 944-5247.
 
 Best regards,
-Jeremy Gill
+Christopher Bean | Tactical Advantage
 Practical Defense Training
 jeremy@abqconcealedcarry.com
 (505) 944-5247
