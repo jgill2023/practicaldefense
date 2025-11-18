@@ -3902,7 +3902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create a form field
-  app.post("/api/course-form-fields", async (req, res) => {
+  app.post("/api/course-form-fields", isAuthenticated, async (req: any, res) => {
     try {
       // Validate request body with Zod
       const { formId, fieldType, label, placeholder, isRequired, options } = insertCourseInformationFormFieldSchema.parse({
@@ -3944,7 +3944,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update a form field
-  app.patch("/api/course-form-fields/:fieldId", async (req, res) => {
+  app.patch("/api/course-form-fields/:fieldId", isAuthenticated, async (req: any, res) => {
     try {
       const { fieldId } = req.params;
       const { fieldType, label, placeholder, isRequired, options } = req.body;
@@ -3993,7 +3993,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete a form field
-  app.delete("/api/course-form-fields/:fieldId", async (req, res) => {
+  app.delete("/api/course-form-fields/:fieldId", isAuthenticated, async (req: any, res) => {
     try {
       const { fieldId } = req.params;
 
