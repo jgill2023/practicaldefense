@@ -87,11 +87,15 @@ export function StudentProfileModal({
   const { data: profile, isLoading, isError } = useQuery<StudentProfile>({
     queryKey: [`/api/students/${studentId}/profile`],
     enabled: isOpen && !!studentId,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 
   const { data: upcomingAppointments = [], isLoading: appointmentsLoading, isError: appointmentsError } = useQuery<StudentAppointment[]>({
     queryKey: [`/api/students/${studentId}/upcoming-appointments`],
     enabled: isOpen && !!studentId,
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
   const getCompletionStatus = (enrollment: EnrollmentHistory) => {
