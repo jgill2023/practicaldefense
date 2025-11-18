@@ -1164,7 +1164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check ownership: either authenticated user owns it, or it's a guest enrollment
-      if (req.isAuthenticated()) {
+      if (req.user) {
         const userId = req.user.id;
         // For authenticated users, allow access to:
         // 1. Enrollments they own (studentId matches)
@@ -1202,7 +1202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check ownership: either authenticated user owns it, guest user matches email, or it's a draft enrollment
-      if (req.isAuthenticated()) {
+      if (req.user) {
         const userId = req.user.id;
         if (enrollment.studentId !== userId) {
           return res.status(403).json({ message: "Access denied - enrollment ownership required" });
