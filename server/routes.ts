@@ -1680,6 +1680,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get waiver template by ID (for students to view when signing)
+  app.get('/api/waiver-templates/:templateId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.claims.sub;
+      const templateId = req.params.templateId;
+      
+      // Get template
+      const template = await storage.getWaiverTemplate(templateId);
+      if (!template) {
+        return res.status(404).json({ message: "Waiver template not found" });
+      }
+
+      // Verify user has access to this template
+      const user = await storage.getUser(userId);
+      
+      // Admins and instructors can access any template
+      if (user?.role === 'instructor' || user?.role === 'superadmin' || user?.role === 'admin') {
+        return res.json({
+          id: template.id,
+          name: template.name,
+          content: template.content,
+          version: template.version,
+        });
+      }
+
+      // For students, verify they have a PENDING waiver instance for this template
+      const allInstances = await storage.getWaiverInstancesByTemplate(templateId);
+      const userEnrollments = await storage.getEnrollmentsByStudent(userId);
+      const userEnrollmentIds = userEnrollments.map(e => e.id);
+      
+      // Check if user has any PENDING waiver instance for this template
+      const hasPendingWaiver = allInstances.some(instance => 
+        userEnrollmentIds.includes(instance.enrollmentId) && instance.status === 'pending'
+      );
+
+      if (!hasPendingWaiver) {
+        return res.status(403).json({ message: "No pending waiver found for this template" });
+      }
+
+      // Return only necessary fields for signing
+      res.json({
+        id: template.id,
+        name: template.name,
+        content: template.content,
+        version: template.version,
+      });
+    } catch (error) {
+      console.error("Error fetching waiver template:", error);
+      res.status(500).json({ message: "Failed to fetch waiver template" });
+    }
+  });
+
   // Payment balance tracking
   app.get('/api/enrollments/:enrollmentId/payment-balance', isAuthenticated, async (req: any, res) => {
     try {

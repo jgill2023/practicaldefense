@@ -25,6 +25,7 @@ import type { EnrollmentWithDetails, User, CourseWithSchedules, CourseSchedule }
 import { useLocation } from "wouter";
 import { StudentBookingsModal } from "@/components/StudentBookingsModal";
 import { EnrollmentFeedbackModal } from "@/components/EnrollmentFeedbackModal";
+import { WaiverSigningInterface } from "@/components/WaiverSigningInterface";
 import { getEnrollmentStatusClassName } from "@/lib/statusColors";
 
 // Types for the query responses
@@ -2377,6 +2378,136 @@ function PendingFormsEnrollmentCard({
   );
 }
 
+// Waiver Dialog Component
+function WaiverDialog({ enrollment, onClose }: { enrollment: EnrollmentWithDetails; onClose: () => void }) {
+  const { toast } = useToast();
+  
+  // Fetch waiver instances for this enrollment
+  const { data: waiverInstances, isLoading: waiverLoading, error: waiverError } = useQuery<any[]>({
+    queryKey: [`/api/enrollments/${enrollment.id}/waiver-instances`],
+    enabled: !!enrollment.id,
+    retry: false,
+  });
+
+  // Get the first pending waiver instance
+  const pendingWaiver = waiverInstances?.find((w) => w.status === 'pending');
+
+  // Fetch the waiver template content
+  const { data: waiverTemplate, isLoading: templateLoading, error: templateError } = useQuery<any>({
+    queryKey: [`/api/waiver-templates/${pendingWaiver?.templateId}`],
+    enabled: !!pendingWaiver?.templateId,
+    retry: false,
+  });
+
+  const handleComplete = () => {
+    toast({
+      title: 'Waiver Signed',
+      description: 'Your waiver has been successfully submitted.',
+    });
+    queryClient.invalidateQueries({ queryKey: [`/api/enrollments/${enrollment.id}/waiver-instances`] });
+    queryClient.invalidateQueries({ queryKey: ['/api/student/enrollments'] });
+    onClose();
+  };
+
+  // Merge field replacement
+  const getMergedContent = (content: string) => {
+    return content
+      .replace(/\{\{courseName\}\}/g, enrollment.course.title)
+      .replace(/\{\{courseDate\}\}/g, new Date(enrollment.schedule.startDate).toLocaleDateString())
+      .replace(/\{\{studentName\}\}/g, `${enrollment.student?.firstName || ''} ${enrollment.student?.lastName || ''}`);
+  };
+
+  if (waiverLoading || templateLoading) {
+    return (
+      <Dialog open={true} onOpenChange={() => onClose()}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Complete Course Waiver</DialogTitle>
+            <DialogDescription>
+              Please review and sign the required waiver for {enrollment.course.title}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading waiver...</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Handle errors
+  if (waiverError || templateError) {
+    return (
+      <Dialog open={true} onOpenChange={() => onClose()}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Complete Course Waiver</DialogTitle>
+            <DialogDescription>
+              Waiver for {enrollment.course.title}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="text-center py-8">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">
+              {templateError 
+                ? "Unable to load waiver template. Please contact support." 
+                : "Unable to load waiver information. Please try again."}
+            </p>
+            <Button onClick={onClose}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (!pendingWaiver || !waiverTemplate) {
+    return (
+      <Dialog open={true} onOpenChange={() => onClose()}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Complete Course Waiver</DialogTitle>
+            <DialogDescription>
+              Waiver for {enrollment.course.title}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="text-center py-8">
+            <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-4" />
+            <p className="text-muted-foreground">No pending waivers found for this course.</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  const mergedContent = getMergedContent(waiverTemplate.content);
+
+  return (
+    <Dialog open={true} onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle>Complete Course Waiver</DialogTitle>
+          <DialogDescription>
+            Please review and sign the required waiver for {enrollment.course.title}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex-1 overflow-hidden">
+          <WaiverSigningInterface
+            waiverContent={mergedContent}
+            waiverTitle={waiverTemplate.name}
+            enrollmentId={enrollment.id}
+            instanceId={pendingWaiver.id}
+            onComplete={handleComplete}
+            onCancel={onClose}
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 export default function StudentPortal() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -3051,32 +3182,9 @@ export default function StudentPortal() {
       )}
 
       {/* Waiver Completion Dialog */}
-      <Dialog open={!!selectedEnrollmentForWaiver} onOpenChange={(open) => !open && setSelectedEnrollmentForWaiver(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Complete Course Waiver</DialogTitle>
-            <DialogDescription>
-              Please review and sign the required waiver for {selectedEnrollmentForWaiver?.course.title}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedEnrollmentForWaiver && (
-            <div className="space-y-4">
-              <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-semibold mb-2">{selectedEnrollmentForWaiver.course.title}</h4>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(selectedEnrollmentForWaiver.schedule.startDate).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="text-center py-8">
-                <FileSignature className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  Waiver signing interface coming soon. You will be able to review and electronically sign required waivers here.
-                </p>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {selectedEnrollmentForWaiver && (
+        <WaiverDialog enrollment={selectedEnrollmentForWaiver} onClose={() => setSelectedEnrollmentForWaiver(null)} />
+      )}
 
       {/* Transfer Request Dialog */}
       {selectedEnrollmentForTransfer && (
