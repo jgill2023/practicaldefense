@@ -793,30 +793,32 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    if (!paymentIntentId) {
-      return res.status(400).json({ message: "Payment is required" });
-    }
+    // Payment verification (optional for free appointments)
+    let taxAmount = null;
+    let taxRate = null;
 
-    // Verify payment with Stripe
-    if (!stripe) {
-      return res.status(503).json({ message: "Payment processing is not configured" });
-    }
+    if (paymentIntentId && paymentIntentId.trim() !== '') {
+      // Verify payment with Stripe
+      if (!stripe) {
+        return res.status(503).json({ message: "Payment processing is not configured" });
+      }
 
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    
-    if (paymentIntent.status !== 'succeeded') {
-      return res.status(400).json({ message: "Payment has not been completed" });
-    }
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ message: "Payment has not been completed" });
+      }
 
-    // Extract tax information from PaymentIntent (keep as numbers for calculations)
-    const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
-    const subtotalInCents = paymentIntent.amount - totalTaxInCents;
-    
-    // Store tax amount in dollars (DECIMAL column) and rate with fixed precision
-    const taxAmount = totalTaxInCents > 0 ? (totalTaxInCents / 100).toFixed(2) : null;
-    const taxRate = totalTaxInCents > 0 && subtotalInCents > 0
-      ? (totalTaxInCents / subtotalInCents).toFixed(4)
-      : null;
+      // Extract tax information from PaymentIntent (keep as numbers for calculations)
+      const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
+      const subtotalInCents = paymentIntent.amount - totalTaxInCents;
+      
+      // Store tax amount in dollars (DECIMAL column) and rate with fixed precision
+      taxAmount = totalTaxInCents > 0 ? (totalTaxInCents / 100).toFixed(2) : null;
+      taxRate = totalTaxInCents > 0 && subtotalInCents > 0
+        ? (totalTaxInCents / subtotalInCents).toFixed(4)
+        : null;
+    }
 
     const result = await appointmentService.bookAppointment({
       instructorId,
@@ -885,35 +887,37 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
       return res.status(400).json({ message: "Missing required booking information" });
     }
 
-    if (!paymentIntentId) {
-      return res.status(400).json({ message: "Payment is required" });
-    }
-
     // Validate password length if provided
     if (password && password.length < 8) {
       return res.status(400).json({ message: "Password must be at least 8 characters long" });
     }
 
-    // Verify payment with Stripe
-    if (!stripe) {
-      return res.status(503).json({ message: "Payment processing is not configured" });
-    }
+    // Payment verification (optional for free appointments)
+    let taxAmount = null;
+    let taxRate = null;
 
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    
-    if (paymentIntent.status !== 'succeeded') {
-      return res.status(400).json({ message: "Payment has not been completed" });
-    }
+    if (paymentIntentId && paymentIntentId.trim() !== '') {
+      // Verify payment with Stripe
+      if (!stripe) {
+        return res.status(503).json({ message: "Payment processing is not configured" });
+      }
 
-    // Extract tax information from PaymentIntent (keep as numbers for calculations)
-    const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
-    const subtotalInCents = paymentIntent.amount - totalTaxInCents;
-    
-    // Store tax amount in dollars (DECIMAL column) and rate with fixed precision
-    const taxAmount = totalTaxInCents > 0 ? (totalTaxInCents / 100).toFixed(2) : null;
-    const taxRate = totalTaxInCents > 0 && subtotalInCents > 0
-      ? (totalTaxInCents / subtotalInCents).toFixed(4)
-      : null;
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ message: "Payment has not been completed" });
+      }
+
+      // Extract tax information from PaymentIntent (keep as numbers for calculations)
+      const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
+      const subtotalInCents = paymentIntent.amount - totalTaxInCents;
+      
+      // Store tax amount in dollars (DECIMAL column) and rate with fixed precision
+      taxAmount = totalTaxInCents > 0 ? (totalTaxInCents / 100).toFixed(2) : null;
+      taxRate = totalTaxInCents > 0 && subtotalInCents > 0
+        ? (totalTaxInCents / subtotalInCents).toFixed(4)
+        : null;
+    }
 
     let user;
     let isNewUser = false;

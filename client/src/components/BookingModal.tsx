@@ -57,6 +57,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   const [selectedDurationHours, setSelectedDurationHours] = useState<number>(2); // For variable duration appointments
   const [clientSecret, setClientSecret] = useState<string>("");
   const [paymentIntentId, setPaymentIntentId] = useState<string>("");
+  const [isFreeAppointment, setIsFreeAppointment] = useState<boolean>(false);
   const [taxBreakdown, setTaxBreakdown] = useState<{
     subtotal: number;
     tax: number;
@@ -98,6 +99,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
       setShowBookingForm(false);
       setClientSecret("");
       setPaymentIntentId("");
+      setIsFreeAppointment(false);
       setTaxBreakdown(null);
       setBillingAddress({
         line1: '',
@@ -401,7 +403,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
 
   // Create payment intent when booking form opens
   useEffect(() => {
-    if (showBookingForm && selectedSlot && appointmentType && !clientSecret) {
+    if (showBookingForm && selectedSlot && appointmentType) {
       const createPaymentIntent = async () => {
         try {
           const isVariableDuration = (appointmentType as any).isVariableDuration;
@@ -413,7 +415,16 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             durationHours: isVariableDuration ? selectedDurationHours : undefined,
           });
 
-          if (response.clientSecret) {
+          // Check if appointment is free
+          if (response.isFree) {
+            // Clear any existing payment state and set free flag
+            setClientSecret("");
+            setPaymentIntentId("");
+            setTaxBreakdown(null);
+            setIsFreeAppointment(true);
+          } else if (response.clientSecret) {
+            // Clear free flag and set payment state
+            setIsFreeAppointment(false);
             setClientSecret(response.clientSecret);
             // Extract PaymentIntent ID from client secret (format: pi_xxx_secret_yyy)
             const piId = response.clientSecret.split('_secret_')[0];
@@ -434,6 +445,11 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   }, [showBookingForm, selectedSlot, appointmentType]);
 
   const handleBooking = () => {
+    // Reset all payment state when opening booking form to force fresh payment intent creation
+    setClientSecret("");
+    setPaymentIntentId("");
+    setIsFreeAppointment(false);
+    setTaxBreakdown(null);
     // Show booking form when user clicks confirm
     setShowBookingForm(true);
   };
@@ -1108,7 +1124,115 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             </div>
           )}
 
-          {clientSecret && stripePromise ? (
+          {!clientSecret && isFreeAppointment ? (
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              {!isAuthenticated && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="free-firstName">
+                        First Name <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="free-firstName"
+                        value={bookingForm.firstName}
+                        onChange={(e) => setBookingForm(prev => ({ ...prev, firstName: e.target.value }))}
+                        required
+                        data-testid="input-free-first-name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="free-lastName">
+                        Last Name <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="free-lastName"
+                        value={bookingForm.lastName}
+                        onChange={(e) => setBookingForm(prev => ({ ...prev, lastName: e.target.value }))}
+                        required
+                        data-testid="input-free-last-name"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="free-email">
+                      Email <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="free-email"
+                      type="email"
+                      value={bookingForm.email}
+                      onChange={(e) => setBookingForm(prev => ({ ...prev, email: e.target.value }))}
+                      required
+                      data-testid="input-free-email"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="free-phone">Phone (optional)</Label>
+                    <Input
+                      id="free-phone"
+                      type="tel"
+                      value={bookingForm.phone}
+                      onChange={(e) => setBookingForm(prev => ({ ...prev, phone: e.target.value }))}
+                      data-testid="input-free-phone"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="free-password">
+                      Create Password (optional)
+                    </Label>
+                    <Input
+                      id="free-password"
+                      type="password"
+                      value={bookingForm.password}
+                      onChange={(e) => setBookingForm(prev => ({ ...prev, password: e.target.value }))}
+                      placeholder="Optional - to create an account"
+                      data-testid="input-free-password"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Leave blank to book as a guest, or create a password to access your appointment online
+                    </p>
+                  </div>
+                </>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="free-notes">Notes (optional)</Label>
+                <Textarea
+                  id="free-notes"
+                  value={bookingForm.notes}
+                  onChange={(e) => setBookingForm(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Any special requests or information for the instructor?"
+                  className="min-h-[80px]"
+                  data-testid="textarea-free-notes"
+                />
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-sm font-medium">Total</span>
+                  <span className="text-lg font-bold text-green-600">FREE</span>
+                </div>
+                
+                <Button
+                  type="submit"
+                  disabled={bookAppointmentMutation.isPending}
+                  className="w-full"
+                  data-testid="button-book-free"
+                >
+                  {bookAppointmentMutation.isPending ? "Booking..." : "Confirm Booking"}
+                </Button>
+                {appointmentType?.requiresApproval && (
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    Your booking will be pending instructor approval
+                  </p>
+                )}
+              </div>
+            </form>
+          ) : clientSecret && stripePromise ? (
             <Elements stripe={stripePromise} options={{ clientSecret }}>
               <PaymentFormContent />
             </Elements>
