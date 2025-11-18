@@ -181,6 +181,8 @@ authRouter.post("/request-reset", async (req, res) => {
 
     const resetToken = generateToken();
     const resetExpiry = getTokenExpiry(1);
+    
+    console.log(`Generated reset token for ${email}: ${resetToken.substring(0, 10)}... (expires: ${resetExpiry})`);
 
     await db
       .update(users)
@@ -214,6 +216,8 @@ authRouter.post("/reset-password", async (req, res) => {
   try {
     const { token, password } = resetPasswordSchema.parse(req.body);
 
+    console.log(`Password reset attempt with token: ${token.substring(0, 10)}...`);
+    
     const user = await db.query.users.findFirst({
       where: and(
         eq(users.passwordResetToken, token),
@@ -222,8 +226,18 @@ authRouter.post("/reset-password", async (req, res) => {
     });
 
     if (!user) {
+      console.log(`No user found with valid reset token`);
+      // Check if token exists but is expired
+      const expiredUser = await db.query.users.findFirst({
+        where: eq(users.passwordResetToken, token),
+      });
+      if (expiredUser) {
+        console.log(`Token found but expired. Expiry: ${expiredUser.passwordResetExpiry}`);
+      }
       return res.status(400).json({ message: "Invalid or expired reset token" });
     }
+    
+    console.log(`Valid reset token found for user: ${user.email}`);
 
     const passwordHash = await hashPassword(password);
 
