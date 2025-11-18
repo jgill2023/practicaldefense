@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { 
   Plus, 
+  Minus,
   Edit, 
   Trash2, 
   Eye, 
@@ -1115,10 +1116,14 @@ function FieldEditor({
     label: field?.label || '',
     placeholder: field?.placeholder || '',
     isRequired: field?.isRequired || false,
-    options: field?.options ? JSON.stringify(field.options, null, 2) : '',
     showWhenFieldId: field?.showWhenFieldId || '',
     showWhenValue: field?.showWhenValue || ''
   });
+
+  // Manage options as an array of strings
+  const [options, setOptions] = useState<string[]>(
+    field?.options && Array.isArray(field.options) ? field.options : ['']
+  );
 
   const fieldTypes: Array<{ value: FormFieldType; label: string }> = [
     { value: 'header', label: 'Header' },
@@ -1129,6 +1134,7 @@ function FieldEditor({
     { value: 'textarea', label: 'Long Text' },
     { value: 'select', label: 'Dropdown' },
     { value: 'checkbox', label: 'Checkbox' },
+    { value: 'radio', label: 'Radio Buttons' },
     { value: 'date', label: 'Date' },
     { value: 'number', label: 'Number' },
   ];
@@ -1136,25 +1142,37 @@ function FieldEditor({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    let parsedOptions = undefined;
-    if (fieldData.options.trim()) {
-      try {
-        parsedOptions = JSON.parse(fieldData.options);
-      } catch (e) {
-        // Handle invalid JSON
-        return;
-      }
-    }
+    // Filter out empty options and only include if field type needs options
+    const filteredOptions = options.filter(opt => opt.trim() !== '');
+    const finalOptions = (fieldData.fieldType === 'select' || fieldData.fieldType === 'checkbox' || fieldData.fieldType === 'radio') && filteredOptions.length > 0
+      ? filteredOptions
+      : undefined;
 
     onSubmit({
       fieldType: fieldData.fieldType,
       label: fieldData.label,
       placeholder: fieldData.placeholder || undefined,
       isRequired: fieldData.isRequired,
-      options: parsedOptions,
+      options: finalOptions,
       showWhenFieldId: fieldData.showWhenFieldId || undefined,
       showWhenValue: fieldData.showWhenValue || undefined
     });
+  };
+
+  const addOption = () => {
+    setOptions([...options, '']);
+  };
+
+  const removeOption = (index: number) => {
+    if (options.length > 1) {
+      setOptions(options.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateOption = (index: number, value: string) => {
+    const newOptions = [...options];
+    newOptions[index] = value;
+    setOptions(newOptions);
   };
 
   // Get the selected conditional field to show its options
@@ -1221,20 +1239,47 @@ function FieldEditor({
         />
       </div>
 
-      {(fieldData.fieldType === 'select' || fieldData.fieldType === 'checkbox') && (
+      {(fieldData.fieldType === 'select' || fieldData.fieldType === 'checkbox' || fieldData.fieldType === 'radio') && (
         <div>
-          <Label htmlFor="options">Options (JSON format)</Label>
-          <Textarea
-            id="options"
-            value={fieldData.options}
-            onChange={(e) => setFieldData(prev => ({ ...prev, options: e.target.value }))}
-            placeholder='["Option 1", "Option 2", "Option 3"]'
-            className="font-mono text-sm"
-            data-testid="textarea-field-options"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            For dropdown and checkbox fields, provide options as a JSON array. For checkboxes, each option will be a separate checkbox.
+          <div className="flex items-center justify-between mb-2">
+            <Label>Choices</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addOption}
+              data-testid="button-add-option"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add Choice
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Define the choices for this field. {fieldData.fieldType === 'checkbox' ? 'Each option will be a separate checkbox.' : fieldData.fieldType === 'radio' ? 'Users can select one option.' : 'Users can select from this dropdown.'}
           </p>
+          <div className="space-y-2">
+            {options.map((option, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  value={option}
+                  onChange={(e) => updateOption(index, e.target.value)}
+                  placeholder={`Choice ${index + 1}`}
+                  data-testid={`input-option-${index}`}
+                />
+                {options.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeOption(index)}
+                    data-testid={`button-remove-option-${index}`}
+                  >
+                    <Minus className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
