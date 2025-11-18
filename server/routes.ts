@@ -2819,10 +2819,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reorder courses endpoint
   app.post("/api/instructor/courses/reorder", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
-      if (!hasInstructorPrivileges(req.user)) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-
       const updates = req.body.updates as {id: string; sortOrder: number}[];
       if (!updates || !Array.isArray(updates)) {
         return res.status(400).json({ message: "Invalid reorder data" });
