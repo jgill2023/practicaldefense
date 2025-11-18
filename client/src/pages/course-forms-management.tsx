@@ -1296,11 +1296,13 @@ function FieldEditor({
                     <SelectValue placeholder="Select a value" />
                   </SelectTrigger>
                   <SelectContent>
-                    {conditionalFieldOptions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
+                    {conditionalFieldOptions
+                      .filter((option) => option && option.trim() !== '') // Filter out empty strings
+                      .map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               ) : (
