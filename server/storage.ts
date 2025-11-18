@@ -230,6 +230,7 @@ export interface IStorage {
   getCourses(): Promise<CourseWithSchedules[]>;
   getCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]>;
   getDeletedCoursesByInstructor(instructorId: string): Promise<CourseWithSchedules[]>;
+  reorderCourses(updates: {id: string; sortOrder: number}[]): Promise<void>;
 
   // Course schedule operations
   createCourseSchedule(schedule: InsertCourseSchedule): Promise<CourseSchedule>;
@@ -1307,6 +1308,18 @@ export class DatabaseStorage implements IStorage {
     return courseList;
   }
 
+  async reorderCourses(updates: {id: string; sortOrder: number}[]): Promise<void> {
+    // Perform batch update in a transaction for atomicity
+    await db.transaction(async (tx) => {
+      for (const update of updates) {
+        await tx
+          .update(courses)
+          .set({ sortOrder: update.sortOrder, updatedAt: new Date() })
+          .where(eq(courses.id, update.id));
+      }
+    });
+  }
+
   async getCourse(id: string): Promise<CourseWithSchedules | undefined> {
     const course = await db.query.courses.findFirst({
       where: eq(courses.id, id),
@@ -1365,7 +1378,7 @@ export class DatabaseStorage implements IStorage {
         instructor: true,
         category: true,
       },
-      orderBy: desc(courses.createdAt),
+      orderBy: [asc(courses.sortOrder), desc(courses.createdAt)],
     });
     return courseList;
   }
@@ -1400,7 +1413,7 @@ export class DatabaseStorage implements IStorage {
         instructor: true,
         category: true,
       },
-      orderBy: desc(courses.createdAt),
+      orderBy: [asc(courses.sortOrder), desc(courses.createdAt)],
     });
     return courseList;
   }

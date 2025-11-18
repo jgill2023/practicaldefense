@@ -126,6 +126,7 @@ export const courses = pgTable("courses", {
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   imageUrl: varchar("image_url"),
   showOnHomePage: boolean("show_on_home_page").notNull().default(true), // Control home page visibility
+  sortOrder: integer("sort_order").default(0), // For display ordering on home page
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

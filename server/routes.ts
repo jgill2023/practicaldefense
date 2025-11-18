@@ -2816,6 +2816,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reorder courses endpoint
+  app.post("/api/instructor/courses/reorder", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      if (!hasInstructorPrivileges(req.user)) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const updates = req.body.updates as {id: string; sortOrder: number}[];
+      if (!updates || !Array.isArray(updates)) {
+        return res.status(400).json({ message: "Invalid reorder data" });
+      }
+
+      await storage.reorderCourses(updates);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error reordering courses:", error);
+      res.status(500).json({ message: "Failed to reorder courses" });
+    }
+  });
+
   // Event creation endpoint (creates course schedules) - MOVED UP
   app.post("/api/instructor/events", isAuthenticated, async (req: any, res) => {
     try {
