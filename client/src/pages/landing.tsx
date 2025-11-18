@@ -51,6 +51,9 @@ export default function Landing() {
     queryKey: ["/api/appointments/types"],
   });
 
+  // Extract instructor ID from first appointment type (for single-instructor platform)
+  const instructorId = appointmentTypes[0]?.instructorId || "";
+
   // Helper function to get category name, handling different formats
   const getCategoryName = (category: any): string => {
     if (!category) return 'General';
