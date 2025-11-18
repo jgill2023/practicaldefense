@@ -2308,10 +2308,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return sum + (totalCost - amountPaid);
         }, 0);
 
-        // Get refund requests count
-        const refundRequests = await db.query.enrollments.findMany({
-          where: eq(enrollments.refundStatus, 'requested'),
-        });
+        // Count refund requests from enrollments we already have
+        const refundRequestCount = allEnrollments.filter(e => e.refundStatus === 'requested').length;
 
         const stats = {
           upcomingCourses,
@@ -2319,7 +2317,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           allStudents: uniqueStudentIds.size,
           totalRevenue,
           outstandingRevenue,
-          refundRequests: refundRequests.length,
+          refundRequests: refundRequestCount,
         };
 
         res.json(stats);
