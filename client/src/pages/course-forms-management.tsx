@@ -94,7 +94,7 @@ function FieldRow({
             )}
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs text-[#ffffff]">
               {fieldTypes.find(t => t.value === field.fieldType)?.label || field.fieldType}
             </Badge>
             {field.placeholder && (
