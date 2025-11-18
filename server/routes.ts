@@ -1598,6 +1598,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sign waiver instance
+  app.post('/api/waiver-instances/:instanceId/sign', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.claims.sub;
+      const instanceId = req.params.instanceId;
+
+      // Get waiver instance
+      const instance = await storage.getWaiverInstance(instanceId);
+      if (!instance) {
+        return res.status(404).json({ message: "Waiver instance not found" });
+      }
+
+      // Verify enrollment ownership
+      const enrollment = await storage.getEnrollment(instance.enrollmentId);
+      if (!enrollment || enrollment.studentId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get user info for signature
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Validate request body
+      const signatureSchema = z.object({
+        signerName: z.string().min(1),
+        signatureData: z.string().min(1), // Base64 PNG
+        signatureMethod: z.enum(['canvas', 'typed', 'uploaded']).default('canvas'),
+        consentCheckboxes: z.array(z.object({
+          sectionId: z.string(),
+          initial: z.string(),
+          timestamp: z.string(),
+        })).optional(),
+        acknowledgementsCompleted: z.boolean().default(false),
+        metadata: z.object({
+          address: z.string().optional(),
+          agreedToTerms: z.boolean().optional(),
+        }).optional(),
+      });
+
+      const validatedData = signatureSchema.parse(req.body);
+
+      // Get IP address and user agent
+      const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+      const userAgent = req.get('user-agent') || 'unknown';
+
+      // Create waiver signature
+      await storage.createWaiverSignature({
+        instanceId,
+        signerName: validatedData.signerName,
+        signerEmail: user.email,
+        signerRole: 'student',
+        signatureData: validatedData.signatureData,
+        signatureMethod: validatedData.signatureMethod,
+        consentCheckboxes: validatedData.consentCheckboxes || null,
+        acknowledgementsCompleted: validatedData.acknowledgementsCompleted,
+        ipAddress,
+        userAgent,
+      });
+
+      // Update waiver instance status
+      await storage.updateWaiverInstance(instanceId, {
+        status: 'signed',
+        signedAt: new Date(),
+        ipAddress,
+        userAgent,
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Waiver signed successfully",
+      });
+    } catch (error) {
+      console.error("Error signing waiver:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to sign waiver" });
+    }
+  });
+
   // Payment balance tracking
   app.get('/api/enrollments/:enrollmentId/payment-balance', isAuthenticated, async (req: any, res) => {
     try {
