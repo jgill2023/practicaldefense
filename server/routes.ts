@@ -104,7 +104,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      console.log('Profile update - User ID:', userId);
+      console.log('Profile update - Update data:', JSON.stringify(updateData, null, 2));
+      
       const updatedUser = await storage.updateUser(userId, updateData);
+      
+      console.log('Profile update - Updated user from DB:', JSON.stringify({
+        id: updatedUser.id,
+        firstName: updatedUser.firstName,
+        phone: updatedUser.phone,
+        streetAddress: updatedUser.streetAddress,
+        city: updatedUser.city,
+        emergencyContactName: updatedUser.emergencyContactName,
+        smsConsent: updatedUser.smsConsent
+      }, null, 2));
+      
       res.json(updatedUser);
     } catch (error) {
       if (error instanceof z.ZodError) {
