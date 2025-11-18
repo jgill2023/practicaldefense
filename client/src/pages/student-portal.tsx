@@ -35,7 +35,9 @@ type PaymentBalanceResponse = {
 
 type FormStatusResponse = {
   isComplete: boolean;
-  missingForms: number;
+  totalForms: number;
+  completedForms: number;
+  missingForms: Array<{ id: string; title: string; isRequired: boolean }>;
 };
 
 // Edit profile form schema
@@ -2207,6 +2209,174 @@ function UnenrollConfirmationDialog({ isOpen, onClose, enrollment }: {
   );
 }
 
+// Pending Forms Modal Component
+function PendingFormsModal({
+  isOpen,
+  onClose,
+  enrollments,
+  onOpenWaiver,
+  onOpenForms,
+  onPendingCountChange,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  enrollments: EnrollmentWithDetails[];
+  onOpenWaiver: (enrollment: EnrollmentWithDetails) => void;
+  onOpenForms: (enrollment: EnrollmentWithDetails) => void;
+  onPendingCountChange: (count: number) => void;
+}) {
+  const [enrollmentCounts, setEnrollmentCounts] = useState<Record<string, number>>({});
+
+  // Aggregate counts whenever they change
+  useEffect(() => {
+    const totalCount = Object.values(enrollmentCounts).reduce((sum, count) => sum + count, 0);
+    onPendingCountChange(totalCount);
+  }, [enrollmentCounts, onPendingCountChange]);
+
+  const handleEnrollmentCountChange = (enrollmentId: string, count: number) => {
+    setEnrollmentCounts(prev => ({
+      ...prev,
+      [enrollmentId]: count
+    }));
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Pending Forms & Waivers</DialogTitle>
+          <DialogDescription>
+            Complete the required forms and waivers for your enrolled courses
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 overflow-y-auto pr-2">
+          <div className="space-y-6">
+            {enrollments.map((enrollment) => (
+              <PendingFormsEnrollmentCard
+                key={enrollment.id}
+                enrollment={enrollment}
+                onOpenWaiver={onOpenWaiver}
+                onOpenForms={onOpenForms}
+                onCountChange={(count) => handleEnrollmentCountChange(enrollment.id, count)}
+              />
+            ))}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Individual enrollment card in the pending forms modal
+function PendingFormsEnrollmentCard({
+  enrollment,
+  onOpenWaiver,
+  onOpenForms,
+  onCountChange,
+}: {
+  enrollment: EnrollmentWithDetails;
+  onOpenWaiver: (enrollment: EnrollmentWithDetails) => void;
+  onOpenForms: (enrollment: EnrollmentWithDetails) => void;
+  onCountChange: (count: number) => void;
+}) {
+  // Query form status - use string template to match existing invalidation pattern
+  const { data: formStatus } = useQuery<FormStatusResponse>({
+    queryKey: [`/api/enrollments/${enrollment.id}/form-completion`],
+    enabled: !!enrollment.id,
+    retry: false,
+  });
+
+  // Query waiver status
+  const { data: waiverStatus } = useQuery({
+    queryKey: [`/api/enrollments/${enrollment.id}/waiver-instances`],
+    enabled: !!enrollment.id,
+    retry: false,
+  });
+
+  const hasIncompleteForms = formStatus && !formStatus.isComplete;
+  const hasPendingWaivers = waiverStatus && Array.isArray(waiverStatus) && waiverStatus.some((w: any) => w.status === 'pending');
+
+  // Calculate and update parent count when data changes
+  useEffect(() => {
+    const pendingCount = (hasIncompleteForms ? 1 : 0) + (hasPendingWaivers ? 1 : 0);
+    onCountChange(pendingCount);
+  }, [formStatus, waiverStatus, hasIncompleteForms, hasPendingWaivers, onCountChange]);
+
+  // Don't render if nothing is pending
+  if (!hasIncompleteForms && !hasPendingWaivers) return null;
+
+  const pendingCount = (hasIncompleteForms ? 1 : 0) + (hasPendingWaivers ? 1 : 0);
+
+  return (
+    <Card className="border-2">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-lg">{enrollment.course.title}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {new Date(enrollment.schedule.startDate).toLocaleDateString()}
+            </p>
+          </div>
+          <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+            {pendingCount} Pending
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Course Waiver */}
+          {hasPendingWaivers && (
+            <div 
+              className="border-2 rounded-lg p-4 transition-all border-destructive hover:border-destructive/80 bg-destructive/5 cursor-pointer hover:shadow-md"
+              onClick={() => onOpenWaiver(enrollment)}
+              data-testid={`waiver-item-${enrollment.id}`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <div className="relative text-destructive">
+                    <FileSignature className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm">Course Waiver</h4>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Click to sign required waiver
+              </p>
+            </div>
+          )}
+          
+          {/* Course Questionnaire */}
+          {hasIncompleteForms && (
+            <div 
+              className="border-2 rounded-lg p-4 transition-all border-destructive hover:border-destructive/80 bg-destructive/5 cursor-pointer hover:shadow-md"
+              onClick={() => onOpenForms(enrollment)}
+              data-testid={`form-item-${enrollment.id}`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <div className="relative text-destructive">
+                    <FileText className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm">Course Questionnaire</h4>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {formStatus && formStatus.missingForms 
+                  ? `${formStatus.missingForms.length} form${formStatus.missingForms.length !== 1 ? 's' : ''} to complete`
+                  : 'Click to complete questionnaire'}
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 export default function StudentPortal() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -2229,6 +2399,9 @@ export default function StudentPortal() {
     isOpen: false, 
     enrollmentId: "" 
   });
+
+  // State for the pending forms modal
+  const [isPendingFormsModalOpen, setIsPendingFormsModalOpen] = useState(false);
 
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/student/enrollments"],
@@ -2341,6 +2514,11 @@ export default function StudentPortal() {
     };
   });
 
+  // We don't pre-fetch all form/waiver statuses to avoid N+1 queries
+  // Instead, the count will be determined by individual cards in the course list
+  // For the dashboard card, we show a simplified count
+  const [pendingFormsCount, setPendingFormsCount] = useState(0);
+
   // Handler for initiating unenrollment
   const handleUnenrollClick = (enrollment: EnrollmentWithDetails) => {
     setSelectedEnrollmentForUnenroll(enrollment);
@@ -2396,22 +2574,12 @@ export default function StudentPortal() {
                   </div>
                 </div>
               )}
-              {/* Profile Status */}
-              <div className="flex items-center space-x-2">
-                <div className="bg-success/10 w-10 h-10 rounded-full flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-success" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium">Profile Complete</div>
-                  <div className="text-xs text-primary-foreground/80">All waivers submitted</div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
 
         {/* Dashboard Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Upcoming Appointments</CardTitle>
@@ -2460,6 +2628,25 @@ export default function StudentPortal() {
               </div>
               <p className="text-sm text-muted-foreground">
                 {totalRemainingBalance > 0 ? `${enrollmentsWithBalance.length} course${enrollmentsWithBalance.length !== 1 ? 's' : ''} pending` : 'All paid'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => setIsPendingFormsModalOpen(true)}
+            data-testid="card-pending-forms"
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Forms</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-3xl font-bold mb-2 ${pendingFormsCount > 0 ? 'text-amber-600' : 'text-success'}`} data-testid="text-pending-forms">
+                {pendingFormsCount}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {pendingFormsCount > 0 ? 'Forms to complete' : 'All complete'}
               </p>
             </CardContent>
           </Card>
@@ -2829,6 +3016,22 @@ export default function StudentPortal() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Pending Forms Modal */}
+      <PendingFormsModal
+        isOpen={isPendingFormsModalOpen}
+        onClose={() => setIsPendingFormsModalOpen(false)}
+        enrollments={enrollments}
+        onOpenWaiver={(enrollment) => {
+          setSelectedEnrollmentForWaiver(enrollment);
+          setIsPendingFormsModalOpen(false);
+        }}
+        onOpenForms={(enrollment) => {
+          setSelectedEnrollmentForForms(enrollment);
+          setIsPendingFormsModalOpen(false);
+        }}
+        onPendingCountChange={setPendingFormsCount}
+      />
 
       {/* Edit Profile Dialog */}
       {user && (
