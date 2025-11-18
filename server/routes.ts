@@ -613,7 +613,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/instructor/courses', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const courses = await storage.getCoursesByInstructor(userId);
+      const userRole = req.user.role;
+      
+      let courses;
+      if (userRole === 'admin' || userRole === 'superadmin') {
+        // Admins and superadmins can see all courses from all instructors
+        courses = await db.query.courses.findMany({
+          where: isNull(courses.deletedAt),
+          with: {
+            schedules: true,
+            instructor: true,
+            category: true,
+          },
+          orderBy: [asc(courses.sortOrder), desc(courses.createdAt)],
+        });
+      } else {
+        // Instructors only see their own courses
+        courses = await storage.getCoursesByInstructor(userId);
+      }
+      
       res.json(courses);
     } catch (error) {
       console.error("Error fetching instructor courses:", error);
@@ -625,7 +643,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/instructor/courses-detailed', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const courses = await storage.getCoursesByInstructor(userId);
+      const userRole = req.user.role;
+      
+      let courses;
+      if (userRole === 'admin' || userRole === 'superadmin') {
+        // Admins and superadmins can see all courses from all instructors
+        courses = await db.query.courses.findMany({
+          where: isNull(courses.deletedAt),
+          with: {
+            schedules: {
+              with: {
+                enrollments: {
+                  with: {
+                    student: true,
+                  },
+                },
+              },
+            },
+            instructor: true,
+            category: true,
+          },
+          orderBy: [asc(courses.sortOrder), desc(courses.createdAt)],
+        });
+      } else {
+        // Instructors only see their own courses
+        courses = await storage.getCoursesByInstructor(userId);
+      }
+      
       res.json(courses);
     } catch (error) {
       console.error("Error fetching detailed instructor courses:", error);
