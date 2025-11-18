@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -125,6 +125,24 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
     name: "eventSessions",
   });
 
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        courseId: preSelectedCourseId || "",
+        isMultiDay: false,
+        isRecurring: false,
+        maxSpots: 20,
+        waitlistEnabled: true,
+        autoConfirmRegistration: true,
+        eventSessions: [],
+        daysOfWeek: [],
+        recurrenceInterval: 1,
+      });
+      setCurrentTab("basic");
+    }
+  }, [isOpen, preSelectedCourseId, form]);
+
   // Create event mutation
   const createEventMutation = useMutation({
     mutationFn: async (data: EventFormData) => {
@@ -145,6 +163,23 @@ export function EventCreationForm({ isOpen = false, onClose, onEventCreated, pre
         queryClient.invalidateQueries({ queryKey: ["/api/courses"] }),
         queryClient.invalidateQueries({ queryKey: ["/api/instructor/enrollments"] }),
       ]);
+      
+      // Reset form to default values
+      form.reset({
+        courseId: "",
+        isMultiDay: false,
+        isRecurring: false,
+        maxSpots: 20,
+        waitlistEnabled: true,
+        autoConfirmRegistration: true,
+        eventSessions: [],
+        daysOfWeek: [],
+        recurrenceInterval: 1,
+      });
+      
+      // Reset tab to first tab
+      setCurrentTab("basic");
+      
       onEventCreated?.();
       onClose();
     },
