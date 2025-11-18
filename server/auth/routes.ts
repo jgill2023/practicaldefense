@@ -301,6 +301,23 @@ authRouter.get("/user", async (req, res) => {
       phone: user.phone,
       profileImageUrl: user.profileImageUrl,
       isEmailVerified: user.isEmailVerified,
+      streetAddress: user.streetAddress,
+      city: user.city,
+      state: user.state,
+      zipCode: user.zipCode,
+      dateOfBirth: user.dateOfBirth,
+      concealedCarryLicenseIssued: user.concealedCarryLicenseIssued,
+      concealedCarryLicenseExpiration: user.concealedCarryLicenseExpiration,
+      emergencyContactName: user.emergencyContactName,
+      emergencyContactPhone: user.emergencyContactPhone,
+      preferredContactMethods: user.preferredContactMethods,
+      enableLicenseExpirationReminder: user.enableLicenseExpirationReminder,
+      enableRefresherReminder: user.enableRefresherReminder,
+      smsConsent: user.smsConsent,
+      enableSmsNotifications: user.enableSmsNotifications,
+      enableSmsReminders: user.enableSmsReminders,
+      enableSmsPaymentNotices: user.enableSmsPaymentNotices,
+      enableSmsAnnouncements: user.enableSmsAnnouncements,
     });
   } catch (error) {
     console.error("Error fetching user:", error);
