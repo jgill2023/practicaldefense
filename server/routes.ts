@@ -155,6 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const createUserSchema = z.object({
         email: z.string().email("Invalid email address"),
+        password: z.string().min(8, "Password must be at least 8 characters"),
         firstName: z.string().min(1, "First name is required"),
         lastName: z.string().min(1, "Last name is required"),
         role: z.enum(['student', 'instructor', 'admin', 'superadmin']),
@@ -171,8 +172,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Only superadmins can create other superadmins" });
       }
 
+      // Hash the password
+      const { hashPassword } = await import("./customAuth");
+      const passwordHash = await hashPassword(validatedData.password);
+
       const newUser = await storage.createUser({
-        ...validatedData,
+        email: validatedData.email,
+        passwordHash,
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName,
+        role: validatedData.role,
+        userStatus: validatedData.userStatus,
         statusUpdatedAt: new Date(),
       });
 
