@@ -5,6 +5,9 @@ import { storage } from '../storage';
 import { appointmentService } from './service';
 import { isAuthenticated } from '../customAuth';
 import { NotificationEngine } from '../notificationEngine';
+import { db } from '../db';
+import { appointmentTypes } from '@shared/schema';
+import { eq, asc } from 'drizzle-orm';
 
 // Initialize Stripe
 let stripe: Stripe | null = null;
@@ -566,10 +569,11 @@ appointmentRouter.get('/student/types', async (req, res) => {
 appointmentRouter.get('/types', async (req, res) => {
   try {
     // For a single-instructor platform, fetch all active appointment types
-    const allTypes = await db.query.appointmentTypes.findMany({
-      where: eq(appointmentTypes.isActive, true),
-      orderBy: [appointmentTypes.createdAt],
-    });
+    const allTypes = await db
+      .select()
+      .from(appointmentTypes)
+      .where(eq(appointmentTypes.isActive, true))
+      .orderBy(asc(appointmentTypes.sortOrder), asc(appointmentTypes.title));
     res.json(allTypes);
   } catch (error) {
     console.error("Error fetching all active appointment types:", error);
