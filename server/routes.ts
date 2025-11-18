@@ -7,8 +7,8 @@ import { storage, normalizePhoneNumber } from "./storage";
 import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrHigher, requireActiveAccount, requireAdminOrHigher, generateToken, getTokenExpiry } from "./customAuth";
 import { authRouter } from "./auth/routes";
 import { db } from "./db";
-import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems, instructorAppointments, courses } from "@shared/schema";
-import { eq, and, inArray, desc, gte, isNotNull } from "drizzle-orm";
+import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems, instructorAppointments, courses as coursesTable } from "@shared/schema";
+import { eq, and, inArray, desc, asc, gte, isNotNull, isNull } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, insertCourseNotificationSignupSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
@@ -619,13 +619,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userRole === 'admin' || userRole === 'superadmin') {
         // Admins and superadmins can see all courses from all instructors
         courses = await db.query.courses.findMany({
-          where: isNull(courses.deletedAt),
+          where: isNull(coursesTable.deletedAt),
           with: {
             schedules: true,
             instructor: true,
             category: true,
           },
-          orderBy: [asc(courses.sortOrder), desc(courses.createdAt)],
+          orderBy: [asc(coursesTable.sortOrder), desc(coursesTable.createdAt)],
         });
       } else {
         // Instructors only see their own courses
@@ -649,7 +649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userRole === 'admin' || userRole === 'superadmin') {
         // Admins and superadmins can see all courses from all instructors
         courses = await db.query.courses.findMany({
-          where: isNull(courses.deletedAt),
+          where: isNull(coursesTable.deletedAt),
           with: {
             schedules: {
               with: {
@@ -663,7 +663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             instructor: true,
             category: true,
           },
-          orderBy: [asc(courses.sortOrder), desc(courses.createdAt)],
+          orderBy: [asc(coursesTable.sortOrder), desc(coursesTable.createdAt)],
         });
       } else {
         // Instructors only see their own courses
@@ -687,13 +687,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (userRole === 'admin' || userRole === 'superadmin') {
         // Admins and superadmins can see all deleted courses from all instructors
         deletedCourses = await db.query.courses.findMany({
-          where: isNotNull(courses.deletedAt),
+          where: isNotNull(coursesTable.deletedAt),
           with: {
             schedules: true,
             instructor: true,
             category: true,
           },
-          orderBy: desc(courses.deletedAt),
+          orderBy: desc(coursesTable.deletedAt),
         });
       } else {
         // Instructors only see their own deleted courses
@@ -3537,22 +3537,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error confirming enrollment:", error);
       res.status(500).json({ message: "Error confirming enrollment: " + error.message });
-    }
-  });
-
-  // Instructor courses endpoint for forms management
-  app.get("/api/instructor/courses", async (req: any, res) => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const courses = await storage.getCoursesByInstructor(userId);
-      res.json(courses);
-    } catch (error: any) {
-      console.error("Error fetching instructor courses:", error);
-      res.status(500).json({ message: "Error fetching instructor courses: " + error.message });
     }
   });
 
