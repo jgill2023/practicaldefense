@@ -119,20 +119,20 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
 
         <div className="space-y-3 mb-6">
           <div className="flex items-center text-sm text-muted-foreground">
-            <Clock className="mr-2 h-4 w-4 text-accent" />
+            <Clock className="mr-2 h-4 w-4 text-foreground" />
             <span data-testid={`text-duration-${course.id}`}>{course.duration}</span>
           </div>
 
           {nextSchedule ? (
             <>
               <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="mr-2 h-4 w-4 text-accent" />
+                <Calendar className="mr-2 h-4 w-4 text-foreground" />
                 <span data-testid={`text-next-date-${course.id}`}>
                   Next: {formatDateSafe(nextSchedule.startDate.toString())}
                 </span>
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
-                <Users className="mr-2 h-4 w-4 text-accent" />
+                <Users className="mr-2 h-4 w-4 text-foreground" />
                 <span data-testid={`text-spots-left-${course.id}`}>
                   {nextSchedule.availableSpots} spots left
                 </span>
@@ -140,13 +140,13 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
             </>
           ) : (
             <div className="flex items-center text-sm text-muted-foreground">
-              <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+              <Calendar className="mr-2 h-4 w-4 text-foreground" />
               <span>No upcoming schedules</span>
             </div>
           )}
 
           <div className="flex items-center text-sm text-muted-foreground">
-            <Users className="mr-2 h-4 w-4 text-accent" />
+            <Users className="mr-2 h-4 w-4 text-foreground" />
             <span>Instructor: {course.instructor.firstName} {course.instructor.lastName}</span>
           </div>
         </div>
