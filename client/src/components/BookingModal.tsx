@@ -122,9 +122,9 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     }
   }, [open, appointmentType]);
 
-  // Pre-populate form for authenticated users
+  // Pre-populate form for authenticated users when modal opens
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (open && isAuthenticated && user) {
       setBookingForm(prev => ({
         ...prev,
         firstName: user.firstName || '',
@@ -133,8 +133,17 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         phone: user.phone || '',
         password: '', // Don't pre-populate password
       }));
+      
+      // Pre-populate billing address
+      setBillingAddress(prev => ({
+        ...prev,
+        line1: user.streetAddress || '',
+        city: user.city || '',
+        state: user.state || '',
+        postal_code: user.zipCode || '',
+      }));
     }
-  }, [isAuthenticated, user]);
+  }, [open, isAuthenticated, user]);
 
   // Calculate tax when billing address is complete and PaymentIntent exists
   useEffect(() => {
@@ -589,7 +598,6 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
               value={bookingForm.firstName}
               onChange={(e) => setBookingForm(prev => ({ ...prev, firstName: e.target.value }))}
               required
-              disabled={isAuthenticated}
               data-testid="input-first-name"
             />
           </div>
@@ -602,7 +610,6 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
               value={bookingForm.lastName}
               onChange={(e) => setBookingForm(prev => ({ ...prev, lastName: e.target.value }))}
               required
-              disabled={isAuthenticated}
               data-testid="input-last-name"
             />
           </div>
@@ -618,7 +625,6 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             value={bookingForm.email}
             onChange={(e) => setBookingForm(prev => ({ ...prev, email: e.target.value }))}
             required
-            disabled={isAuthenticated}
             data-testid="input-email"
           />
         </div>
@@ -630,7 +636,6 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             type="tel"
             value={bookingForm.phone}
             onChange={(e) => setBookingForm(prev => ({ ...prev, phone: e.target.value }))}
-            disabled={isAuthenticated}
             data-testid="input-phone"
           />
         </div>
