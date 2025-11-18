@@ -1293,6 +1293,36 @@ function EditProfileDialog({ isOpen, onClose, user }: {
     },
   });
 
+  // Reset form when dialog opens or user data changes
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        preferredName: user.preferredName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        streetAddress: user.streetAddress || '',
+        city: user.city || '',
+        state: user.state || '',
+        zipCode: user.zipCode || '',
+        dateOfBirth: formatDateForInput(user.dateOfBirth),
+        concealedCarryLicenseIssued: formatDateForInput(user.concealedCarryLicenseIssued),
+        concealedCarryLicenseExpiration: formatDateForInput(user.concealedCarryLicenseExpiration),
+        emergencyContactName: user.emergencyContactName || '',
+        emergencyContactPhone: user.emergencyContactPhone || '',
+        preferredContactMethods: user.preferredContactMethods || [],
+        enableLicenseExpirationReminder: user.enableLicenseExpirationReminder ?? true,
+        enableRefresherReminder: user.enableRefresherReminder ?? true,
+        smsConsent: user.smsConsent ?? true,
+        enableSmsNotifications: user.enableSmsNotifications ?? true,
+        enableSmsReminders: user.enableSmsReminders ?? true,
+        enableSmsPaymentNotices: user.enableSmsPaymentNotices ?? false,
+        enableSmsAnnouncements: user.enableSmsAnnouncements ?? false,
+      });
+    }
+  }, [isOpen, user, form]);
+
   const updateProfileMutation = useMutation({
     mutationFn: (data: EditProfileForm) => apiRequest('PUT', '/api/profile', data),
     onSuccess: () => {
