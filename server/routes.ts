@@ -8,7 +8,7 @@ import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrHighe
 import { authRouter } from "./auth/routes";
 import { db } from "./db";
 import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems, instructorAppointments, courses as coursesTable, courseSchedules } from "@shared/schema";
-import { eq, and, inArray, desc, asc, gte, isNotNull, isNull } from "drizzle-orm";
+import { eq, and, or, inArray, desc, asc, gte, isNotNull, isNull } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
 import { insertCategorySchema, insertCourseSchema, insertCourseScheduleSchema, insertEnrollmentSchema, insertAppSettingsSchema, insertCourseInformationFormSchema, insertCourseInformationFormFieldSchema, initiateRegistrationSchema, paymentIntentRequestSchema, confirmEnrollmentSchema, insertNotificationTemplateSchema, insertNotificationScheduleSchema, insertWaiverTemplateSchema, insertWaiverInstanceSchema, insertWaiverSignatureSchema, insertProductCategorySchema, insertProductSchema, insertProductVariantSchema, insertCartItemSchema, insertEcommerceOrderSchema, insertEcommerceOrderItemSchema, insertCourseNotificationSchema, insertCourseNotificationSignupSchema, type InsertCourseInformationForm, type InsertCourseInformationFormField, type InsertCourseNotification, type User } from "@shared/schema";
@@ -2335,6 +2335,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Count refund requests from enrollments we already have
         const refundRequestCount = allEnrollments.filter(e => e.refundStatus === 'requested').length;
 
+        // Count total appointments for the current admin/superadmin user
+        const appointments = await db.query.instructorAppointments.findMany({
+          where: and(
+            eq(instructorAppointments.instructorId, userId),
+            or(
+              eq(instructorAppointments.status, 'confirmed'),
+              eq(instructorAppointments.status, 'pending'),
+              eq(instructorAppointments.status, 'completed')
+            )
+          ),
+        });
+        const totalAppointments = appointments.length;
+
         const stats = {
           upcomingCourses,
           onlineStudents: 0, // Not applicable for all-instructor view
@@ -2342,6 +2355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalRevenue,
           outstandingRevenue,
           refundRequests: refundRequestCount,
+          totalAppointments,
         };
 
         res.json(stats);
