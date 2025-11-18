@@ -46,17 +46,9 @@ export default function Landing() {
     queryKey: ["/api/app-settings"],
   });
 
-  // Hardcoded instructor ID for single-instructor platform
-  const instructorId = "43575331";
-
+  // Fetch all active appointment types (for single-instructor platform)
   const { data: appointmentTypes = [], isLoading: appointmentsLoading } = useQuery<AppointmentType[]>({
-    queryKey: ["/api/appointments/types", instructorId],
-    queryFn: async () => {
-      const response = await fetch(`/api/appointments/types/${instructorId}`);
-      if (!response.ok) throw new Error('Failed to fetch appointment types');
-      return response.json();
-    },
-    retry: false,
+    queryKey: ["/api/appointments/types"],
   });
 
   // Helper function to get category name, handling different formats

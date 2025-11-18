@@ -20,7 +20,6 @@ export default function ScheduleList() {
   const [sortBy, setSortBy] = useState("date");
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedAppointmentType, setSelectedAppointmentType] = useState<AppointmentType | null>(null);
-  const instructorId = "43575331";
 
   // Helper function to safely get category name
   const getCategoryName = (category: any): string => {
@@ -62,10 +61,13 @@ export default function ScheduleList() {
     queryKey: ["/api/categories"],
   });
 
-  // Fetch appointment types for booking
+  // Fetch appointment types for booking (using new endpoint without instructor ID)
   const { data: appointmentTypes = [] } = useQuery<AppointmentType[]>({
-    queryKey: ["/api/appointments/types", instructorId],
+    queryKey: ["/api/appointments/types"],
   });
+
+  // Extract instructor ID from first appointment type (for single-instructor platform)
+  const instructorId = appointmentTypes[0]?.instructorId || "";
 
   // Filter and process courses to show only upcoming schedules
   const filteredSchedules = useMemo(() => {
