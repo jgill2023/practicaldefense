@@ -1412,7 +1412,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input {...field} data-testid="input-phone" />
+                      <Input {...field} type="tel" placeholder="(555) 123-4567" data-testid="input-phone" />
                     </FormControl>
                   </FormItem>
                 )}
