@@ -372,11 +372,21 @@ export default function Landing() {
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2 text-sm">
                         <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>{type.durationMinutes} minutes</span>
+                        <span>
+                          {type.isVariableDuration 
+                            ? `${type.minimumDurationHours} hour${type.minimumDurationHours !== 1 ? 's' : ''} minimum`
+                            : `${type.durationMinutes} minutes`
+                          }
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold">${Number(type.price).toFixed(2)}</span>
+                        <span className="font-semibold">
+                          {type.isVariableDuration 
+                            ? `$${Number(type.pricePerHour).toFixed(2)}/hour`
+                            : `$${Number(type.price).toFixed(2)}`
+                          }
+                        </span>
                       </div>
                     </div>
                     <Button
