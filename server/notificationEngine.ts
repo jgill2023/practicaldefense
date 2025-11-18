@@ -1,6 +1,7 @@
 import { storage } from './storage';
 import { NotificationEmailService } from './emailService';
 import { NotificationSmsService } from './smsService';
+import { formatInTimeZone } from 'date-fns-tz';
 import { 
   type NotificationTemplateWithDetails, 
   type NotificationScheduleWithDetails,
@@ -13,6 +14,9 @@ import {
   type InstructorAppointment,
   type AppointmentType
 } from '@shared/schema';
+
+// Instructor timezone for appointment time display
+const INSTRUCTOR_TIMEZONE = 'America/Denver';
 
 export interface NotificationVariables {
   student?: {
@@ -349,21 +353,21 @@ export class NotificationEngine {
     student: User,
     instructor?: User
   ): Promise<NotificationVariables> {
-    // Parse appointment times
-    const startTime = new Date(appointment.startTime);
-    const endTime = new Date(appointment.endTime);
+    // Parse appointment times (stored in UTC)
+    const startTimeUTC = new Date(appointment.startTime);
+    const endTimeUTC = new Date(appointment.endTime);
 
-    // Extract time strings in HH:MM format from Date objects for formatTime helper
-    const startTimeHHMM = `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}`;
-    const endTimeHHMM = `${String(endTime.getHours()).padStart(2, '0')}:${String(endTime.getMinutes()).padStart(2, '0')}`;
+    // Extract time in HH:MM format directly in instructor's timezone
+    const startTimeHHMM = formatInTimeZone(startTimeUTC, INSTRUCTOR_TIMEZONE, 'HH:mm');
+    const endTimeHHMM = formatInTimeZone(endTimeUTC, INSTRUCTOR_TIMEZONE, 'HH:mm');
 
     // Format using existing helper methods
     const startTimeFormatted = this.formatTime(startTimeHHMM);
     const endTimeFormatted = this.formatTime(endTimeHHMM);
     const appointmentTime = `${startTimeFormatted} - ${endTimeFormatted}`;
 
-    // Format date using locale for readability
-    const appointmentDate = this.safeFormatDate(appointment.startTime, 'locale') || '';
+    // Format date directly in instructor's timezone for readability
+    const appointmentDate = formatInTimeZone(startTimeUTC, INSTRUCTOR_TIMEZONE, 'EEEE, MMMM d, yyyy');
 
     const variables: NotificationVariables = {
       student: {
@@ -380,7 +384,7 @@ export class NotificationEngine {
         licenseExpiration: this.safeFormatDate(student.concealedCarryLicenseExpiration) || '',
       },
       appointment: {
-        startDate: this.safeFormatDate(appointment.startTime) || '',
+        startDate: formatInTimeZone(startTimeUTC, INSTRUCTOR_TIMEZONE, 'MM/dd/yyyy'),
         startTime: startTimeFormatted,
         endTime: endTimeFormatted,
         date: appointmentDate,
@@ -880,9 +884,14 @@ export class NotificationEngine {
     student: User,
     instructor: User
   ): NotificationVariables {
-    const startDate = new Date(appointment.startTime);
-    const endDate = new Date(appointment.endTime);
-    const durationMinutes = (endDate.getTime() - startDate.getTime()) / 60000;
+    // Parse appointment times (stored in UTC)
+    const startDateUTC = new Date(appointment.startTime);
+    const endDateUTC = new Date(appointment.endTime);
+    const durationMinutes = (endDateUTC.getTime() - startDateUTC.getTime()) / 60000;
+
+    // Extract time in HH:MM format directly in instructor's timezone
+    const startTimeHHMM = formatInTimeZone(startDateUTC, INSTRUCTOR_TIMEZONE, 'HH:mm');
+    const endTimeHHMM = formatInTimeZone(endDateUTC, INSTRUCTOR_TIMEZONE, 'HH:mm');
 
     return {
       student: {
@@ -900,16 +909,11 @@ export class NotificationEngine {
         phone: instructor.phone || '',
       },
       appointment: {
-        startDate: this.safeFormatDate(startDate) || '',
-        startTime: this.formatTime(startDate.toTimeString().slice(0, 5)),
-        endTime: this.formatTime(endDate.toTimeString().slice(0, 5)),
-        date: startDate.toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        }),
-        time: `${this.formatTime(startDate.toTimeString().slice(0, 5))} - ${this.formatTime(endDate.toTimeString().slice(0, 5))}`,
+        startDate: formatInTimeZone(startDateUTC, INSTRUCTOR_TIMEZONE, 'MM/dd/yyyy'),
+        startTime: this.formatTime(startTimeHHMM),
+        endTime: this.formatTime(endTimeHHMM),
+        date: formatInTimeZone(startDateUTC, INSTRUCTOR_TIMEZONE, 'EEEE, MMMM d, yyyy'),
+        time: `${this.formatTime(startTimeHHMM)} - ${this.formatTime(endTimeHHMM)}`,
         duration: `${durationMinutes} minutes`,
         status: appointment.status,
         studentNotes: appointment.studentNotes || '',
