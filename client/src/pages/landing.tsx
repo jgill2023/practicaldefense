@@ -148,9 +148,20 @@ export default function Landing() {
     // Apply home page limit if set
     const limit = appSettings?.homeCoursesLimit || 20;
 
-    // Sort by creation date (newest first) and apply limit
+    // Sort by sortOrder (ascending), then by creation date (newest first) for courses without sortOrder
     const result = filtered
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a, b) => {
+        // If both have sortOrder, sort by sortOrder ascending
+        if (a.sortOrder != null && b.sortOrder != null) {
+          return a.sortOrder - b.sortOrder;
+        }
+        // If only a has sortOrder, it comes first
+        if (a.sortOrder != null) return -1;
+        // If only b has sortOrder, it comes first
+        if (b.sortOrder != null) return 1;
+        // If neither has sortOrder, sort by creation date (newest first)
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      })
       .slice(0, limit);
 
     console.log(`Final filtered courses: ${result.length}`);
