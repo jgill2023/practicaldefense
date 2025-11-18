@@ -1631,7 +1631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get feedback for an enrollment
   app.get("/api/enrollments/:enrollmentId/feedback", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub || req.claims?.sub;
+      const userId = req.user?.id;
       const enrollmentId = req.params.enrollmentId;
 
       // Verify enrollment exists and user has access
@@ -1662,7 +1662,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Instructor updates feedback for an enrollment
   app.patch("/api/instructor/enrollments/:enrollmentId/feedback", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub || req.claims?.sub;
+      const userId = req.user?.id;
       const enrollmentId = req.params.enrollmentId;
       const { positive, opportunities, actionPlan } = req.body;
 
@@ -1698,7 +1698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Student updates their notes for an enrollment
   app.patch("/api/enrollments/:enrollmentId/student-notes", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub || req.claims?.sub;
+      const userId = req.user?.id;
       const enrollmentId = req.params.enrollmentId;
       const { notes } = req.body;
 
@@ -2092,7 +2092,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course roster view route (for dialog display)
   app.get('/api/instructor/roster', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
@@ -2210,7 +2210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Instructor dashboard statistics
   app.get('/api/instructor/dashboard-stats', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
@@ -2227,7 +2227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get refund requests for instructor
   app.get('/api/instructor/refund-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
@@ -2472,7 +2472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Object storage routes for waivers and course images
   app.get("/objects/:objectPath(*)", async (req: any, res) => {
-    const userId = req.user?.claims?.sub;
+    const userId = req.user?.id;
     const objectStorageService = new ObjectStorageService();
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
@@ -2510,7 +2510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course creation endpoint
   app.post("/api/instructor/courses", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Validate required fields
       if (!req.body.title || !req.body.description || !req.body.price || !req.body.category) {
@@ -2538,7 +2538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update/Edit course endpoint
   app.put("/api/instructor/courses/:courseId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const courseId = req.params.courseId;
       const updateData = req.body;
 
@@ -2559,7 +2559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Duplicate schedule endpoint
   app.post("/api/instructor/schedules/:scheduleId/duplicate", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const scheduleId = req.params.scheduleId;
 
       // Get the schedule and verify it belongs to the instructor's course
@@ -2819,7 +2819,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Event creation endpoint (creates course schedules) - MOVED UP
   app.post("/api/instructor/events", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const eventData = req.body;
 
       // Validate required fields
@@ -2863,7 +2863,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete schedule endpoint (soft delete)
   app.delete("/api/instructor/schedules/:scheduleId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const scheduleId = req.params.scheduleId;
 
       // Get schedule to verify ownership
@@ -2890,7 +2890,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update schedule endpoint
   app.patch("/api/instructor/schedules/:scheduleId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const scheduleId = req.params.scheduleId;
 
       // Get schedule to verify ownership
@@ -3017,7 +3017,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Permanently delete schedule endpoint (hard delete)
   app.delete("/api/instructor/schedules/:scheduleId/permanent", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const scheduleId = req.params.scheduleId;
 
       // Check if schedule exists in deleted schedules
@@ -3039,7 +3039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cancel schedule endpoint
   app.patch("/api/instructor/schedules/:scheduleId/cancel", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const scheduleId = req.params.scheduleId;
 
       // Get schedule to verify ownership
@@ -3070,7 +3070,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Unpublish schedule endpoint
   app.patch("/api/instructor/schedules/:scheduleId/unpublish", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const scheduleId = req.params.scheduleId;
 
       // Get schedule to verify ownership
@@ -3104,7 +3104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "courseImageURL is required" });
     }
 
-    const userId = req.user?.claims?.sub;
+    const userId = req.user?.id;
 
     try {
       const objectStorageService = new ObjectStorageService();
@@ -3131,7 +3131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "productImageURL is required" });
     }
 
-    const userId = req.user?.claims?.sub;
+    const userId = req.user?.id;
 
     try {
       const objectStorageService = new ObjectStorageService();
@@ -3246,7 +3246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard statistics endpoint
   app.get("/api/instructor/dashboard-stats", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const stats = await storage.getInstructorDashboardStats(userId);
       res.json(stats);
     } catch (error: any) {
@@ -3262,7 +3262,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: "waiverURL is required" });
     }
 
-    const userId = req.user?.claims?.sub;
+    const userId = req.user?.id;
 
     try {
       const objectStorageService = new ObjectStorageService();
@@ -3293,7 +3293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const { enrollmentId, promoCode, billingAddress } = req.body;
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Fetch enrollment to calculate correct payment amount server-side
       const enrollment = await storage.getEnrollment(enrollmentId);
@@ -3422,7 +3422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/confirm-enrollment", isAuthenticated, async (req: any, res) => {
     try {
       const { enrollmentId, paymentIntentId } = req.body;
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       const enrollment = await storage.getEnrollment(enrollmentId);
       if (!enrollment || enrollment.studentId !== userId) {
@@ -3483,7 +3483,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Instructor courses endpoint for forms management
   app.get("/api/instructor/courses", async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
@@ -3643,7 +3643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sortOrder: 0
       });
 
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
@@ -3681,7 +3681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { fieldId } = req.params;
       const { fieldType, label, placeholder, isRequired, options } = req.body;
 
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
@@ -3729,7 +3729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { fieldId } = req.params;
 
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
@@ -3842,7 +3842,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user is authenticated and get their info if available
       let userId = null;
       if (req.isAuthenticated && req.isAuthenticated()) {
-        userId = req.user?.claims?.sub || null;
+        userId = req.user?.id || null;
       }
 
       // Add userId to the notification data if available
@@ -3862,7 +3862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get course notifications (for instructors)
   app.get("/api/course-notifications", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
@@ -3881,7 +3881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Promo code / coupon routes
   app.get("/api/instructor/coupons", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const promoCodes = await storage.getPromoCodesByCreator(userId);
       res.json(promoCodes);
     } catch (error: any) {
@@ -3892,7 +3892,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/instructor/coupons", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const promoCodeData = {
         ...req.body,
         createdBy: userId,
@@ -3909,7 +3909,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/instructor/coupons/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const { id } = req.params;
 
       const updateData = {
@@ -3927,7 +3927,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/instructor/coupons/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const { id } = req.params;
 
       await storage.deletePromoCode(id);
@@ -3942,7 +3942,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/validate-promo-code", isAuthenticated, async (req: any, res) => {
     try {
       const { code, courseId, amount } = req.body;
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       if (!code || !courseId || !amount) {
         return res.status(400).json({ error: "Missing required fields: code, courseId, amount" });
@@ -4067,7 +4067,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notification Schedules Routes
   app.get("/api/admin/notification-schedules", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
@@ -4085,7 +4085,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/notification-schedules", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
@@ -4112,7 +4112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/admin/notification-schedules/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const { id } = req.params;
 
       // Only allow instructors to access admin features
@@ -4140,7 +4140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/admin/notification-schedules/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const { id } = req.params;
 
       // Only allow instructors to access admin features
@@ -4160,7 +4160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notification Logs Routes
   app.get("/api/admin/notification-logs", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
@@ -4212,7 +4212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send One-time Notification Route
   app.post("/api/admin/send-notification", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
@@ -4320,7 +4320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Waiver Templates Routes (Admin only)
   app.get("/api/admin/waiver-templates", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
@@ -4344,7 +4344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/waiver-templates/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const { id } = req.params;
 
       // Only allow instructors to access admin features
@@ -4367,7 +4367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/waiver-templates", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
@@ -4397,7 +4397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/admin/waiver-templates/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const { id } = req.params;
 
       // Only allow instructors to access admin features
@@ -4427,7 +4427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/admin/waiver-templates/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const { id } = req.params;
 
       // Only allow instructors to access admin features
@@ -4447,7 +4447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Waiver Instances Routes
   app.get("/api/waiver-instances/enrollment/:enrollmentId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const { enrollmentId } = req.params;
 
       // Verify enrollment access (student owns enrollment or instructor owns course)
@@ -4478,7 +4478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/waiver-instances/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const { id } = req.params;
 
       const instance = await storage.getWaiverInstance(id);
@@ -4508,7 +4508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/waiver-instances", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Validate request body
       const instanceData = insertWaiverInstanceSchema.parse(req.body);
@@ -4547,7 +4547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Waiver Signatures Routes
   app.post("/api/waiver-signatures", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Validate request body
       const signatureData = insertWaiverSignatureSchema.parse(req.body);
@@ -4597,7 +4597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Waiver Utility Routes
   app.post("/api/waiver-content/generate", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       const { templateId, enrollmentId } = req.body;
 
@@ -4633,7 +4633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/waiver-requirements/:enrollmentId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const { enrollmentId } = req.params;
 
       // Verify enrollment access
@@ -4665,7 +4665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Waiver Compliance Reporting (Admin only)
   app.get("/api/admin/waiver-compliance", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to access admin features
       const user = await storage.getUser(userId);
@@ -4817,7 +4817,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Check SMS delivery status
   app.get("/api/notifications/sms/:messageSid/status", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors and above to check SMS status
       const user = await storage.getUser(userId);
@@ -4846,7 +4846,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Debug Twilio account info (instructors and above)
   app.get("/api/debug/twilio-info", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors and above to check account info
       const user = await storage.getUser(userId);
@@ -4959,7 +4959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Payment reminder notification
   app.post("/api/notifications/payment-reminder", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to send payment reminders
       const user = await storage.getUser(userId);
@@ -5221,7 +5221,7 @@ jeremy@abqconcealedcarry.com
   // Get detailed payment information for enrollment
   app.get("/api/instructor/payment-details/:enrollmentId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
@@ -5314,7 +5314,7 @@ jeremy@abqconcealedcarry.com
   app.get("/api/cross-enrollment/available-schedules", isAuthenticated, async (req: any, res) => {
     try {
       // Safely access user ID with proper null checks
-      const userId = req.user?.claims?.sub || req.claims?.sub;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
@@ -5589,7 +5589,7 @@ jeremy@abqconcealedcarry.com
   app.get("/api/communications", isAuthenticated, async (req: any, res) => {
     try {
       // Safely access user ID with proper null checks
-      const userId = req.user?.claims?.sub || req.claims?.sub;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
@@ -5791,7 +5791,7 @@ jeremy@abqconcealedcarry.com
   // Get SMS inbox (received messages)
   app.get("/api/sms/inbox", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to access SMS features
       const user = await storage.getUser(userId);
@@ -5819,7 +5819,7 @@ jeremy@abqconcealedcarry.com
   // Get all SMS messages
   app.get("/api/sms/messages", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to access SMS features
       const user = await storage.getUser(userId);
@@ -5849,7 +5849,7 @@ jeremy@abqconcealedcarry.com
   // Get SMS message by SID
   app.get("/api/sms/messages/:sid", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const { sid } = req.params;
 
       // Only allow instructors and above to access SMS features
@@ -5874,7 +5874,7 @@ jeremy@abqconcealedcarry.com
   // Send SMS message
   app.post("/api/sms/send", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors and above to send SMS
       const user = await storage.getUser(userId);
@@ -5928,7 +5928,7 @@ jeremy@abqconcealedcarry.com
   // Get SMS statistics
   app.get("/api/sms/stats", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to access SMS stats
       const user = await storage.getUser(userId);
@@ -5947,7 +5947,7 @@ jeremy@abqconcealedcarry.com
   // Get contacts for SMS (students and instructors with phone numbers)
   app.get("/api/sms/contacts", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to access contacts
       const user = await storage.getUser(userId);
@@ -6315,7 +6315,7 @@ jeremy@abqconcealedcarry.com
   // Shopping Cart Routes
   app.get('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub; // May be null for guest users
+      const userId = req.user?.id; // May be null for guest users
       const sessionId = req.sessionID;
 
       console.log("GET /api/cart - userId:", userId, "sessionId:", sessionId);
@@ -6340,7 +6340,7 @@ jeremy@abqconcealedcarry.com
 
   app.post('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub; // May be null for guest users
+      const userId = req.user?.id; // May be null for guest users
       const sessionId = req.sessionID;
 
       console.log("POST /api/cart - userId:", userId, "sessionId:", sessionId);
@@ -6403,7 +6403,7 @@ jeremy@abqconcealedcarry.com
 
   app.delete('/api/cart', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.claims?.sub;
+      const userId = req.user?.id;
       const sessionId = req.sessionID;
 
       await storage.clearCart(userId, sessionId);
