@@ -7,7 +7,7 @@ import { storage, normalizePhoneNumber } from "./storage";
 import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrHigher, requireActiveAccount, requireAdminOrHigher, generateToken, getTokenExpiry } from "./customAuth";
 import { authRouter } from "./auth/routes";
 import { db } from "./db";
-import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems, instructorAppointments, courses as coursesTable } from "@shared/schema";
+import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems, instructorAppointments, courses as coursesTable, courseSchedules } from "@shared/schema";
 import { eq, and, inArray, desc, asc, gte, isNotNull, isNull } from "drizzle-orm";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
@@ -2255,13 +2255,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/instructor/dashboard-stats', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
+      const userRole = req.user?.role;
 
       if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const stats = await storage.getInstructorDashboardStats(userId);
-      res.json(stats);
+      // For admin/superadmin, calculate stats across all instructors
+      if (userRole === 'admin' || userRole === 'superadmin') {
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        // Get all courses from all instructors
+        const allCourses = await db.query.courses.findMany({
+          where: isNull(coursesTable.deletedAt),
+          with: {
+            schedules: {
+              where: isNull(courseSchedules.deletedAt),
+            },
+            enrollments: true,
+          },
+        });
+
+        // Count upcoming courses (schedules with future start dates)
+        const upcomingCourses = allCourses.reduce((count, course) => {
+          const upcomingSchedules = course.schedules.filter(
+            schedule => schedule.startDate && new Date(schedule.startDate) >= startOfToday
+          );
+          return count + upcomingSchedules.length;
+        }, 0);
+
+        // Count all unique students across all enrollments
+        const allEnrollments = allCourses.flatMap(course => course.enrollments);
+        const uniqueStudentIds = new Set(
+          allEnrollments
+            .filter(e => e.studentId !== null && (e.status === 'confirmed' || e.status === 'pending'))
+            .map(e => e.studentId)
+        );
+
+        // Calculate revenue
+        const paidEnrollments = allEnrollments.filter(e => 
+          e.paymentStatus === 'paid' || e.paymentStatus === 'deposit'
+        );
+        const totalRevenue = paidEnrollments.reduce((sum, e) => sum + Number(e.amountPaid || 0), 0);
+        
+        const pendingEnrollments = allEnrollments.filter(e => 
+          e.status === 'confirmed' && (e.paymentStatus === 'deposit' || e.paymentStatus === 'pending')
+        );
+        const outstandingRevenue = pendingEnrollments.reduce((sum, e) => {
+          const amountPaid = Number(e.amountPaid || 0);
+          const totalCost = Number(e.totalCost || 0);
+          return sum + (totalCost - amountPaid);
+        }, 0);
+
+        // Get refund requests count
+        const refundRequests = await db.query.enrollments.findMany({
+          where: eq(enrollments.refundStatus, 'requested'),
+        });
+
+        const stats = {
+          upcomingCourses,
+          onlineStudents: 0, // Not applicable for all-instructor view
+          allStudents: uniqueStudentIds.size,
+          totalRevenue,
+          outstandingRevenue,
+          refundRequests: refundRequests.length,
+        };
+
+        res.json(stats);
+      } else {
+        // Regular instructors only see their own stats
+        const stats = await storage.getInstructorDashboardStats(userId);
+        res.json(stats);
+      }
     } catch (error) {
       console.error("Error fetching instructor dashboard stats:", error);
       res.status(500).json({ message: "Failed to fetch dashboard statistics" });
@@ -3300,18 +3366,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting product:", error);
       res.status(500).json({ message: "Failed to delete product" });
-    }
-  });
-
-  // Dashboard statistics endpoint
-  app.get("/api/instructor/dashboard-stats", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user?.id;
-      const stats = await storage.getInstructorDashboardStats(userId);
-      res.json(stats);
-    } catch (error: any) {
-      console.error("Error fetching dashboard stats:", error);
-      res.status(500).json({ error: "Failed to fetch dashboard stats: " + error.message });
     }
   });
 
