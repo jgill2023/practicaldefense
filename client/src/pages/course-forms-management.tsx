@@ -1248,10 +1248,10 @@ function FieldEditor({
           <div>
             <Label htmlFor="showWhenFieldId">Show this field when...</Label>
             <Select
-              value={fieldData.showWhenFieldId}
+              value={fieldData.showWhenFieldId || '__NONE__'}
               onValueChange={(value) => setFieldData(prev => ({ 
                 ...prev, 
-                showWhenFieldId: value,
+                showWhenFieldId: value === '__NONE__' ? '' : value,
                 showWhenValue: '' // Reset value when field changes
               }))}
             >
@@ -1259,7 +1259,7 @@ function FieldEditor({
                 <SelectValue placeholder="Always visible (no condition)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Always visible (no condition)</SelectItem>
+                <SelectItem value="__NONE__">Always visible (no condition)</SelectItem>
                 {existingFields
                   .filter(f => 
                     f.id !== field?.id && // Don't allow self-reference
