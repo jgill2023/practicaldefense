@@ -100,6 +100,7 @@ export default function AppointmentsPage() {
     { key: '{{studentFirstName}}', description: 'Student\'s first name' },
     { key: '{{studentLastName}}', description: 'Student\'s last name' },
     { key: '{{studentEmail}}', description: 'Student\'s email address' },
+    { key: '{{studentPhone}}', description: 'Student\'s phone number' },
     { key: '{{appointmentType}}', description: 'Type of appointment' },
     { key: '{{appointmentDate}}', description: 'Date of appointment (e.g., Monday, January 15, 2024)' },
     { key: '{{appointmentTime}}', description: 'Time of appointment (e.g., 2:00 PM - 3:00 PM)' },
