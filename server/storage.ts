@@ -2951,13 +2951,14 @@ export class DatabaseStorage implements IStorage {
       e => e.refundRequested && !e.refundProcessed
     ).length;
 
-    // Count total appointments (confirmed and pending)
+    // Count total appointments (confirmed, pending, and completed)
     const appointments = await db.query.instructorAppointments.findMany({
       where: and(
         eq(instructorAppointments.instructorId, instructorId),
         or(
           eq(instructorAppointments.status, 'confirmed'),
-          eq(instructorAppointments.status, 'pending')
+          eq(instructorAppointments.status, 'pending'),
+          eq(instructorAppointments.status, 'completed')
         )
       ),
     });
