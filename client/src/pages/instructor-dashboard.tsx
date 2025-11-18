@@ -28,7 +28,7 @@ import { EventCreationForm } from "@/components/EventCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
 import { RosterDialog } from "@/components/RosterDialog";
 import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
-import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, MessageSquare, CalendarClock } from "lucide-react";
+import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, MessageSquare, CalendarClock, ChevronUp, ChevronDown } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 import { AppointmentsModal } from "@/components/AppointmentsModal";
@@ -148,6 +148,28 @@ export default function InstructorDashboard() {
       toast({
         title: "Archive Failed",
         description: "Failed to archive course. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Reorder courses mutation
+  const reorderCoursesMutation = useMutation({
+    mutationFn: async (updates: {id: string; sortOrder: number}[]) => {
+      await apiRequest("POST", "/api/instructor/courses/reorder", { updates });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Order Updated",
+        description: "Course order has been updated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Reorder Failed",
+        description: "Failed to reorder courses. Please try again.",
         variant: "destructive",
       });
     },
@@ -840,6 +862,33 @@ export default function InstructorDashboard() {
     );
   };
 
+  // Helper function to move courses up/down
+  const moveCourse = (courseId: string, direction: 'up' | 'down', courseList: CourseWithSchedules[]) => {
+    const currentIndex = courseList.findIndex(c => c.id === courseId);
+    if (currentIndex === -1) return;
+
+    // Can't move up if already at the top
+    if (direction === 'up' && currentIndex === 0) return;
+    // Can't move down if already at the bottom
+    if (direction === 'down' && currentIndex === courseList.length - 1) return;
+
+    // Calculate the swap index
+    const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    // Get the courses
+    const currentCourse = courseList[currentIndex];
+    const swapCourse = courseList[swapIndex];
+
+    // Create updates array - swap the sortOrder values
+    const updates = [
+      { id: currentCourse.id, sortOrder: swapCourse.sortOrder || swapIndex },
+      { id: swapCourse.id, sortOrder: currentCourse.sortOrder || currentIndex },
+    ];
+
+    // Execute the mutation
+    reorderCoursesMutation.mutate(updates);
+  };
+
   // Helper function to render course types table for each category
   const renderCourseTable = (categoryName: string, courseList: CourseWithSchedules[]) => {
     if (coursesLoading) {
@@ -873,6 +922,7 @@ export default function InstructorDashboard() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
               <tr>
+                <th className="px-3 py-4 text-center text-sm font-medium text-gray-600">Sort</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Course</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-gray-600">Date</th>
                 <th className="px-6 py-4 text-center text-sm font-medium text-gray-600">Students</th>
@@ -882,7 +932,7 @@ export default function InstructorDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {courseList.map((course) => {
+              {courseList.map((course, index) => {
               const enrollmentCount = enrollments.filter(e => e.courseId === course.id).length;
               const nextSchedule = course.schedules
                 .filter(s => s.startDate && new Date(s.startDate) > new Date())
@@ -896,6 +946,31 @@ export default function InstructorDashboard() {
 
               return (
                 <tr key={course.id} className="hover:bg-gray-50 transition-colors">
+                  {/* Sort arrows column */}
+                  <td className="px-3 py-4">
+                    <div className="flex flex-col items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                        onClick={() => moveCourse(course.id, 'up', courseList)}
+                        disabled={index === 0 || reorderCoursesMutation.isPending}
+                        data-testid={`button-move-up-course-${course.id}`}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                        onClick={() => moveCourse(course.id, 'down', courseList)}
+                        disabled={index === courseList.length - 1 || reorderCoursesMutation.isPending}
+                        data-testid={`button-move-down-course-${course.id}`}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </td>
                   <td className="px-6 py-4">
                     <div className="font-medium text-gray-900" data-testid={`text-course-name-${course.id}`}>
                       {course.title}
