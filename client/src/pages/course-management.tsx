@@ -38,7 +38,8 @@ import {
   BadgePercent,
   ArrowLeft,
   Bell,
-  ChevronDown
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
@@ -478,6 +479,56 @@ export default function CourseManagement() {
     },
   });
 
+  // Reorder courses mutation
+  const reorderCoursesMutation = useMutation({
+    mutationFn: async (updates: {id: string; sortOrder: number}[]) => {
+      await apiRequest("POST", "/api/instructor/courses/reorder", { updates });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Order Updated",
+        description: "Course order has been updated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Reorder Failed",
+        description: "Failed to reorder courses. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Helper function to move courses up/down
+  const moveCourse = (courseId: string, direction: 'up' | 'down', courseList: CourseWithSchedules[]) => {
+    const currentIndex = courseList.findIndex(c => c.id === courseId);
+    if (currentIndex === -1) return;
+
+    // Can't move up if already at the top
+    if (direction === 'up' && currentIndex === 0) return;
+    // Can't move down if already at the bottom
+    if (direction === 'down' && currentIndex === courseList.length - 1) return;
+
+    // Calculate the swap index
+    const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    // Get the courses
+    const currentCourse = courseList[currentIndex];
+    const swapCourse = courseList[swapIndex];
+
+    // Create updates array - swap the sortOrder values
+    const updates = [
+      { id: currentCourse.id, sortOrder: swapCourse.sortOrder || swapIndex },
+      { id: swapCourse.id, sortOrder: currentCourse.sortOrder || currentIndex },
+    ];
+
+    // Execute the mutation
+    reorderCoursesMutation.mutate(updates);
+  };
+
   // Function to handle creating an event for a specific course
   const handleCreateEventForCourse = (course: CourseWithSchedules) => {
     setSelectedCourseForEvent(course);
@@ -518,7 +569,7 @@ export default function CourseManagement() {
 
     return (
       <div className="grid grid-cols-1 gap-4 sm:gap-6">
-        {courseList.map((course) => (
+        {courseList.map((course, index) => (
           <Card key={course.id} className={`transition-all hover:shadow-md ${
             type === 'archived' ? 'border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800' :
             type === 'drafts' || type === 'unpublished' ? 'border-gray-200 bg-gray-50 dark:bg-gray-950/20 dark:border-gray-800' :
@@ -526,6 +577,29 @@ export default function CourseManagement() {
           }`}>
             <CardContent className="p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                {/* Sort controls */}
+                <div className="flex flex-col gap-1 justify-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                    onClick={() => moveCourse(course.id, 'up', courseList)}
+                    disabled={index === 0 || reorderCoursesMutation.isPending}
+                    data-testid={`button-move-up-course-${course.id}`}
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                    onClick={() => moveCourse(course.id, 'down', courseList)}
+                    disabled={index === courseList.length - 1 || reorderCoursesMutation.isPending}
+                    data-testid={`button-move-down-course-${course.id}`}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-semibold text-lg truncate" data-testid={`text-course-title-${course.id}`}>
