@@ -367,6 +367,19 @@ export default function UserManagementPage() {
                   />
                   <FormField
                     control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Default Password</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="password" placeholder="Enter default password" data-testid="input-password" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="firstName"
                     render={({ field }) => (
                       <FormItem>
