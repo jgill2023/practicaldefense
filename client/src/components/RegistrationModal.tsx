@@ -420,7 +420,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" data-testid="modal-registration">
+      <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto" data-testid="modal-registration">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-card-foreground">
             Course Registration
