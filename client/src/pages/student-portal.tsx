@@ -211,6 +211,25 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
     return initiallyAutopopulatedFields.has(fieldId) && !editableFields[fieldId];
   };
 
+  // Check if a field should be visible based on conditional logic
+  const isFieldVisible = (field: any) => {
+    // If no conditional logic, always show the field
+    if (!field.showWhenFieldId || !field.showWhenValue) {
+      return true;
+    }
+
+    // Get the conditional field's current value
+    const conditionalFieldValue = formData[field.showWhenFieldId];
+    
+    // Handle checkbox fields (which store arrays)
+    if (Array.isArray(conditionalFieldValue)) {
+      return conditionalFieldValue.includes(field.showWhenValue);
+    }
+    
+    // Handle all other field types (select, radio, text, etc.)
+    return conditionalFieldValue === field.showWhenValue;
+  };
+
   const renderField = (field: any) => {
     const value = formData[field.id] || '';
     const isAutopopulated = isFieldAutopopulated(field.id);
@@ -460,13 +479,14 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
   };
 
   const handleSubmit = () => {
-    // Validate required fields
+    // Validate required fields (only for visible fields)
     const allForms = courseForms || [];
     let hasErrors = false;
 
     for (const form of allForms) {
       for (const field of form.fields || []) {
-        if (field.isRequired && !formData[field.id]) {
+        // Only validate if the field is visible based on conditional logic
+        if (field.isRequired && isFieldVisible(field) && !formData[field.id]) {
           hasErrors = true;
           toast({
             title: "Missing Required Field",
@@ -520,7 +540,9 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
                 <CardContent>
                   <div className="space-y-4">
                     {form.fields && form.fields.length > 0 ? (
-                      form.fields.map((field: any) => renderField(field))
+                      form.fields
+                        .filter((field: any) => isFieldVisible(field))
+                        .map((field: any) => renderField(field))
                     ) : (
                       <p className="text-sm text-muted-foreground">No fields configured for this form.</p>
                     )}

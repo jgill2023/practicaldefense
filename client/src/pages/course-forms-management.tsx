@@ -442,6 +442,8 @@ export default function CourseFormsManagement() {
     placeholder?: string;
     isRequired: boolean;
     options?: any;
+    showWhenFieldId?: string;
+    showWhenValue?: string;
   }, formId: string) => {
     fieldMutation.mutate({
       formId,
@@ -699,6 +701,7 @@ export default function CourseFormsManagement() {
                                   </DialogHeader>
                                   <FieldEditor
                                     field={editingField}
+                                    existingFields={form.fields}
                                     onSubmit={(data) => handleCreateField(data, form.id)}
                                     onCancel={() => {
                                       setShowFieldEditor(false);
@@ -1090,16 +1093,20 @@ function CreateFormDialog({
 // Field Editor Component
 function FieldEditor({ 
   field, 
+  existingFields,
   onSubmit, 
   onCancel 
 }: {
   field?: CourseInformationFormField | null;
+  existingFields: CourseInformationFormField[];
   onSubmit: (data: {
     fieldType: FormFieldType;
     label: string;
     placeholder?: string;
     isRequired: boolean;
     options?: any;
+    showWhenFieldId?: string;
+    showWhenValue?: string;
   }) => void;
   onCancel: () => void;
 }) {
@@ -1108,7 +1115,9 @@ function FieldEditor({
     label: field?.label || '',
     placeholder: field?.placeholder || '',
     isRequired: field?.isRequired || false,
-    options: field?.options ? JSON.stringify(field.options, null, 2) : ''
+    options: field?.options ? JSON.stringify(field.options, null, 2) : '',
+    showWhenFieldId: field?.showWhenFieldId || '',
+    showWhenValue: field?.showWhenValue || ''
   });
 
   const fieldTypes: Array<{ value: FormFieldType; label: string }> = [
@@ -1142,9 +1151,15 @@ function FieldEditor({
       label: fieldData.label,
       placeholder: fieldData.placeholder || undefined,
       isRequired: fieldData.isRequired,
-      options: parsedOptions
+      options: parsedOptions,
+      showWhenFieldId: fieldData.showWhenFieldId || undefined,
+      showWhenValue: fieldData.showWhenValue || undefined
     });
   };
+
+  // Get the selected conditional field to show its options
+  const conditionalField = existingFields.find(f => f.id === fieldData.showWhenFieldId);
+  const conditionalFieldOptions = conditionalField?.options as string[] | undefined;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -1222,6 +1237,93 @@ function FieldEditor({
           </p>
         </div>
       )}
+
+      <div className="border-t pt-4">
+        <h4 className="font-medium mb-3">Conditional Display (Optional)</h4>
+        <p className="text-sm text-muted-foreground mb-4">
+          Show this field only when a previous field has a specific value (e.g., show follow-up question when user answers "Yes").
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="showWhenFieldId">Show this field when...</Label>
+            <Select
+              value={fieldData.showWhenFieldId}
+              onValueChange={(value) => setFieldData(prev => ({ 
+                ...prev, 
+                showWhenFieldId: value,
+                showWhenValue: '' // Reset value when field changes
+              }))}
+            >
+              <SelectTrigger id="showWhenFieldId" data-testid="select-conditional-field">
+                <SelectValue placeholder="Always visible (no condition)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Always visible (no condition)</SelectItem>
+                {existingFields
+                  .filter(f => 
+                    f.id !== field?.id && // Don't allow self-reference
+                    (f.fieldType === 'select' || f.fieldType === 'checkbox' || f.fieldType === 'radio') && // Only fields with options
+                    f.options // Must have options defined
+                  )
+                  .map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.label}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            {existingFields.filter(f => 
+              f.id !== field?.id && 
+              (f.fieldType === 'select' || f.fieldType === 'checkbox' || f.fieldType === 'radio') && 
+              f.options
+            ).length === 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                No eligible fields yet. Add a dropdown, checkbox, or radio field first to use conditional logic.
+              </p>
+            )}
+          </div>
+
+          {fieldData.showWhenFieldId && conditionalField && (
+            <div>
+              <Label htmlFor="showWhenValue">...equals this value</Label>
+              {conditionalFieldOptions && Array.isArray(conditionalFieldOptions) && conditionalFieldOptions.length > 0 ? (
+                <Select
+                  value={fieldData.showWhenValue}
+                  onValueChange={(value) => setFieldData(prev => ({ ...prev, showWhenValue: value }))}
+                >
+                  <SelectTrigger id="showWhenValue" data-testid="select-conditional-value">
+                    <SelectValue placeholder="Select a value" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {conditionalFieldOptions.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div>
+                  <Input
+                    id="showWhenValue"
+                    value={fieldData.showWhenValue}
+                    onChange={(e) => setFieldData(prev => ({ ...prev, showWhenValue: e.target.value }))}
+                    placeholder="Enter the exact value"
+                    data-testid="input-conditional-value"
+                  />
+                  <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-1">
+                    Warning: The selected field has no options configured yet. You can enter a value manually, but make sure it matches exactly.
+                  </p>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                This field will only appear when "{conditionalField.label}" has this value.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>

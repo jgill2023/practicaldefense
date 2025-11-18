@@ -715,6 +715,8 @@ export const courseInformationFormFields = pgTable("course_information_form_fiel
   sortOrder: integer("sort_order").notNull().default(0),
   options: jsonb("options"), // JSON object for select/radio options
   validation: jsonb("validation"), // JSON object for validation rules
+  showWhenFieldId: uuid("show_when_field_id"), // Reference to another field in the same form
+  showWhenValue: varchar("show_when_value", { length: 255 }), // Value that triggers visibility
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

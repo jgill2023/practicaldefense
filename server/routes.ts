@@ -3905,7 +3905,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/course-form-fields", isAuthenticated, async (req: any, res) => {
     try {
       // Validate request body with Zod
-      const { formId, fieldType, label, placeholder, isRequired, options } = insertCourseInformationFormFieldSchema.parse({
+      const { formId, fieldType, label, placeholder, isRequired, options, showWhenFieldId, showWhenValue } = insertCourseInformationFormFieldSchema.parse({
         ...req.body,
         // Provide defaults for omitted fields
         sortOrder: 0
@@ -3926,6 +3926,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingFields = await storage.getCourseInformationFormFields(formId);
       const maxSortOrder = existingFields.length > 0 ? Math.max(...existingFields.map(f => f.sortOrder)) : -1;
 
+      // Validate conditional field reference if provided
+      if (showWhenFieldId) {
+        const conditionalField = existingFields.find(f => f.id === showWhenFieldId);
+        if (!conditionalField) {
+          return res.status(400).json({ message: "Referenced conditional field not found in this form" });
+        }
+        
+        // Ensure the conditional field is of a type that supports options
+        const validConditionalTypes = ['select', 'checkbox', 'radio'];
+        if (!validConditionalTypes.includes(conditionalField.fieldType)) {
+          return res.status(400).json({ 
+            message: `Conditional field must be of type select, checkbox, or radio. Field "${conditionalField.label}" is type "${conditionalField.fieldType}"` 
+          });
+        }
+        
+        // Ensure the conditional field has options defined
+        if (!conditionalField.options || (Array.isArray(conditionalField.options) && conditionalField.options.length === 0)) {
+          return res.status(400).json({ 
+            message: `Conditional field "${conditionalField.label}" must have options defined` 
+          });
+        }
+        
+        if (!showWhenValue) {
+          return res.status(400).json({ message: "Conditional value is required when conditional field is specified" });
+        }
+      }
+
       const field = await storage.createCourseInformationFormField({
         formId,
         fieldType,
@@ -3933,6 +3960,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         placeholder,
         isRequired: Boolean(isRequired),
         options,
+        showWhenFieldId,
+        showWhenValue,
         sortOrder: maxSortOrder + 1,
       });
 
@@ -3947,7 +3976,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/course-form-fields/:fieldId", isAuthenticated, async (req: any, res) => {
     try {
       const { fieldId } = req.params;
-      const { fieldType, label, placeholder, isRequired, options } = req.body;
+      
+      // Validate request body with partial Zod schema
+      const updateData = insertCourseInformationFormFieldSchema.partial().parse(req.body);
+      const { fieldType, label, placeholder, isRequired, options, showWhenFieldId, showWhenValue } = updateData;
 
       const userId = req.user?.id;
       if (!userId) {
@@ -3977,12 +4009,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
+      // Determine final conditional logic values
+      // If showWhenFieldId is present in request, use it; if explicitly empty/null, clear both; otherwise keep existing
+      let normalizedShowWhenFieldId: string | undefined = undefined;
+      let normalizedShowWhenValue: string | undefined = undefined;
+      
+      if (showWhenFieldId !== undefined) {
+        // Request explicitly sets or clears showWhenFieldId
+        if (showWhenFieldId === '' || showWhenFieldId === null) {
+          // Explicitly clearing conditional logic
+          normalizedShowWhenFieldId = undefined;
+          normalizedShowWhenValue = undefined;
+        } else {
+          // Setting conditional logic
+          normalizedShowWhenFieldId = showWhenFieldId;
+          normalizedShowWhenValue = showWhenValue || '';
+        }
+      } else {
+        // Request doesn't mention showWhenFieldId - preserve existing values from database
+        normalizedShowWhenFieldId = targetField.showWhenFieldId || undefined;
+        normalizedShowWhenValue = targetField.showWhenValue || undefined;
+      }
+      
+      // Validate conditional field reference if being set
+      if (normalizedShowWhenFieldId) {
+        const conditionalField = targetForm.fields.find(f => f.id === normalizedShowWhenFieldId);
+        if (!conditionalField) {
+          return res.status(400).json({ message: "Referenced conditional field not found in this form" });
+        }
+        
+        // Ensure the conditional field is of a type that supports options
+        const validConditionalTypes = ['select', 'checkbox', 'radio'];
+        if (!validConditionalTypes.includes(conditionalField.fieldType)) {
+          return res.status(400).json({ 
+            message: `Conditional field must be of type select, checkbox, or radio. Field "${conditionalField.label}" is type "${conditionalField.fieldType}"` 
+          });
+        }
+        
+        // Ensure the conditional field has options defined
+        if (!conditionalField.options || (Array.isArray(conditionalField.options) && conditionalField.options.length === 0)) {
+          return res.status(400).json({ 
+            message: `Conditional field "${conditionalField.label}" must have options defined` 
+          });
+        }
+        
+        if (!normalizedShowWhenValue) {
+          return res.status(400).json({ message: "Conditional value is required when conditional field is specified" });
+        }
+      }
+
       const updatedField = await storage.updateCourseInformationFormField(fieldId, {
         fieldType,
         label,
         placeholder,
-        isRequired: Boolean(isRequired),
+        isRequired: isRequired !== undefined ? Boolean(isRequired) : undefined,
         options,
+        showWhenFieldId: normalizedShowWhenFieldId,
+        showWhenValue: normalizedShowWhenValue,
       });
 
       res.json(updatedField);
