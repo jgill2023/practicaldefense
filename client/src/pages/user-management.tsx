@@ -58,6 +58,7 @@ import type { User } from "@shared/schema";
 
 const createUserSchema = z.object({
   email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   role: z.enum(["student", "instructor", "admin", "superadmin"]),
@@ -96,6 +97,7 @@ export default function UserManagementPage() {
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       email: "",
+      password: "",
       firstName: "",
       lastName: "",
       role: "student",
