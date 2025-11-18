@@ -255,10 +255,15 @@ async function sendAuthEmail(to: string, subject: string, html: string): Promise
       subject,
       html,
     });
-    console.log(`Auth email sent successfully to ${to}`);
+    console.log(`Auth email sent successfully to ${to} - Subject: ${subject}`);
     return true;
   } catch (error: any) {
-    console.error("Error sending auth email:", error.response?.body || error);
+    console.error("Error sending auth email:", {
+      to,
+      subject,
+      error: error.response?.body || error.message || error,
+      statusCode: error.code || error.statusCode,
+    });
     return false;
   }
 }

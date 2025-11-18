@@ -191,7 +191,12 @@ authRouter.post("/request-reset", async (req, res) => {
       })
       .where(eq(users.id, user.id));
 
-    await sendPasswordResetEmail(email, user.firstName || "User", resetToken);
+    const emailSent = await sendPasswordResetEmail(email, user.firstName || "User", resetToken);
+    
+    if (!emailSent) {
+      console.error(`Failed to send password reset email to ${email}`);
+      // Still return success message for security (don't reveal if email exists)
+    }
 
     res.json({
       message: "If an account exists with this email, you will receive a password reset link.",
