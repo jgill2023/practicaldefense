@@ -621,6 +621,7 @@ export interface IStorage {
     startDate?: Date;
     endDate?: Date;
   }): Promise<InstructorAppointmentWithDetails[]>;
+  getAllAppointments(): Promise<InstructorAppointmentWithDetails[]>;
   getAppointmentsByInstructor(instructorId: string): Promise<InstructorAppointmentWithDetails[]>;
   getAppointmentsByStudent(studentId: string): Promise<InstructorAppointmentWithDetails[]>;
   getPendingAppointments(instructorId: string): Promise<InstructorAppointmentWithDetails[]>;
@@ -5886,6 +5887,18 @@ export class DatabaseStorage implements IStorage {
         student: true,
       },
       orderBy: [asc(instructorAppointments.startTime)],
+    });
+  }
+
+  async getAllAppointments(): Promise<InstructorAppointmentWithDetails[]> {
+    // For admin/superadmin: return all appointments across all instructors
+    return db.query.instructorAppointments.findMany({
+      with: {
+        appointmentType: true,
+        instructor: true,
+        student: true,
+      },
+      orderBy: [desc(instructorAppointments.startTime)],
     });
   }
 

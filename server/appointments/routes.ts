@@ -88,13 +88,21 @@ appointmentRouter.get('/instructor/:instructorId/appointments', isAuthenticated,
   try {
     const { instructorId } = req.params;
     const currentUserId = req.user.id;
+    const currentUser = req.user;
     
-    // Verify the instructor is requesting their own appointments
-    if (instructorId !== currentUserId) {
+    // Admin and superadmin have global visibility (admin-level data access)
+    const isAdminOrHigher = currentUser.role === 'admin' || currentUser.role === 'superadmin';
+    
+    // Verify the user is authorized: either requesting their own appointments OR is admin/superadmin
+    if (instructorId !== currentUserId && !isAdminOrHigher) {
       return res.status(403).json({ message: "Not authorized to view these appointments" });
     }
     
-    const appointments = await storage.getAppointmentsByInstructor(instructorId);
+    // Admins/superadmins can view all appointments across all instructors
+    const appointments = isAdminOrHigher
+      ? await storage.getAllAppointments()
+      : await storage.getAppointmentsByInstructor(instructorId);
+      
     res.json(appointments);
   } catch (error) {
     console.error("Error fetching appointments:", error);
