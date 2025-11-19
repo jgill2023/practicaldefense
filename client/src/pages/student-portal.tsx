@@ -165,34 +165,6 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
     },
   });
 
-  if (isLoading) {
-    return (
-      <div className="text-center py-8">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-muted-foreground">Loading forms...</p>
-      </div>
-    );
-  }
-
-  if (!courseForms || courseForms.length === 0) {
-    return (
-      <div className="space-y-4">
-        <div className="p-4 bg-muted rounded-lg">
-          <h4 className="font-semibold mb-2">{enrollment.course.title}</h4>
-          <p className="text-sm text-muted-foreground">
-            {new Date(enrollment.schedule.startDate).toLocaleDateString()}
-          </p>
-        </div>
-        <div className="text-center py-8">
-          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            No forms are currently required for this course.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   const handleFieldChange = (fieldId: string, value: any) => {
     setFormData(prev => ({
       ...prev,
@@ -521,8 +493,17 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
             </p>
           </div>
 
-          <div className="space-y-6">
-            {courseForms.map((form: any) => (
+          {isLoading ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Loading forms...</p>
+            </div>
+          ) : !courseForms || courseForms.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No forms required for this course.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {courseForms.map((form: any) => (
               <Card key={form.id} className="border-2">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
@@ -550,21 +531,24 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
                 </CardContent>
               </Card>
             ))}
-          </div>
+            </div>
+          )}
 
-          <div className="flex justify-end space-x-3 pt-4 border-t">
-            <Button variant="outline" onClick={() => {
-              toast({
-                title: "Draft Saved",
-                description: "Your progress has been saved.",
-              });
-            }}>
-              Save Draft
-            </Button>
-            <Button onClick={handleSubmit} disabled={submitFormMutation.isPending}>
-              {submitFormMutation.isPending ? 'Submitting...' : 'Submit All Forms'}
-            </Button>
-          </div>
+          {courseForms && courseForms.length > 0 && !isLoading && (
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button variant="outline" onClick={() => {
+                toast({
+                  title: "Draft Saved",
+                  description: "Your progress has been saved.",
+                });
+              }}>
+                Save Draft
+              </Button>
+              <Button onClick={handleSubmit} disabled={submitFormMutation.isPending}>
+                {submitFormMutation.isPending ? 'Submitting...' : 'Submit All Forms'}
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
