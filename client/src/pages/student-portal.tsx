@@ -2319,11 +2319,10 @@ function PendingFormsEnrollmentCard({
   const hasIncompleteForms = formStatus && !formStatus.isComplete;
   const hasPendingWaivers = waiverStatus && Array.isArray(waiverStatus) && waiverStatus.some((w: any) => w.status === 'pending');
   
-  // Count actual number of incomplete forms and pending waivers
-  const incompleteFormsCount = hasIncompleteForms ? (formStatus?.missingForms?.length || 1) : 0;
-  const pendingWaiversCount = waiverStatus && Array.isArray(waiverStatus) 
-    ? waiverStatus.filter((w: any) => w.status === 'pending').length 
-    : 0;
+  // Count actual number of incomplete forms and pending waivers with defensive defaults
+  // If forms are incomplete but missingForms array is not yet available, default to 1 to show something is pending
+  const incompleteFormsCount = hasIncompleteForms ? (formStatus?.missingForms?.length ?? 1) : 0;
+  const pendingWaiversCount = Array.isArray(waiverStatus) ? waiverStatus.filter((w: any) => w.status === 'pending').length : 0;
 
   // Calculate and update parent count when data changes
   useEffect(() => {
