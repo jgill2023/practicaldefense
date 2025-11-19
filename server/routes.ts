@@ -1861,8 +1861,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const formStatus = await storage.getFormCompletionStatus(enrollmentId);
-      res.json(formStatus);
+      // Return the enrollment data with formSubmissionData
+      res.json({
+        formSubmissionData: enrollment.formSubmissionData,
+        formSubmittedAt: enrollment.formSubmittedAt
+      });
     } catch (error) {
       console.error("Error fetching form completion status:", error);
       res.status(500).json({ message: "Failed to fetch form completion status" });
