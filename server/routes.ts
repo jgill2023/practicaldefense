@@ -1581,10 +1581,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Enrollment not found" });
       }
 
-      // Check ownership: student owns enrollment or instructor has access
+      // Check ownership: student owns enrollment or instructor/admin/superadmin has access
       const user = await storage.getUser(userId);
+      const isInstructorOrHigher = ['instructor', 'admin', 'superadmin'].includes(user?.role || '');
       const hasAccess = enrollment.studentId === userId ||
-                       ((user?.role === 'instructor' || user?.role === 'superadmin') && (enrollment.course?.instructorId === userId || user?.role === 'superadmin'));
+                       (isInstructorOrHigher && (enrollment.course?.instructorId === userId || user?.role === 'superadmin' || user?.role === 'admin'));
 
       if (!hasAccess) {
         return res.status(403).json({ message: "Access denied" });
@@ -1835,10 +1836,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Enrollment not found" });
       }
 
-      // Check ownership: student owns enrollment or instructor has access
+      // Check ownership: student owns enrollment or instructor/admin/superadmin has access
       const user = await storage.getUser(userId);
+      const isInstructorOrHigher = ['instructor', 'admin', 'superadmin'].includes(user?.role || '');
       const hasAccess = enrollment.studentId === userId ||
-                       ((user?.role === 'instructor' || user?.role === 'superadmin') && (enrollment.course?.instructorId === userId || user?.role === 'superadmin'));
+                       (isInstructorOrHigher && (enrollment.course?.instructorId === userId || user?.role === 'superadmin' || user?.role === 'admin'));
 
       if (!hasAccess) {
         return res.status(403).json({ message: "Access denied" });
@@ -1866,12 +1868,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Enrollment not found" });
       }
 
-      // Check access: student, instructor of the course, or superadmin
+      // Check access: student, instructor/admin/superadmin of the course
       const user = await storage.getUser(userId);
+      const isInstructorOrHigher = ['instructor', 'admin', 'superadmin'].includes(user?.role || '');
       const hasAccess =
         enrollment.studentId === userId ||
-        (user?.role === 'instructor' && enrollment.course?.instructorId === userId) ||
-        user?.role === 'superadmin';
+        (isInstructorOrHigher && (enrollment.course?.instructorId === userId || user?.role === 'superadmin' || user?.role === 'admin'));
 
       if (!hasAccess) {
         return res.status(403).json({ message: "Access denied" });
