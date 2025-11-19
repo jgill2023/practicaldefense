@@ -54,7 +54,7 @@ export function ViewCompletedFormsModal({ enrollmentId, courseId, studentName, i
 
     switch (field.fieldType) {
       case 'checkbox':
-        return <Badge variant={value === true || value === 'true' ? 'default' : 'secondary'}>
+        return <Badge variant={value === true || value === 'true' ? 'default' : 'secondary'} className={value === true || value === 'true' ? '' : 'text-[#ffffff]'}>
           {value === true || value === 'true' ? 'Yes' : 'No'}
         </Badge>;
       case 'select':
