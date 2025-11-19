@@ -333,6 +333,7 @@ export interface IStorage {
   getCourseInformationForm(id: string): Promise<CourseInformationFormWithFields | undefined>;
   getCourseInformationForms(): Promise<CourseInformationFormWithFields[]>;
   getCourseInformationFormsByCourse(courseId: string): Promise<CourseInformationFormWithFields[]>;
+  getCourseInformationFormsByAppointmentType(appointmentTypeId: string): Promise<CourseInformationFormWithFields[]>;
 
   // Course Information Form Fields operations
   createCourseInformationFormField(field: InsertCourseInformationFormField): Promise<CourseInformationFormField>;
@@ -3173,6 +3174,22 @@ export class DatabaseStorage implements IStorage {
           orderBy: asc(courseInformationFormFields.sortOrder),
         },
         course: true,
+        appointmentType: true,
+      },
+      orderBy: asc(courseInformationForms.sortOrder),
+    });
+    return forms as CourseInformationFormWithFields[];
+  }
+
+  async getCourseInformationFormsByAppointmentType(appointmentTypeId: string): Promise<CourseInformationFormWithFields[]> {
+    const forms = await db.query.courseInformationForms.findMany({
+      where: eq(courseInformationForms.appointmentTypeId, appointmentTypeId),
+      with: {
+        fields: {
+          orderBy: asc(courseInformationFormFields.sortOrder),
+        },
+        course: true,
+        appointmentType: true,
       },
       orderBy: asc(courseInformationForms.sortOrder),
     });

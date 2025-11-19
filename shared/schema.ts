@@ -828,7 +828,8 @@ export type StudentFormResponse = typeof studentFormResponses.$inferSelect;
 // Extended types for course information forms
 export type CourseInformationFormWithFields = CourseInformationForm & {
   fields: CourseInformationFormField[];
-  course: Course;
+  course?: Course;
+  appointmentType?: AppointmentType;
 };
 
 export type StudentFormResponseWithDetails = StudentFormResponse & {

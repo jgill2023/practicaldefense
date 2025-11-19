@@ -3858,6 +3858,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get forms for an appointment type (accessible to all authenticated users)
+  app.get("/api/appointment-type-forms/:appointmentTypeId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { appointmentTypeId } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const forms = await storage.getCourseInformationFormsByAppointmentType(appointmentTypeId);
+      res.json(forms);
+    } catch (error: any) {
+      console.error("Error fetching appointment type forms:", error);
+      res.status(500).json({ message: "Error fetching appointment type forms: " + error.message });
+    }
+  });
+
   // Create a new course information form
   app.post("/api/course-forms", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
@@ -3876,15 +3894,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Verify instructor owns the course (admins and superadmins can manage any course)
-      const course = await storage.getCourse(validatedData.courseId);
-      if (!course) {
-        return res.status(404).json({ message: "Course not found" });
-      }
-      
-      // Only instructors need to own the course; admins and superadmins can manage any course
-      if (userRole === 'instructor' && course.instructorId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
+      // Verify instructor owns the course or appointment type (admins and superadmins can manage any)
+      if (validatedData.courseId) {
+        const course = await storage.getCourse(validatedData.courseId);
+        if (!course) {
+          return res.status(404).json({ message: "Course not found" });
+        }
+        
+        // Only instructors need to own the course; admins and superadmins can manage any course
+        if (userRole === 'instructor' && course.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else if (validatedData.appointmentTypeId) {
+        const appointmentType = await storage.getAppointmentType(validatedData.appointmentTypeId);
+        if (!appointmentType) {
+          return res.status(404).json({ message: "Appointment type not found" });
+        }
+        
+        // Only instructors need to own the appointment type; admins and superadmins can manage any
+        if (userRole === 'instructor' && appointmentType.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else {
+        return res.status(400).json({ message: "Must provide either courseId or appointmentTypeId" });
       }
 
       const form = await storage.createCourseInformationForm(validatedData);
@@ -3908,15 +3940,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Verify instructor owns the form's course (admins and superadmins can manage any course)
+      // Verify instructor owns the form's course or appointment type
       const form = await storage.getCourseInformationForm(id);
       if (!form) {
         return res.status(404).json({ message: "Form not found" });
       }
       
-      // Only instructors need to own the course; admins and superadmins can manage any course
-      if (userRole === 'instructor' && form.course.instructorId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
+      // Check ownership based on whether it's a course or appointment type form
+      if (form.courseId && form.course) {
+        if (userRole === 'instructor' && form.course.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else if (form.appointmentTypeId && form.appointmentType) {
+        if (userRole === 'instructor' && form.appointmentType.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
       }
 
       const updatedForm = await storage.updateCourseInformationForm(id, {
@@ -3943,15 +3981,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Verify instructor owns the form's course (admins and superadmins can manage any course)
+      // Verify instructor owns the form's course or appointment type
       const form = await storage.getCourseInformationForm(id);
       if (!form) {
         return res.status(404).json({ message: "Form not found" });
       }
       
-      // Only instructors need to own the course; admins and superadmins can manage any course
-      if (userRole === 'instructor' && form.course.instructorId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
+      // Check ownership based on whether it's a course or appointment type form
+      if (form.courseId && form.course) {
+        if (userRole === 'instructor' && form.course.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else if (form.appointmentTypeId && form.appointmentType) {
+        if (userRole === 'instructor' && form.appointmentType.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
       }
 
       await storage.deleteCourseInformationForm(id);
