@@ -1675,26 +1675,41 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getStudentsByInstructor(instructorId: string): Promise<{
+  async getStudentsByInstructor(instructorId: string, restrictToInstructorCourses: boolean = false): Promise<{
     current: any[];
     former: any[];
     held: any[];
   }> {
-    const courses = await this.getCoursesByInstructor(instructorId);
-    const courseIds = courses.map(c => c.id);
+    // For instructors/admins with global access, fetch all enrollments
+    // For specific scoping needs (exports, etc.), use restrictToInstructorCourses=true
+    let allEnrollments;
+    
+    if (restrictToInstructorCourses) {
+      const courses = await this.getCoursesByInstructor(instructorId);
+      const courseIds = courses.map(c => c.id);
 
-    if (courseIds.length === 0) {
-      return { current: [], former: [], held: [] };
+      if (courseIds.length === 0) {
+        return { current: [], former: [], held: [] };
+      }
+
+      allEnrollments = await db.query.enrollments.findMany({
+        where: inArray(enrollments.courseId, courseIds),
+        with: {
+          student: true,
+          course: true,
+          schedule: true,
+        },
+      });
+    } else {
+      // Fetch all enrollments system-wide for instructor/admin access
+      allEnrollments = await db.query.enrollments.findMany({
+        with: {
+          student: true,
+          course: true,
+          schedule: true,
+        },
+      });
     }
-
-    const allEnrollments = await db.query.enrollments.findMany({
-      where: inArray(enrollments.courseId, courseIds),
-      with: {
-        student: true,
-        course: true,
-        schedule: true,
-      },
-    });
 
     // Group enrollments by student
     const studentMap = new Map<string, {
