@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -1005,97 +1005,95 @@ export default function InstructorDashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <TooltipProvider>
-                      <div className="flex items-center justify-center gap-2">
-                        {/* View Button */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                              onClick={() => setEditingCourse(course)}
-                              data-testid={`button-view-course-${course.id}`}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>View Course</p>
-                          </TooltipContent>
-                        </Tooltip>
+                    <div className="flex items-center justify-center gap-2">
+                      {/* View Button */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                            onClick={() => setEditingCourse(course)}
+                            data-testid={`button-view-course-${course.id}`}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>View Course</p>
+                        </TooltipContent>
+                      </Tooltip>
 
-                        {/* Edit Course Button */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                              onClick={() => setEditingCourse(course)}
-                              data-testid={`button-edit-course-${course.id}`}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Edit Course</p>
-                          </TooltipContent>
-                        </Tooltip>
+                      {/* Edit Course Button */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                            onClick={() => setEditingCourse(course)}
+                            data-testid={`button-edit-course-${course.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Edit Course</p>
+                        </TooltipContent>
+                      </Tooltip>
 
-                        {/* View Roster Button */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                              onClick={() => {
-                                // For course roster, we need to find a schedule first
-                                // Since our API works with schedules, let's use the first available schedule
-                                const firstSchedule = course.schedules?.[0];
-                                if (firstSchedule) {
-                                  setSelectedScheduleId(firstSchedule.id);
-                                  setSelectedCourseId(course.id); // Set courseId here
-                                  setShowRosterDialog(true);
-                                } else {
-                                  console.log('No schedules available for course', course.id);
-                                }
-                              }}
-                              data-testid={`button-roster-course-${course.id}`}
-                            >
-                              <Users className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>View Students</p>
-                          </TooltipContent>
-                        </Tooltip>
+                      {/* View Roster Button */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                            onClick={() => {
+                              // For course roster, we need to find a schedule first
+                              // Since our API works with schedules, let's use the first available schedule
+                              const firstSchedule = course.schedules?.[0];
+                              if (firstSchedule) {
+                                setSelectedScheduleId(firstSchedule.id);
+                                setSelectedCourseId(course.id); // Set courseId here
+                                setShowRosterDialog(true);
+                              } else {
+                                console.log('No schedules available for course', course.id);
+                              }
+                            }}
+                            data-testid={`button-roster-course-${course.id}`}
+                          >
+                            <Users className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>View Students</p>
+                        </TooltipContent>
+                      </Tooltip>
 
-                        {/* Delete Course Button */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
-                              onClick={() => {
-                                if (window.confirm('Are you sure you want to permanently delete this course? This action cannot be undone.')) {
-                                  deleteCourseMutation.mutate(course.id);
-                                }
-                              }}
-                              disabled={deleteCourseMutation.isPending}
-                              data-testid={`button-delete-course-${course.id}`}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Delete Course</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </TooltipProvider>
+                      {/* Delete Course Button */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to permanently delete this course? This action cannot be undone.')) {
+                                deleteCourseMutation.mutate(course.id);
+                              }
+                            }}
+                            disabled={deleteCourseMutation.isPending}
+                            data-testid={`button-delete-course-${course.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete Course</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                   </td>
                 </tr>
               );
