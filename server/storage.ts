@@ -5662,14 +5662,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAppointmentTypes(instructorId: string): Promise<AppointmentType[]> {
+    // Instructors have admin-level data visibility - return ALL appointment types system-wide
     return db
       .select()
       .from(appointmentTypes)
-      .where(eq(appointmentTypes.instructorId, instructorId))
       .orderBy(asc(appointmentTypes.sortOrder), asc(appointmentTypes.title));
   }
 
   async getActiveAppointmentTypes(instructorId: string): Promise<AppointmentType[]> {
+    // Return active appointment types for the specified instructor (used for student booking)
     return db
       .select()
       .from(appointmentTypes)
