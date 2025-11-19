@@ -2048,9 +2048,12 @@ export class DatabaseStorage implements IStorage {
     // Collect all form fields across all enrollments for consistent column structure
     const allFormFields = new Map<string, { formTitle: string; fieldLabel: string; sortOrder: number }>();
     
+    console.log(`Collecting form fields from ${allEnrollments.length} enrollments...`);
     allEnrollments.forEach(enrollment => {
+      console.log(`Enrollment ${enrollment.id}: hasCourse=${!!enrollment.course}, hasForms=${!!enrollment.course?.forms}, formsCount=${enrollment.course?.forms?.length || 0}`);
       if (enrollment.course?.forms) {
         enrollment.course.forms.forEach(form => {
+          console.log(`  Form ${form.id} (${form.title}): hasFields=${!!form.fields}, fieldsCount=${form.fields?.length || 0}`);
           if (form.fields) {
             form.fields
               .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -2062,12 +2065,15 @@ export class DatabaseStorage implements IStorage {
                     fieldLabel: field.label,
                     sortOrder: field.sortOrder
                   });
+                  console.log(`    Added field ${field.id}: ${field.label}`);
                 }
               });
           }
         });
       }
     });
+    
+    console.log(`Total form fields collected: ${allFormFields.size}`);
 
     // Flatten the data for export - convert enrollments directly to roster format
     const flattenEnrollment = (enrollment: any, category: 'current' | 'former' | 'held') => {
