@@ -642,7 +642,7 @@ export default function PromoCodesPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-sm font-mono">
+                        <Badge variant="secondary" className="text-sm font-mono text-[#51ff00]">
                           {promoCode.code}
                         </Badge>
                         <Badge variant={getStatusBadgeVariant(promoCode.status)}>
