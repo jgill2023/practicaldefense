@@ -386,7 +386,7 @@ export default function AppointmentsPage() {
     }
   }
 
-  if (authLoading || !user) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -394,15 +394,32 @@ export default function AppointmentsPage() {
     );
   }
 
-  if (!hasInstructorPrivileges(user as User)) {
+  if (!user || !hasInstructorPrivileges(user as User)) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">
           <Card>
-            <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">
-                You must be an instructor to access appointment settings.
+            <CardHeader>
+              <CardTitle>Instructor Access Required</CardTitle>
+              <CardDescription>
+                This page is for instructors to manage appointment settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                {!user 
+                  ? "Please log in with an instructor account to access appointment management." 
+                  : "Your account does not have instructor privileges. Please contact an administrator if you believe this is an error."}
               </p>
+              {!user && (
+                <Button 
+                  onClick={() => window.location.href = '/login'}
+                  className="w-full"
+                  data-testid="button-login"
+                >
+                  Go to Login
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
