@@ -156,7 +156,7 @@ export default function CourseFormsManagement() {
 
   // Fetch appointment types
   const { data: appointmentTypes = [] } = useQuery<AppointmentType[]>({
-    queryKey: ["/api/instructor/appointment-types"],
+    queryKey: ["/api/appointments/instructor/appointment-types"],
   });
 
   // Auto-select first course or appointment type when data loads
