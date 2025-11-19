@@ -2318,17 +2318,23 @@ function PendingFormsEnrollmentCard({
 
   const hasIncompleteForms = formStatus && !formStatus.isComplete;
   const hasPendingWaivers = waiverStatus && Array.isArray(waiverStatus) && waiverStatus.some((w: any) => w.status === 'pending');
+  
+  // Count actual number of incomplete forms and pending waivers
+  const incompleteFormsCount = hasIncompleteForms ? (formStatus?.missingForms?.length || 1) : 0;
+  const pendingWaiversCount = waiverStatus && Array.isArray(waiverStatus) 
+    ? waiverStatus.filter((w: any) => w.status === 'pending').length 
+    : 0;
 
   // Calculate and update parent count when data changes
   useEffect(() => {
-    const pendingCount = (hasIncompleteForms ? 1 : 0) + (hasPendingWaivers ? 1 : 0);
+    const pendingCount = incompleteFormsCount + pendingWaiversCount;
     onCountChange(pendingCount);
-  }, [formStatus, waiverStatus, hasIncompleteForms, hasPendingWaivers, onCountChange]);
+  }, [formStatus, waiverStatus, incompleteFormsCount, pendingWaiversCount, onCountChange]);
 
   // Don't render if nothing is pending
   if (!hasIncompleteForms && !hasPendingWaivers) return null;
 
-  const pendingCount = (hasIncompleteForms ? 1 : 0) + (hasPendingWaivers ? 1 : 0);
+  const pendingCount = incompleteFormsCount + pendingWaiversCount;
 
   return (
     <Card className="border-2">
