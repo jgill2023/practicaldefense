@@ -72,6 +72,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     phone: '',
     password: '',
     notes: '',
+    promoCode: '',
   });
 
   // Billing address state
@@ -118,6 +119,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         phone: '',
         password: '',
         notes: '',
+        promoCode: '',
       });
     }
   }, [open, appointmentType]);
@@ -662,6 +664,19 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             </p>
           </div>
         )}
+
+        <div className="space-y-2">
+          <Label htmlFor="promoCode">
+            Promo Code (Optional)
+          </Label>
+          <Input
+            id="promoCode"
+            value={bookingForm.promoCode}
+            onChange={(e) => setBookingForm(prev => ({ ...prev, promoCode: e.target.value.toUpperCase() }))}
+            placeholder="Enter promo code"
+            data-testid="input-promo-code"
+          />
+        </div>
 
         {/* Billing Address Section */}
         <div className="border-t pt-4 space-y-4">

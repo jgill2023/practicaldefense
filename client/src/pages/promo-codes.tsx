@@ -398,6 +398,7 @@ export default function PromoCodesPage() {
                               <SelectItem value="GLOBAL">All Courses (Sitewide)</SelectItem>
                               <SelectItem value="COURSES">Specific Courses</SelectItem>
                               <SelectItem value="CATEGORIES">Specific Categories</SelectItem>
+                              <SelectItem value="APPOINTMENTS">Appointments/Bookings</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

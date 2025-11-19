@@ -371,7 +371,7 @@ export interface IStorage {
   getPromoCodesByCreator(createdBy: string): Promise<PromoCodeWithDetails[]>;
 
   // Promo code validation and redemption
-  validatePromoCode(code: string, userId: string, courseId: string, amount: number): Promise<PromoCodeValidationResult>;
+  validatePromoCode(code: string, userId: string, courseId: string | null, amount: number, context?: 'course' | 'appointment'): Promise<PromoCodeValidationResult>;
   redeemPromoCode(redemption: InsertPromoCodeRedemption): Promise<PromoCodeRedemption>;
   getPromoCodeRedemptions(promoCodeId: string): Promise<PromoCodeRedemption[]>;
   getPromoCodeRedemptionsByUser(userId: string): Promise<PromoCodeRedemption[]>;
@@ -3330,7 +3330,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Promo code validation and redemption
-  async validatePromoCode(code: string, userId: string, courseId: string, amount: number): Promise<PromoCodeValidationResult> {
+  async validatePromoCode(code: string, userId: string, courseId: string | null, amount: number, context: 'course' | 'appointment' = 'course'): Promise<PromoCodeValidationResult> {
     const promoCode = await this.getPromoCodeByCode(code.trim().toUpperCase());
 
     if (!promoCode) {
@@ -3407,36 +3407,57 @@ export class DatabaseStorage implements IStorage {
       };
     }
 
-    // Check course scope
-    if (promoCode.scopeType === 'COURSES' && promoCode.scopeCourseIds) {
-      if (!promoCode.scopeCourseIds.includes(courseId)) {
+    // Scope validation based on context
+    if (context === 'appointment') {
+      // For appointments, only GLOBAL and APPOINTMENTS scopes are valid
+      if (promoCode.scopeType !== 'GLOBAL' && promoCode.scopeType !== 'APPOINTMENTS') {
         return {
           isValid: false,
-          error: 'This promo code is not valid for this course',
+          error: 'This promo code is not valid for appointments',
           errorCode: 'SCOPE_MISMATCH',
         };
       }
-    }
-
-    // Check category scope
-    if (promoCode.scopeType === 'CATEGORIES' && promoCode.scopeCategoryIds) {
-      const course = await this.getCourse(courseId);
-      if (!course || !course.categoryId || !promoCode.scopeCategoryIds.includes(course.categoryId)) {
+    } else if (context === 'course') {
+      // For courses, check GLOBAL, COURSES, and CATEGORIES scopes
+      if (promoCode.scopeType === 'APPOINTMENTS') {
         return {
           isValid: false,
-          error: 'This promo code is not valid for this course category',
+          error: 'This promo code is only valid for appointments',
           errorCode: 'SCOPE_MISMATCH',
         };
       }
-    }
 
-    // Check exclusions
-    if (promoCode.exclusionCourseIds && promoCode.exclusionCourseIds.includes(courseId)) {
-      return {
-        isValid: false,
-        error: 'This course is excluded from this promo code',
-        errorCode: 'SCOPE_MISMATCH',
-      };
+      // Check course scope
+      if (promoCode.scopeType === 'COURSES' && promoCode.scopeCourseIds && courseId) {
+        if (!promoCode.scopeCourseIds.includes(courseId)) {
+          return {
+            isValid: false,
+            error: 'This promo code is not valid for this course',
+            errorCode: 'SCOPE_MISMATCH',
+          };
+        }
+      }
+
+      // Check category scope
+      if (promoCode.scopeType === 'CATEGORIES' && promoCode.scopeCategoryIds && courseId) {
+        const course = await this.getCourse(courseId);
+        if (!course || !course.categoryId || !promoCode.scopeCategoryIds.includes(course.categoryId)) {
+          return {
+            isValid: false,
+            error: 'This promo code is not valid for this course category',
+            errorCode: 'SCOPE_MISMATCH',
+          };
+        }
+      }
+
+      // Check exclusions
+      if (promoCode.exclusionCourseIds && courseId && promoCode.exclusionCourseIds.includes(courseId)) {
+        return {
+          isValid: false,
+          error: 'This course is excluded from this promo code',
+          errorCode: 'SCOPE_MISMATCH',
+        };
+      }
     }
 
     // Check user eligibility (skip for draft enrollments)
