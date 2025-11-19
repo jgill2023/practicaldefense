@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -92,6 +92,12 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
   const [discountInfo, setDiscountInfo] = useState<{originalAmount: number, discountAmount: number, promoCode: any} | null>(null);
+
+  // Memoize Stripe Elements options to prevent re-mounting on every render
+  const stripeElementsOptions = useMemo(() => {
+    if (!clientSecret) return null;
+    return { clientSecret };
+  }, [clientSecret]);
 
   // Initialize duration based on appointment type
   useEffect(() => {
@@ -1445,8 +1451,8 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 )}
               </div>
             </form>
-          ) : clientSecret && stripePromise ? (
-            <Elements stripe={stripePromise} options={{ clientSecret }}>
+          ) : clientSecret && stripePromise && stripeElementsOptions ? (
+            <Elements stripe={stripePromise} options={stripeElementsOptions} key={clientSecret}>
               <PaymentFormContent />
             </Elements>
           ) : (
