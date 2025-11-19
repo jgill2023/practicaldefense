@@ -84,6 +84,12 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     country: 'US',
   });
 
+  // Promo code state
+  const [promoCodeApplied, setPromoCodeApplied] = useState<string | null>(null);
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [discountInfo, setDiscountInfo] = useState<{originalAmount: number, discountAmount: number, promoCode: any} | null>(null);
+
   // Initialize duration based on appointment type
   useEffect(() => {
     if (appointmentType && (appointmentType as any).isVariableDuration) {
@@ -121,6 +127,9 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         notes: '',
         promoCode: '',
       });
+      setPromoCodeApplied(null);
+      setPromoError(null);
+      setDiscountInfo(null);
     }
   }, [open, appointmentType]);
 
@@ -287,6 +296,117 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     enabled: !!instructorId && !!appointmentType && !!selectedDate,
     retry: false,
   });
+
+  // Apply promo code by recreating the payment intent with the discount
+  const validateAndApplyPromoCode = async () => {
+    if (!bookingForm.promoCode.trim() || !selectedSlot || !appointmentType) return;
+
+    setIsValidatingPromo(true);
+    setPromoError(null);
+
+    try {
+      const isVariableDuration = (appointmentType as any).isVariableDuration;
+      
+      // Cancel existing payment intent if it exists (to avoid orphaned Stripe objects)
+      if (paymentIntentId) {
+        // The backend will handle canceling the old intent when we create a new one
+      }
+
+      // Create new payment intent with promo code
+      const response = await apiRequest("POST", "/api/appointments/create-payment-intent", {
+        instructorId,
+        appointmentTypeId: appointmentType.id,
+        startTime: selectedSlot.startTime,
+        endTime: isVariableDuration ? getCalculatedEndTime(selectedSlot.startTime, selectedDurationHours) : selectedSlot.endTime,
+        durationHours: isVariableDuration ? selectedDurationHours : undefined,
+        promoCode: bookingForm.promoCode.trim(),
+        userId: user?.id || undefined,
+        existingPaymentIntentId: paymentIntentId || undefined, // Cancel old intent
+      });
+
+      // Handle free appointment after promo code
+      if (response.isFree || response.discountAmount > 0) {
+        setPromoCodeApplied(bookingForm.promoCode.trim());
+        setDiscountInfo({
+          originalAmount: response.originalAmount || 0,
+          discountAmount: response.discountAmount || 0,
+          promoCode: response.promoCode
+        });
+
+        if (response.isFree) {
+          setClientSecret("");
+          setPaymentIntentId("");
+          setIsFreeAppointment(true);
+          setTaxBreakdown(null);
+        } else {
+          setIsFreeAppointment(false);
+          setClientSecret(response.clientSecret);
+          const piId = response.clientSecret.split('_secret_')[0];
+          setPaymentIntentId(piId);
+        }
+
+        toast({
+          title: "Promo Code Applied!",
+          description: `You saved $${response.discountAmount.toFixed(2)}`,
+        });
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || "Failed to validate promo code";
+      setPromoError(errorMessage);
+      toast({
+        title: "Invalid Promo Code",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  };
+
+  // Remove promo code and recreate payment intent without discount
+  const removePromoCode = async () => {
+    setBookingForm(prev => ({ ...prev, promoCode: '' }));
+    setPromoCodeApplied(null);
+    setPromoError(null);
+    setDiscountInfo(null);
+
+    toast({
+      title: "Promo Code Removed",
+    });
+
+    // Recreate payment intent without promo code
+    if (selectedSlot && appointmentType) {
+      try {
+        const isVariableDuration = (appointmentType as any).isVariableDuration;
+        const response = await apiRequest("POST", "/api/appointments/create-payment-intent", {
+          instructorId,
+          appointmentTypeId: appointmentType.id,
+          startTime: selectedSlot.startTime,
+          endTime: isVariableDuration ? getCalculatedEndTime(selectedSlot.startTime, selectedDurationHours) : selectedSlot.endTime,
+          durationHours: isVariableDuration ? selectedDurationHours : undefined,
+          existingPaymentIntentId: paymentIntentId || undefined, // Cancel old intent
+        });
+
+        if (response.isFree) {
+          setClientSecret("");
+          setPaymentIntentId("");
+          setIsFreeAppointment(true);
+          setTaxBreakdown(null);
+        } else {
+          setIsFreeAppointment(false);
+          setClientSecret(response.clientSecret);
+          const piId = response.clientSecret.split('_secret_')[0];
+          setPaymentIntentId(piId);
+        }
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to update payment",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   const bookAppointmentMutation = useMutation({
     mutationFn: async () => {
@@ -669,13 +789,53 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           <Label htmlFor="promoCode">
             Promo Code (Optional)
           </Label>
-          <Input
-            id="promoCode"
-            value={bookingForm.promoCode}
-            onChange={(e) => setBookingForm(prev => ({ ...prev, promoCode: e.target.value.toUpperCase() }))}
-            placeholder="Enter promo code"
-            data-testid="input-promo-code"
-          />
+          {!promoCodeApplied ? (
+            <div className="flex gap-2">
+              <Input
+                id="promoCode"
+                value={bookingForm.promoCode}
+                onChange={(e) => setBookingForm(prev => ({ ...prev, promoCode: e.target.value.toUpperCase() }))}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), validateAndApplyPromoCode())}
+                placeholder="Enter promo code"
+                data-testid="input-promo-code"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={validateAndApplyPromoCode}
+                disabled={!bookingForm.promoCode.trim() || isValidatingPromo}
+                data-testid="button-apply-promo"
+              >
+                {isValidatingPromo ? "Validating..." : "Apply"}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-green-700 dark:text-green-300" data-testid="text-promo-applied">
+                  {promoCodeApplied} applied
+                </span>
+                <span className="text-xs text-green-600 dark:text-green-400">
+                  (-${discountInfo?.discountAmount.toFixed(2)})
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={removePromoCode}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950"
+                data-testid="button-remove-promo"
+              >
+                Remove
+              </Button>
+            </div>
+          )}
+          {promoError && (
+            <p className="text-sm text-red-600 dark:text-red-400" data-testid="text-promo-error">
+              {promoError}
+            </p>
+          )}
         </div>
 
         {/* Billing Address Section */}

@@ -1129,7 +1129,7 @@ export const insertPromoCodeSchema = createInsertSchema(promoCodes).omit({
 }).extend({
   value: z.number().positive("Discount value must be positive"),
   type: z.enum(['PERCENT', 'FIXED_AMOUNT']),
-  scopeType: z.enum(['GLOBAL', 'COURSES', 'CATEGORIES']),
+  scopeType: z.enum(['GLOBAL', 'COURSES', 'CATEGORIES', 'APPOINTMENTS']),
   stackingPolicy: z.enum(['EXCLUSIVE', 'STACKABLE']),
   status: z.enum(['ACTIVE', 'SCHEDULED', 'PAUSED', 'EXPIRED']),
   maxTotalUses: z.number().int().positive().optional(),

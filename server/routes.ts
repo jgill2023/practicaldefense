@@ -3612,7 +3612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let promoCodeInfo = null;
 
       if (promoCode) {
-        const validation = await storage.validatePromoCode(promoCode, userId, enrollment.courseId, paymentAmount);
+        const validation = await storage.validatePromoCode(promoCode, userId, enrollment.courseId, paymentAmount, 'course');
         if (validation.isValid && validation.discountAmount !== undefined && validation.finalAmount !== undefined) {
           discountAmount = validation.discountAmount;
           finalPaymentAmount = validation.finalAmount;
@@ -4299,7 +4299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing required fields: code, courseId, amount" });
       }
 
-      const validation = await storage.validatePromoCode(code, userId, courseId, amount);
+      const validation = await storage.validatePromoCode(code, userId, courseId, amount, 'course');
       res.json(validation);
     } catch (error: any) {
       console.error("Error validating promo code:", error);

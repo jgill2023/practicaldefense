@@ -2553,7 +2553,7 @@ export class DatabaseStorage implements IStorage {
       // The actual user validation will happen during finalization
       try {
         console.log('🎫 Validating promo code:', promoCode.trim());
-        const validation = await this.validatePromoCode(promoCode.trim(), 'draft-enrollment', enrollment.courseId, paymentAmount);
+        const validation = await this.validatePromoCode(promoCode.trim(), 'draft-enrollment', enrollment.courseId, paymentAmount, 'course');
         console.log('🎫 Validation result:', validation);
 
         if (validation.isValid && validation.discountAmount !== undefined && validation.finalAmount !== undefined) {
@@ -2750,7 +2750,8 @@ export class DatabaseStorage implements IStorage {
         enrollment.promoCodeApplied,
         data.studentInfo.email, // Temporary user ID for validation
         enrollment.courseId,
-        expectedAmount
+        expectedAmount,
+        'course'
       );
       if (validation.isValid) {
         discountAmount = validation.discountAmount || 0;

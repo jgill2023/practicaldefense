@@ -599,7 +599,17 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
       return res.status(503).json({ message: "Payment processing is not configured" });
     }
 
-    const { instructorId, appointmentTypeId, startTime, endTime, durationHours, billingAddress } = req.body;
+    const { instructorId, appointmentTypeId, startTime, endTime, durationHours, billingAddress, promoCode, userId, existingPaymentIntentId } = req.body;
+
+    // Cancel existing payment intent if provided (for promo code updates)
+    if (existingPaymentIntentId) {
+      try {
+        await stripe.paymentIntents.cancel(existingPaymentIntentId);
+      } catch (cancelError) {
+        console.error("Failed to cancel existing payment intent:", cancelError);
+        // Continue even if cancellation fails - the old intent may already be confirmed or canceled
+      }
+    }
 
     if (!instructorId || !appointmentTypeId || !startTime || !endTime) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -632,14 +642,52 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
       amount = Number(appointmentType.price);
     }
 
+    // Apply promo code discount if provided
+    let discountAmount = 0;
+    let finalAmount = amount;
+    let promoCodeInfo = null;
+
+    if (promoCode && promoCode.trim()) {
+      const promoValidation = await storage.validatePromoCode(
+        promoCode.trim(),
+        userId || 'guest-booking',
+        null, // No courseId for appointments
+        amount,
+        'appointment'
+      );
+
+      if (promoValidation.isValid && promoValidation.discountAmount !== undefined && promoValidation.finalAmount !== undefined) {
+        discountAmount = promoValidation.discountAmount;
+        finalAmount = promoValidation.finalAmount;
+        promoCodeInfo = {
+          code: promoCode.trim(),
+          discountAmount,
+          type: promoValidation.code?.type,
+          value: promoValidation.code?.value
+        };
+      } else {
+        return res.status(400).json({ 
+          message: `Invalid promo code: ${promoValidation.error}`,
+          errorCode: promoValidation.errorCode
+        });
+      }
+    }
+
     // Skip payment intent creation for free appointments
-    if (amount <= 0) {
-      return res.json({ clientSecret: null, amount: 0, isFree: true });
+    if (finalAmount <= 0) {
+      return res.json({ 
+        clientSecret: null, 
+        amount: 0, 
+        isFree: true,
+        originalAmount: amount,
+        discountAmount,
+        promoCode: promoCodeInfo
+      });
     }
 
     // Create PaymentIntent
     const paymentIntentParams: any = {
-      amount: Math.round(amount * 100), // Convert to cents
+      amount: Math.round(finalAmount * 100), // Convert to cents (with discount applied)
       currency: "usd",
       metadata: {
         instructorId,
@@ -647,6 +695,11 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
         startTime: new Date(startTime).toISOString(),
         endTime: new Date(endTime).toISOString(),
         ...(durationHours && { durationHours: String(durationHours) }),
+        ...(promoCodeInfo && { 
+          promoCode: promoCodeInfo.code,
+          originalAmount: String(amount),
+          discountAmount: String(discountAmount)
+        }),
       },
     };
 
@@ -675,6 +728,9 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
       clientSecret: paymentIntent.client_secret,
       amount: paymentIntent.amount / 100,
       taxAmount: totalTaxInCents / 100,
+      originalAmount: amount,
+      discountAmount,
+      promoCode: promoCodeInfo
     });
   } catch (error) {
     console.error("Error creating payment intent:", error);
