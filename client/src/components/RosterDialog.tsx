@@ -81,7 +81,7 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
   });
   const [feedbackModal, setFeedbackModal] = useState<{ isOpen: boolean; enrollmentId: string; studentName: string }>({ isOpen: false, enrollmentId: "", studentName: "" });
   const [viewWaiverModal, setViewWaiverModal] = useState<{ isOpen: boolean; enrollmentId: string; studentName: string }>({ isOpen: false, enrollmentId: "", studentName: "" });
-  const [viewFormsModal, setViewFormsModal] = useState<{ isOpen: boolean; enrollmentId: string; studentName: string }>({ isOpen: false, enrollmentId: "", studentName: "" });
+  const [viewFormsModal, setViewFormsModal] = useState<{ isOpen: boolean; enrollmentId: string; courseId: string; studentName: string }>({ isOpen: false, enrollmentId: "", courseId: "", studentName: "" });
 
 
   const { data: rosterData, isLoading, error } = useQuery<RosterData>({
@@ -492,7 +492,7 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
                                     variant="ghost"
                                     size="sm"
                                     className="h-8 w-8 p-0 hover:bg-green-100 dark:hover:bg-green-900/20"
-                                    onClick={() => setViewFormsModal({ isOpen: true, enrollmentId: student.enrollmentId, studentName: `${student.firstName} ${student.lastName}` })}
+                                    onClick={() => setViewFormsModal({ isOpen: true, enrollmentId: student.enrollmentId, courseId: courseId || '', studentName: `${student.firstName} ${student.lastName}` })}
                                     title="View submitted forms"
                                     data-testid={`form-status-${student.studentId}`}
                                   >
@@ -723,6 +723,7 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
           isOpen={viewFormsModal.isOpen}
           onClose={() => setViewFormsModal({ ...viewFormsModal, isOpen: false })}
           enrollmentId={viewFormsModal.enrollmentId}
+          courseId={viewFormsModal.courseId}
           studentName={viewFormsModal.studentName}
         />
       </DialogContent>

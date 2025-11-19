@@ -10,22 +10,23 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ViewCompletedFormsModalProps {
   enrollmentId: string;
+  courseId: string;
   studentName: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function ViewCompletedFormsModal({ enrollmentId, studentName, isOpen, onClose }: ViewCompletedFormsModalProps) {
+export function ViewCompletedFormsModal({ enrollmentId, courseId, studentName, isOpen, onClose }: ViewCompletedFormsModalProps) {
   const { toast } = useToast();
 
   const { data: enrollment, isLoading: enrollmentLoading, error: enrollmentError } = useQuery<any>({
-    queryKey: ['/api/enrollments', enrollmentId],
+    queryKey: ['/api/enrollments', enrollmentId, 'form-completion'],
     enabled: isOpen && !!enrollmentId,
   });
 
   const { data: courseForms, isLoading: formsLoading, error: formsError } = useQuery<any[]>({
-    queryKey: ['/api/course-forms', enrollment?.courseId],
-    enabled: isOpen && !!enrollment?.courseId,
+    queryKey: ['/api/course-forms', courseId],
+    enabled: isOpen && !!courseId,
   });
 
   const submissionData = useMemo(() => {
