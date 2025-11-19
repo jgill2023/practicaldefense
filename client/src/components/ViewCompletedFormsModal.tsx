@@ -30,7 +30,11 @@ export function ViewCompletedFormsModal({ enrollmentId, courseId, studentName, i
   });
 
   const submissionData = useMemo(() => {
-    if (!enrollment?.formSubmissionData) return null;
+    console.log('ViewCompletedFormsModal - enrollment data:', enrollment);
+    if (!enrollment?.formSubmissionData) {
+      console.log('ViewCompletedFormsModal - No formSubmissionData found');
+      return null;
+    }
     
     try {
       if (typeof enrollment.formSubmissionData === 'string') {
