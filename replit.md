@@ -32,13 +32,21 @@ Authentication is provided by Replit Auth with OpenID Connect. The system uses s
 ### Role Hierarchy and User Management
 The platform implements a comprehensive four-tier role hierarchy with strict privilege levels:
 - **Student**: Access to student portal, course browsing, enrollment, and personal profile management
-- **Instructor**: Inherits student privileges plus full access to instructor dashboard, course management, student management, communications, and scheduling features
+- **Instructor**: Inherits student privileges plus full access to instructor dashboard, course management, student management, communications, and scheduling features. **Instructors have admin-level data visibility** - they can view all courses, enrollments, appointments, and student data system-wide (not limited to their own courses).
 - **Admin**: Inherits all instructor privileges plus user account management, including creating accounts and approving/rejecting pending registrations
 - **Super Admin**: Inherits all admin and instructor privileges plus exclusive access to system administration features (credit management, advanced settings)
 
 Permission helpers enforce the hierarchy consistently:
 - Backend middleware: `requireInstructorOrHigher`, `requireAdminOrHigher`, `requireSuperadmin`, `requireActiveAccount`
 - Frontend utilities: `isInstructorOrHigher(user)`, `isAdminOrHigher(user)`, `isSuperAdmin(user)`, `canCreateAccounts(user)`, `isActiveAccount(user)`
+
+**Instructor Data Visibility:**
+- `/api/instructor/courses` - Shows ALL courses from all instructors
+- `/api/instructor/courses-detailed` - Shows ALL courses with full details
+- `/api/instructor/course-schedules` - Shows ALL course schedules
+- `/api/instructor/enrollments` - Shows ALL enrollments
+- `/api/instructor/dashboard-stats` - Aggregates statistics across ALL courses, students, appointments, and revenue
+- Roster exports include all student data across all instructors when accessed by instructor+ role
 
 ### User Status and Pending Approval Workflow
 All user accounts have a status that controls access to the platform:

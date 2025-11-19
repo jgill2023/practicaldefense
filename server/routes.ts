@@ -1358,9 +1358,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let enrollmentList;
       if (userRole === 'instructor' || userRole === 'admin' || userRole === 'superadmin') {
-        // Instructors, admins and superadmins can see all non-deleted enrollments
+        // Instructors, admins and superadmins can see all enrollments
         enrollmentList = await db.query.enrollments.findMany({
-          where: isNull(enrollments.deletedAt),
           with: {
             course: true,
             schedule: true,
