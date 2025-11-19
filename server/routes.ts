@@ -1683,7 +1683,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get waiver template by ID (for students to view when signing)
   app.get('/api/waiver-templates/:templateId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const templateId = req.params.templateId;
       
       // Get template
@@ -1926,7 +1926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/enrollment-form-submissions", isAuthenticated, async (req: any, res) => {
     try {
       const { enrollmentId, formResponses } = req.body;
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
 
       if (!enrollmentId || !formResponses) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -2022,7 +2022,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course schedules for export selection
   app.get('/api/instructor/course-schedules', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
@@ -2062,7 +2062,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Course roster export routes
   app.get('/api/instructor/roster/export', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
@@ -2159,7 +2159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Sheets export route
   app.post('/api/instructor/roster/google-sheets', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const user = await storage.getUser(userId);
 
       if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
@@ -5641,7 +5641,7 @@ jeremy@abqconcealedcarry.com
   // Get available schedules for rescheduling (instructor's courses only)
   app.get("/api/instructor/available-schedules", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
 
       // Only allow instructors to view available schedules
       const user = await storage.getUser(userId);
@@ -5692,7 +5692,7 @@ jeremy@abqconcealedcarry.com
   // Reschedule student to new schedule
   app.patch("/api/instructor/enrollments/:enrollmentId/reschedule", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const { enrollmentId } = req.params;
       const { newScheduleId, notes } = req.body;
 
@@ -5802,7 +5802,7 @@ jeremy@abqconcealedcarry.com
   // Place student on hold (remove from schedule)
   app.patch("/api/instructor/enrollments/:enrollmentId/hold", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const { enrollmentId } = req.params;
       const { notes } = req.body;
 
@@ -6001,7 +6001,7 @@ jeremy@abqconcealedcarry.com
   // Get single communication by ID
   app.get("/api/communications/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const { id } = req.params;
 
       // Only allow instructors to access communications
@@ -6025,8 +6025,8 @@ jeremy@abqconcealedcarry.com
   // Mark communication as read
   app.patch("/api/communications/:id/read", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
-      const { id } = req.params;
+      const userId = req.user?.id;
+      const { id} = req.params;
 
       // Only allow instructors to manage communications
       const user = await storage.getUser(userId);
@@ -6050,7 +6050,7 @@ jeremy@abqconcealedcarry.com
   // Mark communication as unread
   app.patch("/api/communications/:id/unread", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const { id } = req.params;
 
       // Only allow instructors to manage communications
@@ -6075,7 +6075,7 @@ jeremy@abqconcealedcarry.com
   // Flag communication for follow-up
   app.patch("/api/communications/:id/flag", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const { id } = req.params;
 
       // Only allow instructors to manage communications
@@ -6110,7 +6110,7 @@ jeremy@abqconcealedcarry.com
   // Unflag communication
   app.patch("/api/communications/:id/unflag", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const { id } = req.params;
 
       // Only allow instructors to manage communications
