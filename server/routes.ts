@@ -2123,24 +2123,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = await storage.getRosterExportData(userId, scheduleId, undefined, user.role);
 
       if (format === 'csv') {
-        // Generate CSV
-        const headers = [
+        // Generate CSV with dynamic form fields
+        const baseHeaders = [
           'Student ID', 'First Name', 'Last Name', 'Email', 'Phone',
           'Date of Birth', 'License Expiration', 'Course Title', 'Course Code',
           'Schedule Date', 'Start Time', 'End Time', 'Payment Status',
           'Enrollment Status', 'Category', 'Registration Date'
         ];
+        
+        // Add form field headers
+        const formFieldHeaders = data.formFields?.map(field => field.fieldLabel) || [];
+        const headers = [...baseHeaders, ...formFieldHeaders];
 
         const allRows = [...data.current, ...data.former];
         const csvRows = [headers.join(',')];
 
         allRows.forEach(row => {
-          const values = [
+          const baseValues = [
             row.studentId, row.firstName, row.lastName, row.email, row.phone,
             row.dateOfBirth, row.licenseExpiration, row.courseTitle, row.courseAbbreviation,
             row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime,
             row.paymentStatus, row.enrollmentStatus, row.category, row.registrationDate
           ];
+          
+          // Add form response values
+          const formResponseValues = data.formFields?.map(field => 
+            row.formResponses?.[field.fieldId] || ''
+          ) || [];
+          
+          const values = [...baseValues, ...formResponseValues];
+          
           // Sanitize CSV values to prevent formula injection
           const sanitizedValues = values.map(v => {
             const str = String(v || '');
@@ -2163,22 +2175,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // All Students sheet (combined)
         const allStudentsSheet = workbook.addWorksheet('All Students');
-        const headers = [
+        
+        // Build headers: base student fields + dynamic form fields
+        const baseHeaders = [
           'Student ID', 'First Name', 'Last Name', 'Email', 'Phone',
           'Date of Birth', 'License Expiration', 'Course Title', 'Course Code',
           'Schedule Date', 'Start Time', 'End Time', 'Payment Status',
           'Enrollment Status', 'Category', 'Registration Date'
         ];
+        
+        // Add form field headers (use field label as column header)
+        const formFieldHeaders = data.formFields?.map(field => field.fieldLabel) || [];
+        const headers = [...baseHeaders, ...formFieldHeaders];
+        
         allStudentsSheet.addRow(headers);
 
         const allRows = [...data.current, ...data.former];
         allRows.forEach(row => {
-          allStudentsSheet.addRow([
+          // Build base row data
+          const baseRowData = [
             row.studentId, row.firstName, row.lastName, row.email, row.phone,
             row.dateOfBirth, row.licenseExpiration, row.courseTitle, row.courseAbbreviation,
             row.scheduleDate, row.scheduleStartTime, row.scheduleEndTime,
             row.paymentStatus, row.enrollmentStatus, row.category, row.registrationDate
-          ]);
+          ];
+          
+          // Add form response values in the same order as headers
+          const formResponseValues = data.formFields?.map(field => 
+            row.formResponses?.[field.fieldId] || ''
+          ) || [];
+          
+          allStudentsSheet.addRow([...baseRowData, ...formResponseValues]);
         });
 
         // Summary sheet

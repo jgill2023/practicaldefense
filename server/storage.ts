@@ -270,6 +270,7 @@ export interface IStorage {
     current: any[];
     former: any[];
     held: any[];
+    formFields: Array<{ fieldId: string; formTitle: string; fieldLabel: string; sortOrder: number }>;
     summary: {
       totalCurrentStudents: number;
       totalFormerStudents: number;
@@ -2001,7 +2002,7 @@ export class DatabaseStorage implements IStorage {
       whereClause = and(whereClause, eq(enrollments.courseId, courseId));
     }
 
-    // Get all enrollments with full details - explicitly include student
+    // Get all enrollments with full details - explicitly include student and course forms
     const allEnrollments = await db.query.enrollments.findMany({
       where: whereClause,
       with: {
@@ -2010,6 +2011,12 @@ export class DatabaseStorage implements IStorage {
           with: {
             category: true,
             instructor: true,
+            forms: {
+              where: eq(courseInformationForms.isActive, true),
+              with: {
+                fields: true,
+              }
+            }
           }
         },
         schedule: true,
@@ -2038,6 +2045,30 @@ export class DatabaseStorage implements IStorage {
     console.log(`getRosterExportData - Current students: ${currentStudents.length}`);
     console.log(`getRosterExportData - Held students: ${heldStudents.length}`);
 
+    // Collect all form fields across all enrollments for consistent column structure
+    const allFormFields = new Map<string, { formTitle: string; fieldLabel: string; sortOrder: number }>();
+    
+    allEnrollments.forEach(enrollment => {
+      if (enrollment.course?.forms) {
+        enrollment.course.forms.forEach(form => {
+          if (form.fields) {
+            form.fields
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .forEach(field => {
+                // Use field ID as key to ensure uniqueness
+                if (!allFormFields.has(field.id)) {
+                  allFormFields.set(field.id, {
+                    formTitle: form.title,
+                    fieldLabel: field.label,
+                    sortOrder: field.sortOrder
+                  });
+                }
+              });
+          }
+        });
+      }
+    });
+
     // Flatten the data for export - convert enrollments directly to roster format
     const flattenEnrollment = (enrollment: any, category: 'current' | 'former' | 'held') => {
       // Check if student data is available. If not, log an error and return null.
@@ -2051,7 +2082,20 @@ export class DatabaseStorage implements IStorage {
         return null;
       }
 
-      return {
+      // Parse form submission data
+      let formResponses: Record<string, any> = {};
+      if (enrollment.formSubmissionData) {
+        try {
+          formResponses = typeof enrollment.formSubmissionData === 'string' 
+            ? JSON.parse(enrollment.formSubmissionData) 
+            : enrollment.formSubmissionData;
+        } catch (error) {
+          console.error(`Failed to parse form submission data for enrollment ${enrollment.id}:`, error);
+        }
+      }
+
+      // Build base student data
+      const baseData = {
         studentId: enrollment.student.id,
         enrollmentId: enrollment.id,
         firstName: enrollment.student.firstName,
@@ -2074,6 +2118,18 @@ export class DatabaseStorage implements IStorage {
         courseId: enrollment.course.id,
         location: enrollment.schedule.location || '',
         cancellationReason: enrollment.cancellationReason || ''
+      };
+
+      // Add form responses as individual fields
+      const formResponseData: Record<string, string> = {};
+      allFormFields.forEach((fieldInfo, fieldId) => {
+        // Find the response for this field in the parsed form data
+        formResponseData[fieldId] = formResponses[fieldId] || '';
+      });
+
+      return {
+        ...baseData,
+        formResponses: formResponseData
       };
     };
 
@@ -2115,10 +2171,19 @@ export class DatabaseStorage implements IStorage {
       location: courseId && !scheduleId ? 'Various Locations' : (currentFlat[0]?.location || 'Unknown Location')
     };
 
+    // Convert form fields map to array for export
+    const formFieldsArray = Array.from(allFormFields.entries()).map(([fieldId, fieldInfo]) => ({
+      fieldId,
+      formTitle: fieldInfo.formTitle,
+      fieldLabel: fieldInfo.fieldLabel,
+      sortOrder: fieldInfo.sortOrder
+    })).sort((a, b) => a.sortOrder - b.sortOrder);
+
     return {
       current: currentFlat,
       former: formerFlat,
       held: heldFlat,
+      formFields: formFieldsArray,
       summary: {
         totalCurrentStudents: currentStudents.length,
         totalFormerStudents: formerFlat.length,
