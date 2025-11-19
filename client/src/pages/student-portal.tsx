@@ -401,6 +401,36 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
         );
 
       case 'checkbox':
+        if (field.options && field.options.length > 0) {
+          return (
+            <div key={field.id} className="space-y-3">
+              <Label>
+                {field.label}
+                {field.isRequired && <span className="text-destructive ml-1">*</span>}
+              </Label>
+              <div className="space-y-2">
+                {field.options.map((option: string) => (
+                  <div key={option} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${field.id}-${option}`}
+                      checked={value === option}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          handleFieldChange(field.id, option);
+                        } else if (value === option) {
+                          handleFieldChange(field.id, '');
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`${field.id}-${option}`} className="font-normal cursor-pointer">
+                      {option}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        }
         return (
           <div key={field.id} className="flex items-center space-x-2">
             <Checkbox
@@ -753,6 +783,36 @@ function LiveFireRegistrationModal({ course, schedule, onClose }: {
         );
 
       case 'checkbox':
+        if (field.options && field.options.length > 0) {
+          return (
+            <div key={field.id} className="space-y-3">
+              <Label>
+                {field.label}
+                {field.isRequired && <span className="text-destructive ml-1">*</span>}
+              </Label>
+              <div className="space-y-2">
+                {field.options.map((option: string) => (
+                  <div key={option} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${field.id}-${option}`}
+                      checked={value === option}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setFormData(prev => ({ ...prev, [field.id]: option }));
+                        } else if (value === option) {
+                          setFormData(prev => ({ ...prev, [field.id]: '' }));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`${field.id}-${option}`} className="font-normal cursor-pointer">
+                      {option}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        }
         return (
           <div key={field.id} className="flex items-center space-x-2">
             <Checkbox
