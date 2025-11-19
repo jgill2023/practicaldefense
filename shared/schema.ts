@@ -344,6 +344,9 @@ export const instructorAppointments = pgTable("instructor_appointments", {
   // Notes
   studentNotes: text("student_notes"), // Notes from student when booking
   instructorNotes: text("instructor_notes"), // Private notes for instructor
+  // Form submission data (for appointment type forms)
+  formSubmissionData: jsonb("form_submission_data"), // Stores form responses as key-value pairs {fieldId: response}
+  formSubmittedAt: timestamp("form_submitted_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -476,6 +479,7 @@ export const appointmentTypeRelations = relations(appointmentTypes, ({ one, many
     references: [users.id],
   }),
   appointments: many(instructorAppointments),
+  forms: many(courseInformationForms),
 }));
 
 export const instructorWeeklyTemplateRelations = relations(instructorWeeklyTemplates, ({ one }) => ({
@@ -492,7 +496,7 @@ export const instructorAvailabilityOverrideRelations = relations(instructorAvail
   }),
 }));
 
-export const instructorAppointmentRelations = relations(instructorAppointments, ({ one }) => ({
+export const instructorAppointmentRelations = relations(instructorAppointments, ({ one, many }) => ({
   appointmentType: one(appointmentTypes, {
     fields: [instructorAppointments.appointmentTypeId],
     references: [appointmentTypes.id],
@@ -507,6 +511,7 @@ export const instructorAppointmentRelations = relations(instructorAppointments, 
     references: [users.id],
     relationName: 'studentAppointments',
   }),
+  formResponses: many(studentFormResponses),
 }));
 
 export const appointmentNotificationTemplateRelations = relations(appointmentNotificationTemplates, ({ one, many }) => ({
@@ -728,13 +733,19 @@ export const courseInformationFormFields = pgTable("course_information_form_fiel
 
 export const studentFormResponses = pgTable("student_form_responses", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  enrollmentId: uuid("enrollment_id").notNull().references(() => enrollments.id, { onDelete: 'cascade' }),
+  enrollmentId: uuid("enrollment_id").references(() => enrollments.id, { onDelete: 'cascade' }),
+  appointmentId: uuid("appointment_id").references(() => instructorAppointments.id, { onDelete: 'cascade' }),
   formId: uuid("form_id").notNull().references(() => courseInformationForms.id, { onDelete: 'cascade' }),
   fieldId: uuid("field_id").notNull().references(() => courseInformationFormFields.id, { onDelete: 'cascade' }),
   response: text("response"),
   submittedAt: timestamp("submitted_at").defaultNow(),
 }, (table) => [{
-  uniqueEnrollmentField: sql`UNIQUE(${table.enrollmentId}, ${table.fieldId})`
+  // Ensure either enrollmentId or appointmentId is set, but not both
+  checkEitherEnrollmentOrAppointment: sql`CHECK ((${table.enrollmentId} IS NOT NULL AND ${table.appointmentId} IS NULL) OR (${table.enrollmentId} IS NULL AND ${table.appointmentId} IS NOT NULL))`,
+  // Unique constraint for enrollment-field pairs
+  uniqueEnrollmentField: sql`UNIQUE NULLS NOT DISTINCT(${table.enrollmentId}, ${table.fieldId})`,
+  // Unique constraint for appointment-field pairs
+  uniqueAppointmentField: sql`UNIQUE NULLS NOT DISTINCT(${table.appointmentId}, ${table.fieldId})`
 }]);
 
 // Relations for course information forms
@@ -742,6 +753,10 @@ export const courseInformationFormsRelations = relations(courseInformationForms,
   course: one(courses, {
     fields: [courseInformationForms.courseId],
     references: [courses.id],
+  }),
+  appointmentType: one(appointmentTypes, {
+    fields: [courseInformationForms.appointmentTypeId],
+    references: [appointmentTypes.id],
   }),
   fields: many(courseInformationFormFields),
   responses: many(studentFormResponses),
@@ -760,6 +775,10 @@ export const studentFormResponsesRelations = relations(studentFormResponses, ({ 
     fields: [studentFormResponses.enrollmentId],
     references: [enrollments.id],
   }),
+  appointment: one(instructorAppointments, {
+    fields: [studentFormResponses.appointmentId],
+    references: [instructorAppointments.id],
+  }),
   form: one(courseInformationForms, {
     fields: [studentFormResponses.formId],
     references: [courseInformationForms.id],
@@ -775,7 +794,12 @@ export const insertCourseInformationFormSchema = createInsertSchema(courseInform
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+}).refine(
+  (data) => (data.courseId && !data.appointmentTypeId) || (!data.courseId && data.appointmentTypeId),
+  {
+    message: "Must provide either courseId or appointmentTypeId, but not both",
+  }
+);
 
 export const insertCourseInformationFormFieldSchema = createInsertSchema(courseInformationFormFields).omit({
   id: true,
@@ -786,7 +810,12 @@ export const insertCourseInformationFormFieldSchema = createInsertSchema(courseI
 export const insertStudentFormResponseSchema = createInsertSchema(studentFormResponses).omit({
   id: true,
   submittedAt: true,
-});
+}).refine(
+  (data) => (data.enrollmentId && !data.appointmentId) || (!data.enrollmentId && data.appointmentId),
+  {
+    message: "Must provide either enrollmentId or appointmentId, but not both",
+  }
+);
 
 // Types for course information forms
 export type InsertCourseInformationForm = z.infer<typeof insertCourseInformationFormSchema>;
