@@ -1098,20 +1098,10 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     bookAppointmentMutation.mutate();
   };
 
-  // Calculate end time for variable duration
-  const getCalculatedEndTime = (startTime: string, hours: number): string => {
-    const stripe = useStripe();
-    const elements = useElements();
-    const [isProcessing, setIsProcessing] = useState(false);
+  if (!appointmentType) return null;
 
-    const handlePaymentSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-
-      if (!stripe || !elements) {
-        return;
-      }
-
-      // Validate form fields for non-authenticated users
+  return (
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       if (!isAuthenticated) {
         if (!bookingForm.firstName || !bookingForm.lastName || !bookingForm.email) {
           toast({
