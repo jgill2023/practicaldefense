@@ -4337,8 +4337,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Promo code / coupon routes
   app.get("/api/instructor/coupons", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user?.id;
-      const promoCodes = await storage.getPromoCodesByCreator(userId);
+      // Instructors have admin-level data visibility - return ALL promo codes system-wide
+      const promoCodes = await storage.getPromoCodes();
       res.json(promoCodes);
     } catch (error: any) {
       console.error("Error fetching promo codes:", error);
