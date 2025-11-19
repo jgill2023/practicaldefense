@@ -1028,7 +1028,7 @@ function LiveFireRangeSessionsSection() {
         new Date(schedule.startDate) > now &&
         schedule.availableSpots > 0
       )
-      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
   }, [liveFireCourse]);
 
   const displayedSchedules = showAll ? upcomingSchedules : upcomingSchedules.slice(0, 5);
@@ -2668,10 +2668,10 @@ export default function StudentPortal() {
     retry: false,
   });
 
-  // Sort appointments by date - most recent first (descending order)
+  // Sort appointments by date - soonest first (ascending order)
   const sortedAppointments = useMemo(() => {
     return [...appointments].sort((a, b) => {
-      return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
+      return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
     });
   }, [appointments]);
 
