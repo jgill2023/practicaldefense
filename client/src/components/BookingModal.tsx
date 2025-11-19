@@ -154,7 +154,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         postal_code: user.zipCode || '',
       }));
     }
-  }, [open]);
+  }, [open, isAuthenticated, user]);
 
   // Calculate tax when billing address is complete and PaymentIntent exists
   useEffect(() => {
@@ -931,6 +931,14 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                     ${taxBreakdown.subtotal.toFixed(2)}
                   </span>
                 </div>
+                {discountInfo && discountInfo.discountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                    <span>Discount ({promoCodeApplied})</span>
+                    <span className="font-medium" data-testid="text-booking-discount">
+                      -${discountInfo.discountAmount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
                 {taxBreakdown.tax > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Sales Tax</span>
@@ -949,9 +957,27 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             </>
           ) : (
             <>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Subtotal</span>
-                <span className="text-lg font-bold">${getTotalPrice().toFixed(2)}</span>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Subtotal</span>
+                  <span className="text-lg font-bold">${getTotalPrice().toFixed(2)}</span>
+                </div>
+                {discountInfo && discountInfo.discountAmount > 0 && (
+                  <>
+                    <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                      <span>Discount ({promoCodeApplied})</span>
+                      <span className="font-medium" data-testid="text-booking-discount-notax">
+                        -${discountInfo.discountAmount.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center border-t pt-2">
+                      <span className="font-semibold">Total</span>
+                      <span className="text-xl font-bold" data-testid="text-booking-total-with-discount">
+                        ${(getTotalPrice() - discountInfo.discountAmount).toFixed(2)}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
               <p className="text-xs text-muted-foreground text-center">
                 Tax will be calculated and added at checkout based on your billing address
