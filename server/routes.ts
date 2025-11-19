@@ -1572,7 +1572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Waiver instances for enrollment
   app.get('/api/enrollments/:enrollmentId/waiver-instances', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const enrollmentId = req.params.enrollmentId;
 
       // Verify enrollment ownership
@@ -1601,7 +1601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sign waiver instance
   app.post('/api/waiver-instances/:instanceId/sign', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const instanceId = req.params.instanceId;
 
       // Get waiver instance
@@ -1735,7 +1735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Payment balance tracking
   app.get('/api/enrollments/:enrollmentId/payment-balance', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const enrollmentId = req.params.enrollmentId;
 
       // Verify enrollment ownership
@@ -1764,7 +1764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bulk payment balance tracking for student dashboard
   app.get('/api/student/payment-balances', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const enrollmentIds = req.query.enrollmentIds as string;
 
       if (!enrollmentIds) {
@@ -1802,7 +1802,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Form completion status tracking
   app.get("/api/enrollments/:enrollmentId/form-completion", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.claims.sub;
+      const userId = req.user?.id;
       const enrollmentId = req.params.enrollmentId;
 
       // Verify enrollment ownership
