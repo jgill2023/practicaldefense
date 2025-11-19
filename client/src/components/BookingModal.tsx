@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -49,6 +49,9 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Track if we've pre-populated the form to prevent repeated updates
+  const hasPrePopulated = useRef(false);
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
@@ -130,12 +133,13 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
       setPromoCodeApplied(null);
       setPromoError(null);
       setDiscountInfo(null);
+      hasPrePopulated.current = false; // Reset pre-population flag
     }
   }, [open, appointmentType]);
 
-  // Pre-populate form for authenticated users when modal opens
+  // Pre-populate form for authenticated users when modal opens (only once)
   useEffect(() => {
-    if (open && isAuthenticated && user) {
+    if (open && isAuthenticated && user && !hasPrePopulated.current) {
       setBookingForm(prev => ({
         ...prev,
         firstName: user.firstName || '',
@@ -153,6 +157,8 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         state: user.state || '',
         postal_code: user.zipCode || '',
       }));
+      
+      hasPrePopulated.current = true; // Mark as pre-populated
     }
   }, [open, isAuthenticated, user]);
 
