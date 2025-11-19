@@ -14,6 +14,8 @@ import { PaymentDetailsModal } from "./PaymentDetailsModal";
 import { PaymentReminderModal } from "./PaymentReminderModal";
 import { RescheduleModal } from "./RescheduleModal";
 import { EnrollmentFeedbackModal } from "./EnrollmentFeedbackModal";
+import { ViewCompletedWaiverModal } from "./ViewCompletedWaiverModal";
+import { ViewCompletedFormsModal } from "./ViewCompletedFormsModal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface RosterData {
@@ -78,6 +80,8 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
     reminderType: '' as 'waiver' | 'form'
   });
   const [feedbackModal, setFeedbackModal] = useState<{ isOpen: boolean; enrollmentId: string; studentName: string }>({ isOpen: false, enrollmentId: "", studentName: "" });
+  const [viewWaiverModal, setViewWaiverModal] = useState<{ isOpen: boolean; enrollmentId: string; studentName: string }>({ isOpen: false, enrollmentId: "", studentName: "" });
+  const [viewFormsModal, setViewFormsModal] = useState<{ isOpen: boolean; enrollmentId: string; studentName: string }>({ isOpen: false, enrollmentId: "", studentName: "" });
 
 
   const { data: rosterData, isLoading, error } = useQuery<RosterData>({
@@ -439,13 +443,20 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
                               const isIncomplete = waiverStatus === 'pending';
 
                               if (isComplete) {
-                                // Show green checkmark for signed waivers - not clickable
+                                // Show green checkmark for signed waivers - clickable to view
                                 return (
-                                  <div className="inline-flex items-center justify-center h-8 w-8" data-testid={`waiver-status-${student.studentId}`}>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 hover:bg-green-100 dark:hover:bg-green-900/20"
+                                    onClick={() => setViewWaiverModal({ isOpen: true, enrollmentId: student.enrollmentId, studentName: `${student.firstName} ${student.lastName}` })}
+                                    title="View signed waiver"
+                                    data-testid={`waiver-status-${student.studentId}`}
+                                  >
                                     <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                     </svg>
-                                  </div>
+                                  </Button>
                                 );
                               }
 
@@ -475,13 +486,20 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
                               const isIncomplete = formStatus === 'incomplete';
 
                               if (isComplete) {
-                                // Show green checkmark for completed forms - not clickable
+                                // Show green checkmark for completed forms - clickable to view
                                 return (
-                                  <div className="inline-flex items-center justify-center h-8 w-8" data-testid={`form-status-${student.studentId}`}>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 hover:bg-green-100 dark:hover:bg-green-900/20"
+                                    onClick={() => setViewFormsModal({ isOpen: true, enrollmentId: student.enrollmentId, studentName: `${student.firstName} ${student.lastName}` })}
+                                    title="View submitted forms"
+                                    data-testid={`form-status-${student.studentId}`}
+                                  >
                                     <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                     </svg>
-                                  </div>
+                                  </Button>
                                 );
                               }
 
@@ -692,6 +710,20 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
           enrollmentId={feedbackModal.enrollmentId}
           userRole="instructor"
           isInstructor={true}
+        />
+
+        <ViewCompletedWaiverModal
+          isOpen={viewWaiverModal.isOpen}
+          onClose={() => setViewWaiverModal({ ...viewWaiverModal, isOpen: false })}
+          enrollmentId={viewWaiverModal.enrollmentId}
+          studentName={viewWaiverModal.studentName}
+        />
+
+        <ViewCompletedFormsModal
+          isOpen={viewFormsModal.isOpen}
+          onClose={() => setViewFormsModal({ ...viewFormsModal, isOpen: false })}
+          enrollmentId={viewFormsModal.enrollmentId}
+          studentName={viewFormsModal.studentName}
         />
       </DialogContent>
     </Dialog>
