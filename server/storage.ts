@@ -1949,7 +1949,7 @@ export class DatabaseStorage implements IStorage {
     if (isInstructorOrHigher) {
       // Get all courses from all instructors
       const allCourses = await db.query.courses.findMany({
-        where: isNull(coursesTable.deletedAt),
+        where: isNull(courses.deletedAt),
         columns: { id: true }
       });
       courseIds = allCourses.map(c => c.id);
