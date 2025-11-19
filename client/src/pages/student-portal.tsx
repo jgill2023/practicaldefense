@@ -1028,7 +1028,7 @@ function LiveFireRangeSessionsSection() {
         new Date(schedule.startDate) > now &&
         schedule.availableSpots > 0
       )
-      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   }, [liveFireCourse]);
 
   const displayedSchedules = showAll ? upcomingSchedules : upcomingSchedules.slice(0, 5);
@@ -2668,6 +2668,13 @@ export default function StudentPortal() {
     retry: false,
   });
 
+  // Sort appointments by date - most recent first (descending order)
+  const sortedAppointments = useMemo(() => {
+    return [...appointments].sort((a, b) => {
+      return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
+    });
+  }, [appointments]);
+
   // Add license expiration warning calculation
   const getLicenseWarning = () => {
     const typedUser = user as User;
@@ -3135,9 +3142,9 @@ export default function StudentPortal() {
                     </div>
                   ))}
                 </div>
-              ) : appointments.length > 0 ? (
+              ) : sortedAppointments.length > 0 ? (
                 <div className="space-y-4">
-                  {appointments.map(appointment => (
+                  {sortedAppointments.map(appointment => (
                     <div 
                       key={appointment.id} 
                       className="p-4 bg-muted rounded-lg"
