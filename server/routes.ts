@@ -3766,28 +3766,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Course Information Forms API Routes
 
-  // Get forms for a course
-  app.get("/api/course-forms/:courseId", isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+  // Get forms for a course (accessible to all authenticated users - students need to see forms to complete them)
+  app.get("/api/course-forms/:courseId", isAuthenticated, async (req: any, res) => {
     try {
       const { courseId } = req.params;
-      const userId = req.user.id;
-      const userRole = req.user.role;
+      const userId = req.user?.id;
 
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Verify instructor owns the course (admins and superadmins can access any course)
-      const course = await storage.getCourse(courseId);
-      if (!course) {
-        return res.status(404).json({ message: "Course not found" });
-      }
-      
-      // Only instructors need to own the course; admins and superadmins can access any course
-      if (userRole === 'instructor' && course.instructorId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
+      // All authenticated users can view forms (students need to complete them, instructors need to manage them)
       const forms = await storage.getCourseInformationFormsByCourse(courseId);
       console.log(`[DEBUG] Fetched ${forms.length} forms for course ${courseId}:`, JSON.stringify(forms, null, 2));
       res.json(forms);
