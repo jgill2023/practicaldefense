@@ -154,7 +154,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
         postal_code: user.zipCode || '',
       }));
     }
-  }, [open, isAuthenticated, user]);
+  }, [open]);
 
   // Calculate tax when billing address is complete and PaymentIntent exists
   useEffect(() => {
