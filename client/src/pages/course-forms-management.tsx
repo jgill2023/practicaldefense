@@ -492,6 +492,7 @@ export default function CourseFormsManagement() {
     { value: 'textarea', label: 'Long Text' },
     { value: 'select', label: 'Dropdown' },
     { value: 'checkbox', label: 'Checkbox' },
+    { value: 'radio', label: 'Radio Buttons' },
     { value: 'date', label: 'Date' },
     { value: 'number', label: 'Number' },
   ];
@@ -557,7 +558,10 @@ export default function CourseFormsManagement() {
                   </div>
 
                   {selectedCourse && (
-                    <Dialog open={showCreateFormDialog} onOpenChange={setShowCreateFormDialog}>
+                    <Dialog open={showCreateFormDialog} onOpenChange={(open) => {
+                      setShowCreateFormDialog(open);
+                      if (!open) setEditingForm(null); // Clear editing state when dialog closes
+                    }}>
                       <DialogTrigger asChild>
                         <Button data-testid="button-create-form">
                           <Plus className="h-4 w-4 mr-2" />
@@ -566,14 +570,18 @@ export default function CourseFormsManagement() {
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Create Information Form</DialogTitle>
+                          <DialogTitle>{editingForm ? "Edit Information Form" : "Create Information Form"}</DialogTitle>
                           <DialogDescription>
-                            Create a form that students will complete after registering for the course.
+                            {editingForm ? "Update the form details below." : "Create a form that students will complete after registering for the course."}
                           </DialogDescription>
                         </DialogHeader>
                         <CreateFormDialog 
+                          form={editingForm}
                           onSubmit={handleCreateForm}
-                          onCancel={() => setShowCreateFormDialog(false)}
+                          onCancel={() => {
+                            setShowCreateFormDialog(false);
+                            setEditingForm(null);
+                          }}
                         />
                       </DialogContent>
                     </Dialog>
@@ -694,7 +702,7 @@ export default function CourseFormsManagement() {
                                     Add Field
                                   </Button>
                                 </DialogTrigger>
-                                <DialogContent className="max-w-2xl">
+                                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                                   <DialogHeader>
                                     <DialogTitle>
                                       {editingField ? "Edit Field" : "Add Form Field"}
@@ -1023,16 +1031,18 @@ export default function CourseFormsManagement() {
 
 // Create Form Dialog Component
 function CreateFormDialog({ 
+  form,
   onSubmit, 
   onCancel 
 }: { 
+  form?: CourseInformationFormWithFields | null;
   onSubmit: (data: { title: string; description?: string; isRequired: boolean }) => void;
   onCancel: () => void;
 }) {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    isRequired: false
+    title: form?.title || '',
+    description: form?.description || '',
+    isRequired: form?.isRequired || false
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1084,7 +1094,7 @@ function CreateFormDialog({
           Cancel
         </Button>
         <Button type="submit" disabled={!formData.title}>
-          Create Form
+          {form ? "Update Form" : "Create Form"}
         </Button>
       </div>
     </form>
@@ -1124,6 +1134,15 @@ function FieldEditor({
   const [options, setOptions] = useState<string[]>(
     field?.options && Array.isArray(field.options) ? field.options : ['']
   );
+
+  // Reset/initialize options state when field changes (editing or creating new)
+  useEffect(() => {
+    if (field?.options && Array.isArray(field.options)) {
+      setOptions(field.options);
+    } else {
+      setOptions(['']); // Reset to single empty option for new fields
+    }
+  }, [field]);
 
   const fieldTypes: Array<{ value: FormFieldType; label: string }> = [
     { value: 'header', label: 'Header' },
