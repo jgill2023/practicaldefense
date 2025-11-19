@@ -1590,7 +1590,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const waiverInstances = await storage.getWaiverInstancesByEnrollment(enrollmentId);
+      // Check if waiver instances exist for this enrollment
+      let waiverInstances = await storage.getWaiverInstancesByEnrollment(enrollmentId);
+      
+      // If no waiver instances exist, check if the course has waiver templates
+      if (waiverInstances.length === 0 && enrollment.courseId) {
+        const waiverTemplates = await storage.getWaiverTemplatesByCourse(enrollment.courseId);
+        
+        // Create waiver instances for each active template
+        for (const template of waiverTemplates) {
+          if (template.isActive) {
+            await storage.createWaiverInstance({
+              enrollmentId: enrollmentId,
+              studentId: enrollment.studentId,
+              templateId: template.id,
+              status: 'pending',
+            });
+          }
+        }
+        
+        // Fetch the newly created instances
+        if (waiverTemplates.some(t => t.isActive)) {
+          waiverInstances = await storage.getWaiverInstancesByEnrollment(enrollmentId);
+        }
+      }
+
       res.json(waiverInstances);
     } catch (error) {
       console.error("Error fetching waiver instances:", error);
