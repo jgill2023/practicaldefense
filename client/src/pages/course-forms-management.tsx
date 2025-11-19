@@ -37,7 +37,8 @@ import type {
   CourseWithSchedules,
   WaiverTemplate,
   WaiverTemplateWithDetails,
-  InsertWaiverTemplate
+  InsertWaiverTemplate,
+  AppointmentType
 } from "@shared/schema";
 
 // Field Component with up/down arrows
@@ -133,7 +134,9 @@ export default function CourseFormsManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const [formTargetType, setFormTargetType] = useState<"course" | "appointment">("course");
   const [selectedCourse, setSelectedCourse] = useState<string>("");
+  const [selectedAppointmentType, setSelectedAppointmentType] = useState<string>("");
   const [showCreateFormDialog, setShowCreateFormDialog] = useState(false);
   const [editingForm, setEditingForm] = useState<CourseInformationFormWithFields | null>(null);
   const [showFieldEditor, setShowFieldEditor] = useState(false);
@@ -151,19 +154,32 @@ export default function CourseFormsManagement() {
     queryKey: ["/api/instructor/courses"],
   });
 
-  // Auto-select first course when courses load
-  useEffect(() => {
-    if (courses.length > 0 && !selectedCourse) {
-      setSelectedCourse(courses[0].id);
-    }
-  }, [courses, selectedCourse]);
+  // Fetch appointment types
+  const { data: appointmentTypes = [] } = useQuery<AppointmentType[]>({
+    queryKey: ["/api/instructor/appointment-types"],
+  });
 
-  // Fetch forms for selected course
+  // Auto-select first course or appointment type when data loads
+  useEffect(() => {
+    if (formTargetType === "course" && courses.length > 0 && !selectedCourse) {
+      setSelectedCourse(courses[0].id);
+    } else if (formTargetType === "appointment" && appointmentTypes.length > 0 && !selectedAppointmentType) {
+      setSelectedAppointmentType(appointmentTypes[0].id);
+    }
+  }, [courses, appointmentTypes, selectedCourse, selectedAppointmentType, formTargetType]);
+
+  // Determine the currently selected ID based on form target type
+  const selectedId = formTargetType === "course" ? selectedCourse : selectedAppointmentType;
+
+  // Fetch forms for selected course or appointment type
   const { data: forms = [], isLoading } = useQuery<CourseInformationFormWithFields[]>({
-    queryKey: ["/api/course-forms", selectedCourse],
+    queryKey: ["/api/course-forms", formTargetType, selectedId],
     queryFn: async () => {
-      if (!selectedCourse) return [];
-      const response = await fetch(`/api/course-forms/${selectedCourse}`, {
+      if (!selectedId) return [];
+      const endpoint = formTargetType === "course" 
+        ? `/api/course-forms/${selectedId}`
+        : `/api/appointment-type-forms/${selectedId}`;
+      const response = await fetch(endpoint, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -175,12 +191,13 @@ export default function CourseFormsManagement() {
       const data = await response.json();
       return data;
     },
-    enabled: !!selectedCourse,
+    enabled: !!selectedId,
     staleTime: 0,
     gcTime: 0,
   });
 
-  console.log('[FORMS DEBUG] Selected course:', selectedCourse);
+  console.log('[FORMS DEBUG] Form target type:', formTargetType);
+  console.log('[FORMS DEBUG] Selected ID:', selectedId);
   console.log('[FORMS DEBUG] Forms data:', forms);
   console.log('[FORMS DEBUG] Forms length:', forms?.length);
   console.log('[FORMS DEBUG] Is loading:', isLoading);
@@ -192,7 +209,7 @@ export default function CourseFormsManagement() {
 
   // Form creation/update
   const formMutation = useMutation({
-    mutationFn: async (data: { courseId: string; title: string; description?: string; isRequired: boolean }) => {
+    mutationFn: async (data: { courseId?: string; appointmentTypeId?: string; title: string; description?: string; isRequired: boolean }) => {
       const url = editingForm ? `/api/course-forms/${editingForm.id}` : "/api/course-forms";
       const method = editingForm ? "PATCH" : "POST";
       return await apiRequest(method, url, data);
@@ -202,9 +219,9 @@ export default function CourseFormsManagement() {
         title: editingForm ? "Form Updated" : "Form Created",
         description: `Information form has been ${editingForm ? "updated" : "created"} successfully.`,
       });
-      // Invalidate and refetch the specific course forms query
-      queryClient.invalidateQueries({ queryKey: ["/api/course-forms", selectedCourse] });
-      queryClient.refetchQueries({ queryKey: ["/api/course-forms", selectedCourse] });
+      // Invalidate and refetch the forms query
+      queryClient.invalidateQueries({ queryKey: ["/api/course-forms", formTargetType, selectedId] });
+      queryClient.refetchQueries({ queryKey: ["/api/course-forms", formTargetType, selectedId] });
       setShowCreateFormDialog(false);
       setEditingForm(null);
     },
@@ -430,11 +447,13 @@ export default function CourseFormsManagement() {
   };
 
   const handleCreateForm = (data: { title: string; description?: string; isRequired: boolean }) => {
-    if (!selectedCourse) return;
-    formMutation.mutate({
-      courseId: selectedCourse,
-      ...data
-    });
+    if (!selectedId) return;
+    
+    const payload = formTargetType === "course" 
+      ? { courseId: selectedCourse, ...data }
+      : { appointmentTypeId: selectedAppointmentType, ...data };
+    
+    formMutation.mutate(payload);
   };
 
   const handleCreateField = (data: {
@@ -535,63 +554,108 @@ export default function CourseFormsManagement() {
           </TabsList>
 
           <TabsContent value="manage">
-            {/* Course Selection */}
+            {/* Form Target Selection */}
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle>Select Course</CardTitle>
+                <CardTitle>Select Target for Forms</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-                      <SelectTrigger data-testid="select-course">
-                        <SelectValue placeholder="Choose a course to manage forms" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {courses.map((course) => (
-                          <SelectItem key={course.id} value={course.id}>
-                            {course.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-4">
+                  {/* Toggle between Courses and Appointment Types */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={formTargetType === "course" ? "default" : "outline"}
+                      onClick={() => {
+                        setFormTargetType("course");
+                        setSelectedAppointmentType("");
+                      }}
+                      data-testid="button-select-courses"
+                    >
+                      Courses
+                    </Button>
+                    <Button
+                      variant={formTargetType === "appointment" ? "default" : "outline"}
+                      onClick={() => {
+                        setFormTargetType("appointment");
+                        setSelectedCourse("");
+                      }}
+                      data-testid="button-select-appointments"
+                    >
+                      Appointment Types
+                    </Button>
                   </div>
 
-                  {selectedCourse && (
-                    <Dialog open={showCreateFormDialog} onOpenChange={(open) => {
-                      setShowCreateFormDialog(open);
-                      if (!open) setEditingForm(null); // Clear editing state when dialog closes
-                    }}>
-                      <DialogTrigger asChild>
-                        <Button data-testid="button-create-form">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create Form
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>{editingForm ? "Edit Information Form" : "Create Information Form"}</DialogTitle>
-                          <DialogDescription>
-                            {editingForm ? "Update the form details below." : "Create a form that students will complete after registering for the course."}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <CreateFormDialog 
-                          form={editingForm}
-                          onSubmit={handleCreateForm}
-                          onCancel={() => {
-                            setShowCreateFormDialog(false);
-                            setEditingForm(null);
-                          }}
-                        />
-                      </DialogContent>
-                    </Dialog>
-                  )}
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      {formTargetType === "course" ? (
+                        <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                          <SelectTrigger data-testid="select-course">
+                            <SelectValue placeholder="Choose a course to manage forms" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {courses.map((course) => (
+                              <SelectItem key={course.id} value={course.id}>
+                                {course.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Select value={selectedAppointmentType} onValueChange={setSelectedAppointmentType}>
+                          <SelectTrigger data-testid="select-appointment-type">
+                            <SelectValue placeholder="Choose an appointment type to manage forms" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {appointmentTypes.map((type) => (
+                              <SelectItem key={type.id} value={type.id}>
+                                {type.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+
+                    {selectedId && (
+                      <Dialog open={showCreateFormDialog} onOpenChange={(open) => {
+                        setShowCreateFormDialog(open);
+                        if (!open) setEditingForm(null);
+                      }}>
+                        <DialogTrigger asChild>
+                          <Button data-testid="button-create-form">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create Form
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>{editingForm ? "Edit Information Form" : "Create Information Form"}</DialogTitle>
+                            <DialogDescription>
+                              {editingForm 
+                                ? "Update the form details below." 
+                                : formTargetType === "course"
+                                  ? "Create a form that students will complete after registering for the course."
+                                  : "Create a form that students will complete when booking this appointment type."}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <CreateFormDialog 
+                            form={editingForm}
+                            onSubmit={handleCreateForm}
+                            onCancel={() => {
+                              setShowCreateFormDialog(false);
+                              setEditingForm(null);
+                            }}
+                          />
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Forms List */}
-            {selectedCourse && (
+            {selectedId && (
               <div className="space-y-4">
                 {isLoading ? (
                   <Card>

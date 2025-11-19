@@ -3120,11 +3120,24 @@ export class DatabaseStorage implements IStorage {
 
   // Course Information Forms operations
   async createCourseInformationForm(form: InsertCourseInformationForm): Promise<CourseInformationForm> {
+    // Validate mutual exclusivity
+    if (!form.courseId && !form.appointmentTypeId) {
+      throw new Error("Either courseId or appointmentTypeId must be provided");
+    }
+    if (form.courseId && form.appointmentTypeId) {
+      throw new Error("Cannot specify both courseId and appointmentTypeId");
+    }
+
     const [newForm] = await db.insert(courseInformationForms).values(form).returning();
     return newForm;
   }
 
   async updateCourseInformationForm(id: string, form: Partial<InsertCourseInformationForm>): Promise<CourseInformationForm> {
+    // Validate mutual exclusivity if both IDs are provided in update
+    if (form.courseId && form.appointmentTypeId) {
+      throw new Error("Cannot specify both courseId and appointmentTypeId");
+    }
+
     const [updatedForm] = await db
       .update(courseInformationForms)
       .set({
@@ -3148,6 +3161,7 @@ export class DatabaseStorage implements IStorage {
           orderBy: asc(courseInformationFormFields.sortOrder),
         },
         course: true,
+        appointmentType: true,
       },
     });
     return form as CourseInformationFormWithFields | undefined;
@@ -3160,6 +3174,7 @@ export class DatabaseStorage implements IStorage {
           orderBy: asc(courseInformationFormFields.sortOrder),
         },
         course: true,
+        appointmentType: true,
       },
       orderBy: asc(courseInformationForms.sortOrder),
     });
