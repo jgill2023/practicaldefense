@@ -693,9 +693,11 @@ export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type WaitlistStatus = 'waiting' | 'offered' | 'enrolled' | 'expired';
 
 // Course Information Forms - for post-registration student forms
+// Can be associated with either courses OR appointment types
 export const courseInformationForms = pgTable("course_information_forms", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  courseId: uuid("course_id").notNull().references(() => courses.id, { onDelete: 'cascade' }),
+  courseId: uuid("course_id").references(() => courses.id, { onDelete: 'cascade' }),
+  appointmentTypeId: uuid("appointment_type_id").references(() => appointmentTypes.id, { onDelete: 'cascade' }),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   isRequired: boolean("is_required").notNull().default(false),
@@ -703,7 +705,10 @@ export const courseInformationForms = pgTable("course_information_forms", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [{
+  // Ensure either courseId or appointmentTypeId is set, but not both
+  checkEitherCourseOrAppointment: sql`CHECK ((${table.courseId} IS NOT NULL AND ${table.appointmentTypeId} IS NULL) OR (${table.courseId} IS NULL AND ${table.appointmentTypeId} IS NOT NULL))`
+}]);
 
 export const courseInformationFormFields = pgTable("course_information_form_fields", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
