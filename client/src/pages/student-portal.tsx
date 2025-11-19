@@ -2612,7 +2612,7 @@ function WaiverDialog({ enrollment, onClose }: { enrollment: EnrollmentWithDetai
             Please review and sign the required waiver for {enrollment.course.title}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto pr-2">
           <WaiverSigningInterface
             waiverContent={mergedContent}
             waiverTitle={waiverTemplate.name}
