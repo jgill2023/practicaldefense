@@ -30,6 +30,10 @@ export function ViewCompletedWaiverModal({ enrollmentId, studentName, isOpen, on
       .replace(/\{\{studentName\}\}/g, studentName);
   };
 
+  const getSignature = (waiver: any) => {
+    return waiver.signatures && waiver.signatures.length > 0 ? waiver.signatures[0] : null;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -76,12 +80,15 @@ export function ViewCompletedWaiverModal({ enrollmentId, studentName, isOpen, on
                       <Calendar className="h-4 w-4" />
                       <span>Signed: {waiver.signedAt ? format(new Date(waiver.signedAt), 'MMM d, yyyy h:mm a') : 'N/A'}</span>
                     </div>
-                    {waiver.signatureData && (
-                      <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        <span>Name: {waiver.signatureData.name || 'N/A'}</span>
-                      </div>
-                    )}
+                    {(() => {
+                      const signature = getSignature(waiver);
+                      return signature && (
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          <span>Signer: {signature.signerName || 'N/A'}</span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -95,45 +102,65 @@ export function ViewCompletedWaiverModal({ enrollmentId, studentName, isOpen, on
                   </div>
 
                   {/* Signature Information */}
-                  {waiver.signatureData && (
-                    <div className="space-y-4 border-t pt-4">
-                      <h4 className="font-semibold text-sm">Signature Information</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {waiver.signatureData.name && (
-                          <div>
-                            <label className="text-sm font-medium text-muted-foreground">Full Name</label>
-                            <p className="text-sm">{waiver.signatureData.name}</p>
+                  {(() => {
+                    const signature = getSignature(waiver);
+                    if (!signature) {
+                      return (
+                        <div className="border-t pt-4 mt-6">
+                          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                            <AlertCircle className="h-4 w-4" />
+                            <p className="text-sm">Signature data not available for this waiver</p>
                           </div>
-                        )}
-                        {waiver.signatureData.address && (
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div className="space-y-4 border-t pt-4 mt-6">
+                        <h4 className="font-semibold">Signature Information</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="text-sm font-medium text-muted-foreground">Address</label>
-                            <p className="text-sm">{waiver.signatureData.address}</p>
+                            <label className="text-sm font-medium text-muted-foreground">Signer Name</label>
+                            <p className="text-sm font-medium">{signature.signerName || 'N/A'}</p>
                           </div>
-                        )}
-                        {waiver.signatureData.initials && (
+                          {signature.signerAddress && (
+                            <div>
+                              <label className="text-sm font-medium text-muted-foreground">Address</label>
+                              <p className="text-sm font-medium">{signature.signerAddress}</p>
+                            </div>
+                          )}
                           <div>
-                            <label className="text-sm font-medium text-muted-foreground">Initials</label>
-                            <p className="text-sm">{waiver.signatureData.initials}</p>
+                            <label className="text-sm font-medium text-muted-foreground">Signature Method</label>
+                            <p className="text-sm font-medium capitalize">{signature.signatureMethod || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">IP Address</label>
+                            <p className="text-sm font-medium">{signature.ipAddress || 'N/A'}</p>
+                          </div>
+                        </div>
+
+                        {/* Signature Image */}
+                        {signature.signatureData ? (
+                          <div className="mt-6">
+                            <label className="text-sm font-medium text-muted-foreground block mb-2">Digital Signature</label>
+                            <div className="border-2 border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-900 inline-block">
+                              <img 
+                                src={signature.signatureData} 
+                                alt="Digital Signature" 
+                                className="max-w-md h-24 object-contain"
+                                data-testid="signature-image"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-6 flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                            <AlertCircle className="h-4 w-4" />
+                            <p className="text-sm">Signature image not available</p>
                           </div>
                         )}
                       </div>
-
-                      {/* Signature Image */}
-                      {waiver.signatureData.signature && (
-                        <div>
-                          <label className="text-sm font-medium text-muted-foreground block mb-2">Signature</label>
-                          <div className="border rounded p-2 bg-white dark:bg-gray-800 inline-block">
-                            <img 
-                              src={waiver.signatureData.signature} 
-                              alt="Signature" 
-                              className="max-w-xs h-20 object-contain"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    );
+                  })()}
                 </CardContent>
               </Card>
             ))}

@@ -24,7 +24,7 @@ export function ViewCompletedFormsModal({ enrollmentId, studentName, isOpen, onC
   });
 
   const { data: courseForms, isLoading: formsLoading, error: formsError } = useQuery<any[]>({
-    queryKey: ['/api/course-information-forms/course', enrollment?.courseId],
+    queryKey: ['/api/course-forms', enrollment?.courseId],
     enabled: isOpen && !!enrollment?.courseId,
   });
 
