@@ -2524,6 +2524,8 @@ function WaiverDialog({ enrollment, onClose }: { enrollment: EnrollmentWithDetai
       description: 'Your waiver has been successfully submitted.',
     });
     queryClient.invalidateQueries({ queryKey: [`/api/enrollments/${enrollment.id}/waiver-instances`] });
+    queryClient.invalidateQueries({ queryKey: ['/api/enrollments', enrollment.id, 'waiver-status'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/enrollments', enrollment.id, 'waiver-instances'] });
     queryClient.invalidateQueries({ queryKey: ['/api/student/enrollments'] });
     onClose();
   };
