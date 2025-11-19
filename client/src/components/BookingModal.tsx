@@ -313,20 +313,21 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
       }
 
       // Create new payment intent with promo code
+      const upperPromoCode = bookingForm.promoCode.trim().toUpperCase();
       const response = await apiRequest("POST", "/api/appointments/create-payment-intent", {
         instructorId,
         appointmentTypeId: appointmentType.id,
         startTime: selectedSlot.startTime,
         endTime: isVariableDuration ? getCalculatedEndTime(selectedSlot.startTime, selectedDurationHours) : selectedSlot.endTime,
         durationHours: isVariableDuration ? selectedDurationHours : undefined,
-        promoCode: bookingForm.promoCode.trim(),
+        promoCode: upperPromoCode,
         userId: user?.id || undefined,
         existingPaymentIntentId: paymentIntentId || undefined, // Cancel old intent
       });
 
       // Handle free appointment after promo code
       if (response.isFree || response.discountAmount > 0) {
-        setPromoCodeApplied(bookingForm.promoCode.trim());
+        setPromoCodeApplied(upperPromoCode);
         setDiscountInfo({
           originalAmount: response.originalAmount || 0,
           discountAmount: response.discountAmount || 0,
@@ -794,7 +795,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
               <Input
                 id="promoCode"
                 value={bookingForm.promoCode}
-                onChange={(e) => setBookingForm(prev => ({ ...prev, promoCode: e.target.value.toUpperCase() }))}
+                onChange={(e) => setBookingForm(prev => ({ ...prev, promoCode: e.target.value }))}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), validateAndApplyPromoCode())}
                 placeholder="Enter promo code"
                 data-testid="input-promo-code"
