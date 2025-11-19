@@ -29,7 +29,7 @@ import { EventCreationForm } from "@/components/EventCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
 import { RosterDialog } from "@/components/RosterDialog";
 import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
-import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, MessageSquare, CalendarClock, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, Download, CalendarClock, ChevronUp, ChevronDown } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 import { AppointmentsModal } from "@/components/AppointmentsModal";
@@ -421,6 +421,31 @@ export default function InstructorDashboard() {
       });
     },
   });
+
+  // Function to export roster for a specific schedule
+  const handleExportRoster = (scheduleId: string, courseTitle: string) => {
+    try {
+      // Create download link to trigger Excel export
+      const exportUrl = `/api/instructor/roster/export?scheduleId=${scheduleId}&format=excel`;
+      const link = document.createElement('a');
+      link.href = exportUrl;
+      link.download = `roster-${courseTitle.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Exporting Roster",
+        description: "Downloading roster spreadsheet...",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export roster. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Permanent delete course mutation (hard delete)
   const permanentDeleteCourseMutation = useMutation({
@@ -834,23 +859,23 @@ export default function InstructorDashboard() {
                       <Trash2 className="h-4 w-4" />
                     </Button>
 
-                    {/* SMS Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-gray-400 hover:text-blue-500"
-                      onClick={() => setSmsModalData({
-                          studentName: `${schedule.course.title} - ${schedule.startDate ? formatDateShort(schedule.startDate) : 'Unknown Date'}`,
-                          phoneNumber: schedule.course.instructor?.phone || '', // Assuming instructor's phone for now, needs proper implementation
-                          studentId: null, // Placeholder, needs actual student ID
-                          enrollmentId: null, // Placeholder, needs actual enrollment ID
-                          courseId: schedule.course.id,
-                          scheduleId: schedule.id
-                        })}
-                      data-testid={`button-sms-schedule-${schedule.id}`}
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                    </Button>
+                    {/* Export Roster Button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-gray-400 hover:text-green-600"
+                          onClick={() => handleExportRoster(schedule.id, schedule.course.title)}
+                          data-testid={`button-export-roster-${schedule.id}`}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Export Roster</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </td>
               </tr>
