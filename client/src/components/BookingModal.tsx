@@ -724,7 +724,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             </Label>
             <Input
               id="firstName"
-              defaultValue={bookingForm.firstName}
+              value={bookingForm.firstName}
               onChange={(e) => setBookingForm(prev => ({ ...prev, firstName: e.target.value }))}
               required
               data-testid="input-first-name"
@@ -736,7 +736,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             </Label>
             <Input
               id="lastName"
-              defaultValue={bookingForm.lastName}
+              value={bookingForm.lastName}
               onChange={(e) => setBookingForm(prev => ({ ...prev, lastName: e.target.value }))}
               required
               data-testid="input-last-name"
@@ -751,7 +751,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           <Input
             id="email"
             type="email"
-            defaultValue={bookingForm.email}
+            value={bookingForm.email}
             onChange={(e) => setBookingForm(prev => ({ ...prev, email: e.target.value }))}
             required
             data-testid="input-email"
@@ -763,7 +763,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           <Input
             id="phone"
             type="tel"
-            defaultValue={bookingForm.phone}
+            value={bookingForm.phone}
             onChange={(e) => setBookingForm(prev => ({ ...prev, phone: e.target.value }))}
             data-testid="input-phone"
           />
@@ -777,7 +777,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             <Input
               id="password"
               type="password"
-              defaultValue={bookingForm.password}
+              value={bookingForm.password}
               onChange={(e) => setBookingForm(prev => ({ ...prev, password: e.target.value }))}
               minLength={8}
               placeholder="Leave blank to receive password setup email"
@@ -800,7 +800,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             <div className="flex gap-2">
               <Input
                 id="promoCode"
-                defaultValue={bookingForm.promoCode}
+                value={bookingForm.promoCode}
                 onChange={(e) => setBookingForm(prev => ({ ...prev, promoCode: e.target.value }))}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), validateAndApplyPromoCode())}
                 placeholder="Enter promo code"
@@ -855,7 +855,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
               </Label>
               <Input
                 id="billing-line1"
-                defaultValue={billingAddress.line1}
+                value={billingAddress.line1}
                 onChange={(e) => setBillingAddress(prev => ({ ...prev, line1: e.target.value }))}
                 placeholder="123 Main St"
                 required
@@ -869,7 +869,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 </Label>
                 <Input
                   id="billing-city"
-                  defaultValue={billingAddress.city}
+                  value={billingAddress.city}
                   onChange={(e) => setBillingAddress(prev => ({ ...prev, city: e.target.value }))}
                   placeholder="San Francisco"
                   required
@@ -882,7 +882,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 </Label>
                 <Input
                   id="billing-state"
-                  defaultValue={billingAddress.state}
+                  value={billingAddress.state}
                   onChange={(e) => setBillingAddress(prev => ({ ...prev, state: e.target.value }))}
                   placeholder="CA"
                   maxLength={2}
@@ -898,7 +898,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 </Label>
                 <Input
                   id="billing-postal"
-                  defaultValue={billingAddress.postal_code}
+                  value={billingAddress.postal_code}
                   onChange={(e) => setBillingAddress(prev => ({ ...prev, postal_code: e.target.value }))}
                   placeholder="94102"
                   required
@@ -911,7 +911,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 </Label>
                 <Input
                   id="billing-country"
-                  defaultValue={billingAddress.country}
+                  value={billingAddress.country}
                   onChange={(e) => setBillingAddress(prev => ({ ...prev, country: e.target.value }))}
                   placeholder="US"
                   maxLength={2}
@@ -1348,7 +1348,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                       </Label>
                       <Input
                         id="free-firstName"
-                        defaultValue={bookingForm.firstName}
+                        value={bookingForm.firstName}
                         onChange={(e) => setBookingForm(prev => ({ ...prev, firstName: e.target.value }))}
                         required
                         data-testid="input-free-first-name"
@@ -1360,7 +1360,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                       </Label>
                       <Input
                         id="free-lastName"
-                        defaultValue={bookingForm.lastName}
+                        value={bookingForm.lastName}
                         onChange={(e) => setBookingForm(prev => ({ ...prev, lastName: e.target.value }))}
                         required
                         data-testid="input-free-last-name"
@@ -1375,7 +1375,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                     <Input
                       id="free-email"
                       type="email"
-                      defaultValue={bookingForm.email}
+                      value={bookingForm.email}
                       onChange={(e) => setBookingForm(prev => ({ ...prev, email: e.target.value }))}
                       required
                       data-testid="input-free-email"
@@ -1387,7 +1387,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                     <Input
                       id="free-phone"
                       type="tel"
-                      defaultValue={bookingForm.phone}
+                      value={bookingForm.phone}
                       onChange={(e) => setBookingForm(prev => ({ ...prev, phone: e.target.value }))}
                       data-testid="input-free-phone"
                     />
@@ -1400,7 +1400,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                     <Input
                       id="free-password"
                       type="password"
-                      defaultValue={bookingForm.password}
+                      value={bookingForm.password}
                       onChange={(e) => setBookingForm(prev => ({ ...prev, password: e.target.value }))}
                       placeholder="Optional - to create an account"
                       data-testid="input-free-password"
@@ -1416,7 +1416,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 <Label htmlFor="free-notes">Notes (optional)</Label>
                 <Textarea
                   id="free-notes"
-                  defaultValue={bookingForm.notes}
+                  value={bookingForm.notes}
                   onChange={(e) => setBookingForm(prev => ({ ...prev, notes: e.target.value }))}
                   placeholder="Any special requests or information for the instructor?"
                   className="min-h-[80px]"
