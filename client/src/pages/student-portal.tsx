@@ -85,53 +85,95 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
     retry: false,
   });
 
-  // Autopopulate fields on mount
+  // Parse and memoize existing form submission to avoid infinite loops
+  const existingSubmission = useMemo(() => {
+    if (!enrollment.formSubmissionData) return null;
+    
+    try {
+      // formSubmissionData is stored as a JSON string in the database
+      if (typeof enrollment.formSubmissionData === 'string') {
+        const parsed = JSON.parse(enrollment.formSubmissionData);
+        return parsed && typeof parsed === 'object' ? parsed : null;
+      } else if (typeof enrollment.formSubmissionData === 'object') {
+        // Already an object (shouldn't happen but handle it)
+        return enrollment.formSubmissionData as Record<string, any>;
+      }
+    } catch (error) {
+      console.error('Failed to parse form submission data:', error);
+      return null;
+    }
+    return null;
+  }, [enrollment.formSubmissionData]);
+
+  const hasExistingSubmission = !!existingSubmission;
+
+  // Show error toast if parsing failed (only once when component mounts or data changes)
+  useEffect(() => {
+    if (enrollment.formSubmissionData && !existingSubmission) {
+      // Parsing failed
+      toast({
+        title: "Error Loading Forms",
+        description: "There was an issue loading your saved form data. Please re-enter your information.",
+        variant: "destructive",
+      });
+    }
+  }, [enrollment.formSubmissionData, existingSubmission]);
+  
+  // Load existing form submissions or autopopulate fields on mount
   useEffect(() => {
     if (courseForms && courseForms.length > 0 && typedUser) {
-      // Create field mapping object inside useEffect to avoid hook ordering issues
-      const fieldMapping: Record<string, any> = {
-        'first name': typedUser.firstName,
-        'last name': typedUser.lastName,
-        'email': typedUser.email,
-        'email address': typedUser.email,
-        'phone': typedUser.phone,
-        'phone number': typedUser.phone,
-        'date of birth': typedUser.dateOfBirth ? new Date(typedUser.dateOfBirth).toISOString().split('T')[0] : '',
-        'address': typedUser.streetAddress,
-        'street address': typedUser.streetAddress,
-        'current physical address': typedUser.streetAddress,
-        'city': typedUser.city,
-        'state': typedUser.state,
-        'zip': typedUser.zipCode,
-        'zip code': typedUser.zipCode,
-        'emergency contact first and last name': typedUser.emergencyContactName,
-        'emergency contact name': typedUser.emergencyContactName,
-        'emergency contact phone number': typedUser.emergencyContactPhone,
-        'emergency contact phone': typedUser.emergencyContactPhone,
-        'do you consent to receiving text message notifications?': 'Yes',
-        'do you consent to receive text messages': 'Yes',
-        'text message consent': 'Yes',
-      };
+      // Check if forms have already been submitted
+      if (existingSubmission) {
+        // Load existing form responses
+        setFormData(existingSubmission);
+        // Mark no fields as autopopulated since they're from saved submissions
+        setInitiallyAutopopulatedFields(new Set());
+      } else {
+        // Autopopulate fields for new form submission
+        const fieldMapping: Record<string, any> = {
+          'first name': typedUser.firstName,
+          'last name': typedUser.lastName,
+          'email': typedUser.email,
+          'email address': typedUser.email,
+          'phone': typedUser.phone,
+          'phone number': typedUser.phone,
+          'date of birth': typedUser.dateOfBirth ? new Date(typedUser.dateOfBirth).toISOString().split('T')[0] : '',
+          'address': typedUser.streetAddress,
+          'street address': typedUser.streetAddress,
+          'current physical address': typedUser.streetAddress,
+          'city': typedUser.city,
+          'state': typedUser.state,
+          'zip': typedUser.zipCode,
+          'zip code': typedUser.zipCode,
+          'emergency contact first and last name': typedUser.emergencyContactName,
+          'emergency contact name': typedUser.emergencyContactName,
+          'emergency contact phone number': typedUser.emergencyContactPhone,
+          'emergency contact phone': typedUser.emergencyContactPhone,
+          'do you consent to receiving text message notifications?': 'Yes',
+          'do you consent to receive text messages': 'Yes',
+          'text message consent': 'Yes',
+        };
 
-      const autoPopulatedData: Record<string, any> = {};
-      const autopopulatedFieldIds = new Set<string>();
+        const autoPopulatedData: Record<string, any> = {};
+        const autopopulatedFieldIds = new Set<string>();
 
-      courseForms.forEach((form: any) => {
-        form.fields?.forEach((field: any) => {
-          const normalizedLabel = field.label.toLowerCase().trim();
-          const mappedValue = fieldMapping[normalizedLabel];
+        courseForms.forEach((form: any) => {
+          form.fields?.forEach((field: any) => {
+            const normalizedLabel = field.label.toLowerCase().trim();
+            const mappedValue = fieldMapping[normalizedLabel];
 
-          if (mappedValue !== undefined && mappedValue !== null && mappedValue !== '') {
-            autoPopulatedData[field.id] = mappedValue;
-            autopopulatedFieldIds.add(field.id);
-          }
+            if (mappedValue !== undefined && mappedValue !== null && mappedValue !== '') {
+              autoPopulatedData[field.id] = mappedValue;
+              autopopulatedFieldIds.add(field.id);
+            }
+          });
         });
-      });
 
-      setFormData(autoPopulatedData);
-      setInitiallyAutopopulatedFields(autopopulatedFieldIds);
+        setFormData(autoPopulatedData);
+        setInitiallyAutopopulatedFields(autopopulatedFieldIds);
+      }
     }
-  }, [courseForms, typedUser]);
+  }, [courseForms, typedUser, existingSubmission]);
 
   // Form submission mutation - must be called before any early returns
   const submitFormMutation = useMutation({
@@ -510,9 +552,13 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Complete Course Information Forms</DialogTitle>
+          <DialogTitle>
+            {hasExistingSubmission ? 'Edit Course Information Forms' : 'Complete Course Information Forms'}
+          </DialogTitle>
           <DialogDescription>
-            Please complete the required information forms for {enrollment?.course.title}
+            {hasExistingSubmission 
+              ? `Review and edit your submitted information forms for ${enrollment?.course.title}` 
+              : `Please complete the required information forms for ${enrollment?.course.title}`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
@@ -575,7 +621,9 @@ function FormCompletionInterface({ enrollment, onClose }: { enrollment: Enrollme
                 Save Draft
               </Button>
               <Button onClick={handleSubmit} disabled={submitFormMutation.isPending}>
-                {submitFormMutation.isPending ? 'Submitting...' : 'Submit All Forms'}
+                {submitFormMutation.isPending 
+                  ? (hasExistingSubmission ? 'Updating...' : 'Submitting...') 
+                  : (hasExistingSubmission ? 'Update Forms' : 'Submit All Forms')}
               </Button>
             </div>
           )}
@@ -1241,7 +1289,7 @@ function EnhancedEnrollmentCard({
             </Button>
           )}
 
-          {!formStatus?.isComplete && (
+          {formStatus && formStatus.totalForms > 0 && (
             <Button
               variant="outline"
               size="sm"
@@ -1249,7 +1297,7 @@ function EnhancedEnrollmentCard({
               data-testid={`button-complete-forms-${enrollment.id}`}
             >
               <FileText className="mr-2 h-4 w-4" />
-              Complete Forms
+              {formStatus.isComplete ? 'Edit Forms' : 'Complete Forms'}
             </Button>
           )}
 
