@@ -588,31 +588,47 @@ export default function CourseFormsManagement() {
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
                       {formTargetType === "course" ? (
-                        <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-                          <SelectTrigger data-testid="select-course">
-                            <SelectValue placeholder="Choose a course to manage forms" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {courses.map((course) => (
-                              <SelectItem key={course.id} value={course.id}>
-                                {course.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <>
+                          {courses.length === 0 ? (
+                            <div className="text-sm text-muted-foreground p-3 border rounded-md">
+                              No courses available. Create a course first to manage its forms.
+                            </div>
+                          ) : (
+                            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+                              <SelectTrigger data-testid="select-course">
+                                <SelectValue placeholder="Choose a course to manage forms" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {courses.map((course) => (
+                                  <SelectItem key={course.id} value={course.id}>
+                                    {course.title}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </>
                       ) : (
-                        <Select value={selectedAppointmentType} onValueChange={setSelectedAppointmentType}>
-                          <SelectTrigger data-testid="select-appointment-type">
-                            <SelectValue placeholder="Choose an appointment type to manage forms" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {appointmentTypes.map((type) => (
-                              <SelectItem key={type.id} value={type.id}>
-                                {type.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <>
+                          {appointmentTypes.length === 0 ? (
+                            <div className="text-sm text-muted-foreground p-3 border rounded-md">
+                              No appointment types available. Create an appointment type first to manage its forms.
+                            </div>
+                          ) : (
+                            <Select value={selectedAppointmentType} onValueChange={setSelectedAppointmentType}>
+                              <SelectTrigger data-testid="select-appointment-type">
+                                <SelectValue placeholder="Choose an appointment type to manage forms" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {appointmentTypes.map((type) => (
+                                  <SelectItem key={type.id} value={type.id}>
+                                    {type.title}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </>
                       )}
                     </div>
 
