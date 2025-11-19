@@ -640,8 +640,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRole = req.user.role;
       
       let courses;
-      if (userRole === 'admin' || userRole === 'superadmin') {
-        // Admins and superadmins can see all courses from all instructors
+      if (userRole === 'instructor' || userRole === 'admin' || userRole === 'superadmin') {
+        // Instructors, admins and superadmins can see all courses
         courses = await db.query.courses.findMany({
           where: isNull(coursesTable.deletedAt),
           with: {
@@ -652,8 +652,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           orderBy: [asc(coursesTable.sortOrder), desc(coursesTable.createdAt)],
         });
       } else {
-        // Instructors only see their own courses
-        courses = await storage.getCoursesByInstructor(userId);
+        // Students see no courses through this endpoint
+        courses = [];
       }
       
       res.json(courses);
@@ -670,8 +670,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userRole = req.user.role;
       
       let courses;
-      if (userRole === 'admin' || userRole === 'superadmin') {
-        // Admins and superadmins can see all courses from all instructors
+      if (userRole === 'instructor' || userRole === 'admin' || userRole === 'superadmin') {
+        // Instructors, admins and superadmins can see all courses
         courses = await db.query.courses.findMany({
           where: isNull(coursesTable.deletedAt),
           with: {
@@ -690,8 +690,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           orderBy: [asc(coursesTable.sortOrder), desc(coursesTable.createdAt)],
         });
       } else {
-        // Instructors only see their own courses
-        courses = await storage.getCoursesByInstructor(userId);
+        // Students see no courses through this endpoint
+        courses = [];
       }
       
       res.json(courses);
@@ -1354,8 +1354,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/instructor/enrollments', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const enrollments = await storage.getEnrollmentsByInstructor(userId);
-      res.json(enrollments);
+      const userRole = req.user.role;
+      
+      let enrollmentList;
+      if (userRole === 'instructor' || userRole === 'admin' || userRole === 'superadmin') {
+        // Instructors, admins and superadmins can see all non-deleted enrollments
+        enrollmentList = await db.query.enrollments.findMany({
+          where: isNull(enrollments.deletedAt),
+          with: {
+            course: true,
+            schedule: true,
+            student: true,
+          },
+          orderBy: desc(enrollments.createdAt),
+        });
+      } else {
+        // Students see no enrollments through this endpoint
+        enrollmentList = [];
+      }
+      
+      res.json(enrollmentList);
     } catch (error) {
       console.error("Error fetching instructor enrollments:", error);
       res.status(500).json({ message: "Failed to fetch enrollments" });
@@ -2055,7 +2073,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied. Instructor or admin role required." });
       }
 
-      const courses = await storage.getCoursesByInstructor(userId);
+      // Instructors, admins and superadmins can see all courses
+      const courses = await db.query.courses.findMany({
+        where: isNull(coursesTable.deletedAt),
+        with: {
+          schedules: true,
+        },
+        orderBy: [asc(coursesTable.sortOrder), desc(coursesTable.createdAt)],
+      });
 
       // Format schedules for export selection
       const schedules = courses
@@ -2097,7 +2122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const format = req.query.format || 'excel';
       const scheduleId = req.query.scheduleId as string | undefined;
-      const data = await storage.getRosterExportData(userId, scheduleId);
+      const data = await storage.getRosterExportData(userId, scheduleId, undefined, user.role);
 
       if (format === 'csv') {
         // Generate CSV
@@ -2340,7 +2365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`Fetching roster for ${scheduleId ? 'schedule: ' + scheduleId : 'course: ' + courseId}`);
-      const data = await storage.getRosterExportData(userId, scheduleId, courseId);
+      const data = await storage.getRosterExportData(userId, scheduleId, courseId, user.role);
 
       // Filter out any remaining null/incomplete enrollments from current list
       data.current = data.current.filter(student =>
@@ -2445,8 +2470,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      // For admin/superadmin, calculate stats across all instructors
-      if (userRole === 'admin' || userRole === 'superadmin') {
+      // For instructor/admin/superadmin, calculate stats across all instructors
+      if (userRole === 'instructor' || userRole === 'admin' || userRole === 'superadmin') {
         const now = new Date();
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -2495,15 +2520,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Count refund requests from enrollments we already have
         const refundRequestCount = allEnrollments.filter(e => e.refundStatus === 'requested').length;
 
-        // Count total appointments for the current admin/superadmin user
+        // Count total appointments across all instructors for instructor/admin/superadmin
         const appointments = await db.query.instructorAppointments.findMany({
-          where: and(
-            eq(instructorAppointments.instructorId, userId),
-            or(
-              eq(instructorAppointments.status, 'confirmed'),
-              eq(instructorAppointments.status, 'pending'),
-              eq(instructorAppointments.status, 'completed')
-            )
+          where: or(
+            eq(instructorAppointments.status, 'confirmed'),
+            eq(instructorAppointments.status, 'pending'),
+            eq(instructorAppointments.status, 'completed')
           ),
         });
         const totalAppointments = appointments.length;
@@ -2520,9 +2542,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         res.json(stats);
       } else {
-        // Regular instructors only see their own stats
-        const stats = await storage.getInstructorDashboardStats(userId);
-        res.json(stats);
+        // Students or other roles have no access
+        return res.status(403).json({ message: "Access denied. Instructor role or higher required." });
       }
     } catch (error) {
       console.error("Error fetching instructor dashboard stats:", error);

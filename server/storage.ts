@@ -266,7 +266,7 @@ export interface IStorage {
     former: any[];
   }>;
   getScheduleEnrollmentCount(scheduleId: string): Promise<number>;
-  getRosterExportData(instructorId: string, scheduleId?: string, courseId?: string): Promise<{
+  getRosterExportData(instructorId: string, scheduleId?: string, courseId?: string, userRole?: string): Promise<{
     current: any[];
     former: any[];
     held: any[];
@@ -1928,7 +1928,7 @@ export class DatabaseStorage implements IStorage {
     return Number(count);
   }
 
-  async getRosterExportData(instructorId: string, scheduleId?: string, courseId?: string): Promise<{
+  async getRosterExportData(instructorId: string, scheduleId?: string, courseId?: string, userRole?: string): Promise<{
     current: any[];
     former: any[];
     held: any[];
@@ -1942,9 +1942,22 @@ export class DatabaseStorage implements IStorage {
   }> {
     console.log(`getRosterExportData - Schedule filter: ${scheduleId || 'none'}, Course filter: ${courseId || 'none'}`);
 
-    // Get all courses for this instructor
-    const instructorCourses = await this.getCoursesByInstructor(instructorId);
-    const courseIds = instructorCourses.map(c => c.id);
+    // Instructors, admins, and superadmins can see all courses
+    const isInstructorOrHigher = ['instructor', 'admin', 'superadmin'].includes(userRole || '');
+    
+    let courseIds: string[];
+    if (isInstructorOrHigher) {
+      // Get all courses from all instructors
+      const allCourses = await db.query.courses.findMany({
+        where: isNull(coursesTable.deletedAt),
+        columns: { id: true }
+      });
+      courseIds = allCourses.map(c => c.id);
+    } else {
+      // Get only courses for this instructor
+      const instructorCourses = await this.getCoursesByInstructor(instructorId);
+      courseIds = instructorCourses.map(c => c.id);
+    }
 
     if (courseIds.length === 0) {
       return {
@@ -1954,7 +1967,9 @@ export class DatabaseStorage implements IStorage {
         summary: {
           totalCurrentStudents: 0,
           totalFormerStudents: 0,
+          totalHeldStudents: 0,
           totalCourses: 0,
+          exportDate: new Date().toISOString()
         }
       };
     }
