@@ -694,14 +694,16 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
     }
 
     // Create PaymentIntent
+    const subtotalInCents = Math.round(finalAmount * 100); // Subtotal before tax
     const paymentIntentParams: any = {
-      amount: Math.round(finalAmount * 100), // Convert to cents (with discount applied)
+      amount: subtotalInCents, // Initial amount is subtotal (tax will be added later)
       currency: "usd",
       metadata: {
         instructorId,
         appointmentTypeId,
         startTime: new Date(startTime).toISOString(),
         endTime: new Date(endTime).toISOString(),
+        subtotalCents: String(subtotalInCents), // CRITICAL: Store original subtotal for tax calculation
         ...(durationHours && { durationHours: String(durationHours) }),
         ...(promoCodeInfo && { 
           promoCode: promoCodeInfo.code,
@@ -759,6 +761,17 @@ appointmentRouter.post('/update-payment-intent-address', async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+    // First, retrieve the payment intent to get the original subtotal from metadata
+    let paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    
+    // CRITICAL: Use original subtotal from metadata, not current amount
+    // This prevents tax compounding if user changes address multiple times
+    const subtotalInCents = parseInt(paymentIntent.metadata.subtotalCents || '0', 10);
+    
+    if (subtotalInCents === 0) {
+      return res.status(400).json({ message: "Invalid payment intent: missing subtotal" });
+    }
+
     // Update PaymentIntent with billing address
     const updateParams: any = {
       shipping: {
@@ -774,21 +787,27 @@ appointmentRouter.post('/update-payment-intent-address', async (req, res) => {
       },
     };
 
-    const paymentIntent = await stripe.paymentIntents.update(paymentIntentId, updateParams);
+    paymentIntent = await stripe.paymentIntents.update(paymentIntentId, updateParams);
 
     // Calculate tax from Stripe's automatic tax (if enabled in Stripe Dashboard)
-    const subtotalInCents = paymentIntent.amount;
-    const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
+    const stripeTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
     
     // Calculate a basic sales tax (7.14% for NM) if Stripe Tax is not configured
     // Instructors should enable Stripe Tax in their dashboard for automatic calculation
-    let calculatedTaxInCents = totalTaxInCents;
-    if (totalTaxInCents === 0 && billingAddress.state === 'NM') {
-      // Apply New Mexico state tax rate (7.14%)
+    let calculatedTaxInCents = stripeTaxInCents;
+    if (stripeTaxInCents === 0 && billingAddress.state === 'NM') {
+      // Apply New Mexico state tax rate (7.14%) to ORIGINAL SUBTOTAL
       calculatedTaxInCents = Math.round(subtotalInCents * 0.0714);
     }
     
     const totalInCents = subtotalInCents + calculatedTaxInCents;
+
+    // CRITICAL: Update the payment intent amount to include tax
+    // This ensures Stripe actually charges the tax amount, not just displays it
+    // Using original subtotal + tax prevents compounding on multiple address updates
+    await stripe.paymentIntents.update(paymentIntentId, {
+      amount: totalInCents,
+    });
 
     res.json({
       subtotal: subtotalInCents / 100,
