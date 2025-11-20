@@ -1898,16 +1898,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // Get course forms for this enrollment's course
+      // Get course forms for this enrollment's course (include both required and optional)
       const courseForms = await storage.getCourseInformationFormsByCourse(enrollment.courseId);
-      const activeRequiredForms = courseForms.filter(f => f.isActive && f.isRequired);
-      const totalForms = activeRequiredForms.length;
+      const activeForms = courseForms.filter(f => f.isActive);
+      const activeRequiredForms = activeForms.filter(f => f.isRequired);
+      const totalForms = activeForms.length;
 
       // Check if forms have been submitted
       const hasSubmittedForms = !!enrollment.formSubmissionData && enrollment.formSubmissionData !== '{}';
       
-      // Determine completion status
-      const isComplete = totalForms === 0 || hasSubmittedForms;
+      // Determine completion status - only required forms must be complete
+      const isComplete = activeRequiredForms.length === 0 || hasSubmittedForms;
       const completedForms = hasSubmittedForms ? totalForms : 0;
       const missingForms = isComplete ? [] : activeRequiredForms.map(f => ({
         id: f.id,
@@ -1951,16 +1952,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // Get appointment type forms for this appointment's type
+      // Get appointment type forms for this appointment's type (include both required and optional)
       const appointmentForms = await storage.getCourseInformationFormsByAppointmentType(appointment.appointmentTypeId);
-      const activeRequiredForms = appointmentForms.filter(f => f.isActive && f.isRequired);
-      const totalForms = activeRequiredForms.length;
+      const activeForms = appointmentForms.filter(f => f.isActive);
+      const activeRequiredForms = activeForms.filter(f => f.isRequired);
+      const totalForms = activeForms.length;
 
       // Check if forms have been submitted
       const hasSubmittedForms = !!appointment.formSubmissionData && appointment.formSubmissionData !== '{}';
       
-      // Determine completion status
-      const isComplete = totalForms === 0 || hasSubmittedForms;
+      // Determine completion status - only required forms must be complete
+      const isComplete = activeRequiredForms.length === 0 || hasSubmittedForms;
       const completedForms = hasSubmittedForms ? totalForms : 0;
       const missingForms = isComplete ? [] : activeRequiredForms.map(f => ({
         id: f.id,
