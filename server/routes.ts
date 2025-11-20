@@ -1930,6 +1930,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Appointment form completion status tracking
+  app.get("/api/appointments/:appointmentId/form-completion", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const appointmentId = req.params.appointmentId;
+
+      // Verify appointment ownership
+      const appointment = await storage.getAppointment(appointmentId);
+      if (!appointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+
+      // Check ownership: student owns appointment or instructor/admin/superadmin has access to all
+      const user = await storage.getUser(userId);
+      const isInstructorOrHigher = ['instructor', 'admin', 'superadmin'].includes(user?.role || '');
+      const hasAccess = appointment.studentId === userId || isInstructorOrHigher;
+
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get appointment type forms for this appointment's type
+      const appointmentForms = await storage.getCourseInformationFormsByAppointmentType(appointment.appointmentTypeId);
+      const activeRequiredForms = appointmentForms.filter(f => f.isActive && f.isRequired);
+      const totalForms = activeRequiredForms.length;
+
+      // Check if forms have been submitted
+      const hasSubmittedForms = !!appointment.formSubmissionData && appointment.formSubmissionData !== '{}';
+      
+      // Determine completion status
+      const isComplete = totalForms === 0 || hasSubmittedForms;
+      const completedForms = hasSubmittedForms ? totalForms : 0;
+      const missingForms = isComplete ? [] : activeRequiredForms.map(f => ({
+        id: f.id,
+        title: f.title,
+        isRequired: f.isRequired
+      }));
+
+      // Return the form completion status
+      res.json({
+        isComplete,
+        totalForms,
+        completedForms,
+        missingForms,
+        formSubmissionData: appointment.formSubmissionData,
+        formSubmittedAt: appointment.formSubmittedAt
+      });
+    } catch (error) {
+      console.error("Error fetching appointment form completion status:", error);
+      res.status(500).json({ message: "Failed to fetch appointment form completion status" });
+    }
+  });
+
+  // Submit appointment forms
+  app.post("/api/appointment-form-submissions", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const { appointmentId, formResponses } = req.body;
+
+      if (!appointmentId || !formResponses) {
+        return res.status(400).json({ message: "Appointment ID and form responses are required" });
+      }
+
+      // Verify appointment ownership
+      const appointment = await storage.getAppointment(appointmentId);
+      if (!appointment) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+
+      if (appointment.studentId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Update appointment with form data
+      const updatedAppointment = await storage.updateAppointment(appointmentId, {
+        formSubmissionData: JSON.stringify(formResponses),
+        formSubmittedAt: new Date().toISOString()
+      });
+
+      res.json({ success: true, appointment: updatedAppointment });
+    } catch (error) {
+      console.error("Error submitting appointment forms:", error);
+      res.status(500).json({ message: "Failed to submit appointment forms" });
+    }
+  });
+
   // Enrollment feedback endpoints
 
   // Get feedback for an enrollment

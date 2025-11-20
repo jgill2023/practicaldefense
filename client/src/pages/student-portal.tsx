@@ -1000,6 +1000,337 @@ function LiveFireRegistrationModal({ course, schedule, onClose }: {
   );
 }
 
+// Appointment Form Completion Modal
+function AppointmentFormCompletionModal({ appointment, onClose }: { appointment: any; onClose: () => void }) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const typedUser = user as User;
+  const [formData, setFormData] = useState<Record<string, any>>({});
+
+  // Fetch appointment type forms
+  const { data: appointmentForms, isLoading } = useQuery({
+    queryKey: ['/api/appointment-type-forms', appointment.appointmentType.id],
+    enabled: !!appointment.appointmentType?.id,
+    retry: false,
+  });
+
+  // Parse existing submission
+  const existingSubmission = useMemo(() => {
+    if (!appointment.formSubmissionData) return null;
+    try {
+      if (typeof appointment.formSubmissionData === 'string') {
+        const parsed = JSON.parse(appointment.formSubmissionData);
+        return parsed && typeof parsed === 'object' ? parsed : null;
+      } else if (typeof appointment.formSubmissionData === 'object') {
+        return appointment.formSubmissionData as Record<string, any>;
+      }
+    } catch (error) {
+      console.error('Failed to parse form submission data:', error);
+      return null;
+    }
+    return null;
+  }, [appointment.formSubmissionData]);
+
+  const hasExistingSubmission = !!existingSubmission;
+
+  // Load existing forms or autopopulate
+  useEffect(() => {
+    if (appointmentForms && appointmentForms.length > 0 && typedUser) {
+      if (existingSubmission) {
+        setFormData(existingSubmission);
+      } else {
+        // Autopopulate fields
+        const fieldMapping: Record<string, any> = {
+          'first name': typedUser.firstName,
+          'last name': typedUser.lastName,
+          'email': typedUser.email,
+          'email address': typedUser.email,
+          'phone': typedUser.phone,
+          'phone number': typedUser.phone,
+        };
+
+        const autoPopulatedData: Record<string, any> = {};
+        appointmentForms.forEach((form: any) => {
+          form.fields?.forEach((field: any) => {
+            const normalizedLabel = field.label.toLowerCase().trim();
+            const mappedValue = fieldMapping[normalizedLabel];
+            if (mappedValue !== undefined && mappedValue !== null && mappedValue !== '') {
+              autoPopulatedData[field.id] = mappedValue;
+            }
+          });
+        });
+        setFormData(autoPopulatedData);
+      }
+    }
+  }, [appointmentForms, typedUser, existingSubmission]);
+
+  // Submit mutation
+  const submitFormMutation = useMutation({
+    mutationFn: async (formResponses: Record<string, any>) => {
+      return await apiRequest("POST", "/api/appointment-form-submissions", {
+        appointmentId: appointment.id,
+        formResponses,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Forms Submitted",
+        description: "Your appointment forms have been submitted successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments/my-appointments'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/appointments/${appointment.id}/form-completion`] });
+      onClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Submission Failed",
+        description: error.message || "Failed to submit forms. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = () => {
+    submitFormMutation.mutate(formData);
+  };
+
+  // Helper to check if field should be visible
+  const isFieldVisible = (field: any) => {
+    if (!field.showWhenFieldId || !field.showWhenValue) return true;
+    const conditionalFieldValue = formData[field.showWhenFieldId];
+    return conditionalFieldValue === field.showWhenValue;
+  };
+
+  // Render field based on type
+  const renderField = (field: any) => {
+    if (!isFieldVisible(field)) return null;
+
+    const value = formData[field.id] || '';
+
+    switch (field.fieldType) {
+      case 'textarea':
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Textarea
+              id={field.id}
+              value={value}
+              onChange={(e) => setFormData(prev => ({ ...prev, [field.id]: e.target.value }))}
+              placeholder={field.placeholder || ''}
+              required={field.isRequired}
+              rows={4}
+            />
+          </div>
+        );
+
+      case 'checkbox':
+        if (field.options && field.options.length > 0) {
+          return (
+            <div key={field.id} className="space-y-3">
+              <Label>
+                {field.label}
+                {field.isRequired && <span className="text-destructive ml-1">*</span>}
+              </Label>
+              <div className="space-y-2">
+                {field.options.map((option: string) => (
+                  <div key={option} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${field.id}-${option}`}
+                      checked={value === option}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setFormData(prev => ({ ...prev, [field.id]: option }));
+                        } else if (value === option) {
+                          setFormData(prev => ({ ...prev, [field.id]: '' }));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`${field.id}-${option}`} className="font-normal cursor-pointer">
+                      {option}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        }
+        break;
+
+      default:
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>
+              {field.label}
+              {field.isRequired && <span className="text-destructive ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              type={field.fieldType === 'email' ? 'email' : field.fieldType === 'phone' ? 'tel' : 'text'}
+              value={value}
+              onChange={(e) => setFormData(prev => ({ ...prev, [field.id]: e.target.value }))}
+              placeholder={field.placeholder || ''}
+              required={field.isRequired}
+            />
+          </div>
+        );
+    }
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {hasExistingSubmission ? 'Edit' : 'Complete'} Appointment Forms
+          </DialogTitle>
+          <DialogDescription>
+            {appointment.appointmentType.title} - {new Date(appointment.startTime).toLocaleDateString()}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6">
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+              <p className="text-sm text-muted-foreground mt-4">Loading forms...</p>
+            </div>
+          ) : appointmentForms && appointmentForms.length > 0 ? (
+            <div className="space-y-6">
+              {appointmentForms.map((form: any) => (
+                <Card key={form.id}>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{form.title}</CardTitle>
+                    {form.description && (
+                      <p className="text-sm text-muted-foreground">{form.description}</p>
+                    )}
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {form.fields && form.fields.length > 0 ? (
+                      form.fields.map((field: any) => renderField(field))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No fields configured for this form.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No forms are currently required for this appointment.</p>
+            </div>
+          )}
+
+          {appointmentForms && appointmentForms.length > 0 && (
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit} disabled={submitFormMutation.isPending}>
+                {submitFormMutation.isPending 
+                  ? (hasExistingSubmission ? 'Updating...' : 'Submitting...') 
+                  : (hasExistingSubmission ? 'Update Forms' : 'Submit Forms')}
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Appointment Card with form status
+function AppointmentCard({ appointment, onCompleteFormsClick }: { appointment: any; onCompleteFormsClick: (appointment: any) => void }) {
+  const { data: formStatus } = useQuery<FormStatusResponse>({
+    queryKey: [`/api/appointments/${appointment.id}/form-completion`],
+    enabled: !!appointment.id,
+    retry: false,
+  });
+
+  return (
+    <div 
+      className="p-4 bg-muted rounded-lg"
+      data-testid={`appointment-${appointment.id}`}
+    >
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <h4 className="font-semibold text-card-foreground" data-testid={`text-appointment-type-${appointment.id}`}>
+            {appointment.appointmentType.title}
+          </h4>
+          {appointment.appointmentType.description && (
+            <p className="text-sm text-muted-foreground mt-1">{appointment.appointmentType.description}</p>
+          )}
+        </div>
+        <Badge className={
+          appointment.status === 'confirmed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+          appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+          appointment.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+          'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+        }>
+          {appointment.status}
+        </Badge>
+      </div>
+      <div className="text-sm text-muted-foreground space-y-1 mb-3">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          {new Date(appointment.startTime).toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+          })}
+        </div>
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4" />
+          {new Date(appointment.startTime).toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+          })} - {new Date(appointment.endTime).toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit', 
+            hour12: true 
+          })}
+        </div>
+      </div>
+
+      {/* Form Status */}
+      {formStatus && formStatus.totalForms > 0 && (
+        <div className="flex items-center justify-between pt-3 border-t">
+          <div className="flex items-center text-xs text-muted-foreground">
+            <FileText className="mr-1 h-3 w-3" />
+            Forms
+          </div>
+          <div className="flex items-center gap-2">
+            {formStatus.isComplete ? (
+              <div className="flex items-center space-x-1">
+                <CheckCircle2 className="h-3 w-3 text-success" />
+                <span className="text-xs text-success font-medium">Complete</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-1">
+                <AlertCircle className="h-3 w-3 text-yellow-500" />
+                <span className="text-xs text-yellow-600 font-medium">{formStatus.missingForms.length} pending</span>
+              </div>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onCompleteFormsClick(appointment)}
+              data-testid={`button-complete-appointment-forms-${appointment.id}`}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              {formStatus.isComplete ? 'Edit Forms' : 'Complete Forms'}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Live-Fire Range Sessions Section Component
 function LiveFireRangeSessionsSection() {
   const { toast } = useToast();
@@ -2655,6 +2986,9 @@ export default function StudentPortal() {
   // State for the pending forms modal
   const [isPendingFormsModalOpen, setIsPendingFormsModalOpen] = useState(false);
 
+  // State for appointment form completion
+  const [selectedAppointmentForForms, setSelectedAppointmentForForms] = useState<any | null>(null);
+
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/student/enrollments"],
     enabled: isAuthenticated,
@@ -3145,53 +3479,11 @@ export default function StudentPortal() {
               ) : sortedAppointments.length > 0 ? (
                 <div className="space-y-4">
                   {sortedAppointments.map(appointment => (
-                    <div 
-                      key={appointment.id} 
-                      className="p-4 bg-muted rounded-lg"
-                      data-testid={`appointment-${appointment.id}`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 className="font-semibold text-card-foreground" data-testid={`text-appointment-type-${appointment.id}`}>
-                            {appointment.appointmentType.title}
-                          </h4>
-                          {appointment.appointmentType.description && (
-                            <p className="text-sm text-muted-foreground mt-1">{appointment.appointmentType.description}</p>
-                          )}
-                        </div>
-                        <Badge className={
-                          appointment.status === 'confirmed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                          appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                          appointment.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                          'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                        }>
-                          {appointment.status}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          {new Date(appointment.startTime).toLocaleDateString('en-US', { 
-                            weekday: 'short', 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                          })}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          {new Date(appointment.startTime).toLocaleTimeString('en-US', { 
-                            hour: 'numeric', 
-                            minute: '2-digit', 
-                            hour12: true 
-                          })} - {new Date(appointment.endTime).toLocaleTimeString('en-US', { 
-                            hour: 'numeric', 
-                            minute: '2-digit', 
-                            hour12: true 
-                          })}
-                        </div>
-                      </div>
-                    </div>
+                    <AppointmentCard
+                      key={appointment.id}
+                      appointment={appointment}
+                      onCompleteFormsClick={setSelectedAppointmentForForms}
+                    />
                   ))}
                 </div>
               ) : (
@@ -3312,6 +3604,14 @@ export default function StudentPortal() {
       {/* Waiver Completion Dialog */}
       {selectedEnrollmentForWaiver && (
         <WaiverDialog enrollment={selectedEnrollmentForWaiver} onClose={() => setSelectedEnrollmentForWaiver(null)} />
+      )}
+
+      {/* Appointment Form Completion Dialog */}
+      {selectedAppointmentForForms && (
+        <AppointmentFormCompletionModal
+          appointment={selectedAppointmentForForms}
+          onClose={() => setSelectedAppointmentForForms(null)}
+        />
       )}
 
       {/* Transfer Request Dialog */}
