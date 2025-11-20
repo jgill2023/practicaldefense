@@ -843,6 +843,29 @@ export default function InstructorDashboard() {
                       <Copy className="h-4 w-4" />
                     </Button>
 
+                    {/* Unpublish Schedule Button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-gray-400 hover:text-orange-600"
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to unpublish this training schedule? Students will no longer be able to see or register for it.')) {
+                              unpublishScheduleMutation.mutate(schedule.id);
+                            }
+                          }}
+                          disabled={unpublishScheduleMutation.isPending}
+                          data-testid={`button-unpublish-schedule-${schedule.id}`}
+                        >
+                          <EyeOff className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Unpublish Schedule</p>
+                      </TooltipContent>
+                    </Tooltip>
+
                     {/* Delete Button */}
                     <Button
                       variant="ghost"
