@@ -1101,7 +1101,8 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   if (!appointmentType) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+    <>
+    <Dialog open={open && !showBookingForm} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" data-testid="booking-modal">
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -1403,6 +1404,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           </div>
         </div>
       </DialogContent>
+    </Dialog>
 
       {/* Booking Form Dialog with Stripe Payment */}
       <Dialog open={showBookingForm} onOpenChange={setShowBookingForm}>
@@ -1536,7 +1538,31 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             </form>
           ) : clientSecret && stripePromise && stripeElementsOptions ? (
             <Elements stripe={stripePromise} options={stripeElementsOptions} key={clientSecret}>
-              <PaymentFormContent />
+              <PaymentFormContent
+                isAuthenticated={isAuthenticated}
+                bookingForm={bookingForm}
+                setBookingForm={setBookingForm}
+                billingAddress={billingAddress}
+                setBillingAddress={setBillingAddress}
+                toast={toast}
+                paymentIntentId={paymentIntentId}
+                selectedSlot={selectedSlot}
+                appointmentType={appointmentType!}
+                selectedDurationHours={selectedDurationHours}
+                promoCodeApplied={promoCodeApplied}
+                removePromoCode={removePromoCode}
+                promoError={promoError}
+                isValidatingPromo={isValidatingPromo}
+                validateAndApplyPromoCode={validateAndApplyPromoCode}
+                discountInfo={discountInfo}
+                taxBreakdown={taxBreakdown}
+                getTotalPrice={getTotalPrice}
+                queryClient={queryClient}
+                onClose={onClose}
+                setShowBookingForm={setShowBookingForm}
+                instructorId={instructorId}
+                getCalculatedEndTime={getCalculatedEndTime}
+              />
             </Elements>
           ) : (
             <div className="flex items-center justify-center py-12">
@@ -1545,6 +1571,6 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           )}
         </DialogContent>
       </Dialog>
-    </Dialog>
+    </>
   );
 }
