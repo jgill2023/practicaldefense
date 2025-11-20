@@ -1907,10 +1907,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if forms have been submitted
       const hasSubmittedForms = !!enrollment.formSubmissionData && enrollment.formSubmissionData !== '{}';
       
-      // Determine completion status - only required forms must be complete
-      const isComplete = activeRequiredForms.length === 0 || hasSubmittedForms;
+      // Determine completion status - forms are complete if no forms exist or all have been submitted
+      const isComplete = totalForms === 0 || hasSubmittedForms;
       const completedForms = hasSubmittedForms ? totalForms : 0;
-      const missingForms = isComplete ? [] : activeRequiredForms.map(f => ({
+      const missingForms = isComplete ? [] : activeForms.map(f => ({
         id: f.id,
         title: f.title,
         isRequired: f.isRequired
@@ -1961,10 +1961,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if forms have been submitted
       const hasSubmittedForms = !!appointment.formSubmissionData && appointment.formSubmissionData !== '{}';
       
-      // Determine completion status - only required forms must be complete
-      const isComplete = activeRequiredForms.length === 0 || hasSubmittedForms;
+      // Determine completion status - forms are complete if no forms exist or all have been submitted
+      const isComplete = totalForms === 0 || hasSubmittedForms;
       const completedForms = hasSubmittedForms ? totalForms : 0;
-      const missingForms = isComplete ? [] : activeRequiredForms.map(f => ({
+      const missingForms = isComplete ? [] : activeForms.map(f => ({
         id: f.id,
         title: f.title,
         isRequired: f.isRequired
