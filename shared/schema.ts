@@ -1780,7 +1780,7 @@ export const paymentIntentRequestSchema = z.object({
 export const confirmEnrollmentSchema = z.object({
   enrollmentId: z.string().uuid("Valid enrollment ID is required"),
   paymentIntentId: z.string().min(1, "Payment intent ID is required").max(255),
-  studentInfo: studentInfoSchema,
+  studentInfo: studentInfoSchema.optional(),
 });
 
 // Types for course registration API

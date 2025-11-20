@@ -1261,7 +1261,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/course-registration/confirm', async (req: any, res) => {
     try {
       const validatedData = confirmEnrollmentSchema.parse(req.body);
-      const { enrollmentId, paymentIntentId, studentInfo } = validatedData;
+      const { enrollmentId, paymentIntentId } = validatedData;
+      let { studentInfo } = validatedData;
 
       // Verify enrollment ownership
       const enrollment = await storage.getEnrollment(enrollmentId);
@@ -1275,7 +1276,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (enrollment.studentId !== userId) {
           return res.status(403).json({ message: "Access denied - enrollment ownership required" });
         }
+        
+        // For authenticated users, populate studentInfo from user data if not provided
+        if (!studentInfo) {
+          studentInfo = {
+            firstName: req.user.firstName || '',
+            lastName: req.user.lastName || '',
+            email: req.user.email || '',
+          };
+        }
       } else {
+        // For guest users, studentInfo is required
+        if (!studentInfo) {
+          return res.status(400).json({ message: "Student information is required for guest users" });
+        }
         // For guest users, verify email matches the stored studentInfo or it's a draft enrollment
         if (enrollment.studentInfo && enrollment.studentInfo.email !== studentInfo.email) {
           return res.status(403).json({ message: "Access denied - email mismatch" });
