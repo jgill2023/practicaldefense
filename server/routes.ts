@@ -1201,6 +1201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         scheduleId,
         paymentOption,
         studentId: userId, // Pass userId for authenticated users, null for guests
+        studentInfo: userId ? null : studentInfo, // Store studentInfo only for guest enrollments
       });
 
       // Include account creation status in response
@@ -1264,14 +1265,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { enrollmentId, paymentIntentId } = validatedData;
       let { studentInfo } = validatedData;
 
+      console.log('🔍 Enrollment confirmation request:', {
+        hasUser: !!req.user,
+        userId: req.user?.id,
+        enrollmentId,
+        hasStudentInfo: !!studentInfo,
+        studentInfo
+      });
+
       // Verify enrollment ownership
       const enrollment = await storage.getEnrollment(enrollmentId);
       if (!enrollment) {
         return res.status(404).json({ message: "Enrollment not found" });
       }
 
-      // Check ownership: either authenticated user owns it, guest user matches email, or it's a draft enrollment
+      console.log('📝 Enrollment details:', {
+        enrollmentId: enrollment.id,
+        enrollmentStudentId: enrollment.studentId,
+        enrollmentHasStudentInfo: !!enrollment.studentInfo,
+        enrollmentStudentInfo: enrollment.studentInfo
+      });
+
+      // Check ownership and populate studentInfo
       if (req.user) {
+        // Authenticated user
         const userId = req.user.id;
         if (enrollment.studentId !== userId) {
           return res.status(403).json({ message: "Access denied - enrollment ownership required" });
@@ -1286,11 +1303,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           };
         }
       } else {
-        // For guest users, studentInfo is required
+        // Guest user - try to use studentInfo from request, then from enrollment
+        if (!studentInfo && enrollment.studentInfo) {
+          // Use studentInfo stored in enrollment during initiation
+          studentInfo = enrollment.studentInfo as any;
+        }
+        
         if (!studentInfo) {
           return res.status(400).json({ message: "Student information is required for guest users" });
         }
-        // For guest users, verify email matches the stored studentInfo or it's a draft enrollment
+        
+        // For guest users, verify email matches the stored studentInfo if it exists
         if (enrollment.studentInfo && enrollment.studentInfo.email !== studentInfo.email) {
           return res.status(403).json({ message: "Access denied - email mismatch" });
         }

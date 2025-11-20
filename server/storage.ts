@@ -286,6 +286,7 @@ export interface IStorage {
     scheduleId: string;
     paymentOption: 'full' | 'deposit';
     studentId?: string | null; // Optional studentId for authenticated users
+    studentInfo?: { firstName: string; lastName: string; email: string } | null; // Store for guest enrollments
   }): Promise<Enrollment>;
   upsertPaymentIntent(enrollmentId: string, promoCode?: string): Promise<{
     clientSecret: string;
@@ -2551,6 +2552,7 @@ export class DatabaseStorage implements IStorage {
     scheduleId: string;
     paymentOption: 'full' | 'deposit';
     studentId?: string | null; // Optional studentId for authenticated users
+    studentInfo?: { firstName: string; lastName: string; email: string } | null; // Store for guest enrollments
   }): Promise<Enrollment> {
     const [draftEnrollment] = await db
       .insert(enrollments)
@@ -2561,6 +2563,7 @@ export class DatabaseStorage implements IStorage {
         status: 'initiated',
         paymentStatus: 'pending',
         studentId: data.studentId || null, // Use provided studentId for authenticated users
+        studentInfo: data.studentInfo || null, // Store studentInfo for guest enrollments
       })
       .returning();
 
