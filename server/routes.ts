@@ -1898,8 +1898,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // Return the enrollment data with formSubmissionData
+      // Get course forms for this enrollment's course
+      const courseForms = await storage.getCourseInformationFormsByCourse(enrollment.courseId);
+      const activeRequiredForms = courseForms.filter(f => f.isActive && f.isRequired);
+      const totalForms = activeRequiredForms.length;
+
+      // Check if forms have been submitted
+      const hasSubmittedForms = !!enrollment.formSubmissionData && enrollment.formSubmissionData !== '{}';
+      
+      // Determine completion status
+      const isComplete = totalForms === 0 || hasSubmittedForms;
+      const completedForms = hasSubmittedForms ? totalForms : 0;
+      const missingForms = isComplete ? [] : activeRequiredForms.map(f => ({
+        id: f.id,
+        title: f.title,
+        isRequired: f.isRequired
+      }));
+
+      // Return the form completion status
       res.json({
+        isComplete,
+        totalForms,
+        completedForms,
+        missingForms,
         formSubmissionData: enrollment.formSubmissionData,
         formSubmittedAt: enrollment.formSubmittedAt
       });
