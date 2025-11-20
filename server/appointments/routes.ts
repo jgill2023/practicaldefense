@@ -697,9 +697,6 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
     const paymentIntentParams: any = {
       amount: Math.round(finalAmount * 100), // Convert to cents (with discount applied)
       currency: "usd",
-      automatic_tax: {
-        enabled: true,
-      },
       metadata: {
         instructorId,
         appointmentTypeId,
@@ -762,7 +759,7 @@ appointmentRouter.post('/update-payment-intent-address', async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Update PaymentIntent with billing address and trigger tax calculation
+    // Update PaymentIntent with billing address
     const updateParams: any = {
       shipping: {
         name: billingAddress.name || 'Customer',
@@ -775,21 +772,27 @@ appointmentRouter.post('/update-payment-intent-address', async (req, res) => {
           country: billingAddress.country || 'US',
         },
       },
-      automatic_tax: {
-        enabled: true,
-      },
     };
 
     const paymentIntent = await stripe.paymentIntents.update(paymentIntentId, updateParams);
 
-    // Calculate tax from Stripe's automatic tax calculation
+    // Calculate tax from Stripe's automatic tax (if enabled in Stripe Dashboard)
     const subtotalInCents = paymentIntent.amount;
     const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
-    const totalInCents = subtotalInCents + totalTaxInCents;
+    
+    // Calculate a basic sales tax (7.14% for NM) if Stripe Tax is not configured
+    // Instructors should enable Stripe Tax in their dashboard for automatic calculation
+    let calculatedTaxInCents = totalTaxInCents;
+    if (totalTaxInCents === 0 && billingAddress.state === 'NM') {
+      // Apply New Mexico state tax rate (7.14%)
+      calculatedTaxInCents = Math.round(subtotalInCents * 0.0714);
+    }
+    
+    const totalInCents = subtotalInCents + calculatedTaxInCents;
 
     res.json({
       subtotal: subtotalInCents / 100,
-      tax: totalTaxInCents / 100,
+      tax: calculatedTaxInCents / 100,
       total: totalInCents / 100,
     });
   } catch (error) {
