@@ -4054,14 +4054,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const userId = req.user?.id;
+      const userRole = req.user?.role;
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      // Verify instructor owns the form's course
+      // Verify form exists and check ownership based on whether it's a course or appointment type form
       const form = await storage.getCourseInformationForm(formId);
-      if (!form || form.course.instructorId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
+      if (!form) {
+        return res.status(404).json({ message: "Form not found" });
+      }
+
+      // Check ownership based on whether it's a course or appointment type form
+      if (form.courseId && form.course) {
+        if (userRole === 'instructor' && form.course.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else if (form.appointmentTypeId && form.appointmentType) {
+        if (userRole === 'instructor' && form.appointmentType.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
       }
 
       // Get current max sort order for this form
@@ -4124,6 +4136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { fieldType, label, placeholder, isRequired, options, showWhenFieldId, showWhenValue } = updateData;
 
       const userId = req.user?.id;
+      const userRole = req.user?.role;
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
@@ -4146,9 +4159,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Field not found" });
       }
 
-      // Verify instructor owns the form's course
-      if (targetForm.course.instructorId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
+      // Check ownership based on whether it's a course or appointment type form
+      if (targetForm.courseId && targetForm.course) {
+        if (userRole === 'instructor' && targetForm.course.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else if (targetForm.appointmentTypeId && targetForm.appointmentType) {
+        if (userRole === 'instructor' && targetForm.appointmentType.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
       }
 
       // Determine final conditional logic values
@@ -4223,6 +4242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { fieldId } = req.params;
 
       const userId = req.user?.id;
+      const userRole = req.user?.role;
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
@@ -4245,9 +4265,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Field not found" });
       }
 
-      // Verify instructor owns the form's course
-      if (targetForm.course.instructorId !== userId) {
-        return res.status(403).json({ message: "Access denied" });
+      // Check ownership based on whether it's a course or appointment type form
+      if (targetForm.courseId && targetForm.course) {
+        if (userRole === 'instructor' && targetForm.course.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
+      } else if (targetForm.appointmentTypeId && targetForm.appointmentType) {
+        if (userRole === 'instructor' && targetForm.appointmentType.instructorId !== userId) {
+          return res.status(403).json({ message: "Access denied" });
+        }
       }
 
       await storage.deleteCourseInformationFormField(fieldId);
