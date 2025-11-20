@@ -678,6 +678,8 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             name: `${bookingForm.firstName} ${bookingForm.lastName}`.trim() || 'Customer',
             ...billingAddress,
           },
+          customerEmail: bookingForm.email || undefined,
+          customerName: `${bookingForm.firstName} ${bookingForm.lastName}`.trim() || undefined,
         });
 
         setTaxBreakdown({
@@ -692,7 +694,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     };
 
     calculateTax();
-  }, [paymentIntentId, billingAddress, bookingForm.firstName, bookingForm.lastName]);
+  }, [paymentIntentId, billingAddress, bookingForm.firstName, bookingForm.lastName, bookingForm.email]);
 
   const formatLocalDate = (date: Date): string => {
     const year = date.getFullYear();
@@ -1052,6 +1054,8 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             startTime: selectedSlot.startTime,
             endTime: isVariableDuration ? getCalculatedEndTime(selectedSlot.startTime, selectedDurationHours) : selectedSlot.endTime,
             durationHours: isVariableDuration ? selectedDurationHours : undefined,
+            customerEmail: bookingForm.email || undefined,
+            customerName: `${bookingForm.firstName} ${bookingForm.lastName}`.trim() || undefined,
           });
 
           // Check if appointment is free

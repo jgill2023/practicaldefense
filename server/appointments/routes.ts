@@ -607,7 +607,7 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
       return res.status(503).json({ message: "Payment processing is not configured" });
     }
 
-    const { instructorId, appointmentTypeId, startTime, endTime, durationHours, billingAddress, promoCode, userId, existingPaymentIntentId } = req.body;
+    const { instructorId, appointmentTypeId, startTime, endTime, durationHours, billingAddress, promoCode, userId, existingPaymentIntentId, customerEmail, customerName } = req.body;
 
     // Cancel existing payment intent if provided (for promo code updates)
     if (existingPaymentIntentId) {
@@ -698,12 +698,16 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
     const paymentIntentParams: any = {
       amount: subtotalInCents, // Initial amount is subtotal (tax will be added later)
       currency: "usd",
+      receipt_email: customerEmail || undefined, // Send receipt to customer email
+      description: `${appointmentType.name} - Appointment Booking`,
       metadata: {
         instructorId,
         appointmentTypeId,
         startTime: new Date(startTime).toISOString(),
         endTime: new Date(endTime).toISOString(),
         subtotalCents: String(subtotalInCents), // CRITICAL: Store original subtotal for tax calculation
+        ...(customerEmail && { customerEmail }),
+        ...(customerName && { customerName }),
         ...(durationHours && { durationHours: String(durationHours) }),
         ...(promoCodeInfo && { 
           promoCode: promoCodeInfo.code,
@@ -716,7 +720,7 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
     // Add billing address if provided (required for tax calculation)
     if (billingAddress) {
       paymentIntentParams.shipping = {
-        name: billingAddress.name,
+        name: billingAddress.name || customerName || 'Customer',
         address: {
           line1: billingAddress.line1,
           line2: billingAddress.line2 || undefined,
@@ -755,7 +759,7 @@ appointmentRouter.post('/update-payment-intent-address', async (req, res) => {
       return res.status(503).json({ message: "Payment processing is not configured" });
     }
 
-    const { paymentIntentId, billingAddress } = req.body;
+    const { paymentIntentId, billingAddress, customerEmail, customerName } = req.body;
 
     if (!paymentIntentId || !billingAddress) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -772,10 +776,10 @@ appointmentRouter.post('/update-payment-intent-address', async (req, res) => {
       return res.status(400).json({ message: "Invalid payment intent: missing subtotal" });
     }
 
-    // Update PaymentIntent with billing address
+    // Update PaymentIntent with billing address and customer information
     const updateParams: any = {
       shipping: {
-        name: billingAddress.name || 'Customer',
+        name: billingAddress.name || customerName || 'Customer',
         address: {
           line1: billingAddress.line1,
           line2: billingAddress.line2 || undefined,
@@ -786,6 +790,11 @@ appointmentRouter.post('/update-payment-intent-address', async (req, res) => {
         },
       },
     };
+
+    // Add customer email if provided (shows customer info in Stripe Dashboard)
+    if (customerEmail) {
+      updateParams.receipt_email = customerEmail;
+    }
 
     paymentIntent = await stripe.paymentIntents.update(paymentIntentId, updateParams);
 
