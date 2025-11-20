@@ -3568,9 +3568,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
-      // For now, we'll add a notes field to indicate cancellation
-      // In a more complete system, you might have a separate status field
+      // Set available spots to 0 to prevent new registrations and add cancellation note
       const updatedSchedule = await storage.updateCourseSchedule(scheduleId, {
+        availableSpots: 0,
         notes: (schedule.notes ? schedule.notes + "\n" : "") + `CANCELLED: ${new Date().toISOString()}`
       });
 

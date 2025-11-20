@@ -29,7 +29,7 @@ import { EventCreationForm } from "@/components/EventCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
 import { RosterDialog } from "@/components/RosterDialog";
 import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
-import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, Download, CalendarClock, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, Download, CalendarClock, ChevronUp, ChevronDown, XCircle } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 import { AppointmentsModal } from "@/components/AppointmentsModal";
@@ -843,7 +843,7 @@ export default function InstructorDashboard() {
                       <Copy className="h-4 w-4" />
                     </Button>
 
-                    {/* Unpublish Schedule Button */}
+                    {/* Cancel Schedule Button */}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -851,18 +851,18 @@ export default function InstructorDashboard() {
                           size="sm"
                           className="h-8 w-8 p-0 text-gray-400 hover:text-orange-600"
                           onClick={() => {
-                            if (window.confirm('Are you sure you want to unpublish this training schedule? Students will no longer be able to see or register for it.')) {
-                              unpublishScheduleMutation.mutate(schedule.id);
+                            if (window.confirm('Are you sure you want to cancel this training schedule? It will be moved to the Cancelled tab and students will no longer be able to register.')) {
+                              cancelScheduleMutation.mutate(schedule.id);
                             }
                           }}
-                          disabled={unpublishScheduleMutation.isPending}
-                          data-testid={`button-unpublish-schedule-${schedule.id}`}
+                          disabled={cancelScheduleMutation.isPending}
+                          data-testid={`button-cancel-schedule-${schedule.id}`}
                         >
-                          <EyeOff className="h-4 w-4" />
+                          <XCircle className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Unpublish Schedule</p>
+                        <p>Cancel Schedule</p>
                       </TooltipContent>
                     </Tooltip>
 
