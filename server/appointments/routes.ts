@@ -697,6 +697,9 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
     const paymentIntentParams: any = {
       amount: Math.round(finalAmount * 100), // Convert to cents (with discount applied)
       currency: "usd",
+      automatic_tax: {
+        enabled: true,
+      },
       metadata: {
         instructorId,
         appointmentTypeId,
@@ -772,16 +775,21 @@ appointmentRouter.post('/update-payment-intent-address', async (req, res) => {
           country: billingAddress.country || 'US',
         },
       },
+      automatic_tax: {
+        enabled: true,
+      },
     };
 
     const paymentIntent = await stripe.paymentIntents.update(paymentIntentId, updateParams);
 
-    // Return tax breakdown in dollars (no automatic tax - total is the same as subtotal)
-    const totalInCents = paymentIntent.amount;
+    // Calculate tax from Stripe's automatic tax calculation
+    const subtotalInCents = paymentIntent.amount;
+    const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
+    const totalInCents = subtotalInCents + totalTaxInCents;
 
     res.json({
-      subtotal: totalInCents / 100,
-      tax: 0,
+      subtotal: subtotalInCents / 100,
+      tax: totalTaxInCents / 100,
       total: totalInCents / 100,
     });
   } catch (error) {
