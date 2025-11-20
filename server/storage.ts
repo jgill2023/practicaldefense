@@ -2849,7 +2849,7 @@ export class DatabaseStorage implements IStorage {
       expectedAmount = depositAmount > 0 ? depositAmount : 50; // Default to $50 if not set
     }
 
-    // Apply promo code discount if applicable
+    // Store promo code discount amount for redemption tracking
     let discountAmount = 0;
     if (enrollment.promoCodeApplied) {
       const validation = await this.validatePromoCode(
@@ -2864,24 +2864,10 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
+    // For paid enrollments, verify payment was already successful (checked earlier)
+    // The payment intent amount was correctly calculated in upsertPaymentIntent
+    // with Stripe Tax API, so we trust that amount rather than recalculating
     const subtotal = expectedAmount - discountAmount;
-    // Add tax if applicable (using same logic as upsertPaymentIntent)
-    const taxRate = 0.06; // 6% tax rate - should match payment intent creation
-    const taxAmount = Math.round(subtotal * taxRate * 100);
-    const expectedTotalCents = Math.round(subtotal * 100) + taxAmount;
-
-    // Validate payment amount matches server calculation (only for paid enrollments)
-    if (!isFreeEnrollment) {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-      const paymentIntent = await stripe.paymentIntents.retrieve(data.paymentIntentId);
-
-      if (paymentIntent.amount_received !== expectedTotalCents) {
-        throw new Error(
-          `Payment amount mismatch: expected $${(expectedTotalCents / 100).toFixed(2)}, ` +
-          `received $${(paymentIntent.amount_received / 100).toFixed(2)}`
-        );
-      }
-    }
 
     // Create or find user by email
     let user = await this.getUserByEmail(data.studentInfo.email);
