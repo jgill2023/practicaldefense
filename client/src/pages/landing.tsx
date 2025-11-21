@@ -107,11 +107,26 @@ export default function Landing() {
 
       // Must have at least one upcoming schedule
       const now = new Date();
-      const hasUpcomingSchedules = course.schedules && course.schedules.some(schedule =>
-        !schedule.deletedAt &&
-        new Date(schedule.startDate) > now &&
-        schedule.availableSpots > 0
-      );
+      const hasUpcomingSchedules = course.schedules && course.schedules.some(schedule => {
+        // Skip deleted or cancelled schedules
+        if (schedule.deletedAt || schedule.notes?.includes('CANCELLED:')) {
+          return false;
+        }
+        
+        // Skip past schedules
+        if (new Date(schedule.startDate) <= now) {
+          return false;
+        }
+        
+        // Calculate actual available spots: maxSpots - enrollmentCount
+        // Count both confirmed and pending enrollments (but not cancelled)
+        const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+          e.status === 'confirmed' || e.status === 'pending'
+        ).length || 0;
+        const actualAvailableSpots = Math.max(0, schedule.maxSpots - enrollmentCount);
+        
+        return actualAvailableSpots > 0;
+      });
 
       if (!hasUpcomingSchedules) {
         console.log(`Filtering out course ${course.title}: no upcoming schedules`);

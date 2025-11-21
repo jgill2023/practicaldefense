@@ -1354,11 +1354,26 @@ function LiveFireRangeSessionsSection() {
 
     const now = new Date();
     return liveFireCourse.schedules
-      .filter(schedule =>
-        !schedule.deletedAt &&
-        new Date(schedule.startDate) > now &&
-        schedule.availableSpots > 0
-      )
+      .filter(schedule => {
+        // Skip deleted or cancelled schedules
+        if (schedule.deletedAt || schedule.notes?.includes('CANCELLED:')) {
+          return false;
+        }
+        
+        // Skip past schedules
+        if (new Date(schedule.startDate) <= now) {
+          return false;
+        }
+        
+        // Calculate actual available spots: maxSpots - enrollmentCount
+        // Count both confirmed and pending enrollments (but not cancelled)
+        const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+          e.status === 'confirmed' || e.status === 'pending'
+        ).length || 0;
+        const actualAvailableSpots = Math.max(0, schedule.maxSpots - enrollmentCount);
+        
+        return actualAvailableSpots > 0;
+      })
       .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
   }, [liveFireCourse]);
 

@@ -621,7 +621,7 @@ export default function InstructorDashboard() {
         .map(schedule => {
           const enrollmentCount = schedule.enrollments?.filter((e: any) => e.status !== 'cancelled').length || 0;
           const isCancelled = schedule.notes?.includes('CANCELLED:');
-          const calculatedSpots = isCancelled ? 0 : (schedule.maxSpots - enrollmentCount);
+          const calculatedSpots = isCancelled ? 0 : Math.max(0, schedule.maxSpots - enrollmentCount);
           
           return {
             id: schedule.id,
@@ -740,9 +740,9 @@ export default function InstructorDashboard() {
             const enrollmentCount = scheduleEnrollments.length;
             
             // Calculate spots left: maxSpots - enrollmentCount
-            // For cancelled schedules, use availableSpots (which is 0)
+            // For cancelled schedules, show 0
             const isCancelled = schedule.notes?.includes('CANCELLED:');
-            const spotsLeft = isCancelled ? 0 : (schedule.maxSpots - enrollmentCount);
+            const spotsLeft = isCancelled ? 0 : Math.max(0, schedule.maxSpots - enrollmentCount);
 
             // Revenue calculations
             const coursePrice = parseFloat(schedule.course.price.toString());
