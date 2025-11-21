@@ -4,16 +4,24 @@ Tactical Advantage is a full-stack web application designed as a professional fi
 
 # Recent Changes
 
-## November 21, 2025 - Fixed Course Available Spots Calculation
-Fixed a critical bug where course schedules displayed incorrect available spots. The system was showing "0 spots left" even when only 1 student was enrolled (should show 19 spots for a max of 20). The issue was caused by displaying a stale `availableSpots` field from the database instead of calculating it dynamically from enrollment data.
+## November 21, 2025 - Comprehensive Fix for Course Available Spots Calculation
+Fixed a critical bug where course schedules displayed incorrect available spots throughout all registration flows. The system was relying on a stale `availableSpots` field in the database that wasn't updated with new enrollments. All components now calculate availability dynamically from real-time enrollment data.
 
 **Changes:**
 - Modified `CourseCard.tsx` to calculate available spots from confirmed/pending enrollments
 - Modified `schedule-list.tsx` to calculate available spots from confirmed/pending enrollments
+- Modified `RegistrationModal.tsx` to calculate spots for schedule selection and display
+- Modified `course-registration.tsx` to calculate spots for schedule filtering and display
+- Updated `landing.tsx` waitlist check to use dynamic spot calculations
 - Added proper numeric coercion to prevent NaN calculation errors
-- Calculation logic: `availableSpots = maxSpots - count(confirmed + pending enrollments)`
+- Calculation logic: `actualAvailableSpots = Math.max(0, maxSpots - enrollmentCount)` where enrollmentCount only includes confirmed and pending enrollments
 
-This ensures the UI always displays accurate availability based on real-time enrollment status rather than stale database values.
+**Testing:**
+- End-to-end tests passed successfully
+- Verified correct calculation across all registration views (course cards, modals, registration pages)
+- Confirmed waitlist logic triggers only when courses are actually full
+
+This ensures the UI always displays accurate availability based on real-time enrollment status rather than stale database values. All stale `schedule.availableSpots` references have been eliminated from the codebase.
 
 # User Preferences
 
