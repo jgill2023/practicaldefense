@@ -1357,6 +1357,7 @@ function WaitlistInvitationsSection() {
     },
     onSuccess: (enrollment: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/student/waitlist"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
       toast({
         title: "Enrollment Started",
         description: "Redirecting you to complete payment...",
