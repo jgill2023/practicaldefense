@@ -29,7 +29,7 @@ import { EventCreationForm } from "@/components/EventCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
 import { RosterDialog } from "@/components/RosterDialog";
 import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
-import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, Download, CalendarClock, ChevronUp, ChevronDown, XCircle } from "lucide-react";
+import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, Download, CalendarClock, ChevronUp, ChevronDown, XCircle, UsersRound } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 import { AppointmentsModal } from "@/components/AppointmentsModal";
@@ -814,83 +814,71 @@ export default function InstructorDashboard() {
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-center gap-2">
                     {/* Edit Schedule Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                      onClick={() => setEditingSchedule(schedule)}
-                      data-testid={`button-edit-schedule-${schedule.id}`}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-
-                    {/* Users Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                      onClick={() => {
-                        setSelectedScheduleId(schedule.id);
-                        setSelectedCourseId(schedule.course.id); // Set courseId here
-                        setShowRosterDialog(true);
-                      }}
-                      data-testid={`button-roster-schedule-${schedule.id}`}
-                    >
-                      <Users className="h-4 w-4" />
-                    </Button>
-
-                    {/* Duplicate Course Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600"
-                      onClick={() => {
-                        duplicateScheduleMutation.mutate(schedule.id);
-                      }}
-                      disabled={duplicateScheduleMutation.isPending}
-                      data-testid={`button-duplicate-course-${schedule.id}`}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-
-                    {/* Cancel Schedule Button */}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0 text-gray-400 hover:text-orange-600"
-                          onClick={() => {
-                            if (window.confirm('Are you sure you want to cancel this training schedule? It will be moved to the Cancelled tab and students will no longer be able to register.')) {
-                              cancelScheduleMutation.mutate(schedule.id);
-                            }
-                          }}
-                          disabled={cancelScheduleMutation.isPending}
-                          data-testid={`button-cancel-schedule-${schedule.id}`}
+                          className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                          onClick={() => setEditingSchedule(schedule)}
+                          data-testid={`button-edit-schedule-${schedule.id}`}
+                          aria-label="Edit schedule"
                         >
-                          <XCircle className="h-4 w-4" />
+                          <Edit className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Cancel Schedule</p>
+                        <p>Edit Schedule</p>
                       </TooltipContent>
                     </Tooltip>
 
-                    {/* Delete Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
-                      onClick={() => {
-                        if (window.confirm('Are you sure you want to permanently delete this training schedule? This action cannot be undone.')) {
-                          deleteScheduleMutation.mutate(schedule.id);
-                        }
-                      }}
-                      disabled={deleteScheduleMutation.isPending}
-                      data-testid={`button-delete-schedule-${schedule.id}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {/* View Roster Button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                          onClick={() => {
+                            setSelectedScheduleId(schedule.id);
+                            setSelectedCourseId(schedule.course.id);
+                            setShowRosterDialog(true);
+                          }}
+                          data-testid={`button-roster-schedule-${schedule.id}`}
+                          aria-label="View roster"
+                        >
+                          <Users className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>View Roster</p>
+                      </TooltipContent>
+                    </Tooltip>
+
+                    {/* View Waitlist Button */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600"
+                          onClick={() => {
+                            // TODO: Open waitlist dialog/modal
+                            toast({
+                              title: "Waitlist",
+                              description: "Waitlist management coming soon",
+                            });
+                          }}
+                          data-testid={`button-waitlist-schedule-${schedule.id}`}
+                          aria-label="View waitlist"
+                        >
+                          <UsersRound className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>View Waitlist</p>
+                      </TooltipContent>
+                    </Tooltip>
 
                     {/* Export Roster Button */}
                     <Tooltip>
@@ -901,6 +889,7 @@ export default function InstructorDashboard() {
                           className="h-8 w-8 p-0 text-gray-400 hover:text-green-600"
                           onClick={() => handleExportRoster(schedule.id, schedule.course.title)}
                           data-testid={`button-export-roster-${schedule.id}`}
+                          aria-label="Export roster"
                         >
                           <Download className="h-4 w-4" />
                         </Button>
@@ -909,6 +898,64 @@ export default function InstructorDashboard() {
                         <p>Export Roster</p>
                       </TooltipContent>
                     </Tooltip>
+
+                    {/* More Actions Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                          data-testid={`button-more-actions-${schedule.id}`}
+                          aria-label="More actions"
+                          aria-haspopup="menu"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            duplicateScheduleMutation.mutate(schedule.id);
+                          }}
+                          disabled={duplicateScheduleMutation.isPending}
+                          data-testid={`menu-duplicate-schedule-${schedule.id}`}
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          Duplicate Schedule
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuSeparator />
+                        
+                        <DropdownMenuItem
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to cancel this training schedule? It will be moved to the Cancelled tab and students will no longer be able to register.')) {
+                              cancelScheduleMutation.mutate(schedule.id);
+                            }
+                          }}
+                          disabled={cancelScheduleMutation.isPending}
+                          className="text-orange-600 focus:text-orange-600"
+                          data-testid={`menu-cancel-schedule-${schedule.id}`}
+                        >
+                          <XCircle className="mr-2 h-4 w-4" />
+                          Cancel Schedule
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuItem
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to permanently delete this training schedule? This action cannot be undone.')) {
+                              deleteScheduleMutation.mutate(schedule.id);
+                            }
+                          }}
+                          disabled={deleteScheduleMutation.isPending}
+                          className="text-destructive focus:text-destructive"
+                          data-testid={`menu-delete-schedule-${schedule.id}`}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Schedule
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </td>
               </tr>
