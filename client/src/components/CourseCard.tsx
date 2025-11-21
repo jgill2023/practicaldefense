@@ -21,8 +21,15 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
     )
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
 
+  // Calculate actual available spots based on enrollments
+  const enrollmentCount = nextSchedule?.enrollments?.filter((e: any) => 
+    e.status === 'confirmed' || e.status === 'pending'
+  ).length || 0;
+  const maxSpots = nextSchedule ? Number(nextSchedule.maxSpots) || 0 : 0;
+  const actualAvailableSpots = nextSchedule ? Math.max(0, maxSpots - enrollmentCount) : 0;
+
   // Check if schedule is full (for waitlist button)
-  const isFull = nextSchedule && nextSchedule.availableSpots === 0;
+  const isFull = nextSchedule && actualAvailableSpots === 0;
 
   const getCategoryColor = (category: string | null) => {
     if (!category) return 'bg-muted/10 text-muted-foreground';
@@ -137,7 +144,7 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
               <div className="flex items-center text-sm text-muted-foreground">
                 <Users className="mr-2 h-4 w-4 text-foreground" />
                 <span data-testid={`text-spots-left-${course.id}`}>
-                  {nextSchedule.availableSpots} spots left
+                  {actualAvailableSpots} spots left
                 </span>
               </div>
             </>

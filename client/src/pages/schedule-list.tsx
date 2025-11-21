@@ -79,8 +79,16 @@ export default function ScheduleList() {
         course.schedules.forEach(schedule => {
           const scheduleDate = new Date(schedule.startDate);
           if (scheduleDate >= now) {
+            // Calculate actual available spots based on enrollments
+            const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+              e.status === 'confirmed' || e.status === 'pending'
+            ).length || 0;
+            const maxSpots = Number(schedule.maxSpots) || 0;
+            const actualAvailableSpots = Math.max(0, maxSpots - enrollmentCount);
+            
             allSchedules.push({
               ...schedule,
+              availableSpots: actualAvailableSpots,
               course: course,
               courseId: course.id,
               courseTitle: course.title,
