@@ -270,8 +270,8 @@ export default function TermsOfServicePage() {
             </p>
             <div className="space-y-2 text-muted-foreground">
               <p><strong>Tactical Advantage, LLC</strong></p>
-              <p><strong>Email:</strong> <a href="mailto:info@tacticaladv.com" className="text-accent hover:underline">info@tacticaladv.com</a></p>
-              <p><strong>Website:</strong> <a href="https://www.tacticaladv.com" className="text-accent hover:underline">www.tacticaladv.com</a></p>
+              <p><strong>Email:</strong> <a href="mailto:info@tacticaladv.com" className="hover:underline text-[#000000]">info@tacticaladv.com</a></p>
+              <p><strong>Website:</strong> <a href="https://www.tacticaladv.com" className="hover:underline text-[#000000]">www.tacticaladv.com</a></p>
               <p><strong>Location:</strong> New Mexico, USA</p>
             </div>
           </CardContent>
