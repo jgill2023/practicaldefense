@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign, FileSignature, Users } from "lucide-react";
-import { Calendar, Clock, FileText, Download, BookOpen, Award, Target, UserPlus } from "lucide-react";
+import { Calendar, Clock, FileText, Download, BookOpen, Award, Target, UserPlus, List } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import type { EnrollmentWithDetails, User, CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { useLocation } from "wouter";
@@ -1498,6 +1498,132 @@ function WaitlistInvitationsSection() {
       />
     )}
     </>
+  );
+}
+
+// All Waitlist Entries Section Component
+function MyWaitlistsSection() {
+  // Fetch student's waitlist entries
+  const { data: waitlistEntries = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/student/waitlist"],
+  });
+
+  // Filter for waiting and invited entries (exclude enrolled/removed)
+  const activeWaitlistEntries = useMemo(() => {
+    return waitlistEntries.filter(entry => 
+      entry.status === 'waiting' || entry.status === 'invited'
+    );
+  }, [waitlistEntries]);
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (activeWaitlistEntries.length === 0) {
+    return null;
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'invited':
+        return <Badge className="bg-green-600 text-white">Invited - Action Required</Badge>;
+      case 'waiting':
+        return <Badge variant="secondary">On Waitlist</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  return (
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <List className="mr-2 h-5 w-5" />
+          My Waitlists
+        </CardTitle>
+        <p className="text-sm text-muted-foreground mt-2">
+          Courses you're waiting to join. You'll be notified when spots become available.
+        </p>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <div className="space-y-3">
+          {activeWaitlistEntries.map((entry) => (
+            <div
+              key={entry.id}
+              className="p-4 border rounded-lg hover:border-accent transition-colors"
+              data-testid={`waitlist-entry-${entry.id}`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-lg mb-1" data-testid={`text-waitlist-entry-course-${entry.id}`}>
+                    {entry.course?.title}
+                  </h4>
+                  {getStatusBadge(entry.status)}
+                </div>
+                <div className="text-right ml-4">
+                  <div className="text-sm text-muted-foreground">Position</div>
+                  <div className="text-2xl font-bold text-accent">#{entry.position}</div>
+                </div>
+              </div>
+
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <div className="flex items-center">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  <span>
+                    {new Date(entry.schedule?.startDate).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <Clock className="mr-2 h-4 w-4" />
+                  {entry.schedule?.startTime} - {entry.schedule?.endTime}
+                </div>
+                {entry.schedule?.location && (
+                  <div className="flex items-center">
+                    <span className="mr-2">📍</span>
+                    {entry.schedule.location}
+                  </div>
+                )}
+                <div className="flex items-center space-x-4 mt-2">
+                  <div className="flex items-center">
+                    <Users className="mr-1 h-3 w-3" />
+                    <span className="font-medium">
+                      {entry.schedule?.availableSpots || 0} spots available
+                    </span>
+                  </div>
+                  {entry.course?.price && (
+                    <div className="flex items-center">
+                      <DollarSign className="mr-1 h-3 w-3" />
+                      <span className="font-medium">${entry.course.price}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {entry.status === 'invited' && (
+                <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded">
+                  <p className="text-sm text-green-700 dark:text-green-300 font-medium">
+                    🎉 You've been invited! Scroll up to the "Waitlist Invitations" section to register.
+                  </p>
+                </div>
+              )}
+
+              {entry.notes && (
+                <div className="mt-3 p-3 bg-muted rounded">
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium">Note:</span> {entry.notes}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -3613,6 +3739,9 @@ export default function StudentPortal() {
         {/* Live-Fire Range Sessions Section - Only for Online CCW students */}
         {/* Waitlist Invitations Section - Show if user has any invitations */}
         <WaitlistInvitationsSection />
+
+        {/* My Waitlists Section - Show all active waitlist entries */}
+        <MyWaitlistsSection />
 
         {enrollments.some(e =>
           e.course.title &&

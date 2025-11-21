@@ -469,6 +469,10 @@ export const waitlistRelations = relations(waitlist, ({ one }) => ({
     fields: [waitlist.studentId],
     references: [users.id],
   }),
+  course: one(courses, {
+    fields: [waitlist.courseId],
+    references: [courses.id],
+  }),
   schedule: one(courseSchedules, {
     fields: [waitlist.scheduleId],
     references: [courseSchedules.id],
