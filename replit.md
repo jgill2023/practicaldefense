@@ -2,6 +2,19 @@
 
 Tactical Advantage is a full-stack web application designed as a professional firearms training management platform. It enables instructors to manage courses, schedules, and student enrollments, while providing students with a portal to browse, register for, and track their training progress. Key capabilities include integrated payment processing via Stripe, secure document management (waivers, certificates), advanced student management (license tracking, payment balance, form completion), and a comprehensive communications credit system. The platform aims to streamline administration, enhance the student experience, and ensure compliance with communication regulations.
 
+# Recent Changes
+
+## November 21, 2025 - Fixed Course Available Spots Calculation
+Fixed a critical bug where course schedules displayed incorrect available spots. The system was showing "0 spots left" even when only 1 student was enrolled (should show 19 spots for a max of 20). The issue was caused by displaying a stale `availableSpots` field from the database instead of calculating it dynamically from enrollment data.
+
+**Changes:**
+- Modified `CourseCard.tsx` to calculate available spots from confirmed/pending enrollments
+- Modified `schedule-list.tsx` to calculate available spots from confirmed/pending enrollments
+- Added proper numeric coercion to prevent NaN calculation errors
+- Calculation logic: `availableSpots = maxSpots - count(confirmed + pending enrollments)`
+
+This ensures the UI always displays accurate availability based on real-time enrollment status rather than stale database values.
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
