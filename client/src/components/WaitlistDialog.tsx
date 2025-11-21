@@ -322,8 +322,12 @@ export function WaitlistDialog({ scheduleId, courseTitle, courseId, onClose }: W
 
   const handleConfirmCancelComposition = () => {
     setShowCancelCompositionConfirm(false);
-    resetAllState();
-    if (cancelAction === 'close') {
+    if (cancelAction === 'back') {
+      // Go back to notification selection
+      handleBackToNotificationSelect();
+    } else if (cancelAction === 'close') {
+      // Close everything
+      resetAllState();
       onClose();
     }
   };
@@ -358,30 +362,21 @@ export function WaitlistDialog({ scheduleId, courseTitle, courseId, onClose }: W
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {showComposition ? (isReinvite ? 'Reinvite Student' : 'Invite Student') : 'Waitlist Management'}
+              {showNotificationSelect || showComposition 
+                ? (isReinvite ? 'Reinvite Student' : 'Invite Student') 
+                : 'Waitlist Management'}
             </DialogTitle>
             <DialogDescription>
-              {showComposition 
+              {(showNotificationSelect || showComposition) 
                 ? `Send a notification to ${selectedEntry?.student?.firstName} ${selectedEntry?.student?.lastName} inviting them to complete their enrollment.`
                 : courseTitle && `Course: ${courseTitle}`
               }
             </DialogDescription>
           </DialogHeader>
 
-          {showComposition ? (
-            // Notification Composition View
+          {showNotificationSelect ? (
+            // Notification Selection View (Step 1 - choose Email or SMS)
             <div className="mt-4 space-y-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBackToList}
-                className="mb-2"
-                data-testid="button-back-to-list"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Waitlist
-              </Button>
-
               <Tabs value={notificationTab} onValueChange={(v) => setNotificationTab(v as "email" | "sms")}>
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="email" data-testid="tab-email">
@@ -389,6 +384,94 @@ export function WaitlistDialog({ scheduleId, courseTitle, courseId, onClose }: W
                     Email
                   </TabsTrigger>
                   <TabsTrigger value="sms" data-testid="tab-sms">
+                    <Phone className="h-4 w-4 mr-2" />
+                    SMS
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Email Tab */}
+                <TabsContent value="email" className="space-y-4 mt-4">
+                  <div className="bg-muted/50 dark:bg-muted/20 p-3 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <Mail className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Email Address</p>
+                        <p className="text-sm text-muted-foreground">{selectedEntry?.student?.email || 'No email on file'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    onClick={handleComposeClick}
+                    disabled={!selectedEntry?.student?.email}
+                    data-testid="button-compose-email"
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Compose Email
+                  </Button>
+                </TabsContent>
+
+                {/* SMS Tab */}
+                <TabsContent value="sms" className="space-y-4 mt-4">
+                  <div className="bg-muted/50 dark:bg-muted/20 p-3 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <Phone className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Phone Number</p>
+                        <p className="text-sm text-muted-foreground">{selectedEntry?.student?.phone || 'No phone number on file'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    onClick={handleComposeClick}
+                    disabled={!selectedEntry?.student?.phone}
+                    data-testid="button-compose-sms"
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    Compose SMS
+                  </Button>
+                </TabsContent>
+              </Tabs>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCancelAction('close');
+                    setShowCancelCompositionConfirm(true);
+                  }}
+                  data-testid="button-cancel-notification"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : showComposition ? (
+            // Notification Composition View (Step 2 - compose message)
+            <div className="mt-4 space-y-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBackToNotificationSelect}
+                className="mb-2"
+                data-testid="button-back-to-select"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+
+              <Tabs value={notificationTab} onValueChange={(v) => setNotificationTab(v as "email" | "sms")}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="email" data-testid="tab-email-compose">
+                    <Mail className="h-4 w-4 mr-2" />
+                    Email
+                  </TabsTrigger>
+                  <TabsTrigger value="sms" data-testid="tab-sms-compose">
                     <Phone className="h-4 w-4 mr-2" />
                     SMS
                   </TabsTrigger>
@@ -457,7 +540,10 @@ export function WaitlistDialog({ scheduleId, courseTitle, courseId, onClose }: W
                   <div className="flex justify-end gap-3 pt-4">
                     <Button
                       variant="outline"
-                      onClick={handleBackToList}
+                      onClick={() => {
+                        setCancelAction('back');
+                        setShowCancelCompositionConfirm(true);
+                      }}
                       data-testid="button-cancel-email"
                     >
                       Cancel
@@ -537,7 +623,10 @@ export function WaitlistDialog({ scheduleId, courseTitle, courseId, onClose }: W
                   <div className="flex justify-end gap-3 pt-4">
                     <Button
                       variant="outline"
-                      onClick={handleBackToList}
+                      onClick={() => {
+                        setCancelAction('back');
+                        setShowCancelCompositionConfirm(true);
+                      }}
                       data-testid="button-cancel-sms"
                     >
                       Cancel
