@@ -131,10 +131,18 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
   // Find the next available schedule
   const availableSchedules = course.schedules
     .filter(
-      schedule => 
-        !schedule.deletedAt &&
-        new Date(schedule.startDate) > new Date() && 
-        schedule.availableSpots > 0
+      schedule => {
+        if (schedule.deletedAt || new Date(schedule.startDate) <= new Date()) {
+          return false;
+        }
+        // Calculate actual available spots based on enrollments
+        const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+          e.status === 'confirmed' || e.status === 'pending'
+        ).length || 0;
+        const maxSpots = Number(schedule.maxSpots) || 0;
+        const actualAvailableSpots = Math.max(0, maxSpots - enrollmentCount);
+        return actualAvailableSpots > 0;
+      }
     )
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
@@ -447,12 +455,18 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
 
   // Get the first sold-out schedule for waitlist
   const soldOutSchedule = isWaitlist ? course.schedules
-    .filter(schedule => 
-      !schedule.deletedAt && 
-      new Date(schedule.startDate) > new Date() &&
-      !schedule.notes?.includes('CANCELLED:') &&
-      schedule.availableSpots === 0
-    )
+    .filter(schedule => {
+      if (schedule.deletedAt || new Date(schedule.startDate) <= new Date() || schedule.notes?.includes('CANCELLED:')) {
+        return false;
+      }
+      // Calculate actual available spots based on enrollments
+      const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+        e.status === 'confirmed' || e.status === 'pending'
+      ).length || 0;
+      const maxSpots = Number(schedule.maxSpots) || 0;
+      const actualAvailableSpots = Math.max(0, maxSpots - enrollmentCount);
+      return actualAvailableSpots === 0;
+    })
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0] : null;
 
   const handleJoinWaitlist = () => {
@@ -547,13 +561,22 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
                         <SelectValue placeholder="Select a course date" />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableSchedules.map((schedule) => (
-                          <SelectItem key={schedule.id} value={schedule.id}>
-                            <div className="flex items-center justify-between w-full">
-                              <span>{formatDateSafe(schedule.startDate.toString())} - {schedule.availableSpots} spots left</span>
-                            </div>
-                          </SelectItem>
-                        ))}
+                        {availableSchedules.map((schedule) => {
+                          // Calculate actual available spots
+                          const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+                            e.status === 'confirmed' || e.status === 'pending'
+                          ).length || 0;
+                          const maxSpots = Number(schedule.maxSpots) || 0;
+                          const actualAvailableSpots = Math.max(0, maxSpots - enrollmentCount);
+                          
+                          return (
+                            <SelectItem key={schedule.id} value={schedule.id}>
+                              <div className="flex items-center justify-between w-full">
+                                <span>{formatDateSafe(schedule.startDate.toString())} - {actualAvailableSpots} spots left</span>
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     {selectedSchedule && (
