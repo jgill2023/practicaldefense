@@ -360,6 +360,7 @@ export interface IStorage {
   getWaitlistEntry(waitlistId: string): Promise<WaitlistWithUser | undefined>;
   getWaitlistBySchedule(scheduleId: string): Promise<WaitlistWithUser[]>;
   getWaitlistByStudent(studentId: string): Promise<WaitlistWithUser[]>;
+  getStudentWaitlistEntries(studentId: string): Promise<any[]>;
   inviteFromWaitlist(waitlistId: string): Promise<WaitlistEntry>;
   removeFromWaitlist(waitlistId: string): Promise<void>;
   updateWaitlistStatus(waitlistId: string, status: WaitlistStatus): Promise<WaitlistEntry>;
@@ -3369,6 +3370,36 @@ export class DatabaseStorage implements IStorage {
       orderBy: desc(waitlist.createdAt),
     });
     return entries as WaitlistWithUser[];
+  }
+
+  async getStudentWaitlistEntries(studentId: string): Promise<any[]> {
+    const entries = await db.query.waitlist.findMany({
+      where: eq(waitlist.studentId, studentId),
+      with: {
+        student: true,
+        schedule: {
+          with: {
+            enrollments: {
+              where: (enrollments, { or, eq }) => or(
+                eq(enrollments.status, 'confirmed'),
+                eq(enrollments.status, 'pending')
+              ),
+            },
+          },
+        },
+        course: true,
+      },
+      orderBy: desc(waitlist.createdAt),
+    });
+
+    return entries.map(entry => ({
+      ...entry,
+      schedule: entry.schedule ? {
+        ...entry.schedule,
+        enrollmentCount: entry.schedule.enrollments?.length || 0,
+        availableSpots: Math.max(0, entry.schedule.maxSpots - (entry.schedule.enrollments?.length || 0)),
+      } : null,
+    }));
   }
 
   async inviteFromWaitlist(waitlistId: string): Promise<WaitlistEntry> {

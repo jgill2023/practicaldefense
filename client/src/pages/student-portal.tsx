@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign, FileSignature, Users } from "lucide-react";
-import { Calendar, Clock, FileText, Download, BookOpen, Award, Target } from "lucide-react";
+import { Calendar, Clock, FileText, Download, BookOpen, Award, Target, UserPlus } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import type { EnrollmentWithDetails, User, CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { useLocation } from "wouter";
@@ -1328,6 +1328,264 @@ function AppointmentCard({ appointment, onCompleteFormsClick }: { appointment: a
         </div>
       )}
     </div>
+  );
+}
+
+// Waitlist Invitations Section Component
+function WaitlistInvitationsSection() {
+  const { toast } = useToast();
+  const [location, setLocation] = useLocation();
+  const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentOption, setPaymentOption] = useState<'full' | 'deposit'>('full');
+
+  // Fetch student's waitlist entries
+  const { data: waitlistEntries = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/student/waitlist"],
+  });
+
+  // Filter for invited entries only
+  const invitedEntries = useMemo(() => {
+    return waitlistEntries.filter(entry => entry.status === 'invited');
+  }, [waitlistEntries]);
+
+  const enrollMutation = useMutation({
+    mutationFn: async ({ waitlistId, paymentOption }: { waitlistId: string; paymentOption: 'full' | 'deposit' }) => {
+      return await apiRequest("POST", `/api/student/waitlist/${waitlistId}/enroll`, {
+        paymentOption,
+      });
+    },
+    onSuccess: (enrollment: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/student/waitlist"] });
+      toast({
+        title: "Enrollment Started",
+        description: "Redirecting you to complete payment...",
+      });
+      setShowPaymentDialog(false);
+      setSelectedEntry(null);
+      // Redirect to registration flow with the enrollment ID
+      setLocation(`/registration/${enrollment.scheduleId}/${enrollment.id}`);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Enrollment Failed",
+        description: error.message || "Failed to start enrollment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRegisterClick = (entry: any) => {
+    // Check if both course AND schedule support deposits
+    const courseAllowsDeposits = entry.course?.depositAllowed && entry.course?.depositAmount && entry.course.depositAmount > 0;
+    const scheduleAllowsDeposits = entry.schedule?.allowDeposits !== false;
+    const depositsAvailable = courseAllowsDeposits && scheduleAllowsDeposits;
+
+    if (depositsAvailable) {
+      // Show payment option dialog
+      setSelectedEntry(entry);
+      setPaymentOption('full');
+      setShowPaymentDialog(true);
+    } else {
+      // Directly enroll with full payment
+      enrollMutation.mutate({ waitlistId: entry.id, paymentOption: 'full' });
+    }
+  };
+
+  const handleConfirmEnrollment = () => {
+    if (!selectedEntry) return;
+    enrollMutation.mutate({ waitlistId: selectedEntry.id, paymentOption });
+  };
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (invitedEntries.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <Card className="mb-8 border-2 border-green-500 dark:border-green-400">
+        <CardHeader className="bg-green-50 dark:bg-green-950/20">
+          <CardTitle className="flex items-center text-green-700 dark:text-green-400">
+            <UserPlus className="mr-2 h-5 w-5" />
+            Waitlist Invitations
+          </CardTitle>
+          <p className="text-sm text-muted-foreground mt-2">
+            You've been invited to enroll in these courses! Spots have opened up - register now before they fill up again.
+          </p>
+        </CardHeader>
+      <CardContent className="pt-6">
+        <div className="space-y-3">
+          {invitedEntries.map((entry) => (
+            <div
+              key={entry.id}
+              className="p-4 border border-green-200 dark:border-green-800 rounded-lg bg-green-50/50 dark:bg-green-950/10"
+              data-testid={`waitlist-invitation-${entry.id}`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-lg mb-2" data-testid={`text-waitlist-course-${entry.id}`}>
+                    {entry.course?.title}
+                  </h4>
+                  <div className="space-y-1 text-sm text-muted-foreground">
+                    <div className="flex items-center">
+                      <Calendar className="mr-2 h-4 w-4 text-green-600 dark:text-green-400" />
+                      <span className="font-medium">
+                        {new Date(entry.schedule?.startDate).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <Clock className="mr-2 h-4 w-4 text-green-600 dark:text-green-400" />
+                      {entry.schedule?.startTime} - {entry.schedule?.endTime}
+                    </div>
+                    {entry.schedule?.location && (
+                      <div className="flex items-center">
+                        <span className="mr-2">📍</span>
+                        {entry.schedule.location}
+                      </div>
+                    )}
+                    <div className="flex items-center space-x-4 mt-2">
+                      <div className="flex items-center">
+                        <Users className="mr-1 h-3 w-3 text-green-600 dark:text-green-400" />
+                        <span className="text-green-700 dark:text-green-300 font-medium">
+                          {entry.schedule?.availableSpots || 0} spots available
+                        </span>
+                      </div>
+                      {entry.course?.price && (
+                        <div className="flex items-center">
+                          <DollarSign className="mr-1 h-3 w-3 text-green-600 dark:text-green-400" />
+                          <span className="font-medium">${entry.course.price}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => handleRegisterClick(entry)}
+                  disabled={enrollMutation.isPending || (entry.schedule?.availableSpots || 0) === 0}
+                  className="ml-4 bg-green-600 hover:bg-green-700 text-white"
+                  data-testid={`button-register-waitlist-${entry.id}`}
+                >
+                  {enrollMutation.isPending ? "Processing..." : "Register & Pay"}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+
+    {/* Payment Option Dialog */}
+    {showPaymentDialog && selectedEntry && (
+      <PaymentOptionDialog
+        entry={selectedEntry}
+        paymentOption={paymentOption}
+        setPaymentOption={setPaymentOption}
+        onConfirm={handleConfirmEnrollment}
+        onCancel={() => {
+          setShowPaymentDialog(false);
+          setSelectedEntry(null);
+        }}
+        isProcessing={enrollMutation.isPending}
+      />
+    )}
+    </>
+  );
+}
+
+function PaymentOptionDialog({
+  entry,
+  paymentOption,
+  setPaymentOption,
+  onConfirm,
+  onCancel,
+  isProcessing,
+}: {
+  entry: any;
+  paymentOption: 'full' | 'deposit';
+  setPaymentOption: (option: 'full' | 'deposit') => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isProcessing: boolean;
+}) {
+  const fullAmount = entry.course?.price || 0;
+  const depositAmount = entry.course?.depositAmount || 0;
+  const remainingBalance = fullAmount - depositAmount;
+
+  return (
+    <Dialog open={true} onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Select Payment Option</DialogTitle>
+          <DialogDescription>
+            Choose how you'd like to pay for {entry.course?.title}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div
+            className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+              paymentOption === 'full'
+                ? 'border-green-600 bg-green-50 dark:bg-green-950/20'
+                : 'border-gray-200 dark:border-gray-700 hover:border-green-300'
+            }`}
+            onClick={() => setPaymentOption('full')}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-semibold">Pay in Full</h4>
+                <p className="text-sm text-muted-foreground">One-time payment</p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold">${fullAmount.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+              paymentOption === 'deposit'
+                ? 'border-green-600 bg-green-50 dark:bg-green-950/20'
+                : 'border-gray-200 dark:border-gray-700 hover:border-green-300'
+            }`}
+            onClick={() => setPaymentOption('deposit')}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-semibold">Pay Deposit</h4>
+                <p className="text-sm text-muted-foreground">
+                  ${depositAmount.toFixed(2)} now, ${remainingBalance.toFixed(2)} later
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold">${depositAmount.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">Due now</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end space-x-2">
+          <Button variant="outline" onClick={onCancel} disabled={isProcessing}>
+            Cancel
+          </Button>
+          <Button
+            onClick={onConfirm}
+            disabled={isProcessing}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isProcessing ? "Processing..." : "Continue to Payment"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -3353,6 +3611,9 @@ export default function StudentPortal() {
         )}
 
         {/* Live-Fire Range Sessions Section - Only for Online CCW students */}
+        {/* Waitlist Invitations Section - Show if user has any invitations */}
+        <WaitlistInvitationsSection />
+
         {enrollments.some(e =>
           e.course.title &&
           e.course.title.toLowerCase().includes('online') &&

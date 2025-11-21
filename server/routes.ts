@@ -1367,6 +1367,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })();
       }
 
+      // Update waitlist status if enrollment came from waitlist invitation
+      if (finalizedEnrollment.status === 'confirmed' && finalizedEnrollment.notes) {
+        const waitlistMatch = finalizedEnrollment.notes.match(/Enrolled from waitlist entry: ([a-f0-9-]+)/);
+        if (waitlistMatch) {
+          const waitlistId = waitlistMatch[1];
+          try {
+            await storage.updateWaitlistStatus(waitlistId, 'enrolled');
+            console.log(`Updated waitlist entry ${waitlistId} to 'enrolled' status`);
+          } catch (error) {
+            console.error(`Error updating waitlist status for entry ${waitlistId}:`, error);
+          }
+        }
+      }
+
       res.status(200).json(finalizedEnrollment);
     } catch (error) {
       console.error("Error finalizing enrollment:", error);
@@ -1385,6 +1399,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching student enrollments:", error);
       res.status(500).json({ message: "Failed to fetch enrollments" });
+    }
+  });
+
+  // Get student's waitlist invitations
+  app.get('/api/student/waitlist', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const entries = await storage.getStudentWaitlistEntries(userId);
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching student waitlist entries:", error);
+      res.status(500).json({ message: "Failed to fetch waitlist entries" });
+    }
+  });
+
+  // Initiate enrollment from waitlist invitation
+  app.post('/api/student/waitlist/:waitlistId/enroll', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { waitlistId } = req.params;
+
+      // Validate request body
+      const waitlistEnrollSchema = z.object({
+        paymentOption: z.enum(['full', 'deposit'], {
+          errorMap: () => ({ message: "Payment option must be 'full' or 'deposit'" })
+        }),
+      });
+
+      const validatedData = waitlistEnrollSchema.parse(req.body);
+      const { paymentOption } = validatedData;
+
+      // Verify waitlist entry exists and belongs to this user
+      const waitlistEntry = await storage.getWaitlistEntry(waitlistId);
+      if (!waitlistEntry) {
+        return res.status(404).json({ message: "Waitlist entry not found" });
+      }
+
+      if (waitlistEntry.studentId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Only allow enrollment from 'invited' status
+      if (waitlistEntry.status !== 'invited') {
+        return res.status(400).json({ message: "Only invited students can enroll from waitlist" });
+      }
+
+      // Create draft enrollment (same as regular registration)
+      const draftEnrollment = await storage.initiateRegistration({
+        courseId: waitlistEntry.courseId,
+        scheduleId: waitlistEntry.scheduleId,
+        paymentOption,
+        studentId: userId,
+        studentInfo: null,
+      });
+
+      // Store waitlist ID in enrollment for later status update
+      await db
+        .update(enrollments)
+        .set({ 
+          notes: `Enrolled from waitlist entry: ${waitlistId}` 
+        })
+        .where(eq(enrollments.id, draftEnrollment.id));
+
+      res.status(201).json(draftEnrollment);
+    } catch (error) {
+      console.error("Error enrolling from waitlist:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to initiate enrollment from waitlist" });
     }
   });
 
