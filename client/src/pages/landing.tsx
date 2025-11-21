@@ -538,7 +538,15 @@ export default function Landing() {
                 new Date(schedule.startDate) > new Date() &&
                 !schedule.notes?.includes('CANCELLED:')
               )
-              .every(schedule => schedule.availableSpots === 0)
+              .every(schedule => {
+                // Calculate actual available spots
+                const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+                  e.status === 'confirmed' || e.status === 'pending'
+                ).length || 0;
+                const maxSpots = Number(schedule.maxSpots) || 0;
+                const actualAvailableSpots = Math.max(0, maxSpots - enrollmentCount);
+                return actualAvailableSpots === 0;
+              })
           }
         />
       )}
