@@ -61,6 +61,7 @@ export default function InstructorDashboard() {
   // Waitlist dialog states
   const [waitlistScheduleId, setWaitlistScheduleId] = useState<string | null>(null);
   const [waitlistCourseTitle, setWaitlistCourseTitle] = useState<string>("");
+  const [waitlistCourseId, setWaitlistCourseId] = useState<string>("");
 
   // Permanent deletion confirmation states
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -870,6 +871,7 @@ export default function InstructorDashboard() {
                           onClick={() => {
                             setWaitlistScheduleId(schedule.id);
                             setWaitlistCourseTitle(schedule.course.title);
+                            setWaitlistCourseId(schedule.courseId);
                           }}
                           data-testid={`button-waitlist-schedule-${schedule.id}`}
                           aria-label="View waitlist"
@@ -1548,9 +1550,11 @@ export default function InstructorDashboard() {
       <WaitlistDialog
         scheduleId={waitlistScheduleId}
         courseTitle={waitlistCourseTitle}
+        courseId={waitlistCourseId}
         onClose={() => {
           setWaitlistScheduleId(null);
           setWaitlistCourseTitle("");
+          setWaitlistCourseId("");
         }}
       />
 
