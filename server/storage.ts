@@ -350,6 +350,15 @@ export interface IStorage {
   getStudentFormResponsesByForm(formId: string): Promise<StudentFormResponse[]>;
   getStudentFormResponsesWithDetails(enrollmentId: string): Promise<any[]>;
 
+  // Waitlist operations
+  joinWaitlist(data: { studentId: string; courseId: string; scheduleId: string; notes?: string }): Promise<WaitlistEntry>;
+  getWaitlistEntry(waitlistId: string): Promise<WaitlistWithUser | undefined>;
+  getWaitlistBySchedule(scheduleId: string): Promise<WaitlistWithUser[]>;
+  getWaitlistByStudent(studentId: string): Promise<WaitlistWithUser[]>;
+  inviteFromWaitlist(waitlistId: string): Promise<WaitlistEntry>;
+  removeFromWaitlist(waitlistId: string): Promise<void>;
+  updateWaitlistStatus(waitlistId: string, status: WaitlistStatus): Promise<WaitlistEntry>;
+
   // App settings operations
   getAppSettings(): Promise<AppSettings>;
   updateAppSettings(input: InsertAppSettings): Promise<AppSettings>;
@@ -3295,6 +3304,114 @@ export class DatabaseStorage implements IStorage {
       orderBy: asc(studentFormResponses.submittedAt),
     });
     return responses;
+  }
+
+  // Waitlist operations
+  async joinWaitlist(data: { studentId: string; courseId: string; scheduleId: string; notes?: string }): Promise<WaitlistEntry> {
+    // Get current max position for this schedule
+    const maxPosition = await db
+      .select({ maxPos: sql<number>`COALESCE(MAX(${waitlist.position}), 0)` })
+      .from(waitlist)
+      .where(eq(waitlist.scheduleId, data.scheduleId));
+    
+    const position = (maxPosition[0]?.maxPos || 0) + 1;
+    
+    const [entry] = await db
+      .insert(waitlist)
+      .values({
+        studentId: data.studentId,
+        courseId: data.courseId,
+        scheduleId: data.scheduleId,
+        notes: data.notes,
+        position,
+        status: 'waiting',
+      })
+      .returning();
+    
+    return entry;
+  }
+
+  async getWaitlistEntry(waitlistId: string): Promise<WaitlistWithUser | undefined> {
+    const entry = await db.query.waitlist.findFirst({
+      where: eq(waitlist.id, waitlistId),
+      with: {
+        student: true,
+        schedule: true,
+      },
+    });
+    return entry as WaitlistWithUser | undefined;
+  }
+
+  async getWaitlistBySchedule(scheduleId: string): Promise<WaitlistWithUser[]> {
+    const entries = await db.query.waitlist.findMany({
+      where: eq(waitlist.scheduleId, scheduleId),
+      with: {
+        student: true,
+        schedule: true,
+      },
+      orderBy: asc(waitlist.position),
+    });
+    return entries as WaitlistWithUser[];
+  }
+
+  async getWaitlistByStudent(studentId: string): Promise<WaitlistWithUser[]> {
+    const entries = await db.query.waitlist.findMany({
+      where: eq(waitlist.studentId, studentId),
+      with: {
+        student: true,
+        schedule: true,
+      },
+      orderBy: desc(waitlist.createdAt),
+    });
+    return entries as WaitlistWithUser[];
+  }
+
+  async inviteFromWaitlist(waitlistId: string): Promise<WaitlistEntry> {
+    const [entry] = await db
+      .update(waitlist)
+      .set({
+        status: 'invited',
+        invitedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(waitlist.id, waitlistId))
+      .returning();
+    
+    return entry;
+  }
+
+  async removeFromWaitlist(waitlistId: string): Promise<void> {
+    await db
+      .update(waitlist)
+      .set({
+        status: 'removed',
+        removedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(waitlist.id, waitlistId));
+  }
+
+  async updateWaitlistStatus(waitlistId: string, status: WaitlistStatus): Promise<WaitlistEntry> {
+    const updateData: any = {
+      status,
+      updatedAt: new Date(),
+    };
+    
+    if (status === 'invited') {
+      updateData.invitedAt = new Date();
+    } else if (status === 'enrolled') {
+      updateData.enrolledAt = new Date();
+    } else if (status === 'removed') {
+      updateData.removedAt = new Date();
+    }
+    
+    const [entry] = await db
+      .update(waitlist)
+      .set(updateData)
+      .where(eq(waitlist.id, waitlistId))
+      .returning();
+    
+    return entry;
   }
 
   // Promo code operations

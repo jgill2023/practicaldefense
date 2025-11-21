@@ -3612,6 +3612,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // WAITLIST MANAGEMENT ROUTES
+  // ============================================
+
+  // Student joins waitlist for a schedule
+  app.post("/api/waitlist/join", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const { courseId, scheduleId, notes } = req.body;
+
+      if (!courseId || !scheduleId) {
+        return res.status(400).json({ error: "Course ID and Schedule ID are required" });
+      }
+
+      // Check if student is already on the waitlist
+      const existingWaitlist = await storage.getWaitlistBySchedule(scheduleId);
+      const alreadyOnWaitlist = existingWaitlist.some(entry => 
+        entry.studentId === userId && entry.status === 'waiting'
+      );
+
+      if (alreadyOnWaitlist) {
+        return res.status(400).json({ error: "You are already on the waitlist for this schedule" });
+      }
+
+      const waitlistEntry = await storage.joinWaitlist({
+        studentId: userId,
+        courseId,
+        scheduleId,
+        notes,
+      });
+
+      res.json({ message: "Successfully joined waitlist", entry: waitlistEntry });
+    } catch (error: any) {
+      console.error("Error joining waitlist:", error);
+      res.status(500).json({ error: "Failed to join waitlist: " + error.message });
+    }
+  });
+
+  // Get waitlist for a specific schedule (instructor only)
+  app.get("/api/instructor/schedules/:scheduleId/waitlist", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const { scheduleId } = req.params;
+
+      // Get schedule to verify ownership
+      const schedule = await storage.getCourseSchedule(scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ error: "Schedule not found" });
+      }
+
+      // Verify the course belongs to the instructor
+      const course = await storage.getCourse(schedule.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
+      }
+
+      const waitlistEntries = await storage.getWaitlistBySchedule(scheduleId);
+      res.json(waitlistEntries);
+    } catch (error: any) {
+      console.error("Error fetching waitlist:", error);
+      res.status(500).json({ error: "Failed to fetch waitlist: " + error.message });
+    }
+  });
+
+  // Invite a student from the waitlist
+  app.post("/api/instructor/waitlist/:waitlistId/invite", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const { waitlistId } = req.params;
+
+      // Get waitlist entry with proper method
+      const entry = await storage.getWaitlistEntry(waitlistId);
+      
+      if (!entry) {
+        return res.status(404).json({ error: "Waitlist entry not found" });
+      }
+
+      // Verify ownership through schedule -> course
+      const course = await storage.getCourse(entry.courseId);
+      if (!course || course.instructorId !== userId) {
+        return res.status(403).json({ error: "Unauthorized: Not your course" });
+      }
+
+      const updatedEntry = await storage.inviteFromWaitlist(waitlistId);
+
+      // TODO: Send email notification to student
+      
+      res.json({ message: "Student invited successfully", entry: updatedEntry });
+    } catch (error: any) {
+      console.error("Error inviting from waitlist:", error);
+      res.status(500).json({ error: "Failed to invite from waitlist: " + error.message });
+    }
+  });
+
+  // Remove a student from the waitlist
+  app.delete("/api/waitlist/:waitlistId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const { waitlistId } = req.params;
+
+      // Get the waitlist entry
+      const entry = await storage.getWaitlistEntry(waitlistId);
+      
+      if (!entry) {
+        return res.status(404).json({ error: "Waitlist entry not found" });
+      }
+
+      // Check authorization: either the student themselves or the instructor
+      const isStudent = entry.studentId === userId;
+      
+      if (!isStudent) {
+        // Check if user is instructor for this course
+        const course = await storage.getCourse(entry.courseId);
+        const isInstructor = course && course.instructorId === userId;
+        
+        if (!isInstructor) {
+          return res.status(403).json({ error: "Unauthorized: You can only remove your own waitlist entries or those from your courses" });
+        }
+      }
+
+      await storage.removeFromWaitlist(waitlistId);
+      res.json({ message: "Removed from waitlist successfully" });
+    } catch (error: any) {
+      console.error("Error removing from waitlist:", error);
+      res.status(500).json({ error: "Failed to remove from waitlist: " + error.message });
+    }
+  });
+
+  // Get student's own waitlist entries
+  app.get("/api/student/waitlist", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const waitlistEntries = await storage.getWaitlistByStudent(userId);
+      res.json(waitlistEntries);
+    } catch (error: any) {
+      console.error("Error fetching student waitlist:", error);
+      res.status(500).json({ error: "Failed to fetch waitlist: " + error.message });
+    }
+  });
+
   // Course image upload endpoint
   app.put("/api/course-images", isAuthenticated, async (req: any, res) => {
     if (!req.body.courseImageURL) {

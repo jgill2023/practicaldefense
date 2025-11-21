@@ -240,11 +240,14 @@ export const courseEnrollmentFeedback = pgTable("course_enrollment_feedback", {
 export const waitlist = pgTable("waitlist", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").notNull().references(() => users.id),
+  courseId: uuid("course_id").notNull().references(() => courses.id),
   scheduleId: uuid("schedule_id").notNull().references(() => courseSchedules.id),
   position: integer("position").notNull(),
-  status: varchar("status").notNull().default('waiting'), // 'waiting', 'offered', 'enrolled', 'expired'
-  offerDate: timestamp("offer_date"),
-  offerExpiryDate: timestamp("offer_expiry_date"),
+  status: varchar("status").notNull().default('waiting'), // 'waiting', 'invited', 'enrolled', 'removed'
+  notes: text("notes"), // Student message or admin notes
+  invitedAt: timestamp("invited_at"),
+  enrolledAt: timestamp("enrolled_at"),
+  removedAt: timestamp("removed_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -695,7 +698,7 @@ export type RecurrencePattern = 'daily' | 'weekly' | 'monthly' | 'custom';
 export type EventCategory = 'basic' | 'advanced' | 'concealed' | 'specialty' | 'refresher';
 export type RegistrationStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
-export type WaitlistStatus = 'waiting' | 'offered' | 'enrolled' | 'expired';
+export type WaitlistStatus = 'waiting' | 'invited' | 'enrolled' | 'removed';
 
 // Course Information Forms - for post-registration student forms
 // Can be associated with either courses OR appointment types

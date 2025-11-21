@@ -12,14 +12,17 @@ interface CourseCardProps {
 
 export function CourseCard({ course, onRegister }: CourseCardProps) {
 
-  // Find the next available schedule with available spots
+  // Find the next available schedule (including full ones for waitlist)
   const nextSchedule = course.schedules
     .filter(schedule => 
       !schedule.deletedAt && 
       new Date(schedule.startDate) > new Date() &&
-      schedule.availableSpots > 0
+      !schedule.notes?.includes('CANCELLED:') // Exclude cancelled schedules
     )
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
+
+  // Check if schedule is full (for waitlist button)
+  const isFull = nextSchedule && nextSchedule.availableSpots === 0;
 
   const getCategoryColor = (category: string | null) => {
     if (!category) return 'bg-muted/10 text-muted-foreground';
@@ -161,8 +164,9 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
           }}
           disabled={!nextSchedule}
           data-testid={`button-register-${course.id}`}
+          variant={isFull ? "outline" : "default"}
         >
-          REGISTER NOW
+          {isFull ? "JOIN WAITLIST" : "REGISTER NOW"}
           <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
       </CardContent>
