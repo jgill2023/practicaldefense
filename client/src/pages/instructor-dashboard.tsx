@@ -28,6 +28,7 @@ import { EditScheduleForm } from "@/components/EditScheduleForm";
 import { EventCreationForm } from "@/components/EventCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
 import { RosterDialog } from "@/components/RosterDialog";
+import { WaitlistDialog } from "@/components/WaitlistDialog";
 import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
 import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, Download, CalendarClock, ChevronUp, ChevronDown, XCircle, UsersRound } from "lucide-react";
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
@@ -56,6 +57,10 @@ export default function InstructorDashboard() {
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [showRosterDialog, setShowRosterDialog] = useState(false);
+
+  // Waitlist dialog states
+  const [waitlistScheduleId, setWaitlistScheduleId] = useState<string | null>(null);
+  const [waitlistCourseTitle, setWaitlistCourseTitle] = useState<string>("");
 
   // Permanent deletion confirmation states
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -863,11 +868,8 @@ export default function InstructorDashboard() {
                           size="sm"
                           className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600"
                           onClick={() => {
-                            // TODO: Open waitlist dialog/modal
-                            toast({
-                              title: "Waitlist",
-                              description: "Waitlist management coming soon",
-                            });
+                            setWaitlistScheduleId(schedule.id);
+                            setWaitlistCourseTitle(schedule.course.title);
                           }}
                           data-testid={`button-waitlist-schedule-${schedule.id}`}
                           aria-label="View waitlist"
@@ -1539,6 +1541,16 @@ export default function InstructorDashboard() {
           setShowRosterDialog(false);
           setSelectedScheduleId(null);
           setSelectedCourseId(null);
+        }}
+      />
+
+      {/* Waitlist Dialog */}
+      <WaitlistDialog
+        scheduleId={waitlistScheduleId}
+        courseTitle={waitlistCourseTitle}
+        onClose={() => {
+          setWaitlistScheduleId(null);
+          setWaitlistCourseTitle("");
         }}
       />
 
