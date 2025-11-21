@@ -4089,13 +4089,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create PaymentIntent with automatic tax calculation
+      // Create PaymentIntent
       const paymentIntentParams: any = {
         amount: Math.round(finalPaymentAmount * 100), // Discounted amount before tax
         currency: "usd",
-        automatic_tax: {
-          enabled: true,
-        },
         automatic_payment_methods: { enabled: true },
         metadata: {
           enrollmentId,
@@ -4126,7 +4123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
 
-      // Calculate total tax from amount_details.taxes array (in cents)
+      // Calculate total tax from amount_details if available (in cents)
       const totalTaxInCents = paymentIntent.amount_details?.taxes?.reduce((sum, tax) => sum + tax.amount, 0) || 0;
       
       // Return dollars to frontend for UI compatibility
@@ -4135,12 +4132,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         originalAmount: paymentAmount, // dollars
         subtotal: finalPaymentAmount, // dollars
         discountAmount, // dollars
-        tax: totalTaxInCents / 100, // dollars
+        tax: totalTaxInCents / 100, // dollars - will be 0 if automatic tax not enabled
         total: paymentIntent.amount / 100, // dollars
         tax_included: totalTaxInCents > 0,
         promoCode: promoCodeInfo
       });
     } catch (error: any) {
+      console.error("Error creating payment intent:", error);
+      console.error("Error details:", {
+        enrollmentId: req.body.enrollmentId,
+        userId: req.user?.id,
+        errorMessage: error.message,
+        errorStack: error.stack
+      });
       res.status(500).json({ message: "Error creating payment intent: " + error.message });
     }
   });
