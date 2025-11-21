@@ -531,6 +531,15 @@ export default function Landing() {
         <RegistrationModal
           course={selectedCourse}
           onClose={handleCloseModal}
+          isWaitlist={
+            selectedCourse.schedules
+              .filter(schedule => 
+                !schedule.deletedAt && 
+                new Date(schedule.startDate) > new Date() &&
+                !schedule.notes?.includes('CANCELLED:')
+              )
+              .every(schedule => schedule.availableSpots === 0)
+          }
         />
       )}
       {/* Booking Modal */}

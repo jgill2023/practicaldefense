@@ -28,6 +28,7 @@ const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : null;
 interface RegistrationModalProps {
   course: CourseWithSchedules;
   onClose: () => void;
+  isWaitlist?: boolean;
 }
 
 const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: any; confirmEnrollmentMutation: any }) => {
@@ -99,7 +100,7 @@ const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: a
   );
 };
 
-export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
+export function RegistrationModal({ course, onClose, isWaitlist = false }: RegistrationModalProps) {
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -389,6 +390,32 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
     },
   });
 
+  const joinWaitlistMutation = useMutation({
+    mutationFn: async ({ courseId, scheduleId, notes }: { courseId: string; scheduleId: string; notes?: string }) => {
+      return await apiRequest("POST", "/api/waitlist/join", {
+        courseId,
+        scheduleId,
+        notes,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Joined Waitlist",
+        description: "You've been added to the waitlist. We'll notify you if a seat becomes available.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/student/waitlist"] });
+      onClose();
+      setLocation('/student-portal');
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to Join Waitlist",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleScheduleChange = async (scheduleId: string) => {
     const schedule = availableSchedules.find(s => s.id === scheduleId);
     if (!schedule) return;
@@ -418,12 +445,57 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
     }
   }, [formData, selectedSchedule, isDraftCreated]);
 
+  // Get the first sold-out schedule for waitlist
+  const soldOutSchedule = isWaitlist ? course.schedules
+    .filter(schedule => 
+      !schedule.deletedAt && 
+      new Date(schedule.startDate) > new Date() &&
+      !schedule.notes?.includes('CANCELLED:') &&
+      schedule.availableSpots === 0
+    )
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0] : null;
+
+  const handleJoinWaitlist = () => {
+    if (!soldOutSchedule) {
+      toast({
+        title: "No Schedule Available",
+        description: "There are no sold-out schedules available for this course.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+      toast({
+        title: "Required Fields Missing",
+        description: "Please fill in all required student information fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.agreeToTerms) {
+      toast({
+        title: "Terms Required",
+        description: "Please agree to the terms and conditions",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    joinWaitlistMutation.mutate({
+      courseId: course.id,
+      scheduleId: soldOutSchedule.id,
+      notes: `${formData.firstName} ${formData.lastName} - ${formData.email} - ${formData.phone}`,
+    });
+  };
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto" data-testid="modal-registration">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-card-foreground">
-            Course Registration
+            {isWaitlist ? "Join Waitlist" : "Course Registration"}
           </DialogTitle>
         </DialogHeader>
         
@@ -460,56 +532,58 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
             </div>
           </div>
 
-          {/* Schedule Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Choose Course Date</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {availableSchedules.length > 0 ? (
-                <div className="space-y-4">
-                  <Label htmlFor="schedule">Available Dates *</Label>
-                  <Select onValueChange={handleScheduleChange}>
-                    <SelectTrigger data-testid="select-course-schedule">
-                      <SelectValue placeholder="Select a course date" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableSchedules.map((schedule) => (
-                        <SelectItem key={schedule.id} value={schedule.id}>
-                          <div className="flex items-center justify-between w-full">
-                            <span>{formatDateSafe(schedule.startDate.toString())} - {schedule.availableSpots} spots left</span>
+          {/* Schedule Selection - Hidden for waitlist */}
+          {!isWaitlist && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Choose Course Date</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {availableSchedules.length > 0 ? (
+                  <div className="space-y-4">
+                    <Label htmlFor="schedule">Available Dates *</Label>
+                    <Select onValueChange={handleScheduleChange}>
+                      <SelectTrigger data-testid="select-course-schedule">
+                        <SelectValue placeholder="Select a course date" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableSchedules.map((schedule) => (
+                          <SelectItem key={schedule.id} value={schedule.id}>
+                            <div className="flex items-center justify-between w-full">
+                              <span>{formatDateSafe(schedule.startDate.toString())} - {schedule.availableSpots} spots left</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedSchedule && (
+                      <div className="p-3 bg-black/10 border border-black/20 rounded-lg">
+                        <div className="text-sm">
+                          <div className="font-medium text-black mb-1">Selected Date:</div>
+                          <div className="flex items-center text-muted-foreground">
+                            <Calendar className="mr-2 h-4 w-4 text-black" />
+                            {formatDateSafe(selectedSchedule.startDate.toString())}
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedSchedule && (
-                    <div className="p-3 bg-black/10 border border-black/20 rounded-lg">
-                      <div className="text-sm">
-                        <div className="font-medium text-black mb-1">Selected Date:</div>
-                        <div className="flex items-center text-muted-foreground">
-                          <Calendar className="mr-2 h-4 w-4 text-black" />
-                          {formatDateSafe(selectedSchedule.startDate.toString())}
+                          {selectedSchedule.location && (
+                            <div className="flex items-center text-muted-foreground mt-1">
+                              <span className="mr-2">📍</span>
+                              {selectedSchedule.location}
+                            </div>
+                          )}
                         </div>
-                        {selectedSchedule.location && (
-                          <div className="flex items-center text-muted-foreground mt-1">
-                            <span className="mr-2">📍</span>
-                            {selectedSchedule.location}
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium text-muted-foreground mb-2">No schedules available</h3>
-                  <p className="text-sm text-muted-foreground">Please check back later for new course dates</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium text-muted-foreground mb-2">No schedules available</h3>
+                    <p className="text-sm text-muted-foreground">Please check back later for new course dates</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Student Information */}
           <Card>
@@ -567,7 +641,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
           </Card>
 
           {/* Account Creation (for non-authenticated users) */}
-          {!isAuthenticated && formData.createAccount && (
+          {!isAuthenticated && formData.createAccount && !isWaitlist && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -604,8 +678,27 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
             </Card>
           )}
 
+          {/* Waitlist Acknowledgement */}
+          {isWaitlist && (
+            <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <Users className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-blue-900 dark:text-blue-100">
+                      <p className="font-medium mb-2">You are joining the waitlist for this course.</p>
+                      <p className="text-blue-800 dark:text-blue-200">
+                        We'll notify you via email if any seats become available. You will not be charged at this time.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Payment Options */}
-          {parseFloat(course.price) > 0 && course.depositAmount && (
+          {!isWaitlist && parseFloat(course.price) > 0 && course.depositAmount && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -641,7 +734,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
           )}
 
           {/* Free Course Registration */}
-          {selectedSchedule && parseFloat(course.price) === 0 && (
+          {!isWaitlist && selectedSchedule && parseFloat(course.price) === 0 && (
             <Card className="bg-green-50 border-green-200">
               <CardContent className="p-8 text-center">
                 <div className="mb-4">
@@ -671,7 +764,7 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
           )}
 
           {/* Payment Section */}
-          {selectedSchedule && parseFloat(course.price) > 0 && clientSecret && (
+          {!isWaitlist && selectedSchedule && parseFloat(course.price) > 0 && clientSecret && (
             <>
               {/* Promo Code Section */}
               <Card>
@@ -875,6 +968,30 @@ export function RegistrationModal({ course, onClose }: RegistrationModalProps) {
               </div>
             </CardContent>
           </Card>
+
+          {/* Join Waitlist Button */}
+          {isWaitlist && (
+            <Button
+              type="button"
+              size="lg"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={handleJoinWaitlist}
+              disabled={joinWaitlistMutation.isPending || !formData.agreeToTerms}
+              data-testid="button-join-waitlist"
+            >
+              {joinWaitlistMutation.isPending ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-transparent border-t-current rounded-full mr-2" />
+                  Joining Waitlist...
+                </>
+              ) : (
+                <>
+                  <Users className="mr-2 h-4 w-4" />
+                  Join Waitlist
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </DialogContent>
 
