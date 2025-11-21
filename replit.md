@@ -4,6 +4,19 @@ Tactical Advantage is a full-stack web application designed as a professional fi
 
 # Recent Changes
 
+## November 21, 2025 - Fixed Appointment Type Edit Dialog Price Display Error
+Fixed a bug where editing appointment types caused a runtime error: "typeForm.pricePerHour.toFixed is not a function". The issue occurred because database decimal values are returned as strings to preserve precision, and calling `.toFixed()` on a string fails.
+
+**Changes:**
+- Modified `appointments.tsx` line 1027 to wrap `pricePerHour` with `Number()` before calling `.toFixed(2)`
+- Modified `appointments.tsx` line 350 to ensure form initialization converts `pricePerHour` to a number
+- Cleared Vite cache to ensure browser receives updated code
+
+**Testing:**
+- End-to-end test passed successfully
+- Verified appointment types can be edited without errors
+- Confirmed price displays correctly (e.g., "$150.00/hour")
+
 ## November 21, 2025 - Comprehensive Fix for Course Available Spots Calculation
 Fixed a critical bug where course schedules displayed incorrect available spots throughout all registration flows. The system was relying on a stale `availableSpots` field in the database that wasn't updated with new enrollments. All components now calculate availability dynamically from real-time enrollment data.
 

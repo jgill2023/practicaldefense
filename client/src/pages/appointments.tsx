@@ -344,7 +344,7 @@ export default function AppointmentsPage() {
         isVariableDuration: (type as any).isVariableDuration || false,
         minimumDurationHours: (type as any).minimumDurationHours || 2,
         durationIncrementMinutes: (type as any).durationIncrementMinutes || 60,
-        pricePerHour: (type as any).pricePerHour || 0,
+        pricePerHour: Number((type as any).pricePerHour) || 0,
       });
     } else {
       setEditingType(null);
@@ -1021,7 +1021,7 @@ export default function AppointmentsPage() {
                       data-testid="input-type-price-per-hour"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Total price will be calculated: ${typeForm.pricePerHour.toFixed(2)}/hour × hours selected
+                      Total price will be calculated: ${(Number(typeForm.pricePerHour) || 0).toFixed(2)}/hour × hours selected
                     </p>
                   </div>
                 </div>
