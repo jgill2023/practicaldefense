@@ -1363,8 +1363,8 @@ function WaitlistInvitationsSection() {
       });
       setShowPaymentDialog(false);
       setSelectedEntry(null);
-      // Redirect to registration flow with the enrollment ID
-      setLocation(`/registration/${enrollment.scheduleId}/${enrollment.id}`);
+      // Redirect to checkout page with the enrollment ID
+      setLocation(`/checkout?enrollmentId=${enrollment.id}`);
     },
     onError: (error: any) => {
       toast({
