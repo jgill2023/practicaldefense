@@ -618,22 +618,28 @@ export default function InstructorDashboard() {
     return courses.flatMap(course =>
       (course.schedules || [])
         .filter(schedule => !schedule.deletedAt) // Filter out deleted schedules
-        .map(schedule => ({
-          id: schedule.id,
-          courseId: course.id,
-          courseTitle: course.title,
-          courseAbbreviation: course.abbreviation,
-          categoryColor: course.category?.color || '#3b82f6',
-          startDate: schedule.startDate,
-          endDate: schedule.endDate,
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
-          location: schedule.location,
-          maxSpots: schedule.maxSpots,
-          availableSpots: schedule.availableSpots,
-          enrollmentCount: schedule.enrollments?.filter((e: any) => e.status !== 'cancelled').length || 0,
-          status: schedule.availableSpots > 0 ? 'active' : 'full',
-        }))
+        .map(schedule => {
+          const enrollmentCount = schedule.enrollments?.filter((e: any) => e.status !== 'cancelled').length || 0;
+          const isCancelled = schedule.notes?.includes('CANCELLED:');
+          const calculatedSpots = isCancelled ? 0 : (schedule.maxSpots - enrollmentCount);
+          
+          return {
+            id: schedule.id,
+            courseId: course.id,
+            courseTitle: course.title,
+            courseAbbreviation: course.abbreviation,
+            categoryColor: course.category?.color || '#3b82f6',
+            startDate: schedule.startDate,
+            endDate: schedule.endDate,
+            startTime: schedule.startTime,
+            endTime: schedule.endTime,
+            location: schedule.location,
+            maxSpots: schedule.maxSpots,
+            availableSpots: calculatedSpots,
+            enrollmentCount: enrollmentCount,
+            status: calculatedSpots > 0 ? 'active' : 'full',
+          };
+        })
     ).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
   }, [courses]);
 
@@ -732,7 +738,11 @@ export default function InstructorDashboard() {
               e.studentId !== null
             );
             const enrollmentCount = scheduleEnrollments.length;
-            const spotsLeft = schedule.availableSpots;
+            
+            // Calculate spots left: maxSpots - enrollmentCount
+            // For cancelled schedules, use availableSpots (which is 0)
+            const isCancelled = schedule.notes?.includes('CANCELLED:');
+            const spotsLeft = isCancelled ? 0 : (schedule.maxSpots - enrollmentCount);
 
             // Revenue calculations
             const coursePrice = parseFloat(schedule.course.price.toString());
