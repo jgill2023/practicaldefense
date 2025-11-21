@@ -14,6 +14,7 @@ import {
   prohibitedWords,
   messageAuditLog,
   communications,
+  waitlist,
   // E-commerce tables
   productCategories,
   products,
@@ -51,6 +52,10 @@ import {
   type InsertPromoCodeRedemption,
   type PromoCodeWithDetails,
   type PromoCodeValidationResult,
+  type WaitlistEntry,
+  type InsertWaitlist,
+  type WaitlistWithUser,
+  type WaitlistStatus,
   type ProhibitedWord,
   type InsertProhibitedWord,
   type MessageAuditLog,
