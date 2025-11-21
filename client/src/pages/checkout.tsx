@@ -93,7 +93,7 @@ const CheckoutForm = ({ enrollment, totalAmount }: { enrollment: EnrollmentWithD
       <Button
         type="submit"
         size="lg"
-        className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
+        className="w-full hover:bg-secondary/90 bg-[#000000] text-[#ffffff]"
         disabled={!stripe || isProcessing || confirmEnrollmentMutation.isPending}
         data-testid="button-complete-payment"
       >
