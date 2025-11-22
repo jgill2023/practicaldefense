@@ -1814,10 +1814,10 @@ export class DatabaseStorage implements IStorage {
       // Filter enrollments based on student category
       let filteredEnrollments = activeEnrollments;
 
-      if (isOnHold) {
-        // For held students, show only current/future hold enrollments
+      if (hasCurrentEnrollment) {
+        // For current students, show all future/today enrollments (confirmed, pending, or hold)
+        // This allows instructors to see if a current student also has any holds
         filteredEnrollments = activeEnrollments.filter(e => {
-          if (e.status !== 'hold') return false;
           if (!e.scheduleDate) return false;
 
           const scheduleDateStr = typeof e.scheduleDate === 'string' ? e.scheduleDate : e.scheduleDate.toISOString();
@@ -1827,10 +1827,10 @@ export class DatabaseStorage implements IStorage {
 
           return scheduleStartOfDay >= startOfToday;
         });
-      } else if (hasCurrentEnrollment) {
-        // For current students, show only future/today confirmed or pending enrollments
+      } else if (isOnHold) {
+        // For held students (those with ONLY holds, no confirmed/pending), show only current/future hold enrollments
         filteredEnrollments = activeEnrollments.filter(e => {
-          if (e.status !== 'confirmed' && e.status !== 'pending') return false;
+          if (e.status !== 'hold') return false;
           if (!e.scheduleDate) return false;
 
           const scheduleDateStr = typeof e.scheduleDate === 'string' ? e.scheduleDate : e.scheduleDate.toISOString();
@@ -1866,11 +1866,14 @@ export class DatabaseStorage implements IStorage {
 
       console.log(`Student ${student.id} (${student.firstName} ${student.lastName}): isOnHold=${isOnHold}, hasCurrentEnrollment=${hasCurrentEnrollment}, activeEnrollments=${activeEnrollments.length}, filteredEnrollments=${filteredEnrollments.length}`);
 
-      if (isOnHold) {
-        held.push(studentData);
-      } else if (hasCurrentEnrollment) {
+      // Prioritize current enrollments over hold status
+      // Students with confirmed/pending enrollments should be in "Current" even if they also have holds
+      if (hasCurrentEnrollment) {
         console.log(`Adding ${student.firstName} ${student.lastName} to current students`);
         current.push(studentData);
+      } else if (isOnHold) {
+        // Only categorize as held if they have NO current confirmed/pending enrollments
+        held.push(studentData);
       } else {
         // Former students - only include if they have any past enrollments
         if (filteredEnrollments.length > 0) {
