@@ -217,7 +217,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Mobile menu */}
           {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-primary-foreground/20 py-4">
+            <div className="md:hidden border-t border-primary-foreground/20 py-4 max-h-[calc(100vh-64px)] overflow-y-auto">
               <nav className="flex flex-col space-y-2">
                 <a href="/" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-home-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
