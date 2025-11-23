@@ -4,6 +4,26 @@ Tactical Advantage is a full-stack web application designed as a professional fi
 
 # Recent Changes
 
+## November 23, 2025 - Enhanced User Management: Scrollable Edit Dialog and Password Change Feature
+Added the ability to change user passwords directly from the Edit User dialog in the admin user management interface. Also fixed modal scrollability to accommodate all form fields.
+
+**Changes:**
+- Made Edit User dialog scrollable by adding `max-h-[90vh] overflow-y-auto` classes to DialogContent
+- Added optional password field to the edit user form (frontend and backend schemas)
+- Implemented password hashing on the backend when updating user passwords
+- Added security enhancement to exclude sensitive fields (passwordHash, password reset tokens, email verification tokens) from API responses
+- Password field includes helpful placeholder text: "Leave blank to keep current password"
+- Empty password field preserves existing user password
+
+**Security:**
+- User update API responses now properly exclude passwordHash and all token fields
+- Password hashing is performed server-side before storing in database
+- Only admin and superadmin users can access the user management functionality
+
+**Files Modified:**
+- `client/src/pages/user-management.tsx`: Added password field to form and made dialog scrollable
+- `server/routes.ts`: Added password hashing logic and response sanitization
+
 ## November 21, 2025 - Fixed Appointment Type Edit Dialog Price Display Error
 Fixed a bug where editing appointment types caused a runtime error: "typeForm.pricePerHour.toFixed is not a function". The issue occurred because database decimal values are returned as strings to preserve precision, and calling `.toFixed()` on a string fails.
 
