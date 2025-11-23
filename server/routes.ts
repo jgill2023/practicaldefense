@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import Stripe from "stripe";
 import { z } from "zod";
 import { storage, normalizePhoneNumber } from "./storage";
-import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrHigher, requireActiveAccount, requireAdminOrHigher, generateToken, getTokenExpiry } from "./customAuth";
+import { setupAuth, isAuthenticated, requireSuperadmin, requireInstructorOrHigher, requireActiveAccount, requireAdminOrHigher, generateToken, getTokenExpiry, hashPassword } from "./customAuth";
 import { authRouter } from "./auth/routes";
 import { db } from "./db";
 import { enrollments, smsBroadcastMessages, waiverInstances, studentFormResponses, courseInformationForms, notificationTemplates, notificationSchedules, users, cartItems, instructorAppointments, courses as coursesTable, courseSchedules } from "@shared/schema";
@@ -311,6 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: z.string().min(1, "Last name is required").optional(),
         preferredName: z.string().optional(),
         phone: z.string().optional(),
+        password: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal("")),
         role: z.enum(['student', 'instructor', 'admin', 'superadmin']).optional(),
         userStatus: z.enum(['pending', 'active', 'suspended', 'rejected']).optional(),
       });
@@ -322,8 +323,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Only superadmins can assign superadmin role" });
       }
 
-      const updatedUser = await storage.updateUser(userId, validatedData);
-      res.json(updatedUser);
+      // If password is provided and not empty, hash it
+      const updateData: any = { ...validatedData };
+      if (validatedData.password && validatedData.password.trim() !== '') {
+        updateData.passwordHash = await hashPassword(validatedData.password);
+        delete updateData.password;
+      } else {
+        delete updateData.password;
+      }
+
+      const updatedUser = await storage.updateUser(userId, updateData);
+      
+      // Remove sensitive fields from response
+      const { passwordHash, passwordResetToken, passwordResetExpiry, emailVerificationToken, emailVerificationExpiry, ...safeUser } = updatedUser;
+      res.json(safeUser);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Validation error", errors: error.errors });

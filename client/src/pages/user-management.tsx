@@ -71,6 +71,7 @@ const editUserSchema = z.object({
   lastName: z.string().min(1, "Last name is required").optional(),
   preferredName: z.string().optional(),
   phone: z.string().optional(),
+  password: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal("")),
   role: z.enum(["student", "instructor", "admin", "superadmin"]).optional(),
   userStatus: z.enum(["pending", "active", "suspended", "rejected"]).optional(),
 });
@@ -113,6 +114,7 @@ export default function UserManagementPage() {
       lastName: "",
       preferredName: "",
       phone: "",
+      password: "",
       role: "student",
       userStatus: "active",
     },
@@ -265,6 +267,7 @@ export default function UserManagementPage() {
       lastName: user.lastName,
       preferredName: user.preferredName || "",
       phone: user.phone || "",
+      password: "",
       role: user.role,
       userStatus: user.userStatus,
     });
@@ -670,7 +673,7 @@ export default function UserManagementPage() {
 
         {/* Edit User Dialog */}
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent data-testid="dialog-edit-user">
+          <DialogContent className="max-h-[90vh] overflow-y-auto" data-testid="dialog-edit-user">
             <DialogHeader>
               <DialogTitle>Edit User</DialogTitle>
               <DialogDescription>
@@ -726,6 +729,19 @@ export default function UserManagementPage() {
                       <FormLabel>Phone (optional)</FormLabel>
                       <FormControl>
                         <Input {...field} data-testid="input-edit-phone" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password (optional)</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="password" placeholder="Leave blank to keep current password" data-testid="input-edit-password" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
