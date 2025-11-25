@@ -403,8 +403,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-primary-foreground/80">
-            <p>&copy; {new Date().getFullYear()} Tactical Advantage</p>
+          <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-primary-foreground/80">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-left">&copy; {new Date().getFullYear()} Tactical Advantage</p>
+              <p className="text-center md:absolute md:left-1/2 md:transform md:-translate-x-1/2">Built and Powered by InstructorOps</p>
+              <div className="hidden md:block"></div>
+            </div>
           </div>
         </div>
       </footer>
