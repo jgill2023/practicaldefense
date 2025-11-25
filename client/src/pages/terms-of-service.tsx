@@ -116,15 +116,15 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              By participating in firearms training or related activities provided by Practical Defense Training, LLC, you acknowledge and accept the inherent risks associated with handling firearms, live ammunition, and range activities.
+              By participating in firearms training or related activities provided by Tactical Advantage, LLC, you acknowledge and accept the inherent risks associated with handling firearms, live ammunition, and range activities.
             </p>
             <p className="text-muted-foreground">
               You agree to:
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
               <li>Assume all risks, known and unknown, associated with training and related activities</li>
-              <li>Waive and release Practical Defense Training, LLC, its owners, instructors, and affiliates from any and all claims of injury, loss, or damage arising out of participation</li>
-              <li>Indemnify and hold harmless Practical Defense Training, LLC for any claims brought by third parties resulting from your actions</li>
+              <li>Waive and release Tactical Advantage, LLC, its owners, instructors, and affiliates from any and all claims of injury, loss, or damage arising out of participation</li>
+              <li>Indemnify and hold harmless Tactical Advantage, LLC for any claims brought by third parties resulting from your actions</li>
             </ul>
             <p className="text-muted-foreground">
               You further understand that safety protocols are strictly enforced and noncompliance may result in removal.
@@ -156,7 +156,7 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              All content on the Site—including text, logos, videos, graphics, and course materials—is the property of Practical Defense Training, LLC and is protected by copyright and trademark laws.
+              All content on the Site—including text, logos, videos, graphics, and course materials—is the property of Tactical Advantage, LLC and is protected by copyright and trademark laws.
             </p>
             <p className="text-muted-foreground mt-4">
               You may not copy, reproduce, distribute, or modify any materials without prior written consent.
