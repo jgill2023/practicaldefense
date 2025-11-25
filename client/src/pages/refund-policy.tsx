@@ -92,7 +92,7 @@ export default function RefundPolicyPage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>4. Cancellations by Practical Defense Training, LLC</CardTitle>
+            <CardTitle>4. Cancellations by Tactical Advantage, LLC</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
@@ -124,7 +124,7 @@ export default function RefundPolicyPage() {
           <CardContent className="space-y-4">
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
               <li>Refunds are issued to the original payment method used at registration</li>
-              <li>Stripe processing fees are covered by Practical Defense Training, LLC</li>
+              <li>Stripe processing fees are covered by Tactical Advantage, LLC</li>
               <li>Refunds typically appear within 5–10 business days, depending on your financial institution</li>
             </ul>
           </CardContent>

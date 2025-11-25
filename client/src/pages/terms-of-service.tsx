@@ -214,7 +214,7 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              To the fullest extent permitted by law, Practical Defense Training, LLC shall not be liable for any indirect, incidental, or consequential damages, including but not limited to personal injury, property damage, or data loss, arising from:
+              To the fullest extent permitted by law, Tactical Advantage, LLC shall not be liable for any indirect, incidental, or consequential damages, including but not limited to personal injury, property damage, or data loss, arising from:
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
               <li>Use or inability to use the Site</li>
@@ -233,7 +233,7 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              You agree to defend, indemnify, and hold harmless Practical Defense Training, LLC, its owners, employees, and affiliates from any claims, damages, or expenses resulting from your use of the Site or participation in our courses.
+              You agree to defend, indemnify, and hold harmless Tactical Advantage, LLC, its owners, employees, and affiliates from any claims, damages, or expenses resulting from your use of the Site or participation in our courses.
             </p>
           </CardContent>
         </Card>

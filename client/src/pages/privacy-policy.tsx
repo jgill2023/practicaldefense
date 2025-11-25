@@ -199,7 +199,7 @@ export default function PrivacyPolicyPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              We collect identification data solely to verify eligibility for firearms instruction. We do not share or report firearm-related information to government agencies unless legally required. Practical Defense Training, LLC assumes no liability for misuse or unauthorized disclosure of data by users or third-party platforms beyond our control.
+              We collect identification data solely to verify eligibility for firearms instruction. We do not share or report firearm-related information to government agencies unless legally required. Tactical Advantage, LLC assumes no liability for misuse or unauthorized disclosure of data by users or third-party platforms beyond our control.
             </p>
           </CardContent>
         </Card>

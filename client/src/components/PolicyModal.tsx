@@ -29,7 +29,7 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              By accessing or using www.abqconcealedcarry.com (the "Site") or registering for any training, course, or service provided by Practical Defense Training, LLC ("we," "us," or "our"), you agree to be bound by these Terms of Service ("Terms").
+              By accessing or using www.abqconcealedcarry.com (the "Site") or registering for any training, course, or service provided by Tactical Advantage, LLC ("we," "us," or "our"), you agree to be bound by these Terms of Service ("Terms").
             </p>
             <p className="text-muted-foreground mt-4">
               If you do not agree, do not use our website or services. These Terms apply to all users, including students, visitors, and account holders.
@@ -144,7 +144,7 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
               For questions or concerns regarding these Terms, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Practical Defense Training, LLC</strong></p>
+              <p><strong>Tactical Advantage, LLC</strong></p>
               <p><strong>Email:</strong> info@abqconcealedcarry.com</p>
               <p><strong>Website:</strong> www.abqconcealedcarry.com</p>
               <p><strong>Location:</strong> New Mexico, USA</p>
@@ -214,7 +214,7 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
               For privacy inquiries or to exercise your data rights, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Practical Defense Training, LLC</strong></p>
+              <p><strong>Tactical Advantage, LLC</strong></p>
               <p><strong>Email:</strong> info@abqconcealedcarry.com</p>
               <p><strong>Website:</strong> www.abqconcealedcarry.com</p>
               <p><strong>Location:</strong> New Mexico, USA</p>
@@ -244,7 +244,7 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              At Practical Defense Training, LLC ("we," "us," or "our"), we understand that plans can change. Because class sizes are limited and range time is reserved in advance, we have established the following refund and cancellation policy to ensure fairness to all students and instructors.
+              At Tactical Advantage, LLC ("we," "us," or "our"), we understand that plans can change. Because class sizes are limited and range time is reserved in advance, we have established the following refund and cancellation policy to ensure fairness to all students and instructors.
             </p>
             <p className="text-muted-foreground mt-4">
               By registering for a course on www.abqconcealedcarry.com, you acknowledge and agree to the terms below.
@@ -290,7 +290,7 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
               For questions or cancellation requests, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Practical Defense Training, LLC</strong></p>
+              <p><strong>Tactical Advantage, LLC</strong></p>
               <p><strong>Email:</strong> info@abqconcealedcarry.com</p>
               <p><strong>Website:</strong> www.abqconcealedcarry.com</p>
               <p><strong>Location:</strong> New Mexico, USA</p>
