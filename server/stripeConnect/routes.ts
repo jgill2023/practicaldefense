@@ -63,8 +63,11 @@ function verifyState(state: string): { userId: string; timestamp: number } | nul
 }
 
 function getBaseUrl(req: Request): string {
-  const proto = req.headers['x-forwarded-proto'] || req.protocol;
   const host = req.headers['x-forwarded-host'] || req.headers.host;
+  // Always use HTTPS for OAuth redirects to prevent token leakage
+  // In development, x-forwarded-proto may be http, but we force https for security
+  const isLocalhost = host?.includes('localhost') || host?.includes('127.0.0.1');
+  const proto = isLocalhost ? 'http' : 'https';
   return `${proto}://${host}`;
 }
 

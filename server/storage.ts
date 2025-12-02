@@ -2769,8 +2769,18 @@ export class DatabaseStorage implements IStorage {
       // Continue without tax if calculation fails
     }
 
-    // Create or update the Stripe PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
+    // Check if the course instructor has a connected Stripe account
+    let stripeConnectedAccountId: string | null = null;
+    if (course.instructorId) {
+      const instructor = await this.getUser(course.instructorId);
+      if (instructor?.stripeConnectAccountId && instructor.stripeConnectOnboardingComplete) {
+        stripeConnectedAccountId = instructor.stripeConnectAccountId;
+        console.log('💳 Routing payment to connected account:', stripeConnectedAccountId);
+      }
+    }
+
+    // Build payment intent parameters
+    const paymentIntentParams: any = {
       amount: finalAmount,
       currency: "usd",
       automatic_payment_methods: { enabled: true },
@@ -2783,8 +2793,22 @@ export class DatabaseStorage implements IStorage {
         promo_code: promoCode || null,
         original_amount: paymentAmount.toString(),
         discount_amount: discountAmount.toString(),
+        instructor_id: course.instructorId || null,
+        connected_account_id: stripeConnectedAccountId || null,
       },
-    });
+    };
+
+    // Add transfer_data for connected accounts to route payment directly
+    if (stripeConnectedAccountId) {
+      paymentIntentParams.transfer_data = {
+        destination: stripeConnectedAccountId,
+      };
+      // Optionally add application_fee_amount for platform fees here
+      // paymentIntentParams.application_fee_amount = Math.round(finalAmount * 0.05); // 5% platform fee
+    }
+
+    // Create or update the Stripe PaymentIntent
+    const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
 
     // Update enrollment with Stripe PaymentIntent ID and promo code
     await db

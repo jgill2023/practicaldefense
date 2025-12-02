@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { isAdminOrHigher, isInstructorOrHigher } from "@/lib/authUtils";
-import Layout from "@/components/Layout";
+import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -234,25 +234,26 @@ export default function StripeConnectPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline inline-flex items-center gap-1"
+                    data-testid="link-stripe-dashboard-settings"
                   >
                     Stripe Dashboard <ExternalLink className="h-3 w-3" />
                   </a>
                 </p>
               </div>
 
-              <Alert>
+              <Alert data-testid="alert-redirect-uri">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Redirect URI Configuration</AlertTitle>
                 <AlertDescription className="space-y-2">
                   <p>Add this redirect URI to your Stripe Connect settings:</p>
-                  <code className="block bg-muted p-2 rounded text-sm font-mono break-all">
+                  <code className="block bg-muted p-2 rounded text-sm font-mono break-all" data-testid="text-redirect-uri">
                     {window.location.origin}/api/stripe-connect/oauth/callback
                   </code>
                 </AlertDescription>
               </Alert>
 
               <div className="flex items-center gap-2">
-                <Badge variant={config?.configured ? "default" : "secondary"}>
+                <Badge variant={config?.configured ? "default" : "secondary"} data-testid="badge-config-status">
                   {config?.configured ? "Configured" : "Not Configured"}
                 </Badge>
               </div>

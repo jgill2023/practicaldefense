@@ -693,6 +693,16 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
       });
     }
 
+    // Check if the instructor has a connected Stripe account
+    const instructor = await storage.getUser(instructorId);
+    const stripeConnectedAccountId = instructor?.stripeConnectAccountId && instructor.stripeConnectOnboardingComplete
+      ? instructor.stripeConnectAccountId
+      : null;
+    
+    if (stripeConnectedAccountId) {
+      console.log('💳 Routing appointment payment to connected account:', stripeConnectedAccountId);
+    }
+
     // Create PaymentIntent
     const subtotalInCents = Math.round(finalAmount * 100); // Subtotal before tax
     const paymentIntentParams: any = {
@@ -706,6 +716,7 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
         startTime: new Date(startTime).toISOString(),
         endTime: new Date(endTime).toISOString(),
         subtotalCents: String(subtotalInCents), // CRITICAL: Store original subtotal for tax calculation
+        connected_account_id: stripeConnectedAccountId || null,
         ...(customerEmail && { customerEmail }),
         ...(customerName && { customerName }),
         ...(durationHours && { durationHours: String(durationHours) }),
@@ -730,6 +741,15 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
           country: billingAddress.country || 'US',
         },
       };
+    }
+
+    // Add transfer_data for connected accounts to route payment directly
+    if (stripeConnectedAccountId) {
+      paymentIntentParams.transfer_data = {
+        destination: stripeConnectedAccountId,
+      };
+      // Optionally add application_fee_amount for platform fees here
+      // paymentIntentParams.application_fee_amount = Math.round(subtotalInCents * 0.05); // 5% platform fee
     }
 
     const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
