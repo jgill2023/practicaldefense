@@ -6098,10 +6098,10 @@ jeremy@abqconcealedcarry.com
 
       const { enrollmentId } = req.params;
 
-      // Only allow instructors to view payment details
+      // Allow instructors, admin, and superadmin roles to view payment details
       const user = await storage.getUser(userId);
-      if (!user || (user.role !== 'instructor' && user.role !== 'superadmin')) {
-        return res.status(403).json({ error: "Unauthorized: Instructor access required" });
+      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
+        return res.status(403).json({ error: "Unauthorized: Instructor or admin access required" });
       }
 
       // Get enrollment and verify instructor has access
@@ -6110,21 +6110,27 @@ jeremy@abqconcealedcarry.com
         return res.status(404).json({ error: "Enrollment not found" });
       }
 
-      // Verify instructor owns this course
+      // Verify instructor owns this course or user is admin/superadmin
       const schedule = await storage.getCourseSchedule(enrollment.scheduleId);
       if (!schedule) {
         return res.status(404).json({ error: "Course schedule not found" });
       }
 
       const course = await storage.getCourse(schedule.courseId);
-      if (!course || course.instructorId !== userId) {
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      // Regular instructors can only view their own courses; admin/superadmin can view all
+      const isAdminOrSuperadmin = user.role === 'admin' || user.role === 'superadmin';
+      if (!isAdminOrSuperadmin && course.instructorId !== userId) {
         return res.status(403).json({ error: "Unauthorized: You can only view payment details for your own courses" });
       }
 
-      // Get payment balance info
-      const paymentBalance = await storage.getPaymentBalance(enrollmentId);
-
-      // Calculate tax information (taxAmount stored as DECIMAL dollars in database)
+      // Get promo code redemption for this enrollment (authoritative source for discount)
+      const promoRedemption = await storage.getPromoCodeRedemptionByEnrollment(enrollmentId);
+      
+      // Calculate amounts using promo code redemption data as authoritative source
       const coursePriceInDollars = parseFloat(course.price);
       const taxAmountInDollars = enrollment.taxAmount 
         ? parseFloat(enrollment.taxAmount.toString()) 
@@ -6132,18 +6138,43 @@ jeremy@abqconcealedcarry.com
       const taxRateValue = enrollment.taxRate 
         ? parseFloat(enrollment.taxRate.toString())
         : null;
-      const totalWithTax = coursePriceInDollars + (taxAmountInDollars || 0);
+
+      // Get discount amount from promo code redemption (authoritative)
+      let discountAmount = 0;
+      let promoCode: string | undefined;
+      
+      if (promoRedemption) {
+        discountAmount = parseFloat(promoRedemption.discountAmount.toString());
+        // Get the promo code details
+        const promoCodeDetails = await storage.getPromoCode(promoRedemption.promoCodeId);
+        promoCode = promoCodeDetails?.code;
+      }
+
+      // Calculate total: Course Price - Discount + Tax
+      // Formula: Total Amount = (Subtotal - Discount) + Tax
+      const subtotalAfterDiscount = coursePriceInDollars - discountAmount;
+      const totalAmount = subtotalAfterDiscount + (taxAmountInDollars || 0);
+
+      // Get payment balance info
+      const paymentBalance = await storage.getPaymentBalance(enrollmentId);
+
+      // Calculate remaining balance: Total Amount - Amount Paid
+      const amountPaid = paymentBalance.paidAmount || 0;
+      const remainingBalance = Math.max(0, totalAmount - amountPaid);
 
       const paymentDetails = {
         enrollmentId: enrollment.id,
         paymentStatus: enrollment.paymentStatus,
         subtotal: coursePriceInDollars,
+        promoCode: promoCode || enrollment.promoCodeApplied,
+        promoDiscount: discountAmount > 0 ? discountAmount : undefined,
         taxAmount: taxAmountInDollars,
         taxRate: taxRateValue,
-        totalAmount: totalWithTax,
-        amountPaid: paymentBalance.paidAmount || 0,
-        remainingBalance: paymentBalance.remainingBalance || 0,
+        totalAmount: totalAmount,
+        amountPaid: amountPaid,
+        remainingBalance: remainingBalance,
         paymentDate: enrollment.paymentDate,
+        paymentIntentId: enrollment.stripePaymentIntentId,
         courseName: course.title,
         scheduleDate: schedule.startDate,
         paymentHistory: [],

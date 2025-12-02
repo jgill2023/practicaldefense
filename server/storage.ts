@@ -393,6 +393,7 @@ export interface IStorage {
   redeemPromoCode(redemption: InsertPromoCodeRedemption): Promise<PromoCodeRedemption>;
   getPromoCodeRedemptions(promoCodeId: string): Promise<PromoCodeRedemption[]>;
   getPromoCodeRedemptionsByUser(userId: string): Promise<PromoCodeRedemption[]>;
+  getPromoCodeRedemptionByEnrollment(enrollmentId: string): Promise<PromoCodeRedemption | undefined>;
 
   // Promo code utility methods
   generatePromoCode(): Promise<string>;
@@ -3829,6 +3830,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(promoCodeRedemptions.userId, userId))
       .orderBy(desc(promoCodeRedemptions.createdAt));
     return redemptions;
+  }
+
+  async getPromoCodeRedemptionByEnrollment(enrollmentId: string): Promise<PromoCodeRedemption | undefined> {
+    const redemption = await db.query.promoCodeRedemptions.findFirst({
+      where: eq(promoCodeRedemptions.enrollmentId, enrollmentId),
+    });
+    return redemption || undefined;
   }
 
   // Promo code utility methods

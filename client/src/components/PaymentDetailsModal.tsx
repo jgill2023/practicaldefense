@@ -5,13 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { CreditCard, DollarSign, Calendar, Tag, AlertCircle, X, MessageSquare, Mail, RefreshCw } from "lucide-react";
+import { CreditCard, DollarSign, Calendar, Tag, AlertCircle, MessageSquare, Mail, RefreshCw } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { RefundPaymentModal } from "./RefundPaymentModal";
 
 interface PaymentDetailsModalProps {
   isOpen: boolean;
@@ -36,6 +34,7 @@ interface PaymentDetails {
   scheduleDate: string;
   taxAmount?: number | null;
   taxRate?: number | null;
+  paymentIntentId?: string;
   paymentHistory: Array<{
     id: string;
     amount: number;
@@ -54,9 +53,7 @@ export function PaymentDetailsModal({
   enrollmentId 
 }: PaymentDetailsModalProps) {
   const { toast } = useToast();
-  const [showRefundDialog, setShowRefundDialog] = useState(false);
-  const [refundAmount, setRefundAmount] = useState("");
-  const [refundReason, setRefundReason] = useState("");
+  const [showRefundModal, setShowRefundModal] = useState(false);
   
   const { data: paymentDetails, isLoading, error } = useQuery<PaymentDetails>({
     queryKey: ["/api/instructor/payment-details", enrollmentId],
@@ -110,45 +107,6 @@ export function PaymentDetailsModal({
     },
   });
 
-  const processRefundMutation = useMutation({
-    mutationFn: async () => {
-      const body: any = {};
-      
-      if (refundAmount && refundAmount.trim() !== "") {
-        const amount = parseFloat(refundAmount);
-        if (isNaN(amount) || amount <= 0) {
-          throw new Error("Please enter a valid refund amount");
-        }
-        body.refundAmount = amount;
-      }
-      
-      if (refundReason && refundReason.trim() !== "") {
-        body.refundReason = refundReason.trim();
-      }
-      
-      return await apiRequest("POST", `/api/instructor/refund-requests/${enrollmentId}/process`, body);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Refund Processed",
-        description: "The refund has been processed successfully and the student has been notified.",
-      });
-      setShowRefundDialog(false);
-      setRefundAmount("");
-      setRefundReason("");
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor/payment-details", enrollmentId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor/refund-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Refund Failed",
-        description: error?.message || "Unable to process refund. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -181,372 +139,326 @@ export function PaymentDetailsModal({
     }
   };
 
+  const handleRefundSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/instructor/payment-details", enrollmentId] });
+    setShowRefundModal(false);
+  };
+
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center gap-3">
-            <CreditCard className="h-5 w-5 text-primary" />
-            <DialogTitle>Payment Details</DialogTitle>
-          </div>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <CreditCard className="h-5 w-5 text-primary" />
+              <DialogTitle>Payment Details</DialogTitle>
+            </div>
+          </DialogHeader>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
-            <span className="ml-3 text-muted-foreground">Loading payment details...</span>
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Failed to Load Payment Details</h3>
-              <p className="text-muted-foreground">Unable to retrieve payment information. Please try again.</p>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
+              <span className="ml-3 text-muted-foreground">Loading payment details...</span>
             </div>
-          </div>
-        ) : !paymentDetails ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Payment Information</h3>
-              <p className="text-muted-foreground">No payment details found for this enrollment.</p>
+          ) : error ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Failed to Load Payment Details</h3>
+                <p className="text-muted-foreground">Unable to retrieve payment information. Please try again.</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Student & Course Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Enrollment Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Student:</span>
-                  <span className="font-medium" data-testid="text-student-name">{studentName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Course:</span>
-                  <span className="font-medium" data-testid="text-course-name">{paymentDetails.courseName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Schedule:</span>
-                  <span className="font-medium" data-testid="text-schedule-date">
-                    {format(new Date(paymentDetails.scheduleDate), "MMM d, yyyy")}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status:</span>
-                  <div data-testid="badge-payment-status">
-                    {getPaymentStatusBadge(paymentDetails.paymentStatus)}
+          ) : !paymentDetails ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Payment Information</h3>
+                <p className="text-muted-foreground">No payment details found for this enrollment.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Student & Course Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Enrollment Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Student:</span>
+                    <span className="font-medium" data-testid="text-student-name">{studentName}</span>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Course:</span>
+                    <span className="font-medium" data-testid="text-course-name">{paymentDetails.courseName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Schedule:</span>
+                    <span className="font-medium" data-testid="text-schedule-date">
+                      {format(new Date(paymentDetails.scheduleDate), "MMM d, yyyy")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Status:</span>
+                    <div data-testid="badge-payment-status">
+                      {getPaymentStatusBadge(paymentDetails.paymentStatus)}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Payment Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <DollarSign className="h-5 w-5" />
-                  Payment Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Tax Breakdown */}
-                {paymentDetails.taxAmount != null && paymentDetails.taxAmount > 0 ? (
+              {/* Payment Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <DollarSign className="h-5 w-5" />
+                    Payment Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Tax and Discount Breakdown */}
                   <div className="space-y-2 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    {/* Subtotal (before discount) */}
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Subtotal (Course Price)</span>
                       <span className="font-medium" data-testid="text-subtotal-amount">
-                        {formatCurrency(paymentDetails.totalAmount - paymentDetails.taxAmount)}
+                        {formatCurrency(
+                          paymentDetails.taxAmount != null && paymentDetails.taxAmount > 0
+                            ? paymentDetails.totalAmount - paymentDetails.taxAmount + (paymentDetails.promoDiscount || 0)
+                            : paymentDetails.totalAmount + (paymentDetails.promoDiscount || 0)
+                        )}
                       </span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Sales Tax{paymentDetails.taxRate ? ` (${(paymentDetails.taxRate * 100).toFixed(2)}%)` : ''}
-                      </span>
-                      <span className="font-medium" data-testid="text-tax-amount">
-                        {formatCurrency(paymentDetails.taxAmount)}
-                      </span>
-                    </div>
+
+                    {/* Promo Discount */}
+                    {paymentDetails.promoDiscount != null && paymentDetails.promoDiscount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <Tag className="h-3 w-3" />
+                          Discount {paymentDetails.promoCode && `(${paymentDetails.promoCode})`}
+                        </span>
+                        <span className="font-medium text-green-600" data-testid="text-discount-amount">
+                          -{formatCurrency(paymentDetails.promoDiscount)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Tax */}
+                    {paymentDetails.taxAmount != null && paymentDetails.taxAmount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          Sales Tax{paymentDetails.taxRate ? ` (${(paymentDetails.taxRate * 100).toFixed(2)}%)` : ''}
+                        </span>
+                        <span className="font-medium" data-testid="text-tax-amount">
+                          {formatCurrency(paymentDetails.taxAmount)}
+                        </span>
+                      </div>
+                    )}
+
                     <Separator />
+
+                    {/* Total */}
                     <div className="flex justify-between font-semibold">
-                      <span>Total with Tax</span>
+                      <span>Total</span>
                       <span data-testid="text-total-with-tax">
                         {formatCurrency(paymentDetails.totalAmount)}
                       </span>
                     </div>
                   </div>
-                ) : null}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">Total Amount</p>
-                    <p className="text-2xl font-bold text-blue-600" data-testid="text-total-amount">
-                      {formatCurrency(paymentDetails.totalAmount)}
-                    </p>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">Amount Paid</p>
-                    <p className="text-2xl font-bold text-green-600" data-testid="text-amount-paid">
-                      {formatCurrency(paymentDetails.amountPaid)}
-                    </p>
-                  </div>
-                  <div className="text-center p-4 bg-red-50 rounded-lg">
-                    <p className="text-sm text-muted-foreground">Remaining Balance</p>
-                    <p className="text-2xl font-bold text-red-600" data-testid="text-remaining-balance">
-                      {formatCurrency(paymentDetails.remainingBalance)}
-                    </p>
-                  </div>
-                </div>
-
-                {paymentDetails.promoCode && (
-                  <>
-                    <Separator />
-                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Tag className="h-4 w-4 text-purple-600" />
-                        <span className="text-sm font-medium">Promo Code Applied</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-mono" data-testid="text-promo-code">
-                          {paymentDetails.promoCode}
-                        </p>
-                        {paymentDetails.promoDiscount && (
-                          <p className="text-sm text-green-600" data-testid="text-promo-discount">
-                            -{formatCurrency(paymentDetails.promoDiscount)}
-                          </p>
-                        )}
-                      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Total Amount</p>
+                      <p className="text-2xl font-bold text-blue-600" data-testid="text-total-amount">
+                        {formatCurrency(paymentDetails.totalAmount)}
+                      </p>
                     </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Amount Paid</p>
+                      <p className="text-2xl font-bold text-green-600" data-testid="text-amount-paid">
+                        {formatCurrency(paymentDetails.amountPaid)}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-red-50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Remaining Balance</p>
+                      <p className="text-2xl font-bold text-red-600" data-testid="text-remaining-balance">
+                        {formatCurrency(paymentDetails.remainingBalance)}
+                      </p>
+                    </div>
+                  </div>
 
-            {/* Payment History */}
-            {paymentDetails.paymentHistory && paymentDetails.paymentHistory.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Calendar className="h-5 w-5" />
-                    Payment History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {paymentDetails.paymentHistory.map((payment, index) => (
-                      <div key={payment.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium" data-testid={`text-payment-amount-${index}`}>
-                            {formatCurrency(payment.amount)}
+                  {paymentDetails.promoCode && (
+                    <>
+                      <Separator />
+                      <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Tag className="h-4 w-4 text-purple-600" />
+                          <span className="text-sm font-medium">Promo Code Applied</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-mono" data-testid="text-promo-code">
+                            {paymentDetails.promoCode}
                           </p>
-                          <p className="text-sm text-muted-foreground" data-testid={`text-payment-date-${index}`}>
-                            {formatDate(payment.paymentDate)}
-                          </p>
-                          {payment.transactionId && (
-                            <p className="text-xs text-muted-foreground font-mono" data-testid={`text-transaction-id-${index}`}>
-                              ID: {payment.transactionId}
+                          {paymentDetails.promoDiscount != null && paymentDetails.promoDiscount > 0 && (
+                            <p className="text-sm text-green-600" data-testid="text-promo-discount">
+                              -{formatCurrency(paymentDetails.promoDiscount)}
                             </p>
                           )}
                         </div>
-                        <div className="text-right">
-                          <Badge 
-                            variant={payment.status === 'completed' ? 'default' : 'secondary'}
-                            data-testid={`badge-payment-status-${index}`}
-                          >
-                            {payment.status}
-                          </Badge>
-                          <p className="text-sm text-muted-foreground mt-1" data-testid={`text-payment-method-${index}`}>
-                            {payment.paymentMethod}
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Payment History */}
+              {paymentDetails.paymentHistory && paymentDetails.paymentHistory.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Calendar className="h-5 w-5" />
+                      Payment History
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {paymentDetails.paymentHistory.map((payment, index) => (
+                        <div key={payment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium" data-testid={`text-payment-amount-${index}`}>
+                              {formatCurrency(payment.amount)}
+                            </p>
+                            <p className="text-sm text-muted-foreground" data-testid={`text-payment-date-${index}`}>
+                              {formatDate(payment.paymentDate)}
+                            </p>
+                            {payment.transactionId && (
+                              <p className="text-xs text-muted-foreground font-mono" data-testid={`text-transaction-id-${index}`}>
+                                ID: {payment.transactionId}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <Badge 
+                              variant={payment.status === 'completed' ? 'default' : 'secondary'}
+                              data-testid={`badge-payment-status-${index}`}
+                            >
+                              {payment.status}
+                            </Badge>
+                            <p className="text-sm text-muted-foreground mt-1" data-testid={`text-payment-method-${index}`}>
+                              {payment.paymentMethod}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Refund Section for Paid Enrollments */}
+              {paymentDetails.paymentStatus === 'paid' && (
+                <Card className="border-purple-200 bg-purple-50">
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <RefreshCw className="h-5 w-5 text-purple-600" />
+                        <div>
+                          <p className="font-medium text-purple-800">Process Refund</p>
+                          <p className="text-sm text-purple-700">
+                            Issue a full or partial refund for this enrollment
                           </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Refund Section for Paid Enrollments */}
-            {paymentDetails.paymentStatus === 'paid' && !showRefundDialog && (
-              <Card className="border-purple-200 bg-purple-50">
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <RefreshCw className="h-5 w-5 text-purple-600" />
-                      <div>
-                        <p className="font-medium text-purple-800">Process Refund</p>
-                        <p className="text-sm text-purple-700">
-                          Issue a full or partial refund for this enrollment
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowRefundDialog(true)}
-                      className="bg-white hover:bg-purple-100"
-                      data-testid="button-initiate-refund"
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Process Refund
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Refund Dialog */}
-            {showRefundDialog && (
-              <Card className="border-purple-200 bg-purple-50">
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <RefreshCw className="h-5 w-5 text-purple-600" />
-                        <p className="font-medium text-purple-800">Process Refund</p>
-                      </div>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={() => {
-                          setShowRefundDialog(false);
-                          setRefundAmount("");
-                          setRefundReason("");
-                        }}
-                        data-testid="button-cancel-refund"
+                        onClick={() => setShowRefundModal(true)}
+                        className="bg-white hover:bg-purple-100"
+                        data-testid="button-initiate-refund"
                       >
-                        <X className="h-4 w-4" />
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Process Refund
                       </Button>
                     </div>
-                    
-                    <div className="space-y-3">
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Balance Due Notice with Reminder Options */}
+              {paymentDetails.remainingBalance > 0 && (
+                <Card className="border-yellow-200 bg-yellow-50">
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-yellow-600" />
+                        <div>
+                          <p className="font-medium text-yellow-800">Outstanding Balance</p>
+                          <p className="text-sm text-yellow-700">
+                            Student has a remaining balance of {formatCurrency(paymentDetails.remainingBalance)}
+                          </p>
+                        </div>
+                      </div>
+                      <Separator className="bg-yellow-200" />
                       <div>
-                        <Label htmlFor="refund-amount" className="text-sm font-medium text-purple-900">
-                          Refund Amount (Optional)
-                        </Label>
-                        <Input
-                          id="refund-amount"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          max={paymentDetails.amountPaid}
-                          placeholder={`Leave empty for full refund ($${paymentDetails.amountPaid.toFixed(2)})`}
-                          value={refundAmount}
-                          onChange={(e) => setRefundAmount(e.target.value)}
-                          className="bg-white mt-1"
-                          data-testid="input-refund-amount"
-                        />
-                        <p className="text-xs text-purple-700 mt-1">
-                          If left empty, the full amount of {formatCurrency(paymentDetails.amountPaid)} will be refunded
-                        </p>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="refund-reason" className="text-sm font-medium text-purple-900">
-                          Refund Reason (Optional)
-                        </Label>
-                        <Textarea
-                          id="refund-reason"
-                          placeholder="Enter reason for refund (e.g., Student requested cancellation, Course rescheduled)"
-                          value={refundReason}
-                          onChange={(e) => setRefundReason(e.target.value)}
-                          className="bg-white mt-1"
-                          rows={3}
-                          data-testid="input-refund-reason"
-                        />
-                      </div>
-
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          onClick={() => processRefundMutation.mutate()}
-                          disabled={processRefundMutation.isPending}
-                          className="bg-purple-600 hover:bg-purple-700"
-                          data-testid="button-confirm-refund"
-                        >
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          {processRefundMutation.isPending ? "Processing..." : "Process Refund"}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setShowRefundDialog(false);
-                            setRefundAmount("");
-                            setRefundReason("");
-                          }}
-                          disabled={processRefundMutation.isPending}
-                          className="bg-white"
-                          data-testid="button-cancel-refund-form"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-
-                      <div className="bg-white p-3 rounded-lg border border-purple-200">
-                        <p className="text-xs text-purple-700">
-                          <strong>Note:</strong> Processing this refund will create a refund in Stripe, 
-                          update the enrollment status to "Refunded", and automatically send a notification 
-                          to the student.
-                        </p>
+                        <p className="text-sm font-medium text-yellow-800 mb-3">Send Payment Reminder:</p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => sendSMSReminderMutation.mutate()}
+                            disabled={sendSMSReminderMutation.isPending}
+                            className="bg-white hover:bg-yellow-100"
+                            data-testid="button-send-sms-reminder"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            {sendSMSReminderMutation.isPending ? "Sending..." : "Send SMS"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => sendEmailReminderMutation.mutate()}
+                            disabled={sendEmailReminderMutation.isPending}
+                            className="bg-white hover:bg-yellow-100"
+                            data-testid="button-send-email-reminder"
+                          >
+                            <Mail className="h-4 w-4 mr-2" />
+                            {sendEmailReminderMutation.isPending ? "Sending..." : "Send Email"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
-            {/* Balance Due Notice with Reminder Options */}
-            {paymentDetails.remainingBalance > 0 && (
-              <Card className="border-yellow-200 bg-yellow-50">
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-yellow-600" />
-                      <div>
-                        <p className="font-medium text-yellow-800">Outstanding Balance</p>
-                        <p className="text-sm text-yellow-700">
-                          Student has a remaining balance of {formatCurrency(paymentDetails.remainingBalance)}
-                        </p>
-                      </div>
-                    </div>
-                    <Separator className="bg-yellow-200" />
-                    <div>
-                      <p className="text-sm font-medium text-yellow-800 mb-3">Send Payment Reminder:</p>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => sendSMSReminderMutation.mutate()}
-                          disabled={sendSMSReminderMutation.isPending}
-                          className="bg-white hover:bg-yellow-100"
-                          data-testid="button-send-sms-reminder"
-                        >
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          {sendSMSReminderMutation.isPending ? "Sending..." : "Send SMS"}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => sendEmailReminderMutation.mutate()}
-                          disabled={sendEmailReminderMutation.isPending}
-                          className="bg-white hover:bg-yellow-100"
-                          data-testid="button-send-email-reminder"
-                        >
-                          <Mail className="h-4 w-4 mr-2" />
-                          {sendEmailReminderMutation.isPending ? "Sending..." : "Send Email"}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+      {/* Refund Payment Modal */}
+      {paymentDetails && (
+        <RefundPaymentModal
+          isOpen={showRefundModal}
+          onClose={() => setShowRefundModal(false)}
+          paymentType="enrollment"
+          entityId={enrollmentId}
+          paymentIntentId={paymentDetails.paymentIntentId}
+          originalAmount={paymentDetails.amountPaid}
+          studentName={studentName}
+          description={`${paymentDetails.courseName} - ${format(new Date(paymentDetails.scheduleDate), "MMM d, yyyy")}`}
+          enrollmentId={enrollmentId}
+          onSuccess={handleRefundSuccess}
+          queryKeysToInvalidate={[
+            ["/api/instructor/payment-details", enrollmentId],
+            ["/api/instructor/refund-requests"],
+            ["/api/instructor/dashboard-stats"],
+            ["/api/instructor/roster"],
+            ["/api/students"],
+          ]}
+        />
+      )}
+    </>
   );
 }
