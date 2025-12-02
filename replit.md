@@ -4,6 +4,35 @@ Tactical Advantage is a full-stack web application designed as a professional fi
 
 # Recent Changes
 
+## December 2, 2025 - Stripe Connect OAuth Integration for Instructor Payment Routing
+Added Stripe Connect OAuth functionality allowing instructors to connect their existing Stripe accounts to receive payments directly. This enables a self-service flow where instructors can link their accounts and the platform automatically routes payments to them.
+
+**Features:**
+- OAuth flow with HMAC-signed state parameters and HTTPS-enforced redirects
+- Admin configuration panel for setting Stripe Client ID
+- Instructor connection status dashboard showing account verification status
+- Automatic payment routing for course enrollments and appointments when instructor has connected account
+- Webhook processing for account synchronization and status updates
+- Disconnect functionality with proper cleanup
+
+**Schema Changes:**
+- Added `stripeClientId` to appSettings for platform configuration
+- Added Stripe Connect fields to users table: `stripeConnectAccountId`, `stripeConnectOnboardingComplete`, `stripeConnectDetailsSubmitted`, `stripeConnectChargesEnabled`, `stripeConnectPayoutsEnabled`, `stripeConnectCreatedAt`
+
+**Files Added/Modified:**
+- `server/stripeConnect/routes.ts`: OAuth endpoints, config, status, disconnect, webhooks
+- `client/src/pages/stripe-connect.tsx`: Payment Settings page with role-gated access
+- `server/storage.ts`: Updated payment intent creation with connected account routing
+- `server/appointments/routes.ts`: Updated appointment payments with connected account routing
+- `client/src/components/Layout.tsx`: Added Payment Settings navigation link
+- `client/src/App.tsx`: Registered new route
+
+**Security:**
+- HMAC-signed OAuth state with timestamp validation (10-minute expiry)
+- HTTPS-only redirects in production (localhost exception for development)
+- Role-based access: Admins configure Client ID, Instructors connect accounts
+- All interactive elements have data-testid attributes for testing
+
 ## November 23, 2025 - Enhanced User Management: Scrollable Edit Dialog and Password Change Feature
 Added the ability to change user passwords directly from the Edit User dialog in the admin user management interface. Also fixed modal scrollability to accommodate all form fields.
 
