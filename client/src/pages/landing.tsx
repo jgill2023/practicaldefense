@@ -10,7 +10,7 @@ import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
 import { BookingModal } from "@/components/BookingModal";
 import type { CourseWithSchedules, AppSettings, AppointmentType } from "@shared/schema";
-import heroImage from "@assets/TacticalAdvantageHeader_1762624792996.jpg";
+import heroImage from "@assets/header1_1764654063692.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
@@ -219,9 +219,8 @@ export default function Landing() {
 
           <div className="flex justify-center mb-16">
             <Button
-              size="lg"
               className="hover:bg-gray-200 px-4 sm:px-8 py-3 rounded border-2 border-white transition-colors text-sm sm:text-base md:text-lg lg:text-xl bg-[#ab0505] text-[#ffffff] font-bold pt-[12px] pb-[12px] mt-[0px] mb-[0px]"
-              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
+              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}
               onClick={() => {
                 const coursesSection = document.getElementById('courses');
                 if (coursesSection) {
