@@ -73,6 +73,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-products">
                         Products
                       </Link>
+                      <Link href="/stripe-connect" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-payment-settings">
+                        Payment Settings
+                      </Link>
                     </>
                   )}
                   <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-student-dashboard">
@@ -305,6 +308,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           <Link href="/product-management" className="block">
                             <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-products-mobile">
                               Products
+                            </Button>
+                          </Link>
+                          <Link href="/stripe-connect" className="block">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-payment-settings-mobile">
+                              Payment Settings
                             </Button>
                           </Link>
                           {canCreateAccounts(user as any) && (
