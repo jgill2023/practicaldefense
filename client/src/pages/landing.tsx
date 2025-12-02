@@ -216,9 +216,6 @@ export default function Landing() {
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
           <h1 className="uppercase mb-4 text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl" style={{ fontFamily: "'Vast Shadow', cursive", fontWeight: 400, letterSpacing: '3px', lineHeight: '1.1em' }}>Core Concepts</h1>
-          <p className="uppercase mb-12 text-xl sm:text-2xl md:text-3xl lg:text-4xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, letterSpacing: '3px', lineHeight: '1.3em' }}>
-            Different by Design
-          </p>
 
           <div className="flex justify-center mb-16">
             <Button
