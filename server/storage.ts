@@ -204,6 +204,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByPhone(phone: string): Promise<User | undefined>;
+  getUsersByStripeConnectAccountId(stripeConnectAccountId: string): Promise<User[]>;
   getAllStudents(): Promise<User[]>;
   getAllUsers(): Promise<User[]>;
   getPendingUsersCount(): Promise<number>;
@@ -738,6 +739,12 @@ export class DatabaseStorage implements IStorage {
     });
     
     return user;
+  }
+
+  async getUsersByStripeConnectAccountId(stripeConnectAccountId: string): Promise<User[]> {
+    const matchedUsers = await db.select().from(users)
+      .where(eq(users.stripeConnectAccountId, stripeConnectAccountId));
+    return matchedUsers;
   }
 
   async getAllStudents(): Promise<User[]> {

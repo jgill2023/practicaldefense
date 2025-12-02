@@ -16,6 +16,7 @@ import { sendSms } from "./smsService";
 import { CourseNotificationEngine, NotificationEngine } from "./notificationEngine";
 import { NotificationEmailService, sendPasswordResetEmail } from "./emailService";
 import { appointmentRouter } from "./appointments/routes";
+import { stripeConnectRouter } from "./stripeConnect/routes";
 import "./types"; // Import type declarations
 
 // Stripe is required for payment processing
@@ -8725,6 +8726,9 @@ jeremy@abqconcealedcarry.com
 
   // Mount appointment routes
   app.use('/api/appointments', appointmentRouter);
+
+  // Mount Stripe Connect routes
+  app.use('/api/stripe-connect', stripeConnectRouter);
 
   const httpServer = createServer(app);
   return httpServer;

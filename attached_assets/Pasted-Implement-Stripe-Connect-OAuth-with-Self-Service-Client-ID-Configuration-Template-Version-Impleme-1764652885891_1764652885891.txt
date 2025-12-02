@@ -1,0 +1,68 @@
+Implement Stripe Connect OAuth with Self-Service Client ID Configuration (Template Version)
+Implement Stripe Connect OAuth integration that allows instructors to enter their Stripe Client ID from a settings page and connect their existing Stripe accounts. Payments should route through connected instructor accounts.
+
+Key Requirements:
+
+Database Schema Changes (shared/schema.ts):
+
+Add stripe_client_id column to appSettings table (optional string for storing Stripe Client ID)
+Add Stripe Connect fields to users table: stripeConnectAccountId, stripeConnectOnboardingComplete, stripeConnectDetailsSubmitted, stripeConnectChargesEnabled, stripeConnectPayoutsEnabled, stripeConnectCreatedAt
+Backend Routes (server/stripeConnect/routes.ts - new file):
+
+GET /api/stripe-connect/config - Check if Stripe Client ID is configured
+POST /api/stripe-connect/config - Save Stripe Client ID to appSettings table (admin/superadmin only)
+GET /api/stripe-connect/oauth-link - Generate OAuth authorization link with HMAC-signed state parameter (15-minute TTL)
+GET /api/stripe-connect/oauth/callback - Handle OAuth callback with state verification and redirect_uri validation
+GET /api/stripe-connect/status - Get instructor's connection status
+DELETE /api/stripe-connect/disconnect - Disconnect instructor's Stripe account
+POST /api/stripe-connect/webhook - Handle Stripe account.updated and account.application.deauthorized events
+Security Implementation:
+
+HMAC sign state parameter with SESSION_SECRET environment variable
+15-minute TTL for state tokens
+Validate Client ID must start with "ca_"
+Pinning redirect_uri to prevent authorization code replay
+Only allow instructors to manage their own connections
+Frontend Payment Settings Page (client/src/pages/stripe-connect.tsx):
+
+Form to enter Stripe Client ID from Stripe Dashboard
+Display current connection status
+"Connect Your Stripe Account" button that redirects to OAuth authorization link
+Show connection details (account ID, charges enabled, payouts enabled)
+Disconnect button
+Redirect URI info for Stripe Dashboard: /api/stripe-connect/oauth/callback
+Navigation Updates (client/src/components/Layout.tsx):
+
+Add "Payment Settings" link for instructors in both desktop and mobile navigation
+Payment Routing Logic (server/routes.ts + server/appointments/routes.ts + server/storage.ts):
+
+Update all payment intent creation to check for connected Stripe account
+Use transfer_data.destination to route funds to instructor's connected account
+Payment routing priority:
+Check the authenticated instructor's connected Stripe account
+If not connected, fall back to platform Stripe account with logging
+Include paymentRouting field in payment metadata for audit trail
+Generic Setup:
+
+No hardcoded instructor names, emails, or business names
+Courses should reference their assigned instructor dynamically (via instructorId)
+All routes should work for any instructor connecting their account
+Make template reusable for different business domains
+Test Coverage:
+
+Test IDs for Client ID input, save button, connect button, status display, disconnect button
+Verify OAuth state parameter is properly signed and validated
+Test redirect_uri pinning prevents code reuse
+Verify connection status displays correctly
+Configuration:
+
+Redirect URI for Stripe Dashboard: https://your-domain/api/stripe-connect/oauth/callback
+Environment variable: SESSION_SECRET (used for HMAC signing)
+Key Features:
+
+Instructors self-serve Stripe Client ID configuration (no environment variables needed)
+OAuth flow handles account creation or existing account connection
+Automatic fallback to platform account if no connected account available
+Webhook support for real-time account status updates
+Audit trail via payment metadata
+Template-ready: works for any instructor/business setup

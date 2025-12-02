@@ -82,6 +82,13 @@ export const users = pgTable("users", {
   userStatus: userStatusEnum("user_status").notNull().default('pending'), // 'pending', 'active', 'suspended', or 'rejected'
   statusUpdatedAt: timestamp("status_updated_at"),
   statusReason: text("status_reason"), // Reason for suspension or rejection
+  // Stripe Connect fields for instructor payment routing
+  stripeConnectAccountId: varchar("stripe_connect_account_id", { length: 255 }), // Stripe Connect account ID (e.g., "acct_xxxxx")
+  stripeConnectOnboardingComplete: boolean("stripe_connect_onboarding_complete").default(false),
+  stripeConnectDetailsSubmitted: boolean("stripe_connect_details_submitted").default(false),
+  stripeConnectChargesEnabled: boolean("stripe_connect_charges_enabled").default(false),
+  stripeConnectPayoutsEnabled: boolean("stripe_connect_payouts_enabled").default(false),
+  stripeConnectCreatedAt: timestamp("stripe_connect_created_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -256,6 +263,8 @@ export const waitlist = pgTable("waitlist", {
 export const appSettings = pgTable("app_settings", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   homeCoursesLimit: integer("home_courses_limit").notNull().default(20),
+  // Stripe Connect OAuth configuration
+  stripeClientId: varchar("stripe_client_id", { length: 255 }), // Stripe Connect OAuth Client ID (starts with "ca_")
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -589,6 +598,10 @@ export const insertAppSettingsSchema = createInsertSchema(appSettings).omit({
   updatedAt: true,
 }).extend({
   homeCoursesLimit: z.number().int().min(1).max(50),
+  stripeClientId: z.string().optional().nullable().refine(
+    (val) => !val || val.startsWith('ca_'),
+    { message: "Stripe Client ID must start with 'ca_'" }
+  ),
 });
 
 // Appointment system insert schemas
