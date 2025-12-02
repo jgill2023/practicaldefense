@@ -1,0 +1,39 @@
+ Implement Refund Payment Feature with Move to Held List
+Implement a comprehensive refund payment feature for instructors that allows them to issue refunds on course enrollments, appointments, and e-commerce orders, with automatic prompting to move students to held status after refunds.
+
+Key Requirements:
+
+RefundPaymentModal Component (client/src/components/RefundPaymentModal.tsx):
+
+Accept props: isOpen, onClose, paymentType (enrollment/appointment/ecommerce_order), entityId, paymentIntentId, originalAmount, studentName, description, enrollmentId (optional), onSuccess, queryKeysToInvalidate
+Allow full or partial refunds with validation
+Support refund reasons: requested_by_customer, duplicate, fraudulent, other
+On successful refund, show an AlertDialog for enrollments asking: "Move Student to Held List?"
+AlertDialog should have two buttons: "No, Keep in Class" and "Yes, Move to Held"
+Call PATCH /api/instructor/enrollments/:enrollmentId/hold with notes when confirmed
+Invalidate appropriate query caches after both refund and hold actions
+PaymentDetailsModal Component (client/src/components/PaymentDetailsModal.tsx):
+
+Pass enrollmentId prop to RefundPaymentModal to enable the move-to-held feature
+Display payment details with correct balance calculation (Total - Discount - Amount Paid = Remaining Balance)
+Show promo code discount amounts
+Show "Process Refund" button for paid enrollments
+Backend Payment Authorization:
+
+Ensure GET /api/instructor/payment-details/:enrollmentId restricts regular instructors to viewing only their own courses
+Allow admin/superadmin roles to view all payment details
+Properly calculate remaining balance accounting for promo code redemptions
+Payment Calculation Logic:
+
+Use authoritative data from promoCodeRedemptions table for actual amounts
+Formula: Remaining Balance = Total Amount - Discount Amount - Amount Paid
+Handle both full payment and deposit payment scenarios
+Test Coverage:
+
+Test IDs for all interactive elements: button-initiate-refund, button-confirm-refund, button-skip-hold, button-confirm-hold, etc.
+Display test IDs for key values: text-refund-student-name, text-original-amount, text-refund-description
+Key Files to Modify:
+
+client/src/components/RefundPaymentModal.tsx (main refund logic with hold prompt)
+client/src/components/PaymentDetailsModal.tsx (pass enrollmentId prop)
+server/routes.ts (authorization and payment calculations)
