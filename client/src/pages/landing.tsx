@@ -220,7 +220,7 @@ export default function Landing() {
           <div className="flex justify-center mb-16">
             <Button
               size="lg"
-              className="bg-white text-black hover:bg-gray-200 px-4 sm:px-8 py-3 rounded border-2 border-white transition-colors text-sm sm:text-base md:text-lg lg:text-xl"
+              className="hover:bg-gray-200 px-4 sm:px-8 py-3 rounded border-2 border-white transition-colors text-sm sm:text-base md:text-lg lg:text-xl bg-[#ab0505] text-[#ffffff] font-bold pt-[12px] pb-[12px] mt-[0px] mb-[0px]"
               style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
               onClick={() => {
                 const coursesSection = document.getElementById('courses');
@@ -231,9 +231,7 @@ export default function Landing() {
                 }
               }}
               data-testid="button-browse-courses"
-            >
-              LET'S TRAIN TOGETHER
-            </Button>
+            >FIND A CLASS</Button>
           </div>
         </div>
 
