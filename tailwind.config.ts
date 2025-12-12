@@ -68,6 +68,9 @@ export default {
       },
       fontFamily: {
         sans: ["var(--font-sans)", "Noto Sans", "sans-serif"],
+        heading: ["Oswald", "Bebas Neue", "sans-serif"],
+        display: ["Bebas Neue", "sans-serif"],
+        accent: ["Permanent Marker", "cursive"],
         serif: ["var(--font-serif)", "Georgia", "serif"],
         mono: ["var(--font-mono)", "Fira Code", "monospace"],
       },
@@ -123,6 +126,36 @@ export default {
             transform: "translateY(0)",
           },
         },
+        "slide-up": {
+          from: {
+            opacity: "0",
+            transform: "translateY(20px)",
+          },
+          to: {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+        },
+        "slide-in-left": {
+          from: {
+            opacity: "0",
+            transform: "translateX(-30px)",
+          },
+          to: {
+            opacity: "1",
+            transform: "translateX(0)",
+          },
+        },
+        "scale-in": {
+          from: {
+            opacity: "0",
+            transform: "scale(0.95)",
+          },
+          to: {
+            opacity: "1",
+            transform: "scale(1)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -130,6 +163,9 @@ export default {
         "fade-in": "fade-in 0.3s ease-out",
         "slide-in": "slide-in 0.3s ease-out",
         "bounce-subtle": "bounce-subtle 1s ease-in-out infinite",
+        "slide-up": "slide-up 0.25s ease-out",
+        "slide-in-left": "slide-in-left 0.25s ease-out",
+        "scale-in": "scale-in 0.2s ease-out",
       },
       screens: {
         'xs': '475px',

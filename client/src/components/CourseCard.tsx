@@ -93,56 +93,55 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
 
   return (
     <Card 
-      className="overflow-hidden border border-border md:hover:shadow-xl transition-shadow w-full cursor-pointer active:shadow-2xl" 
+      className="overflow-hidden border-2 border-[hsl(204,27%,16%,0.12)] rounded-lg shadow-[4px_4px_0px_hsl(204,27%,16%,0.2)] hover:shadow-[6px_6px_0px_hsl(204,27%,16%,0.25)] hover:-translate-y-1 transition-all duration-200 w-full cursor-pointer" 
       data-testid={`course-card-${course.id}`}
       onClick={handleCardClick}
     >
-      <div className="relative w-full h-40 sm:h-48 bg-muted">
+      <div className="relative w-full h-40 sm:h-48 bg-muted overflow-hidden">
         <img 
           src={displayImageUrl} 
           alt={course.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           loading="lazy"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            // If the uploaded image fails to load, fall back to category-based image
             if (target.src !== getImageUrl(getCategoryName())) {
               target.src = getImageUrl(getCategoryName());
             }
           }}
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-[hsl(204,27%,16%,0.4)] to-transparent" />
       </div>
       <CardContent className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
-          <Badge className={getCategoryColor(getCategoryName())} data-testid={`badge-category-${course.id}`}>
+          <Badge className="bg-[hsl(190,65%,47%,0.15)] text-[hsl(190,65%,40%)] font-heading uppercase tracking-wide text-xs" data-testid={`badge-category-${course.id}`}>
             {getCategoryName()}
           </Badge>
-          <span className="text-2xl font-bold text-primary" data-testid={`text-price-${course.id}`}>
+          <span className="text-2xl font-bold text-[hsl(209,90%,38%)] font-heading" data-testid={`text-price-${course.id}`}>
             ${course.price}
           </span>
         </div>
 
-        <h3 className="text-xl font-semibold text-card-foreground mb-3" data-testid={`text-title-${course.id}`}>
+        <h3 className="font-heading text-xl uppercase tracking-wide text-card-foreground mb-3" data-testid={`text-title-${course.id}`}>
           {course.title}
         </h3>
 
-
         <div className="space-y-3 mb-6">
           <div className="flex items-center text-sm text-muted-foreground">
-            <Clock className="mr-2 h-4 w-4 text-foreground" />
+            <Clock className="mr-2 h-4 w-4 text-[hsl(209,90%,38%)]" />
             <span data-testid={`text-duration-${course.id}`}>{course.duration}</span>
           </div>
 
           {nextSchedule ? (
             <>
               <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="mr-2 h-4 w-4 text-foreground" />
+                <Calendar className="mr-2 h-4 w-4 text-[hsl(190,65%,47%)]" />
                 <span data-testid={`text-next-date-${course.id}`}>
                   Next: {formatDateSafe(nextSchedule.startDate.toString())}
                 </span>
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
-                <Users className="mr-2 h-4 w-4 text-foreground" />
+                <Users className="mr-2 h-4 w-4 text-[hsl(44,89%,61%)]" />
                 <span data-testid={`text-spots-left-${course.id}`}>
                   {actualAvailableSpots} spots left
                 </span>
@@ -150,13 +149,13 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
             </>
           ) : (
             <div className="flex items-center text-sm text-muted-foreground">
-              <Calendar className="mr-2 h-4 w-4 text-foreground" />
+              <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
               <span>No upcoming schedules</span>
             </div>
           )}
 
           <div className="flex items-center text-sm text-muted-foreground">
-            <Users className="mr-2 h-4 w-4 text-foreground" />
+            <Users className="mr-2 h-4 w-4 text-[hsl(204,27%,16%)]" />
             <span>Instructor: {course.instructor.firstName} {course.instructor.lastName}</span>
           </div>
         </div>
@@ -164,14 +163,17 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
         <Button 
           type="button"
           size="lg" 
-          className="w-full register-button min-h-[44px] rounded-none"
+          className={`w-full min-h-[44px] font-heading uppercase tracking-wide ${
+            isFull 
+              ? "bg-transparent border-2 border-[hsl(44,89%,61%)] text-[hsl(44,89%,50%)] hover:bg-[hsl(44,89%,61%)] hover:text-[hsl(204,27%,16%)]" 
+              : "bg-[hsl(209,90%,38%)] hover:bg-[hsl(209,90%,30%)] text-white"
+          }`}
           onClick={(e) => {
             e.stopPropagation();
             onRegister(course);
           }}
           disabled={!nextSchedule}
           data-testid={`button-register-${course.id}`}
-          variant={isFull ? "outline" : "default"}
         >
           {isFull ? "JOIN WAITLIST" : "REGISTER NOW"}
           <ArrowRight className="ml-2 h-5 w-5" />

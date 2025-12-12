@@ -44,7 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="sticky top-0 z-50">
         {/* Secondary Menu Bar for Logged In Users - Desktop Only */}
         {isAuthenticated && (
-          <div className="hidden md:block bg-gray-100 dark:bg-gray-800 border-b">
+          <div className="hidden md:block bg-[hsl(210,20%,96%)] dark:bg-[hsl(204,27%,12%)] border-b border-[hsl(210,15%,85%)]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-end h-10">
                 <nav className="flex items-center space-x-6">
@@ -116,36 +116,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Header Navigation */}
-        <header className="bg-primary shadow-lg">
+        <header className="bg-[hsl(204,27%,16%)] shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Company logo aligned to the left */}
             <div className="flex-shrink-0">
-              <Link href="/">
-                <img 
-                  src="/tactical-advantage-logo.png" 
-                  alt="Tactical Advantage" 
-                  className="h-12 cursor-pointer"
-                  data-testid="link-home"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    console.error('Logo failed to load from:', e.currentTarget.src);
-                  }}
-                />
+              <Link href="/" data-testid="link-home" className="flex items-center gap-2">
+                <div className="flex flex-col">
+                  <span className="font-display text-2xl text-white tracking-wider leading-none">RAC</span>
+                  <span className="text-[10px] text-[hsl(190,65%,47%)] tracking-widest uppercase leading-none">Core Concepts</span>
+                </div>
               </Link>
             </div>
 
             {/* Navigation and login aligned to the right */}
             <div className="flex items-center space-x-8">
               <nav className="hidden md:flex items-center space-x-8">
-                <a href="/" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-home" onClick={(e) => {
+                <a href="/" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" data-testid="link-home" onClick={(e) => {
                   if (window.location.pathname === '/') {
                     e.preventDefault();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <Link href="/about-chris" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-about-chris">About Chris</Link>
-                <a href="/#deductive-pistolcraft" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={(e) => {
+                <Link href="/about-chris" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" data-testid="link-about-chris">About Chris</Link>
+                <a href="/#deductive-pistolcraft" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" onClick={(e) => {
                   if (window.location.pathname === '/') {
                     e.preventDefault();
                     document.getElementById('deductive-pistolcraft')?.scrollIntoView({ behavior: 'smooth' });
@@ -154,7 +148,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
-                      <NavigationMenuTrigger className="bg-transparent text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors">
+                      <NavigationMenuTrigger className="bg-transparent text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium">
                         The Schedule
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
@@ -178,7 +172,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </NavigationMenuItem>
                   </NavigationMenuList>
                 </NavigationMenu>
-                <a href="/#appointments" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={(e) => {
+                <a href="/#appointments" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" onClick={(e) => {
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
                     e.preventDefault();
@@ -190,15 +184,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>Virtual Training</a>
-                <a href="/the-crucible" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors">The Crucible</a>
-                <Link href="/contact" className="text-base text-primary-foreground hover:text-[#A8ACB3] transition-colors" data-testid="link-contact">Contact Us</Link>
+                <a href="/the-crucible" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium">The Crucible</a>
+                <Link href="/contact" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" data-testid="link-contact">Contact Us</Link>
               </nav>
 
               {/* Desktop auth buttons */}
               <div className="hidden md:flex items-center space-x-4">
                 {!isAuthenticated && (
                   <Button 
-                    className="bg-accent text-accent-foreground hover:bg-accent/90"
+                    variant="accent"
                     onClick={() => window.location.href = '/login'}
                     data-testid="button-login"
                   >
@@ -209,7 +203,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
               {/* Mobile menu button */}
               <button 
-                className="md:hidden text-primary-foreground"
+                className="md:hidden text-white"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 data-testid="button-mobile-menu"
               >
@@ -220,36 +214,36 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Mobile menu */}
           {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-primary-foreground/20 py-4 max-h-[calc(100vh-64px)] overflow-y-auto">
+            <div className="md:hidden border-t border-white/20 py-4 max-h-[calc(100vh-64px)] overflow-y-auto">
               <nav className="flex flex-col space-y-2">
-                <a href="/" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-home-mobile" onClick={(e) => {
+                <a href="/" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-home-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
                   if (window.location.pathname === '/') {
                     e.preventDefault();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <Link href="/about-chris" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-about-chris-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Chris</Link>
-                <a href="/#deductive-pistolcraft" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-courses-mobile" onClick={(e) => {
+                <Link href="/about-chris" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-about-chris-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Chris</Link>
+                <a href="/#deductive-pistolcraft" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-courses-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
                   if (window.location.pathname === '/') {
                     e.preventDefault();
                     document.getElementById('deductive-pistolcraft')?.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}>Courses</a>
-                <a href="/the-crucible" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-crucible-mobile" onClick={() => setIsMobileMenuOpen(false)}>The Crucible</a>
+                <a href="/the-crucible" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-crucible-mobile" onClick={() => setIsMobileMenuOpen(false)}>The Crucible</a>
                 <div className="py-2">
-                  <div className="text-primary-foreground font-medium mb-2">The Schedule</div>
+                  <div className="text-white font-medium mb-2">The Schedule</div>
                   <div className="pl-4 space-y-2">
-                    <Link href="/schedule-list" className="block text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link href="/schedule-list" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                       List View
                     </Link>
-                    <Link href="/schedule-calendar" className="block text-primary-foreground hover:text-[#A8ACB3] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link href="/schedule-calendar" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                       Calendar View
                     </Link>
                   </div>
                 </div>
-                <a href="/#appointments" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" onClick={(e) => {
+                <a href="/#appointments" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" onClick={(e) => {
                   setIsMobileMenuOpen(false);
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
@@ -261,13 +255,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>Virtual Training</a>
-                <Link href="/contact" className="text-primary-foreground hover:text-[#A8ACB3] transition-colors py-2" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
+                <Link href="/contact" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
 
                 {/* Mobile auth buttons */}
-                <div className="border-t border-primary-foreground/20 mt-2 pt-2 space-y-2">
+                <div className="border-t border-white/20 mt-2 pt-2 space-y-2">
                   {!isAuthenticated ? (
                     <Button 
-                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                      variant="accent"
+                      className="w-full"
                       onClick={() => window.location.href = '/login'}
                       data-testid="button-login-mobile"
                     >
@@ -366,55 +361,57 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Main Content */}
       <main>{children}</main>
       {/* Footer */}
-      <footer className="bg-primary text-primary-foreground py-12">
+      <footer className="bg-[hsl(204,27%,16%)] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-12 gap-8">
             <div className="md:col-span-5">
-              <h3 className="text-xl font-bold mb-4">Tactical Advantage</h3>
-              <p className="text-primary-foreground/80">
+              <h3 className="text-xl font-bold mb-4 font-heading uppercase tracking-wide">
+                <span className="font-display text-2xl">RAC</span> - Core Concepts
+              </h3>
+              <p className="text-white/80">
                 Results-driven firearms training tailored to the individual student. Traditional, deductive pistolcraft emphasizing fundamentals and quantifiable metrics.
               </p>
             </div>
 
             <div className="md:col-span-2">
-              <h4 className="font-semibold mb-4">Support</h4>
-              <div className="space-y-2 text-primary-foreground/80">
-                <Link href="/contact" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-contact-support">Contact Us</Link>
-                <Link href="/privacy-policy" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-privacy-policy">Privacy Policy</Link>
-                <Link href="/terms-of-service" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-terms-of-service">Terms of Service</Link>
-                <Link href="/refund-policy" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-refund-policy">Refund Policy</Link>
+              <h4 className="font-semibold mb-4 text-[hsl(190,65%,47%)]">Support</h4>
+              <div className="space-y-2">
+                <Link href="/contact" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-contact-support">Contact Us</Link>
+                <Link href="/privacy-policy" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-privacy-policy">Privacy Policy</Link>
+                <Link href="/terms-of-service" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-terms-of-service">Terms of Service</Link>
+                <Link href="/refund-policy" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-refund-policy">Refund Policy</Link>
               </div>
             </div>
 
             <div className="md:col-span-2">
-              <h4 className="font-semibold mb-4">Quick Links</h4>
-              <div className="space-y-2 text-primary-foreground/80">
-                <Link href="/schedule-list" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
-                <Link href="/student-portal" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-student-dashboard">Student Dashboard</Link>
-                <a href="#resources" className="block transition-colors" style={{ color: '#e8e9eb' }}>Resources</a>
-                <Link href="/the-crucible" className="block transition-colors" style={{ color: '#e8e9eb' }} data-testid="link-footer-crucible">The Crucible</Link>
+              <h4 className="font-semibold mb-4 text-[hsl(190,65%,47%)]">Quick Links</h4>
+              <div className="space-y-2">
+                <Link href="/schedule-list" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
+                <Link href="/student-portal" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-footer-student-dashboard">Student Dashboard</Link>
+                <a href="#resources" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors">Resources</a>
+                <Link href="/the-crucible" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-footer-crucible">The Crucible</Link>
               </div>
             </div>
 
             <div className="md:col-span-3">
-              <h4 className="font-semibold mb-4">Contact</h4>
-              <div className="space-y-2 text-primary-foreground/80">
+              <h4 className="font-semibold mb-4 text-[hsl(190,65%,47%)]">Contact</h4>
+              <div className="space-y-2 text-white/80">
                 <div className="flex items-start space-x-2">
                   <span>✉️</span>
-                  <a href="mailto:Chris@TacticalAdv.com" className="transition-colors" style={{ color: '#e8e9eb' }}>Chris@TacticalAdv.com</a>
+                  <a href="mailto:Chris@TacticalAdv.com" className="hover:text-[hsl(190,65%,47%)] transition-colors">Chris@TacticalAdv.com</a>
                 </div>
                 <div className="flex items-start space-x-2">
-                  <span className="text-success">📍</span>
+                  <span>📍</span>
                   <span>Atlanta, Georgia</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-primary-foreground/80">
+          <div className="border-t border-white/20 mt-8 pt-8 text-white/70">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <p className="text-left">&copy; {new Date().getFullYear()} Tactical Advantage</p>
-              <p className="text-center md:absolute md:left-1/2 md:transform md:-translate-x-1/2">Built and Powered by <a href="https://instructorops.com" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-white underline">InstructorOps</a></p>
+              <p className="text-left">&copy; {new Date().getFullYear()} Apache Solutions</p>
+              <p className="text-center md:absolute md:left-1/2 md:transform md:-translate-x-1/2">Built and Powered by <a href="https://instructorops.com" target="_blank" rel="noopener noreferrer" className="text-[hsl(190,65%,47%)] hover:text-white transition-colors underline">InstructorOps</a></p>
               <div className="hidden md:block"></div>
             </div>
           </div>

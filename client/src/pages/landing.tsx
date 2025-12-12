@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User, DollarSign, CalendarClock } from "lucide-react";
+import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User, DollarSign, CalendarClock, Target, Award, Crosshair } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
 import { BookingModal } from "@/components/BookingModal";
+import { ComicPanel, TitleCard, DiagonalSeparator, SectionLabel } from "@/components/RACTheme";
 import type { CourseWithSchedules, AppSettings, AppointmentType } from "@shared/schema";
 import heroImage from "@assets/header1_1764654063692.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
@@ -197,7 +198,7 @@ export default function Landing() {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-screen flex items-center justify-center overflow-hidden grain-texture">
         {/* Background Image */}
         <div className="absolute inset-0">
           <div
@@ -209,65 +210,131 @@ export default function Landing() {
               backgroundRepeat: 'no-repeat'
             }}
           ></div>
-          {/* Dark overlay for better text readability */}
-          <div className="absolute inset-0 bg-black/60"></div>
+          {/* RAC Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(204,27%,16%,0.85)] via-[hsl(209,90%,38%,0.6)] to-[hsl(190,65%,47%,0.5)]"></div>
         </div>
 
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
-          <h1 className="uppercase mb-4 sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-[78px] pt-[64px] pb-[64px]" style={{ fontFamily: "'Vast Shadow', cursive", fontWeight: 400, letterSpacing: '3px', lineHeight: '1.1em' }}>Core Concepts</h1>
+          <div className="animate-slide-up">
+            <SectionLabel className="text-[hsl(44,89%,61%)] text-lg mb-4">Responsibly Armed Citizen</SectionLabel>
+            <h1 className="font-display uppercase mb-6 text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-wider">
+              CORE CONCEPTS
+            </h1>
+            <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto mb-8 font-light">
+              Results-driven firearms training tailored to the individual
+            </p>
+          </div>
 
-          <div className="flex justify-center mb-16">
+          <div className="flex justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <Button
-              className="hover:bg-gray-200 px-4 sm:px-8 py-3 rounded border-2 border-white transition-colors text-sm sm:text-base md:text-lg lg:text-xl bg-[#ab0505] text-[#ffffff] font-bold pt-[12px] pb-[12px] mt-[0px] mb-[0px]"
-              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}
+              size="lg"
+              className="bg-[hsl(209,90%,38%)] hover:bg-[hsl(209,90%,30%)] text-white font-heading uppercase tracking-wide px-8 py-6 text-lg shadow-lg"
               onClick={() => {
                 const coursesSection = document.getElementById('courses');
                 if (coursesSection) {
-                  const yOffset = -80; // Adjusted to show the top of the off-white area
+                  const yOffset = -80;
                   const y = coursesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                   window.scrollTo({ top: y, behavior: 'smooth' });
                 }
               }}
               data-testid="button-browse-courses"
-            >FIND A CLASS</Button>
+            >
+              <Target className="w-5 h-5 mr-2" />
+              FIND A CLASS
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-2 border-white text-white hover:bg-white hover:text-[hsl(204,27%,16%)] font-heading uppercase tracking-wide px-8 py-6 text-lg"
+              onClick={() => {
+                const appointmentsSection = document.getElementById('appointments');
+                if (appointmentsSection) {
+                  appointmentsSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              data-testid="button-book-training"
+            >
+              BOOK TRAINING
+            </Button>
           </div>
         </div>
 
-        {/* Diagonal slope overlay - part of hero section */}
-        <div className="absolute bottom-0 left-0 right-0 z-30" style={{ height: '15vh' }}>
-          <div className="relative w-full h-full" style={{ clipPath: 'polygon(0 0, 100% 40%, 100% 100%, 0 100%)', backgroundColor: 'transparent' }}>
+        {/* Diagonal separator at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 z-30">
+          <DiagonalSeparator direction="down" variant="light" height={80} />
+        </div>
+      </section>
+      {/* Results-Driven Training Section */}
+      <section id="results-driven-training" className="bg-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="flex justify-center mb-6">
+            <TitleCard as="h2" variant="default" className="text-4xl lg:text-5xl">
+              <span className="line-through opacity-50">Traditional</span> Results-Driven Training
+            </TitleCard>
+          </div>
+          <p className="max-w-4xl mx-auto text-xl text-[hsl(204,18%,35%)] leading-relaxed">
+            We pride ourselves on results-driven training that is tailored to, and for, the individual student.
+          </p>
+          
+          {/* Feature highlights */}
+          <div className="grid md:grid-cols-3 gap-8 mt-12">
+            <ComicPanel shadow="sm" className="text-center p-6 hover-lift">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[hsl(209,90%,38%)] flex items-center justify-center shadow-comic-sm">
+                <Target className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-heading text-lg uppercase tracking-wide mb-2">Precision Focus</h3>
+              <p className="text-muted-foreground">Quantifiable metrics to validate your progress</p>
+            </ComicPanel>
+            <ComicPanel shadow="sm" className="text-center p-6 hover-lift">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[hsl(190,65%,47%)] flex items-center justify-center shadow-comic-sm">
+                <Award className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-heading text-lg uppercase tracking-wide mb-2">Certified Excellence</h3>
+              <p className="text-muted-foreground">Professional instructor-led training</p>
+            </ComicPanel>
+            <ComicPanel shadow="sm" className="text-center p-6 hover-lift">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[hsl(204,27%,16%)] flex items-center justify-center shadow-comic-sm">
+                <Crosshair className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="font-heading text-lg uppercase tracking-wide mb-2">Personalized Path</h3>
+              <p className="text-muted-foreground">Training tailored to your individual goals</p>
+            </ComicPanel>
           </div>
         </div>
       </section>
-      {/* Results-Driven Training Section - Separate white section */}
-      <section id="results-driven-training" className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="lg:text-4xl mb-6 uppercase text-[32px]" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, color: '#000' }}>
-            <span className="line-through">Traditional</span> Results-Driven Training
-          </h2>
-          <p className="max-w-4xl mx-auto text-[20px]" style={{ color: '#000' }}>
-            We pride ourselves on results-driven training that is tailored to, and for, the individual student.
-          </p>
-        </div>
-      </section>
+      
+      {/* Diagonal Separator */}
+      <DiagonalSeparator direction="down" variant="gradient" height={60} />
       {/* Training Programs */}
       <section id="courses" className="bg-muted py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <SectionLabel>Our Programs</SectionLabel>
+            <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
+              Training Programs
+            </TitleCard>
+          </div>
+          
           {/* Deductive Pistolcraft */}
-          <div id="deductive-pistolcraft" className="bg-card rounded-lg overflow-hidden shadow-lg mb-8 scroll-mt-[850px] md:scroll-mt-28" data-testid="feature-deductive-pistolcraft">
-            <div className="grid md:grid-cols-2 gap-6 p-6">
+          <ComicPanel 
+            id="deductive-pistolcraft" 
+            className="mb-8 scroll-mt-[850px] md:scroll-mt-28 hover-lift" 
+            shadow="lg"
+            data-testid="feature-deductive-pistolcraft"
+          >
+            <div className="grid md:grid-cols-2 gap-6">
               <div className="flex flex-col justify-center">
-                <h3 className="font-semibold text-foreground mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '26px', letterSpacing: '0px', lineHeight: '1.5em' }}>
+                <h3 className="font-heading text-2xl lg:text-3xl uppercase tracking-wide text-foreground mb-4">
                   Deductive Pistolcraft
                 </h3>
-                <p className="text-muted-foreground mb-6" style={{ fontSize: '16px', lineHeight: '1.8em' }}>
+                <p className="text-muted-foreground mb-6 leading-relaxed">
                   We tailor the definition of proficiency to our clients' strengths and blind spots, forging a personalized path based on evidence, ability, and individual goals. Our program delves into fundamentals, emphasizing quantifiable metrics to validate theories. Grip, trigger control, sighting, practice, goal setting, and performance tracking are integral components, ensuring a comprehensive exploration of pistolcraft tailored to individual needs.
                 </p>
                 <Button
-                  className="bg-black text-white hover:bg-black/90 w-fit rounded-sm"
+                  className="bg-[hsl(209,90%,38%)] text-white hover:bg-[hsl(209,90%,30%)] w-fit font-heading uppercase tracking-wide"
                   data-testid="button-learn-more-pistolcraft"
-                  onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() => document.getElementById('course-listings')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   LET'S TRAIN!
                 </Button>
@@ -276,54 +343,54 @@ export default function Landing() {
                 <img
                   src={deductivePistolcraftImage}
                   alt="Deductive Pistolcraft Instructor"
-                  className="w-full h-auto object-cover"
+                  className="w-full h-auto object-cover rounded-lg shadow-comic-sm"
                 />
               </div>
             </div>
-          </div>
+          </ComicPanel>
 
           {/* Practice for Mastery */}
-          <div className="bg-card rounded-lg overflow-hidden shadow-lg" data-testid="feature-practice-mastery">
-            <div className="grid md:grid-cols-2 gap-6 p-6">
-              <div className="flex items-center">
+          <ComicPanel className="mb-8 hover-lift" shadow="lg" data-testid="feature-practice-mastery">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="flex items-center md:order-1 order-2">
                 <img
                   src={practiceForMasteryImage}
                   alt="Practice for Mastery Training"
-                  className="w-full h-auto object-cover"
+                  className="w-full h-auto object-cover rounded-lg shadow-comic-sm"
                 />
               </div>
-              <div className="flex flex-col justify-center">
-                <h3 className="font-semibold text-foreground mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '26px', letterSpacing: '0px', lineHeight: '1.5em' }}>
+              <div className="flex flex-col justify-center md:order-2 order-1">
+                <h3 className="font-heading text-2xl lg:text-3xl uppercase tracking-wide text-foreground mb-4">
                   Practice for Mastery
                 </h3>
-                <p className="text-muted-foreground mb-6" style={{ fontSize: '16px', lineHeight: '1.8em' }}>
+                <p className="text-muted-foreground mb-6 leading-relaxed">
                   "Practice for Mastery" is designed to assist our students in crafting a training plan geared towards achieving high-performance goals with a firearm. This program integrates both dry and live fire techniques, showcasing immediate improvements in performance. As participants advance through the curriculum, the emphasis transitions from immediate performance gains to sustained growth.
                 </p>
                 <Button
-                  className="bg-black text-white hover:bg-black/90 w-fit rounded-sm"
+                  className="bg-[hsl(190,65%,47%)] text-white hover:bg-[hsl(190,65%,40%)] w-fit font-heading uppercase tracking-wide"
                   data-testid="button-learn-more-practice-mastery"
-                  onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() => document.getElementById('course-listings')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   LET'S TRAIN!
                 </Button>
               </div>
             </div>
-          </div>
+          </ComicPanel>
 
           {/* Performance Shooting for the Concealed Carrier */}
-          <div className="bg-card rounded-lg overflow-hidden shadow-lg mt-8" data-testid="feature-performance-shooting">
-            <div className="grid md:grid-cols-2 gap-6 p-6">
+          <ComicPanel className="hover-lift" shadow="lg" data-testid="feature-performance-shooting">
+            <div className="grid md:grid-cols-2 gap-6">
               <div className="flex flex-col justify-center">
-                <h3 className="font-semibold text-foreground mb-4" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '26px', letterSpacing: '0px', lineHeight: '1.5em' }}>
+                <h3 className="font-heading text-2xl lg:text-3xl uppercase tracking-wide text-foreground mb-4">
                   Performance Shooting for the Concealed Carrier
                 </h3>
-                <p className="text-muted-foreground mb-6" style={{ fontSize: '16px', lineHeight: '1.8em' }}>
+                <p className="text-muted-foreground mb-6 leading-relaxed">
                   Offering an in-depth exploration of performance concepts employed by highly-skilled practitioners, specifically competitive shooters. In Performance Shooting for the Concealed Carrier we delve into applying those metrics to benefit concealed carriers and defensive enthusiasts, unraveling the hows and whys behind integrating world-class shooting skills into defensive preparedness.
                 </p>
                 <Button
-                  className="bg-black text-white hover:bg-black/90 w-fit rounded-sm"
+                  className="bg-[hsl(204,27%,16%)] text-white hover:bg-[hsl(204,27%,20%)] w-fit font-heading uppercase tracking-wide"
                   data-testid="button-learn-more-performance-shooting"
-                  onClick={() => document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() => document.getElementById('course-listings')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   LET'S TRAIN!
                 </Button>
@@ -332,19 +399,25 @@ export default function Landing() {
                 <img
                   src={performanceShootingImage}
                   alt="Performance Shooting for the Concealed Carrier"
-                  className="w-full h-auto object-cover"
+                  className="w-full h-auto object-cover rounded-lg shadow-comic-sm"
                 />
               </div>
             </div>
-          </div>
+          </ComicPanel>
         </div>
       </section>
+      {/* Diagonal Separator */}
+      <DiagonalSeparator direction="up" variant="dark" height={60} flip />
+      
       {/* Schedule Your Training Section */}
-      <section id="appointments" className="py-20 bg-muted/30 pt-[50px] pb-[50px]" data-testid="section-schedule-training">
+      <section id="appointments" className="py-20 bg-[hsl(204,27%,16%)]" data-testid="section-schedule-training">
         <div className="max-w-5xl mx-auto px-3 sm:px-5 lg:px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">One-on-One Training</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <SectionLabel className="text-[hsl(44,89%,61%)]">Personal Training</SectionLabel>
+            <TitleCard as="h2" variant="light" className="text-3xl lg:text-4xl">
+              One-on-One Training
+            </TitleCard>
+            <p className="text-lg text-white/80 max-w-2xl mx-auto mt-4">
               Book one-on-one training sessions tailored to your specific needs and schedule.
             </p>
           </div>
@@ -352,22 +425,26 @@ export default function Landing() {
           {appointmentsLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map(i => (
-                <Card key={i} className="animate-pulse">
-                  <div className="h-64 bg-muted" />
-                </Card>
+                <ComicPanel key={i} shadow="md" className="animate-pulse">
+                  <div className="h-48 bg-muted/20 rounded-lg mb-4" />
+                  <div className="h-4 bg-muted/20 rounded w-3/4 mb-2" />
+                  <div className="h-4 bg-muted/20 rounded w-1/2 mb-4" />
+                  <div className="h-10 bg-muted/20 rounded" />
+                </ComicPanel>
               ))}
             </div>
           ) : appointmentTypes.length === 0 ? (
-            <div className="text-center py-12">
-              <CalendarClock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <ComicPanel shadow="md" className="text-center py-12">
+              <CalendarClock className="mx-auto h-12 w-12 text-[hsl(190,65%,47%)] mb-4" />
               <p className="text-muted-foreground">No appointment types available at this time.</p>
-            </div>
+            </ComicPanel>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {appointmentTypes.map((type) => (
-                <Card
+                <ComicPanel
                   key={type.id}
-                  className="md:hover:shadow-lg transition-shadow cursor-pointer active:shadow-2xl"
+                  className="hover-lift cursor-pointer"
+                  shadow="md"
                   data-testid={`appointment-card-${type.id}`}
                   onClick={() => {
                     console.log('Appointment card clicked!', type.title);
@@ -375,21 +452,19 @@ export default function Landing() {
                     setShowBookingModal(true);
                   }}
                 >
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{type.title}</span>
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-heading text-xl uppercase tracking-wide">{type.title}</h3>
                       {type.requiresApproval && (
-                        <Badge variant="outline" className="text-xs text-center">Approval Required</Badge>
+                        <Badge className="bg-[hsl(44,89%,61%)] text-[hsl(204,27%,16%)] text-xs">Approval Required</Badge>
                       )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                    </div>
                     {type.description && (
                       <p className="text-sm text-muted-foreground mb-4">{type.description}</p>
                     )}
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2 text-sm">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <Clock className="h-4 w-4 text-[hsl(209,90%,38%)]" />
                         <span>
                           {type.isVariableDuration 
                             ? `${type.minimumDurationHours} hour${type.minimumDurationHours !== 1 ? 's' : ''} minimum`
@@ -398,8 +473,8 @@ export default function Landing() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <DollarSign className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold">
+                        <DollarSign className="h-4 w-4 text-[hsl(190,65%,47%)]" />
+                        <span className="font-semibold text-[hsl(209,90%,38%)]">
                           {type.isVariableDuration 
                             ? `$${Number(type.pricePerHour).toFixed(2)}/hour`
                             : `$${Number(type.price).toFixed(2)}`
@@ -409,7 +484,7 @@ export default function Landing() {
                     </div>
                     <Button
                       size="lg"
-                      className="w-full min-h-[44px] rounded-none"
+                      className="w-full min-h-[44px] bg-[hsl(209,90%,38%)] hover:bg-[hsl(209,90%,30%)] text-white font-heading uppercase tracking-wide"
                       onClick={(e) => {
                         e.stopPropagation();
                         console.log('Book Now button clicked!', type.title);
@@ -420,18 +495,24 @@ export default function Landing() {
                     >
                       BOOK NOW
                     </Button>
-                  </CardContent>
-                </Card>
+                  </div>
+                </ComicPanel>
               ))}
             </div>
           )}
         </div>
       </section>
+      {/* Diagonal Separator */}
+      <DiagonalSeparator direction="down" variant="light" height={60} />
+      
       {/* Course Listings */}
-      <section id="course-listings" className="py-20 pt-[50px] pb-[50px]">
+      <section id="course-listings" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-6">Upcoming Courses</h2>
+            <SectionLabel>Enroll Now</SectionLabel>
+            <TitleCard as="h2" variant="default" className="text-3xl lg:text-4xl">
+              Upcoming Courses
+            </TitleCard>
           </div>
 
           {/* Course Filter Tabs - Mobile Responsive */}
@@ -459,15 +540,15 @@ export default function Landing() {
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               {[1, 2, 3].map(i => (
-                <Card key={i} className="animate-pulse">
-                  <div className="h-48 bg-muted" />
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="h-4 bg-muted rounded mb-2" />
-                    <div className="h-4 bg-muted rounded w-3/4 mb-4" />
-                    <div className="h-20 bg-muted rounded mb-4" />
-                    <div className="h-10 bg-muted rounded" />
-                  </CardContent>
-                </Card>
+                <ComicPanel key={i} shadow="md" className="animate-pulse overflow-hidden">
+                  <div className="h-48 bg-muted/30" />
+                  <div className="p-4 sm:p-6">
+                    <div className="h-4 bg-muted/30 rounded mb-2" />
+                    <div className="h-4 bg-muted/30 rounded w-3/4 mb-4" />
+                    <div className="h-20 bg-muted/30 rounded mb-4" />
+                    <div className="h-10 bg-muted/30 rounded" />
+                  </div>
+                </ComicPanel>
               ))}
             </div>
           ) : (
@@ -483,38 +564,48 @@ export default function Landing() {
           )}
         </div>
       </section>
+      {/* Diagonal Separator */}
+      <DiagonalSeparator direction="up" variant="gradient" height={60} />
+      
       {/* Virtual Coaching and Mental Management Section */}
-      <section className="relative w-full py-24" style={{
+      <section className="relative w-full py-24 grain-texture" style={{
         backgroundImage: `url(${coachingBackgroundImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }}>
-        {/* Semi-transparent black overlay */}
-        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0, 0, 0, 0.65)' }}></div>
+        {/* RAC Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(204,27%,16%,0.9)] via-[hsl(209,90%,38%,0.7)] to-[hsl(190,65%,47%,0.6)]"></div>
 
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <SectionLabel className="text-[hsl(44,89%,61%)]">Advanced Training</SectionLabel>
+            <TitleCard as="h2" variant="light" className="text-3xl lg:text-4xl">
+              Specialized Coaching
+            </TitleCard>
+          </div>
+          
           <div className="grid md:grid-cols-2 gap-12">
             {/* Left Column - Virtual Coaching */}
-            <div className="text-white text-center">
-              <h2 className="text-3xl lg:text-4xl mb-6" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+            <ComicPanel variant="ghost" noBorder className="text-white text-center p-6 backdrop-blur-sm bg-white/5 rounded-lg">
+              <h3 className="font-heading text-2xl lg:text-3xl uppercase tracking-wide mb-6 text-[hsl(190,65%,47%)]">
                 Virtual Coaching
-              </h2>
-              <p className="text-base lg:text-lg leading-relaxed">
+              </h3>
+              <p className="text-base lg:text-lg leading-relaxed text-white/90">
                 Enhancing your skills through virtual coaching is not only possible but highly effective. We specialize in helping you develop a personalized training plan, thoroughly examining and evaluating all aspects of your current abilities. Our clients consistently experience substantial benefits from virtual coaching, making it an exceptionally cost-effective means of receiving tailored one-on-one guidance.
               </p>
-            </div>
+            </ComicPanel>
 
             {/* Right Column - Mental Management Coaching */}
-            <div className="text-white text-center">
-              <h2 className="text-3xl lg:text-4xl mb-6" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+            <ComicPanel variant="ghost" noBorder className="text-white text-center p-6 backdrop-blur-sm bg-white/5 rounded-lg">
+              <h3 className="font-heading text-2xl lg:text-3xl uppercase tracking-wide mb-6 text-[hsl(44,89%,61%)]">
                 Mental Management Coaching
-              </h2>
-              <p className="text-base lg:text-lg leading-relaxed">
+              </h3>
+              <p className="text-base lg:text-lg leading-relaxed text-white/90">
                 Proudly, I am among an exclusive group of 23 coaches worldwide certified by the originator and pioneer of Mental Management, Lanny Bassham. As a certified Level II mental management coach, I've dedicated a significant amount of time and resources to becoming an exemplary guide in incorporating mental management concepts into the performer's toolkit.
               </p>
-            </div>
+            </ComicPanel>
           </div>
         </div>
       </section>
