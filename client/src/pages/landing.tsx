@@ -218,7 +218,7 @@ export default function Landing() {
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
           <div className="animate-slide-up">
             <SectionLabel className="text-[hsl(44,89%,61%)] text-lg mb-4">Responsibly Armed Citizen</SectionLabel>
-            <h1 style={{ fontFamily: 'League Gothic, sans-serif' }} className="uppercase mb-6 text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-wider">APACHE SOLUTIONS</h1>
+            <h1 style={{ fontFamily: 'Ethnocentric, sans-serif' }} className="uppercase mb-6 text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-wider">APACHE SOLUTIONS</h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto mb-8 font-light">
               Results-driven firearms training tailored to the individual
             </p>
