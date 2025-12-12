@@ -93,7 +93,7 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
 
   return (
     <Card 
-      className="overflow-hidden border-2 border-[hsl(204,27%,16%,0.12)] rounded-lg shadow-[12px_2px_0px_#5170FF] hover:shadow-[12px_2px_0px_#FD66C5] hover:-translate-y-1 transition-all duration-200 w-full cursor-pointer" 
+      className="overflow-hidden border-2 border-[hsl(204,27%,16%,0.12)] rounded-lg shadow-[12px_5px_0px_#5170FF] hover:shadow-[12px_5px_0px_#FD66C5] hover:-translate-y-1 transition-all duration-200 w-full cursor-pointer" 
       data-testid={`course-card-${course.id}`}
       onClick={handleCardClick}
     >
