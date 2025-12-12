@@ -32,9 +32,9 @@ export function ComicPanel({
   };
 
   const shadowStyles = {
-    sm: "shadow-[5px_3px_0px_#5170FF] hover:shadow-[5px_3px_0px_#FD66C5]",
-    md: "shadow-[8px_5px_0px_#5170FF] hover:shadow-[8px_5px_0px_#FD66C5]",
-    lg: "shadow-[10px_6px_0px_#5170FF] hover:shadow-[10px_6px_0px_#FD66C5]",
+    sm: "shadow-[8px_1px_0px_#5170FF] hover:shadow-[8px_1px_0px_#FD66C5]",
+    md: "shadow-[12px_2px_0px_#5170FF] hover:shadow-[12px_2px_0px_#FD66C5]",
+    lg: "shadow-[14px_3px_0px_#5170FF] hover:shadow-[14px_3px_0px_#FD66C5]",
   };
 
   return (
