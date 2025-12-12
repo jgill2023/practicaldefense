@@ -32,9 +32,9 @@ export function ComicPanel({
   };
 
   const shadowOffsets = {
-    sm: "translate-x-2 translate-y-2",
-    md: "translate-x-3 translate-y-3",
-    lg: "translate-x-4 translate-y-4",
+    sm: "-translate-x-1 -translate-y-1",
+    md: "-translate-x-2 -translate-y-2",
+    lg: "-translate-x-2 -translate-y-2",
   };
 
   return (
