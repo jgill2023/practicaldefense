@@ -94,7 +94,7 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
   return (
     <div className="relative group">
       {/* Background Shadow Layer */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0A5DB8] to-[#2BB0C7] rounded-lg -translate-x-2 -translate-y-2 rotate-2 transition-all duration-200 group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0A5DB8] to-[#2BB0C7] rounded-lg translate-x-2 -translate-y-2 rotate-2 transition-all duration-200 group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0]" />
       
       {/* Card Layer */}
       <Card 
