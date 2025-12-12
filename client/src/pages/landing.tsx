@@ -9,7 +9,7 @@ import { Layout } from "@/components/Layout";
 import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
 import { BookingModal } from "@/components/BookingModal";
-import { ComicPanel, TitleCard, DiagonalSeparator, SectionLabel } from "@/components/RACTheme";
+import { ComicPanel, TitleCard, SectionLabel } from "@/components/RACTheme";
 import type { CourseWithSchedules, AppSettings, AppointmentType } from "@shared/schema";
 import heroImage from "@assets/header1_1764654063692.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
@@ -260,10 +260,6 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Diagonal separator at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 z-30">
-          <DiagonalSeparator direction="down" variant="light" height={80} />
-        </div>
       </section>
       {/* Results-Driven Training Section */}
       <section id="results-driven-training" className="bg-white py-20">
@@ -304,8 +300,6 @@ export default function Landing() {
         </div>
       </section>
       
-      {/* Diagonal Separator */}
-      <DiagonalSeparator direction="down" variant="gradient" height={60} />
       {/* Training Programs */}
       <section id="courses" className="bg-muted py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -406,8 +400,6 @@ export default function Landing() {
           </ComicPanel>
         </div>
       </section>
-      {/* Diagonal Separator */}
-      <DiagonalSeparator direction="up" variant="dark" height={60} flip />
       
       {/* Schedule Your Training Section */}
       <section id="appointments" className="py-20 bg-[hsl(204,27%,16%)]" data-testid="section-schedule-training">
@@ -502,8 +494,6 @@ export default function Landing() {
           )}
         </div>
       </section>
-      {/* Diagonal Separator */}
-      <DiagonalSeparator direction="down" variant="light" height={60} />
       
       {/* Course Listings */}
       <section id="course-listings" className="py-20 bg-white">
@@ -564,8 +554,6 @@ export default function Landing() {
           )}
         </div>
       </section>
-      {/* Diagonal Separator */}
-      <DiagonalSeparator direction="up" variant="gradient" height={60} />
       
       {/* Virtual Coaching and Mental Management Section */}
       <section className="relative w-full py-24 grain-texture" style={{
