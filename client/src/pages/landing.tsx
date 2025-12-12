@@ -218,9 +218,7 @@ export default function Landing() {
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
           <div className="animate-slide-up">
             <SectionLabel className="text-[hsl(44,89%,61%)] text-lg mb-4">Responsibly Armed Citizen</SectionLabel>
-            <h1 style={{ fontFamily: 'League Gothic, sans-serif' }} className="uppercase mb-6 text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-wider">
-              CORE CONCEPTS
-            </h1>
+            <h1 style={{ fontFamily: 'League Gothic, sans-serif' }} className="uppercase mb-6 text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-wider">APACHE SOLUTIONS</h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto mb-8 font-light">
               Results-driven firearms training tailored to the individual
             </p>
@@ -299,7 +297,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      
       {/* Training Programs */}
       <section id="courses" className="bg-muted py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -400,7 +397,6 @@ export default function Landing() {
           </ComicPanel>
         </div>
       </section>
-      
       {/* Schedule Your Training Section */}
       <section id="appointments" className="py-20 bg-[hsl(204,27%,16%)]" data-testid="section-schedule-training">
         <div className="max-w-5xl mx-auto px-3 sm:px-5 lg:px-6">
@@ -494,7 +490,6 @@ export default function Landing() {
           )}
         </div>
       </section>
-      
       {/* Course Listings */}
       <section id="course-listings" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
@@ -554,7 +549,6 @@ export default function Landing() {
           )}
         </div>
       </section>
-      
       {/* Virtual Coaching and Mental Management Section */}
       <section className="relative w-full py-24 grain-texture" style={{
         backgroundImage: `url(${coachingBackgroundImage})`,
