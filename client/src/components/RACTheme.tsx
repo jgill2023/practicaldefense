@@ -32,9 +32,9 @@ export function ComicPanel({
   };
 
   const shadowStyles = {
-    sm: "shadow-[2px_2px_0px_hsl(204,27%,16%,0.15)]",
-    md: "shadow-[4px_4px_0px_hsl(204,27%,16%,0.2)]",
-    lg: "shadow-[6px_6px_0px_hsl(204,27%,16%,0.25)]",
+    sm: "shadow-[3px_2px_0px_#5170FF]",
+    md: "shadow-[5px_3px_0px_#5170FF]",
+    lg: "shadow-[7px_4px_0px_#5170FF]",
   };
 
   return (
@@ -168,8 +168,8 @@ export function DiagonalSeparator({
   };
 
   const clipPath = direction === "down" 
-    ? (flip ? "polygon(0 0, 100% 100%, 0 100%)" : "polygon(0 0, 100% 0, 100% 100%)")
-    : (flip ? "polygon(0 0, 100% 0, 0 100%)" : "polygon(100% 0, 100% 100%, 0 100%)");
+    ? "polygon(0 0, 100% 0, 100% 100%, 0 60%)"
+    : "polygon(0 40%, 100% 0, 100% 100%, 0 100%)";
 
   return (
     <div
@@ -191,8 +191,8 @@ export function DiagonalSeparator({
           </defs>
           <polygon
             points={direction === "down" 
-              ? (flip ? "0,0 100,100 0,100" : "0,0 100,0 100,100")
-              : (flip ? "0,0 100,0 0,100" : "100,0 100,100 0,100")}
+              ? "0,0 100,0 100,100 0,60"
+              : "0,40 100,0 100,100 0,100"}
             fill="url(#diagonalGradient)"
           />
         </svg>

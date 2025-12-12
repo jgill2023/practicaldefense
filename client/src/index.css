@@ -12,6 +12,12 @@
   --rac-slate: hsl(204, 18%, 35%);
   --rac-accent-gold: hsl(44, 89%, 61%);
   
+  /* Neon Colors */
+  --rac-neon-pink: #FD66C5;
+  --rac-neon-pink-accent: #FBA3F0;
+  --rac-neon-blue: #5170FF;
+  --rac-neon-blue-accent: #34B8FE;
+  
   /* Theme Variables */
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(204, 27%, 16%);
@@ -66,7 +72,7 @@
   --shadow-lg: 0px 10px 15px -3px hsl(204, 27%, 16%, 0.15), 0px 4px 6px -4px hsl(204, 27%, 16%, 0.1);
   --shadow-xl: 0px 20px 25px -5px hsl(204, 27%, 16%, 0.15), 0px 8px 10px -6px hsl(204, 27%, 16%, 0.1);
   --shadow-2xl: 0px 25px 50px -12px hsl(204, 27%, 16%, 0.25);
-  --shadow-comic: 4px 4px 0px hsl(204, 27%, 16%, 0.3);
+  --shadow-comic: 5px 3px 0px #5170FF;
   --tracking-normal: 0em;
   --spacing: 1.25rem;
 }
