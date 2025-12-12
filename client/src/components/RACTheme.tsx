@@ -43,11 +43,11 @@ export function ComicPanel({
       onClick={onClick}
       className="relative group"
     >
-      {/* Shadow Layer */}
+      {/* Background Shadow Layer */}
       <div className={cn(
         "absolute inset-0 bg-gradient-to-br from-[#0A5DB8] to-[#2BB0C7] rounded-lg transition-all duration-200",
         shadowOffsets[shadow],
-        "skew-x-[-6deg] group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0]"
+        "rotate-2 group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0]"
       )} />
       
       {/* Card Layer */}
