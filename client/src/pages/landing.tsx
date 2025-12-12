@@ -9,7 +9,7 @@ import { Layout } from "@/components/Layout";
 import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
 import { BookingModal } from "@/components/BookingModal";
-import { ComicPanel, TitleCard, SectionLabel } from "@/components/RACTheme";
+import { ComicPanel, TitleCard } from "@/components/RACTheme";
 import type { CourseWithSchedules, AppSettings, AppointmentType } from "@shared/schema";
 import heroImage from "@assets/Header01_1765564232545.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
@@ -217,7 +217,6 @@ export default function Landing() {
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
           <div className="animate-slide-up">
-            <SectionLabel className="text-[hsl(44,89%,61%)] text-lg mb-4">Responsibly Armed Citizen</SectionLabel>
             <h1 style={{ fontFamily: 'League Gothic, sans-serif' }} className="uppercase mb-6 text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-wider">APACHE SOLUTIONS</h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto mb-8 font-light">Educating the Responsibily Armed Citizen</p>
           </div>
@@ -299,7 +298,6 @@ export default function Landing() {
       <section id="courses" className="bg-muted py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <SectionLabel>Our Programs</SectionLabel>
             <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
               Training Programs
             </TitleCard>
@@ -399,7 +397,6 @@ export default function Landing() {
       <section id="appointments" className="py-20 bg-[hsl(204,27%,16%)]" data-testid="section-schedule-training">
         <div className="max-w-5xl mx-auto px-3 sm:px-5 lg:px-6">
           <div className="text-center mb-12">
-            <SectionLabel className="text-[hsl(44,89%,61%)]">Personal Training</SectionLabel>
             <TitleCard as="h2" variant="light" className="text-3xl lg:text-4xl">
               One-on-One Training
             </TitleCard>
@@ -492,7 +489,6 @@ export default function Landing() {
       <section id="course-listings" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
           <div className="text-center mb-16">
-            <SectionLabel>Enroll Now</SectionLabel>
             <TitleCard as="h2" variant="default" className="text-3xl lg:text-4xl">
               Upcoming Courses
             </TitleCard>
@@ -560,7 +556,6 @@ export default function Landing() {
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <SectionLabel className="text-[hsl(44,89%,61%)]">Advanced Training</SectionLabel>
             <TitleCard as="h2" variant="light" className="text-3xl lg:text-4xl">
               Specialized Coaching
             </TitleCard>

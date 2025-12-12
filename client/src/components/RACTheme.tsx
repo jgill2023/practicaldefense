@@ -385,16 +385,4 @@ export function FeatureCard({
   );
 }
 
-export function SectionLabel({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <span
-      className={cn(
-        "inline-block font-accent text-sm text-[hsl(190,65%,47%)] mb-2",
-        className
-      )}
-      data-testid="section-label"
-    >
-      {children}
-    </span>
-  );
-}
+
