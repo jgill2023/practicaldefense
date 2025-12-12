@@ -31,31 +31,42 @@ export function ComicPanel({
     ghost: "bg-transparent border-[hsl(204,27%,16%,0.08)]",
   };
 
-  const shadowStyles = {
-    sm: "shadow-[8px_3px_0px_#5170FF] hover:shadow-[8px_3px_0px_#FD66C5]",
-    md: "shadow-[12px_5px_0px_#5170FF] hover:shadow-[12px_5px_0px_#FD66C5]",
-    lg: "shadow-[14px_6px_0px_#5170FF] hover:shadow-[14px_6px_0px_#FD66C5]",
+  const shadowOffsets = {
+    sm: "translate-x-2 translate-y-2",
+    md: "translate-x-3 translate-y-3",
+    lg: "translate-x-4 translate-y-4",
   };
 
   return (
     <div
       id={id}
       onClick={onClick}
-      className={cn(
-        "rounded-lg transition-all duration-200",
-        !noBorder && "border-2",
-        variantStyles[variant],
-        shadowStyles[shadow],
-        className
-      )}
-      data-testid={testId || "comic-panel"}
+      className="relative group"
     >
-      {header && (
-        <div className="border-b border-inherit px-5 py-3 font-heading text-lg uppercase tracking-wide">
-          {header}
-        </div>
-      )}
-      <div className="p-5">{children}</div>
+      {/* Shadow Layer */}
+      <div className={cn(
+        "absolute inset-0 bg-gradient-to-br from-[#0A5DB8] to-[#2BB0C7] rounded-lg transition-all duration-200",
+        shadowOffsets[shadow],
+        "skew-x-[-6deg] group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0]"
+      )} />
+      
+      {/* Card Layer */}
+      <div
+        className={cn(
+          "relative rounded-lg transition-all duration-200",
+          !noBorder && "border-2",
+          variantStyles[variant],
+          className
+        )}
+        data-testid={testId || "comic-panel"}
+      >
+        {header && (
+          <div className="border-b border-inherit px-5 py-3 font-heading text-lg uppercase tracking-wide">
+            {header}
+          </div>
+        )}
+        <div className="p-5">{children}</div>
+      </div>
     </div>
   );
 }

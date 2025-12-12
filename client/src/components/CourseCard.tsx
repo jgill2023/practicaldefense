@@ -92,11 +92,16 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
   };
 
   return (
-    <Card 
-      className="overflow-hidden border-2 border-[hsl(204,27%,16%,0.12)] rounded-lg shadow-[12px_5px_0px_#5170FF] hover:shadow-[12px_5px_0px_#FD66C5] hover:-translate-y-1 transition-all duration-200 w-full cursor-pointer" 
-      data-testid={`course-card-${course.id}`}
-      onClick={handleCardClick}
-    >
+    <div className="relative group">
+      {/* Shadow Layer */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0A5DB8] to-[#2BB0C7] rounded-lg translate-x-3 translate-y-3 skew-x-[-6deg] transition-all duration-200 group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0]" />
+      
+      {/* Card Layer */}
+      <Card 
+        className="relative overflow-hidden border-2 border-[hsl(204,27%,16%,0.12)] rounded-lg transition-all duration-200 w-full cursor-pointer" 
+        data-testid={`course-card-${course.id}`}
+        onClick={handleCardClick}
+      >
       <div className="relative w-full h-40 sm:h-48 bg-muted overflow-hidden">
         <img 
           src={displayImageUrl} 
@@ -179,6 +184,7 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
           <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }
