@@ -1,0 +1,265 @@
+Apache Solutions / RAC
+Action Comic + Tactical Graphic Novel Theme (WITH Enhancements)
+
+Prompt:
+
+Update the existing application’s theme, styling, and UI components to reflect the Apache Solutions / Responsibly Armed Citizen (RAC) brand with a modern action-comic / tactical graphic novel aesthetic.
+
+The final result should feel:
+
+Professional and instructor-led
+
+Safety-first and responsibility-driven
+
+Dynamic, bold, and cinematic
+
+Inspired by modern graphic novels and action movie title cards
+
+Not childish, exaggerated, political, or violent-glorifying
+
+This is a firearms training brand, not a video game UI.
+
+🎨 Brand Color System
+
+Use these colors consistently:
+
+Primary Blue: #0A5DB8
+
+Secondary Teal: #2BB0C7
+
+Dark Navy / Gunmetal: #1E2A32
+
+Slate Gray: #4A5D6A
+
+White: #FFFFFF
+
+Accent (stars/emphasis only): #F5C542
+
+Apply:
+
+Blue/teal gradients for hero sections
+
+White cards on dark backgrounds
+
+High contrast for accessibility
+
+🔤 Typography Rules
+Headings
+
+Bold, condensed, high-impact
+
+ALL CAPS for major section headers
+
+Examples: Oswald, Bebas Neue, Anton, Montserrat Alternates
+
+Accent Text (VERY LIMITED USE)
+
+Brush / handwritten style
+
+Used ONLY for:
+
+“RAC Review”
+
+Short callouts
+
+Section labels
+
+Body Text
+
+Clean, readable sans-serif
+
+Examples: Inter, Roboto, Open Sans
+
+🧩 Layout & Visual Style
+
+Structure pages like graphic novel panels
+
+Use:
+
+Framed sections
+
+Layered cards
+
+Slight overlaps
+
+Directional flow
+
+Replace flat section breaks with diagonal separators
+
+Avoid harsh borders; use shadows + outlines instead
+
+✨ Required Optional Enhancements (IMPLEMENT ALL)
+1️⃣ Create a Reusable ComicPanel Wrapper Component
+
+Acts as a container for sections and cards
+
+Features:
+
+Rounded corners
+
+Subtle dark outline (1–2px)
+
+Soft directional shadow
+
+Optional header slot
+
+Used across:
+
+Feature sections
+
+Testimonials
+
+Course cards
+
+Callouts
+
+2️⃣ Add an Animated TitleCard Component
+
+Used for major section headers
+
+Features:
+
+Bold typography
+
+Slide-in or fade-up animation
+
+Optional accent underline or angled bar
+
+Animation timing:
+
+150–250ms
+
+Ease-out
+
+Styled like an action movie or comic title card
+
+3️⃣ Introduce Diagonal Section Separators
+
+Replace straight horizontal breaks
+
+Use:
+
+CSS clip-path or SVG
+
+Subtle gradients
+
+Apply between major page sections:
+
+Hero → Content
+
+Content → Reviews
+
+Reviews → CTA
+
+4️⃣ Apply Subtle Halftone / Grain Textures
+
+Add light halftone or grain texture to:
+
+Hero backgrounds
+
+Large color panels
+
+Must be:
+
+Very subtle
+
+Low opacity
+
+Non-distracting
+
+If noticeable at first glance, reduce intensity
+
+⭐ Testimonials (RAC Review Panels)
+
+Style testimonials as highlight panels:
+
+Star rating emphasized
+
+Framed card design
+
+Reviewer photo inset like a panel portrait
+
+Oversized stylized quotation marks
+
+Clean spacing and hierarchy
+
+🎛️ UI Components
+Buttons
+
+Primary: blue background, white text
+
+Secondary: teal background
+
+Hover:
+
+Slight lift
+
+Shadow increase
+
+Subtle scale (≤ 1.03)
+
+Navigation
+
+Dark navy background
+
+White text
+
+Strong active state indicators
+
+🎬 Motion & Animation
+
+Fade/slide-in on scroll
+
+Hover lift on cards
+
+Title cards animate like chapter headers
+
+Keep animations smooth and minimal
+
+♿ Accessibility & Guardrails
+
+Maintain contrast ratios
+
+Large tap targets
+
+No flashing effects
+
+No violent imagery or gamification
+
+🚫 Do NOT:
+
+Change backend logic
+
+Modify database behavior
+
+Add new dependencies unless required
+
+Introduce cartoonish or meme-style visuals
+
+✅ Deliverables
+
+Updated global theme/styles
+
+New reusable components:
+
+ComicPanel
+
+TitleCard
+
+Diagonal section separators implemented
+
+Halftone texture usage
+
+Consistent branding across all pages
+
+🎯 Final Result
+
+The application should feel like a modern firearms training platform with:
+
+Cinematic confidence
+
+Graphic-novel energy
+
+Instructor professionalism
+
+Clear emphasis on responsibility and safety

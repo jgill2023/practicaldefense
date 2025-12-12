@@ -1,0 +1,219 @@
+Action Comic / Tactical Graphic Novel Style
+
+Prompt:
+
+Enhance the existing Apache Solutions / Responsibly Armed Citizen (RAC) theme by introducing a modern action-comic / tactical graphic novel aesthetic.
+
+This style should feel:
+
+Dynamic and energetic
+
+Instructor-led and authoritative
+
+High-impact without being chaotic
+
+Graphic-novel inspired (NOT childish or exaggerated)
+
+Think clean comic panels, bold typography, motion, and contrast—similar to modern action movie posters or high-end graphic novels.
+
+🎨 Visual Style Enhancements
+1️⃣ Color Treatment (Comic-Style, Controlled)
+
+Keep the existing palette but apply it more dynamically:
+
+Use diagonal color blocks
+
+Sharp background angles instead of flat rectangles
+
+Blue → teal gradients with directional movement
+
+Dark navy panels with white “inked” highlights
+
+Avoid:
+❌ Neon colors
+❌ Primary red/yellow comic chaos
+❌ Over-saturation
+
+2️⃣ Typography (Comic Energy Without Looking Juvenile)
+
+Use contrast-based typography, not goofy fonts:
+
+Primary Headings
+
+Extra bold
+
+Slightly condensed
+
+All caps for section headers
+
+Examples:
+
+Oswald
+
+Bebas Neue
+
+Anton
+
+Montserrat Alternates
+
+Accent / Callout Text
+
+Hand-drawn / brush-style font
+
+Used ONLY for:
+
+“RAC Review”
+
+Testimonials
+
+Short callouts
+
+Never for body text
+
+Comic Detail Touch
+
+Slight letter spacing
+
+Occasional italic slant for motion words
+
+3️⃣ Layout Structure — “Comic Panel” Design
+
+Structure sections like comic panels:
+
+Framed content blocks
+
+Slight offsets or overlaps
+
+Layered cards with depth
+
+Clear separation between sections
+
+Examples:
+
+Hero → angled edge bottom
+
+Testimonial cards → bordered like panels
+
+Feature sections → split panel layout (icon + text)
+
+4️⃣ Linework, Borders & Texture
+
+Introduce subtle “inked” details:
+
+1–2px dark outlines on key cards
+
+Drop shadows with slight directional offset
+
+Soft halftone or grain textures (very subtle)
+
+Key rule:
+If users notice the texture, it’s too strong.
+
+5️⃣ Motion & Micro-Animations (Action Feel)
+
+Add cinematic movement, not gimmicks:
+
+Slide-in panels
+
+Directional reveals (left → right)
+
+Button hover:
+
+Slight pop
+
+Shadow increase
+
+Section headers animate in like title cards
+
+Timing:
+
+150–250ms
+
+Ease-out curves
+
+6️⃣ Iconography (Graphic Novel Style)
+
+Use:
+
+High-contrast icons
+
+Bold outlines
+
+Minimal fill
+
+Slight tilt or offset
+
+Icon themes:
+
+🧠 Mindset
+
+➕ Medical
+
+🔒 Secure storage
+
+🎯 Training
+
+🧰 Equipment
+
+Avoid photorealistic icons.
+
+7️⃣ Testimonials → “Action Review Panels”
+
+Style reviews like comic inserts:
+
+Framed card
+
+Star ratings bold and prominent
+
+Quote marks oversized and stylized
+
+Reviewer photo inset like a panel portrait
+
+Text should feel:
+
+“This is a highlight moment — not filler.”
+
+🧠 Tone Guardrails (VERY IMPORTANT)
+
+The comic feel must never:
+
+Glamorize violence
+
+Feel aggressive or political
+
+Look like a video game HUD
+
+Feel juvenile or meme-like
+
+This is:
+
+Professional firearms education with cinematic confidence
+
+🧩 Component Instructions for Replit
+
+Apply this comic-inspired style consistently across:
+
+Hero sections
+
+Navigation
+
+Feature cards
+
+Testimonials
+
+Call-to-action blocks
+
+Preserve accessibility, contrast, and readability.
+Do not modify business logic or backend functionality.
+
+✅ Optional Enhancements (Add if You Want)
+
+Append any of these to the prompt:
+
+“Create a reusable ComicPanel wrapper component.”
+
+“Add an animated ‘Title Card’ component for section headers.”
+
+“Introduce diagonal section separators across the site.”
+
+“Apply subtle halftone textures to backgrounds.”
