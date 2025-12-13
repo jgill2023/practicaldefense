@@ -248,11 +248,11 @@ function MosaicTestimonialSlider() {
 
   const TestimonialCard = ({ review, className = "" }: { review: typeof googleReviews[0], className?: string }) => (
     <div 
-      className={`bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 ${className}`}
+      className={`bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 min-h-[280px] flex flex-col ${className}`}
       data-testid={`testimonial-card-${review.id}`}
     >
       <Quote className="w-8 h-8 text-[hsl(209,90%,38%)] opacity-20 mb-3 rotate-180" />
-      <p className="text-muted-foreground italic leading-relaxed mb-4 text-sm">
+      <p className="text-muted-foreground italic leading-relaxed mb-4 text-sm flex-1">
         "{review.quote}"
       </p>
       <div className="flex items-center justify-between mt-auto">
@@ -269,48 +269,18 @@ function MosaicTestimonialSlider() {
     </div>
   );
 
-  const renderMosaicPattern = () => {
-    const patternIndex = currentPattern % 3;
-    
-    if (patternIndex === 0) {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          <div className="md:col-span-2 md:row-span-2">
-            <TestimonialCard review={currentReviews[0]} className="h-full" />
-          </div>
-          <div className="flex flex-col gap-4 md:gap-6">
-            <TestimonialCard review={currentReviews[1]} />
-            <TestimonialCard review={currentReviews[2]} />
-          </div>
-        </div>
-      );
-    } else if (patternIndex === 1) {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          <div className="flex flex-col gap-4 md:gap-6">
-            <TestimonialCard review={currentReviews[0]} />
-            <TestimonialCard review={currentReviews[1]} />
-          </div>
-          <div className="md:col-span-2 md:row-span-2">
-            <TestimonialCard review={currentReviews[2]} className="h-full" />
-          </div>
-        </div>
-      );
-    } else {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          <TestimonialCard review={currentReviews[0]} />
-          <TestimonialCard review={currentReviews[1]} />
-          <TestimonialCard review={currentReviews[2]} />
-        </div>
-      );
-    }
-  };
+  const renderCards = () => (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {currentReviews.map((review) => (
+        <TestimonialCard key={review.id} review={review} className="h-full" />
+      ))}
+    </div>
+  );
 
   return (
     <div data-testid="mosaic-testimonial-slider">
       <div className={`transition-all duration-500 ${isAnimating ? 'opacity-0 translate-x-8' : 'opacity-100 translate-x-0'}`}>
-        {renderMosaicPattern()}
+        {renderCards()}
       </div>
       
       <div className="flex items-center justify-center gap-4 mt-8">
