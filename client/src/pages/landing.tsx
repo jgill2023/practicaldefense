@@ -19,7 +19,7 @@ import deductivePistolcraftImage from "@assets/Deductive-Pistol-Craft_1762671845
 import practiceForMasteryImage from "@assets/Performance-Shooting_1762673186670.jpg";
 import performanceShootingImage from "@assets/Practical-Mastery-2025_1762674118627.jpg";
 import coachingBackgroundImage from "@assets/Main_1762715966076.jpg";
-import apacheLogoImage from "@assets/Apache_(6)_1765614133164.png";
+import apacheLogoImage from "@assets/Apache_(6)_1765614929955.png";
 import {
   Select,
   SelectContent,
