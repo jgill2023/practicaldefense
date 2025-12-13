@@ -50,13 +50,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <nav className="flex items-center space-x-6">
                   {isInstructorOrHigher(user) && (
                     <>
-                      <Link href="/instructor-dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-dashboard">
+                      <Link href="/instructor-dashboard" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-dashboard">
                         Dashboard
                       </Link>
-                      <Link href="/students" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-students">
+                      <Link href="/students" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-students">
                         Students
                       </Link>
-                      <Link href="/communications" className="text-sm font-medium text-foreground hover:text-primary transition-colors relative" data-testid="link-secondary-communication">
+                      <Link href="/communications" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors relative" data-testid="link-secondary-communication">
                         Communication
                         {counts.unread > 0 && (
                           <Badge 
@@ -67,22 +67,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           </Badge>
                         )}
                       </Link>
-                      <Link href="/reports" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-reports">
+                      <Link href="/reports" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-reports">
                         Reports
                       </Link>
-                      <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-products">
+                      <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-products">
                         Products
                       </Link>
-                      <Link href="/stripe-connect" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-payment-settings">
+                      <Link href="/stripe-connect" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-payment-settings">
                         Payment Settings
                       </Link>
                     </>
                   )}
-                  <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-student-dashboard">
+                  <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-student-dashboard">
                     Student Dashboard
                   </Link>
                   {canCreateAccounts(user) && (
-                    <Link href="/admin/users" className="text-sm font-medium text-foreground hover:text-primary transition-colors relative" data-testid="link-secondary-user-management">
+                    <Link href="/admin/users" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors relative" data-testid="link-secondary-user-management">
                       User Management
                       {pendingCount > 0 && (
                         <Badge 
@@ -96,7 +96,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </Link>
                   )}
                   {user?.role === 'superadmin' && (
-                    <Link href="/admin/credits" className="text-sm font-medium text-foreground hover:text-primary transition-colors" data-testid="link-secondary-admin-credits">
+                    <Link href="/admin/credits" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-admin-credits">
                       Admin Credits
                     </Link>
                   )}
@@ -130,21 +130,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* Navigation and login aligned to the right */}
             <div className="flex items-center space-x-8">
               <nav className="hidden md:flex items-center space-x-8">
-                <a href="/" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" data-testid="link-home" onClick={(e) => {
+                <a href="/" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-home" onClick={(e) => {
                   if (window.location.pathname === '/') {
                     e.preventDefault();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <Link href="/about-chris" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" data-testid="link-about-chris">About Us</Link>
-                <a href="/#deductive-pistolcraft" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" onClick={(e) => {
+                <Link href="/about-chris" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-about-chris">About Us</Link>
+                <a href="/#deductive-pistolcraft" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" onClick={(e) => {
                   if (window.location.pathname === '/') {
                     e.preventDefault();
                     document.getElementById('deductive-pistolcraft')?.scrollIntoView({ behavior: 'smooth' });
                   }
                 }} data-testid="link-courses">Courses</a>
-                <Link href="/schedule-list" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" data-testid="link-events">Events</Link>
-                <a href="/#appointments" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" onClick={(e) => {
+                <Link href="/schedule-list" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-events">Events</Link>
+                <a href="/#appointments" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" onClick={(e) => {
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
                     e.preventDefault();
@@ -156,7 +156,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>One/One Training</a>
-                <Link href="/contact" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" data-testid="link-contact">Contact Us</Link>
+                <Link href="/contact" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-contact">Contact Us</Link>
               </nav>
 
               {/* Desktop auth buttons */}
@@ -188,34 +188,34 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {isMobileMenuOpen && (
             <div className="md:hidden border-t border-white/20 py-4 max-h-[calc(100vh-64px)] overflow-y-auto">
               <nav className="flex flex-col space-y-2">
-                <a href="/" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-home-mobile" onClick={(e) => {
+                <a href="/" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-home-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
                   if (window.location.pathname === '/') {
                     e.preventDefault();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <Link href="/about-chris" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-about-chris-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
-                <a href="/#deductive-pistolcraft" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-courses-mobile" onClick={(e) => {
+                <Link href="/about-chris" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-about-chris-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
+                <a href="/#deductive-pistolcraft" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-courses-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
                   if (window.location.pathname === '/') {
                     e.preventDefault();
                     document.getElementById('deductive-pistolcraft')?.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}>Courses</a>
-                <Link href="/schedule-list" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-events-mobile" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
+                <Link href="/schedule-list" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-events-mobile" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
                 <div className="py-2" style={{display: 'none'}}>
                   <div className="text-white font-medium mb-2">The Schedule</div>
                   <div className="pl-4 space-y-2">
-                    <Link href="/schedule-list" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link href="/schedule-list" className="block text-white/80 hover:text-[#FD66C5] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                       List View
                     </Link>
-                    <Link href="/schedule-calendar" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Link href="/schedule-calendar" className="block text-white/80 hover:text-[#FD66C5] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                       Calendar View
                     </Link>
                   </div>
                 </div>
-                <a href="/#appointments" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" onClick={(e) => {
+                <a href="/#appointments" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" onClick={(e) => {
                   setIsMobileMenuOpen(false);
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
@@ -227,7 +227,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>One/One Training</a>
-                <Link href="/contact" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
+                <Link href="/contact" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
 
                 {/* Mobile auth buttons */}
                 <div className="border-t border-white/20 mt-2 pt-2 space-y-2">
@@ -245,17 +245,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       {hasInstructorPrivileges(user as any) ? (
                         <>
                           <Link href="/instructor-dashboard" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-instructor-dashboard-mobile">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-instructor-dashboard-mobile">
                               Dashboard
                             </Button>
                           </Link>
                           <Link href="/students" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-students-mobile">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-students-mobile">
                               Students
                             </Button>
                           </Link>
                           <Link href="/communications" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary relative" data-testid="link-communications-mobile">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5] relative" data-testid="link-communications-mobile">
                               Communications
                               {counts.unread > 0 && (
                                 <Badge 
@@ -268,23 +268,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             </Button>
                           </Link>
                           <Link href="/student-portal" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-dashboard-mobile">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-student-dashboard-mobile">
                               Student Dashboard
                             </Button>
                           </Link>
                           <Link href="/product-management" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-products-mobile">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-products-mobile">
                               Products
                             </Button>
                           </Link>
                           <Link href="/stripe-connect" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-payment-settings-mobile">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-payment-settings-mobile">
                               Payment Settings
                             </Button>
                           </Link>
                           {canCreateAccounts(user as any) && (
                             <Link href="/admin/users" className="block">
-                              <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary relative" data-testid="link-user-management-mobile">
+                              <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5] relative" data-testid="link-user-management-mobile">
                                 User Management
                                 {pendingCount > 0 && (
                                   <Badge 
@@ -300,7 +300,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           )}
                           {user?.role === 'superadmin' && (
                             <Link href="/admin/credits" className="block">
-                              <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-admin-credits-mobile">
+                              <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-admin-credits-mobile">
                                 Admin Credits
                               </Button>
                             </Link>
@@ -308,14 +308,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         </>
                       ) : (
                         <Link href="/student-portal" className="block">
-                          <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary" data-testid="link-student-portal-mobile">
+                          <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-student-portal-mobile">
                             My Portal
                           </Button>
                         </Link>
                       )}
                       <Button 
                         variant="outline" 
-                        className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-primary"
+                        className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]"
                         onClick={handleLogout}
                         data-testid="button-logout-mobile"
                       >
@@ -348,19 +348,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="md:col-span-2">
               <h4 className="font-semibold mb-4 text-[#34B8FE]">Support</h4>
               <div className="space-y-2">
-                <Link href="/contact" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-contact-support">Contact Us</Link>
-                <Link href="/privacy-policy" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-privacy-policy">Privacy Policy</Link>
-                <Link href="/terms-of-service" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-terms-of-service">Terms of Service</Link>
-                <Link href="/refund-policy" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-refund-policy">Refund Policy</Link>
+                <Link href="/contact" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-contact-support">Contact Us</Link>
+                <Link href="/privacy-policy" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-privacy-policy">Privacy Policy</Link>
+                <Link href="/terms-of-service" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-terms-of-service">Terms of Service</Link>
+                <Link href="/refund-policy" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-refund-policy">Refund Policy</Link>
               </div>
             </div>
 
             <div className="md:col-span-2">
               <h4 className="font-semibold mb-4 text-[#34B8FE]">Quick Links</h4>
               <div className="space-y-2">
-                <Link href="/schedule-list" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
-                <Link href="/student-portal" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-footer-student-dashboard">Student Dashboard</Link>
-                <a href="#resources" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors">Resources</a>
+                <Link href="/schedule-list" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
+                <Link href="/student-portal" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-footer-student-dashboard">Student Dashboard</Link>
+                <a href="#resources" className="block text-white/80 hover:text-[#FD66C5] transition-colors">Resources</a>
               </div>
             </div>
 
@@ -369,7 +369,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="space-y-2 text-white/80">
                 <div className="flex items-start space-x-2">
                   <span>✉️</span>
-                  <a href="mailto:Info@ApacheNC.com" className="hover:text-[hsl(190,65%,47%)] transition-colors">Info@ApacheNC.com</a>
+                  <a href="mailto:Info@ApacheNC.com" className="hover:text-[#FD66C5] transition-colors">Info@ApacheNC.com</a>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span>📍</span>
