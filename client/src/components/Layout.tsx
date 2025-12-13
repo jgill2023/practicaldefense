@@ -382,7 +382,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="border-t border-white/20 mt-8 pt-8 text-white/70">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p style={{ fontFamily: 'League Gothic, sans-serif' }} className="text-left text-lg">&copy; {new Date().getFullYear()} Apache Solutions</p>
-              <p className="text-center md:absolute md:left-1/2 md:transform md:-translate-x-1/2">Built and Powered by <a href="https://instructorops.com" target="_blank" rel="noopener noreferrer" className="text-[hsl(190,65%,47%)] hover:text-white transition-colors underline">InstructorOps</a></p>
+              <p className="text-center md:absolute md:left-1/2 md:transform md:-translate-x-1/2">Built and Powered by <a href="https://instructorops.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline text-[#34B8FE] font-bold">InstructorOps</a></p>
               <div className="hidden md:block"></div>
             </div>
           </div>
