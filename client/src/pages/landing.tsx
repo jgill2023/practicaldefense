@@ -19,6 +19,7 @@ import deductivePistolcraftImage from "@assets/Deductive-Pistol-Craft_1762671845
 import practiceForMasteryImage from "@assets/Performance-Shooting_1762673186670.jpg";
 import performanceShootingImage from "@assets/Practical-Mastery-2025_1762674118627.jpg";
 import coachingBackgroundImage from "@assets/Main_1762715966076.jpg";
+import apacheLogoImage from "@assets/Apache_(6)_1765614133164.png";
 import {
   Select,
   SelectContent,
@@ -316,6 +317,12 @@ export default function Landing() {
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
           <div className="animate-slide-up">
+            <img 
+              src={apacheLogoImage} 
+              alt="Apache Solutions Logo" 
+              className="h-32 sm:h-40 md:h-48 mx-auto mb-6 object-contain"
+              data-testid="apache-logo"
+            />
             <h1 style={{ fontFamily: 'League Gothic, sans-serif' }} className="uppercase mb-6 text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-wider">APACHE SOLUTIONS</h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto mb-8 font-light">Educating the Responsibily Armed Citizen</p>
           </div>
