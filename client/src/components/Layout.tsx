@@ -123,7 +123,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex-shrink-0">
               <Link href="/" data-testid="link-home" className="flex items-center gap-2">
                 <div className="flex flex-col">
-                  <span className="font-display text-2xl text-white tracking-wider leading-none">RAC</span>
                 </div>
               </Link>
             </div>
