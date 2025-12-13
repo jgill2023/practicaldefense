@@ -370,7 +370,7 @@ export default function Landing() {
                   </div>
                   <div>
                     <h3 className="font-heading text-xl lg:text-2xl uppercase tracking-wide">Responsibly Armed Citizen Criterion</h3>
-                    <p className="text-sm text-muted-foreground">4-Phase Belt-Style Progression System</p>
+                    <p className="text-muted-foreground text-[16px]">4-Phase Belt-Style Progression System</p>
                   </div>
                 </div>
                 
