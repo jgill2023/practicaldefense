@@ -323,7 +323,6 @@ export default function Landing() {
               className="h-32 sm:h-40 md:h-48 mx-auto mb-6 object-contain"
               data-testid="apache-logo"
             />
-            <h1 style={{ fontFamily: 'League Gothic, sans-serif' }} className="uppercase mb-6 text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-wider">APACHE SOLUTIONS</h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto mb-8 font-light">Educating the Responsibily Armed Citizen</p>
           </div>
 
