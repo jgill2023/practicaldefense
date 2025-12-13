@@ -210,6 +210,7 @@ function UpcomingCoursesList() {
   // Get all upcoming schedules with their course info, sorted by date
   const upcomingSchedules = useMemo(() => {
     const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const schedulesWithCourse: { schedule: any; course: CourseWithSchedules }[] = [];
     
     courses.forEach(course => {
@@ -219,7 +220,8 @@ function UpcomingCoursesList() {
         if (schedule.deletedAt || schedule.notes?.includes('CANCELLED:')) return;
         
         const startDate = new Date(schedule.startDate);
-        if (startDate <= now) return;
+        // Include today's events and future events
+        if (startDate < todayStart) return;
         
         // Calculate available spots
         const enrollmentCount = schedule.enrollments?.filter((e: any) => 
