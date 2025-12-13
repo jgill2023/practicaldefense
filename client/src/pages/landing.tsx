@@ -199,6 +199,267 @@ function TestimonialSlider() {
   );
 }
 
+function UpcomingCoursesList() {
+  const [currentPage, setCurrentPage] = useState(0);
+  const coursesPerPage = 3;
+  
+  const { data: courses = [], isLoading } = useQuery<CourseWithSchedules[]>({
+    queryKey: ["/api/courses"],
+  });
+
+  // Get all upcoming schedules with their course info, sorted by date
+  const upcomingSchedules = useMemo(() => {
+    const now = new Date();
+    const schedulesWithCourse: { schedule: any; course: CourseWithSchedules }[] = [];
+    
+    courses.forEach(course => {
+      if (!course.isActive || course.status !== 'published' || course.deletedAt) return;
+      
+      course.schedules?.forEach(schedule => {
+        if (schedule.deletedAt || schedule.notes?.includes('CANCELLED:')) return;
+        
+        const startDate = new Date(schedule.startDate);
+        if (startDate <= now) return;
+        
+        // Calculate available spots
+        const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+          e.status === 'confirmed' || e.status === 'pending'
+        ).length || 0;
+        const availableSpots = Math.max(0, schedule.maxSpots - enrollmentCount);
+        
+        if (availableSpots > 0) {
+          schedulesWithCourse.push({ schedule, course });
+        }
+      });
+    });
+    
+    return schedulesWithCourse.sort((a, b) => 
+      new Date(a.schedule.startDate).getTime() - new Date(b.schedule.startDate).getTime()
+    );
+  }, [courses]);
+
+  const totalPages = Math.ceil(upcomingSchedules.length / coursesPerPage);
+  
+  // Clamp currentPage when data changes to prevent empty list
+  useEffect(() => {
+    if (upcomingSchedules.length > 0 && currentPage >= totalPages) {
+      setCurrentPage(Math.max(0, totalPages - 1));
+    }
+  }, [upcomingSchedules.length, totalPages, currentPage]);
+  
+  const currentSchedules = upcomingSchedules.slice(
+    currentPage * coursesPerPage,
+    (currentPage + 1) * coursesPerPage
+  );
+
+  const goToPrev = () => {
+    setCurrentPage(prev => Math.max(0, prev - 1));
+  };
+
+  const goToNext = () => {
+    setCurrentPage(prev => Math.min(totalPages - 1, prev + 1));
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long',
+      month: 'long', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+
+  const formatTime = (startTime: string, endTime: string) => {
+    const formatTimeStr = (t: string) => {
+      const [hours, minutes] = t.split(':');
+      const h = parseInt(hours);
+      const ampm = h >= 12 ? 'pm' : 'am';
+      const hour = h % 12 || 12;
+      return `${hour}:${minutes} ${ampm}`;
+    };
+    return `${formatTimeStr(startTime)} - ${formatTimeStr(endTime)}`;
+  };
+
+  const formatPrice = (price: string | number) => {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    if (numPrice === 0) return 'Contact for pricing';
+    return `$${numPrice.toFixed(2)}`;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="bg-white rounded-xl p-6 shadow-md animate-pulse">
+            <div className="flex gap-6">
+              <div className="w-32 h-24 bg-gray-200 rounded-lg"></div>
+              <div className="flex-1 space-y-3">
+                <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (upcomingSchedules.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <p>No upcoming courses scheduled. Check back soon!</p>
+      </div>
+    );
+  }
+
+  return (
+    <div data-testid="upcoming-courses-list">
+      <div className="divide-y divide-gray-200 border-t border-b border-gray-200">
+        {currentSchedules.map(({ schedule, course }) => (
+          <div 
+            key={schedule.id}
+            className="py-6 hover:bg-gray-50 transition-colors duration-200"
+            data-testid={`upcoming-course-${schedule.id}`}
+          >
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Course Image */}
+              <div className="w-full md:w-40 h-32 flex-shrink-0 rounded-lg overflow-hidden">
+                {course.imageUrl ? (
+                  <img 
+                    src={course.imageUrl} 
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)] flex items-center justify-center">
+                    <Target className="w-10 h-10 text-white opacity-50" />
+                  </div>
+                )}
+              </div>
+              
+              {/* Course Details */}
+              <div className="flex-1">
+                <h3 className="font-heading text-xl uppercase tracking-wide text-foreground mb-2">
+                  {course.title}
+                </h3>
+                
+                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-2">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>{formatDate(schedule.startDate)}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    <span>{formatTime(schedule.startTime, schedule.endTime)}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="w-4 h-4" />
+                    <span className="font-medium text-foreground">{formatPrice(course.price)}</span>
+                  </div>
+                  {schedule.location && (
+                    <div className="flex items-center gap-1">
+                      <span>{schedule.location}</span>
+                    </div>
+                  )}
+                </div>
+                
+                {course.briefDescription && (
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                    {course.briefDescription}
+                  </p>
+                )}
+                
+                <div className="flex items-center gap-3">
+                  <Button 
+                    size="sm"
+                    className="bg-[hsl(209,90%,38%)] text-white hover:bg-[hsl(209,90%,30%)] font-heading uppercase tracking-wide"
+                    onClick={() => {
+                      const coursesSection = document.getElementById('course-listings');
+                      if (coursesSection) {
+                        coursesSection.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    data-testid={`button-book-${schedule.id}`}
+                  >
+                    Book Now
+                  </Button>
+                  <Badge variant="secondary" className="text-xs">
+                    {(() => {
+                      const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+                        e.status === 'confirmed' || e.status === 'pending'
+                      ).length || 0;
+                      const spots = Math.max(0, schedule.maxSpots - enrollmentCount);
+                      return `${spots} spots left`;
+                    })()}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-8">
+          <button
+            onClick={goToPrev}
+            disabled={currentPage === 0}
+            className={`p-3 rounded-full transition-colors border border-gray-200 ${
+              currentPage === 0 
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'hover:bg-gray-100'
+            }`}
+            data-testid="upcoming-courses-prev"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+          </button>
+          
+          <div className="flex gap-2">
+            {Array.from({ length: totalPages }).map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentPage(idx)}
+                className={`w-3 h-3 rounded-full transition-all ${
+                  idx === currentPage 
+                    ? "bg-[hsl(209,90%,38%)] w-8" 
+                    : "bg-gray-300 hover:bg-gray-400"
+                }`}
+                data-testid={`upcoming-courses-dot-${idx}`}
+                aria-label={`Go to page ${idx + 1}`}
+              />
+            ))}
+          </div>
+          
+          <button
+            onClick={goToNext}
+            disabled={currentPage === totalPages - 1}
+            className={`p-3 rounded-full transition-colors border border-gray-200 ${
+              currentPage === totalPages - 1 
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'hover:bg-gray-100'
+            }`}
+            data-testid="upcoming-courses-next"
+            aria-label="Next page"
+          >
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </div>
+      )}
+      
+      <div className="text-center mt-4">
+        <p className="text-sm text-muted-foreground">
+          Showing {currentPage * coursesPerPage + 1}-{Math.min((currentPage + 1) * coursesPerPage, upcomingSchedules.length)} of {upcomingSchedules.length} upcoming courses
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function MosaicTestimonialSlider() {
   const [currentPattern, setCurrentPattern] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -650,6 +911,21 @@ export default function Landing() {
               </ComicPanel>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Upcoming Courses */}
+      <section id="upcoming-events" className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
+              Upcoming Courses
+            </TitleCard>
+            <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
+              Browse our upcoming training events and secure your spot today.
+            </p>
+          </div>
+          <UpcomingCoursesList />
         </div>
       </section>
 
