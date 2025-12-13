@@ -191,6 +191,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {!isAuthenticated && (
                   <Button 
                     variant="accent"
+                    className="bg-[#FD66C5]"
                     onClick={() => window.location.href = '/login'}
                     data-testid="button-login"
                   >
