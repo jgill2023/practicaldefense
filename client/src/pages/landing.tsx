@@ -28,6 +28,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import ApacheLogo from "@assets/ApacheLogo.png";
+
 const testimonials = [
   {
     quote: "RACC transformed my understanding of concealed carry. The pressure-tested benchmarks gave me real confidence.",
@@ -318,7 +320,7 @@ export default function Landing() {
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
           <div className="animate-slide-up">
             <img 
-              src={apacheLogoImage} 
+              src={ApacheLogo} 
               alt="Apache Solutions Logo" 
               className="h-96 sm:h-[480px] md:h-[576px] mx-auto object-contain mt-[0px] mb-[0px]"
               data-testid="apache-logo"
