@@ -19,7 +19,6 @@ import deductivePistolcraftImage from "@assets/Deductive-Pistol-Craft_1762671845
 import practiceForMasteryImage from "@assets/Performance-Shooting_1762673186670.jpg";
 import performanceShootingImage from "@assets/Practical-Mastery-2025_1762674118627.jpg";
 import coachingBackgroundImage from "@assets/Main_1762715966076.jpg";
-import apacheLogoImage from "@assets/Apache_(6)_1765614929955.png";
 import {
   Select,
   SelectContent,
@@ -27,8 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import ApacheLogo from "@assets/ApacheLogo.png";
 
 const testimonials = [
   {
@@ -318,13 +315,8 @@ export default function Landing() {
 
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
-          <div className="animate-slide-up -mt-20 sm:-mt-32 md:-mt-40">
-            <img 
-              src={ApacheLogo} 
-              alt="Apache Solutions Logo" 
-              className="h-48 sm:h-[240px] md:h-[288px] mx-auto object-contain mt-[0px] mb-[0px]"
-              data-testid="apache-logo"
-            />
+          <div className="animate-slide-up">
+            <h1 style={{ fontFamily: 'League Gothic, sans-serif' }} className="uppercase mb-6 text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-wider">APACHE SOLUTIONS</h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto mb-8 font-light">Educating the Responsibily Armed Citizen</p>
           </div>
 
@@ -701,6 +693,7 @@ export default function Landing() {
           )}
         </div>
       </section>
+      
       {/* Registration Modal */}
       {selectedCourse && (
         <RegistrationModal
