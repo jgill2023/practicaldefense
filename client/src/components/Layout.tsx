@@ -116,7 +116,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Header Navigation */}
-        <header className="bg-[hsl(204,27%,16%)] shadow-lg">
+        <header className="bg-[#5170FF] shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Company logo aligned to the left */}
