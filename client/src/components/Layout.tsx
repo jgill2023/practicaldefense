@@ -356,7 +356,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="md:col-span-2">
-              <h4 className="font-semibold mb-4 text-[hsl(190,65%,47%)]">Quick Links</h4>
+              <h4 className="font-semibold mb-4 text-[#34B8FE]">Quick Links</h4>
               <div className="space-y-2">
                 <Link href="/schedule-list" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
                 <Link href="/student-portal" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-footer-student-dashboard">Student Dashboard</Link>
