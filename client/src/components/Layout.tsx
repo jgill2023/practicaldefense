@@ -124,7 +124,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Link href="/" data-testid="link-home" className="flex items-center gap-2">
                 <div className="flex flex-col">
                   <span className="font-display text-2xl text-white tracking-wider leading-none">RAC</span>
-                  <span className="text-[10px] text-[hsl(190,65%,47%)] tracking-widest uppercase leading-none">Core Concepts</span>
                 </div>
               </Link>
             </div>
