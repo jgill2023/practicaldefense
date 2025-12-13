@@ -37,11 +37,13 @@ export function ComicPanel({
     lg: "translate-x-2 -translate-y-2",
   };
 
+  const hasHeightClass = className?.includes('h-full') || className?.includes('flex-1');
+  
   return (
     <div
       id={id}
       onClick={onClick}
-      className="relative group"
+      className={cn("relative group", hasHeightClass && "h-full flex flex-col")}
     >
       {/* Background Shadow Layer */}
       <div className={cn(
@@ -56,6 +58,7 @@ export function ComicPanel({
           "relative rounded-lg transition-all duration-200",
           !noBorder && "border-2",
           variantStyles[variant],
+          hasHeightClass && "flex-1 flex flex-col",
           className
         )}
         data-testid={testId || "comic-panel"}
@@ -65,7 +68,7 @@ export function ComicPanel({
             {header}
           </div>
         )}
-        <div className="p-5">{children}</div>
+        <div className={cn("p-5", hasHeightClass && "flex-1")}>{children}</div>
       </div>
     </div>
   );

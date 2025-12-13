@@ -419,7 +419,7 @@ export default function Landing() {
             {/* Right Side - 2 Stacked Training Cards (40% width) */}
             <div className="lg:w-[40%] flex flex-col gap-6 h-full">
               {/* Card 1: Precision Training */}
-              <ComicPanel shadow="sm" className="flex-1 hover-lift" data-testid="precision-training-card">
+              <ComicPanel shadow="sm" className="flex-1 h-full hover-lift" data-testid="precision-training-card">
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 flex-shrink-0 rounded-lg bg-[hsl(209,90%,38%)] flex items-center justify-center">
                     <Target className="w-7 h-7 text-white" />
@@ -435,7 +435,7 @@ export default function Landing() {
               </ComicPanel>
 
               {/* Card 2: Personalized Path */}
-              <ComicPanel shadow="sm" className="flex-1 hover-lift" data-testid="personalized-path-card">
+              <ComicPanel shadow="sm" className="flex-1 h-full hover-lift" data-testid="personalized-path-card">
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 flex-shrink-0 rounded-lg bg-[hsl(190,65%,47%)] flex items-center justify-center">
                     <Crosshair className="w-7 h-7 text-white" />
