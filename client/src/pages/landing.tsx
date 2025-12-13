@@ -693,44 +693,7 @@ export default function Landing() {
           )}
         </div>
       </section>
-      {/* Virtual Coaching and Mental Management Section */}
-      <section className="relative w-full py-24 grain-texture" style={{
-        backgroundImage: `url(${coachingBackgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}>
-        {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <TitleCard as="h2" variant="light" className="text-3xl lg:text-4xl">
-              Specialized Coaching
-            </TitleCard>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-12">
-            {/* Left Column - Virtual Coaching */}
-            <ComicPanel variant="ghost" noBorder className="text-white text-center p-6 backdrop-blur-sm bg-white/5 rounded-lg">
-              <h3 className="font-heading text-2xl lg:text-3xl uppercase tracking-wide mb-6 text-[hsl(190,65%,47%)]">
-                Virtual Coaching
-              </h3>
-              <p className="text-base lg:text-lg leading-relaxed text-white/90">
-                Enhancing your skills through virtual coaching is not only possible but highly effective. We specialize in helping you develop a personalized training plan, thoroughly examining and evaluating all aspects of your current abilities. Our clients consistently experience substantial benefits from virtual coaching, making it an exceptionally cost-effective means of receiving tailored one-on-one guidance.
-              </p>
-            </ComicPanel>
-
-            {/* Right Column - Mental Management Coaching */}
-            <ComicPanel variant="ghost" noBorder className="text-white text-center p-6 backdrop-blur-sm bg-white/5 rounded-lg">
-              <h3 className="font-heading text-2xl lg:text-3xl uppercase tracking-wide mb-6 text-[hsl(44,89%,61%)]">
-                Mental Management Coaching
-              </h3>
-              <p className="text-base lg:text-lg leading-relaxed text-white/90">
-                Proudly, I am among an exclusive group of 23 coaches worldwide certified by the originator and pioneer of Mental Management, Lanny Bassham. As a certified Level II mental management coach, I've dedicated a significant amount of time and resources to becoming an exemplary guide in incorporating mental management concepts into the performer's toolkit.
-              </p>
-            </ComicPanel>
-          </div>
-        </div>
-      </section>
+      
       {/* Registration Modal */}
       {selectedCourse && (
         <RegistrationModal
