@@ -409,33 +409,33 @@ export default function Landing() {
 
             {/* Right Side - 2 Stacked Training Cards (40% width) */}
             <div className="lg:w-[40%] flex flex-col gap-6 self-stretch">
-              {/* Card 1: Precision Training */}
-              <ComicPanel shadow="sm" className="flex-1 h-full hover-lift" data-testid="precision-training-card">
+              {/* Card 1: NC Concealed Carry */}
+              <ComicPanel shadow="sm" className="flex-1 h-full hover-lift" data-testid="nc-concealed-carry-card">
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 flex-shrink-0 rounded-lg bg-[hsl(209,90%,38%)] flex items-center justify-center">
                     <Target className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-heading uppercase tracking-wide mb-2 text-[20px]">Precision Focus</h3>
+                    <h3 className="font-heading uppercase tracking-wide mb-2 text-[20px]">NC Concealed Carry</h3>
                     <p className="text-muted-foreground text-[16px]">
-                      Every session builds on quantifiable metrics. Apache B-8 scores, timed drills, and skill demonstrations 
-                      provide data-driven proof of your progress.
+                      Comprehensive NC Concealed Carry permit class covering safety fundamentals, legal considerations, 
+                      and practical shooting qualification. Take control of your personal safety.
                     </p>
                   </div>
                 </div>
               </ComicPanel>
 
-              {/* Card 2: Personalized Path */}
-              <ComicPanel shadow="sm" className="flex-1 h-full hover-lift" data-testid="personalized-path-card">
+              {/* Card 2: Dry-Fire Practice */}
+              <ComicPanel shadow="sm" className="flex-1 h-full hover-lift" data-testid="dry-fire-practice-card">
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 flex-shrink-0 rounded-lg bg-[hsl(190,65%,47%)] flex items-center justify-center">
                     <Crosshair className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-heading uppercase tracking-wide mb-2 text-[20px]">Personalized Path</h3>
+                    <h3 className="font-heading uppercase tracking-wide mb-2 text-[20px]">Dry-Fire Practice</h3>
                     <p className="text-muted-foreground text-[16px]">
-                      No one-size-fits-all. Your goals, your pace, your success. Whether you're a first-time owner or 
-                      seasoned carrier, we meet you exactly where you are.
+                      Build real skill from the comfort of the classroom. Learn effective dry-fire practice techniques, 
+                      proper safety protocols, and how to structure your sessions for maximum improvement.
                     </p>
                   </div>
                 </div>
