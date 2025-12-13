@@ -358,15 +358,6 @@ export default function Landing() {
       {/* Results-Driven Training Section */}
       <section id="results-driven-training" className="bg-white py-20">
         <div className="w-full px-4 sm:px-6 lg:px-12 text-center">
-          <div className="flex justify-center mb-6">
-            <TitleCard as="h2" variant="default" className="text-4xl lg:text-5xl">
-              <span className="line-through opacity-50">Traditional</span> Results-Driven Training
-            </TitleCard>
-          </div>
-          <p className="max-w-4xl mx-auto text-xl text-[hsl(204,18%,35%)] leading-relaxed">
-            We pride ourselves on results-driven training that is tailored to, and for, the individual student.
-          </p>
-          
           {/* RACC Feature Section with Testimonials */}
           <div className="flex flex-col lg:flex-row lg:items-stretch gap-8 mt-12 text-left pr-4 pb-4">
             {/* RACC Program Card - 60% width */}
