@@ -322,7 +322,7 @@ export default function Landing() {
             <img 
               src={ApacheLogo} 
               alt="Apache Solutions Logo" 
-              className="h-96 sm:h-[480px] md:h-[576px] mx-auto object-contain mt-[0px] mb-[0px]"
+              className="h-48 sm:h-[240px] md:h-[288px] mx-auto object-contain mt-[0px] mb-[0px]"
               data-testid="apache-logo"
             />
             <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto mb-8 font-light">Educating the Responsibily Armed Citizen</p>
