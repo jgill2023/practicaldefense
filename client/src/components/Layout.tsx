@@ -338,7 +338,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="grid md:grid-cols-12 gap-8">
             <div className="md:col-span-5">
               <h3 className="text-xl font-bold mb-4 font-heading uppercase tracking-wide">
-                <span className="font-display text-2xl">RAC</span> - Core Concepts
+                Apache Solutions
               </h3>
               <p className="text-white/80">
                 Results-driven firearms training tailored to the individual student. Traditional, deductive pistolcraft emphasizing fundamentals and quantifiable metrics.
