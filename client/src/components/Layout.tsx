@@ -365,7 +365,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="md:col-span-3">
-              <h4 className="font-semibold mb-4 text-[hsl(190,65%,47%)]">Contact</h4>
+              <h4 className="font-semibold mb-4 text-[#34B8FE]">Contact</h4>
               <div className="space-y-2 text-white/80">
                 <div className="flex items-start space-x-2">
                   <span>✉️</span>
