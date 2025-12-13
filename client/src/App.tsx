@@ -29,7 +29,6 @@ import ContactPage from "@/pages/contact";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import TermsOfServicePage from "@/pages/terms-of-service";
 import RefundPolicyPage from "@/pages/refund-policy";
-import TheCrucible from "@/pages/the-crucible";
 import AppointmentsPage from "@/pages/appointments";
 import BookAppointmentPage from "@/pages/book-appointment";
 import AdminCreditsPage from "@/pages/admin-credits";
@@ -108,7 +107,7 @@ function Router() {
 
   // Redirect pending users to approval page except for allowed routes
   if (isAuthenticated && user?.userStatus === 'pending') {
-    const allowedPaths = ['/pending-approval', '/contact', '/about-chris', '/privacy-policy', '/terms-of-service', '/refund-policy', '/the-crucible', '/'];
+    const allowedPaths = ['/pending-approval', '/contact', '/about-chris', '/privacy-policy', '/terms-of-service', '/refund-policy', '/'];
     if (!allowedPaths.includes(location) && location !== '/') {
       window.location.href = '/pending-approval';
       return null;
@@ -134,7 +133,6 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/terms-of-service" component={TermsOfServicePage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />
-      <Route path="/the-crucible" component={TheCrucible} />
       <Route path="/book-appointment/:instructorId" component={BookAppointmentPage} />
       <Route path="/instructor-dashboard" component={InstructorDashboard} />
       <Route path="/course-management" component={CourseManagement} />

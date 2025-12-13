@@ -136,40 +136,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <Link href="/about-chris" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" data-testid="link-about-chris">About Chris</Link>
+                <Link href="/about-chris" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" data-testid="link-about-chris">About Us</Link>
                 <a href="/#deductive-pistolcraft" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" onClick={(e) => {
                   if (window.location.pathname === '/') {
                     e.preventDefault();
                     document.getElementById('deductive-pistolcraft')?.scrollIntoView({ behavior: 'smooth' });
                   }
                 }} data-testid="link-courses">Courses</a>
-                <NavigationMenu>
-                  <NavigationMenuList>
-                    <NavigationMenuItem>
-                      <NavigationMenuTrigger className="bg-transparent text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium">
-                        The Schedule
-                      </NavigationMenuTrigger>
-                      <NavigationMenuContent>
-                        <ul className="grid w-[150px] gap-1 p-2">
-                          <li>
-                            <NavigationMenuLink asChild>
-                              <Link href="/schedule-list" className="block select-none rounded-md p-2 text-[14px] leading-none no-underline outline-none transition-colors text-black hover:text-gray-600">
-                                List View
-                              </Link>
-                            </NavigationMenuLink>
-                          </li>
-                          <li>
-                            <NavigationMenuLink asChild>
-                              <Link href="/schedule-calendar" className="block select-none rounded-md p-2 text-[14px] leading-none no-underline outline-none transition-colors text-black hover:text-gray-600">
-                                Calendar View
-                              </Link>
-                            </NavigationMenuLink>
-                          </li>
-                        </ul>
-                      </NavigationMenuContent>
-                    </NavigationMenuItem>
-                  </NavigationMenuList>
-                </NavigationMenu>
+                <Link href="/schedule-list" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" data-testid="link-events">Events</Link>
                 <a href="/#appointments" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" onClick={(e) => {
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
@@ -181,8 +155,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
-                }}>Virtual Training</a>
-                <a href="/the-crucible" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium">The Crucible</a>
+                }}>One/One Training</a>
                 <Link href="/contact" className="text-base text-white hover:text-[hsl(190,65%,47%)] transition-colors font-medium" data-testid="link-contact">Contact Us</Link>
               </nav>
 
@@ -222,7 +195,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <Link href="/about-chris" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-about-chris-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Chris</Link>
+                <Link href="/about-chris" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-about-chris-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
                 <a href="/#deductive-pistolcraft" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-courses-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
                   if (window.location.pathname === '/') {
@@ -230,8 +203,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     document.getElementById('deductive-pistolcraft')?.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}>Courses</a>
-                <a href="/the-crucible" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-crucible-mobile" onClick={() => setIsMobileMenuOpen(false)}>The Crucible</a>
-                <div className="py-2">
+                <Link href="/schedule-list" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-events-mobile" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
+                <div className="py-2" style={{display: 'none'}}>
                   <div className="text-white font-medium mb-2">The Schedule</div>
                   <div className="pl-4 space-y-2">
                     <Link href="/schedule-list" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
@@ -253,7 +226,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     const y = appointmentsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
-                }}>Virtual Training</a>
+                }}>One/One Training</a>
                 <Link href="/contact" className="text-white hover:text-[hsl(190,65%,47%)] transition-colors py-2 font-medium" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
 
                 {/* Mobile auth buttons */}
@@ -388,7 +361,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/schedule-list" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
                 <Link href="/student-portal" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-footer-student-dashboard">Student Dashboard</Link>
                 <a href="#resources" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors">Resources</a>
-                <Link href="/the-crucible" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-footer-crucible">The Crucible</Link>
               </div>
             </div>
 
