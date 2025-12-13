@@ -340,7 +340,7 @@ export default function Landing() {
             <Button
               size="lg"
               variant="outline"
-              className="border-2 border-white hover:bg-white hover:text-[hsl(204,27%,16%)] font-heading uppercase tracking-wide px-8 py-6 text-lg text-[#5170FF]"
+              className="border-2 border-black hover:bg-white hover:text-[hsl(204,27%,16%)] font-heading uppercase tracking-wide px-8 py-6 text-lg text-[#5170FF]"
               onClick={() => {
                 const appointmentsSection = document.getElementById('appointments');
                 if (appointmentsSection) {
