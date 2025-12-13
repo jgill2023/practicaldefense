@@ -346,7 +346,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="md:col-span-2">
-              <h4 className="font-semibold mb-4 text-[hsl(190,65%,47%)]">Support</h4>
+              <h4 className="font-semibold mb-4 text-[#34B8FE]">Support</h4>
               <div className="space-y-2">
                 <Link href="/contact" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-contact-support">Contact Us</Link>
                 <Link href="/privacy-policy" className="block text-white/80 hover:text-[hsl(190,65%,47%)] transition-colors" data-testid="link-privacy-policy">Privacy Policy</Link>
