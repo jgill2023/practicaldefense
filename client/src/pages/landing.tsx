@@ -432,8 +432,8 @@ export default function Landing() {
                     <Crosshair className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-heading text-lg uppercase tracking-wide mb-2">Personalized Path</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <h3 className="font-heading uppercase tracking-wide mb-2 text-[20px]">Personalized Path</h3>
+                    <p className="text-muted-foreground text-[16px]">
                       No one-size-fits-all. Your goals, your pace, your success. Whether you're a first-time owner or 
                       seasoned carrier, we meet you exactly where you are.
                     </p>
