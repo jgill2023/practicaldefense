@@ -26,6 +26,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const testimonials = [
   {
@@ -42,6 +48,28 @@ const testimonials = [
     quote: "The 4-phase system is brilliant. You don't just learn—you prove you can perform when it counts.",
     author: "James R.",
     rating: 5,
+  },
+];
+
+// Facebook Reviews for main testimonials section
+const facebookReviews = [
+  {
+    author: "Dustin C.",
+    rating: 5,
+    quote: "I took the conceal carry class today. It exceeded my expectations by a long shot. The quality time Derrick took with each one of us in the class was phenomenal. This truly is a community of people that want to see you succeed. When I left I felt apart of something larger than myself. This is a place everyone young and old should attend for any of their firearm and survival classes. 10 out of 10! You won't be disappointed.",
+    isLong: false,
+  },
+  {
+    author: "Pacwest Defense",
+    rating: 5,
+    quote: "This is coming a little late, but I wanted to take a moment to share some feedback after hosting Tim and Derek of Apache Solutions recently. I work as the Chief RSO for Tri-County Gun Club in Sherwood, OR. We have a large, private event each year for our members. I invited the guys to teach a couple of classes and host a booth at the event while they were here.\n\nTim and Derek had a one-day course for Defensive Pistol on Friday, followed by the member event on Saturday, and then another one-day class, Full Spectrum Pistol Metrics on Sunday.\n\nLet me just say that Tim and Derek are great guys. They are friendly, funny, and knowledgeable. I was unable to participate or RSO for their class, due to prepping for our large event the following morning. I did, however, go and check on them a handful of times throughout the day on Friday. No one was doing cartwheels with a gun in their hand, and I was comfortable with their ability to run the line and maintain safety protocol. The students were engaged and focused each time I walked into the bay. At the end of the day, I was present for the tear down and wrap-up. The students were thrilled with the content they learned. They were energized and excited. One of them indicated that they were so impressed with the class that he had decided to attend the second class on Sunday. This was not his original plan and was going to rearrange his schedule to make it happen.\n\nAt the member event on Saturday, we had roughly 1,100 people in attendance. Tim and Derek were well received. The club had purchased a seat for the Sunday class and raffled it off at the event. When I called the winner of the raffle Saturday evening, the guy whooped, cheered and laughed. He was SO EXCITED to attend the class the next morning.\n\nSunday came, and I peeked in on the class a few times. Each time I peeked in, I would watch for 5-10 minutes. I was present to help with tear down and wrap up. At the end of class, the students were glowing. All were quite happy with the content they had learned. They were excited about having actual metrics for their shooting abilities and the standards they were working towards. There were some experienced and well-seasons students in this class, who I personally know. They were impressed with the way Tim was able to convey the content in a way that they had not heard before. All of the students thanked me for bringing them to Tri-County and expressed interest in learning from them again in the future.\n\nTim and Derek were pleasant, and easy to host. They offer a unique perspective that is beneficial to beginners and experienced shooters alike. I look forward to hosting them again, and would encourage anyone to consider learning from and/or hosting these guys.",
+    isLong: true,
+  },
+  {
+    author: "Marissa B.",
+    rating: 5,
+    quote: "Derek is an exceptional firearms instructor who truly goes above and beyond for his students. I have had the pleasure of training with him at Apache Solutions, and I cannot speak highly enough of his expertise and dedication.\n\nDerek's passion for teaching self-defense skills is evident in every lesson he conducts. He is patient, encouraging, and always willing to tailor his instruction to meet the individual needs of each student. Under his guidance, I have not only gained invaluable knowledge about firearms, but I have also developed a newfound confidence in my ability to protect myself.\n\nI have taken private lessons with Derek, and I can honestly say that the one-on-one attention and personalized instruction he provides have been instrumental in my growth as a shooter. He has a keen eye for identifying areas of improvement and offers constructive feedback in a way that is both motivating and empowering.\n\nOverall, Derek is a true professional who is dedicated to helping his students reach their full potential. I am grateful for the opportunity to train with him and would highly recommend him to anyone looking to enhance their firearm skills or learn self-defense techniques. Thank you, Derek, for everything you do!",
+    isLong: true,
   },
 ];
 
@@ -123,6 +151,128 @@ function TestimonialSlider() {
         </div>
       </div>
     </div>
+  );
+}
+
+function FacebookTestimonialSlider() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedReview, setSelectedReview] = useState<typeof facebookReviews[0] | null>(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % facebookReviews.length);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const goToPrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + facebookReviews.length) % facebookReviews.length);
+  };
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % facebookReviews.length);
+  };
+
+  const truncateText = (text: string, maxLength: number = 200) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + "...";
+  };
+
+  const current = facebookReviews[currentIndex];
+
+  return (
+    <>
+      <div className="max-w-3xl mx-auto" data-testid="facebook-testimonial-slider">
+        <ComicPanel shadow="lg" className="hover-lift">
+          <div className="text-center">
+            <Quote className="w-12 h-12 text-[hsl(209,90%,38%)] opacity-30 mx-auto mb-4 rotate-180" />
+            <p className="text-lg text-muted-foreground italic leading-relaxed mb-4 min-h-[120px]">
+              "{truncateText(current.quote)}"
+              {current.quote.length > 200 && (
+                <button
+                  onClick={() => setSelectedReview(current)}
+                  className="text-[hsl(209,90%,38%)] hover:text-[#FD66C5] ml-1 font-medium transition-colors"
+                  data-testid="button-read-more"
+                >
+                  Read More
+                </button>
+              )}
+            </p>
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-5 h-5 ${i < current.rating ? "text-[hsl(44,89%,61%)] fill-[hsl(44,89%,61%)]" : "text-gray-300"}`}
+                  />
+                ))}
+              </div>
+            </div>
+            <span className="text-base font-medium text-foreground">— {current.author}</span>
+          </div>
+          
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+            <div className="flex gap-2 mx-auto">
+              {facebookReviews.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`w-3 h-3 rounded-full transition-all ${
+                    idx === currentIndex 
+                      ? "bg-[hsl(209,90%,38%)] w-6" 
+                      : "bg-gray-300 hover:bg-gray-400"
+                  }`}
+                  data-testid={`facebook-testimonial-dot-${idx}`}
+                  aria-label={`Go to review ${idx + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-center gap-2 mt-4">
+            <button
+              onClick={goToPrev}
+              className="p-2 rounded-full hover:bg-muted transition-colors border border-border"
+              data-testid="facebook-testimonial-prev"
+              aria-label="Previous review"
+            >
+              <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <button
+              onClick={goToNext}
+              className="p-2 rounded-full hover:bg-muted transition-colors border border-border"
+              data-testid="facebook-testimonial-next"
+              aria-label="Next review"
+            >
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
+        </ComicPanel>
+      </div>
+
+      <Dialog open={!!selectedReview} onOpenChange={(open) => !open && setSelectedReview(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-4 h-4 ${i < (selectedReview?.rating || 0) ? "text-[hsl(44,89%,61%)] fill-[hsl(44,89%,61%)]" : "text-gray-300"}`}
+                  />
+                ))}
+              </div>
+              <span className="ml-2">— {selectedReview?.author}</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <Quote className="w-8 h-8 text-[hsl(209,90%,38%)] opacity-30 mb-2 rotate-180" />
+            <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+              {selectedReview?.quote}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -444,6 +594,19 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Customer Testimonials */}
+      <section className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
+              What Our Students Say
+            </TitleCard>
+          </div>
+          <FacebookTestimonialSlider />
+        </div>
+      </section>
+
       {/* Training Programs */}
       <section id="courses" className="bg-muted py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
