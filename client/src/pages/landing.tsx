@@ -1,10 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User, DollarSign, CalendarClock, Target, Award, Crosshair } from "lucide-react";
+import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User, DollarSign, CalendarClock, Target, Award, Crosshair, ChevronLeft, ChevronRight, Quote } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
@@ -26,6 +26,105 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+const testimonials = [
+  {
+    quote: "RACC transformed my understanding of concealed carry. The pressure-tested benchmarks gave me real confidence.",
+    author: "Michael T.",
+    rating: 5,
+  },
+  {
+    quote: "Private sessions on my schedule made all the difference. I went from beginner to confident carrier in months.",
+    author: "Sarah K.",
+    rating: 5,
+  },
+  {
+    quote: "The 4-phase system is brilliant. You don't just learn—you prove you can perform when it counts.",
+    author: "James R.",
+    rating: 5,
+  },
+];
+
+function TestimonialSlider() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const goToPrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  };
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+  };
+
+  const current = testimonials[currentIndex];
+
+  return (
+    <div className="relative" data-testid="testimonial-slider">
+      <div className="flex items-start gap-3">
+        <Quote className="w-8 h-8 text-[hsl(209,90%,38%)] opacity-30 flex-shrink-0 rotate-180" />
+        <div className="flex-1 min-h-[80px]">
+          <p className="text-sm text-muted-foreground italic leading-relaxed mb-2">
+            "{current.quote}"
+          </p>
+          <div className="flex items-center gap-2">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`w-3 h-3 ${i < current.rating ? "text-[hsl(44,89%,61%)] fill-[hsl(44,89%,61%)]" : "text-gray-300"}`}
+                />
+              ))}
+            </div>
+            <span className="text-xs font-medium text-foreground">— {current.author}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex items-center justify-between mt-3">
+        <div className="flex gap-1.5">
+          {testimonials.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              className={`w-2 h-2 rounded-full transition-all ${
+                idx === currentIndex 
+                  ? "bg-[hsl(209,90%,38%)] w-4" 
+                  : "bg-gray-300 hover:bg-gray-400"
+              }`}
+              data-testid={`testimonial-dot-${idx}`}
+              aria-label={`Go to testimonial ${idx + 1}`}
+            />
+          ))}
+        </div>
+        <div className="flex gap-1">
+          <button
+            onClick={goToPrev}
+            className="p-1 rounded hover:bg-muted transition-colors"
+            data-testid="testimonial-prev"
+            aria-label="Previous testimonial"
+          >
+            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+          </button>
+          <button
+            onClick={goToNext}
+            className="p-1 rounded hover:bg-muted transition-colors"
+            data-testid="testimonial-next"
+            aria-label="Next testimonial"
+          >
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Landing() {
   const [, setLocation] = useLocation();
@@ -268,29 +367,87 @@ export default function Landing() {
             We pride ourselves on results-driven training that is tailored to, and for, the individual student.
           </p>
           
-          {/* Feature highlights */}
-          <div className="grid md:grid-cols-3 gap-8 mt-12">
-            <ComicPanel shadow="sm" className="text-center p-6 hover-lift">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[hsl(209,90%,38%)] flex items-center justify-center shadow-comic-sm">
-                <Target className="w-8 h-8 text-white" />
+          {/* RACC Feature Section with Testimonials */}
+          <div className="grid lg:grid-cols-5 gap-6 mt-12 text-left">
+            {/* RACC Program Card - 60% width (3 of 5 columns) */}
+            <ComicPanel shadow="lg" className="lg:col-span-3 hover-lift" data-testid="racc-program-card">
+              <div className="flex flex-col h-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)] flex items-center justify-center">
+                    <Award className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-xl lg:text-2xl uppercase tracking-wide">Responsibly Armed Citizen Criterion</h3>
+                    <p className="text-sm text-muted-foreground">4-Phase Belt-Style Progression System</p>
+                  </div>
+                </div>
+                
+                <p className="text-muted-foreground mb-4 leading-relaxed">
+                  Your personal hot spot for concealed carry performance. Private 1-on-1 sessions with flexible scheduling, 
+                  pressure-tested with objective benchmarks. Advance at your own pace through four clear phases—from safety 
+                  fundamentals to refined control and real-world competency.
+                </p>
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="w-4 h-4 text-[hsl(209,90%,38%)]" />
+                    <span>1-2 hour sessions</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <DollarSign className="w-4 h-4 text-[hsl(190,65%,47%)]" />
+                    <span>$60/hr or $100/2hrs</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <User className="w-4 h-4 text-[hsl(209,90%,38%)]" />
+                    <span>Private 1-on-1</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="w-4 h-4 text-[hsl(190,65%,47%)]" />
+                    <span>Flexible scheduling</span>
+                  </div>
+                </div>
+
+                {/* Testimonial Slider */}
+                <div className="mt-auto pt-4 border-t border-border">
+                  <TestimonialSlider />
+                </div>
               </div>
-              <h3 className="font-heading text-lg uppercase tracking-wide mb-2">Precision Focus</h3>
-              <p className="text-muted-foreground">Quantifiable metrics to validate your progress</p>
             </ComicPanel>
-            <ComicPanel shadow="sm" className="text-center p-6 hover-lift">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[hsl(190,65%,47%)] flex items-center justify-center shadow-comic-sm">
-                <Award className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-heading text-lg uppercase tracking-wide mb-2">Certified Excellence</h3>
-              <p className="text-muted-foreground">Professional instructor-led training</p>
-            </ComicPanel>
-            <ComicPanel shadow="sm" className="text-center p-6 hover-lift">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[hsl(204,27%,16%)] flex items-center justify-center shadow-comic-sm">
-                <Crosshair className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-heading text-lg uppercase tracking-wide mb-2">Personalized Path</h3>
-              <p className="text-muted-foreground">Training tailored to your individual goals</p>
-            </ComicPanel>
+
+            {/* Right Side - 2 Stacked Training Cards (40% width - 2 of 5 columns) */}
+            <div className="lg:col-span-2 flex flex-col gap-6">
+              {/* Card 1: Precision Training */}
+              <ComicPanel shadow="sm" className="flex-1 hover-lift" data-testid="precision-training-card">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 flex-shrink-0 rounded-lg bg-[hsl(209,90%,38%)] flex items-center justify-center">
+                    <Target className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-lg uppercase tracking-wide mb-2">Precision Focus</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Every session builds on quantifiable metrics. Apache B-8 scores, timed drills, and skill demonstrations 
+                      provide data-driven proof of your progress.
+                    </p>
+                  </div>
+                </div>
+              </ComicPanel>
+
+              {/* Card 2: Personalized Path */}
+              <ComicPanel shadow="sm" className="flex-1 hover-lift" data-testid="personalized-path-card">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 flex-shrink-0 rounded-lg bg-[hsl(190,65%,47%)] flex items-center justify-center">
+                    <Crosshair className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-lg uppercase tracking-wide mb-2">Personalized Path</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      No one-size-fits-all. Your goals, your pace, your success. Whether you're a first-time owner or 
+                      seasoned carrier, we meet you exactly where you are.
+                    </p>
+                  </div>
+                </div>
+              </ComicPanel>
+            </div>
           </div>
         </div>
       </section>
