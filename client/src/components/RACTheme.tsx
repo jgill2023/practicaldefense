@@ -25,9 +25,9 @@ export function ComicPanel({
   "data-testid": testId,
 }: ComicPanelProps) {
   const variantStyles = {
-    default: "bg-card border-[hsl(204,27%,16%,0.12)]",
-    dark: "bg-[hsl(204,27%,16%)] text-white border-[hsl(204,27%,10%)]",
-    accent: "bg-gradient-to-br from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)] text-white border-[hsl(209,90%,30%)]",
+    default: "bg-card border-black",
+    dark: "bg-[hsl(204,27%,16%)] text-white border-black",
+    accent: "bg-gradient-to-br from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)] text-white border-black",
     ghost: "bg-transparent border-[hsl(204,27%,16%,0.08)]",
   };
 
