@@ -416,7 +416,7 @@ export default function Landing() {
                     <Target className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-heading text-lg uppercase tracking-wide mb-2">Precision Focus</h3>
+                    <h3 className="font-heading uppercase tracking-wide mb-2 text-[20px]">Precision Focus</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       Every session builds on quantifiable metrics. Apache B-8 scores, timed drills, and skill demonstrations 
                       provide data-driven proof of your progress.
