@@ -700,9 +700,6 @@ export default function Landing() {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }}>
-        {/* RAC Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(204,27%,16%,0.9)] via-[hsl(209,90%,38%,0.7)] to-[hsl(190,65%,47%,0.6)]"></div>
-
         {/* Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
