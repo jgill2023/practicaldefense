@@ -827,7 +827,7 @@ export default function Landing() {
 
       </section>
       {/* Results-Driven Training Section */}
-      <section id="results-driven-training" className="bg-white py-20">
+      <section id="results-driven-training" className="bg-gray-50 py-20">
         <div className="w-[80%] mx-auto px-4 text-center">
           {/* RACC Feature Section with Testimonials */}
           <div className="flex flex-col lg:flex-row gap-8 mt-12 text-left pr-4 pb-4" style={{ alignItems: 'stretch' }}>
