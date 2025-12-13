@@ -368,9 +368,10 @@ export default function Landing() {
           </p>
           
           {/* RACC Feature Section with Testimonials */}
-          <div className="flex flex-col lg:flex-row gap-6 mt-12 text-left">
+          <div className="flex flex-col lg:flex-row gap-8 mt-12 text-left pr-4 pb-4">
             {/* RACC Program Card - 60% width */}
-            <ComicPanel shadow="lg" className="lg:w-3/5 hover-lift" data-testid="racc-program-card">
+            <div className="lg:w-[60%]">
+              <ComicPanel shadow="lg" className="h-full hover-lift" data-testid="racc-program-card">
               <div className="flex flex-col h-full">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)] flex items-center justify-center">
@@ -412,10 +413,11 @@ export default function Landing() {
                   <TestimonialSlider />
                 </div>
               </div>
-            </ComicPanel>
+              </ComicPanel>
+            </div>
 
             {/* Right Side - 2 Stacked Training Cards (40% width) */}
-            <div className="lg:w-2/5 flex flex-col gap-6">
+            <div className="lg:w-[40%] flex flex-col gap-6">
               {/* Card 1: Precision Training */}
               <ComicPanel shadow="sm" className="flex-1 hover-lift" data-testid="precision-training-card">
                 <div className="flex items-start gap-4">
