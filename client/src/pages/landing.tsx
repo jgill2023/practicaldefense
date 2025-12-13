@@ -318,7 +318,7 @@ export default function Landing() {
 
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
-          <div className="animate-slide-up">
+          <div className="animate-slide-up -mt-20 sm:-mt-32 md:-mt-40">
             <img 
               src={ApacheLogo} 
               alt="Apache Solutions Logo" 
