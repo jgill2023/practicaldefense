@@ -357,7 +357,7 @@ export default function Landing() {
       </section>
       {/* Results-Driven Training Section */}
       <section id="results-driven-training" className="bg-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="w-full px-4 sm:px-6 lg:px-12 text-center">
           <div className="flex justify-center mb-6">
             <TitleCard as="h2" variant="default" className="text-4xl lg:text-5xl">
               <span className="line-through opacity-50">Traditional</span> Results-Driven Training
