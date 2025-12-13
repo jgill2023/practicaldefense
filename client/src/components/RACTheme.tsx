@@ -46,7 +46,7 @@ export function ComicPanel({
       className={cn("relative group", hasHeightClass && "h-full flex flex-col")}
     >
       {/* Background Shadow Layer */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0A5DB8] to-[#2BB0C7] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0] pl-[48px] pr-[48px]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0A5DB8] to-[#2BB0C7] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0] pl-[84px] pr-[84px]" />
       {/* Card Layer */}
       <div
         className={cn(
