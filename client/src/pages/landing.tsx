@@ -357,7 +357,7 @@ export default function Landing() {
       </section>
       {/* Results-Driven Training Section */}
       <section id="results-driven-training" className="bg-white py-20">
-        <div className="w-full px-4 sm:px-6 lg:px-12 text-center pl-[84px] pr-[84px] ml-[84px] mr-[84px]">
+        <div className="w-full px-4 sm:px-6 lg:px-12 text-center pl-[84px] pr-[84px]">
           {/* RACC Feature Section with Testimonials */}
           <div className="flex flex-col lg:flex-row lg:items-stretch gap-8 mt-12 text-left pr-4 pb-4">
             {/* RACC Program Card - 60% width */}
