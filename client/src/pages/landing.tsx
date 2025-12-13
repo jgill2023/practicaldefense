@@ -202,6 +202,7 @@ function TestimonialSlider() {
 function MosaicTestimonialSlider() {
   const [currentPattern, setCurrentPattern] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const timeoutRef = { current: null as NodeJS.Timeout | null };
   
   const patterns = [
     [0, 1, 2],
@@ -214,25 +215,30 @@ function MosaicTestimonialSlider() {
   useEffect(() => {
     const timer = setInterval(() => {
       setIsAnimating(true);
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setCurrentPattern((prev) => (prev + 1) % totalPatterns);
         setIsAnimating(false);
       }, 500);
     }, 8000);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
   }, [totalPatterns]);
 
   const goToPrev = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setIsAnimating(true);
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setCurrentPattern((prev) => (prev - 1 + totalPatterns) % totalPatterns);
       setIsAnimating(false);
     }, 300);
   };
 
   const goToNext = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setIsAnimating(true);
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setCurrentPattern((prev) => (prev + 1) % totalPatterns);
       setIsAnimating(false);
     }, 300);
