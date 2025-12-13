@@ -323,7 +323,7 @@ export default function Landing() {
           <div className="flex justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <Button
               size="lg"
-              className="hover:bg-[#FD66C5] text-white font-heading uppercase tracking-wide px-8 py-6 text-lg shadow-lg bg-[#5170FF]"
+              className="hover:bg-[#FD66C5] text-white font-heading uppercase tracking-wide px-8 py-6 text-lg shadow-lg bg-[#5170FF] border-2 border-black"
               onClick={() => {
                 const coursesSection = document.getElementById('courses');
                 if (coursesSection) {
