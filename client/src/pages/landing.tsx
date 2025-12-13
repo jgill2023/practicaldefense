@@ -417,7 +417,7 @@ export default function Landing() {
                   </div>
                   <div>
                     <h3 className="font-heading uppercase tracking-wide mb-2 text-[20px]">Precision Focus</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-muted-foreground text-[16px]">
                       Every session builds on quantifiable metrics. Apache B-8 scores, timed drills, and skill demonstrations 
                       provide data-driven proof of your progress.
                     </p>
