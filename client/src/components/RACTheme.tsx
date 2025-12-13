@@ -142,11 +142,7 @@ export function TitleCard({
       </Component>
       {underline && (
         <div
-          className={cn(
-            "h-1 mt-2 w-16 rounded-full transform origin-left",
-            underlineStyles[variant],
-            animate && isVisible && "animate-scale-in"
-          )}
+          className="h-1 mt-2 w-16 rounded-full transform origin-left animate-scale-in bg-[#FD66C5]"
           style={{ animationDelay: "0.1s" }}
         />
       )}
