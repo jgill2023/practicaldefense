@@ -26,7 +26,7 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              By accessing or using <a href="https://www.tacticaladv.com" className="text-accent hover:underline">www.tacticaladv.com</a> (the "Site") or registering for any training, course, or service provided by Tactical Advantage, LLC ("we," "us," or "our"), you agree to be bound by these Terms of Service ("Terms").
+              By accessing or using <a href="https://www.tacticaladv.com" className="text-accent hover:underline">www.tacticaladv.com</a> (the "Site") or registering for any training, course, or service provided by Apache Solutions ("we," "us," or "our"), you agree to be bound by these Terms of Service ("Terms").
             </p>
             <p className="text-muted-foreground mt-4">
               If you do not agree, do not use our website or services. These Terms apply to all users, including students, visitors, and account holders.
@@ -67,7 +67,7 @@ export default function TermsOfServicePage() {
               <li>Provide truthful, accurate, and current information</li>
             </ul>
             <p className="text-muted-foreground">
-              If you suspect unauthorized use of your account, notify us immediately at <a href="mailto:info@tacticaladv.com" className="text-accent hover:underline">info@tacticaladv.com</a>.
+              If you suspect unauthorized use of your account, notify us immediately at <a href="mailto:Info@ApacheNC.com" className="text-accent hover:underline">Info@ApacheNC.com</a>.
             </p>
           </CardContent>
         </Card>
@@ -116,15 +116,15 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              By participating in firearms training or related activities provided by Tactical Advantage, LLC, you acknowledge and accept the inherent risks associated with handling firearms, live ammunition, and range activities.
+              By participating in firearms training or related activities provided by Apache Solutions, you acknowledge and accept the inherent risks associated with handling firearms, live ammunition, and range activities.
             </p>
             <p className="text-muted-foreground">
               You agree to:
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
               <li>Assume all risks, known and unknown, associated with training and related activities</li>
-              <li>Waive and release Tactical Advantage, LLC, its owners, instructors, and affiliates from any and all claims of injury, loss, or damage arising out of participation</li>
-              <li>Indemnify and hold harmless Tactical Advantage, LLC for any claims brought by third parties resulting from your actions</li>
+              <li>Waive and release Apache Solutions, its owners, instructors, and affiliates from any and all claims of injury, loss, or damage arising out of participation</li>
+              <li>Indemnify and hold harmless Apache Solutions for any claims brought by third parties resulting from your actions</li>
             </ul>
             <p className="text-muted-foreground">
               You further understand that safety protocols are strictly enforced and noncompliance may result in removal.
@@ -156,7 +156,7 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              All content on the Site—including text, logos, videos, graphics, and course materials—is the property of Tactical Advantage, LLC and is protected by copyright and trademark laws.
+              All content on the Site—including text, logos, videos, graphics, and course materials—is the property of Apache Solutions and is protected by copyright and trademark laws.
             </p>
             <p className="text-muted-foreground mt-4">
               You may not copy, reproduce, distribute, or modify any materials without prior written consent.
@@ -214,7 +214,7 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              To the fullest extent permitted by law, Tactical Advantage, LLC shall not be liable for any indirect, incidental, or consequential damages, including but not limited to personal injury, property damage, or data loss, arising from:
+              To the fullest extent permitted by law, Apache Solutions shall not be liable for any indirect, incidental, or consequential damages, including but not limited to personal injury, property damage, or data loss, arising from:
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
               <li>Use or inability to use the Site</li>
@@ -233,7 +233,7 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              You agree to defend, indemnify, and hold harmless Tactical Advantage, LLC, its owners, employees, and affiliates from any claims, damages, or expenses resulting from your use of the Site or participation in our courses.
+              You agree to defend, indemnify, and hold harmless Apache Solutions, its owners, employees, and affiliates from any claims, damages, or expenses resulting from your use of the Site or participation in our courses.
             </p>
           </CardContent>
         </Card>
@@ -269,8 +269,8 @@ export default function TermsOfServicePage() {
               For questions or concerns regarding these Terms, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Tactical Advantage, LLC</strong></p>
-              <p><strong>Email:</strong> <a href="mailto:info@tacticaladv.com" className="hover:underline text-[#000000]">info@tacticaladv.com</a></p>
+              <p><strong>Apache Solutions</strong></p>
+              <p><strong>Email:</strong> <a href="mailto:Info@ApacheNC.com" className="hover:underline text-[#000000]">Info@ApacheNC.com</a></p>
               <p><strong>Website:</strong> <a href="https://www.tacticaladv.com" className="hover:underline text-[#000000]">www.tacticaladv.com</a></p>
               <p><strong>Location:</strong> Georgia, USA</p>
             </div>

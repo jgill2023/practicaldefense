@@ -369,7 +369,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="space-y-2 text-white/80">
                 <div className="flex items-start space-x-2">
                   <span>✉️</span>
-                  <a href="mailto:Chris@TacticalAdv.com" className="hover:text-[hsl(190,65%,47%)] transition-colors">Chris@TacticalAdv.com</a>
+                  <a href="mailto:Info@ApacheNC.com" className="hover:text-[hsl(190,65%,47%)] transition-colors">Info@ApacheNC.com</a>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span>📍</span>

@@ -26,7 +26,7 @@ export default function PrivacyPolicyPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Tactical Advantage, LLC ("we," "our," or "us") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website www.tacticaladv.com, register for courses, or otherwise interact with our services.
+              Apache Solutions ("we," "our," or "us") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website www.tacticaladv.com, register for courses, or otherwise interact with our services.
             </p>
             <p className="text-muted-foreground mt-4">
               By using our website or submitting your information, you agree to the terms of this Privacy Policy.
@@ -199,7 +199,7 @@ export default function PrivacyPolicyPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              We collect identification data solely to verify eligibility for firearms instruction. We do not share or report firearm-related information to government agencies unless legally required. Tactical Advantage, LLC assumes no liability for misuse or unauthorized disclosure of data by users or third-party platforms beyond our control.
+              We collect identification data solely to verify eligibility for firearms instruction. We do not share or report firearm-related information to government agencies unless legally required. Apache Solutions assumes no liability for misuse or unauthorized disclosure of data by users or third-party platforms beyond our control.
             </p>
           </CardContent>
         </Card>
@@ -224,8 +224,8 @@ export default function PrivacyPolicyPage() {
               For privacy inquiries or to exercise your data rights, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Tactical Advantage, LLC</strong></p>
-              <p><strong>Email:</strong> info@tacticaladv.com</p>
+              <p><strong>Apache Solutions</strong></p>
+              <p><strong>Email:</strong> Info@ApacheNC.com</p>
               <p><strong>Website:</strong> www.tacticaladv.com</p>
               <p><strong>Location:</strong> New Mexico, USA</p>
             </div>

@@ -26,7 +26,7 @@ export default function RefundPolicyPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              At Tactical Advantage, LLC ("we," "us," or "our"), we understand that plans can change. Because class sizes are limited and range time is reserved in advance, we have established the following refund and cancellation policy to ensure fairness to all students and instructors.
+              At Apache Solutions ("we," "us," or "our"), we understand that plans can change. Because class sizes are limited and range time is reserved in advance, we have established the following refund and cancellation policy to ensure fairness to all students and instructors.
             </p>
             <p className="text-muted-foreground mt-4">
               By registering for a course on <a href="https://www.tacticaladv.com" className="text-accent hover:underline">www.tacticaladv.com</a>, you acknowledge and agree to the terms below.
@@ -92,7 +92,7 @@ export default function RefundPolicyPage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>4. Cancellations by Tactical Advantage, LLC</CardTitle>
+            <CardTitle>4. Cancellations by Apache Solutions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
@@ -124,7 +124,7 @@ export default function RefundPolicyPage() {
           <CardContent className="space-y-4">
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
               <li>Refunds are issued to the original payment method used at registration</li>
-              <li>Stripe processing fees are covered by Tactical Advantage, LLC</li>
+              <li>Stripe processing fees are covered by Apache Solutions</li>
               <li>Refunds typically appear within 5–10 business days, depending on your financial institution</li>
             </ul>
           </CardContent>
@@ -168,8 +168,8 @@ export default function RefundPolicyPage() {
               For questions or cancellation requests, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Tactical Advantage, LLC</strong></p>
-              <p><strong>Email:</strong> <a href="mailto:info@tacticaladv.com" className="text-accent hover:underline">info@tacticaladv.com</a></p>
+              <p><strong>Apache Solutions</strong></p>
+              <p><strong>Email:</strong> <a href="mailto:Info@ApacheNC.com" className="text-accent hover:underline">Info@ApacheNC.com</a></p>
               <p><strong>Website:</strong> <a href="https://www.tacticaladv.com" className="text-accent hover:underline">www.tacticaladv.com</a></p>
               <p><strong>Location:</strong> New Mexico, USA</p>
             </div>

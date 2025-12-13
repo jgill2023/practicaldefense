@@ -29,7 +29,7 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              By accessing or using www.abqconcealedcarry.com (the "Site") or registering for any training, course, or service provided by Tactical Advantage, LLC ("we," "us," or "our"), you agree to be bound by these Terms of Service ("Terms").
+              By accessing or using www.abqconcealedcarry.com (the "Site") or registering for any training, course, or service provided by Apache Solutions, LLC ("we," "us," or "our"), you agree to be bound by these Terms of Service ("Terms").
             </p>
             <p className="text-muted-foreground mt-4">
               If you do not agree, do not use our website or services. These Terms apply to all users, including students, visitors, and account holders.
@@ -119,15 +119,15 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              By participating in firearms training or related activities provided by Tactical Advantage, LLC, you acknowledge and accept the inherent risks associated with handling firearms, live ammunition, and range activities.
+              By participating in firearms training or related activities provided by Apache Solutions, LLC, you acknowledge and accept the inherent risks associated with handling firearms, live ammunition, and range activities.
             </p>
             <p className="text-muted-foreground">
               You agree to:
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
               <li>Assume all risks, known and unknown, associated with training and related activities</li>
-              <li>Waive and release Tactical Advantage, LLC, its owners, instructors, and affiliates from any and all claims of injury, loss, or damage arising out of participation</li>
-              <li>Indemnify and hold harmless Tactical Advantage, LLC for any claims brought by third parties resulting from your actions</li>
+              <li>Waive and release Apache Solutions, LLC, its owners, instructors, and affiliates from any and all claims of injury, loss, or damage arising out of participation</li>
+              <li>Indemnify and hold harmless Apache Solutions, LLC for any claims brought by third parties resulting from your actions</li>
             </ul>
             <p className="text-muted-foreground">
               You further understand that safety protocols are strictly enforced and noncompliance may result in removal.
@@ -144,7 +144,7 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
               For questions or concerns regarding these Terms, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Tactical Advantage, LLC</strong></p>
+              <p><strong>Apache Solutions, LLC</strong></p>
               <p><strong>Email:</strong> info@abqconcealedcarry.com</p>
               <p><strong>Website:</strong> www.abqconcealedcarry.com</p>
               <p><strong>Location:</strong> New Mexico, USA</p>
@@ -174,7 +174,7 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Tactical Advantage, LLC ("we," "our," or "us") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website www.tacticaladv.com, register for courses, or otherwise interact with our services.
+              Apache Solutions, LLC ("we," "our," or "us") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website www.tacticaladv.com, register for courses, or otherwise interact with our services.
             </p>
             <p className="text-muted-foreground mt-4">
               By using our website or submitting your information, you agree to the terms of this Privacy Policy.
@@ -214,7 +214,7 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
               For privacy inquiries or to exercise your data rights, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Tactical Advantage, LLC</strong></p>
+              <p><strong>Apache Solutions, LLC</strong></p>
               <p><strong>Email:</strong> info@abqconcealedcarry.com</p>
               <p><strong>Website:</strong> www.abqconcealedcarry.com</p>
               <p><strong>Location:</strong> New Mexico, USA</p>
@@ -244,7 +244,7 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              At Tactical Advantage, LLC ("we," "us," or "our"), we understand that plans can change. Because class sizes are limited and range time is reserved in advance, we have established the following refund and cancellation policy to ensure fairness to all students and instructors.
+              At Apache Solutions, LLC ("we," "us," or "our"), we understand that plans can change. Because class sizes are limited and range time is reserved in advance, we have established the following refund and cancellation policy to ensure fairness to all students and instructors.
             </p>
             <p className="text-muted-foreground mt-4">
               By registering for a course on www.abqconcealedcarry.com, you acknowledge and agree to the terms below.
@@ -290,7 +290,7 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
               For questions or cancellation requests, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Tactical Advantage, LLC</strong></p>
+              <p><strong>Apache Solutions, LLC</strong></p>
               <p><strong>Email:</strong> info@abqconcealedcarry.com</p>
               <p><strong>Website:</strong> www.abqconcealedcarry.com</p>
               <p><strong>Location:</strong> New Mexico, USA</p>

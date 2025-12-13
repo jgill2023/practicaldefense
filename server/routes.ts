@@ -5816,7 +5816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subject: processedSubject,
         htmlContent: isHtml ? processedContent : `<pre>${processedContent}</pre>`,
         textContent: isHtml ? undefined : processedContent,
-        fromName: 'Chris Bean | Tactical Advantage',
+        fromName: 'Apache Solutions',
       });
 
       res.json(result);
@@ -5866,7 +5866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subject: subject.trim(),
           htmlContent: `<div style="font-family: Arial, sans-serif;">${message.trim().replace(/\n/g, '<br>')}</div>`,
           textContent: message.trim(),
-          fromName: 'Chris Bean | Tactical Advantage',
+          fromName: 'Apache Solutions',
         });
 
         results.results.push({ method: 'email', ...emailResult });
@@ -7507,7 +7507,7 @@ Please respond to ${email} based on their preferred contact method: ${preferredC
             <p>If you have any urgent questions, please feel free to call us at <strong>(505) 944-5247</strong>.</p>
 
             <p>Best regards,<br>
-            <strong>Christopher Bean | Tactical Advantage</strong><br>
+            <strong>Apache Solutions</strong><br>
             Practical Defense Training<br>
             jeremy@abqconcealedcarry.com<br>
             (505) 944-5247</p>
@@ -7531,7 +7531,7 @@ Preferred Contact Method: ${preferredContact || 'Email'}
 If you have any urgent questions, please feel free to call us at (505) 944-5247.
 
 Best regards,
-Christopher Bean | Tactical Advantage
+Apache Solutions
 Practical Defense Training
 jeremy@abqconcealedcarry.com
 (505) 944-5247

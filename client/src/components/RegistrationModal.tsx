@@ -986,7 +986,7 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
                   >
                     Refund Policy
                   </button>
-                  . I also consent to receive text messages related to my class registration, reminders, and important updates from Tactical Advantage. Message and data rates may apply. You may reply STOP at anytime to unsubscribe from SMS notifications.
+                  . I also consent to receive text messages related to my class registration, reminders, and important updates from Apache Solutions. Message and data rates may apply. You may reply STOP at anytime to unsubscribe from SMS notifications.
                 </label>
               </div>
             </CardContent>

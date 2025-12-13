@@ -2545,7 +2545,7 @@ function EditProfileDialog({ isOpen, onClose, user }: {
                           SMS Consent
                         </FormLabel>
                         <FormDescription>
-                          Allow Tactical Advantage to send SMS messages to your phone. You agreed to this when registering. Reply STOP to opt out.
+                          Allow Apache Solutions to send SMS messages to your phone. You agreed to this when registering. Reply STOP to opt out.
                         </FormDescription>
                       </div>
                       <FormControl>

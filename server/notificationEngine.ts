@@ -99,9 +99,9 @@ export interface NotificationVariables {
 
 export class NotificationEngine {
   private static readonly SYSTEM_VARIABLES = {
-    companyName: 'Tactical Advantage',
+    companyName: 'Apache Solutions',
     companyPhone: '(555) 123-4567',
-    companyEmail: 'info@tacticaladv.com',
+    companyEmail: 'Info@ApacheNC.com',
     website: 'tacticaladv.com',
     websiteUrl: process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://tacticaladv.com',
     currentDate: new Date().toLocaleDateString()
@@ -926,10 +926,10 @@ export class NotificationEngine {
         price: `$${Number(appointmentType.price).toFixed(2)}`,
       },
       system: {
-        companyName: 'Tactical Advantage',
+        companyName: 'Apache Solutions',
         companyPhone: instructor.phone || '',
         companyEmail: instructor.email,
-        website: 'Tactical Advantage',
+        website: 'Apache Solutions',
         websiteUrl: process.env.REPLIT_DOMAINS || 'https://tacticaladv.com',
         currentDate: new Date().toLocaleDateString('en-US'),
       },
@@ -1364,7 +1364,7 @@ export class CourseNotificationEngine {
           </div>
           <div class="footer">
             <p>You're receiving this email because you signed up to be notified about ${course.title}.</p>
-            <p>Tactical Advantage | chris@tacticaladv.com</p>
+            <p>Apache Solutions | Info@ApacheNC.com</p>
           </div>
         </div>
       </body>
@@ -1401,7 +1401,7 @@ Register at: ${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://example.com
 
 ---
 You're receiving this email because you signed up to be notified about ${course.title}.
-Tactical Advantage | chris@tacticaladv.com
+Apache Solutions | Info@ApacheNC.com
     `.trim();
   }
 
