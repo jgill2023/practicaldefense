@@ -719,6 +719,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   };
 
   // Calculate price for a specific duration (for display in duration selector)
+  // Tiered pricing: 1 hour = firstHourPrice, 2+ hours = additionalHourPrice × all hours
   const getPriceForDuration = (hours: number) => {
     if (!(appointmentType as any)?.isVariableDuration) return 0;
     
@@ -726,7 +727,8 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     if (useTieredPricing) {
       const firstHourPrice = Number((appointmentType as any).firstHourPrice || 0);
       const additionalHourPrice = Number((appointmentType as any).additionalHourPrice || 0);
-      return firstHourPrice + (Math.max(0, hours - 1) * additionalHourPrice);
+      // 1 hour uses firstHourPrice, 2+ hours uses additionalHourPrice for ALL hours
+      return hours === 1 ? firstHourPrice : additionalHourPrice * hours;
     }
     
     const pricePerHour = Number((appointmentType as any).pricePerHour || 0);
@@ -734,6 +736,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
   };
 
   // Calculate total price for the booking (supports tiered pricing)
+  // Tiered pricing: 1 hour = firstHourPrice, 2+ hours = additionalHourPrice × all hours
   const getTotalPrice = () => {
     if ((appointmentType as any)?.isVariableDuration) {
       const useTieredPricing = (appointmentType as any).useTieredPricing;
@@ -741,7 +744,8 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
       if (useTieredPricing) {
         const firstHourPrice = Number((appointmentType as any).firstHourPrice || 0);
         const additionalHourPrice = Number((appointmentType as any).additionalHourPrice || 0);
-        return firstHourPrice + (Math.max(0, selectedDurationHours - 1) * additionalHourPrice);
+        // 1 hour uses firstHourPrice, 2+ hours uses additionalHourPrice for ALL hours
+        return selectedDurationHours === 1 ? firstHourPrice : additionalHourPrice * selectedDurationHours;
       }
       
       const pricePerHour = Number((appointmentType as any).pricePerHour || 0);
@@ -1198,7 +1202,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             </select>
             <p className="text-xs text-muted-foreground mt-2">
               {(appointmentType as any).useTieredPricing 
-                ? `First hour: $${Number((appointmentType as any).firstHourPrice || 0).toFixed(2)}, then $${Number((appointmentType as any).additionalHourPrice || 0).toFixed(2)}/hour after`
+                ? `1 hour: $${Number((appointmentType as any).firstHourPrice || 0).toFixed(2)} | 2+ hours: $${Number((appointmentType as any).additionalHourPrice || 0).toFixed(2)}/hour`
                 : `Time slots will show ${selectedDurationHours}-hour blocks at $${Number((appointmentType as any).pricePerHour).toFixed(2)}/hour`
               }
             </p>

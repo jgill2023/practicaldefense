@@ -1067,7 +1067,7 @@ export default function AppointmentsPage() {
                           />
                         </div>
                         <div>
-                          <Label htmlFor="additional-hour-price">Additional Hours ($)*</Label>
+                          <Label htmlFor="additional-hour-price">2+ Hours Rate ($)*</Label>
                           <Input
                             id="additional-hour-price"
                             type="number"
@@ -1077,14 +1077,14 @@ export default function AppointmentsPage() {
                             onChange={(e) => setTypeForm({ ...typeForm, additionalHourPrice: parseFloat(e.target.value) || 0 })}
                             data-testid="input-type-additional-hour-price"
                           />
-                          <p className="text-xs text-muted-foreground mt-1">Per hour after first</p>
+                          <p className="text-xs text-muted-foreground mt-1">Rate per hour when booking 2+ hours</p>
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground space-y-1 border-t pt-2">
                         <p className="font-medium">Example pricing:</p>
                         <p>1 hour: ${(Number(typeForm.firstHourPrice) || 0).toFixed(2)}</p>
-                        <p>2 hours: ${((Number(typeForm.firstHourPrice) || 0) + (Number(typeForm.additionalHourPrice) || 0)).toFixed(2)}</p>
-                        <p>3 hours: ${((Number(typeForm.firstHourPrice) || 0) + (Number(typeForm.additionalHourPrice) || 0) * 2).toFixed(2)}</p>
+                        <p>2 hours: ${((Number(typeForm.additionalHourPrice) || 0) * 2).toFixed(2)} ($${(Number(typeForm.additionalHourPrice) || 0).toFixed(2)}/hr)</p>
+                        <p>3 hours: ${((Number(typeForm.additionalHourPrice) || 0) * 3).toFixed(2)} ($${(Number(typeForm.additionalHourPrice) || 0).toFixed(2)}/hr)</p>
                       </div>
                     </div>
                   )}
