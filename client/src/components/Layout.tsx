@@ -140,12 +140,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   }
                 }}>Home</a>
                 <Link href="/about" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-about">About Us</Link>
-                <a href="/#deductive-pistolcraft" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" onClick={(e) => {
-                  if (window.location.pathname === '/') {
-                    e.preventDefault();
-                    document.getElementById('deductive-pistolcraft')?.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }} data-testid="link-courses">Courses</a>
                 <Link href="/schedule-list" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-events">Events</Link>
                 <a href="/#appointments" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" onClick={(e) => {
                   const appointmentsSection = document.getElementById('appointments');
@@ -199,13 +193,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   }
                 }}>Home</a>
                 <Link href="/about" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-about-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
-                <a href="/#deductive-pistolcraft" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-courses-mobile" onClick={(e) => {
-                  setIsMobileMenuOpen(false);
-                  if (window.location.pathname === '/') {
-                    e.preventDefault();
-                    document.getElementById('deductive-pistolcraft')?.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}>Courses</a>
                 <Link href="/schedule-list" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-events-mobile" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
                 <div className="py-2" style={{display: 'none'}}>
                   <div className="text-white font-medium mb-2">The Schedule</div>
