@@ -32,6 +32,20 @@ let productCache: { data: NormalizedProduct[]; timestamp: number } | null = null
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
+ * GET /api/store/shops
+ * Debug endpoint to list Printify shops (helps find correct shop ID)
+ */
+router.get('/shops', async (req: Request, res: Response) => {
+  try {
+    const shops = await printifyService.getShops();
+    res.json(shops);
+  } catch (error) {
+    console.error('Error fetching shops:', error);
+    res.status(500).json({ message: 'Failed to fetch shops', error: String(error) });
+  }
+});
+
+/**
  * GET /api/store/products
  * Fetch all products from Printify
  */

@@ -148,6 +148,21 @@ class PrintifyService {
   }
 
   /**
+   * Get all shops associated with this Printify account
+   */
+  async getShops(): Promise<{ id: number; title: string; sales_channel: string }[]> {
+    try {
+      const response = await this.request<{ id: number; title: string; sales_channel: string }[]>(
+        `/shops.json`
+      );
+      return response;
+    } catch (error) {
+      console.error('Error fetching Printify shops:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get all published products from the Printify store
    */
   async getProducts(): Promise<NormalizedProduct[]> {
