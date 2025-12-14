@@ -618,43 +618,54 @@ export default function Store() {
           />
         </div>
 
-        {/* Filter and Sort Controls */}
+        {/* Category Filter Buttons */}
         {products.length > 0 && (
-          <div className="flex flex-wrap gap-4 mb-6">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="category-filter" className="text-sm font-medium whitespace-nowrap">Category:</Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[180px]" data-testid="category-filter">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {allCategories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="mb-6 space-y-4">
+            <div className="flex flex-wrap gap-1 border-b border-border">
+              {[
+                { value: 'all', label: 'All products' },
+                { value: 'Men', label: 'Men' },
+                { value: 'Accessories', label: 'Accessories' },
+                { value: 'Kids', label: 'Kids' },
+                { value: 'Women', label: 'Women' },
+                { value: 'Home & Living', label: 'Home & Living' },
+              ].map((category) => (
+                <button
+                  key={category.value}
+                  onClick={() => setSelectedCategory(category.value)}
+                  className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+                    selectedCategory === category.value
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  data-testid={`category-${category.value}`}
+                >
+                  {category.label}
+                  {selectedCategory === category.value && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
+                  )}
+                </button>
+              ))}
             </div>
             
-            <div className="flex items-center gap-2">
-              <Label htmlFor="sort-by" className="text-sm font-medium whitespace-nowrap">Sort by:</Label>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-[180px]" data-testid="sort-by">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                  <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                  <SelectItem value="price-asc">Price (Low to High)</SelectItem>
-                  <SelectItem value="price-desc">Price (High to Low)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="text-sm text-muted-foreground self-center">
-              {filteredAndSortedProducts.length} {filteredAndSortedProducts.length === 1 ? 'product' : 'products'}
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                {filteredAndSortedProducts.length} {filteredAndSortedProducts.length === 1 ? 'product' : 'products'}
+              </div>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="sort-by" className="text-sm font-medium whitespace-nowrap">Sort by:</Label>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[180px]" data-testid="sort-by">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                    <SelectItem value="price-asc">Price (Low to High)</SelectItem>
+                    <SelectItem value="price-desc">Price (High to Low)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         )}
