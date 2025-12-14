@@ -139,7 +139,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <Link href="/about-chris" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-about-chris">About Us</Link>
+                <Link href="/about" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-about">About Us</Link>
                 <a href="/#deductive-pistolcraft" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" onClick={(e) => {
                   if (window.location.pathname === '/') {
                     e.preventDefault();
@@ -198,7 +198,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <Link href="/about-chris" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-about-chris-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
+                <Link href="/about" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-about-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
                 <a href="/#deductive-pistolcraft" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-courses-mobile" onClick={(e) => {
                   setIsMobileMenuOpen(false);
                   if (window.location.pathname === '/') {

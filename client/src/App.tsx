@@ -35,6 +35,7 @@ import AdminCreditsPage from "@/pages/admin-credits";
 import UserManagementPage from "@/pages/user-management";
 import PendingApprovalPage from "@/pages/pending-approval";
 import AboutChris from "@/pages/about-chris";
+import About from "@/pages/about";
 import StripeConnectPage from "@/pages/stripe-connect";
 import StudentResources from "@/pages/student-resources";
 import NotFound from "@/pages/not-found";
@@ -108,7 +109,7 @@ function Router() {
 
   // Redirect pending users to approval page except for allowed routes
   if (isAuthenticated && user?.userStatus === 'pending') {
-    const allowedPaths = ['/pending-approval', '/contact', '/about-chris', '/privacy-policy', '/terms-of-service', '/refund-policy', '/'];
+    const allowedPaths = ['/pending-approval', '/contact', '/about', '/about-chris', '/privacy-policy', '/terms-of-service', '/refund-policy', '/'];
     if (!allowedPaths.includes(location) && location !== '/') {
       window.location.href = '/pending-approval';
       return null;
@@ -126,6 +127,7 @@ function Router() {
       <Route path="/store" component={Storefront} />
       <Route path="/cart" component={CartPage} />
       <Route path="/contact" component={ContactPage} />
+      <Route path="/about" component={About} />
       <Route path="/about-chris" component={AboutChris} />
       <Route path="/course-registration/:id" component={CourseRegistration} />
       <Route path="/checkout" component={Checkout} />
