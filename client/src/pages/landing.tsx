@@ -1027,64 +1027,7 @@ export default function Landing() {
           )}
         </div>
       </section>
-      {/* Course Listings */}
-      <section id="course-listings" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
-          <div className="text-center mb-16">
-            <TitleCard as="h2" variant="default" className="text-3xl lg:text-4xl">
-              Upcoming Courses
-            </TitleCard>
-          </div>
-
-          {/* Course Filter Tabs - Mobile Responsive */}
-          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-12 px-2">
-            <Button
-              variant={courseFilter === "all" ? "default" : "outline"}
-              onClick={() => setCourseFilter("all")}
-              data-testid="filter-all"
-            >
-              All Courses
-            </Button>
-            {availableCategories.map((category) => (
-              <Button
-                key={category}
-                variant={courseFilter === category ? "default" : "outline"}
-                onClick={() => setCourseFilter(category)}
-                data-testid={`filter-${category.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
-
-          {/* Course Grid - Mobile Responsive */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-              {[1, 2, 3].map(i => (
-                <ComicPanel key={i} shadow="md" className="animate-pulse overflow-hidden">
-                  <div className="h-48 bg-muted/30" />
-                  <div className="p-4 sm:p-6">
-                    <div className="h-4 bg-muted/30 rounded mb-2" />
-                    <div className="h-4 bg-muted/30 rounded w-3/4 mb-4" />
-                    <div className="h-20 bg-muted/30 rounded mb-4" />
-                    <div className="h-10 bg-muted/30 rounded" />
-                  </div>
-                </ComicPanel>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-              {sortedAndFilteredCourses.map(course => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  onRegister={handleRegisterCourse}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+      
       {/* Registration Modal */}
       {selectedCourse && (
         <RegistrationModal
