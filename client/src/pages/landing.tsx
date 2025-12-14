@@ -785,7 +785,7 @@ export default function Landing() {
         </div>
 
         {/* Content */}
-        <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
+        <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8 flex flex-col justify-end h-full pb-20">
           <div className="flex justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <Button
               size="lg"
