@@ -185,7 +185,7 @@ export default function StripeConnectPage() {
           </p>
         </div>
 
-        {isAdmin && (
+        {isAdmin && !config?.configured && (
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
