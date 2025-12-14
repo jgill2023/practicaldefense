@@ -1,0 +1,268 @@
+Printify + Stripe Custom Checkout Integration (With Discounts)
+
+Prompt:
+
+Integrate our existing Printify store into this Replit web application using the Printify API for product data and fulfillment, and Stripe for a fully custom checkout experience, including discount codes.
+
+Users must never be redirected to Printify.
+All purchasing and checkout must occur inside our app.
+
+🔐 Secrets & Environment Setup
+
+Store all credentials in Replit Secrets:
+
+PRINTIFY_API_KEY
+
+PRINTIFY_STORE_ID
+
+STRIPE_SECRET_KEY
+
+STRIPE_PUBLIC_KEY
+
+STRIPE_WEBHOOK_SECRET
+
+Never expose Printify or Stripe secret keys to the client.
+
+🧠 Architecture Overview (Required)
+
+Frontend
+
+Product browsing
+
+Variant selection
+
+Cart
+
+Discount code input
+
+Checkout form
+
+Backend
+
+Fetch products from Printify
+
+Validate pricing
+
+Create Stripe Checkout Session or PaymentIntent
+
+Apply discounts
+
+Create Printify order after successful payment
+
+Printify
+
+Fulfillment only
+
+No checkout UI
+
+📦 Product Sync (Printify API)
+Requirements
+
+Fetch and display:
+
+Product title
+
+Description
+
+Images
+
+Variants (size, color)
+
+Base price
+
+Cache products server-side
+
+Handle unavailable variants gracefully
+
+Create a service module:
+
+printifyService.ts
+
+getProducts()
+
+getProductById(productId)
+
+createOrder(orderData)
+
+🛒 Cart System
+
+Client-side cart state
+
+Store:
+
+Product ID
+
+Variant ID
+
+Quantity
+
+Price snapshot
+
+Validate cart server-side before payment
+
+💳 Stripe Custom Checkout (MANDATORY)
+Checkout Flow
+
+User enters shipping + billing info
+
+User enters discount code
+
+Backend:
+
+Validates discount code
+
+Calculates final price
+
+Create Stripe PaymentIntent
+
+Confirm payment on frontend
+
+On success:
+
+Trigger Printify order creation
+
+Stripe Setup Requirements
+
+Use PaymentIntents API
+
+Use Stripe Elements for card input
+
+Support:
+
+Tax-ready pricing
+
+Future extensibility for subscriptions
+
+🏷️ Discount Codes (REQUIRED)
+Supported Discount Types
+
+Percentage off (e.g. 10%)
+
+Fixed amount off (e.g. $5)
+
+Free shipping (optional)
+
+Implementation Options
+
+Use Stripe Coupons / Promotion Codes
+
+OR maintain an internal discount table synced with Stripe
+
+Validation Rules
+
+Active / inactive
+
+Expiration date
+
+Usage limits
+
+Applies only to eligible products
+
+Discounts must be validated server-side.
+
+📦 Order Creation (Printify)
+
+After Stripe payment success:
+
+Create Printify order with:
+
+Customer name
+
+Shipping address
+
+Selected variants
+
+Quantities
+
+Store:
+
+Stripe PaymentIntent ID
+
+Printify Order ID
+
+Order status
+
+Allow configuration for:
+
+Auto-submit orders
+
+Manual approval before fulfillment
+
+🔔 Webhooks (REQUIRED)
+Stripe Webhooks
+
+Handle:
+
+payment_intent.succeeded
+
+payment_intent.payment_failed
+
+On success:
+
+Create Printify order
+
+Send confirmation email
+
+Persist order record
+
+Printify Webhooks (Optional but Recommended)
+
+Order shipped
+
+Order failed
+
+Tracking number updates
+
+📧 Notifications
+
+Order confirmation email
+
+Shipping confirmation (if webhook enabled)
+
+Admin alert on failed fulfillment
+
+🔒 Security & Validation
+
+All price calculations server-side
+
+Revalidate cart before charging
+
+Never trust client totals
+
+Sanitize all inputs
+
+🚫 Do NOT
+
+Use Printify checkout
+
+Hardcode prices
+
+Expose API keys
+
+Skip webhook verification
+
+Allow client-side discount validation only
+
+✅ Deliverables
+
+Embedded Printify storefront
+
+Custom Stripe checkout
+
+Discount code support
+
+Secure order creation
+
+Fulfillment via Printify
+
+Production-ready architecture
+
+🎯 Final Result
+
+Users should be able to:
+
+✔ Browse merch inside the app
+✔ Apply promo codes
+✔ Checkout seamlessly with Stripe
+✔ Receive products fulfilled by Printify
+✔ Never leave your platform

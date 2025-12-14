@@ -1,0 +1,184 @@
+Integrate our existing Printify store into this Replit web application using the Printify API, so products can be browsed, selected, and ordered directly within the app while fulfillment is handled by Printify.
+
+This integration must be:
+
+API-driven (not iframe-only unless used as fallback)
+
+Brand-consistent with the existing app
+
+Secure and scalable
+
+Ready for production use
+
+🔐 Environment & Secrets Setup
+
+Use Replit Secrets for all credentials:
+
+PRINTIFY_API_KEY
+
+PRINTIFY_STORE_ID
+
+(Optional) STRIPE_SECRET_KEY if using custom checkout
+
+(Optional) STRIPE_PUBLIC_KEY
+
+Do NOT hardcode credentials.
+
+🧠 Core Functional Requirements
+1️⃣ Product Sync
+
+Fetch products from Printify via API:
+
+Product name
+
+Description
+
+Images
+
+Variants (size, color, price)
+
+Availability
+
+Cache results to reduce API calls
+
+Gracefully handle out-of-stock variants
+
+2️⃣ Storefront UI
+
+Create a storefront inside the app with:
+
+Product grid
+
+Product detail page
+
+Variant selector (size/color)
+
+Quantity selector
+
+Add-to-cart functionality
+
+UI should match the app’s existing theme (action-comic / tactical professional styling).
+
+3️⃣ Cart & Checkout Flow (Two Supported Modes)
+✅ Mode A: Printify-Hosted Checkout (Fastest)
+
+Add items to cart
+
+Redirect user to Printify checkout
+
+Pass selected variants and quantities
+
+Maintain branding consistency where possible
+
+✅ Mode B: Custom Checkout (Preferred)
+
+Collect customer info inside the app
+
+Process payment via Stripe
+
+Create order in Printify via API
+
+Send confirmation email
+
+Handle errors and retries
+
+Implement whichever mode fits best with existing payment infrastructure.
+
+4️⃣ Order Creation
+
+When an order is submitted:
+
+Create a Printify order via API
+
+Include:
+
+Customer shipping info
+
+Selected variants
+
+Quantity
+
+Support:
+
+Automatic fulfillment
+
+Manual approval (configurable)
+
+5️⃣ Order Status & Confirmation
+
+Store order metadata locally (order ID, status)
+
+Display confirmation screen
+
+Send confirmation email
+
+Optionally poll Printify for order status updates
+
+🧱 Technical Implementation Notes
+
+Create a Printify service module (e.g. printifyService.ts)
+
+Abstract API calls:
+
+getProducts()
+
+getProductById()
+
+createOrder()
+
+Handle API rate limits
+
+Validate inputs before order submission
+
+🔒 Security & Compliance
+
+Never expose Printify API key to the client
+
+All Printify calls must be server-side
+
+Sanitize user input
+
+Validate shipping addresses
+
+🧪 Error Handling
+
+Graceful fallback if Printify API is unavailable
+
+Clear user-facing error messages
+
+Log failures for debugging
+
+🚫 Do NOT:
+
+Hardcode credentials
+
+Bypass payment verification
+
+Modify unrelated business logic
+
+Use deprecated Printify endpoints
+
+✅ Deliverables
+
+Printify API integration complete
+
+Storefront UI embedded in the app
+
+Secure order creation flow
+
+Cart + checkout working
+
+Ready for production testing
+
+🎯 Final Outcome
+
+Users should be able to:
+
+Browse merch inside the app
+
+Select variants
+
+Checkout cleanly
+
+Receive products fulfilled by Printify
+…without ever feeling like they left your platform.
