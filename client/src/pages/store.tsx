@@ -94,7 +94,7 @@ function ProductCard({
             ${lowestPrice.toFixed(2)}
             {availableVariants.length > 1 && <span className="text-sm font-normal text-muted-foreground">+</span>}
           </span>
-          <Button size="sm" data-testid={`add-to-cart-${product.id}`}>
+          <Button size="sm" className="bg-[#5170FF] hover:bg-[#FD66C5] text-white" data-testid={`add-to-cart-${product.id}`}>
             View Options
           </Button>
         </CardFooter>
