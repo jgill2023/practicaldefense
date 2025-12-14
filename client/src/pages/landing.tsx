@@ -200,7 +200,7 @@ function TestimonialSlider() {
   );
 }
 
-function UpcomingCoursesList() {
+function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSchedules) => void }) {
   const [currentPage, setCurrentPage] = useState(0);
   const coursesPerPage = 3;
   
@@ -379,12 +379,7 @@ function UpcomingCoursesList() {
                   <Button 
                     size="sm"
                     className="bg-[hsl(209,90%,38%)] text-white hover:bg-[#FD66C5] font-heading uppercase tracking-wide"
-                    onClick={() => {
-                      const coursesSection = document.getElementById('course-listings');
-                      if (coursesSection) {
-                        coursesSection.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
+                    onClick={() => onRegister(course)}
                     data-testid={`button-book-${schedule.id}`}
                   >
                     Register
@@ -1023,7 +1018,7 @@ export default function Landing() {
               Browse our upcoming training events and secure your spot today.
             </p>
           </div>
-          <UpcomingCoursesList />
+          <UpcomingCoursesList onRegister={handleRegisterCourse} />
         </div>
       </section>
       {/* Customer Testimonials */}
