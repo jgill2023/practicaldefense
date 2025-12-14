@@ -3,8 +3,7 @@ import { ComicPanel, TitleCard } from "@/components/RACTheme";
 import { Award, GraduationCap, Shield, Target, BookOpen, Medal, Quote } from "lucide-react";
 import teamCollageImage from "@assets/image_1765700410773.png";
 import timKellyImage from "@assets/Tim_Kelly_1765700546617.jpg";
-
-import TK01 from "@assets/TK01.jpg";
+import heroImage from "@assets/Tim_Kelly_1765700860362.jpg";
 
 const accomplishments = [
   {
@@ -52,23 +51,31 @@ const accomplishments = [
 export default function About() {
   return (
     <Layout>
+      <div className="relative h-[50vh] min-h-[400px] w-full overflow-hidden">
+        <img 
+          src={heroImage} 
+          alt="Tim Kelly instructing at Apache Solutions" 
+          className="w-full h-full object-cover"
+          data-testid="img-about-hero"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
+          <div className="max-w-5xl mx-auto">
+            <h1 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide mb-2">About Us</h1>
+            <p className="text-white/80 text-lg">Meet the team behind Apache Solutions Firearms Training.</p>
+          </div>
+        </div>
+      </div>
+
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <TitleCard as="h1" variant="accent" className="text-3xl lg:text-4xl">
-              About Us
-            </TitleCard>
-            <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
-              Meet the team behind Apache Solutions Firearms Training.
-            </p>
-          </div>
 
           <ComicPanel shadow="lg" className="mb-8" data-testid="about-tim-kelly">
             <div className="space-y-8">
               <div className="flex flex-col md:flex-row gap-8">
                 <div className="md:w-1/3">
                   <img 
-                    src={TK01} 
+                    src={timKellyImage} 
                     alt="Tim Kelly - Owner & Lead Instructor" 
                     className="w-full aspect-square object-cover rounded-xl"
                     data-testid="img-tim-kelly"
