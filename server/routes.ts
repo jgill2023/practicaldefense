@@ -18,6 +18,7 @@ import { NotificationEmailService, sendPasswordResetEmail } from "./emailService
 import { appointmentRouter } from "./appointments/routes";
 import { stripeConnectRouter } from "./stripeConnect/routes";
 import storeRouter from "./store/routes";
+import { googleCalendarRouter } from "./googleCalendar/routes";
 import "./types"; // Import type declarations
 
 import { getStripeClient } from './stripeClient';
@@ -8746,6 +8747,9 @@ jeremy@abqconcealedcarry.com
 
   // Mount Store routes (Printify merch)
   app.use('/api/store', storeRouter);
+
+  // Mount Google Calendar routes
+  app.use('/api/google-calendar', googleCalendarRouter);
 
   const httpServer = createServer(app);
   return httpServer;

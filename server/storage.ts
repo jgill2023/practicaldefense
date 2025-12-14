@@ -162,6 +162,10 @@ import {
   type InsertCreditTransaction,
   type InstructorCreditsWithDetails,
   type CreditTransactionWithDetails,
+  // Google Calendar integration
+  googleCalendarCredentials,
+  type GoogleCalendarCredentials,
+  type InsertGoogleCalendarCredentials,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne, inArray, notInArray } from "drizzle-orm";
