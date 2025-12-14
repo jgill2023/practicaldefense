@@ -53,7 +53,7 @@ const accomplishments = [
 export default function About() {
   return (
     <Layout>
-      <div className="relative h-[50vh] min-h-[400px] w-full overflow-hidden">
+      <div className="relative h-screen min-h-[500px] w-full overflow-hidden">
         <img 
           src={heroImage} 
           alt="Tim Kelly instructing at Apache Solutions" 
@@ -76,7 +76,7 @@ export default function About() {
               <div className="flex flex-col md:flex-row gap-8">
                 <div className="md:w-1/3">
                   <img 
-                    src={TK01} 
+                    src={timKellyImage} 
                     alt="Tim Kelly - Owner & Lead Instructor" 
                     className="w-full aspect-square object-cover rounded-xl"
                     data-testid="img-tim-kelly"
