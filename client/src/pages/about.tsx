@@ -53,7 +53,7 @@ const accomplishments = [
 export default function About() {
   return (
     <Layout>
-      <div className="relative h-screen min-h-[500px] w-full overflow-hidden">
+      <div className="relative h-[75vh] min-h-[500px] w-full overflow-hidden">
         <img 
           src={heroImage} 
           alt="Tim Kelly instructing at Apache Solutions" 
