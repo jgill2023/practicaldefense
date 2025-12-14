@@ -35,13 +35,12 @@ export class GoogleCalendarService {
   }
 
   getAuthorizationUrl(redirectUri: string, state: string): string {
-    this.oauth2Client.setRedirectUrl(redirectUri);
-    
     return this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: ['https://www.googleapis.com/auth/calendar.events'],
       prompt: 'consent',
       state,
+      redirect_uri: redirectUri,
     });
   }
 
@@ -50,8 +49,7 @@ export class GoogleCalendarService {
     refreshToken: string;
     expiryDate: Date;
   }> {
-    this.oauth2Client.setRedirectUrl(redirectUri);
-    const { tokens } = await this.oauth2Client.getToken(code);
+    const { tokens } = await this.oauth2Client.getToken({ code, redirect_uri: redirectUri });
     
     if (!tokens.refresh_token) {
       throw new Error('No refresh token received. Please revoke access and try again.');
