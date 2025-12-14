@@ -8,6 +8,7 @@ import { NotificationEngine } from '../notificationEngine';
 import { db } from '../db';
 import { appointmentTypes } from '@shared/schema';
 import { eq, asc } from 'drizzle-orm';
+import { googleCalendarService } from '../googleCalendar/service';
 
 import { getStripeClient } from '../stripeClient';
 
@@ -547,6 +548,9 @@ appointmentRouter.post('/instructor/appointments/:id/cancel', isAuthenticated, a
       return res.status(403).json({ message: "Not authorized to cancel this appointment" });
     }
     
+    // Get appointment before cancelling to check for Google Calendar event
+    const existingAppointment = await storage.getAppointment(id);
+    
     const { reason } = req.body;
     const appointment = await storage.cancelAppointment(id, instructorId, reason);
     
@@ -558,6 +562,16 @@ appointmentRouter.post('/instructor/appointments/:id/cancel', isAuthenticated, a
     }).catch(err => {
       console.error('Failed to send cancellation notification:', err);
     });
+
+    // Delete Google Calendar event if exists
+    if (existingAppointment?.googleEventId) {
+      try {
+        await googleCalendarService.deleteEvent(existingAppointment.googleEventId);
+        await googleCalendarService.updateAppointmentGoogleEventId(id, null);
+      } catch (err) {
+        console.error('Failed to delete Google Calendar event:', err);
+      }
+    }
     
     res.json(appointment);
   } catch (error) {
@@ -985,6 +999,25 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
         console.error('Failed to send booking confirmation notification:', err);
         // Don't fail the booking if notification fails
       });
+
+      // Sync to Google Calendar if connected
+      try {
+        const appointmentType = await storage.getAppointmentType(appointmentTypeId);
+        const student = await storage.getUser(studentId);
+        const googleEventId = await googleCalendarService.createEvent({
+          summary: `${appointmentType?.title || 'Appointment'} - ${student?.firstName} ${student?.lastName}`,
+          description: studentNotes || undefined,
+          startTime: new Date(startTime),
+          endTime: new Date(endTime),
+          attendeeEmails: student?.email ? [student.email] : undefined,
+        });
+        if (googleEventId) {
+          await googleCalendarService.updateAppointmentGoogleEventId(result.appointment.id, googleEventId);
+        }
+      } catch (err) {
+        console.error('Failed to create Google Calendar event:', err);
+        // Don't fail the booking if calendar sync fails
+      }
     }
 
     res.status(201).json(result.appointment);
@@ -1139,6 +1172,24 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
         console.error('Failed to send booking confirmation notification:', err);
         // Don't fail the booking if notification fails
       });
+
+      // Sync to Google Calendar if connected
+      try {
+        const appointmentType = await storage.getAppointmentType(appointmentTypeId);
+        const googleEventId = await googleCalendarService.createEvent({
+          summary: `${appointmentType?.title || 'Appointment'} - ${user.firstName} ${user.lastName}`,
+          description: studentNotes || undefined,
+          startTime: new Date(startTime),
+          endTime: new Date(endTime),
+          attendeeEmails: user.email ? [user.email] : undefined,
+        });
+        if (googleEventId) {
+          await googleCalendarService.updateAppointmentGoogleEventId(result.appointment.id, googleEventId);
+        }
+      } catch (err) {
+        console.error('Failed to create Google Calendar event:', err);
+        // Don't fail the booking if calendar sync fails
+      }
     }
 
     // Only auto-login for NEW users who provided a password
@@ -1205,6 +1256,16 @@ appointmentRouter.post('/:id/cancel', isAuthenticated, async (req: any, res) => 
     }).catch(err => {
       console.error('Failed to send cancellation notification:', err);
     });
+
+    // Delete Google Calendar event if exists
+    if (appointment.googleEventId) {
+      try {
+        await googleCalendarService.deleteEvent(appointment.googleEventId);
+        await googleCalendarService.updateAppointmentGoogleEventId(id, null);
+      } catch (err) {
+        console.error('Failed to delete Google Calendar event:', err);
+      }
+    }
     
     res.json(cancelledAppointment);
   } catch (error) {

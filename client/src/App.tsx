@@ -38,6 +38,7 @@ import AboutChris from "@/pages/about-chris";
 import About from "@/pages/about";
 import Articles from "@/pages/articles";
 import StripeConnectPage from "@/pages/stripe-connect";
+import SettingsPage from "@/pages/settings";
 import StudentResources from "@/pages/student-resources";
 import MerchStore from "@/pages/store";
 import NotFound from "@/pages/not-found";
@@ -151,6 +152,7 @@ function Router() {
       <Route path="/admin/credits" component={AdminCreditsPage} />
       <Route path="/admin/users" component={UserManagementPage} />
       <Route path="/stripe-connect" component={StripeConnectPage} />
+      <Route path="/settings" component={SettingsPage} />
       <Route path="/student-portal" component={StudentPortal} />
       <Route path="/students" component={StudentsPage} />
       <Route path="/student-resources" component={StudentResources} />

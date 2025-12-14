@@ -85,18 +85,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     Student Resources
                   </Link>
                   {canCreateAccounts(user) && (
-                    <Link href="/admin/users" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors relative" data-testid="link-secondary-user-management">
-                      User Management
-                      {pendingCount > 0 && (
-                        <Badge 
-                          variant="destructive" 
-                          className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
-                          data-testid="badge-pending-users-desktop"
-                        >
-                          {pendingCount > 99 ? '99+' : pendingCount}
-                        </Badge>
-                      )}
-                    </Link>
+                    <>
+                      <Link href="/admin/users" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors relative" data-testid="link-secondary-user-management">
+                        User Management
+                        {pendingCount > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
+                            data-testid="badge-pending-users-desktop"
+                          >
+                            {pendingCount > 99 ? '99+' : pendingCount}
+                          </Badge>
+                        )}
+                      </Link>
+                      <Link href="/settings" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-settings">
+                        Settings
+                      </Link>
+                    </>
                   )}
                   {user?.role === 'superadmin' && (
                     <Link href="/admin/credits" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-admin-credits">
@@ -277,20 +282,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
                             </Button>
                           </Link>
                           {canCreateAccounts(user as any) && (
-                            <Link href="/admin/users" className="block">
-                              <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5] relative" data-testid="link-user-management-mobile">
-                                User Management
-                                {pendingCount > 0 && (
-                                  <Badge 
-                                    variant="destructive" 
-                                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-[20px]"
-                                    data-testid="badge-pending-users-mobile"
-                                  >
-                                    {pendingCount > 99 ? '99+' : pendingCount}
-                                  </Badge>
-                                )}
-                              </Button>
-                            </Link>
+                            <>
+                              <Link href="/admin/users" className="block">
+                                <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5] relative" data-testid="link-user-management-mobile">
+                                  User Management
+                                  {pendingCount > 0 && (
+                                    <Badge 
+                                      variant="destructive" 
+                                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-[20px]"
+                                      data-testid="badge-pending-users-mobile"
+                                    >
+                                      {pendingCount > 99 ? '99+' : pendingCount}
+                                    </Badge>
+                                  )}
+                                </Button>
+                              </Link>
+                              <Link href="/settings" className="block">
+                                <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-settings-mobile">
+                                  Settings
+                                </Button>
+                              </Link>
+                            </>
                           )}
                           {user?.role === 'superadmin' && (
                             <Link href="/admin/credits" className="block">
