@@ -785,7 +785,7 @@ export default function Landing() {
         </div>
 
         {/* Content */}
-        <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8 flex flex-col justify-end h-full pb-20">
+        <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8 flex flex-col justify-end h-full pt-[100px] pb-[100px]">
           <div className="flex justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <Button
               size="lg"
@@ -910,7 +910,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Upcoming Courses */}
       <section id="upcoming-events" className="bg-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -925,7 +924,6 @@ export default function Landing() {
           <UpcomingCoursesList />
         </div>
       </section>
-
       {/* Customer Testimonials */}
       <section className="bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -937,7 +935,6 @@ export default function Landing() {
           <MosaicTestimonialSlider />
         </div>
       </section>
-
       {/* Training Programs */}
       <section id="courses" className="bg-muted py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1187,7 +1184,6 @@ export default function Landing() {
           )}
         </div>
       </section>
-      
       {/* Registration Modal */}
       {selectedCourse && (
         <RegistrationModal
