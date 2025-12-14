@@ -31,6 +31,9 @@ type AppointmentType = {
   minimumDurationHours?: number;
   durationIncrementMinutes?: number;
   pricePerHour?: number;
+  useTieredPricing?: boolean;
+  firstHourPrice?: number;
+  additionalHourPrice?: number;
 };
 
 type WeeklyTemplate = {
@@ -76,6 +79,9 @@ export default function AppointmentsPage() {
     minimumDurationHours: 2,
     durationIncrementMinutes: 60,
     pricePerHour: 0,
+    useTieredPricing: false,
+    firstHourPrice: 0,
+    additionalHourPrice: 0,
   });
 
   const [templateForm, setTemplateForm] = useState({
@@ -307,6 +313,9 @@ export default function AppointmentsPage() {
       minimumDurationHours: 2,
       durationIncrementMinutes: 60,
       pricePerHour: 0,
+      useTieredPricing: false,
+      firstHourPrice: 0,
+      additionalHourPrice: 0,
     });
   }
 
@@ -345,6 +354,9 @@ export default function AppointmentsPage() {
         minimumDurationHours: (type as any).minimumDurationHours || 2,
         durationIncrementMinutes: (type as any).durationIncrementMinutes || 60,
         pricePerHour: Number((type as any).pricePerHour) || 0,
+        useTieredPricing: (type as any).useTieredPricing || false,
+        firstHourPrice: Number((type as any).firstHourPrice) || 0,
+        additionalHourPrice: Number((type as any).additionalHourPrice) || 0,
       });
     } else {
       setEditingType(null);
@@ -1009,21 +1021,73 @@ export default function AppointmentsPage() {
                       <p className="text-xs text-muted-foreground mt-1">Duration increases in these steps</p>
                     </div>
                   </div>
-                  <div>
-                    <Label htmlFor="price-per-hour">Price Per Hour ($)*</Label>
-                    <Input
-                      id="price-per-hour"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={typeForm.pricePerHour}
-                      onChange={(e) => setTypeForm({ ...typeForm, pricePerHour: parseFloat(e.target.value) || 0 })}
-                      data-testid="input-type-price-per-hour"
+                  <div className="flex items-center justify-between border-t pt-4">
+                    <div>
+                      <Label htmlFor="use-tiered-pricing">Use Tiered Pricing</Label>
+                      <p className="text-xs text-muted-foreground">Different rate for first hour vs. additional hours</p>
+                    </div>
+                    <Switch
+                      id="use-tiered-pricing"
+                      checked={typeForm.useTieredPricing}
+                      onCheckedChange={(checked) => setTypeForm({ ...typeForm, useTieredPricing: checked })}
+                      data-testid="switch-type-tiered-pricing"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Total price will be calculated: ${(Number(typeForm.pricePerHour) || 0).toFixed(2)}/hour × hours selected
-                    </p>
                   </div>
+
+                  {!typeForm.useTieredPricing ? (
+                    <div>
+                      <Label htmlFor="price-per-hour">Price Per Hour ($)*</Label>
+                      <Input
+                        id="price-per-hour"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={typeForm.pricePerHour}
+                        onChange={(e) => setTypeForm({ ...typeForm, pricePerHour: parseFloat(e.target.value) || 0 })}
+                        data-testid="input-type-price-per-hour"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Total price will be calculated: ${(Number(typeForm.pricePerHour) || 0).toFixed(2)}/hour × hours selected
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 p-4 bg-muted/50 rounded-md">
+                      <p className="text-sm font-medium">Tiered Pricing Structure</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="first-hour-price">First Hour Price ($)*</Label>
+                          <Input
+                            id="first-hour-price"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={typeForm.firstHourPrice}
+                            onChange={(e) => setTypeForm({ ...typeForm, firstHourPrice: parseFloat(e.target.value) || 0 })}
+                            data-testid="input-type-first-hour-price"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="additional-hour-price">Additional Hours ($)*</Label>
+                          <Input
+                            id="additional-hour-price"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={typeForm.additionalHourPrice}
+                            onChange={(e) => setTypeForm({ ...typeForm, additionalHourPrice: parseFloat(e.target.value) || 0 })}
+                            data-testid="input-type-additional-hour-price"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">Per hour after first</p>
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground space-y-1 border-t pt-2">
+                        <p className="font-medium">Example pricing:</p>
+                        <p>1 hour: ${(Number(typeForm.firstHourPrice) || 0).toFixed(2)}</p>
+                        <p>2 hours: ${((Number(typeForm.firstHourPrice) || 0) + (Number(typeForm.additionalHourPrice) || 0)).toFixed(2)}</p>
+                        <p>3 hours: ${((Number(typeForm.firstHourPrice) || 0) + (Number(typeForm.additionalHourPrice) || 0) * 2).toFixed(2)}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

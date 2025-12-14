@@ -641,11 +641,19 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
       return res.status(400).json({ message: validation.reason });
     }
 
-    // Calculate total amount
+    // Calculate total amount (supports tiered pricing)
     let amount: number;
     if ((appointmentType as any).isVariableDuration && durationHours) {
-      const pricePerHour = Number((appointmentType as any).pricePerHour || 0);
-      amount = pricePerHour * durationHours;
+      const useTieredPricing = (appointmentType as any).useTieredPricing;
+      
+      if (useTieredPricing) {
+        const firstHourPrice = Number((appointmentType as any).firstHourPrice || 0);
+        const additionalHourPrice = Number((appointmentType as any).additionalHourPrice || 0);
+        amount = firstHourPrice + (Math.max(0, durationHours - 1) * additionalHourPrice);
+      } else {
+        const pricePerHour = Number((appointmentType as any).pricePerHour || 0);
+        amount = pricePerHour * durationHours;
+      }
     } else {
       amount = Number(appointmentType.price);
     }

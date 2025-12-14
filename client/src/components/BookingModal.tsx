@@ -718,9 +718,32 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     return options;
   };
 
-  // Calculate total price for the booking
+  // Calculate price for a specific duration (for display in duration selector)
+  const getPriceForDuration = (hours: number) => {
+    if (!(appointmentType as any)?.isVariableDuration) return 0;
+    
+    const useTieredPricing = (appointmentType as any).useTieredPricing;
+    if (useTieredPricing) {
+      const firstHourPrice = Number((appointmentType as any).firstHourPrice || 0);
+      const additionalHourPrice = Number((appointmentType as any).additionalHourPrice || 0);
+      return firstHourPrice + (Math.max(0, hours - 1) * additionalHourPrice);
+    }
+    
+    const pricePerHour = Number((appointmentType as any).pricePerHour || 0);
+    return pricePerHour * hours;
+  };
+
+  // Calculate total price for the booking (supports tiered pricing)
   const getTotalPrice = () => {
     if ((appointmentType as any)?.isVariableDuration) {
+      const useTieredPricing = (appointmentType as any).useTieredPricing;
+      
+      if (useTieredPricing) {
+        const firstHourPrice = Number((appointmentType as any).firstHourPrice || 0);
+        const additionalHourPrice = Number((appointmentType as any).additionalHourPrice || 0);
+        return firstHourPrice + (Math.max(0, selectedDurationHours - 1) * additionalHourPrice);
+      }
+      
       const pricePerHour = Number((appointmentType as any).pricePerHour || 0);
       return pricePerHour * selectedDurationHours;
     }
@@ -1169,12 +1192,15 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
             >
               {getDurationOptions().map(hours => (
                 <option key={hours} value={hours}>
-                  {hours} {hours === 1 ? 'hour' : 'hours'} - ${(Number((appointmentType as any).pricePerHour) * hours).toFixed(2)}
+                  {hours} {hours === 1 ? 'hour' : 'hours'} - ${getPriceForDuration(hours).toFixed(2)}
                 </option>
               ))}
             </select>
             <p className="text-xs text-muted-foreground mt-2">
-              Time slots will show {selectedDurationHours}-hour blocks at ${Number((appointmentType as any).pricePerHour).toFixed(2)}/hour
+              {(appointmentType as any).useTieredPricing 
+                ? `First hour: $${Number((appointmentType as any).firstHourPrice || 0).toFixed(2)}, then $${Number((appointmentType as any).additionalHourPrice || 0).toFixed(2)}/hour after`
+                : `Time slots will show ${selectedDurationHours}-hour blocks at $${Number((appointmentType as any).pricePerHour).toFixed(2)}/hour`
+              }
             </p>
           </div>
         )}
