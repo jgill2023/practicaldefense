@@ -467,11 +467,13 @@ export default function Store() {
     new Set(products.flatMap(p => p.tags))
   ).filter(tag => tag && tag.trim()).sort();
 
-  // Category mapping - filter value to actual Printify tags (case-insensitive matching)
+  // Category mapping - filter value to actual Printify tags
   const categoryTagMap: Record<string, string[]> = {
-    'Apparel': ["Men's Clothing", "Hoodies", "Sportswear", "AOP", "All Over Print", "Polyester"],
+    'Men': ["Men's Clothing", "Hoodies", "Sportswear", "AOP", "All Over Print"],
+    'Women': ["Women's Clothing"],
+    'Kids': ["Kids", "Kids' Clothing", "Youth"],
     'Accessories': ["Accessories", "Card", "Games", "Paper", "Sports & Games"],
-    'Home': ["Indoor", "Outdoor", "Home & Living"],
+    'Home & Living': ["Indoor", "Outdoor", "Home & Living", "Home"],
   };
 
   // Helper to check if product matches category
@@ -485,11 +487,6 @@ export default function Store() {
       )
     );
   };
-
-  // Generate dynamic category list based on actual products
-  const availableCategories = Object.keys(categoryTagMap).filter(cat => 
-    products.some(p => productMatchesCategory(p, cat))
-  );
 
   // Filter and sort products
   const filteredAndSortedProducts = [...products]
@@ -645,7 +642,11 @@ export default function Store() {
             <div className="flex flex-wrap gap-1 border-b border-border">
               {[
                 { value: 'all', label: 'All products' },
-                ...availableCategories.map(cat => ({ value: cat, label: cat }))
+                { value: 'Men', label: 'Men' },
+                { value: 'Accessories', label: 'Accessories' },
+                { value: 'Kids', label: 'Kids' },
+                { value: 'Women', label: 'Women' },
+                { value: 'Home & Living', label: 'Home & Living' },
               ].map((category) => (
                 <button
                   key={category.value}
