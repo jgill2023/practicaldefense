@@ -467,11 +467,21 @@ export default function Store() {
     new Set(products.flatMap(p => p.tags))
   ).filter(tag => tag && tag.trim()).sort();
 
+  // Category mapping - filter value to actual Printify tags
+  const categoryTagMap: Record<string, string[]> = {
+    'Men': ["Men's Clothing", "Hoodies", "Sportswear"],
+    'Women': ["Women's Clothing"],
+    'Kids': ["Kids", "Kids' Clothing"],
+    'Accessories': ["Accessories", "Card", "Games"],
+    'Home & Living': ["Home & Living", "Indoor", "Outdoor"],
+  };
+
   // Filter and sort products
   const filteredAndSortedProducts = [...products]
     .filter(product => {
       if (selectedCategory === 'all') return true;
-      return product.tags.includes(selectedCategory);
+      const matchTags = categoryTagMap[selectedCategory] || [selectedCategory];
+      return product.tags.some(tag => matchTags.includes(tag));
     })
     .sort((a, b) => {
       const aPrice = Math.min(...a.variants.filter(v => v.isAvailable && v.isEnabled).map(v => v.price));
