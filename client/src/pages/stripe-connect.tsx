@@ -80,10 +80,7 @@ export default function StripeConnectPage() {
 
   const saveConfigMutation = useMutation({
     mutationFn: async (stripeClientId: string) => {
-      return apiRequest("/api/stripe-connect/config", {
-        method: "POST",
-        body: JSON.stringify({ stripeClientId: stripeClientId || null }),
-      });
+      return apiRequest("POST", "/api/stripe-connect/config", { stripeClientId: stripeClientId || null });
     },
     onSuccess: () => {
       toast({
@@ -103,9 +100,7 @@ export default function StripeConnectPage() {
 
   const getOAuthLinkMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("/api/stripe-connect/oauth-link", {
-        method: "GET",
-      });
+      const response = await apiRequest("GET", "/api/stripe-connect/oauth-link");
       return response;
     },
     onSuccess: (data: any) => {
@@ -124,9 +119,7 @@ export default function StripeConnectPage() {
 
   const disconnectMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("/api/stripe-connect/disconnect", {
-        method: "DELETE",
-      });
+      return apiRequest("DELETE", "/api/stripe-connect/disconnect");
     },
     onSuccess: () => {
       toast({
