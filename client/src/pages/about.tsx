@@ -68,7 +68,7 @@ export default function About() {
           </div>
         </div>
       </div>
-      <div className="min-h-screen bg-gray-50 py-12">
+      <div className="min-h-screen bg-gray-50 py-12 pt-[84px] pb-[84px]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <ComicPanel shadow="lg" className="mb-8" data-testid="about-tim-kelly">
