@@ -4,6 +4,39 @@ Tactical Advantage is a full-stack web application designed as a professional fi
 
 # Recent Changes
 
+## December 14, 2025 - Google Calendar Integration for Appointments
+Added Google Calendar integration to automatically sync appointment bookings with the instructor's Google Calendar. When appointments are booked or cancelled, corresponding calendar events are created or deleted.
+
+**Features:**
+- OAuth 2.0 flow for connecting Google Calendar with HMAC-signed state parameters
+- Automatic event creation when appointments are booked (both authenticated and guest bookings)
+- Automatic event deletion when appointments are cancelled (by student or instructor)
+- Admin Settings page for managing Google Calendar connection
+- Calendar ID configuration for using specific calendars (defaults to primary)
+- Auto-refresh of expired tokens
+
+**Schema Changes:**
+- Added `googleCalendarCredentials` table for storing OAuth tokens
+- Added `googleEventId` column to `instructorAppointments` table
+
+**Files Added/Modified:**
+- `shared/schema.ts`: Added googleCalendarCredentials table and googleEventId column
+- `server/googleCalendar/service.ts`: Google Calendar API operations (create, update, delete events)
+- `server/googleCalendar/routes.ts`: OAuth endpoints (status, oauth-link, callback, disconnect, calendar-id)
+- `server/appointments/routes.ts`: Integrated calendar sync into booking and cancellation flows
+- `client/src/pages/settings.tsx`: New Settings page with Google Calendar authorization UI
+- `client/src/App.tsx`: Registered /settings route
+- `client/src/components/Layout.tsx`: Added Settings navigation link for admin users
+
+**Environment Variables Required:**
+- `GOOGLE_CLIENT_ID`: Google OAuth client ID
+- `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
+
+**Security:**
+- HMAC-signed OAuth state with 10-minute expiry
+- Admin-only access for connecting/disconnecting calendar
+- Graceful error handling that doesn't block appointment operations
+
 ## December 14, 2025 - Tim Kelly Admin/Instructor Permission Update
 Updated Tim Kelly's account to have combined Admin + Instructor permissions. This allows Tim to access all instructor features (course management, appointments, availability, communications) as well as admin features (user management), while keeping superadmin-only features (credit granting) restricted.
 
