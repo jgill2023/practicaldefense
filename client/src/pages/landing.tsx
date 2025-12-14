@@ -785,7 +785,7 @@ export default function Landing() {
         </div>
 
         {/* Content */}
-        <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8 flex flex-col justify-end h-full pt-[100px] pb-[100px]">
+        <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8 flex flex-col justify-end h-full pt-[120px] pb-[120px]">
           <div className="flex justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <Button
               size="lg"
@@ -1027,7 +1027,6 @@ export default function Landing() {
           <MosaicTestimonialSlider />
         </div>
       </section>
-      
       {/* Registration Modal */}
       {selectedCourse && (
         <RegistrationModal
