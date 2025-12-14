@@ -467,25 +467,53 @@ export default function Store() {
     new Set(products.flatMap(p => p.tags))
   ).filter(tag => tag && tag.trim()).sort();
 
-  // Category mapping - filter value to actual Printify tags
-  const categoryTagMap: Record<string, string[]> = {
-    'Men': ["Men's Clothing", "Hoodies", "Sportswear", "AOP", "All Over Print"],
-    'Women': ["Women's Clothing"],
-    'Kids': ["Kids", "Kids' Clothing", "Youth"],
-    'Accessories': ["Accessories", "Card", "Games", "Paper", "Sports & Games"],
-    'Home & Living': ["Indoor", "Outdoor", "Home & Living", "Home"],
+  // Category mapping - filter value to actual Printify tags AND title keywords
+  const categoryConfig: Record<string, { tags: string[], titleKeywords: string[] }> = {
+    'Men': { 
+      tags: ["Men's Clothing", "Hoodies", "Sportswear", "AOP", "All Over Print"],
+      titleKeywords: ["Hoodie", "Tee", "T-Shirt", "Sun Hoodie", "Adult", "Hat", "Dad Hat"]
+    },
+    'Women': { 
+      tags: ["Women's Clothing"],
+      titleKeywords: ["Ladies", "Women", "Racerback", "Tank"]
+    },
+    'Kids': { 
+      tags: ["Kids", "Kids' Clothing", "Youth"],
+      titleKeywords: ["Kids"]
+    },
+    'Accessories': { 
+      tags: ["Accessories", "Card", "Games", "Paper", "Sports & Games"],
+      titleKeywords: ["Can Cooler", "Can Holder", "Mug", "Mat", "Playing Cards", "Range Rag", "Hat"]
+    },
+    'Home & Living': { 
+      tags: ["Indoor", "Outdoor", "Home & Living", "Home"],
+      titleKeywords: ["Mug", "Mat", "Desk"]
+    },
   };
 
-  // Helper to check if product matches category
+  // Helper to check if product matches category by tags or title
   const productMatchesCategory = (product: Product, category: string) => {
     if (category === 'all') return true;
-    const matchTags = categoryTagMap[category] || [category];
-    return product.tags.some(tag => 
-      matchTags.some(matchTag => 
-        tag.toLowerCase().includes(matchTag.toLowerCase()) || 
-        matchTag.toLowerCase().includes(tag.toLowerCase())
+    const config = categoryConfig[category];
+    if (!config) return false;
+    
+    // Check tags first
+    const tagMatch = product.tags.some(tag => 
+      config.tags.some(matchTag => 
+        tag.toLowerCase().includes(matchTag.toLowerCase())
       )
     );
+    if (tagMatch) return true;
+    
+    // Fall back to title keyword matching for products without tags
+    if (product.tags.length === 0) {
+      const titleLower = product.title.toLowerCase();
+      return config.titleKeywords.some(keyword => 
+        titleLower.includes(keyword.toLowerCase())
+      );
+    }
+    
+    return false;
   };
 
   // Filter and sort products
