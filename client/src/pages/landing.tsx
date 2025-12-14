@@ -387,7 +387,7 @@ function UpcomingCoursesList() {
                     }}
                     data-testid={`button-book-${schedule.id}`}
                   >
-                    Book Now
+                    Register
                   </Button>
                   <Badge variant="secondary" className="text-xs">
                     {(() => {
