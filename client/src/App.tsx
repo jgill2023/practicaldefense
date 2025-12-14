@@ -36,6 +36,7 @@ import UserManagementPage from "@/pages/user-management";
 import PendingApprovalPage from "@/pages/pending-approval";
 import AboutChris from "@/pages/about-chris";
 import StripeConnectPage from "@/pages/stripe-connect";
+import StudentResources from "@/pages/student-resources";
 import NotFound from "@/pages/not-found";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -147,6 +148,7 @@ function Router() {
       <Route path="/stripe-connect" component={StripeConnectPage} />
       <Route path="/student-portal" component={StudentPortal} />
       <Route path="/students" component={StudentsPage} />
+      <Route path="/student-resources" component={StudentResources} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -81,6 +81,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-student-dashboard">
                     Student Dashboard
                   </Link>
+                  <Link href="/student-resources" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-student-resources">
+                    Student Resources
+                  </Link>
                   {canCreateAccounts(user) && (
                     <Link href="/admin/users" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors relative" data-testid="link-secondary-user-management">
                       User Management
@@ -307,11 +310,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           )}
                         </>
                       ) : (
-                        <Link href="/student-portal" className="block">
-                          <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-student-portal-mobile">
-                            My Portal
-                          </Button>
-                        </Link>
+                        <>
+                          <Link href="/student-portal" className="block">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-student-portal-mobile">
+                              My Portal
+                            </Button>
+                          </Link>
+                          <Link href="/student-resources" className="block">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-student-resources-mobile">
+                              Student Resources
+                            </Button>
+                          </Link>
+                        </>
                       )}
                       <Button 
                         variant="outline" 
