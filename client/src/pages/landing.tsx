@@ -910,31 +910,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      {/* Upcoming Courses */}
-      <section id="upcoming-events" className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
-              Upcoming Courses
-            </TitleCard>
-            <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
-              Browse our upcoming training events and secure your spot today.
-            </p>
-          </div>
-          <UpcomingCoursesList />
-        </div>
-      </section>
-      {/* Customer Testimonials */}
-      <section className="bg-gray-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
-              What Our Students Say
-            </TitleCard>
-          </div>
-          <MosaicTestimonialSlider />
-        </div>
-      </section>
       {/* Schedule Your Training Section */}
       <section id="appointments" className="py-20 bg-[hsl(204,27%,16%)]" data-testid="section-schedule-training">
         <div className="max-w-5xl mx-auto px-3 sm:px-5 lg:px-6">
@@ -1025,6 +1000,31 @@ export default function Landing() {
               ))}
             </div>
           )}
+        </div>
+      </section>
+      {/* Upcoming Courses */}
+      <section id="upcoming-events" className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
+              Upcoming Courses
+            </TitleCard>
+            <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
+              Browse our upcoming training events and secure your spot today.
+            </p>
+          </div>
+          <UpcomingCoursesList />
+        </div>
+      </section>
+      {/* Customer Testimonials */}
+      <section className="bg-gray-50 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
+              What Our Students Say
+            </TitleCard>
+          </div>
+          <MosaicTestimonialSlider />
         </div>
       </section>
       
