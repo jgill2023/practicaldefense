@@ -19,6 +19,7 @@ import deductivePistolcraftImage from "@assets/Deductive-Pistol-Craft_1762671845
 import practiceForMasteryImage from "@assets/Performance-Shooting_1762673186670.jpg";
 import performanceShootingImage from "@assets/Practical-Mastery-2025_1762674118627.jpg";
 import coachingBackgroundImage from "@assets/Main_1762715966076.jpg";
+import oneOnOneTrainingBg from "@assets/header02_1765735082776.jpg";
 import {
   Select,
   SelectContent,
@@ -911,7 +912,16 @@ export default function Landing() {
         </div>
       </section>
       {/* Schedule Your Training Section */}
-      <section id="appointments" className="py-20 bg-[hsl(204,27%,16%)]" data-testid="section-schedule-training">
+      <section 
+        id="appointments" 
+        className="py-20 relative" 
+        data-testid="section-schedule-training"
+        style={{
+          backgroundImage: `linear-gradient(rgba(23, 37, 48, 0.85), rgba(23, 37, 48, 0.85)), url(${oneOnOneTrainingBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
         <div className="max-w-5xl mx-auto px-3 sm:px-5 lg:px-6">
           <div className="text-center mb-12">
             <TitleCard as="h2" variant="light" className="text-3xl lg:text-4xl">
