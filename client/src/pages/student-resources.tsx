@@ -46,41 +46,49 @@ export default function StudentResources() {
                     Local Hotels
                   </h3>
                   <div className="space-y-3">
-                    <Card className="border-l-4 border-l-[hsl(209,90%,38%)]">
-                      <CardContent className="py-3 px-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">Best Western Plus Yadkin Valley Inn & Suites</p>
-                            <p className="text-sm text-muted-foreground">9.3 mi (16 min)</p>
+                    <a href="https://www.bestwestern.com/en_US/book/hotels-in-jonesville/best-western-plus-yadkin-valley-inn-suites/propertyCode.34170.html" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-hotel-best-western">
+                      <Card className="border-l-4 border-l-[hsl(209,90%,38%)] hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="py-3 px-4">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium hover:text-[hsl(209,90%,38%)]">Best Western Plus Yadkin Valley Inn & Suites</p>
+                              <p className="text-sm text-muted-foreground">9.3 mi (16 min)</p>
+                            </div>
+                            <Badge variant="secondary" className="text-xs">Recommended</Badge>
                           </div>
-                          <Badge variant="secondary" className="text-xs">Recommended</Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="py-3 px-4">
-                        <p className="font-medium">Hampton Inn Jonesville/Elkin</p>
-                        <p className="text-sm text-muted-foreground">12 mi (17 min)</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="py-3 px-4">
-                        <p className="font-medium">Quality Inn Jonesville I-77</p>
-                        <p className="text-sm text-muted-foreground">12 mi (17 min)</p>
-                      </CardContent>
-                    </Card>
-                    <Card className="border-l-4 border-l-amber-500">
-                      <CardContent className="py-3 px-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">Days Inn Yadkinville</p>
-                            <p className="text-sm text-muted-foreground">3.9 mi (8 min)</p>
+                        </CardContent>
+                      </Card>
+                    </a>
+                    <a href="https://www.hilton.com/en/hotels/jnvnchx-hampton-jonesville-elkin/" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-hotel-hampton">
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="py-3 px-4">
+                          <p className="font-medium hover:text-[hsl(209,90%,38%)]">Hampton Inn Jonesville/Elkin</p>
+                          <p className="text-sm text-muted-foreground">12 mi (17 min)</p>
+                        </CardContent>
+                      </Card>
+                    </a>
+                    <a href="https://www.choicehotels.com/north-carolina/jonesville/quality-inn-hotels/nc126" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-hotel-quality-inn">
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="py-3 px-4">
+                          <p className="font-medium hover:text-[hsl(209,90%,38%)]">Quality Inn Jonesville I-77</p>
+                          <p className="text-sm text-muted-foreground">12 mi (17 min)</p>
+                        </CardContent>
+                      </Card>
+                    </a>
+                    <a href="https://www.wyndhamhotels.com/days-inn/yadkinville-north-carolina/days-inn-yadkinville/overview" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-hotel-days-inn">
+                      <Card className="border-l-4 border-l-amber-500 hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="py-3 px-4">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium hover:text-[hsl(209,90%,38%)]">Days Inn Yadkinville</p>
+                              <p className="text-sm text-muted-foreground">3.9 mi (8 min)</p>
+                            </div>
+                            <Badge variant="outline" className="text-xs">Closest & Budget</Badge>
                           </div>
-                          <Badge variant="outline" className="text-xs">Closest & Budget</Badge>
-                        </div>
-                        <p className="text-xs text-amber-600 mt-1">Note: Closest and most affordable, but lower quality based on our experience.</p>
-                      </CardContent>
-                    </Card>
+                          <p className="text-xs text-amber-600 mt-1">Note: Closest and most affordable, but lower quality based on our experience.</p>
+                        </CardContent>
+                      </Card>
+                    </a>
                   </div>
                 </div>
 
@@ -90,68 +98,84 @@ export default function StudentResources() {
                     Local B&Bs & Vacation Rentals
                   </h3>
                   <div className="space-y-3">
-                    <Card>
-                      <CardContent className="py-3 px-4">
-                        <p className="font-medium">Modest Cottage in Yadkinville</p>
-                        <p className="text-sm text-muted-foreground">2.9 mi (5 min)</p>
-                      </CardContent>
-                    </Card>
-                    <Card className="border-l-4 border-l-[hsl(190,65%,47%)]">
-                      <CardContent className="py-3 px-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">Yadkin Creekside Getaway</p>
-                            <p className="text-sm text-muted-foreground">12 mi (16 min)</p>
+                    <a href="https://www.airbnb.com/rooms/1175504037376643694" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-bnb-modest-cottage">
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="py-3 px-4">
+                          <p className="font-medium hover:text-[hsl(190,65%,47%)]">Modest Cottage in Yadkinville</p>
+                          <p className="text-sm text-muted-foreground">2.9 mi (5 min)</p>
+                        </CardContent>
+                      </Card>
+                    </a>
+                    <a href="https://www.airbnb.com/rooms/933929015454258456" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-bnb-creekside">
+                      <Card className="border-l-4 border-l-[hsl(190,65%,47%)] hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="py-3 px-4">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium hover:text-[hsl(190,65%,47%)]">Yadkin Creekside Getaway</p>
+                              <p className="text-sm text-muted-foreground">12 mi (16 min)</p>
+                            </div>
+                            <Badge className="bg-[hsl(190,65%,47%)] text-white text-xs flex items-center gap-1">
+                              <Users className="w-3 h-3" /> Great for Groups
+                            </Badge>
                           </div>
-                          <Badge className="bg-[hsl(190,65%,47%)] text-white text-xs flex items-center gap-1">
-                            <Users className="w-3 h-3" /> Great for Groups
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card className="border-l-4 border-l-[hsl(190,65%,47%)]">
-                      <CardContent className="py-3 px-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">Legacy Acres Farmhouse</p>
-                            <p className="text-sm text-muted-foreground">7.4 mi (11 min)</p>
+                        </CardContent>
+                      </Card>
+                    </a>
+                    <a href="https://www.airbnb.com/rooms/1027888698529823932" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-bnb-legacy-acres">
+                      <Card className="border-l-4 border-l-[hsl(190,65%,47%)] hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="py-3 px-4">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium hover:text-[hsl(190,65%,47%)]">Legacy Acres Farmhouse</p>
+                              <p className="text-sm text-muted-foreground">7.4 mi (11 min)</p>
+                            </div>
+                            <Badge className="bg-[hsl(190,65%,47%)] text-white text-xs flex items-center gap-1">
+                              <Users className="w-3 h-3" /> Large Groups
+                            </Badge>
                           </div>
-                          <Badge className="bg-[hsl(190,65%,47%)] text-white text-xs flex items-center gap-1">
-                            <Users className="w-3 h-3" /> Large Groups
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="py-3 px-4">
-                        <p className="font-medium">Onyx Cabin On its Creek</p>
-                        <p className="text-sm text-muted-foreground">9 mi (15 min)</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="py-3 px-4">
-                        <p className="font-medium">Yadkin Valley Vineyard Cabin</p>
-                        <p className="text-sm text-muted-foreground">4.3 mi (8 min) - Cozy & Private</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="py-3 px-4">
-                        <p className="font-medium">The Rockford Inn</p>
-                        <p className="text-sm text-muted-foreground">9.9 mi (17 min)</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="py-3 px-4">
-                        <p className="font-medium">New Charming Yadkin Valley Cottage</p>
-                        <p className="text-sm text-muted-foreground">9.3 mi (15 min)</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="py-3 px-4">
-                        <p className="font-medium">Private Vineyard Cabin</p>
-                        <p className="text-sm text-muted-foreground">3.7 mi (7 min)</p>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </a>
+                    <a href="https://www.airbnb.com/rooms/828212812662489013" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-bnb-onyx-cabin">
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="py-3 px-4">
+                          <p className="font-medium hover:text-[hsl(190,65%,47%)]">Onyx Cabin On its Creek</p>
+                          <p className="text-sm text-muted-foreground">9 mi (15 min)</p>
+                        </CardContent>
+                      </Card>
+                    </a>
+                    <a href="https://www.airbnb.com/rooms/37283409" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-bnb-vineyard-cabin">
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="py-3 px-4">
+                          <p className="font-medium hover:text-[hsl(190,65%,47%)]">Yadkin Valley Vineyard Cabin</p>
+                          <p className="text-sm text-muted-foreground">4.3 mi (8 min) - Cozy & Private</p>
+                        </CardContent>
+                      </Card>
+                    </a>
+                    <a href="https://www.rockfordinn.com/" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-bnb-rockford-inn">
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="py-3 px-4">
+                          <p className="font-medium hover:text-[hsl(190,65%,47%)]">The Rockford Inn</p>
+                          <p className="text-sm text-muted-foreground">9.9 mi (17 min)</p>
+                        </CardContent>
+                      </Card>
+                    </a>
+                    <a href="https://evolve.com/vacation-rentals/459545" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-bnb-yadkin-cottage">
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="py-3 px-4">
+                          <p className="font-medium hover:text-[hsl(190,65%,47%)]">New Charming Yadkin Valley Cottage</p>
+                          <p className="text-sm text-muted-foreground">9.3 mi (15 min)</p>
+                        </CardContent>
+                      </Card>
+                    </a>
+                    <a href="https://www.vrbo.com/622179" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-bnb-private-vineyard">
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardContent className="py-3 px-4">
+                          <p className="font-medium hover:text-[hsl(190,65%,47%)]">Private Vineyard Cabin</p>
+                          <p className="text-sm text-muted-foreground">3.7 mi (7 min)</p>
+                        </CardContent>
+                      </Card>
+                    </a>
                   </div>
                 </div>
               </div>
