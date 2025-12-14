@@ -363,6 +363,8 @@ export const instructorAppointments = pgTable("instructor_appointments", {
   // Form submission data (for appointment type forms)
   formSubmissionData: jsonb("form_submission_data"), // Stores form responses as key-value pairs {fieldId: response}
   formSubmittedAt: timestamp("form_submitted_at"),
+  // Google Calendar integration
+  googleEventId: varchar("google_event_id", { length: 255 }), // Google Calendar event ID for sync
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -2537,3 +2539,29 @@ export type CartItem = {
   unitPrice: number;
   imageUrl?: string;
 };
+
+// ============================================
+// GOOGLE CALENDAR INTEGRATION
+// ============================================
+
+// Google Calendar credentials for OAuth tokens (single shared calendar)
+export const googleCalendarCredentials = pgTable("google_calendar_credentials", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  tokenExpiry: timestamp("token_expiry").notNull(),
+  calendarId: varchar("calendar_id", { length: 255 }).default('primary'), // Which calendar to use
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insert schema for Google Calendar credentials
+export const insertGoogleCalendarCredentialsSchema = createInsertSchema(googleCalendarCredentials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for Google Calendar credentials
+export type InsertGoogleCalendarCredentials = z.infer<typeof insertGoogleCalendarCredentialsSchema>;
+export type GoogleCalendarCredentials = typeof googleCalendarCredentials.$inferSelect;
