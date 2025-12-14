@@ -438,6 +438,8 @@ export default function Store() {
   const [orderDetails, setOrderDetails] = useState<any>(null);
   const [discountCode, setDiscountCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('name-asc');
   const [shippingInfo, setShippingInfo] = useState({
     firstName: '',
     lastName: '',
@@ -459,6 +461,34 @@ export default function Store() {
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ['/api/store/products'],
   });
+
+  // Extract all unique categories from product tags
+  const allCategories = Array.from(
+    new Set(products.flatMap(p => p.tags))
+  ).filter(tag => tag && tag.trim()).sort();
+
+  // Filter and sort products
+  const filteredAndSortedProducts = [...products]
+    .filter(product => {
+      if (selectedCategory === 'all') return true;
+      return product.tags.includes(selectedCategory);
+    })
+    .sort((a, b) => {
+      const aPrice = Math.min(...a.variants.filter(v => v.isAvailable && v.isEnabled).map(v => v.price));
+      const bPrice = Math.min(...b.variants.filter(v => v.isAvailable && v.isEnabled).map(v => v.price));
+      
+      switch (sortBy) {
+        case 'price-asc':
+          return aPrice - bPrice;
+        case 'price-desc':
+          return bPrice - aPrice;
+        case 'name-desc':
+          return b.title.localeCompare(a.title);
+        case 'name-asc':
+        default:
+          return a.title.localeCompare(b.title);
+      }
+    });
 
   const validateDiscountMutation = useMutation({
     mutationFn: async (code: string) => {
@@ -588,6 +618,47 @@ export default function Store() {
           />
         </div>
 
+        {/* Filter and Sort Controls */}
+        {products.length > 0 && (
+          <div className="flex flex-wrap gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="category-filter" className="text-sm font-medium whitespace-nowrap">Category:</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[180px]" data-testid="category-filter">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {allCategories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Label htmlFor="sort-by" className="text-sm font-medium whitespace-nowrap">Sort by:</Label>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[180px]" data-testid="sort-by">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                  <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                  <SelectItem value="price-asc">Price (Low to High)</SelectItem>
+                  <SelectItem value="price-desc">Price (High to Low)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="text-sm text-muted-foreground self-center">
+              {filteredAndSortedProducts.length} {filteredAndSortedProducts.length === 1 ? 'product' : 'products'}
+            </div>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -598,9 +669,25 @@ export default function Store() {
             <h2 className="text-xl font-semibold mb-2">No products available</h2>
             <p className="text-muted-foreground">Check back soon for new merchandise!</p>
           </div>
+        ) : filteredAndSortedProducts.length === 0 ? (
+          <div className="text-center py-16">
+            <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <h2 className="text-xl font-semibold mb-2">No products found</h2>
+            <p className="text-muted-foreground">Try changing your filter or check back soon!</p>
+            {selectedCategory !== 'all' && (
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => setSelectedCategory('all')}
+                data-testid="clear-filter"
+              >
+                Clear Filter
+              </Button>
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map(product => (
+            {filteredAndSortedProducts.map(product => (
               <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
             ))}
           </div>
