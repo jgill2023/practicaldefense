@@ -5,6 +5,8 @@ import teamCollageImage from "@assets/image_1765700410773.png";
 import timKellyImage from "@assets/Tim_Kelly_1765700546617.jpg";
 import heroImage from "@assets/Tim_Kelly_1765700860362.jpg";
 
+import TK01 from "@assets/TK01.jpg";
+
 const accomplishments = [
   {
     year: "2005-2013",
@@ -66,7 +68,6 @@ export default function About() {
           </div>
         </div>
       </div>
-
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -75,7 +76,7 @@ export default function About() {
               <div className="flex flex-col md:flex-row gap-8">
                 <div className="md:w-1/3">
                   <img 
-                    src={timKellyImage} 
+                    src={TK01} 
                     alt="Tim Kelly - Owner & Lead Instructor" 
                     className="w-full aspect-square object-cover rounded-xl"
                     data-testid="img-tim-kelly"
