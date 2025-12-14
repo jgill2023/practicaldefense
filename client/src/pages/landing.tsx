@@ -939,7 +939,7 @@ export default function Landing() {
               <p className="text-muted-foreground">No appointment types available at this time.</p>
             </ComicPanel>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {appointmentTypes.map((type) => (
                 <ComicPanel
                   key={type.id}
