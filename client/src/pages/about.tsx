@@ -76,7 +76,7 @@ export default function About() {
               <div className="flex flex-col md:flex-row gap-8">
                 <div className="md:w-1/3">
                   <img 
-                    src={timKellyImage} 
+                    src={TK01} 
                     alt="Tim Kelly - Owner & Lead Instructor" 
                     className="w-full aspect-square object-cover rounded-xl"
                     data-testid="img-tim-kelly"
