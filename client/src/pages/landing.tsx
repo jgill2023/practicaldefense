@@ -787,7 +787,6 @@ export default function Landing() {
         {/* Content */}
         <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8">
           <div className="animate-slide-up">
-            <h1 style={{ fontFamily: 'League Gothic, sans-serif' }} className="uppercase mb-6 text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-wider">APACHE SOLUTIONS</h1>
             <p className="text-xl md:text-2xl text-white/90 max-w-2xl mx-auto mb-8 font-light">Educating the Responsibily Armed Citizen</p>
           </div>
 
