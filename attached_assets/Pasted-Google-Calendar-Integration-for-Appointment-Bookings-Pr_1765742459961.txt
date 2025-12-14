@@ -1,0 +1,155 @@
+Google Calendar Integration for Appointment Bookings
+
+Prompt:
+
+Integrate Google Calendar into this application so that when a student books, reschedules, or cancels an appointment, the corresponding event is automatically created, updated, or deleted on one Google Calendar.
+
+Use Google OAuth 2.0 and the Google Calendar API.
+This integration uses a single Google Calendar, not per-instructor calendars.
+
+🔐 Environment & Secrets
+
+Use Replit Secrets for Google credentials:
+
+GOOGLE_CLIENT_ID (already available)
+
+GOOGLE_CLIENT_SECRET
+
+GOOGLE_REDIRECT_URI
+
+Do NOT expose secrets client-side.
+
+🧠 Functional Requirements
+1️⃣ Google OAuth Setup (Backend)
+
+Implement OAuth 2.0 authorization flow
+
+Request scope:
+
+https://www.googleapis.com/auth/calendar.events
+
+
+Handle OAuth callback
+
+Store:
+
+access_token
+
+refresh_token
+
+token_expiry
+
+Tokens must persist across deploys (store in DB, not memory).
+
+2️⃣ One-Time Calendar Authorization Flow
+
+Provide an admin-only endpoint or script to:
+
+Generate Google authorization URL
+
+Complete OAuth consent
+
+Store tokens securely
+
+This step is done once for the calendar owner
+
+No per-instructor Google setup UI is required.
+
+3️⃣ Calendar Event Creation on Booking
+
+When an appointment is booked:
+
+Create a Google Calendar event with:
+
+Title (student name + appointment type)
+
+Start and end time
+
+Time zone
+
+Location or “Online”
+
+Description with booking details
+
+Save the returned:
+
+google_event_id
+
+
+on the appointment record
+
+4️⃣ Event Updates & Deletions (REQUIRED)
+
+On appointment reschedule:
+
+Update the existing Google Calendar event
+
+On appointment cancellation:
+
+Delete the Google Calendar event
+
+This must use the stored google_event_id.
+
+5️⃣ Token Refresh Handling
+
+Automatically refresh access tokens using the refresh token
+
+Retry calendar actions if token is expired
+
+Gracefully handle revoked access and surface admin errors
+
+📅 Calendar API Usage
+
+Use calendar.events.insert to create events
+
+Use calendar.events.update to reschedule
+
+Use calendar.events.delete to cancel
+
+Always specify time zone explicitly
+
+🔒 Security & Stability Rules
+
+Never call Google APIs from the frontend
+
+Never expose tokens in the browser
+
+Validate appointment data before creating events
+
+Fail gracefully if calendar sync fails (booking should still save)
+
+🚫 Do NOT
+
+Use API keys alone (OAuth required)
+
+Use per-instructor calendars
+
+Make the calendar public
+
+Store tokens in Replit Secrets if they need rotation
+
+Block bookings if Google Calendar is temporarily unavailable
+
+✅ Deliverables
+
+Google OAuth authorization flow
+
+Secure token storage
+
+Appointment → calendar sync
+
+Update/delete sync logic
+
+Production-ready Google Calendar integration
+
+🎯 Expected End Result
+
+Student books appointment
+
+Appointment instantly appears on Google Calendar
+
+Reschedules and cancellations stay in sync
+
+No manual calendar management required
+
+This should behave like Calendly / Acuity, but integrated directly into this app.
