@@ -2615,9 +2615,9 @@ export class DatabaseStorage implements IStorage {
     tax_included: boolean;
     promoCode?: string;
   }> {
-    // Import Stripe here to avoid circular dependencies
-    const Stripe = await import('stripe');
-    const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY!);
+    // Use the Stripe client from the Replit connector
+    const { getStripeClient } = await import('./stripeClient');
+    const stripe = await getStripeClient();
 
     // Get enrollment and course details
     const enrollment = await db.query.enrollments.findFirst({
@@ -2869,7 +2869,8 @@ export class DatabaseStorage implements IStorage {
 
     // Only verify payment with Stripe if it's NOT a free enrollment
     if (!isFreeEnrollment) {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+      const { getStripeClient } = await import('./stripeClient');
+      const stripe = await getStripeClient();
 
       // Verify payment with Stripe FIRST (critical security check)
       const paymentIntent = await stripe.paymentIntents.retrieve(data.paymentIntentId);

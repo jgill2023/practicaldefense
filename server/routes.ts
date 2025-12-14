@@ -20,17 +20,30 @@ import { stripeConnectRouter } from "./stripeConnect/routes";
 import storeRouter from "./store/routes";
 import "./types"; // Import type declarations
 
+import { getStripeClient } from './stripeClient';
+
 // Stripe is required for payment processing
-// During setup, payments will be disabled if not configured
+// Using Replit connector for credentials
 let stripe: Stripe | null = null;
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-08-27.basil",
-  });
-} else {
-  console.warn('⚠️  STRIPE_SECRET_KEY not configured. Payment processing is disabled.');
-  console.warn('   Complete the onboarding process to enable payments.');
+let stripeInitialized = false;
+
+async function ensureStripeInitialized(): Promise<Stripe | null> {
+  if (!stripeInitialized) {
+    try {
+      stripe = await getStripeClient();
+      stripeInitialized = true;
+      console.log('✅ Stripe client initialized successfully');
+    } catch (error) {
+      console.warn('⚠️  Stripe not configured. Payment processing is disabled.');
+      console.warn('   Complete the Stripe integration setup to enable payments.');
+      stripe = null;
+    }
+  }
+  return stripe;
 }
+
+// Initialize Stripe on startup
+ensureStripeInitialized();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware

@@ -9,13 +9,26 @@ import { db } from '../db';
 import { appointmentTypes } from '@shared/schema';
 import { eq, asc } from 'drizzle-orm';
 
-// Initialize Stripe
+import { getStripeClient } from '../stripeClient';
+
+// Initialize Stripe using Replit connector
 let stripe: Stripe | null = null;
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-08-27.basil",
-  });
+let stripeInitialized = false;
+
+async function ensureStripeInitialized(): Promise<Stripe | null> {
+  if (!stripeInitialized) {
+    try {
+      stripe = await getStripeClient();
+      stripeInitialized = true;
+    } catch (error) {
+      console.warn('Appointments: Stripe not configured');
+      stripe = null;
+    }
+  }
+  return stripe;
 }
+
+ensureStripeInitialized();
 import { 
   insertAppointmentTypeSchema,
   insertInstructorWeeklyTemplateSchema,

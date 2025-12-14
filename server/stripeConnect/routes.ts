@@ -4,14 +4,24 @@ import Stripe from 'stripe';
 import crypto from 'crypto';
 import { storage } from '../storage';
 import { isAuthenticated } from '../customAuth';
+import { getStripeClient } from '../stripeClient';
 
 export const stripeConnectRouter = Router();
 
 let stripe: Stripe | null = null;
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-08-27.basil",
-  });
+let stripeInitialized = false;
+
+async function ensureStripeInitialized(): Promise<Stripe | null> {
+  if (!stripeInitialized) {
+    try {
+      stripe = await getStripeClient();
+      stripeInitialized = true;
+    } catch (error) {
+      console.warn('Failed to initialize Stripe client:', error);
+      stripe = null;
+    }
+  }
+  return stripe;
 }
 
 const STATE_TTL_MS = 15 * 60 * 1000;
@@ -185,7 +195,8 @@ stripeConnectRouter.get('/oauth/callback', async (req: Request, res: Response) =
       return res.redirect('/stripe-connect?error=Missing%20authorization%20code');
     }
 
-    if (!stripe) {
+    const stripeClient = await ensureStripeInitialized();
+    if (!stripeClient) {
       return res.redirect('/stripe-connect?error=Stripe%20is%20not%20configured');
     }
 
@@ -194,7 +205,7 @@ stripeConnectRouter.get('/oauth/callback', async (req: Request, res: Response) =
       return res.redirect('/stripe-connect?error=Stripe%20Connect%20Client%20ID%20not%20configured');
     }
 
-    const response = await stripe.oauth.token({
+    const response = await stripeClient.oauth.token({
       grant_type: 'authorization_code',
       code: code,
     });
@@ -204,7 +215,7 @@ stripeConnectRouter.get('/oauth/callback', async (req: Request, res: Response) =
       return res.redirect('/stripe-connect?error=Failed%20to%20connect%20Stripe%20account');
     }
 
-    const account = await stripe.accounts.retrieve(response.stripe_user_id);
+    const account = await stripeClient.accounts.retrieve(response.stripe_user_id);
 
     await storage.updateUser(stateData.userId, {
       stripeConnectAccountId: response.stripe_user_id,
@@ -243,9 +254,10 @@ stripeConnectRouter.get('/status', isAuthenticated, async (req: any, res: Respon
     }
 
     let liveStatus = null;
-    if (stripe) {
+    const stripeClient = await ensureStripeInitialized();
+    if (stripeClient) {
       try {
-        const account = await stripe.accounts.retrieve(user.stripeConnectAccountId);
+        const account = await stripeClient.accounts.retrieve(user.stripeConnectAccountId);
         liveStatus = {
           chargesEnabled: account.charges_enabled,
           payoutsEnabled: account.payouts_enabled,
@@ -295,11 +307,12 @@ stripeConnectRouter.delete('/disconnect', isAuthenticated, async (req: any, res:
       return res.status(400).json({ error: 'No Stripe account connected' });
     }
 
-    if (stripe) {
+    const stripeClient = await ensureStripeInitialized();
+    if (stripeClient) {
       try {
         const settings = await storage.getAppSettings();
         if (settings?.stripeClientId) {
-          await stripe.oauth.deauthorize({
+          await stripeClient.oauth.deauthorize({
             client_id: settings.stripeClientId,
             stripe_user_id: user.stripeConnectAccountId,
           });
@@ -345,12 +358,13 @@ stripeConnectRouter.post('/webhook', async (req: Request, res: Response) => {
   let event: Stripe.Event;
   
   try {
-    if (!stripe) {
+    const stripeClient = await ensureStripeInitialized();
+    if (!stripeClient) {
       return res.status(500).json({ error: 'Stripe not configured' });
     }
     
     const rawBody = (req as any).rawBody || req.body;
-    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+    event = stripeClient.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err: any) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).json({ error: `Webhook Error: ${err.message}` });

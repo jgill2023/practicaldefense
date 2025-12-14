@@ -16,16 +16,28 @@ import {
 import { printifyService, type NormalizedProduct } from '../printify/service';
 import { eq, and, sql, gt, or, isNull, lte } from 'drizzle-orm';
 import Stripe from 'stripe';
+import { getStripeClient } from '../stripeClient';
 
 const router = Router();
 
-// Initialize Stripe (only if key is available)
+// Initialize Stripe using Replit connector
 let stripe: Stripe | null = null;
-if (process.env.STRIPE_SECRET_KEY) {
-  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-04-30.basil',
-  });
+let stripeInitialized = false;
+
+async function ensureStripeInitialized(): Promise<Stripe | null> {
+  if (!stripeInitialized) {
+    try {
+      stripe = await getStripeClient();
+      stripeInitialized = true;
+    } catch (error) {
+      console.warn('Store: Stripe not configured');
+      stripe = null;
+    }
+  }
+  return stripe;
 }
+
+ensureStripeInitialized();
 
 // Simple in-memory cache for products (5 minute TTL)
 let productCache: { data: NormalizedProduct[]; timestamp: number } | null = null;
