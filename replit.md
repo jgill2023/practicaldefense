@@ -4,6 +4,21 @@ Tactical Advantage is a full-stack web application designed as a professional fi
 
 # Recent Changes
 
+## December 14, 2025 - Tim Kelly Admin/Instructor Permission Update
+Updated Tim Kelly's account to have combined Admin + Instructor permissions. This allows Tim to access all instructor features (course management, appointments, availability, communications) as well as admin features (user management), while keeping superadmin-only features (credit granting) restricted.
+
+**Changes:**
+- Updated Tim Kelly's role from 'instructor' to 'admin' in the database
+- Created weekly availability templates for Tim Kelly (9 AM - 5 PM, all 7 days)
+- Updated 60+ role checks in server/routes.ts to include 'admin' alongside 'instructor' and 'superadmin'
+- Admin role now inherits all instructor capabilities by design
+
+**Permission Model:**
+- **Student**: Basic access to courses, enrollments, profile
+- **Instructor**: Course management, appointments, availability, communications
+- **Admin**: All instructor features + user management (Tim Kelly's level)
+- **Superadmin**: All admin features + credit granting
+
 ## December 2, 2025 - Stripe Connect OAuth Integration for Instructor Payment Routing
 Added Stripe Connect OAuth functionality allowing instructors to connect their existing Stripe accounts to receive payments directly. This enables a self-service flow where instructors can link their accounts and the platform automatically routes payments to them.
 
