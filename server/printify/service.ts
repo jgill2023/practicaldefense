@@ -163,17 +163,34 @@ class PrintifyService {
   }
 
   /**
-   * Get all published products from the Printify store
+   * Get all published products from the Printify store (handles pagination)
    */
   async getProducts(): Promise<NormalizedProduct[]> {
     try {
-      const response = await this.request<PrintifyProductList>(
-        `/shops/${this.storeId}/products.json`
-      );
+      const allProducts: PrintifyProduct[] = [];
+      let currentPage = 1;
+      let hasMore = true;
 
-      // Filter only visible products and normalize the data
-      return response.data
+      // Fetch all pages
+      while (hasMore) {
+        const response = await this.request<PrintifyProductList>(
+          `/shops/${this.storeId}/products.json?page=${currentPage}`
+        );
+        
+        allProducts.push(...response.data);
+        
+        // Check if there are more pages
+        if (response.current_page >= response.last_page || !response.next_page_url) {
+          hasMore = false;
+        } else {
+          currentPage++;
+        }
+      }
+
+      // Filter visible products, exclude "Copy of" duplicates, and normalize
+      return allProducts
         .filter(product => product.visible)
+        .filter(product => !product.title.startsWith('Copy of'))
         .map(product => this.normalizeProduct(product));
     } catch (error) {
       console.error('Error fetching Printify products:', error);
