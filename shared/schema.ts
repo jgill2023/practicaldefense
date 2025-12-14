@@ -290,6 +290,10 @@ export const appointmentTypes = pgTable("appointment_types", {
   minimumDurationHours: integer("minimum_duration_hours"), // Minimum hours for variable duration (e.g., 2)
   durationIncrementMinutes: integer("duration_increment_minutes"), // Increment in minutes (e.g., 60 for 1-hour increments)
   pricePerHour: decimal("price_per_hour", { precision: 10, scale: 2 }), // Price per hour for variable duration bookings
+  // Tiered pricing fields - e.g., $60 for first hour, $50 for each additional hour
+  useTieredPricing: boolean("use_tiered_pricing").notNull().default(false), // Enable tiered pricing (first hour different rate)
+  firstHourPrice: decimal("first_hour_price", { precision: 10, scale: 2 }), // Price for the first hour
+  additionalHourPrice: decimal("additional_hour_price", { precision: 10, scale: 2 }), // Price for each additional hour
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").default(0), // For display ordering
   createdAt: timestamp("created_at").defaultNow(),
