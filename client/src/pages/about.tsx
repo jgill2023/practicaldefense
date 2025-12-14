@@ -1,7 +1,5 @@
 import { Layout } from "@/components/Layout";
 import { ComicPanel, TitleCard } from "@/components/RACTheme";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Award, GraduationCap, Shield, Target, BookOpen, Medal, Users, Quote } from "lucide-react";
 
 const accomplishments = [
@@ -89,21 +87,17 @@ export default function About() {
                   <Award className="w-5 h-5 text-[hsl(209,90%,38%)]" />
                   Major Accomplishments
                 </h3>
-                <div className="grid md:grid-cols-2 gap-4">
+                <ul className="space-y-3">
                   {accomplishments.map((item, index) => (
-                    <Card key={index} className="border-l-4 border-l-[hsl(209,90%,38%)] hover:shadow-md transition-shadow" data-testid={`accomplishment-${index}`}>
-                      <CardContent className="py-4 px-5">
-                        <div className="flex items-start gap-3">
-                          <item.icon className="w-5 h-5 text-[hsl(209,90%,38%)] flex-shrink-0 mt-0.5" />
-                          <div>
-                            <Badge variant="secondary" className="text-xs mb-2">{item.year}</Badge>
-                            <p className="text-foreground font-medium">{item.title}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <li key={index} className="flex items-start gap-3" data-testid={`accomplishment-${index}`}>
+                      <item.icon className="w-5 h-5 text-[hsl(209,90%,38%)] flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-foreground font-medium">{item.title}</span>
+                        <span className="text-muted-foreground ml-2">({item.year})</span>
+                      </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             </div>
           </ComicPanel>
