@@ -467,22 +467,33 @@ export default function Store() {
     new Set(products.flatMap(p => p.tags))
   ).filter(tag => tag && tag.trim()).sort();
 
-  // Category mapping - filter value to actual Printify tags
+  // Category mapping - filter value to actual Printify tags (case-insensitive matching)
   const categoryTagMap: Record<string, string[]> = {
-    'Men': ["Men's Clothing", "Hoodies", "Sportswear"],
-    'Women': ["Women's Clothing"],
-    'Kids': ["Kids", "Kids' Clothing"],
-    'Accessories': ["Accessories", "Card", "Games"],
-    'Home & Living': ["Home & Living", "Indoor", "Outdoor"],
+    'Apparel': ["Men's Clothing", "Hoodies", "Sportswear", "AOP", "All Over Print", "Polyester"],
+    'Accessories': ["Accessories", "Card", "Games", "Paper", "Sports & Games"],
+    'Home': ["Indoor", "Outdoor", "Home & Living"],
   };
+
+  // Helper to check if product matches category
+  const productMatchesCategory = (product: Product, category: string) => {
+    if (category === 'all') return true;
+    const matchTags = categoryTagMap[category] || [category];
+    return product.tags.some(tag => 
+      matchTags.some(matchTag => 
+        tag.toLowerCase().includes(matchTag.toLowerCase()) || 
+        matchTag.toLowerCase().includes(tag.toLowerCase())
+      )
+    );
+  };
+
+  // Generate dynamic category list based on actual products
+  const availableCategories = Object.keys(categoryTagMap).filter(cat => 
+    products.some(p => productMatchesCategory(p, cat))
+  );
 
   // Filter and sort products
   const filteredAndSortedProducts = [...products]
-    .filter(product => {
-      if (selectedCategory === 'all') return true;
-      const matchTags = categoryTagMap[selectedCategory] || [selectedCategory];
-      return product.tags.some(tag => matchTags.includes(tag));
-    })
+    .filter(product => productMatchesCategory(product, selectedCategory))
     .sort((a, b) => {
       const aPrice = Math.min(...a.variants.filter(v => v.isAvailable && v.isEnabled).map(v => v.price));
       const bPrice = Math.min(...b.variants.filter(v => v.isAvailable && v.isEnabled).map(v => v.price));
@@ -634,11 +645,7 @@ export default function Store() {
             <div className="flex flex-wrap gap-1 border-b border-border">
               {[
                 { value: 'all', label: 'All products' },
-                { value: 'Men', label: 'Men' },
-                { value: 'Accessories', label: 'Accessories' },
-                { value: 'Kids', label: 'Kids' },
-                { value: 'Women', label: 'Women' },
-                { value: 'Home & Living', label: 'Home & Living' },
+                ...availableCategories.map(cat => ({ value: cat, label: cat }))
               ].map((category) => (
                 <button
                   key={category.value}
