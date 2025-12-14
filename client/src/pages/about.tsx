@@ -1,6 +1,7 @@
 import { Layout } from "@/components/Layout";
 import { ComicPanel, TitleCard } from "@/components/RACTheme";
 import { Award, GraduationCap, Shield, Target, BookOpen, Medal, Users, Quote } from "lucide-react";
+import teamCollageImage from "@assets/image_1765700410773.png";
 
 const accomplishments = [
   {
@@ -159,6 +160,15 @@ export default function About() {
                 <div className="border-t border-gray-200 pt-6 mt-8">
                   <p className="font-heading text-lg uppercase tracking-wide text-[hsl(209,90%,38%)]">Tim Kelly</p>
                   <p className="text-muted-foreground">Owner / Chief Instructor at Apache Solutions LLC</p>
+                </div>
+
+                <div className="mt-8">
+                  <img 
+                    src={teamCollageImage} 
+                    alt="Apache Solutions team throughout the years" 
+                    className="w-full rounded-lg shadow-md"
+                    data-testid="img-team-collage"
+                  />
                 </div>
               </div>
             </div>
