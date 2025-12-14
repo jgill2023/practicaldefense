@@ -377,7 +377,7 @@ function UpcomingCoursesList() {
                 <div className="flex items-center gap-3">
                   <Button 
                     size="sm"
-                    className="bg-[hsl(209,90%,38%)] text-white hover:bg-[hsl(209,90%,30%)] font-heading uppercase tracking-wide"
+                    className="bg-[hsl(209,90%,38%)] text-white hover:bg-[#FD66C5] font-heading uppercase tracking-wide"
                     onClick={() => {
                       const coursesSection = document.getElementById('course-listings');
                       if (coursesSection) {
