@@ -1,7 +1,8 @@
 import { Layout } from "@/components/Layout";
 import { ComicPanel, TitleCard } from "@/components/RACTheme";
-import { Award, GraduationCap, Shield, Target, BookOpen, Medal, Users, Quote } from "lucide-react";
+import { Award, GraduationCap, Shield, Target, BookOpen, Medal, Quote } from "lucide-react";
 import teamCollageImage from "@assets/image_1765700410773.png";
+import timKellyImage from "@assets/Tim_Kelly_1765700546617.jpg";
 
 const accomplishments = [
   {
@@ -64,9 +65,12 @@ export default function About() {
             <div className="space-y-8">
               <div className="flex flex-col md:flex-row gap-8">
                 <div className="md:w-1/3">
-                  <div className="w-full aspect-square bg-gradient-to-br from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)] rounded-xl flex items-center justify-center">
-                    <Users className="w-24 h-24 text-white opacity-50" />
-                  </div>
+                  <img 
+                    src={timKellyImage} 
+                    alt="Tim Kelly - Owner & Lead Instructor" 
+                    className="w-full aspect-square object-cover rounded-xl"
+                    data-testid="img-tim-kelly"
+                  />
                   <div className="mt-4 text-center">
                     <h2 className="font-heading text-2xl uppercase tracking-wide">Tim Kelly</h2>
                     <p className="text-[hsl(209,90%,38%)] font-medium">Owner & Lead Instructor</p>
