@@ -39,6 +39,7 @@ import About from "@/pages/about";
 import Articles from "@/pages/articles";
 import StripeConnectPage from "@/pages/stripe-connect";
 import StudentResources from "@/pages/student-resources";
+import MerchStore from "@/pages/store";
 import NotFound from "@/pages/not-found";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -153,6 +154,7 @@ function Router() {
       <Route path="/student-portal" component={StudentPortal} />
       <Route path="/students" component={StudentsPage} />
       <Route path="/student-resources" component={StudentResources} />
+      <Route path="/merch" component={MerchStore} />
       <Route component={NotFound} />
     </Switch>
   );

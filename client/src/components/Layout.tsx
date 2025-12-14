@@ -142,6 +142,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/about" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-about">About Us</Link>
                 <Link href="/articles" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-articles">Articles</Link>
                 <Link href="/schedule-list" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-events">Events</Link>
+                <Link href="/merch" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-merch">Store</Link>
                 <a href="/#appointments" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" onClick={(e) => {
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
@@ -196,6 +197,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/about" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-about-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
                 <Link href="/articles" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-articles-mobile" onClick={() => setIsMobileMenuOpen(false)}>Articles</Link>
                 <Link href="/schedule-list" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-events-mobile" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
+                <Link href="/merch" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-merch-mobile" onClick={() => setIsMobileMenuOpen(false)}>Store</Link>
                 <div className="py-2" style={{display: 'none'}}>
                   <div className="text-white font-medium mb-2">The Schedule</div>
                   <div className="pl-4 space-y-2">

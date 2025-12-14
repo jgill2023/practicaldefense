@@ -19,10 +19,13 @@ import Stripe from 'stripe';
 
 const router = Router();
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-04-30.basil',
-});
+// Initialize Stripe (only if key is available)
+let stripe: Stripe | null = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-04-30.basil',
+  });
+}
 
 // Simple in-memory cache for products (5 minute TTL)
 let productCache: { data: NormalizedProduct[]; timestamp: number } | null = null;
@@ -227,6 +230,10 @@ router.post('/create-payment-intent', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Cart is empty' });
     }
 
+    if (!stripe) {
+      return res.status(503).json({ message: 'Payment processing is not configured' });
+    }
+
     // Validate cart server-side
     const products = productCache?.data || await printifyService.getProducts();
     let subtotal = 0;
@@ -377,6 +384,10 @@ router.post('/confirm-order', async (req: Request, res: Response) => {
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (!stripe) {
+      return res.status(503).json({ message: 'Payment processing is not configured' });
     }
 
     // Verify payment intent
