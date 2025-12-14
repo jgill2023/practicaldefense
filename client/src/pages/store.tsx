@@ -603,7 +603,7 @@ export default function Store() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 pl-[48px] pr-[48px]">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-primary">Apache Solutions Merch Store</h1>
