@@ -2378,3 +2378,162 @@ export type CreditTransactionWithDetails = CreditTransaction & {
 
 // Credit transaction types
 export type CreditTransactionType = 'purchase' | 'usage' | 'refund' | 'adjustment' | 'initial_grant';
+
+// ============================================
+// MERCH STORE TABLES (Printify Integration)
+// ============================================
+
+// Merch order status enum
+export const merchOrderStatusEnum = pgEnum("merch_order_status", [
+  "pending",
+  "paid",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled",
+  "refunded"
+]);
+
+// Discount type enum
+export const discountTypeEnum = pgEnum("discount_type", [
+  "percentage",
+  "fixed_amount",
+  "free_shipping"
+]);
+
+// Merch discount codes table
+export const merchDiscountCodes = pgTable("merch_discount_codes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: varchar("code", { length: 50 }).notNull().unique(),
+  discountType: discountTypeEnum("discount_type").notNull(),
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(), // Percentage (0-100) or fixed amount
+  minOrderAmount: decimal("min_order_amount", { precision: 10, scale: 2 }), // Minimum order to apply
+  maxUsageCount: integer("max_usage_count"), // Null means unlimited
+  currentUsageCount: integer("current_usage_count").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Merch orders table
+export const merchOrders = pgTable("merch_orders", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  // Customer info (can be guest or logged-in user)
+  userId: varchar("user_id").references(() => users.id), // Null for guest checkout
+  customerEmail: varchar("customer_email", { length: 255 }).notNull(),
+  customerFirstName: varchar("customer_first_name", { length: 100 }).notNull(),
+  customerLastName: varchar("customer_last_name", { length: 100 }).notNull(),
+  customerPhone: varchar("customer_phone", { length: 20 }),
+  // Shipping address
+  shippingAddress1: varchar("shipping_address1", { length: 255 }).notNull(),
+  shippingAddress2: varchar("shipping_address2", { length: 255 }),
+  shippingCity: varchar("shipping_city", { length: 100 }).notNull(),
+  shippingState: varchar("shipping_state", { length: 100 }).notNull(),
+  shippingZip: varchar("shipping_zip", { length: 20 }).notNull(),
+  shippingCountry: varchar("shipping_country", { length: 100 }).notNull().default('US'),
+  // Order details
+  status: merchOrderStatusEnum("status").notNull().default("pending"),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default('0'),
+  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default('0'),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default('0'),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  discountCodeId: uuid("discount_code_id").references(() => merchDiscountCodes.id),
+  discountCodeUsed: varchar("discount_code_used", { length: 50 }),
+  // Payment tracking
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  stripePaymentStatus: varchar("stripe_payment_status", { length: 50 }),
+  // Printify tracking
+  printifyOrderId: varchar("printify_order_id"),
+  printifyStatus: varchar("printify_status", { length: 50 }),
+  trackingNumber: varchar("tracking_number"),
+  trackingUrl: text("tracking_url"),
+  // Timestamps
+  paidAt: timestamp("paid_at"),
+  shippedAt: timestamp("shipped_at"),
+  deliveredAt: timestamp("delivered_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Merch order items table
+export const merchOrderItems = pgTable("merch_order_items", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: uuid("order_id").notNull().references(() => merchOrders.id),
+  printifyProductId: varchar("printify_product_id", { length: 100 }).notNull(),
+  printifyVariantId: varchar("printify_variant_id", { length: 100 }).notNull(),
+  productTitle: varchar("product_title", { length: 255 }).notNull(),
+  variantTitle: varchar("variant_title", { length: 255 }), // e.g., "Large / Black"
+  quantity: integer("quantity").notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations for merch orders
+export const merchOrdersRelations = relations(merchOrders, ({ one, many }) => ({
+  user: one(users, {
+    fields: [merchOrders.userId],
+    references: [users.id],
+  }),
+  discountCode: one(merchDiscountCodes, {
+    fields: [merchOrders.discountCodeId],
+    references: [merchDiscountCodes.id],
+  }),
+  items: many(merchOrderItems),
+}));
+
+export const merchOrderItemsRelations = relations(merchOrderItems, ({ one }) => ({
+  order: one(merchOrders, {
+    fields: [merchOrderItems.orderId],
+    references: [merchOrders.id],
+  }),
+}));
+
+// Insert schemas for merch
+export const insertMerchDiscountCodeSchema = createInsertSchema(merchDiscountCodes).omit({
+  id: true,
+  currentUsageCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMerchOrderSchema = createInsertSchema(merchOrders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMerchOrderItemSchema = createInsertSchema(merchOrderItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for merch
+export type InsertMerchDiscountCode = z.infer<typeof insertMerchDiscountCodeSchema>;
+export type MerchDiscountCode = typeof merchDiscountCodes.$inferSelect;
+
+export type InsertMerchOrder = z.infer<typeof insertMerchOrderSchema>;
+export type MerchOrder = typeof merchOrders.$inferSelect;
+
+export type InsertMerchOrderItem = z.infer<typeof insertMerchOrderItemSchema>;
+export type MerchOrderItem = typeof merchOrderItems.$inferSelect;
+
+// Extended types with relations
+export type MerchOrderWithItems = MerchOrder & {
+  items: MerchOrderItem[];
+  discountCode?: MerchDiscountCode;
+};
+
+// Cart item type (for frontend cart state)
+export type CartItem = {
+  printifyProductId: string;
+  printifyVariantId: string;
+  productTitle: string;
+  variantTitle: string;
+  quantity: number;
+  unitPrice: number;
+  imageUrl?: string;
+};
