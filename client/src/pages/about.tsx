@@ -87,7 +87,7 @@ export default function About() {
                   <Award className="w-5 h-5 text-[hsl(209,90%,38%)]" />
                   Major Accomplishments
                 </h3>
-                <ul className="space-y-3">
+                <ul className="space-y-3 pl-[28px] pr-[28px]">
                   {accomplishments.map((item, index) => (
                     <li key={index} className="flex items-start gap-3" data-testid={`accomplishment-${index}`}>
                       <item.icon className="w-5 h-5 text-[hsl(209,90%,38%)] flex-shrink-0 mt-0.5" />
