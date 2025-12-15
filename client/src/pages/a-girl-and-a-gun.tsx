@@ -137,7 +137,7 @@ export default function AGirlAndAGun() {
                   </ul>
                 </div>
 
-                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                <div className="p-4 rounded-lg border border-red-200 bg-[#b6a8cc]">
                   <h3 className="font-semibold text-lg mb-3" data-testid="text-get-involved">
                     Get Involved
                   </h3>
