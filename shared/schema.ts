@@ -2618,6 +2618,8 @@ export const giftCardThemes = pgTable("gift_card_themes", {
   recipientNamePosition: jsonb("recipient_name_position").$type<TextPosition>(),
   senderNamePosition: jsonb("sender_name_position").$type<TextPosition>(),
   amountPosition: jsonb("amount_position").$type<TextPosition>(),
+  codePosition: jsonb("code_position").$type<TextPosition>(),
+  messagePosition: jsonb("message_position").$type<TextPosition>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -84,6 +84,8 @@ const createThemeSchema = z.object({
   recipientNamePosition: textPositionSchema.optional(),
   senderNamePosition: textPositionSchema.optional(),
   amountPosition: textPositionSchema.optional(),
+  codePosition: textPositionSchema.optional(),
+  messagePosition: textPositionSchema.optional(),
 });
 
 type CreateGiftCardData = z.infer<typeof createGiftCardSchema>;
@@ -659,31 +661,52 @@ function DraggableTextBox({
   );
 }
 
+type FieldType = 'recipient' | 'sender' | 'amount' | 'code' | 'message';
+
 function DraggablePositionEditor({
   recipientPosition,
   senderPosition,
   amountPosition,
+  codePosition,
+  messagePosition,
   onRecipientChange,
   onSenderChange,
   onAmountChange,
+  onCodeChange,
+  onMessageChange,
   previewImageUrl,
   accentColor,
 }: {
   recipientPosition: TextPosition | undefined;
   senderPosition: TextPosition | undefined;
   amountPosition: TextPosition | undefined;
+  codePosition: TextPosition | undefined;
+  messagePosition: TextPosition | undefined;
   onRecipientChange: (pos: TextPosition) => void;
   onSenderChange: (pos: TextPosition) => void;
   onAmountChange: (pos: TextPosition) => void;
+  onCodeChange: (pos: TextPosition) => void;
+  onMessageChange: (pos: TextPosition) => void;
   previewImageUrl?: string;
   accentColor?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [selectedField, setSelectedField] = useState<'recipient' | 'sender' | 'amount' | null>(null);
+  const [selectedField, setSelectedField] = useState<FieldType | null>(null);
 
-  const recipient = recipientPosition || { ...defaultTextPosition, x: 10, y: 20 };
-  const sender = senderPosition || { ...defaultTextPosition, x: 10, y: 35 };
-  const amount = amountPosition || { ...defaultTextPosition, x: 50, y: 60, fontSize: 32 };
+  const recipient = recipientPosition || { ...defaultTextPosition, x: 10, y: 15 };
+  const sender = senderPosition || { ...defaultTextPosition, x: 10, y: 30 };
+  const amount = amountPosition || { ...defaultTextPosition, x: 50, y: 50, fontSize: 32 };
+  const code = codePosition || { ...defaultTextPosition, x: 50, y: 70, fontSize: 12 };
+  const message = messagePosition || { ...defaultTextPosition, x: 50, y: 85, fontSize: 14 };
+
+  const positions: Record<FieldType, TextPosition> = { recipient, sender, amount, code, message };
+  const handlers: Record<FieldType, (pos: TextPosition) => void> = {
+    recipient: onRecipientChange,
+    sender: onSenderChange,
+    amount: onAmountChange,
+    code: onCodeChange,
+    message: onMessageChange,
+  };
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, delta } = event;
@@ -695,41 +718,26 @@ function DraggablePositionEditor({
     const deltaXPercent = (delta.x / rect.width) * 100;
     const deltaYPercent = (delta.y / rect.height) * 100;
 
-    const id = active.id as string;
+    const id = active.id as FieldType;
+    const pos = positions[id];
+    const handler = handlers[id];
     
-    if (id === 'recipient') {
-      const newX = Math.max(0, Math.min(100, recipient.x + deltaXPercent));
-      const newY = Math.max(0, Math.min(100, recipient.y + deltaYPercent));
-      onRecipientChange({ ...recipient, x: Math.round(newX), y: Math.round(newY) });
-    } else if (id === 'sender') {
-      const newX = Math.max(0, Math.min(100, sender.x + deltaXPercent));
-      const newY = Math.max(0, Math.min(100, sender.y + deltaYPercent));
-      onSenderChange({ ...sender, x: Math.round(newX), y: Math.round(newY) });
-    } else if (id === 'amount') {
-      const newX = Math.max(0, Math.min(100, amount.x + deltaXPercent));
-      const newY = Math.max(0, Math.min(100, amount.y + deltaYPercent));
-      onAmountChange({ ...amount, x: Math.round(newX), y: Math.round(newY) });
+    if (pos && handler) {
+      const newX = Math.max(0, Math.min(100, pos.x + deltaXPercent));
+      const newY = Math.max(0, Math.min(100, pos.y + deltaYPercent));
+      handler({ ...pos, x: Math.round(newX), y: Math.round(newY) });
     }
-  }, [recipient, sender, amount, onRecipientChange, onSenderChange, onAmountChange]);
+  }, [positions, handlers]);
 
-  const updateStyle = (field: 'recipient' | 'sender' | 'amount', key: keyof TextPosition, value: any) => {
-    if (field === 'recipient') {
-      onRecipientChange({ ...recipient, [key]: value });
-    } else if (field === 'sender') {
-      onSenderChange({ ...sender, [key]: value });
-    } else {
-      onAmountChange({ ...amount, [key]: value });
+  const updateStyle = (field: FieldType, key: keyof TextPosition, value: any) => {
+    const pos = positions[field];
+    const handler = handlers[field];
+    if (pos && handler) {
+      handler({ ...pos, [key]: value });
     }
   };
 
-  const getSelectedPosition = () => {
-    if (selectedField === 'recipient') return recipient;
-    if (selectedField === 'sender') return sender;
-    if (selectedField === 'amount') return amount;
-    return null;
-  };
-
-  const selectedPos = getSelectedPosition();
+  const selectedPos = selectedField ? positions[selectedField] : null;
 
   return (
     <div className="space-y-4">
@@ -760,14 +768,14 @@ function DraggablePositionEditor({
               
               <DraggableTextBox
                 id="recipient"
-                label="Recipient Name"
+                label="To: Recipient Name"
                 position={recipient}
                 onSelect={() => setSelectedField('recipient')}
                 isSelected={selectedField === 'recipient'}
               />
               <DraggableTextBox
                 id="sender"
-                label="Sender Name"
+                label="From: Sender Name"
                 position={sender}
                 onSelect={() => setSelectedField('sender')}
                 isSelected={selectedField === 'sender'}
@@ -779,6 +787,20 @@ function DraggablePositionEditor({
                 onSelect={() => setSelectedField('amount')}
                 isSelected={selectedField === 'amount'}
               />
+              <DraggableTextBox
+                id="code"
+                label="Gift Card Code"
+                position={code}
+                onSelect={() => setSelectedField('code')}
+                isSelected={selectedField === 'code'}
+              />
+              <DraggableTextBox
+                id="message"
+                label="Custom Message"
+                position={message}
+                onSelect={() => setSelectedField('message')}
+                isSelected={selectedField === 'message'}
+              />
             </div>
           </div>
         </DndContext>
@@ -788,15 +810,16 @@ function DraggablePositionEditor({
         Click a text box to edit its style, then drag to reposition
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-5 gap-1">
         <Button
           type="button"
           variant={selectedField === 'recipient' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setSelectedField('recipient')}
           data-testid="button-select-recipient"
+          className="text-xs px-2"
         >
-          Recipient
+          To
         </Button>
         <Button
           type="button"
@@ -804,8 +827,9 @@ function DraggablePositionEditor({
           size="sm"
           onClick={() => setSelectedField('sender')}
           data-testid="button-select-sender"
+          className="text-xs px-2"
         >
-          Sender
+          From
         </Button>
         <Button
           type="button"
@@ -813,8 +837,29 @@ function DraggablePositionEditor({
           size="sm"
           onClick={() => setSelectedField('amount')}
           data-testid="button-select-amount"
+          className="text-xs px-2"
         >
           Amount
+        </Button>
+        <Button
+          type="button"
+          variant={selectedField === 'code' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setSelectedField('code')}
+          data-testid="button-select-code"
+          className="text-xs px-2"
+        >
+          Code
+        </Button>
+        <Button
+          type="button"
+          variant={selectedField === 'message' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setSelectedField('message')}
+          data-testid="button-select-message"
+          className="text-xs px-2"
+        >
+          Message
         </Button>
       </div>
 
@@ -934,9 +979,11 @@ function ThemeManagement() {
       previewImageUrl: "",
       isActive: true,
       sortOrder: 0,
-      recipientNamePosition: { x: 50, y: 25, fontSize: 18, fontColor: "#000000", fontWeight: "bold", textAlign: "center" },
-      senderNamePosition: { x: 50, y: 40, fontSize: 14, fontColor: "#666666", fontWeight: "normal", textAlign: "center" },
-      amountPosition: { x: 50, y: 60, fontSize: 32, fontColor: "#000000", fontWeight: "bold", textAlign: "center" },
+      recipientNamePosition: { x: 10, y: 15, fontSize: 18, fontColor: "#000000", fontWeight: "bold", textAlign: "left" },
+      senderNamePosition: { x: 10, y: 30, fontSize: 14, fontColor: "#666666", fontWeight: "normal", textAlign: "left" },
+      amountPosition: { x: 50, y: 50, fontSize: 32, fontColor: "#000000", fontWeight: "bold", textAlign: "center" },
+      codePosition: { x: 50, y: 70, fontSize: 12, fontColor: "#333333", fontWeight: "normal", textAlign: "center" },
+      messagePosition: { x: 50, y: 85, fontSize: 14, fontColor: "#666666", fontWeight: "normal", textAlign: "center" },
     },
   });
 
@@ -1034,9 +1081,11 @@ function ThemeManagement() {
       previewImageUrl: theme.previewImageUrl || "",
       isActive: theme.isActive ?? true,
       sortOrder: theme.sortOrder ?? 0,
-      recipientNamePosition: theme.recipientNamePosition || { x: 50, y: 25, fontSize: 18, fontColor: "#000000", fontWeight: "bold", textAlign: "center" },
-      senderNamePosition: theme.senderNamePosition || { x: 50, y: 40, fontSize: 14, fontColor: "#666666", fontWeight: "normal", textAlign: "center" },
-      amountPosition: theme.amountPosition || { x: 50, y: 60, fontSize: 32, fontColor: "#000000", fontWeight: "bold", textAlign: "center" },
+      recipientNamePosition: theme.recipientNamePosition || { x: 10, y: 15, fontSize: 18, fontColor: "#000000", fontWeight: "bold", textAlign: "left" },
+      senderNamePosition: theme.senderNamePosition || { x: 10, y: 30, fontSize: 14, fontColor: "#666666", fontWeight: "normal", textAlign: "left" },
+      amountPosition: theme.amountPosition || { x: 50, y: 50, fontSize: 32, fontColor: "#000000", fontWeight: "bold", textAlign: "center" },
+      codePosition: theme.codePosition || { x: 50, y: 70, fontSize: 12, fontColor: "#333333", fontWeight: "normal", textAlign: "center" },
+      messagePosition: theme.messagePosition || { x: 50, y: 85, fontSize: 14, fontColor: "#666666", fontWeight: "normal", textAlign: "center" },
     });
   };
 
@@ -1153,9 +1202,13 @@ function ThemeManagement() {
                   recipientPosition={createForm.watch('recipientNamePosition')}
                   senderPosition={createForm.watch('senderNamePosition')}
                   amountPosition={createForm.watch('amountPosition')}
+                  codePosition={createForm.watch('codePosition')}
+                  messagePosition={createForm.watch('messagePosition')}
                   onRecipientChange={(pos) => createForm.setValue('recipientNamePosition', pos)}
                   onSenderChange={(pos) => createForm.setValue('senderNamePosition', pos)}
                   onAmountChange={(pos) => createForm.setValue('amountPosition', pos)}
+                  onCodeChange={(pos) => createForm.setValue('codePosition', pos)}
+                  onMessageChange={(pos) => createForm.setValue('messagePosition', pos)}
                   previewImageUrl={selectedFile ? URL.createObjectURL(selectedFile) : undefined}
                   accentColor={createForm.watch('accentColor')}
                 />
@@ -1332,9 +1385,13 @@ function ThemeManagement() {
                 recipientPosition={editForm.watch('recipientNamePosition')}
                 senderPosition={editForm.watch('senderNamePosition')}
                 amountPosition={editForm.watch('amountPosition')}
+                codePosition={editForm.watch('codePosition')}
+                messagePosition={editForm.watch('messagePosition')}
                 onRecipientChange={(pos) => editForm.setValue('recipientNamePosition', pos)}
                 onSenderChange={(pos) => editForm.setValue('senderNamePosition', pos)}
                 onAmountChange={(pos) => editForm.setValue('amountPosition', pos)}
+                onCodeChange={(pos) => editForm.setValue('codePosition', pos)}
+                onMessageChange={(pos) => editForm.setValue('messagePosition', pos)}
                 previewImageUrl={editSelectedFile ? URL.createObjectURL(editSelectedFile) : editingTheme?.previewImageUrl}
                 accentColor={editForm.watch('accentColor')}
               />
