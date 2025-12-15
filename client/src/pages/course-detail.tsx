@@ -301,7 +301,7 @@ export default function CourseDetail() {
                             </div>
                           )}
 
-                          <Link href={`/course-registration/${schedule.id}`}>
+                          <Link href={`/course-registration/${course.title}/${schedule.id}`}>
                             <Button 
                               className="w-full mt-[12px] mb-[12px]" 
                               disabled={isFull}

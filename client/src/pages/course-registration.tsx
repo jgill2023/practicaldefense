@@ -165,7 +165,7 @@ const CheckoutForm = ({ enrollment, confirmEnrollmentMutation, giftCardApplied, 
 
 
 export default function CourseRegistration() {
-  const [, params] = useRoute("/course-registration/:id");
+  const [, params] = useRoute("/course-registration/:courseTitle/:scheduleId");
   const [, setLocation] = useLocation();
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
@@ -230,10 +230,10 @@ export default function CourseRegistration() {
     }
   };
 
-  // Fetch all courses
+  // Fetch course by schedule ID
   const { data: course, isLoading: courseLoading } = useQuery<CourseWithSchedules>({
-    queryKey: ["/api/courses", params?.id],
-    enabled: !!params?.id,
+    queryKey: ["/api/courses/by-schedule", params?.scheduleId],
+    enabled: !!params?.scheduleId,
   });
 
   // Auto-populate form fields for logged-in students

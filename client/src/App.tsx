@@ -137,7 +137,7 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/articles" component={Articles} />
       <Route path="/about-chris" component={AboutChris} />
-      <Route path="/course-registration/:id" component={CourseRegistration} />
+      <Route path="/course-registration/:courseTitle/:scheduleId" component={CourseRegistration} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/schedule-list" component={ScheduleList} />
       <Route path="/schedule-calendar" component={ScheduleCalendar} />

@@ -610,6 +610,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Fetch course by schedule ID
+  app.get('/api/courses/by-schedule/:scheduleId', async (req, res) => {
+    try {
+      const schedule = await storage.getCourseSchedule(req.params.scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ message: "Schedule not found" });
+      }
+      const course = await storage.getCourse(schedule.courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+      res.json(course);
+    } catch (error) {
+      console.error("Error fetching course by schedule:", error);
+      res.status(500).json({ message: "Failed to fetch course" });
+    }
+  });
+
   app.post('/api/courses', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
