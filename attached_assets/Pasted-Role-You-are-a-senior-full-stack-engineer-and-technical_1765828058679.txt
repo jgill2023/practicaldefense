@@ -1,0 +1,176 @@
+Role:
+You are a senior full-stack engineer and technical SEO specialist.
+
+🎯 OBJECTIVE
+
+Upgrade this existing web application to be fully optimized for SEO and social sharing previews, ensuring correct preview images, metadata, and rich search results.
+
+This implementation must be server-side rendered so that search engines and social crawlers can read all metadata without executing JavaScript.
+
+🌐 PLATFORM INFORMATION (AUTHORITATIVE)
+
+Site Name: Apache Solutions
+
+Primary Domain: https://apachenc.com
+
+Site Description:
+Professional firearms training courses, private instruction, and defensive skills education offered by Apache Solutions with online registration and scheduling.
+
+Logo URL (square):
+https://apachenc.com/public/logo.png
+
+Default OG Preview Image (1200×630):
+https://apachenc.com/public/og-image.jpg
+
+Brand Colors:
+
+Primary Blue: #5170FF
+
+Accent Pink: #FD66C5
+
+✅ REQUIRED IMPLEMENTATION
+1️⃣ Global SEO Meta System
+
+Implement a centralized SEO system that injects the following server-side:
+
+<title> (unique per route)
+
+<meta name="description">
+
+<link rel="canonical">
+
+<meta name="robots" content="index, follow">
+
+Default title format:
+
+Apache Solutions | Professional Firearms Training
+
+
+All pages must support:
+
+Global defaults
+
+Route-level overrides
+
+Dynamic content (courses, instructors, landing pages)
+
+2️⃣ Social Sharing Preview (CRITICAL)
+
+Add Open Graph and Twitter/X metadata so previews render correctly on:
+
+Facebook • X • iMessage • Slack • Discord • LinkedIn
+
+Open Graph
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Apache Solutions" />
+<meta property="og:title" content="Apache Solutions | Professional Firearms Training" />
+<meta property="og:description" content="Professional firearms training courses, private instruction, and defensive skills education with easy online registration." />
+<meta property="og:image" content="https://apachenc.com/public/og-image.jpg" />
+<meta property="og:url" content="https://apachenc.com/" />
+
+Twitter / X
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Apache Solutions | Professional Firearms Training" />
+<meta name="twitter:description" content="Firearms training courses and private instruction by Apache Solutions." />
+<meta name="twitter:image" content="https://apachenc.com/public/og-image.jpg" />
+
+3️⃣ Dynamic OG Image Logic
+
+Implement safe fallback logic:
+
+Priority order:
+
+Page-specific OG image
+
+Course image
+
+Instructor image
+
+Default OG image (/public/og-image.jpg)
+
+Must always return a valid absolute URL.
+
+4️⃣ Structured Data (Schema.org)
+
+Add JSON-LD for:
+
+Organization
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Apache Solutions",
+  "url": "https://apachenc.com",
+  "logo": "https://apachenc.com/public/logo.png"
+}
+
+Course (dynamic)
+
+Course name
+
+Description
+
+Provider (Apache Solutions)
+
+Person (Instructor profiles)
+
+Name
+
+Job title (Firearms Instructor)
+
+Organization
+
+5️⃣ Sitemap & Robots
+
+Auto-generate:
+
+/sitemap.xml
+
+/robots.txt
+
+Sitemap includes:
+
+Homepage
+
+Public course pages
+
+Instructor profiles
+
+Marketing pages
+
+Sitemap excludes:
+
+/dashboard
+
+/admin
+
+/login
+
+/api
+
+6️⃣ Technical SEO Best Practices
+
+Server-side meta rendering only
+
+Semantic HTML5
+
+Proper H1–H3 hierarchy
+
+No duplicate meta tags
+
+Fast LCP
+
+Lazy-loaded images
+
+Absolute URLs everywhere
+
+📦 DELIVERABLES
+
+Fully implemented SEO system
+
+Verified social preview rendering
+
+Clean, maintainable code
+
+Zero breaking changes
+
+Ask clarifying questions only if absolutely required.
