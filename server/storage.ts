@@ -2679,9 +2679,6 @@ export class DatabaseStorage implements IStorage {
     const { getStripeClient } = await import('./stripeClient');
     const stripe = await getStripeClient();
 
-    // Handgun rental fee amount (fixed price)
-    const HANDGUN_RENTAL_FEE = 25.00;
-
     // Get enrollment and course details
     const enrollment = await db.query.enrollments.findFirst({
       where: eq(enrollments.id, enrollmentId),
@@ -2706,6 +2703,11 @@ export class DatabaseStorage implements IStorage {
 
     const course = enrollment.course;
 
+    // Get handgun rental fee from course settings (with fallback to default)
+    const courseHandgunRentalFee = course.handgunRentalEnabled && course.handgunRentalPrice 
+      ? parseFloat(course.handgunRentalPrice) 
+      : 25.00;
+
     // Calculate payment amount based on payment option
     let paymentAmount: number;
     const coursePrice = parseFloat(course.price);
@@ -2724,8 +2726,8 @@ export class DatabaseStorage implements IStorage {
       paymentAmount = coursePrice;
     }
 
-    // Add handgun rental fee if selected
-    const handgunRentalFee = handgunRentalAdded ? HANDGUN_RENTAL_FEE : 0;
+    // Add handgun rental fee if selected (use course-specific price)
+    const handgunRentalFee = handgunRentalAdded && course.handgunRentalEnabled ? courseHandgunRentalFee : 0;
     paymentAmount += handgunRentalFee;
 
     // Update enrollment with handgun rental info
@@ -2734,7 +2736,7 @@ export class DatabaseStorage implements IStorage {
         .update(enrollments)
         .set({
           handgunRentalAdded: handgunRentalAdded || false,
-          handgunRentalFee: handgunRentalAdded ? HANDGUN_RENTAL_FEE.toString() : null,
+          handgunRentalFee: handgunRentalAdded && course.handgunRentalEnabled ? courseHandgunRentalFee.toString() : null,
           updatedAt: new Date(),
         })
         .where(eq(enrollments.id, enrollmentId));
@@ -2812,7 +2814,7 @@ export class DatabaseStorage implements IStorage {
         total: 0,
         tax_included: false,
         promoCode: promoCodeInfo?.code,
-        handgunRentalFee: handgunRentalAdded ? HANDGUN_RENTAL_FEE : undefined,
+        handgunRentalFee: handgunRentalAdded && course.handgunRentalEnabled ? courseHandgunRentalFee : undefined,
         isFree: true, // Flag to indicate no payment is required
       };
     }
@@ -2910,7 +2912,7 @@ export class DatabaseStorage implements IStorage {
       total: finalAmount / 100,
       tax_included: taxAmount > 0,
       promoCode: promoCodeInfo?.code,
-      handgunRentalFee: handgunRentalAdded ? HANDGUN_RENTAL_FEE : undefined,
+      handgunRentalFee: handgunRentalAdded && course.handgunRentalEnabled ? courseHandgunRentalFee : undefined,
       isFree: false,
     };
   }

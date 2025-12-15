@@ -779,7 +779,7 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
           )}
 
           {/* Handgun Rental Option */}
-          {!isWaitlist && selectedSchedule && parseFloat(course.price) > 0 && (
+          {!isWaitlist && selectedSchedule && parseFloat(course.price) > 0 && course.handgunRentalEnabled && (
             <Card>
               <CardHeader>
                 <CardTitle>Add-ons</CardTitle>
@@ -794,7 +794,7 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
                   />
                   <div className="flex-1">
                     <Label htmlFor="handgunRental" className="cursor-pointer">
-                      <div className="font-medium">Handgun Rental - $25.00</div>
+                      <div className="font-medium">Handgun Rental - ${Number(course.handgunRentalPrice || 0).toFixed(2)}</div>
                       <div className="text-sm text-muted-foreground">
                         Includes rental handgun and all ammunition needed for the course
                       </div>
