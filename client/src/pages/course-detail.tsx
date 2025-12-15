@@ -220,14 +220,6 @@ export default function CourseDetail() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Users className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Max Students</p>
-                    <p className="font-medium" data-testid="text-max-students">{course.maxStudents} per class</p>
-                  </div>
-                </div>
-
                 {course.classroomTime && (
                   <div className="flex items-center gap-3">
                     <BookOpen className="h-5 w-5 text-primary" />
