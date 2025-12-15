@@ -3,18 +3,22 @@ import { HeroSection, TitleCard, ComicPanel } from "@/components/RACTheme";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/components/shopping-cart";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { CheckCircle, Phone, Globe, Mail, Calendar, Check, Minus } from "lucide-react";
+import { CheckCircle, Phone, Globe, Mail, Calendar, Check, Minus, ShoppingCart } from "lucide-react";
 
 const raccPackages = [
   {
     name: "Half Package",
     price: "$275",
+    priceNum: 275,
+    productId: "39894ae0-538a-47c9-80d5-02d50cf112bd",
     sessions: "5 Hours",
     people: "1",
     courseDiscount: null,
@@ -31,6 +35,8 @@ const raccPackages = [
   {
     name: "Full Package",
     price: "$475",
+    priceNum: 475,
+    productId: "022fb18b-e016-496d-98f9-795c820dcdbd",
     sessions: "10 Hours",
     people: "1",
     courseDiscount: null,
@@ -47,6 +53,8 @@ const raccPackages = [
   {
     name: "Premium (Solo)",
     price: "$900",
+    priceNum: 900,
+    productId: "712196cf-1d5c-4e1a-8cdd-3b4e42371c45",
     sessions: "25 (Bi-Weekly)",
     people: "1",
     courseDiscount: null,
@@ -63,6 +71,8 @@ const raccPackages = [
   {
     name: "Elite (Solo)",
     price: "$1,800",
+    priceNum: 1800,
+    productId: "b8b39a57-3746-4176-8625-b3c450d919f3",
     sessions: "50 (Weekly)",
     people: "1",
     courseDiscount: "20% Off",
@@ -79,6 +89,8 @@ const raccPackages = [
   {
     name: "Premium Family",
     price: "$2,250",
+    priceNum: 2250,
+    productId: "42025c9e-b128-4e3a-b5ef-565e872548bb",
     sessions: "25 (Bi-Weekly)",
     people: "2",
     courseDiscount: null,
@@ -95,6 +107,8 @@ const raccPackages = [
   {
     name: "Family Flex 75",
     price: "$3,200",
+    priceNum: 3200,
+    productId: "360f74aa-a138-438f-a811-d552d51edebb",
     sessions: "75 Hours",
     people: "2",
     courseDiscount: "25% Off",
@@ -111,6 +125,8 @@ const raccPackages = [
   {
     name: "Family Flex 100",
     price: "$3,800",
+    priceNum: 3800,
+    productId: "58c7534b-d395-4e04-a762-62f6ac6c6223",
     sessions: "100 Hours",
     people: "Up to 4",
     courseDiscount: "50% Off",
@@ -127,6 +143,8 @@ const raccPackages = [
   {
     name: "Elite Family",
     price: "$4,500",
+    priceNum: 4500,
+    productId: "cd6ca897-6294-407f-a5a9-5072658d1a61",
     sessions: "50 (Weekly)",
     people: "2",
     courseDiscount: "20% Off",
@@ -144,6 +162,20 @@ const raccPackages = [
 
 export default function RACCProgram() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const { addToCart, isAddingToCart } = useCart();
+
+  const handleEnrollNow = (pkg: typeof raccPackages[0]) => {
+    addToCart({
+      productId: pkg.productId,
+      quantity: 1,
+      priceAtTime: pkg.priceNum,
+    });
+    toast({
+      title: "Added to cart",
+      description: `${pkg.name} has been added to your cart`,
+    });
+  };
 
   return (
     <Layout>
@@ -289,6 +321,28 @@ export default function RACCProgram() {
                       }`}
                     >
                       {pkg.price}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-card border-t-2">
+                  <td className="sticky left-0 z-10 bg-card px-4 py-3 border-r border-border"></td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={`${pkg.name}-enroll-top`}
+                      className={`px-3 py-3 text-center ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/5" : ""
+                      }`}
+                    >
+                      <Button
+                        onClick={() => handleEnrollNow(pkg)}
+                        disabled={isAddingToCart}
+                        className="w-full bg-[hsl(209,90%,38%)] hover:bg-[hsl(209,90%,35%)] text-white font-semibold text-sm"
+                        data-testid={`button-enroll-${pkg.name.replace(/\s+/g, '-').toLowerCase()}-top`}
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Enroll Now
+                      </Button>
                     </td>
                   ))}
                 </tr>
@@ -497,6 +551,28 @@ export default function RACCProgram() {
                       }`}
                     >
                       {pkg.trainingType}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-card border-t-2">
+                  <td className="sticky left-0 z-10 bg-card px-4 py-3 border-r border-border"></td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={`${pkg.name}-enroll-bottom`}
+                      className={`px-3 py-3 text-center ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/5" : ""
+                      }`}
+                    >
+                      <Button
+                        onClick={() => handleEnrollNow(pkg)}
+                        disabled={isAddingToCart}
+                        className="w-full bg-[hsl(209,90%,38%)] hover:bg-[hsl(209,90%,35%)] text-white font-semibold text-sm"
+                        data-testid={`button-enroll-${pkg.name.replace(/\s+/g, '-').toLowerCase()}-bottom`}
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Enroll Now
+                      </Button>
                     </td>
                   ))}
                 </tr>
