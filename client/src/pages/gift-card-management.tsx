@@ -614,13 +614,15 @@ function CreateGiftCardDialog({ onSuccess }: { onSuccess: () => void }) {
 function DraggableTextBox({ 
   id, 
   label, 
-  position, 
-  containerRef 
+  position,
+  onSelect,
+  isSelected,
 }: { 
   id: string; 
   label: string; 
   position: TextPosition;
-  containerRef: React.RefObject<HTMLDivElement>;
+  onSelect: () => void;
+  isSelected: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
   
@@ -636,11 +638,11 @@ function DraggableTextBox({
     color: position.fontColor,
     textAlign: position.textAlign,
     backgroundColor: 'rgba(255,255,255,0.9)',
-    border: '2px dashed #5170FF',
+    border: isSelected ? '2px solid #5170FF' : '2px dashed #5170FF',
     borderRadius: '4px',
     padding: '4px 8px',
     whiteSpace: 'nowrap',
-    zIndex: 10,
+    zIndex: isSelected ? 20 : 10,
   };
 
   return (
@@ -649,6 +651,7 @@ function DraggableTextBox({
       style={style}
       {...listeners}
       {...attributes}
+      onClick={(e) => { e.stopPropagation(); onSelect(); }}
       data-testid={`draggable-${id}`}
     >
       <div className="flex items-center gap-1">
@@ -758,30 +761,27 @@ function DraggablePositionEditor({
                 <Gift className="w-16 h-16 text-white" />
               </div>
               
-              <div onClick={() => setSelectedField('recipient')}>
-                <DraggableTextBox
-                  id="recipient"
-                  label="Recipient Name"
-                  position={recipient}
-                  containerRef={containerRef}
-                />
-              </div>
-              <div onClick={() => setSelectedField('sender')}>
-                <DraggableTextBox
-                  id="sender"
-                  label="Sender Name"
-                  position={sender}
-                  containerRef={containerRef}
-                />
-              </div>
-              <div onClick={() => setSelectedField('amount')}>
-                <DraggableTextBox
-                  id="amount"
-                  label="$Amount"
-                  position={amount}
-                  containerRef={containerRef}
-                />
-              </div>
+              <DraggableTextBox
+                id="recipient"
+                label="Recipient Name"
+                position={recipient}
+                onSelect={() => setSelectedField('recipient')}
+                isSelected={selectedField === 'recipient'}
+              />
+              <DraggableTextBox
+                id="sender"
+                label="Sender Name"
+                position={sender}
+                onSelect={() => setSelectedField('sender')}
+                isSelected={selectedField === 'sender'}
+              />
+              <DraggableTextBox
+                id="amount"
+                label="$Amount"
+                position={amount}
+                onSelect={() => setSelectedField('amount')}
+                isSelected={selectedField === 'amount'}
+              />
             </div>
           </div>
         </DndContext>
