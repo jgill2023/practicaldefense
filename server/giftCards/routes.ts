@@ -413,17 +413,61 @@ router.post('/admin/themes/upload-image', requireAdmin, upload.single('image'), 
       },
     });
 
-    // Make the file publicly accessible
-    await file.makePublic();
-
-    // Construct the public URL
-    const publicUrl = `https://storage.googleapis.com/${bucketName}/${objectName}`;
+    // Store the object info for proxy access
+    const imageFilename = fileName.split('/').pop(); // Just the UUID.ext part
+    const proxyUrl = `/api/gift-cards/theme-image/${imageFilename}`;
     
-    console.log('Gift card theme image uploaded successfully:', publicUrl);
-    res.json({ url: publicUrl });
+    console.log('Gift card theme image uploaded successfully:', proxyUrl);
+    res.json({ url: proxyUrl });
   } catch (error: any) {
     console.error('Error uploading theme image:', error);
     res.status(500).json({ error: error.message || 'Failed to upload image' });
+  }
+});
+
+// Serve theme images (public - no auth required for viewing)
+router.get('/theme-image/:filename', async (req: Request, res: Response) => {
+  try {
+    const filename = req.params.filename;
+    if (!filename || !/^[a-f0-9-]+\.(jpg|jpeg|png|gif|webp)$/i.test(filename)) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    const publicSearchPaths = process.env.PUBLIC_OBJECT_SEARCH_PATHS || '';
+    if (!publicSearchPaths) {
+      return res.status(500).json({ error: 'Object storage not configured' });
+    }
+
+    let searchPath = publicSearchPaths.split(',')[0].trim();
+    if (searchPath.startsWith('https://storage.googleapis.com/')) {
+      const url = new URL(searchPath);
+      searchPath = url.pathname;
+    }
+    if (!searchPath.startsWith('/')) {
+      searchPath = '/' + searchPath;
+    }
+
+    const fullPath = `${searchPath}/gift-card-themes/${filename}`;
+    const pathParts = fullPath.slice(1).split('/');
+    const bucketName = pathParts[0];
+    const objectName = pathParts.slice(1).join('/');
+
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+    
+    const [exists] = await file.exists();
+    if (!exists) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+
+    const [metadata] = await file.getMetadata();
+    res.set('Content-Type', metadata.contentType || 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=31536000');
+    
+    file.createReadStream().pipe(res);
+  } catch (error: any) {
+    console.error('Error serving theme image:', error);
+    res.status(500).json({ error: 'Failed to load image' });
   }
 });
 
