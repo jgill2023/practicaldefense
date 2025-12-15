@@ -186,9 +186,9 @@ export function Layout({ children, headerColor }: LayoutProps) {
               </Link>
             </div>
 
-            {/* Navigation and login aligned to the right */}
-            <div className="flex items-center space-x-8">
-              <nav className="hidden md:flex items-center space-x-8">
+            {/* Navigation centered, auth buttons on right */}
+            <div className="flex justify-between items-center flex-1">
+              <nav className="hidden md:flex items-center justify-center flex-1 space-x-8">
                 <a href="/" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-home" onClick={(e) => {
                   if (window.location.pathname === '/') {
                     e.preventDefault();
