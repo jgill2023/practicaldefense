@@ -30,42 +30,53 @@ export default function AGirlAndAGun() {
           <h2 className="text-3xl font-bold mb-8 text-center" data-testid="heading-mission">
             Program Overview
           </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card className="border-2 shadow-lg hover:shadow-xl transition-all" data-testid="card-community">
-              <CardHeader className="flex flex-col space-y-1.5 p-6">
-                <Heart className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
-                <CardTitle className="text-lg">Community & Connection</CardTitle>
-              </CardHeader>
-              <CardContent className="text-gray-700">
-                Join a supportive community of women who share your passion for shooting sports and Second Amendment rights. Build lasting friendships with like-minded women.
-              </CardContent>
-            </Card>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#8B7BB5] group-hover:to-[#C9BDDB]" />
+              <Card className="relative border-2 border-[#6956A2] bg-white" data-testid="card-community">
+                <CardHeader className="flex flex-col space-y-1.5 p-6">
+                  <Heart className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
+                  <CardTitle className="text-lg">Community & Connection</CardTitle>
+                </CardHeader>
+                <CardContent className="text-gray-700">
+                  Join a supportive community of women who share your passion for shooting sports and Second Amendment rights. Build lasting friendships with like-minded women.
+                </CardContent>
+              </Card>
+            </div>
 
-            <Card className="border-2 shadow-lg hover:shadow-xl transition-all" data-testid="card-education">
-              <CardHeader className="flex flex-col space-y-1.5 p-6">
-                <Shield className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
-                <CardTitle className="text-lg">Expert Training</CardTitle>
-              </CardHeader>
-              <CardContent className="text-gray-700">
-                Receive quality instruction from experienced educators who prioritize safety, technique, and empowerment. Courses range from beginner to advanced.
-              </CardContent>
-            </Card>
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#8B7BB5] group-hover:to-[#C9BDDB]" />
+              <Card className="relative border-2 border-[#6956A2] bg-white" data-testid="card-education">
+                <CardHeader className="flex flex-col space-y-1.5 p-6">
+                  <Shield className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
+                  <CardTitle className="text-lg">Expert Training</CardTitle>
+                </CardHeader>
+                <CardContent className="text-gray-700">
+                  Receive quality instruction from experienced educators who prioritize safety, technique, and empowerment. Courses range from beginner to advanced.
+                </CardContent>
+              </Card>
+            </div>
 
-            <Card className="border-2 shadow-lg hover:shadow-xl transition-all" data-testid="card-advocacy">
-              <CardHeader className="flex flex-col space-y-1.5 p-6">
-                <Award className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
-                <CardTitle className="text-lg">Advocacy & Support</CardTitle>
-              </CardHeader>
-              <CardContent className="text-gray-700">
-                We advocate for women's voices in the shooting sports community and provide resources to support your journey as a female shooter.
-              </CardContent>
-            </Card>
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#8B7BB5] group-hover:to-[#C9BDDB]" />
+              <Card className="relative border-2 border-[#6956A2] bg-white" data-testid="card-advocacy">
+                <CardHeader className="flex flex-col space-y-1.5 p-6">
+                  <Award className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
+                  <CardTitle className="text-lg">Advocacy & Support</CardTitle>
+                </CardHeader>
+                <CardContent className="text-gray-700">
+                  We advocate for women's voices in the shooting sports community and provide resources to support your journey as a female shooter.
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </section>
 
         {/* Teresa Kelly Section */}
         <section className="mb-12">
-          <div className="rounded-lg p-8 md:p-12 border-2 shadow-lg hover:shadow-xl transition-all" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#8B7BB5] group-hover:to-[#C9BDDB]" />
+            <div className="relative rounded-lg p-8 md:p-12 border-2" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
             <div className="flex flex-col md:flex-row gap-8 items-stretch md:items-stretch">
               <div className="w-72 flex-shrink-0">
                 <img 
@@ -94,6 +105,7 @@ export default function AGirlAndAGun() {
                 </p>
               </div>
             </div>
+            </div>
           </div>
         </section>
 
@@ -102,16 +114,18 @@ export default function AGirlAndAGun() {
           <h2 className="text-3xl font-bold mb-8 text-center" data-testid="heading-chapter">
             NC Yadkin Valley Chapter
           </h2>
-          <Card className="border-2 shadow-lg hover:shadow-xl transition-all" style={{ borderColor: '#6956A2' }}>
-            <CardHeader className="border-b" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
-              <div className="flex items-center gap-2 mb-2">
-                <MapPin className="h-6 w-6" style={{ color: '#6956A2' }} />
-                <CardTitle data-testid="text-chapter-name">North Carolina - Yadkin Valley</CardTitle>
-              </div>
-              <CardDescription className="text-base text-[#372b4a] font-semibold" data-testid="text-chapter-facilitator">
-                Facilitated by Teresa Kelly
-              </CardDescription>
-            </CardHeader>
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#8B7BB5] group-hover:to-[#C9BDDB]" />
+            <Card className="relative border-2 bg-white" style={{ borderColor: '#6956A2' }}>
+              <CardHeader className="border-b" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="h-6 w-6" style={{ color: '#6956A2' }} />
+                  <CardTitle data-testid="text-chapter-name">North Carolina - Yadkin Valley</CardTitle>
+                </div>
+                <CardDescription className="text-base text-[#372b4a] font-semibold" data-testid="text-chapter-facilitator">
+                  Facilitated by Teresa Kelly
+                </CardDescription>
+              </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-6">
                 <div>
@@ -174,7 +188,8 @@ export default function AGirlAndAGun() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+            </Card>
+          </div>
         </section>
 
         {/* Call to Action Section */}
