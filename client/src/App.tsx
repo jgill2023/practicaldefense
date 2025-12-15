@@ -43,6 +43,7 @@ import StudentResources from "@/pages/student-resources";
 import MerchStore from "@/pages/store";
 import GiftCardsPage from "@/pages/gift-cards";
 import GiftCardManagement from "@/pages/gift-card-management";
+import CourseDetail from "@/pages/course-detail";
 import NotFound from "@/pages/not-found";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -139,6 +140,7 @@ function Router() {
       <Route path="/checkout" component={Checkout} />
       <Route path="/schedule-list" component={ScheduleList} />
       <Route path="/schedule-calendar" component={ScheduleCalendar} />
+      <Route path="/course/:id" component={CourseDetail} />
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/terms-of-service" component={TermsOfServicePage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />

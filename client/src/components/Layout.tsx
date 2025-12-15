@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCommunicationCounts } from "@/hooks/useCommunicationCounts";
 import { hasInstructorPrivileges, canCreateAccounts, isInstructorOrHigher } from "@/lib/authUtils";
 import { usePendingUsersCount } from "@/hooks/usePendingUsersCount";
+import { useQuery } from "@tanstack/react-query";
+import type { Course } from "@shared/schema";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -14,12 +16,15 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, User, Bell, MessageSquare, Settings } from "lucide-react";
+import { Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, User, Bell, MessageSquare, Settings, BookOpen } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -27,8 +32,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSettingsOpen, setIsMobileSettingsOpen] = useState(false);
+  const [isMobileCoursesOpen, setIsMobileCoursesOpen] = useState(false);
   const { counts } = useCommunicationCounts();
   const { pendingCount } = usePendingUsersCount();
+
+  const { data: coursesData } = useQuery<{ courses: Course[] }>({
+    queryKey: ['/api/courses'],
+  });
+
+  const activeCourses = coursesData?.courses?.filter((c: Course) => c.isActive && !c.deletedAt) || [];
 
 
 
@@ -177,7 +189,41 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 }}>Home</a>
                 <Link href="/about" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-about">About Us</Link>
                 <Link href="/articles" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-articles">Articles</Link>
-                <Link href="/schedule-list" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-events">Events</Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium flex items-center gap-1" data-testid="dropdown-courses">
+                    Courses
+                    <ChevronDown className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    <DropdownMenuItem asChild>
+                      <Link href="/schedule-list" className="w-full cursor-pointer flex items-center gap-2" data-testid="link-upcoming-events">
+                        <Calendar className="h-4 w-4" />
+                        Upcoming Events
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="flex items-center gap-2" data-testid="submenu-course-offerings">
+                        <BookOpen className="h-4 w-4" />
+                        Course Offerings
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-64">
+                        {activeCourses.length > 0 ? (
+                          activeCourses.map((course) => (
+                            <DropdownMenuItem key={course.id} asChild>
+                              <Link href={`/course/${course.id}`} className="w-full cursor-pointer" data-testid={`link-course-${course.id}`}>
+                                {course.title}
+                              </Link>
+                            </DropdownMenuItem>
+                          ))
+                        ) : (
+                          <DropdownMenuItem disabled>
+                            No courses available
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Link href="/merch" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-merch">Store</Link>
                 <Link href="/gift-cards" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-gift-cards">Gift Cards</Link>
                 <a href="/#appointments" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" onClick={(e) => {
@@ -233,20 +279,42 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 }}>Home</a>
                 <Link href="/about" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-about-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
                 <Link href="/articles" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-articles-mobile" onClick={() => setIsMobileMenuOpen(false)}>Articles</Link>
-                <Link href="/schedule-list" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-events-mobile" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
+                <div className="py-2">
+                  <button 
+                    className="text-white hover:text-[#FD66C5] transition-colors font-medium flex items-center justify-between w-full"
+                    onClick={() => setIsMobileCoursesOpen(!isMobileCoursesOpen)}
+                    data-testid="button-courses-mobile"
+                  >
+                    <span>Courses</span>
+                    {isMobileCoursesOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  {isMobileCoursesOpen && (
+                    <div className="pl-4 mt-2 space-y-2">
+                      <Link href="/schedule-list" className="block text-white/80 hover:text-[#FD66C5] transition-colors flex items-center gap-2" data-testid="link-upcoming-events-mobile" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Calendar className="h-4 w-4" />
+                        Upcoming Events
+                      </Link>
+                      <div className="text-white/60 text-sm font-medium pt-2">Course Offerings:</div>
+                      {activeCourses.length > 0 ? (
+                        activeCourses.map((course) => (
+                          <Link 
+                            key={course.id}
+                            href={`/course/${course.id}`} 
+                            className="block text-white/80 hover:text-[#FD66C5] transition-colors pl-2" 
+                            data-testid={`link-course-mobile-${course.id}`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            {course.title}
+                          </Link>
+                        ))
+                      ) : (
+                        <span className="text-white/40 text-sm pl-2">No courses available</span>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <Link href="/merch" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-merch-mobile" onClick={() => setIsMobileMenuOpen(false)}>Store</Link>
                 <Link href="/gift-cards" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-gift-cards-mobile" onClick={() => setIsMobileMenuOpen(false)}>Gift Cards</Link>
-                <div className="py-2" style={{display: 'none'}}>
-                  <div className="text-white font-medium mb-2">The Schedule</div>
-                  <div className="pl-4 space-y-2">
-                    <Link href="/schedule-list" className="block text-white/80 hover:text-[#FD66C5] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                      List View
-                    </Link>
-                    <Link href="/schedule-calendar" className="block text-white/80 hover:text-[#FD66C5] transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
-                      Calendar View
-                    </Link>
-                  </div>
-                </div>
                 <a href="/#appointments" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" onClick={(e) => {
                   setIsMobileMenuOpen(false);
                   const appointmentsSection = document.getElementById('appointments');
