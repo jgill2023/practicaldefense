@@ -786,14 +786,7 @@ export default function Landing() {
             <Button
               size="lg"
               className="hover:bg-[#FD66C5] text-white font-heading uppercase tracking-wide px-8 py-6 text-lg shadow-lg bg-[#5170FF] border-2 border-black"
-              onClick={() => {
-                const coursesSection = document.getElementById('courses');
-                if (coursesSection) {
-                  const yOffset = -80;
-                  const y = coursesSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                  window.scrollTo({ top: y, behavior: 'smooth' });
-                }
-              }}
+              onClick={() => setLocation('/schedule-list')}
               data-testid="button-browse-courses"
             >
               <Target className="w-5 h-5 mr-2" />
