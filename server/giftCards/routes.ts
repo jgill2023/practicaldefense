@@ -8,6 +8,7 @@ import { processGiftCardDelivery, generateGiftCardPdf } from './delivery';
 import multer from 'multer';
 import { objectStorageClient } from '../objectStorage';
 import { randomUUID } from 'crypto';
+import { isAuthenticated, requireAdminOrHigher } from '../customAuth';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -180,13 +181,8 @@ router.post('/purchase/complete', async (req: Request, res: Response) => {
 // ADMIN ROUTES (require admin/superadmin role)
 // ============================================
 
-const requireAdmin = (req: Request, res: Response, next: Function) => {
-  const user = req.user as any;
-  if (!user || !['admin', 'superadmin', 'instructor'].includes(user.role)) {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
-  next();
-};
+// Use the standard auth middleware from customAuth
+const requireAdmin = [isAuthenticated, requireAdminOrHigher];
 
 // Get all gift cards (admin)
 router.get('/admin/list', requireAdmin, async (req: Request, res: Response) => {
