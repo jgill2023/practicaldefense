@@ -156,8 +156,7 @@ function GiftCardDetailsDialog({
 
   const voidMutation = useMutation({
     mutationFn: async (data: VoidCardData) => {
-      const res = await apiRequest("POST", `/api/gift-cards/admin/${giftCardId}/void`, data);
-      return res.json();
+      return await apiRequest("POST", `/api/gift-cards/admin/${giftCardId}/void`, data);
     },
     onSuccess: () => {
       toast({ title: "Gift card voided successfully" });
@@ -172,8 +171,7 @@ function GiftCardDetailsDialog({
 
   const adjustMutation = useMutation({
     mutationFn: async (data: AdjustBalanceData) => {
-      const res = await apiRequest("POST", `/api/gift-cards/admin/${giftCardId}/adjust-balance`, data);
-      return res.json();
+      return await apiRequest("POST", `/api/gift-cards/admin/${giftCardId}/adjust-balance`, data);
     },
     onSuccess: () => {
       toast({ title: "Balance adjusted successfully" });
@@ -440,8 +438,7 @@ function CreateGiftCardDialog({ onSuccess }: { onSuccess: () => void }) {
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateGiftCardData) => {
-      const res = await apiRequest("POST", "/api/gift-cards/admin/create", data);
-      return res.json();
+      return await apiRequest("POST", "/api/gift-cards/admin/create", data);
     },
     onSuccess: (data) => {
       setCreatedCode(data.code);
@@ -964,11 +961,10 @@ function ThemeManagement() {
       }
       
       // Create the theme with the image URL
-      const res = await apiRequest("POST", "/api/gift-cards/admin/themes", {
+      return await apiRequest("POST", "/api/gift-cards/admin/themes", {
         ...data,
         previewImageUrl: imageUrl || undefined,
       });
-      return res.json();
     },
     onSuccess: () => {
       toast({ title: "Theme created successfully" });
@@ -999,11 +995,11 @@ function ThemeManagement() {
         setIsUploading(false);
       }
       
-      const res = await apiRequest("PATCH", `/api/gift-cards/admin/themes/${id}`, {
+      const result = await apiRequest("PATCH", `/api/gift-cards/admin/themes/${id}`, {
         ...data,
         previewImageUrl: imageUrl || undefined,
       });
-      return res.json();
+      return result;
     },
     onSuccess: () => {
       toast({ title: "Theme updated successfully" });
@@ -1018,8 +1014,7 @@ function ThemeManagement() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await apiRequest("DELETE", `/api/gift-cards/admin/themes/${id}`);
-      return res.json();
+      return await apiRequest("DELETE", `/api/gift-cards/admin/themes/${id}`);
     },
     onSuccess: () => {
       toast({ title: "Theme deleted successfully" });
