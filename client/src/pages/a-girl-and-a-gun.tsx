@@ -32,8 +32,8 @@ export default function AGirlAndAGun() {
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="border-2" data-testid="card-community">
-              <CardHeader>
-                <Heart className="h-8 w-8 text-red-600 mb-2" />
+              <CardHeader style={{ backgroundColor: '#b6a8cc' }}>
+                <Heart className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
                 <CardTitle className="text-lg">Community & Connection</CardTitle>
               </CardHeader>
               <CardContent className="text-gray-700">
@@ -42,8 +42,8 @@ export default function AGirlAndAGun() {
             </Card>
 
             <Card className="border-2" data-testid="card-education">
-              <CardHeader>
-                <Shield className="h-8 w-8 text-red-600 mb-2" />
+              <CardHeader style={{ backgroundColor: '#b6a8cc' }}>
+                <Shield className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
                 <CardTitle className="text-lg">Expert Training</CardTitle>
               </CardHeader>
               <CardContent className="text-gray-700">
@@ -52,8 +52,8 @@ export default function AGirlAndAGun() {
             </Card>
 
             <Card className="border-2" data-testid="card-advocacy">
-              <CardHeader>
-                <Award className="h-8 w-8 text-red-600 mb-2" />
+              <CardHeader style={{ backgroundColor: '#b6a8cc' }}>
+                <Award className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
                 <CardTitle className="text-lg">Advocacy & Support</CardTitle>
               </CardHeader>
               <CardContent className="text-gray-700">
@@ -65,9 +65,9 @@ export default function AGirlAndAGun() {
 
         {/* Teresa Kelly Section */}
         <section className="mb-12">
-          <div className="bg-gradient-to-r from-red-50 to-red-100 rounded-lg p-8 md:p-12 border-2 border-red-200">
+          <div className="rounded-lg p-8 md:p-12 border-2 border-red-200" style={{ backgroundColor: '#b6a8cc' }}>
             <div className="flex items-center gap-4 mb-4">
-              <Users className="h-8 w-8 text-red-600" />
+              <Users className="h-8 w-8" style={{ color: '#6956A2' }} />
               <h2 className="text-3xl font-bold" data-testid="heading-facilitator">
                 Meet Teresa Kelly
               </h2>
@@ -90,9 +90,9 @@ export default function AGirlAndAGun() {
             NC Yadkin Valley Chapter
           </h2>
           <Card className="border-2 border-red-200">
-            <CardHeader className="bg-red-50 border-b border-red-200">
+            <CardHeader className="border-b border-red-200" style={{ backgroundColor: '#b6a8cc' }}>
               <div className="flex items-center gap-2 mb-2">
-                <MapPin className="h-6 w-6 text-red-600" />
+                <MapPin className="h-6 w-6" style={{ color: '#6956A2' }} />
                 <CardTitle data-testid="text-chapter-name">North Carolina - Yadkin Valley</CardTitle>
               </div>
               <CardDescription className="text-base" data-testid="text-chapter-facilitator">
@@ -150,7 +150,8 @@ export default function AGirlAndAGun() {
                       href="https://www.agirlandagun.org/chapter/nc-yadkin-valley/" 
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 font-semibold"
+                      className="inline-flex items-center gap-2 font-semibold"
+                      style={{ color: '#6956A2' }}
                       data-testid="link-chapter-page"
                     >
                       <ExternalLink className="h-4 w-4" />
@@ -203,7 +204,8 @@ export default function AGirlAndAGun() {
               href="https://www.agirlandagun.org/" 
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold text-lg"
+              className="inline-flex items-center gap-2 font-semibold text-lg"
+              style={{ color: '#6956A2' }}
               data-testid="link-national"
             >
               <ExternalLink className="h-4 w-4" />
