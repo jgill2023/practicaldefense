@@ -197,7 +197,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       <NavigationMenuContent className="min-w-[600px]">
                         <div className="p-4">
                           <NavigationMenuLink asChild>
-                            <Link href="/schedule-list" className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[#5170FF]/20 cursor-pointer text-[#5170FF] font-medium bg-[#f951ff33]" data-testid="link-upcoming-events">
+                            <Link href="/schedule-list" className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[#5170FF]/20 cursor-pointer font-medium bg-[#5170ff] text-[#ffffff]" data-testid="link-upcoming-events">
                               <Calendar className="h-4 w-4" />
                               Upcoming Courses
                             </Link>
