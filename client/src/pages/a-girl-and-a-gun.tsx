@@ -31,44 +31,35 @@ export default function AGirlAndAGun() {
             Program Overview
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#6956A2] to-[#b6a8cc] rounded-lg translate-x-2 -translate-y-2" />
-              <Card className="relative border-2" data-testid="card-community">
-                <CardHeader className="flex flex-col space-y-1.5 p-6">
-                  <Heart className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
-                  <CardTitle className="text-lg">Community & Connection</CardTitle>
-                </CardHeader>
-                <CardContent className="text-gray-700">
-                  Join a supportive community of women who share your passion for shooting sports and Second Amendment rights. Build lasting friendships with like-minded women.
-                </CardContent>
-              </Card>
-            </div>
+            <Card className="border-2" data-testid="card-community">
+              <CardHeader className="flex flex-col space-y-1.5 p-6">
+                <Heart className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
+                <CardTitle className="text-lg">Community & Connection</CardTitle>
+              </CardHeader>
+              <CardContent className="text-gray-700">
+                Join a supportive community of women who share your passion for shooting sports and Second Amendment rights. Build lasting friendships with like-minded women.
+              </CardContent>
+            </Card>
 
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#6956A2] to-[#b6a8cc] rounded-lg translate-x-2 -translate-y-2" />
-              <Card className="relative border-2" data-testid="card-education">
-                <CardHeader className="flex flex-col space-y-1.5 p-6">
-                  <Shield className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
-                  <CardTitle className="text-lg">Expert Training</CardTitle>
-                </CardHeader>
-                <CardContent className="text-gray-700">
-                  Receive quality instruction from experienced educators who prioritize safety, technique, and empowerment. Courses range from beginner to advanced.
-                </CardContent>
-              </Card>
-            </div>
+            <Card className="border-2" data-testid="card-education">
+              <CardHeader className="flex flex-col space-y-1.5 p-6">
+                <Shield className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
+                <CardTitle className="text-lg">Expert Training</CardTitle>
+              </CardHeader>
+              <CardContent className="text-gray-700">
+                Receive quality instruction from experienced educators who prioritize safety, technique, and empowerment. Courses range from beginner to advanced.
+              </CardContent>
+            </Card>
 
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#6956A2] to-[#b6a8cc] rounded-lg translate-x-2 -translate-y-2" />
-              <Card className="relative border-2" data-testid="card-advocacy">
-                <CardHeader className="flex flex-col space-y-1.5 p-6">
-                  <Award className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
-                  <CardTitle className="text-lg">Advocacy & Support</CardTitle>
-                </CardHeader>
-                <CardContent className="text-gray-700">
-                  We advocate for women's voices in the shooting sports community and provide resources to support your journey as a female shooter.
-                </CardContent>
-              </Card>
-            </div>
+            <Card className="border-2" data-testid="card-advocacy">
+              <CardHeader className="flex flex-col space-y-1.5 p-6">
+                <Award className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
+                <CardTitle className="text-lg">Advocacy & Support</CardTitle>
+              </CardHeader>
+              <CardContent className="text-gray-700">
+                We advocate for women's voices in the shooting sports community and provide resources to support your journey as a female shooter.
+              </CardContent>
+            </Card>
           </div>
         </section>
 
