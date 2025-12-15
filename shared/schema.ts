@@ -2592,6 +2592,18 @@ export const giftCardDeliveryStatusEnum = pgEnum("gift_card_delivery_status", [
   "failed"
 ]);
 
+// Text position mapping type for gift card elements
+export const textPositionSchema = z.object({
+  x: z.number().min(0).max(100).default(50), // Percentage from left
+  y: z.number().min(0).max(100).default(50), // Percentage from top
+  fontSize: z.number().min(8).max(72).default(16), // Font size in pixels
+  fontColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default('#000000'), // Hex color
+  fontWeight: z.enum(['normal', 'bold']).default('normal'),
+  textAlign: z.enum(['left', 'center', 'right']).default('center'),
+});
+
+export type TextPosition = z.infer<typeof textPositionSchema>;
+
 // Gift card themes table - visual styles for gift cards
 export const giftCardThemes = pgTable("gift_card_themes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -2602,6 +2614,10 @@ export const giftCardThemes = pgTable("gift_card_themes", {
   fontFamily: varchar("font_family", { length: 100 }).default('Inter'),
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").default(0),
+  // Text position mappings for gift card elements
+  recipientNamePosition: jsonb("recipient_name_position").$type<TextPosition>(),
+  senderNamePosition: jsonb("sender_name_position").$type<TextPosition>(),
+  amountPosition: jsonb("amount_position").$type<TextPosition>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

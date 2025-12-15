@@ -35,7 +35,8 @@ import {
   Clock,
   AlertTriangle
 } from "lucide-react";
-import type { GiftCard, GiftCardTheme, GiftCardRedemption, GiftCardBalanceAdjustment } from "@shared/schema";
+import type { GiftCard, GiftCardTheme, GiftCardRedemption, GiftCardBalanceAdjustment, TextPosition } from "@shared/schema";
+import { textPositionSchema } from "@shared/schema";
 
 type GiftCardWithDetails = GiftCard & {
   theme?: GiftCardTheme;
@@ -61,6 +62,15 @@ const voidCardSchema = z.object({
   reason: z.string().min(1, "Reason is required"),
 });
 
+const defaultTextPosition: TextPosition = {
+  x: 50,
+  y: 50,
+  fontSize: 16,
+  fontColor: "#000000",
+  fontWeight: "normal",
+  textAlign: "center",
+};
+
 const createThemeSchema = z.object({
   name: z.string().min(1, "Theme name is required"),
   description: z.string().optional(),
@@ -68,6 +78,9 @@ const createThemeSchema = z.object({
   previewImageUrl: z.string().optional(),
   isActive: z.boolean().default(true),
   sortOrder: z.coerce.number().default(0),
+  recipientNamePosition: textPositionSchema.optional(),
+  senderNamePosition: textPositionSchema.optional(),
+  amountPosition: textPositionSchema.optional(),
 });
 
 type CreateGiftCardData = z.infer<typeof createGiftCardSchema>;
@@ -595,6 +608,105 @@ function CreateGiftCardDialog({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
+function TextPositionEditor({ 
+  value, 
+  onChange, 
+  label 
+}: { 
+  value: TextPosition | undefined; 
+  onChange: (value: TextPosition) => void; 
+  label: string;
+}) {
+  const position = value || defaultTextPosition;
+  
+  const updateField = (field: keyof TextPosition, newValue: any) => {
+    onChange({ ...position, [field]: newValue });
+  };
+
+  return (
+    <div className="border rounded-lg p-3 space-y-3">
+      <Label className="font-medium">{label}</Label>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label className="text-xs text-muted-foreground">X Position (%)</Label>
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            value={position.x}
+            onChange={(e) => updateField('x', Number(e.target.value))}
+            data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}-x`}
+          />
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Y Position (%)</Label>
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            value={position.y}
+            onChange={(e) => updateField('y', Number(e.target.value))}
+            data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}-y`}
+          />
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Font Size (px)</Label>
+          <Input
+            type="number"
+            min={8}
+            max={72}
+            value={position.fontSize}
+            onChange={(e) => updateField('fontSize', Number(e.target.value))}
+            data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}-size`}
+          />
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Font Color</Label>
+          <div className="flex gap-1">
+            <Input
+              type="color"
+              className="w-10 h-9 p-1"
+              value={position.fontColor}
+              onChange={(e) => updateField('fontColor', e.target.value)}
+              data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}-color`}
+            />
+            <Input
+              value={position.fontColor}
+              onChange={(e) => updateField('fontColor', e.target.value)}
+              className="flex-1"
+            />
+          </div>
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Font Weight</Label>
+          <Select value={position.fontWeight} onValueChange={(v) => updateField('fontWeight', v)}>
+            <SelectTrigger data-testid={`select-${label.toLowerCase().replace(/\s+/g, '-')}-weight`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">Normal</SelectItem>
+              <SelectItem value="bold">Bold</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs text-muted-foreground">Text Align</Label>
+          <Select value={position.textAlign} onValueChange={(v) => updateField('textAlign', v as 'left' | 'center' | 'right')}>
+            <SelectTrigger data-testid={`select-${label.toLowerCase().replace(/\s+/g, '-')}-align`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="left">Left</SelectItem>
+              <SelectItem value="center">Center</SelectItem>
+              <SelectItem value="right">Right</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ThemeManagement() {
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -644,6 +756,9 @@ function ThemeManagement() {
       previewImageUrl: "",
       isActive: true,
       sortOrder: 0,
+      recipientNamePosition: { x: 50, y: 25, fontSize: 18, fontColor: "#000000", fontWeight: "bold", textAlign: "center" },
+      senderNamePosition: { x: 50, y: 40, fontSize: 14, fontColor: "#666666", fontWeight: "normal", textAlign: "center" },
+      amountPosition: { x: 50, y: 60, fontSize: 32, fontColor: "#000000", fontWeight: "bold", textAlign: "center" },
     },
   });
 
@@ -743,6 +858,9 @@ function ThemeManagement() {
       previewImageUrl: theme.previewImageUrl || "",
       isActive: theme.isActive ?? true,
       sortOrder: theme.sortOrder ?? 0,
+      recipientNamePosition: theme.recipientNamePosition || { x: 50, y: 25, fontSize: 18, fontColor: "#000000", fontWeight: "bold", textAlign: "center" },
+      senderNamePosition: theme.senderNamePosition || { x: 50, y: 40, fontSize: 14, fontColor: "#666666", fontWeight: "normal", textAlign: "center" },
+      amountPosition: theme.amountPosition || { x: 50, y: 60, fontSize: 32, fontColor: "#000000", fontWeight: "bold", textAlign: "center" },
     });
   };
 
@@ -768,7 +886,7 @@ function ThemeManagement() {
               Add Theme
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create Theme</DialogTitle>
             </DialogHeader>
@@ -850,6 +968,56 @@ function ThemeManagement() {
                     </FormItem>
                   )}
                 />
+                
+                <Separator className="my-4" />
+                <h4 className="font-medium text-sm">Text Position Mapping</h4>
+                <p className="text-xs text-muted-foreground mb-3">Configure where text elements appear on the gift card</p>
+                
+                <FormField
+                  control={createForm.control}
+                  name="recipientNamePosition"
+                  render={({ field }) => (
+                    <FormItem>
+                      <TextPositionEditor
+                        label="Recipient Name"
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={createForm.control}
+                  name="senderNamePosition"
+                  render={({ field }) => (
+                    <FormItem>
+                      <TextPositionEditor
+                        label="Sender Name"
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={createForm.control}
+                  name="amountPosition"
+                  render={({ field }) => (
+                    <FormItem>
+                      <TextPositionEditor
+                        label="Amount"
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
                   <Button type="submit" disabled={createMutation.isPending || isUploading} data-testid="button-submit-theme">
@@ -912,7 +1080,7 @@ function ThemeManagement() {
 
       {/* Edit Theme Dialog */}
       <Dialog open={!!editingTheme} onOpenChange={(open) => !open && setEditingTheme(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Theme</DialogTitle>
           </DialogHeader>
@@ -1013,6 +1181,56 @@ function ThemeManagement() {
                   </FormItem>
                 )}
               />
+              
+              <Separator className="my-4" />
+              <h4 className="font-medium text-sm">Text Position Mapping</h4>
+              <p className="text-xs text-muted-foreground mb-3">Configure where text elements appear on the gift card</p>
+              
+              <FormField
+                control={editForm.control}
+                name="recipientNamePosition"
+                render={({ field }) => (
+                  <FormItem>
+                    <TextPositionEditor
+                      label="Recipient Name"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editForm.control}
+                name="senderNamePosition"
+                render={({ field }) => (
+                  <FormItem>
+                    <TextPositionEditor
+                      label="Sender Name"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editForm.control}
+                name="amountPosition"
+                render={({ field }) => (
+                  <FormItem>
+                    <TextPositionEditor
+                      label="Amount"
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => { setEditingTheme(null); setEditSelectedFile(null); }}>Cancel</Button>
                 <Button type="submit" disabled={updateMutation.isPending || isUploading} data-testid="button-submit-edit-theme">
