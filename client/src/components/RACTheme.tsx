@@ -132,11 +132,7 @@ export function TitleCard({
       data-testid="title-card"
     >
       <Component
-        className={cn(
-          "font-heading uppercase tracking-wide font-bold",
-          variantStyles[variant],
-          className
-        )}
+        className="font-heading uppercase tracking-wide font-bold text-foreground text-3xl text-center mt-[4px] mb-[4px]"
       >
         {children}
       </Component>
