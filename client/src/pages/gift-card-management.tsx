@@ -611,18 +611,27 @@ function ThemeManagement() {
     const formData = new FormData();
     formData.append('image', file);
     
-    const res = await fetch('/api/gift-cards/admin/themes/upload-image', {
+    const response = await fetch('/api/gift-cards/admin/themes/upload-image', {
       method: 'POST',
       credentials: 'include',
       body: formData,
     });
     
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || 'Failed to upload image');
+    if (!response.ok) {
+      let errorMessage = 'Failed to upload image';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch {
+        errorMessage = `Upload failed with status ${response.status}`;
+      }
+      throw new Error(errorMessage);
     }
     
-    const data = await res.json();
+    const data = await response.json();
+    if (!data.url) {
+      throw new Error('No URL returned from upload');
+    }
     return data.url;
   };
 
