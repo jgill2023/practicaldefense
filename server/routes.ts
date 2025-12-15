@@ -1599,11 +1599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get student profile with enrollment history
-  app.get('/api/students/:studentId/profile', async (req, res) => {
-    if (!req.user) {
-      return res.status(401).send({ message: 'Unauthorized' });
-    }
-
+  app.get('/api/students/:studentId/profile', isAuthenticated, async (req, res) => {
     const { studentId } = req.params;
 
     try {
