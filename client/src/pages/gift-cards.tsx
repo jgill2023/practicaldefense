@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,14 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Separator } from "@/components/ui/separator";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Gift, Mail, Download, CheckCircle, Loader2, CreditCard, ArrowLeft, ArrowRight } from "lucide-react";
+import { Gift, Mail, Download, CheckCircle, Loader2, CreditCard, ArrowLeft, ArrowRight, Eye } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { apiRequest } from "@/lib/queryClient";
-import type { GiftCardTheme } from "@shared/schema";
+import type { GiftCardTheme, TextPosition } from "@shared/schema";
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
@@ -147,6 +147,141 @@ function AmountSelector({
         <p className="text-sm text-muted-foreground">Custom amount: ${value.toFixed(2)}</p>
       )}
     </div>
+  );
+}
+
+const defaultTextPosition: TextPosition = {
+  x: 50,
+  y: 50,
+  fontSize: 16,
+  fontColor: "#000000",
+  fontWeight: "normal",
+  textAlign: "center",
+};
+
+function GiftCardPreview({
+  theme,
+  amount,
+  recipientName,
+  senderName,
+  personalMessage,
+}: {
+  theme: GiftCardTheme;
+  amount: number;
+  recipientName?: string;
+  senderName?: string;
+  personalMessage?: string;
+}) {
+  const getPositionStyle = (position: TextPosition | null | undefined): CSSProperties => {
+    const pos = position || defaultTextPosition;
+    return {
+      position: "absolute",
+      left: `${pos.x}%`,
+      top: `${pos.y}%`,
+      transform: `translate(${pos.textAlign === 'center' ? '-50%' : pos.textAlign === 'right' ? '-100%' : '0'}, -50%)`,
+      fontSize: `${pos.fontSize}px`,
+      color: pos.fontColor,
+      fontWeight: pos.fontWeight,
+      textAlign: pos.textAlign,
+      whiteSpace: "nowrap",
+      maxWidth: "90%",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+    };
+  };
+
+  const sampleCode = "XXXX-XXXX-XXXX";
+
+  return (
+    <div
+      className="relative aspect-[3/2] rounded-lg overflow-hidden shadow-lg"
+      style={{
+        backgroundColor: theme.accentColor || '#3b82f6',
+        backgroundImage: theme.previewImageUrl ? `url(${theme.previewImageUrl})` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+      data-testid="gift-card-preview"
+    >
+      {recipientName && (
+        <div style={getPositionStyle(theme.recipientNamePosition)}>
+          To: {recipientName}
+        </div>
+      )}
+      {senderName && (
+        <div style={getPositionStyle(theme.senderNamePosition)}>
+          From: {senderName}
+        </div>
+      )}
+      <div style={getPositionStyle(theme.amountPosition)}>
+        ${amount.toFixed(2)}
+      </div>
+      <div style={getPositionStyle(theme.codePosition)}>
+        {sampleCode}
+      </div>
+      {personalMessage && (
+        <div 
+          style={{
+            ...getPositionStyle(theme.messagePosition),
+            whiteSpace: "normal",
+            maxWidth: "80%",
+            textOverflow: "clip",
+          }}
+        >
+          "{personalMessage}"
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GiftCardPreviewDialog({
+  isOpen,
+  onClose,
+  theme,
+  amount,
+  recipientName,
+  senderName,
+  personalMessage,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  theme: GiftCardTheme | null;
+  amount: number;
+  recipientName?: string;
+  senderName?: string;
+  personalMessage?: string;
+}) {
+  if (!theme) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Eye className="w-5 h-5" />
+            Gift Card Preview
+          </DialogTitle>
+          <DialogDescription>
+            This is how your gift card will look. The code shown is a placeholder.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <GiftCardPreview
+            theme={theme}
+            amount={amount}
+            recipientName={recipientName}
+            senderName={senderName}
+            personalMessage={personalMessage}
+          />
+        </div>
+        <div className="flex justify-end">
+          <Button onClick={onClose} data-testid="close-preview">
+            Close
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -321,6 +456,7 @@ function GiftCardPurchaseContent() {
     deliveryMethod: "email" | "download";
     recipientEmail?: string;
   } | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const { data: themes = [], isLoading: themesLoading } = useQuery<GiftCardTheme[]>({
     queryKey: ["/api/gift-cards/themes"],
@@ -406,6 +542,12 @@ function GiftCardPurchaseContent() {
 
   const deliveryMethod = form.watch("deliveryMethod");
   const selectedThemeId = form.watch("themeId");
+  const watchedAmount = form.watch("amount");
+  const watchedRecipientName = form.watch("recipientName");
+  const watchedPurchaserName = form.watch("purchaserName");
+  const watchedPersonalMessage = form.watch("personalMessage");
+
+  const selectedTheme = themes.find((t) => t.id === selectedThemeId) || null;
 
   if (step === "success" && purchaseResult) {
     return (
@@ -668,8 +810,19 @@ function GiftCardPurchaseContent() {
               </Card>
             )}
 
-            {/* Submit Button */}
-            <div className="flex justify-end">
+            {/* Preview and Submit Buttons */}
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => setIsPreviewOpen(true)}
+                disabled={!selectedTheme}
+                data-testid="preview-gift-card"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                Preview Gift Card
+              </Button>
               <Button 
                 type="submit" 
                 size="lg"
@@ -693,6 +846,16 @@ function GiftCardPurchaseContent() {
           </form>
         </Form>
       )}
+
+      <GiftCardPreviewDialog
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        theme={selectedTheme}
+        amount={watchedAmount}
+        recipientName={watchedRecipientName}
+        senderName={watchedPurchaserName}
+        personalMessage={watchedPersonalMessage}
+      />
 
       {step === "payment" && clientSecret && stripePromise && (
         <Card>
