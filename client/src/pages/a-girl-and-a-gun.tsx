@@ -64,7 +64,7 @@ export default function AGirlAndAGun() {
 
         {/* Teresa Kelly Section */}
         <section className="mb-12">
-          <div className="rounded-lg p-8 md:p-12 border-2 border-red-200" style={{ backgroundColor: '#b6a8cc' }}>
+          <div className="rounded-lg p-8 md:p-12 border-2" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
             <div className="flex items-center gap-4 mb-4">
               <Users className="h-8 w-8" style={{ color: '#6956A2' }} />
               <h2 className="text-3xl font-bold" data-testid="heading-facilitator">
@@ -88,8 +88,8 @@ export default function AGirlAndAGun() {
           <h2 className="text-3xl font-bold mb-8 text-center" data-testid="heading-chapter">
             NC Yadkin Valley Chapter
           </h2>
-          <Card className="border-2 border-red-200">
-            <CardHeader className="border-b border-red-200" style={{ backgroundColor: '#b6a8cc' }}>
+          <Card className="border-2" style={{ borderColor: '#6956A2' }}>
+            <CardHeader className="border-b" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
               <div className="flex items-center gap-2 mb-2">
                 <MapPin className="h-6 w-6" style={{ color: '#6956A2' }} />
                 <CardTitle data-testid="text-chapter-name">North Carolina - Yadkin Valley</CardTitle>
@@ -137,7 +137,7 @@ export default function AGirlAndAGun() {
                   </ul>
                 </div>
 
-                <div className="p-4 rounded-lg border border-red-200 bg-[#b6a8cc]">
+                <div className="p-4 rounded-lg border bg-[#b6a8cc]" style={{ borderColor: '#6956A2' }}>
                   <h3 className="font-semibold text-lg mb-3" data-testid="text-get-involved">
                     Get Involved
                   </h3>
