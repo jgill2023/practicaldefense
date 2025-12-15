@@ -188,7 +188,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   }
                 }}>Home</a>
                 <Link href="/about" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-about">About Us</Link>
-                <Link href="/articles" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-articles">Articles</Link>
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
@@ -209,12 +208,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                               Course Offerings
                             </p>
                             {activeCourses.length > 0 ? (
-                              <div className="grid grid-cols-3 gap-2">
+                              <div className="grid grid-cols-3 gap-3">
                                 {activeCourses.map((course) => (
                                   <NavigationMenuLink key={course.id} asChild>
                                     <Link 
                                       href={`/course/${course.id}`} 
-                                      className="block px-3 py-2 rounded-md hover:bg-accent cursor-pointer text-sm"
+                                      className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer text-sm"
                                       data-testid={`link-course-${course.id}`}
                                     >
                                       {course.title}
@@ -231,6 +230,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     </NavigationMenuItem>
                   </NavigationMenuList>
                 </NavigationMenu>
+                <Link href="/articles" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-articles">Articles</Link>
                 <Link href="/merch" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-merch">Store</Link>
                 <Link href="/gift-cards" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-gift-cards">Gift Cards</Link>
                 <a href="/#appointments" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" onClick={(e) => {
