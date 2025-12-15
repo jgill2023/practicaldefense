@@ -22,7 +22,6 @@ export default function AGirlAndAGun() {
           </p>
         </div>
       </div>
-
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-12">
         {/* Program Overview */}
@@ -32,7 +31,7 @@ export default function AGirlAndAGun() {
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="border-2" data-testid="card-community">
-              <CardHeader className="flex flex-col space-y-1.5 p-6 bg-[#b6a8cc00]" style={{ backgroundColor: '#b6a8cc' }}>
+              <CardHeader className="flex flex-col space-y-1.5 p-6 bg-[#ffffff]" style={{ backgroundColor: '#b6a8cc' }}>
                 <Heart className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
                 <CardTitle className="text-lg">Community & Connection</CardTitle>
               </CardHeader>
