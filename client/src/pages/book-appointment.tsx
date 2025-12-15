@@ -531,6 +531,9 @@ export default function BookAppointmentPage() {
                     <span>Total:</span>
                     <span>${Number(selectedType.price).toFixed(2)}</span>
                   </div>
+                  <p className="text-sm text-muted-foreground pt-2 text-center">
+                    Payment will be collected in person
+                  </p>
                 </div>
                 {selectedType.requiresApproval && (
                   <div className="bg-muted p-3 rounded-md">

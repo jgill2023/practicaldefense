@@ -1042,6 +1042,9 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
           }
         });
         
+        // Close the booking form dialog and parent modal
+        setShowBookingForm(false);
+        
         // Only reload if user was auto-logged in (new user with password)
         // For authenticated users or linked accounts, just close the modal
         if (autoLoggedIn === true) {
@@ -1069,56 +1072,23 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     },
   });
 
-  // Create payment intent when booking form opens
+  // Skip payment for appointments - payment collected in person
+  // Set isFreeAppointment to true when booking form opens
   useEffect(() => {
     if (showBookingForm && selectedSlot && appointmentType) {
-      const createPaymentIntent = async () => {
-        try {
-          const isVariableDuration = (appointmentType as any).isVariableDuration;
-          const response = await apiRequest("POST", "/api/appointments/create-payment-intent", {
-            instructorId,
-            appointmentTypeId: appointmentType.id,
-            startTime: selectedSlot.startTime,
-            endTime: isVariableDuration ? getCalculatedEndTime(selectedSlot.startTime, selectedDurationHours) : selectedSlot.endTime,
-            durationHours: isVariableDuration ? selectedDurationHours : undefined,
-            customerEmail: bookingForm.email || undefined,
-            customerName: `${bookingForm.firstName} ${bookingForm.lastName}`.trim() || undefined,
-          });
-
-          // Check if appointment is free
-          if (response.isFree) {
-            // Clear any existing payment state and set free flag
-            setClientSecret("");
-            setPaymentIntentId("");
-            setTaxBreakdown(null);
-            setIsFreeAppointment(true);
-          } else if (response.clientSecret) {
-            // Clear free flag and set payment state
-            setIsFreeAppointment(false);
-            setClientSecret(response.clientSecret);
-            // Extract PaymentIntent ID from client secret (format: pi_xxx_secret_yyy)
-            const piId = response.clientSecret.split('_secret_')[0];
-            setPaymentIntentId(piId);
-          }
-        } catch (error: any) {
-          toast({
-            title: "Error",
-            description: error.message || "Failed to initialize payment",
-            variant: "destructive",
-          });
-          setShowBookingForm(false);
-        }
-      };
-
-      createPaymentIntent();
+      // Always treat appointments as "pay in person" - skip online payment
+      setClientSecret("");
+      setPaymentIntentId("");
+      setTaxBreakdown(null);
+      setIsFreeAppointment(true);
     }
   }, [showBookingForm, selectedSlot, appointmentType]);
 
   const handleBooking = () => {
-    // Reset all payment state when opening booking form to force fresh payment intent creation
+    // Reset payment state - appointments are now pay-in-person (no online payment)
     setClientSecret("");
     setPaymentIntentId("");
-    setIsFreeAppointment(false);
+    setIsFreeAppointment(true); // Always treat as pay-in-person
     setTaxBreakdown(null);
     // Show booking form when user clicks confirm
     setShowBookingForm(true);
@@ -1550,10 +1520,13 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
               </div>
 
               <div className="border-t pt-4">
-                <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Total</span>
-                  <span className="text-lg font-bold text-green-600">FREE</span>
+                  <span className="text-lg font-bold">${getTotalPrice().toFixed(2)}</span>
                 </div>
+                <p className="text-sm text-muted-foreground mb-4 text-center">
+                  Payment will be collected in person
+                </p>
                 
                 <Button
                   type="submit"
