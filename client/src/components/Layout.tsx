@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import santaGiftCardImage from "@assets/SantaCallout_1765791736148.png";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -538,6 +539,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </footer>
+
+      {/* Floating Gift Card Button */}
+      <Link href="/gift-cards">
+        <img 
+          src={santaGiftCardImage} 
+          alt="Get Your Gift Card!" 
+          className="fixed bottom-6 right-6 z-50 w-64 cursor-pointer hover:scale-105 transition-transform duration-200 drop-shadow-lg"
+          data-testid="button-floating-gift-card"
+        />
+      </Link>
     </div>
   );
 }
