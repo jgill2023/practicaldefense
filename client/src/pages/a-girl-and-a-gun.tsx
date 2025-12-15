@@ -129,7 +129,7 @@ export default function AGirlAndAGun() {
                   </h3>
                   <ul className="space-y-2 text-gray-700">
                     <li className="flex items-start gap-2">
-                      <span className="text-red-600 font-bold">•</span>
+                      <span className="font-bold text-[#846da8]">•</span>
                       <span data-testid="text-offer-training">Regular training sessions and workshops tailored to all skill levels</span>
                     </li>
                     <li className="flex items-start gap-2">
