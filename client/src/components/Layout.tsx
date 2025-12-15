@@ -213,7 +213,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                   <NavigationMenuLink key={course.id} asChild>
                                     <Link 
                                       href={`/course/${course.id}`} 
-                                      className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer text-sm"
+                                      className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer text-sm pt-[4px] pb-[4px] pl-[4px] pr-[4px]"
                                       data-testid={`link-course-${course.id}`}
                                     >
                                       {course.title}
