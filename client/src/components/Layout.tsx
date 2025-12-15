@@ -7,7 +7,7 @@ import { useCommunicationCounts } from "@/hooks/useCommunicationCounts";
 import { hasInstructorPrivileges, canCreateAccounts, isInstructorOrHigher } from "@/lib/authUtils";
 import { usePendingUsersCount } from "@/hooks/usePendingUsersCount";
 import { useQuery } from "@tanstack/react-query";
-import type { Course } from "@shared/schema";
+import type { CourseWithSchedules } from "@shared/schema";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -36,11 +36,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { counts } = useCommunicationCounts();
   const { pendingCount } = usePendingUsersCount();
 
-  const { data: coursesData } = useQuery<Course[]>({
+  const { data: coursesData } = useQuery<CourseWithSchedules[]>({
     queryKey: ['/api/courses'],
   });
 
-  const activeCourses = coursesData?.filter((c: Course) => c.isActive && !c.deletedAt) || [];
+  const activeCourses = coursesData?.filter((c: CourseWithSchedules) => c.isActive && !c.deletedAt) || [];
 
 
 
