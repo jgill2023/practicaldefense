@@ -14,12 +14,19 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, User, Bell, MessageSquare } from "lucide-react";
+import { Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, User, Bell, MessageSquare, Settings } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileSettingsOpen, setIsMobileSettingsOpen] = useState(false);
   const { counts } = useCommunicationCounts();
   const { pendingCount } = usePendingUsersCount();
 
@@ -67,44 +74,65 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           </Badge>
                         )}
                       </Link>
-                      <Link href="/reports" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-reports">
-                        Reports
-                      </Link>
                       <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-products">
                         Products
                       </Link>
-                      <Link href="/gift-card-management" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-gift-cards-admin">
-                        Gift Card Admin
-                      </Link>
-                      <Link href="/stripe-connect" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-payment-settings">
-                        Payment Settings
-                      </Link>
                     </>
                   )}
-                  <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-student-dashboard">
-                    Student Dashboard
-                  </Link>
                   <Link href="/student-resources" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-student-resources">
                     Student Resources
                   </Link>
-                  {canCreateAccounts(user) && (
-                    <>
-                      <Link href="/admin/users" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors relative" data-testid="link-secondary-user-management">
-                        User Management
-                        {pendingCount > 0 && (
-                          <Badge 
-                            variant="destructive" 
-                            className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
-                            data-testid="badge-pending-users-desktop"
-                          >
-                            {pendingCount > 99 ? '99+' : pendingCount}
-                          </Badge>
-                        )}
-                      </Link>
-                      <Link href="/settings" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-settings">
+                  {isInstructorOrHigher(user) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors flex items-center gap-1" data-testid="dropdown-settings">
+                        <Settings className="h-4 w-4" />
                         Settings
-                      </Link>
-                    </>
+                        <ChevronDown className="h-3 w-3" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem asChild>
+                          <Link href="/settings" className="w-full cursor-pointer" data-testid="link-settings-google-calendar">
+                            Google Calendar
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/stripe-connect" className="w-full cursor-pointer" data-testid="link-settings-payment">
+                            Payment Settings
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/gift-card-management" className="w-full cursor-pointer" data-testid="link-settings-gift-cards">
+                            Gift Card Admin
+                          </Link>
+                        </DropdownMenuItem>
+                        {canCreateAccounts(user) && (
+                          <DropdownMenuItem asChild>
+                            <Link href="/admin/users" className="w-full cursor-pointer relative" data-testid="link-settings-user-management">
+                              User Management
+                              {pendingCount > 0 && (
+                                <Badge 
+                                  variant="destructive" 
+                                  className="ml-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
+                                  data-testid="badge-pending-users-desktop"
+                                >
+                                  {pendingCount > 99 ? '99+' : pendingCount}
+                                </Badge>
+                              )}
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem asChild>
+                          <Link href="/student-portal" className="w-full cursor-pointer" data-testid="link-settings-student-dashboard">
+                            Student Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/reports" className="w-full cursor-pointer" data-testid="link-settings-reports">
+                            Reports
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                   {user?.role === 'superadmin' && (
                     <Link href="/admin/credits" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-admin-credits">
@@ -271,49 +299,75 @@ export function Layout({ children }: { children: React.ReactNode }) {
                               )}
                             </Button>
                           </Link>
-                          <Link href="/student-portal" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-student-dashboard-mobile">
-                              Student Dashboard
-                            </Button>
-                          </Link>
                           <Link href="/product-management" className="block">
                             <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-products-mobile">
                               Products
                             </Button>
                           </Link>
-                          <Link href="/gift-card-management" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-gift-card-admin-mobile">
-                              Gift Card Admin
+                          <Link href="/student-resources" className="block">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-student-resources-instructor-mobile">
+                              Student Resources
                             </Button>
                           </Link>
-                          <Link href="/stripe-connect" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-payment-settings-mobile">
-                              Payment Settings
+                          <div className="space-y-1">
+                            <Button 
+                              variant="outline" 
+                              className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5] flex items-center justify-between"
+                              onClick={() => setIsMobileSettingsOpen(!isMobileSettingsOpen)}
+                              data-testid="button-settings-submenu-mobile"
+                            >
+                              <span className="flex items-center gap-2">
+                                <Settings className="h-4 w-4" />
+                                Settings
+                              </span>
+                              {isMobileSettingsOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                             </Button>
-                          </Link>
-                          {canCreateAccounts(user as any) && (
-                            <>
-                              <Link href="/admin/users" className="block">
-                                <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5] relative" data-testid="link-user-management-mobile">
-                                  User Management
-                                  {pendingCount > 0 && (
-                                    <Badge 
-                                      variant="destructive" 
-                                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-[20px]"
-                                      data-testid="badge-pending-users-mobile"
-                                    >
-                                      {pendingCount > 99 ? '99+' : pendingCount}
-                                    </Badge>
-                                  )}
-                                </Button>
-                              </Link>
-                              <Link href="/settings" className="block">
-                                <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-settings-mobile">
-                                  Settings
-                                </Button>
-                              </Link>
-                            </>
-                          )}
+                            {isMobileSettingsOpen && (
+                              <div className="pl-4 space-y-1">
+                                <Link href="/settings" className="block" onClick={() => setIsMobileMenuOpen(false)}>
+                                  <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-google-calendar-mobile">
+                                    Google Calendar
+                                  </Button>
+                                </Link>
+                                <Link href="/stripe-connect" className="block" onClick={() => setIsMobileMenuOpen(false)}>
+                                  <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-payment-settings-mobile">
+                                    Payment Settings
+                                  </Button>
+                                </Link>
+                                <Link href="/gift-card-management" className="block" onClick={() => setIsMobileMenuOpen(false)}>
+                                  <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-gift-card-admin-mobile">
+                                    Gift Card Admin
+                                  </Button>
+                                </Link>
+                                {canCreateAccounts(user as any) && (
+                                  <Link href="/admin/users" className="block" onClick={() => setIsMobileMenuOpen(false)}>
+                                    <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent relative" data-testid="link-user-management-mobile">
+                                      User Management
+                                      {pendingCount > 0 && (
+                                        <Badge 
+                                          variant="destructive" 
+                                          className="ml-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
+                                          data-testid="badge-pending-users-mobile"
+                                        >
+                                          {pendingCount > 99 ? '99+' : pendingCount}
+                                        </Badge>
+                                      )}
+                                    </Button>
+                                  </Link>
+                                )}
+                                <Link href="/student-portal" className="block" onClick={() => setIsMobileMenuOpen(false)}>
+                                  <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-student-dashboard-mobile">
+                                    Student Dashboard
+                                  </Button>
+                                </Link>
+                                <Link href="/reports" className="block" onClick={() => setIsMobileMenuOpen(false)}>
+                                  <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-reports-mobile">
+                                    Reports
+                                  </Button>
+                                </Link>
+                              </div>
+                            )}
+                          </div>
                           {user?.role === 'superadmin' && (
                             <Link href="/admin/credits" className="block">
                               <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-admin-credits-mobile">
