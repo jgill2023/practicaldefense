@@ -344,7 +344,7 @@ export default function RACCProgram() {
       <section className="py-16 bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <ComicPanel shadow="lg" variant="accent" className="text-center">
-            <div className="py-8">
+            <div className="py-8 pt-[8px] pb-[8px]">
               <h3 className="font-heading text-3xl uppercase tracking-wide text-white mb-4">
                 Ready to Start?
               </h3>
