@@ -126,6 +126,9 @@ export const courses = pgTable("courses", {
   rounds: integer("rounds"), // Number of rounds required
   prerequisites: text("prerequisites"), // Course prerequisites
   maxStudents: integer("max_students").notNull().default(20),
+  // Add-on options
+  handgunRentalEnabled: boolean("handgun_rental_enabled").notNull().default(false),
+  handgunRentalPrice: decimal("handgun_rental_price", { precision: 10, scale: 2 }).default("25.00"),
   instructorId: varchar("instructor_id").notNull().references(() => users.id),
   isActive: boolean("is_active").notNull().default(true),
   status: courseStatusEnum("status").notNull().default("published"), // Course lifecycle status

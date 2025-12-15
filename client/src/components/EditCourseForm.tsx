@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ObjectUploader } from "@/components/ObjectUploader";
-import { Edit, FileText, ImageIcon, Target } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Edit, FileText, ImageIcon, Target, Package } from "lucide-react";
 import type { CourseWithSchedules, Category } from "@shared/schema";
 import type { UploadResult } from "@uppy/core";
 
@@ -42,6 +43,14 @@ const courseSchema = z.object({
   prerequisites: z.string().optional(),
   maxStudents: z.number().min(1, "Must allow at least 1 student").max(100, "Cannot exceed 100 students"),
   imageUrl: z.string().optional(),
+  handgunRentalEnabled: z.boolean().optional(),
+  handgunRentalPrice: z.string().optional().refine((val) => {
+    if (!val || val === "") return true;
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= 0;
+  }, {
+    message: "Rental price must be a valid non-negative number"
+  }),
 }).refine((data) => {
   if (!data.depositAmount || data.depositAmount === "") return true;
   const deposit = parseFloat(data.depositAmount);
@@ -103,6 +112,8 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       prerequisites: course.prerequisites || "",
       maxStudents: course.maxStudents,
       imageUrl: course.imageUrl || "",
+      handgunRentalEnabled: course.handgunRentalEnabled || false,
+      handgunRentalPrice: course.handgunRentalPrice ? course.handgunRentalPrice.toString() : "25.00",
     },
   });
 
@@ -137,6 +148,8 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       prerequisites: course.prerequisites || "",
       maxStudents: course.maxStudents,
       imageUrl: course.imageUrl || "",
+      handgunRentalEnabled: course.handgunRentalEnabled || false,
+      handgunRentalPrice: course.handgunRentalPrice ? course.handgunRentalPrice.toString() : "25.00",
     });
   }, [course, form, categories]);
 
@@ -152,6 +165,8 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
         price: parseFloat(data.price),
         depositAmount: data.depositAmount && data.depositAmount !== "" ? parseFloat(data.depositAmount) : undefined,
         imageUrl: uploadedImageUrl || data.imageUrl || undefined,
+        handgunRentalEnabled: data.handgunRentalEnabled || false,
+        handgunRentalPrice: data.handgunRentalPrice && data.handgunRentalPrice !== "" ? parseFloat(data.handgunRentalPrice) : 25.00,
       };
       console.log("Updating course with data:", courseData);
       return await apiRequest("PUT", `/api/instructor/courses/${course.id}`, courseData);
@@ -401,6 +416,54 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                       <p className="text-sm text-red-600 mt-1">{form.formState.errors.depositAmount.message}</p>
                     )}
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Add-ons Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Package className="h-5 w-5" />
+                    <span>Add-on Options</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-1">
+                      <Label htmlFor="handgunRentalEnabled" className="text-base font-medium">
+                        Handgun Rental Option
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Allow students to add handgun rental during checkout
+                      </p>
+                    </div>
+                    <Switch
+                      id="handgunRentalEnabled"
+                      checked={form.watch("handgunRentalEnabled") || false}
+                      onCheckedChange={(checked) => form.setValue("handgunRentalEnabled", checked, { shouldDirty: true })}
+                      data-testid="switch-handgun-rental-enabled"
+                    />
+                  </div>
+
+                  {form.watch("handgunRentalEnabled") && (
+                    <div>
+                      <Label htmlFor="handgunRentalPrice">Rental Price ($)</Label>
+                      <Input
+                        id="handgunRentalPrice"
+                        type="number"
+                        step="0.01"
+                        {...form.register("handgunRentalPrice")}
+                        placeholder="25.00"
+                        data-testid="input-handgun-rental-price"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Includes rental handgun and all ammunition needed for the course
+                      </p>
+                      {form.formState.errors.handgunRentalPrice && (
+                        <p className="text-sm text-red-600 mt-1">{form.formState.errors.handgunRentalPrice.message}</p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
