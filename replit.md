@@ -4,6 +4,30 @@ Tactical Advantage is a full-stack web application designed as a professional fi
 
 # Recent Changes
 
+## December 15, 2025 - Course-Specific Handgun Rental Add-on Configuration
+Added the ability for instructors to configure handgun rental add-ons on a per-course basis with custom pricing, replacing the previous hardcoded $25.00 fee.
+
+**Features:**
+- Toggle to enable/disable handgun rental add-on for each course
+- Custom pricing field for rental fee (defaults to $25.00 if not specified)
+- Registration modal only shows add-on option when enabled for the course
+- Dynamic price display based on course-specific settings
+
+**Schema Changes:**
+- Added `handgunRentalEnabled` (boolean, default false) to courses table
+- Added `handgunRentalPrice` (decimal, default 25.00) to courses table
+
+**Files Modified:**
+- `shared/schema.ts`: Added new course fields
+- `client/src/components/EditCourseForm.tsx`: Added add-on configuration UI in Basic Info tab
+- `server/storage.ts`: Updated upsertPaymentIntent to use course-specific rental price
+- `client/src/components/RegistrationModal.tsx`: Conditional display and dynamic pricing for add-on
+
+**Behavior:**
+- When `handgunRentalEnabled` is false, the add-on option is hidden from registration
+- When enabled, the course-specific price is used in payment calculations
+- Falls back to $25.00 if no custom price is set
+
 ## December 14, 2025 - Google Calendar Integration for Appointments
 Added Google Calendar integration to automatically sync appointment bookings with the instructor's Google Calendar. When appointments are booked or cancelled, corresponding calendar events are created or deleted.
 
