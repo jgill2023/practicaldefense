@@ -169,16 +169,21 @@ export default function Register() {
             </CardContent>
           </Card>
 
-          {selectedCourseId && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Calendar className="mr-2 h-5 w-5" />
-                  Select Date
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {availableSchedules.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calendar className="mr-2 h-5 w-5" />
+                Select Date
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!selectedCourseId ? (
+                <div className="text-center py-4 text-muted-foreground">
+                  <Calendar className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                  <p>Please select a course first</p>
+                </div>
+              ) : availableSchedules.length > 0 ? (
+                <>
                   <Select value={selectedScheduleId} onValueChange={setSelectedScheduleId}>
                     <SelectTrigger data-testid="select-schedule">
                       <SelectValue placeholder="Choose a date" />
@@ -202,170 +207,164 @@ export default function Register() {
                       })}
                     </SelectContent>
                   </Select>
-                ) : (
-                  <div className="text-center py-4 text-muted-foreground">
-                    <Calendar className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                    <p>No available dates for this course</p>
-                  </div>
-                )}
 
-                {selectedSchedule && (
-                  <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                    <div className="text-sm">
-                      <div className="font-medium text-foreground mb-1">Selected Date:</div>
-                      <div className="flex items-center text-muted-foreground">
-                        <Calendar className="mr-2 h-4 w-4 text-primary" />
-                        {formatDateSafe(selectedSchedule.startDate.toString())}
-                        {selectedSchedule.startTime && (
-                          <span className="ml-2">at {selectedSchedule.startTime.slice(0, 5)}</span>
+                  {selectedSchedule && (
+                    <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                      <div className="text-sm">
+                        <div className="font-medium text-foreground mb-1">Selected Date:</div>
+                        <div className="flex items-center text-muted-foreground">
+                          <Calendar className="mr-2 h-4 w-4 text-primary" />
+                          {formatDateSafe(selectedSchedule.startDate.toString())}
+                          {selectedSchedule.startTime && (
+                            <span className="ml-2">at {selectedSchedule.startTime.slice(0, 5)}</span>
+                          )}
+                        </div>
+                        {selectedSchedule.location && (
+                          <div className="flex items-center text-muted-foreground mt-1">
+                            <span className="mr-2">📍</span>
+                            {selectedSchedule.location}
+                          </div>
                         )}
                       </div>
-                      {selectedSchedule.location && (
-                        <div className="flex items-center text-muted-foreground mt-1">
-                          <span className="mr-2">📍</span>
-                          {selectedSchedule.location}
-                        </div>
-                      )}
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {selectedScheduleId && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="mr-2 h-5 w-5" />
-                  Student Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName">First Name *</Label>
-                    <Input
-                      id="firstName"
-                      value={formData.firstName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                      placeholder="John"
-                      required
-                      data-testid="input-first-name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input
-                      id="lastName"
-                      value={formData.lastName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                      placeholder="Doe"
-                      required
-                      data-testid="input-last-name"
-                    />
-                  </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  <Calendar className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                  <p>No available dates for this course</p>
                 </div>
+              )}
+            </CardContent>
+          </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="mr-2 h-5 w-5" />
+                Student Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="email">Email Address *</Label>
+                  <Label htmlFor="firstName">First Name *</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="john@example.com"
+                    id="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                    placeholder="John"
                     required
-                    data-testid="input-email"
+                    data-testid="input-first-name"
                   />
                 </div>
-
                 <div>
-                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Label htmlFor="lastName">Last Name *</Label>
                   <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="(555) 123-4567"
+                    id="lastName"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                    placeholder="Doe"
                     required
-                    data-testid="input-phone"
+                    data-testid="input-last-name"
                   />
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
 
-          {selectedScheduleId && (
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="smsConsent"
-                    checked={formData.smsConsent}
-                    onCheckedChange={(checked) => 
-                      setFormData(prev => ({ ...prev, smsConsent: checked === true }))
-                    }
-                    data-testid="checkbox-sms-consent"
-                  />
-                  <label htmlFor="smsConsent" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                    By checking this box, I consent to receive automated text messages related to my class registration, reminders, and important updates from Apache Solutions. Message & data rates may apply. Reply STOP to unsubscribe or HELP for help.
-                  </label>
-                </div>
+              <div>
+                <Label htmlFor="email">Email Address *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="john@example.com"
+                  required
+                  data-testid="input-email"
+                />
+              </div>
 
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="agreeToTerms"
-                    checked={formData.agreeToTerms}
-                    onCheckedChange={(checked) => 
-                      setFormData(prev => ({ ...prev, agreeToTerms: checked === true }))
-                    }
-                    data-testid="checkbox-agree-terms"
-                  />
-                  <label htmlFor="agreeToTerms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                    I agree to the{' '}
-                    <button
-                      type="button"
-                      onClick={() => setPolicyModalOpen('terms')}
-                      className="text-primary hover:text-primary/80 transition-colors underline"
-                    >
-                      Terms of Service
-                    </button>
-                    ,{' '}
-                    <button
-                      type="button"
-                      onClick={() => setPolicyModalOpen('privacy')}
-                      className="text-primary hover:text-primary/80 transition-colors underline"
-                    >
-                      Privacy Policy
-                    </button>
-                    , and{' '}
-                    <button
-                      type="button"
-                      onClick={() => setPolicyModalOpen('refund')}
-                      className="text-primary hover:text-primary/80 transition-colors underline"
-                    >
-                      Refund Policy
-                    </button>
-                    .
-                  </label>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              <div>
+                <Label htmlFor="phone">Phone Number *</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="(555) 123-4567"
+                  required
+                  data-testid="input-phone"
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-          {selectedScheduleId && (
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={handleProceedToPayment}
-              disabled={!canProceed}
-              data-testid="button-proceed-payment"
-            >
-              Proceed to Payment
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          )}
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="smsConsent"
+                  checked={formData.smsConsent}
+                  onCheckedChange={(checked) => 
+                    setFormData(prev => ({ ...prev, smsConsent: checked === true }))
+                  }
+                  data-testid="checkbox-sms-consent"
+                />
+                <label htmlFor="smsConsent" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                  By checking this box, I consent to receive automated text messages related to my class registration, reminders, and important updates from Apache Solutions. Message & data rates may apply. Reply STOP to unsubscribe or HELP for help.
+                </label>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="agreeToTerms"
+                  checked={formData.agreeToTerms}
+                  onCheckedChange={(checked) => 
+                    setFormData(prev => ({ ...prev, agreeToTerms: checked === true }))
+                  }
+                  data-testid="checkbox-agree-terms"
+                />
+                <label htmlFor="agreeToTerms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                  I agree to the{' '}
+                  <button
+                    type="button"
+                    onClick={() => setPolicyModalOpen('terms')}
+                    className="text-primary hover:text-primary/80 transition-colors underline"
+                  >
+                    Terms of Service
+                  </button>
+                  ,{' '}
+                  <button
+                    type="button"
+                    onClick={() => setPolicyModalOpen('privacy')}
+                    className="text-primary hover:text-primary/80 transition-colors underline"
+                  >
+                    Privacy Policy
+                  </button>
+                  , and{' '}
+                  <button
+                    type="button"
+                    onClick={() => setPolicyModalOpen('refund')}
+                    className="text-primary hover:text-primary/80 transition-colors underline"
+                  >
+                    Refund Policy
+                  </button>
+                  .
+                </label>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={handleProceedToPayment}
+            disabled={!canProceed}
+            data-testid="button-proceed-payment"
+          >
+            Proceed to Payment
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       </div>
 
