@@ -8,7 +8,7 @@ import teresaKellyImage from "@assets/tk_1765820939527.png";
 
 export default function AGirlAndAGun() {
   return (
-    <Layout>
+    <Layout headerColor="#b6a8cc">
       {/* Hero Section */}
       <div className="text-white py-16 px-4 md:px-8" style={{ backgroundColor: '#69579e' }}>
         <div className="max-w-4xl mx-auto text-center">
