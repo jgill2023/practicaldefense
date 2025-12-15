@@ -12,12 +12,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Gift, Mail, Download, CheckCircle, Loader2, CreditCard, ArrowLeft, ArrowRight, Eye } from "lucide-react";
+import { Gift, Mail, Download, CheckCircle, Loader2, CreditCard, ArrowLeft, ArrowRight, Eye, ChevronDown, GraduationCap } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { apiRequest } from "@/lib/queryClient";
-import type { GiftCardTheme, TextPosition } from "@shared/schema";
+import type { GiftCardTheme, TextPosition, Course } from "@shared/schema";
+
+interface ClassAmountOption {
+  id: string;
+  label: string;
+  amount: number;
+  type: 'course' | 'addon';
+  courseId: string;
+}
 
 const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
@@ -92,13 +103,81 @@ function ThemeCard({
 
 function AmountSelector({ 
   value, 
-  onChange 
+  onChange,
+  courses = [],
 }: { 
   value: number; 
   onChange: (amount: number) => void;
+  courses?: Course[];
 }) {
   const [customAmount, setCustomAmount] = useState<string>("");
-  const isCustom = !PRESET_AMOUNTS.includes(value) && value > 0;
+  const [selectedClassOptions, setSelectedClassOptions] = useState<string[]>([]);
+  const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
+  const isCustom = !PRESET_AMOUNTS.includes(value) && value > 0 && selectedClassOptions.length === 0;
+
+  const classAmountOptions: ClassAmountOption[] = courses.flatMap((course) => {
+    const options: ClassAmountOption[] = [];
+    const coursePrice = Number(course.price) || 0;
+    if (coursePrice > 0) {
+      options.push({
+        id: `course-${course.id}`,
+        label: `${course.title} - $${coursePrice.toFixed(2)}`,
+        amount: coursePrice,
+        type: 'course',
+        courseId: course.id,
+      });
+    }
+    if (course.handgunRentalEnabled) {
+      const rentalPrice = Number(course.handgunRentalPrice) || 25;
+      options.push({
+        id: `addon-${course.id}`,
+        label: `+ Handgun Rental (${course.title}) - $${rentalPrice.toFixed(2)}`,
+        amount: rentalPrice,
+        type: 'addon',
+        courseId: course.id,
+      });
+    }
+    return options;
+  });
+
+  const handleClassOptionToggle = (optionId: string) => {
+    const option = classAmountOptions.find((o) => o.id === optionId);
+    if (!option) return;
+
+    let newSelected: string[];
+    if (selectedClassOptions.includes(optionId)) {
+      newSelected = selectedClassOptions.filter((id) => id !== optionId);
+    } else {
+      const potentialTotal = selectedTotal + option.amount;
+      if (potentialTotal > 500) {
+        return;
+      }
+      newSelected = [...selectedClassOptions, optionId];
+    }
+    setSelectedClassOptions(newSelected);
+
+    const total = newSelected.reduce((sum, id) => {
+      const opt = classAmountOptions.find((o) => o.id === id);
+      return sum + (opt?.amount || 0);
+    }, 0);
+
+    if (total > 0) {
+      onChange(total);
+      setCustomAmount("");
+    } else {
+      onChange(50);
+    }
+  };
+
+  const clearClassSelections = () => {
+    setSelectedClassOptions([]);
+    onChange(50);
+  };
+
+  const selectedTotal = selectedClassOptions.reduce((sum, id) => {
+    const opt = classAmountOptions.find((o) => o.id === id);
+    return sum + (opt?.amount || 0);
+  }, 0);
 
   return (
     <div className="space-y-4">
@@ -107,11 +186,12 @@ function AmountSelector({
           <Button
             key={amount}
             type="button"
-            variant={value === amount ? "default" : "outline"}
-            className={value === amount ? "bg-[#5170FF] hover:bg-[#5170FF]/90" : ""}
+            variant={value === amount && selectedClassOptions.length === 0 ? "default" : "outline"}
+            className={value === amount && selectedClassOptions.length === 0 ? "bg-[#5170FF] hover:bg-[#5170FF]/90" : ""}
             onClick={() => {
               onChange(amount);
               setCustomAmount("");
+              clearClassSelections();
             }}
             data-testid={`amount-${amount}`}
           >
@@ -119,6 +199,85 @@ function AmountSelector({
           </Button>
         ))}
       </div>
+
+      {classAmountOptions.length > 0 && (
+        <div className="space-y-2">
+          <Popover open={isClassDropdownOpen} onOpenChange={setIsClassDropdownOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className={`w-full justify-between ${selectedClassOptions.length > 0 ? "border-[#5170FF] bg-[#5170FF]/5" : ""}`}
+                data-testid="class-amounts-dropdown"
+              >
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4" />
+                  <span>
+                    {selectedClassOptions.length > 0
+                      ? `${selectedClassOptions.length} class${selectedClassOptions.length > 1 ? 'es' : ''} selected - $${selectedTotal.toFixed(2)}`
+                      : "Class Specific Amounts"}
+                  </span>
+                </div>
+                <ChevronDown className="w-4 h-4 ml-2" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="start">
+              <div className="p-3 border-b">
+                <p className="text-sm font-medium">Select classes to cover with this gift card</p>
+                <p className="text-xs text-muted-foreground">You can select multiple options</p>
+              </div>
+              <ScrollArea className="h-64">
+                <div className="p-2 space-y-1">
+                  {classAmountOptions.map((option) => {
+                    const wouldExceedLimit = !selectedClassOptions.includes(option.id) && selectedTotal + option.amount > 500;
+                    return (
+                      <div
+                        key={option.id}
+                        className={`flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-muted ${
+                          option.type === 'addon' ? 'pl-6 text-sm' : ''
+                        } ${wouldExceedLimit ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        data-testid={`class-option-${option.id}`}
+                      >
+                        <Checkbox
+                          checked={selectedClassOptions.includes(option.id)}
+                          onCheckedChange={() => handleClassOptionToggle(option.id)}
+                          disabled={wouldExceedLimit}
+                        />
+                        <span 
+                          className={option.type === 'addon' ? 'text-muted-foreground' : ''}
+                          onClick={() => !wouldExceedLimit && handleClassOptionToggle(option.id)}
+                        >
+                          {option.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+              {selectedClassOptions.length > 0 && (
+                <div className="p-3 border-t bg-muted/50">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Total: ${selectedTotal.toFixed(2)}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        clearClassSelections();
+                        setIsClassDropdownOpen(false);
+                      }}
+                      data-testid="clear-class-selections"
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
+
       <div className="flex items-center gap-3">
         <Label htmlFor="custom-amount" className="whitespace-nowrap">Custom:</Label>
         <div className="relative flex-1">
@@ -137,6 +296,7 @@ function AmountSelector({
               const num = parseFloat(val);
               if (!isNaN(num) && num >= 10 && num <= 500) {
                 onChange(num);
+                clearClassSelections();
               }
             }}
             data-testid="custom-amount-input"
@@ -145,6 +305,13 @@ function AmountSelector({
       </div>
       {isCustom && customAmount && (
         <p className="text-sm text-muted-foreground">Custom amount: ${value.toFixed(2)}</p>
+      )}
+      {selectedClassOptions.length > 0 && (
+        <div className="p-3 bg-[#5170FF]/5 rounded-lg border border-[#5170FF]/20">
+          <p className="text-sm font-medium text-[#5170FF]">
+            Gift card for: {selectedClassOptions.length} item{selectedClassOptions.length > 1 ? 's' : ''} = ${selectedTotal.toFixed(2)}
+          </p>
+        </div>
       )}
     </div>
   );
@@ -462,6 +629,10 @@ function GiftCardPurchaseContent() {
     queryKey: ["/api/gift-cards/themes"],
   });
 
+  const { data: courses = [] } = useQuery<Course[]>({
+    queryKey: ["/api/courses"],
+  });
+
   const form = useForm<PurchaseFormData>({
     resolver: zodResolver(purchaseFormSchema),
     defaultValues: {
@@ -645,6 +816,7 @@ function GiftCardPurchaseContent() {
                       <AmountSelector
                         value={field.value}
                         onChange={field.onChange}
+                        courses={courses}
                       />
                       <FormMessage />
                     </FormItem>
