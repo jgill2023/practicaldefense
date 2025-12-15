@@ -303,7 +303,7 @@ export default function CourseDetail() {
 
                           <Link href={`/course-registration/${schedule.id}`}>
                             <Button 
-                              className="w-full" 
+                              className="w-full mt-[12px] mb-[12px]" 
                               disabled={isFull}
                               data-testid={`button-register-${schedule.id}`}
                             >
