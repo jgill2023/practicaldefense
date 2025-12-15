@@ -1600,7 +1600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get student profile with enrollment history
   app.get('/api/students/:studentId/profile', async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
       return res.status(401).send({ message: 'Unauthorized' });
     }
 
