@@ -348,7 +348,7 @@ export default function RACCProgram() {
               <h3 className="font-heading text-3xl uppercase tracking-wide text-white mb-4">
                 Ready to Start?
               </h3>
-              <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
+              <p className="text-white/90 text-lg max-w-2xl mx-auto mt-[8px] mb-[8px]">
                 Book your first private RACC session today.
               </p>
 
