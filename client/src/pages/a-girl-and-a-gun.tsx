@@ -66,12 +66,12 @@ export default function AGirlAndAGun() {
         {/* Teresa Kelly Section */}
         <section className="mb-12">
           <div className="rounded-lg p-8 md:p-12 border-2" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
-            <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-              <div className="flex-shrink-0">
+            <div className="flex flex-col md:flex-row gap-8 items-stretch md:items-stretch">
+              <div className="w-72 flex-shrink-0">
                 <img 
                   src={teresaKellyImage} 
                   alt="Teresa Kelly"
-                  className="w-48 h-auto rounded-lg shadow-lg border-2"
+                  className="w-full h-full object-cover rounded-lg shadow-lg border-2"
                   style={{ borderColor: '#6956A2' }}
                   data-testid="image-teresa"
                 />
