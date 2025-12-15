@@ -116,9 +116,14 @@ export default function CourseDetail() {
     );
   }
 
+  // Handle category being either a string or an object (from relation)
+  const categoryName = typeof course.category === 'string' 
+    ? course.category 
+    : (course.category as any)?.name || 'Course';
+    
   const imageUrl = course.imageUrl && course.imageUrl.trim() !== "" 
     ? course.imageUrl 
-    : getDefaultImageUrl(course.category);
+    : getDefaultImageUrl(categoryName);
 
   const now = new Date();
   const upcomingSchedules = course.schedules?.filter(s => new Date(s.startDate) >= now && !s.deletedAt) || [];
@@ -143,11 +148,11 @@ export default function CourseDetail() {
                 className="w-full h-64 md:h-80 object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = getDefaultImageUrl(course.category);
+                  target.src = getDefaultImageUrl(categoryName);
                 }}
                 data-testid="img-course"
               />
-              <Badge className="absolute top-4 left-4 bg-primary">{course.category}</Badge>
+              <Badge className="absolute top-4 left-4 bg-primary">{categoryName}</Badge>
             </div>
 
             <div>
