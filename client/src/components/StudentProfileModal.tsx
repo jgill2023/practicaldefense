@@ -397,9 +397,9 @@ export function StudentProfileModal({
         ) : null}
 
         {/* Enrollment Feedback Modal */}
-        {selectedEnrollmentForFeedback && (
+        {feedbackModal.enrollmentId && (
           <EnrollmentFeedbackModal
-            enrollmentId={selectedEnrollmentForFeedback}
+            enrollmentId={feedbackModal.enrollmentId}
             isOpen={feedbackModal.isOpen}
             onClose={() => {
               setFeedbackModal({ ...feedbackModal, isOpen: false });
