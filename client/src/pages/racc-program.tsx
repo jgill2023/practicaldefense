@@ -9,7 +9,138 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { CheckCircle, Phone, Globe, Mail, Calendar } from "lucide-react";
+import { CheckCircle, Phone, Globe, Mail, Calendar, Check, Minus } from "lucide-react";
+
+const raccPackages = [
+  {
+    name: "Half Package",
+    price: "$275",
+    sessions: "5 Hours",
+    people: "1",
+    courseDiscount: null,
+    freeAmmo: null,
+    swagPacks: null,
+    privateRangeCoach: true,
+    fixedWeeklySlot: false,
+    fixedBiWeeklySlot: false,
+    flexibleScheduling: true,
+    addOnHours: false,
+    trainingType: "Intro",
+    highlight: false,
+  },
+  {
+    name: "Full Package",
+    price: "$475",
+    sessions: "10 Hours",
+    people: "1",
+    courseDiscount: null,
+    freeAmmo: null,
+    swagPacks: null,
+    privateRangeCoach: true,
+    fixedWeeklySlot: false,
+    fixedBiWeeklySlot: false,
+    flexibleScheduling: true,
+    addOnHours: false,
+    trainingType: "Momentum",
+    highlight: false,
+  },
+  {
+    name: "Premium (Solo)",
+    price: "$900",
+    sessions: "25 (Bi-Weekly)",
+    people: "1",
+    courseDiscount: null,
+    freeAmmo: "100 Rds",
+    swagPacks: null,
+    privateRangeCoach: true,
+    fixedWeeklySlot: false,
+    fixedBiWeeklySlot: true,
+    flexibleScheduling: false,
+    addOnHours: false,
+    trainingType: "Solo / Maint.",
+    highlight: false,
+  },
+  {
+    name: "Elite (Solo)",
+    price: "$1,800",
+    sessions: "50 (Weekly)",
+    people: "1",
+    courseDiscount: "20% Off",
+    freeAmmo: "100 Rds",
+    swagPacks: "1 Pack",
+    privateRangeCoach: true,
+    fixedWeeklySlot: true,
+    fixedBiWeeklySlot: false,
+    flexibleScheduling: false,
+    addOnHours: true,
+    trainingType: "Solo / Intensive",
+    highlight: true,
+  },
+  {
+    name: "Premium Family",
+    price: "$2,250",
+    sessions: "25 (Bi-Weekly)",
+    people: "2",
+    courseDiscount: null,
+    freeAmmo: "100 Rds",
+    swagPacks: "2 Packs",
+    privateRangeCoach: true,
+    fixedWeeklySlot: false,
+    fixedBiWeeklySlot: true,
+    flexibleScheduling: false,
+    addOnHours: false,
+    trainingType: "Duo / Maint.",
+    highlight: false,
+  },
+  {
+    name: "Family Flex 75",
+    price: "$3,200",
+    sessions: "75 Hours",
+    people: "2",
+    courseDiscount: "25% Off",
+    freeAmmo: "300 Rds",
+    swagPacks: "2 Packs",
+    privateRangeCoach: true,
+    fixedWeeklySlot: false,
+    fixedBiWeeklySlot: false,
+    flexibleScheduling: true,
+    addOnHours: false,
+    trainingType: "Duo / Flexible",
+    highlight: false,
+  },
+  {
+    name: "Family Flex 100",
+    price: "$3,800",
+    sessions: "100 Hours",
+    people: "Up to 4",
+    courseDiscount: "50% Off",
+    freeAmmo: "400 Rds",
+    swagPacks: "2 Packs",
+    privateRangeCoach: true,
+    fixedWeeklySlot: false,
+    fixedBiWeeklySlot: false,
+    flexibleScheduling: true,
+    addOnHours: false,
+    trainingType: "Volume / Family",
+    highlight: true,
+  },
+  {
+    name: "Elite Family",
+    price: "$4,500",
+    sessions: "50 (Weekly)",
+    people: "2",
+    courseDiscount: "20% Off",
+    freeAmmo: "200 Rds",
+    swagPacks: "2 Packs",
+    privateRangeCoach: true,
+    fixedWeeklySlot: true,
+    fixedBiWeeklySlot: false,
+    flexibleScheduling: false,
+    addOnHours: true,
+    trainingType: "Duo / Legacy",
+    highlight: false,
+  },
+];
 
 export default function RACCProgram() {
   const [, setLocation] = useLocation();
@@ -340,6 +471,276 @@ export default function RACCProgram() {
           </Accordion>
         </div>
       </section>
+      {/* RACC Package Comparison Chart */}
+      <section className="py-16 bg-background" data-testid="racc-packages-section">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <TitleCard as="h2" className="text-3xl mb-4">
+              RACC Package Comparison
+            </TitleCard>
+            <p className="text-muted-foreground max-w-2xl mx-auto mt-4">
+              Choose the training package that best fits your goals and schedule
+            </p>
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border border-border shadow-professional">
+            <table className="w-full min-w-[1000px]" data-testid="racc-comparison-table">
+              <thead>
+                <tr className="bg-[hsl(204,27%,16%)] text-white">
+                  <th className="sticky left-0 z-10 bg-[hsl(204,27%,16%)] px-4 py-4 text-left font-heading uppercase tracking-wide text-sm border-r border-white/20">
+                    Feature
+                  </th>
+                  {raccPackages.map((pkg) => (
+                    <th
+                      key={pkg.name}
+                      className={`px-3 py-4 text-center font-heading uppercase tracking-wide text-sm min-w-[120px] ${
+                        pkg.highlight ? "bg-gradient-to-b from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)]" : ""
+                      }`}
+                    >
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-xs opacity-80">
+                          {pkg.highlight && "Popular"}
+                        </span>
+                        <span>{pkg.name}</span>
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                <tr className="bg-[hsl(209,90%,38%)]/5">
+                  <td className="sticky left-0 z-10 bg-muted px-4 py-3 font-semibold text-foreground border-r border-border">
+                    Price
+                  </td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={pkg.name}
+                      className={`px-3 py-3 text-center font-heading text-lg ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/10 text-[hsl(209,90%,38%)] font-bold" : "text-foreground"
+                      }`}
+                    >
+                      {pkg.price}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-card">
+                  <td className="sticky left-0 z-10 bg-card px-4 py-3 font-medium text-foreground border-r border-border">
+                    Number of Sessions
+                  </td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={pkg.name}
+                      className={`px-3 py-3 text-center text-sm ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/5" : ""
+                      }`}
+                    >
+                      {pkg.sessions}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-muted/50">
+                  <td className="sticky left-0 z-10 bg-muted/50 px-4 py-3 font-medium text-foreground border-r border-border">
+                    People Included
+                  </td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={pkg.name}
+                      className={`px-3 py-3 text-center text-sm ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/5" : ""
+                      }`}
+                    >
+                      {pkg.people}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-card">
+                  <td className="sticky left-0 z-10 bg-card px-4 py-3 font-medium text-foreground border-r border-border">
+                    Course Discount
+                  </td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={pkg.name}
+                      className={`px-3 py-3 text-center text-sm ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/5" : ""
+                      }`}
+                    >
+                      {pkg.courseDiscount ? (
+                        <span className="text-[hsl(142,76%,36%)] font-semibold">{pkg.courseDiscount}</span>
+                      ) : (
+                        <Minus className="w-4 h-4 text-muted-foreground mx-auto" />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-muted/50">
+                  <td className="sticky left-0 z-10 bg-muted/50 px-4 py-3 font-medium text-foreground border-r border-border">
+                    Free Ammo
+                  </td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={pkg.name}
+                      className={`px-3 py-3 text-center text-sm ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/5" : ""
+                      }`}
+                    >
+                      {pkg.freeAmmo ? (
+                        <span className="text-[hsl(44,89%,45%)] font-semibold">{pkg.freeAmmo}</span>
+                      ) : (
+                        <Minus className="w-4 h-4 text-muted-foreground mx-auto" />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-card">
+                  <td className="sticky left-0 z-10 bg-card px-4 py-3 font-medium text-foreground border-r border-border">
+                    Swag Packs
+                  </td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={pkg.name}
+                      className={`px-3 py-3 text-center text-sm ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/5" : ""
+                      }`}
+                    >
+                      {pkg.swagPacks ? (
+                        <span className="font-medium">{pkg.swagPacks}</span>
+                      ) : (
+                        <Minus className="w-4 h-4 text-muted-foreground mx-auto" />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-muted/50">
+                  <td className="sticky left-0 z-10 bg-muted/50 px-4 py-3 font-medium text-foreground border-r border-border">
+                    Private Range & Coach
+                  </td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={pkg.name}
+                      className={`px-3 py-3 text-center ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/5" : ""
+                      }`}
+                    >
+                      {pkg.privateRangeCoach ? (
+                        <Check className="w-5 h-5 text-[hsl(209,90%,38%)] mx-auto" />
+                      ) : (
+                        <Minus className="w-4 h-4 text-muted-foreground mx-auto" />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-card">
+                  <td className="sticky left-0 z-10 bg-card px-4 py-3 font-medium text-foreground border-r border-border">
+                    Fixed Weekly Slot
+                  </td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={pkg.name}
+                      className={`px-3 py-3 text-center ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/5" : ""
+                      }`}
+                    >
+                      {pkg.fixedWeeklySlot ? (
+                        <Check className="w-5 h-5 text-[hsl(209,90%,38%)] mx-auto" />
+                      ) : (
+                        <Minus className="w-4 h-4 text-muted-foreground mx-auto" />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-muted/50">
+                  <td className="sticky left-0 z-10 bg-muted/50 px-4 py-3 font-medium text-foreground border-r border-border">
+                    Fixed Bi-Weekly Slot
+                  </td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={pkg.name}
+                      className={`px-3 py-3 text-center ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/5" : ""
+                      }`}
+                    >
+                      {pkg.fixedBiWeeklySlot ? (
+                        <Check className="w-5 h-5 text-[hsl(209,90%,38%)] mx-auto" />
+                      ) : (
+                        <Minus className="w-4 h-4 text-muted-foreground mx-auto" />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-card">
+                  <td className="sticky left-0 z-10 bg-card px-4 py-3 font-medium text-foreground border-r border-border">
+                    Flexible Scheduling
+                  </td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={pkg.name}
+                      className={`px-3 py-3 text-center ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/5" : ""
+                      }`}
+                    >
+                      {pkg.flexibleScheduling ? (
+                        <Check className="w-5 h-5 text-[hsl(209,90%,38%)] mx-auto" />
+                      ) : (
+                        <Minus className="w-4 h-4 text-muted-foreground mx-auto" />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-muted/50">
+                  <td className="sticky left-0 z-10 bg-muted/50 px-4 py-3 font-medium text-foreground border-r border-border">
+                    $40 Add-On Hours
+                  </td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={pkg.name}
+                      className={`px-3 py-3 text-center ${
+                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/5" : ""
+                      }`}
+                    >
+                      {pkg.addOnHours ? (
+                        <Check className="w-5 h-5 text-[hsl(209,90%,38%)] mx-auto" />
+                      ) : (
+                        <Minus className="w-4 h-4 text-muted-foreground mx-auto" />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+
+                <tr className="bg-[hsl(204,27%,16%)] text-white">
+                  <td className="sticky left-0 z-10 bg-[hsl(204,27%,16%)] px-4 py-3 font-heading uppercase tracking-wide text-sm border-r border-white/20">
+                    Training Type
+                  </td>
+                  {raccPackages.map((pkg) => (
+                    <td
+                      key={pkg.name}
+                      className={`px-3 py-3 text-center text-sm font-medium ${
+                        pkg.highlight ? "bg-gradient-to-b from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)]" : ""
+                      }`}
+                    >
+                      {pkg.trainingType}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            Scroll horizontally to view all packages on smaller screens
+          </p>
+        </div>
+      </section>
+
       {/* Ready to Start CTA */}
       <section className="py-16 bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
