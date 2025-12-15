@@ -169,9 +169,11 @@ function AmountSelector({
     }
   };
 
-  const clearClassSelections = () => {
+  const clearClassSelections = (resetAmount = false) => {
     setSelectedClassOptions([]);
-    onChange(50);
+    if (resetAmount) {
+      onChange(50);
+    }
   };
 
   const selectedTotal = selectedClassOptions.reduce((sum, id) => {
@@ -263,7 +265,7 @@ function AmountSelector({
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        clearClassSelections();
+                        clearClassSelections(true);
                         setIsClassDropdownOpen(false);
                       }}
                       data-testid="clear-class-selections"
