@@ -36,11 +36,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { counts } = useCommunicationCounts();
   const { pendingCount } = usePendingUsersCount();
 
-  const { data: coursesData } = useQuery<{ courses: Course[] }>({
+  const { data: coursesData } = useQuery<Course[]>({
     queryKey: ['/api/courses'],
   });
 
-  const activeCourses = coursesData?.courses?.filter((c: Course) => c.isActive && !c.deletedAt) || [];
+  const activeCourses = coursesData?.filter((c: Course) => c.isActive && !c.deletedAt) || [];
 
 
 
@@ -189,41 +189,48 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 }}>Home</a>
                 <Link href="/about" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-about">About Us</Link>
                 <Link href="/articles" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-articles">Articles</Link>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium flex items-center gap-1" data-testid="dropdown-courses">
-                    Courses
-                    <ChevronDown className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-56">
-                    <DropdownMenuItem asChild>
-                      <Link href="/schedule-list" className="w-full cursor-pointer flex items-center gap-2" data-testid="link-upcoming-events">
-                        <Calendar className="h-4 w-4" />
-                        Upcoming Events
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="flex items-center gap-2" data-testid="submenu-course-offerings">
-                        <BookOpen className="h-4 w-4" />
-                        Course Offerings
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent className="w-64">
-                        {activeCourses.length > 0 ? (
-                          activeCourses.map((course) => (
-                            <DropdownMenuItem key={course.id} asChild>
-                              <Link href={`/course/${course.id}`} className="w-full cursor-pointer" data-testid={`link-course-${course.id}`}>
-                                {course.title}
-                              </Link>
-                            </DropdownMenuItem>
-                          ))
-                        ) : (
-                          <DropdownMenuItem disabled>
-                            No courses available
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <NavigationMenu>
+                  <NavigationMenuList>
+                    <NavigationMenuItem>
+                      <NavigationMenuTrigger className="bg-transparent text-base text-white hover:text-[#FD66C5] hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent" data-testid="dropdown-courses">
+                        Courses
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent className="min-w-[280px]">
+                        <div className="p-2">
+                          <NavigationMenuLink asChild>
+                            <Link href="/schedule-list" className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent cursor-pointer" data-testid="link-upcoming-events">
+                              <Calendar className="h-4 w-4" />
+                              Upcoming Events
+                            </Link>
+                          </NavigationMenuLink>
+                          <div className="mt-2 pt-2 border-t">
+                            <p className="px-3 py-1 text-sm font-medium text-muted-foreground flex items-center gap-2">
+                              <BookOpen className="h-4 w-4" />
+                              Course Offerings
+                            </p>
+                            <div className="mt-1 space-y-1">
+                              {activeCourses.length > 0 ? (
+                                activeCourses.map((course) => (
+                                  <NavigationMenuLink key={course.id} asChild>
+                                    <Link 
+                                      href={`/course/${course.id}`} 
+                                      className="block px-3 py-2 rounded-md hover:bg-accent cursor-pointer text-sm"
+                                      data-testid={`link-course-${course.id}`}
+                                    >
+                                      {course.title}
+                                    </Link>
+                                  </NavigationMenuLink>
+                                ))
+                              ) : (
+                                <p className="px-3 py-2 text-sm text-muted-foreground">No courses available</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  </NavigationMenuList>
+                </NavigationMenu>
                 <Link href="/merch" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-merch">Store</Link>
                 <Link href="/gift-cards" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-gift-cards">Gift Cards</Link>
                 <a href="/#appointments" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" onClick={(e) => {
