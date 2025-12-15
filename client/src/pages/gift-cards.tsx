@@ -342,8 +342,7 @@ function GiftCardPurchaseContent() {
 
   const createPaymentIntentMutation = useMutation({
     mutationFn: async (data: PurchaseFormData) => {
-      const response = await apiRequest("POST", "/api/gift-cards/purchase/create-payment-intent", data);
-      return response.json();
+      return await apiRequest("POST", "/api/gift-cards/purchase/create-payment-intent", data);
     },
     onSuccess: (data) => {
       setClientSecret(data.clientSecret);
@@ -360,8 +359,7 @@ function GiftCardPurchaseContent() {
 
   const completePurchaseMutation = useMutation({
     mutationFn: async (paymentIntentId: string) => {
-      const response = await apiRequest("POST", "/api/gift-cards/purchase/complete", { paymentIntentId });
-      return response.json();
+      return await apiRequest("POST", "/api/gift-cards/purchase/complete", { paymentIntentId });
     },
     onSuccess: (data) => {
       setPurchaseResult({
