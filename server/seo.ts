@@ -8,7 +8,7 @@ const DEFAULT_DESCRIPTION = "Professional firearms training courses, private ins
 const DEFAULT_OG_IMAGE = `${BASE_URL}/public/og-image.jpg`;
 const LOGO_URL = `${BASE_URL}/public/logo.png`;
 
-export interface SEOConfig {
+export type SEOConfig = {
   title: string;
   description: string;
   canonicalUrl: string;
@@ -17,7 +17,7 @@ export interface SEOConfig {
   twitterCard: string;
   noIndex?: boolean;
   structuredData?: object[];
-}
+};
 
 interface RouteConfig {
   title: string;
