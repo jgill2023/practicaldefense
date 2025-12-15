@@ -73,6 +73,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-products">
                         Products
                       </Link>
+                      <Link href="/gift-card-management" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-gift-cards-admin">
+                        Gift Card Admin
+                      </Link>
                       <Link href="/stripe-connect" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-payment-settings">
                         Payment Settings
                       </Link>
@@ -148,6 +151,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/articles" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-articles">Articles</Link>
                 <Link href="/schedule-list" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-events">Events</Link>
                 <Link href="/merch" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-merch">Store</Link>
+                <Link href="/gift-cards" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-gift-cards">Gift Cards</Link>
                 <a href="/#appointments" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" onClick={(e) => {
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
@@ -203,6 +207,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/articles" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-articles-mobile" onClick={() => setIsMobileMenuOpen(false)}>Articles</Link>
                 <Link href="/schedule-list" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-events-mobile" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
                 <Link href="/merch" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-merch-mobile" onClick={() => setIsMobileMenuOpen(false)}>Store</Link>
+                <Link href="/gift-cards" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-gift-cards-mobile" onClick={() => setIsMobileMenuOpen(false)}>Gift Cards</Link>
                 <div className="py-2" style={{display: 'none'}}>
                   <div className="text-white font-medium mb-2">The Schedule</div>
                   <div className="pl-4 space-y-2">
@@ -274,6 +279,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           <Link href="/product-management" className="block">
                             <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-products-mobile">
                               Products
+                            </Button>
+                          </Link>
+                          <Link href="/gift-card-management" className="block">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-gift-card-admin-mobile">
+                              Gift Card Admin
                             </Button>
                           </Link>
                           <Link href="/stripe-connect" className="block">

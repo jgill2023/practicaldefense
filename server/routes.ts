@@ -19,6 +19,7 @@ import { appointmentRouter } from "./appointments/routes";
 import { stripeConnectRouter } from "./stripeConnect/routes";
 import storeRouter from "./store/routes";
 import { googleCalendarRouter } from "./googleCalendar/routes";
+import giftCardRouter from "./giftCards/routes";
 import "./types"; // Import type declarations
 
 import { getStripeClient } from './stripeClient';
@@ -8750,6 +8751,9 @@ jeremy@abqconcealedcarry.com
 
   // Mount Google Calendar routes
   app.use('/api/google-calendar', googleCalendarRouter);
+
+  // Gift card routes
+  app.use('/api/gift-cards', giftCardRouter);
 
   const httpServer = createServer(app);
   return httpServer;

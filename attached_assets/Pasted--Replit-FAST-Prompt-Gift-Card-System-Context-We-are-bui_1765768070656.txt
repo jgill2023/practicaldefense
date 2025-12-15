@@ -1,0 +1,245 @@
+# 🎁 Replit FAST Prompt — Gift Card System
+
+## Context
+We are building a **Gift Card system** for our web application. The app already supports:
+- User accounts
+- Products and checkout
+- Stripe payments
+
+Stripe does **not** provide native gift card management, so gift cards must be implemented **at the application level**, with Stripe used only to process payments.
+
+This system must be secure, auditable, and extensible.
+
+---
+
+## 1. Product Type: Gift Card
+
+Create a new product type:
+
+```ts
+type ProductType = "standard" | "subscription" | "course" | "gift_card"
+```
+
+Gift card products:
+- Are digital only
+- Are not shippable
+- Are not taxable by default (configurable)
+- Trigger gift card generation after payment
+- Allow preset or custom amounts
+
+### Gift Card Product Settings
+- allow_custom_amount: boolean
+- min_amount (default $10)
+- max_amount (default $500)
+- expiration_months (default 12)
+- is_gift_card: true
+
+---
+
+## 2. Gift Card Themes / Styles
+
+Create a `gift_card_themes` table:
+
+```ts
+id
+name
+preview_image_url
+background_image_url
+accent_color
+font_family
+is_active
+```
+
+Rules:
+- Customer must select a theme at purchase
+- Theme is applied to:
+  - Email delivery
+  - Printable PDF
+  - QR code display
+
+---
+
+## 3. Gift Card Purchase Flow
+
+At purchase:
+1. Customer selects:
+   - Gift card amount (preset or custom)
+   - Gift card theme
+   - Delivery method:
+     - Email to recipient
+     - Download/print
+2. Collect:
+   - Purchaser name + email
+   - Recipient email (if email delivery)
+   - Optional personal message
+   - Optional scheduled delivery date
+3. Create Stripe PaymentIntent
+4. On successful payment confirmation:
+   - Generate gift card record
+   - Generate secure gift card code
+
+---
+
+## 4. Gift Card Code Generation
+
+Gift card codes must:
+- Be cryptographically secure
+- Be non-guessable
+- Never stored in plaintext
+
+Example:
+```ts
+RAW: GC-XXXX-XXXX-XXXX
+STORED: bcrypt(raw)
+```
+
+Store:
+- hashed_code
+- last_4 (for admin reference)
+
+---
+
+## 5. Gift Card Database Models
+
+### gift_cards
+```ts
+id
+hashed_code
+last_4
+initial_value
+remaining_balance
+currency
+status (active | partially_used | redeemed | expired | voided)
+expiration_date
+theme_id
+delivery_method (email | download)
+delivery_status (pending | sent | failed)
+purchaser_email
+recipient_email
+created_at
+```
+
+### gift_card_redemptions
+```ts
+id
+gift_card_id
+order_id
+amount_applied
+remaining_balance_after
+redeemed_at
+user_id
+```
+
+---
+
+## 6. Delivery Options
+
+### Email Delivery
+- Send branded email to recipient
+- Include:
+  - Gift card code
+  - Amount
+  - Expiration date
+  - Redeem instructions
+  - Selected theme
+- Track delivery status
+- Allow resend + recipient email update
+
+### Download / Print
+- Generate printable PDF immediately
+- PDF includes:
+  - Gift card code
+  - QR code (optional)
+  - Amount
+  - Expiration
+  - Theme artwork
+- Allow re-download from purchaser account
+
+---
+
+## 7. Checkout Redemption Flow
+
+At checkout:
+- Input field: Apply Gift Card
+- Validate server-side:
+  - Exists
+  - Active
+  - Not expired
+  - Remaining balance > 0
+- Apply gift card as store credit
+
+### Payment Logic
+- If gift card covers full total:
+  - No Stripe charge
+- If partial:
+  - Deduct gift card balance
+  - Create Stripe PaymentIntent for remainder
+
+Stripe metadata example:
+```json
+{
+  "gift_card_applied": true,
+  "gift_card_last4": "A9F2",
+  "gift_card_amount": 50
+}
+```
+
+---
+
+## 8. Admin Dashboard — Gift Cards
+
+Add Admin → Gift Cards section:
+- View all gift cards
+- Filter by:
+  - Status
+  - Date range
+  - Balance
+- Actions:
+  - Issue manual gift card
+  - Adjust balance (audit logged)
+  - Void gift card
+  - Resend delivery email
+
+---
+
+## 9. Security Requirements
+
+- Hash all gift card codes
+- Rate-limit redemption attempts
+- Prevent brute force
+- All balance logic server-side
+- Full audit log of balance changes
+- Idempotent Stripe webhooks
+
+---
+
+## 10. Business Rules
+
+- Gift cards are treated as cash
+- Non-refundable once redeemed
+- Refund allowed only if:
+  - Balance = 100%
+  - Delivery not completed
+- Default expiration: 12 months (configurable)
+
+---
+
+## 11. Deliverables
+
+- Gift card product type
+- Secure code generation
+- Stripe integration
+- Redemption logic
+- Email templates
+- PDF generation
+- Admin UI
+- Database migrations
+- Basic tests
+
+---
+
+## Notes for Replit
+- Stripe handles payments only
+- Gift card balances are app-managed
+- System must support partial redemptions
+- Design must be mobile-first

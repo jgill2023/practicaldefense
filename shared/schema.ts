@@ -2565,3 +2565,262 @@ export const insertGoogleCalendarCredentialsSchema = createInsertSchema(googleCa
 // Types for Google Calendar credentials
 export type InsertGoogleCalendarCredentials = z.infer<typeof insertGoogleCalendarCredentialsSchema>;
 export type GoogleCalendarCredentials = typeof googleCalendarCredentials.$inferSelect;
+
+// ============================================
+// GIFT CARD SYSTEM
+// ============================================
+
+// Gift card status enum
+export const giftCardStatusEnum = pgEnum("gift_card_status", [
+  "active",
+  "partially_used",
+  "redeemed",
+  "expired",
+  "voided"
+]);
+
+// Gift card delivery method enum
+export const giftCardDeliveryMethodEnum = pgEnum("gift_card_delivery_method", [
+  "email",
+  "download"
+]);
+
+// Gift card delivery status enum
+export const giftCardDeliveryStatusEnum = pgEnum("gift_card_delivery_status", [
+  "pending",
+  "sent",
+  "failed"
+]);
+
+// Gift card themes table - visual styles for gift cards
+export const giftCardThemes = pgTable("gift_card_themes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull(),
+  previewImageUrl: varchar("preview_image_url", { length: 500 }),
+  backgroundImageUrl: varchar("background_image_url", { length: 500 }),
+  accentColor: varchar("accent_color", { length: 7 }).default('#3b82f6'), // Hex color
+  fontFamily: varchar("font_family", { length: 100 }).default('Inter'),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Gift cards table - main gift card records
+export const giftCards = pgTable("gift_cards", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  hashedCode: varchar("hashed_code", { length: 255 }).notNull(), // bcrypt hashed code
+  last4: varchar("last_4", { length: 4 }).notNull(), // Last 4 characters for admin reference
+  initialValue: decimal("initial_value", { precision: 10, scale: 2 }).notNull(),
+  remainingBalance: decimal("remaining_balance", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).notNull().default('USD'),
+  status: giftCardStatusEnum("status").notNull().default("active"),
+  expirationDate: timestamp("expiration_date").notNull(),
+  themeId: uuid("theme_id").references(() => giftCardThemes.id),
+  deliveryMethod: giftCardDeliveryMethodEnum("delivery_method").notNull(),
+  deliveryStatus: giftCardDeliveryStatusEnum("delivery_status").notNull().default("pending"),
+  scheduledDeliveryDate: timestamp("scheduled_delivery_date"), // Optional scheduled delivery
+  purchaserEmail: varchar("purchaser_email", { length: 255 }).notNull(),
+  purchaserName: varchar("purchaser_name", { length: 255 }),
+  recipientEmail: varchar("recipient_email", { length: 255 }), // Required for email delivery
+  recipientName: varchar("recipient_name", { length: 255 }),
+  personalMessage: text("personal_message"),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+  orderId: varchar("order_id").references(() => ecommerceOrders.id), // Link to e-commerce order if applicable
+  isManuallyIssued: boolean("is_manually_issued").notNull().default(false), // Admin-issued cards
+  issuedByUserId: varchar("issued_by_user_id").references(() => users.id), // Admin who issued
+  voidedAt: timestamp("voided_at"),
+  voidedByUserId: varchar("voided_by_user_id").references(() => users.id),
+  voidReason: text("void_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Gift card redemptions table - tracks each use of a gift card
+export const giftCardRedemptions = pgTable("gift_card_redemptions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  giftCardId: uuid("gift_card_id").notNull().references(() => giftCards.id),
+  orderId: varchar("order_id").references(() => ecommerceOrders.id), // E-commerce order
+  enrollmentId: uuid("enrollment_id").references(() => enrollments.id), // Course enrollment
+  appointmentId: uuid("appointment_id").references(() => instructorAppointments.id), // Appointment booking
+  amountApplied: decimal("amount_applied", { precision: 10, scale: 2 }).notNull(),
+  remainingBalanceAfter: decimal("remaining_balance_after", { precision: 10, scale: 2 }).notNull(),
+  userId: varchar("user_id").references(() => users.id), // User who redeemed
+  redeemedAt: timestamp("redeemed_at").defaultNow(),
+});
+
+// Gift card balance adjustments for admin audit trail
+export const giftCardBalanceAdjustments = pgTable("gift_card_balance_adjustments", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  giftCardId: uuid("gift_card_id").notNull().references(() => giftCards.id),
+  previousBalance: decimal("previous_balance", { precision: 10, scale: 2 }).notNull(),
+  newBalance: decimal("new_balance", { precision: 10, scale: 2 }).notNull(),
+  adjustmentAmount: decimal("adjustment_amount", { precision: 10, scale: 2 }).notNull(),
+  reason: text("reason").notNull(),
+  adjustedByUserId: varchar("adjusted_by_user_id").notNull().references(() => users.id),
+  adjustedAt: timestamp("adjusted_at").defaultNow(),
+});
+
+// Gift card validation attempts for rate limiting and security
+export const giftCardValidationAttempts = pgTable("gift_card_validation_attempts", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userId: varchar("user_id").references(() => users.id),
+  attemptedCode: varchar("attempted_code", { length: 50 }), // Partial code for logging (not full)
+  wasSuccessful: boolean("was_successful").notNull(),
+  failureReason: varchar("failure_reason", { length: 100 }),
+  attemptedAt: timestamp("attempted_at").defaultNow(),
+});
+
+// Relations for gift cards
+export const giftCardThemesRelations = relations(giftCardThemes, ({ many }) => ({
+  giftCards: many(giftCards),
+}));
+
+export const giftCardsRelations = relations(giftCards, ({ one, many }) => ({
+  theme: one(giftCardThemes, {
+    fields: [giftCards.themeId],
+    references: [giftCardThemes.id],
+  }),
+  order: one(ecommerceOrders, {
+    fields: [giftCards.orderId],
+    references: [ecommerceOrders.id],
+  }),
+  issuedBy: one(users, {
+    fields: [giftCards.issuedByUserId],
+    references: [users.id],
+    relationName: "giftCardIssuedBy",
+  }),
+  voidedBy: one(users, {
+    fields: [giftCards.voidedByUserId],
+    references: [users.id],
+    relationName: "giftCardVoidedBy",
+  }),
+  redemptions: many(giftCardRedemptions),
+  balanceAdjustments: many(giftCardBalanceAdjustments),
+}));
+
+export const giftCardRedemptionsRelations = relations(giftCardRedemptions, ({ one }) => ({
+  giftCard: one(giftCards, {
+    fields: [giftCardRedemptions.giftCardId],
+    references: [giftCards.id],
+  }),
+  order: one(ecommerceOrders, {
+    fields: [giftCardRedemptions.orderId],
+    references: [ecommerceOrders.id],
+  }),
+  enrollment: one(enrollments, {
+    fields: [giftCardRedemptions.enrollmentId],
+    references: [enrollments.id],
+  }),
+  appointment: one(instructorAppointments, {
+    fields: [giftCardRedemptions.appointmentId],
+    references: [instructorAppointments.id],
+  }),
+  user: one(users, {
+    fields: [giftCardRedemptions.userId],
+    references: [users.id],
+  }),
+}));
+
+export const giftCardBalanceAdjustmentsRelations = relations(giftCardBalanceAdjustments, ({ one }) => ({
+  giftCard: one(giftCards, {
+    fields: [giftCardBalanceAdjustments.giftCardId],
+    references: [giftCards.id],
+  }),
+  adjustedBy: one(users, {
+    fields: [giftCardBalanceAdjustments.adjustedByUserId],
+    references: [users.id],
+  }),
+}));
+
+// Insert schemas for gift cards
+export const insertGiftCardThemeSchema = createInsertSchema(giftCardThemes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertGiftCardSchema = createInsertSchema(giftCards).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertGiftCardRedemptionSchema = createInsertSchema(giftCardRedemptions).omit({
+  id: true,
+  redeemedAt: true,
+});
+
+export const insertGiftCardBalanceAdjustmentSchema = createInsertSchema(giftCardBalanceAdjustments).omit({
+  id: true,
+  adjustedAt: true,
+});
+
+export const insertGiftCardValidationAttemptSchema = createInsertSchema(giftCardValidationAttempts).omit({
+  id: true,
+  attemptedAt: true,
+});
+
+// Types for gift cards
+export type InsertGiftCardTheme = z.infer<typeof insertGiftCardThemeSchema>;
+export type GiftCardTheme = typeof giftCardThemes.$inferSelect;
+
+export type InsertGiftCard = z.infer<typeof insertGiftCardSchema>;
+export type GiftCard = typeof giftCards.$inferSelect;
+
+export type InsertGiftCardRedemption = z.infer<typeof insertGiftCardRedemptionSchema>;
+export type GiftCardRedemption = typeof giftCardRedemptions.$inferSelect;
+
+export type InsertGiftCardBalanceAdjustment = z.infer<typeof insertGiftCardBalanceAdjustmentSchema>;
+export type GiftCardBalanceAdjustment = typeof giftCardBalanceAdjustments.$inferSelect;
+
+export type InsertGiftCardValidationAttempt = z.infer<typeof insertGiftCardValidationAttemptSchema>;
+export type GiftCardValidationAttempt = typeof giftCardValidationAttempts.$inferSelect;
+
+// Extended types with relations
+export type GiftCardWithDetails = GiftCard & {
+  theme?: GiftCardTheme;
+  redemptions?: GiftCardRedemption[];
+  balanceAdjustments?: GiftCardBalanceAdjustment[];
+  issuedBy?: User;
+  voidedBy?: User;
+};
+
+export type GiftCardRedemptionWithDetails = GiftCardRedemption & {
+  giftCard?: GiftCard;
+  user?: User;
+};
+
+// Gift card status type
+export type GiftCardStatus = 'active' | 'partially_used' | 'redeemed' | 'expired' | 'voided';
+
+// Gift card delivery method type
+export type GiftCardDeliveryMethod = 'email' | 'download';
+
+// Gift card delivery status type
+export type GiftCardDeliveryStatus = 'pending' | 'sent' | 'failed';
+
+// Gift card purchase request schema (for API validation)
+export const giftCardPurchaseRequestSchema = z.object({
+  amount: z.number().min(10).max(500),
+  themeId: z.string().uuid(),
+  deliveryMethod: z.enum(['email', 'download']),
+  purchaserEmail: z.string().email(),
+  purchaserName: z.string().min(1).max(255),
+  recipientEmail: z.string().email().optional(),
+  recipientName: z.string().min(1).max(255).optional(),
+  personalMessage: z.string().max(500).optional(),
+  scheduledDeliveryDate: z.string().datetime().optional(),
+});
+
+export type GiftCardPurchaseRequest = z.infer<typeof giftCardPurchaseRequestSchema>;
+
+// Gift card validation result type
+export type GiftCardValidationResult = {
+  isValid: boolean;
+  giftCard?: GiftCard;
+  errorCode?: 'NOT_FOUND' | 'EXPIRED' | 'VOIDED' | 'NO_BALANCE' | 'RATE_LIMITED';
+  errorMessage?: string;
+  remainingBalance?: number;
+};

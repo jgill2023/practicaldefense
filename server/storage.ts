@@ -166,6 +166,25 @@ import {
   googleCalendarCredentials,
   type GoogleCalendarCredentials,
   type InsertGoogleCalendarCredentials,
+  // Gift card system imports
+  giftCardThemes,
+  giftCards,
+  giftCardRedemptions,
+  giftCardBalanceAdjustments,
+  giftCardValidationAttempts,
+  type GiftCardTheme,
+  type InsertGiftCardTheme,
+  type GiftCard,
+  type InsertGiftCard,
+  type GiftCardRedemption,
+  type InsertGiftCardRedemption,
+  type GiftCardBalanceAdjustment,
+  type InsertGiftCardBalanceAdjustment,
+  type GiftCardValidationAttempt,
+  type InsertGiftCardValidationAttempt,
+  type GiftCardWithDetails,
+  type GiftCardRedemptionWithDetails,
+  type GiftCardValidationResult,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne, inArray, notInArray } from "drizzle-orm";
@@ -716,6 +735,41 @@ export interface IStorage {
   // Credit transaction history
   getCreditTransactions(instructorId: string, limit?: number): Promise<CreditTransactionWithDetails[]>;
   getCreditTransaction(id: string): Promise<CreditTransactionWithDetails | undefined>;
+
+  // ============================================
+  // GIFT CARD SYSTEM METHODS
+  // ============================================
+
+  // Gift card theme operations
+  createGiftCardTheme(theme: InsertGiftCardTheme): Promise<GiftCardTheme>;
+  updateGiftCardTheme(id: string, theme: Partial<InsertGiftCardTheme>): Promise<GiftCardTheme>;
+  deleteGiftCardTheme(id: string): Promise<void>;
+  getGiftCardTheme(id: string): Promise<GiftCardTheme | undefined>;
+  getGiftCardThemes(): Promise<GiftCardTheme[]>;
+  getActiveGiftCardThemes(): Promise<GiftCardTheme[]>;
+
+  // Gift card operations
+  createGiftCard(giftCard: InsertGiftCard): Promise<GiftCard>;
+  updateGiftCard(id: string, giftCard: Partial<InsertGiftCard>): Promise<GiftCard>;
+  getGiftCard(id: string): Promise<GiftCardWithDetails | undefined>;
+  getGiftCardByCodeHash(codeHash: string): Promise<GiftCard | undefined>;
+  getGiftCardByLast4(last4: string): Promise<GiftCardWithDetails[]>;
+  getGiftCards(filters?: { status?: string; issuedByUserId?: string }): Promise<GiftCardWithDetails[]>;
+  voidGiftCard(id: string, voidedByUserId: string, reason: string): Promise<GiftCard>;
+
+  // Gift card redemption operations
+  createGiftCardRedemption(redemption: InsertGiftCardRedemption): Promise<GiftCardRedemption>;
+  getGiftCardRedemptions(giftCardId: string): Promise<GiftCardRedemptionWithDetails[]>;
+  getGiftCardRedemptionsByUser(userId: string): Promise<GiftCardRedemptionWithDetails[]>;
+
+  // Gift card balance adjustment operations (admin audit trail)
+  createGiftCardBalanceAdjustment(adjustment: InsertGiftCardBalanceAdjustment): Promise<GiftCardBalanceAdjustment>;
+  getGiftCardBalanceAdjustments(giftCardId: string): Promise<GiftCardBalanceAdjustment[]>;
+
+  // Gift card validation attempt operations (rate limiting/security)
+  createGiftCardValidationAttempt(attempt: InsertGiftCardValidationAttempt): Promise<GiftCardValidationAttempt>;
+  getRecentValidationAttempts(ipAddress: string, minutes: number): Promise<GiftCardValidationAttempt[]>;
+  getRecentValidationAttemptsBySession(sessionId: string, minutes: number): Promise<GiftCardValidationAttempt[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -6738,6 +6792,209 @@ export class DatabaseStorage implements IStorage {
     });
 
     return transaction as CreditTransactionWithDetails | undefined;
+  }
+
+  // ============================================
+  // GIFT CARD SYSTEM IMPLEMENTATIONS
+  // ============================================
+
+  // Gift card theme operations
+  async createGiftCardTheme(theme: InsertGiftCardTheme): Promise<GiftCardTheme> {
+    const [created] = await db.insert(giftCardThemes).values(theme).returning();
+    return created;
+  }
+
+  async updateGiftCardTheme(id: string, theme: Partial<InsertGiftCardTheme>): Promise<GiftCardTheme> {
+    const [updated] = await db
+      .update(giftCardThemes)
+      .set({ ...theme, updatedAt: new Date() })
+      .where(eq(giftCardThemes.id, id))
+      .returning();
+    if (!updated) throw new Error('Gift card theme not found');
+    return updated;
+  }
+
+  async deleteGiftCardTheme(id: string): Promise<void> {
+    await db.delete(giftCardThemes).where(eq(giftCardThemes.id, id));
+  }
+
+  async getGiftCardTheme(id: string): Promise<GiftCardTheme | undefined> {
+    const [theme] = await db.select().from(giftCardThemes).where(eq(giftCardThemes.id, id));
+    return theme;
+  }
+
+  async getGiftCardThemes(): Promise<GiftCardTheme[]> {
+    return db.select().from(giftCardThemes).orderBy(asc(giftCardThemes.sortOrder));
+  }
+
+  async getActiveGiftCardThemes(): Promise<GiftCardTheme[]> {
+    return db
+      .select()
+      .from(giftCardThemes)
+      .where(eq(giftCardThemes.isActive, true))
+      .orderBy(asc(giftCardThemes.sortOrder));
+  }
+
+  // Gift card operations
+  async createGiftCard(giftCard: InsertGiftCard): Promise<GiftCard> {
+    const [created] = await db.insert(giftCards).values(giftCard).returning();
+    return created;
+  }
+
+  async updateGiftCard(id: string, giftCard: Partial<InsertGiftCard>): Promise<GiftCard> {
+    const [updated] = await db
+      .update(giftCards)
+      .set({ ...giftCard, updatedAt: new Date() })
+      .where(eq(giftCards.id, id))
+      .returning();
+    if (!updated) throw new Error('Gift card not found');
+    return updated;
+  }
+
+  async getGiftCard(id: string): Promise<GiftCardWithDetails | undefined> {
+    const giftCard = await db.query.giftCards.findFirst({
+      where: eq(giftCards.id, id),
+      with: {
+        theme: true,
+        redemptions: true,
+        balanceAdjustments: true,
+        issuedBy: true,
+        voidedBy: true,
+      },
+    });
+    return giftCard as GiftCardWithDetails | undefined;
+  }
+
+  async getGiftCardByCodeHash(codeHash: string): Promise<GiftCard | undefined> {
+    const [giftCard] = await db.select().from(giftCards).where(eq(giftCards.codeHash, codeHash));
+    return giftCard;
+  }
+
+  async getGiftCardByLast4(last4: string): Promise<GiftCardWithDetails[]> {
+    const cards = await db.query.giftCards.findMany({
+      where: eq(giftCards.codeLast4, last4),
+      with: {
+        theme: true,
+        redemptions: true,
+        balanceAdjustments: true,
+        issuedBy: true,
+        voidedBy: true,
+      },
+    });
+    return cards as GiftCardWithDetails[];
+  }
+
+  async getGiftCards(filters?: { status?: string; issuedByUserId?: string }): Promise<GiftCardWithDetails[]> {
+    const conditions = [];
+    if (filters?.status) {
+      conditions.push(eq(giftCards.status, filters.status as any));
+    }
+    if (filters?.issuedByUserId) {
+      conditions.push(eq(giftCards.issuedByUserId, filters.issuedByUserId));
+    }
+
+    const cards = await db.query.giftCards.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      with: {
+        theme: true,
+        redemptions: true,
+        balanceAdjustments: true,
+        issuedBy: true,
+        voidedBy: true,
+      },
+      orderBy: [desc(giftCards.createdAt)],
+    });
+    return cards as GiftCardWithDetails[];
+  }
+
+  async voidGiftCard(id: string, voidedByUserId: string, reason: string): Promise<GiftCard> {
+    const [voided] = await db
+      .update(giftCards)
+      .set({
+        status: 'voided',
+        voidedByUserId,
+        voidedAt: new Date(),
+        voidReason: reason,
+        updatedAt: new Date(),
+      })
+      .where(eq(giftCards.id, id))
+      .returning();
+    if (!voided) throw new Error('Gift card not found');
+    return voided;
+  }
+
+  // Gift card redemption operations
+  async createGiftCardRedemption(redemption: InsertGiftCardRedemption): Promise<GiftCardRedemption> {
+    const [created] = await db.insert(giftCardRedemptions).values(redemption).returning();
+    return created;
+  }
+
+  async getGiftCardRedemptions(giftCardId: string): Promise<GiftCardRedemptionWithDetails[]> {
+    const redemptions = await db.query.giftCardRedemptions.findMany({
+      where: eq(giftCardRedemptions.giftCardId, giftCardId),
+      with: {
+        giftCard: true,
+        user: true,
+      },
+      orderBy: [desc(giftCardRedemptions.redeemedAt)],
+    });
+    return redemptions as GiftCardRedemptionWithDetails[];
+  }
+
+  async getGiftCardRedemptionsByUser(userId: string): Promise<GiftCardRedemptionWithDetails[]> {
+    const redemptions = await db.query.giftCardRedemptions.findMany({
+      where: eq(giftCardRedemptions.userId, userId),
+      with: {
+        giftCard: true,
+        user: true,
+      },
+      orderBy: [desc(giftCardRedemptions.redeemedAt)],
+    });
+    return redemptions as GiftCardRedemptionWithDetails[];
+  }
+
+  // Gift card balance adjustment operations
+  async createGiftCardBalanceAdjustment(adjustment: InsertGiftCardBalanceAdjustment): Promise<GiftCardBalanceAdjustment> {
+    const [created] = await db.insert(giftCardBalanceAdjustments).values(adjustment).returning();
+    return created;
+  }
+
+  async getGiftCardBalanceAdjustments(giftCardId: string): Promise<GiftCardBalanceAdjustment[]> {
+    return db
+      .select()
+      .from(giftCardBalanceAdjustments)
+      .where(eq(giftCardBalanceAdjustments.giftCardId, giftCardId))
+      .orderBy(desc(giftCardBalanceAdjustments.adjustedAt));
+  }
+
+  // Gift card validation attempt operations
+  async createGiftCardValidationAttempt(attempt: InsertGiftCardValidationAttempt): Promise<GiftCardValidationAttempt> {
+    const [created] = await db.insert(giftCardValidationAttempts).values(attempt).returning();
+    return created;
+  }
+
+  async getRecentValidationAttempts(ipAddress: string, minutes: number): Promise<GiftCardValidationAttempt[]> {
+    const cutoffTime = new Date(Date.now() - minutes * 60 * 1000);
+    return db
+      .select()
+      .from(giftCardValidationAttempts)
+      .where(and(
+        eq(giftCardValidationAttempts.ipAddress, ipAddress),
+        gte(giftCardValidationAttempts.attemptedAt, cutoffTime)
+      ))
+      .orderBy(desc(giftCardValidationAttempts.attemptedAt));
+  }
+
+  async getRecentValidationAttemptsBySession(sessionId: string, minutes: number): Promise<GiftCardValidationAttempt[]> {
+    const cutoffTime = new Date(Date.now() - minutes * 60 * 1000);
+    return db
+      .select()
+      .from(giftCardValidationAttempts)
+      .where(and(
+        eq(giftCardValidationAttempts.sessionId, sessionId),
+        gte(giftCardValidationAttempts.attemptedAt, cutoffTime)
+      ))
+      .orderBy(desc(giftCardValidationAttempts.attemptedAt));
   }
 }
 

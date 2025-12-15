@@ -26,23 +26,34 @@ import { PolicyModal } from "@/components/PolicyModal";
 const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : null;
 
-const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: any; confirmEnrollmentMutation: any }) => {
+interface CheckoutFormProps {
+  enrollment: any;
+  confirmEnrollmentMutation: any;
+  giftCardApplied?: {
+    giftCardId: string;
+    amountToApply: number;
+    remainingBalance: number;
+    amountLeft: number;
+    code: string;
+  } | null;
+  taxInfo?: {
+    subtotal: number;
+    tax: number;
+    total: number;
+  } | null;
+}
+
+const CheckoutForm = ({ enrollment, confirmEnrollmentMutation, giftCardApplied, taxInfo }: CheckoutFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Calculate the payment amount based on the payment option
-  const getPaymentAmount = (enrollment: any) => {
-    if (!enrollment) return 0;
-
-    const coursePrice = parseFloat(enrollment.course.price);
-    const depositAmount = enrollment.course.depositAmount ? parseFloat(enrollment.course.depositAmount) : null;
-
-    if (enrollment.paymentOption === 'deposit' && depositAmount) {
-      return depositAmount;
-    }
-    return coursePrice;
+  // Calculate the payment amount after gift card
+  const getPaymentAmount = () => {
+    const baseAmount = taxInfo?.total ?? 0;
+    const giftCardAmount = giftCardApplied?.amountToApply ?? 0;
+    return Math.max(0, baseAmount - giftCardAmount);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,32 +65,73 @@ const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: a
 
     setIsProcessing(true);
 
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      redirect: 'if_required',
-    });
+    try {
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        redirect: 'if_required',
+      });
 
-    if (error) {
+      if (error) {
+        toast({
+          title: "Payment Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
+      }
+
+      if (paymentIntent && paymentIntent.status === 'succeeded') {
+        // If there's a gift card applied, redeem it first
+        if (giftCardApplied) {
+          try {
+            await apiRequest("POST", "/api/gift-cards/redeem", {
+              giftCardId: giftCardApplied.giftCardId,
+              amount: giftCardApplied.amountToApply,
+              enrollmentId: enrollment.id,
+            });
+          } catch (redeemError: any) {
+            console.error("Gift card redemption failed:", redeemError);
+            // Continue with enrollment confirmation even if gift card redemption fails
+            // The payment has already been processed
+          }
+        }
+
+        // Confirm the enrollment on our backend
+        confirmEnrollmentMutation.mutate({
+          enrollmentId: enrollment.id,
+          paymentIntentId: paymentIntent.id,
+        });
+      }
+    } catch (err) {
       toast({
         title: "Payment Failed",
-        description: error.message,
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setIsProcessing(false);
-    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-      // Confirm the enrollment on our backend
-      confirmEnrollmentMutation.mutate({
-        enrollmentId: enrollment.id,
-        paymentIntentId: paymentIntent.id,
-      });
     }
-
-    setIsProcessing(false);
   };
+
+  const displayAmount = getPaymentAmount();
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <PaymentElement />
+
+      {giftCardApplied && (
+        <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-sm">
+          <div className="flex justify-between text-purple-700 dark:text-purple-300">
+            <span>Gift Card Credit:</span>
+            <span>-${giftCardApplied.amountToApply.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between font-semibold mt-1">
+            <span>Amount to charge:</span>
+            <span>${displayAmount.toFixed(2)}</span>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center space-x-2 text-sm text-success">
         <Shield className="h-4 w-4" />
@@ -101,7 +153,7 @@ const CheckoutForm = ({ enrollment, confirmEnrollmentMutation }: { enrollment: a
         ) : (
           <>
             <CreditCard className="mr-2 h-4 w-4" />
-            Complete Payment - ${getPaymentAmount(enrollment)}
+            Complete Payment - ${displayAmount.toFixed(2)}
           </>
         )}
       </Button>
@@ -127,6 +179,18 @@ export default function CourseRegistration() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [currentEnrollment, setCurrentEnrollment] = useState<any>(null);
   const [isDraftCreated, setIsDraftCreated] = useState(false);
+
+  // Gift Card state
+  const [giftCardCode, setGiftCardCode] = useState("");
+  const [giftCardApplied, setGiftCardApplied] = useState<{
+    giftCardId: string;
+    amountToApply: number;
+    remainingBalance: number;
+    amountLeft: number;
+    code: string;
+  } | null>(null);
+  const [isValidatingGiftCard, setIsValidatingGiftCard] = useState(false);
+  const [giftCardError, setGiftCardError] = useState<string | null>(null);
 
   // State for policy modals
   const [policyModalOpen, setPolicyModalOpen] = useState<'terms' | 'privacy' | 'refund' | null>(null);
@@ -279,6 +343,83 @@ export default function CourseRegistration() {
         paymentOption: formData.paymentOption,
       });
     }
+  };
+
+  // Calculate the amount that would need to be paid (after promo and gift card)
+  const getAmountAfterDiscounts = () => {
+    const baseAmount = taxInfo?.total ?? 0;
+    const giftCardAmount = giftCardApplied?.amountToApply ?? 0;
+    return Math.max(0, baseAmount - giftCardAmount);
+  };
+
+  const validateAndApplyGiftCard = async () => {
+    if (!giftCardCode.trim() || !taxInfo) return;
+
+    setIsValidatingGiftCard(true);
+    setGiftCardError(null);
+
+    try {
+      const amountNeeded = taxInfo.total - (giftCardApplied?.amountToApply ?? 0);
+      
+      const result = await apiRequest("POST", "/api/gift-cards/apply", {
+        code: giftCardCode.trim().toUpperCase(),
+        amount: amountNeeded,
+      });
+
+      if (!result.isValid) {
+        setGiftCardError(result.error || "Invalid gift card code");
+        toast({
+          title: "Invalid Gift Card",
+          description: result.error || "Please check your code and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setGiftCardApplied({
+        giftCardId: result.giftCardId,
+        amountToApply: result.amountToApply,
+        remainingBalance: result.remainingBalance,
+        amountLeft: result.amountLeft || (result.remainingBalance - result.amountToApply),
+        code: giftCardCode.trim().toUpperCase(),
+      });
+      setGiftCardCode("");
+      
+      toast({
+        title: "Gift Card Applied!",
+        description: `$${result.amountToApply.toFixed(2)} will be applied to your order.`,
+      });
+
+      // If gift card covers the full amount, we may not need Stripe
+      const remainingToPay = taxInfo.total - result.amountToApply;
+      if (remainingToPay <= 0) {
+        // Gift card covers everything - no need for payment intent
+        setClientSecret("");
+      } else if (currentEnrollment && remainingToPay !== taxInfo.total) {
+        // Need to update payment intent with reduced amount
+        // For now, we'll handle this at confirmation time
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || "Failed to validate gift card";
+      setGiftCardError(errorMessage);
+      toast({
+        title: "Validation Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidatingGiftCard(false);
+    }
+  };
+
+  const removeGiftCard = () => {
+    setGiftCardApplied(null);
+    setGiftCardCode("");
+    setGiftCardError(null);
+    toast({
+      title: "Gift Card Removed",
+      description: "The gift card has been removed from your order.",
+    });
   };
 
   // Create draft enrollment when schedule is selected and form is valid
@@ -951,6 +1092,187 @@ export default function CourseRegistration() {
                 </CardContent>
               </Card>
 
+              {/* Gift Card Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    Gift Card
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Have a gift card? Enter the code below to apply it to your order.
+                  </p>
+
+                  {!giftCardApplied ? (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter gift card code (e.g., GC-XXXX-XXXX-XXXX)"
+                        value={giftCardCode}
+                        onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === 'Enter' && validateAndApplyGiftCard()}
+                        className="flex-1"
+                        data-testid="input-gift-card-code"
+                      />
+                      <Button 
+                        onClick={validateAndApplyGiftCard}
+                        disabled={!giftCardCode.trim() || isValidatingGiftCard || !taxInfo}
+                        size="sm"
+                        data-testid="button-apply-gift-card"
+                      >
+                        {isValidatingGiftCard ? "Checking..." : "Apply"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 p-3 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4" />
+                        <span className="text-sm font-medium" data-testid="text-applied-gift-card">
+                          Gift Card Applied
+                        </span>
+                        <span className="text-sm">
+                          - ${giftCardApplied.amountToApply.toFixed(2)} credit
+                        </span>
+                      </div>
+                      <Button 
+                        onClick={removeGiftCard}
+                        variant="ghost" 
+                        size="sm"
+                        className="h-auto p-1 text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100"
+                        data-testid="button-remove-gift-card"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {giftCardError && (
+                    <div className="text-red-600 text-sm mt-1" data-testid="text-gift-card-error">
+                      {giftCardError}
+                    </div>
+                  )}
+
+                  {giftCardApplied && giftCardApplied.amountLeft > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      Remaining gift card balance after purchase: ${giftCardApplied.amountLeft.toFixed(2)}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Updated Order Summary with Gift Card */}
+              {giftCardApplied && taxInfo && (
+                <Card className="border-purple-200 dark:border-purple-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Updated Order Total</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Subtotal</span>
+                        <span>${taxInfo.subtotal.toFixed(2)}</span>
+                      </div>
+                      {taxInfo.discountAmount && taxInfo.discountAmount > 0 && (
+                        <div className="flex justify-between text-sm text-green-600">
+                          <span>Promo Discount</span>
+                          <span>-${taxInfo.discountAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {taxInfo.tax > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span>Tax</span>
+                          <span>${taxInfo.tax.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm text-purple-600 dark:text-purple-400">
+                        <span>Gift Card Credit</span>
+                        <span>-${giftCardApplied.amountToApply.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-semibold text-lg mt-2 pt-2 border-t">
+                        <span>Amount Due</span>
+                        <span data-testid="text-amount-after-gift-card">
+                          ${getAmountAfterDiscounts().toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Gift Card Covers Full Amount */}
+              {giftCardApplied && getAmountAfterDiscounts() <= 0 && (
+                <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-purple-600 dark:text-purple-400">
+                      <Check className="mr-2 h-5 w-5" />
+                      Gift Card Covers Full Amount
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <p className="text-muted-foreground">
+                        Your gift card covers the full cost of this course. Click below to complete your registration.
+                      </p>
+                      <Button
+                        onClick={async () => {
+                          if (!formData.agreeToTerms) {
+                            toast({
+                              title: "Terms Required",
+                              description: "Please agree to the terms and conditions.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          
+                          try {
+                            // Redeem the gift card first
+                            await apiRequest("POST", "/api/gift-cards/redeem", {
+                              giftCardId: giftCardApplied.giftCardId,
+                              amount: giftCardApplied.amountToApply,
+                              enrollmentId: currentEnrollment.id,
+                            });
+                            
+                            // Then confirm the enrollment
+                            confirmEnrollmentMutation.mutate({
+                              enrollmentId: currentEnrollment.id,
+                              paymentIntentId: 'gift-card-payment',
+                              studentInfo: {
+                                firstName: formData.firstName,
+                                lastName: formData.lastName,
+                                email: formData.email,
+                              }
+                            });
+                          } catch (error: any) {
+                            toast({
+                              title: "Payment Failed",
+                              description: error.message || "Failed to process gift card payment",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        disabled={confirmEnrollmentMutation.isPending || !formData.agreeToTerms}
+                        size="lg"
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                        data-testid="button-complete-gift-card-registration"
+                      >
+                        {confirmEnrollmentMutation.isPending ? (
+                          <>
+                            <div className="animate-spin w-4 h-4 border-2 border-transparent border-t-current rounded-full mr-2" />
+                            Completing Registration...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Complete Registration with Gift Card
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Free Enrollment - No payment required */}
               {taxInfo && taxInfo.total === 0 ? (
                 <Card>
@@ -1034,7 +1356,12 @@ export default function CourseRegistration() {
                           }
                         }}
                       >
-                        <CheckoutForm enrollment={currentEnrollment} confirmEnrollmentMutation={confirmEnrollmentMutation} />
+                        <CheckoutForm 
+                          enrollment={currentEnrollment} 
+                          confirmEnrollmentMutation={confirmEnrollmentMutation}
+                          giftCardApplied={giftCardApplied}
+                          taxInfo={taxInfo}
+                        />
                       </Elements>
                     )}
                   </CardContent>

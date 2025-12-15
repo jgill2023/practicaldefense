@@ -41,6 +41,8 @@ import StripeConnectPage from "@/pages/stripe-connect";
 import SettingsPage from "@/pages/settings";
 import StudentResources from "@/pages/student-resources";
 import MerchStore from "@/pages/store";
+import GiftCardsPage from "@/pages/gift-cards";
+import GiftCardManagement from "@/pages/gift-card-management";
 import NotFound from "@/pages/not-found";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -157,6 +159,8 @@ function Router() {
       <Route path="/students" component={StudentsPage} />
       <Route path="/student-resources" component={StudentResources} />
       <Route path="/merch" component={MerchStore} />
+      <Route path="/gift-cards" component={GiftCardsPage} />
+      <Route path="/gift-card-management" component={GiftCardManagement} />
       <Route component={NotFound} />
     </Switch>
   );
