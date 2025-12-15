@@ -337,10 +337,9 @@ export default function RACCProgram() {
                       <Button
                         onClick={() => handleEnrollNow(pkg)}
                         disabled={isAddingToCart}
-                        className="w-full bg-[hsl(209,90%,38%)] hover:bg-[hsl(209,90%,35%)] text-white font-semibold text-sm"
+                        className="w-full bg-[hsl(209,90%,38%)] hover:bg-[#FD66C5] text-white font-semibold text-xs"
                         data-testid={`button-enroll-${pkg.name.replace(/\s+/g, '-').toLowerCase()}-top`}
                       >
-                        <ShoppingCart className="w-4 h-4 mr-2" />
                         Enroll Now
                       </Button>
                     </td>
@@ -567,10 +566,9 @@ export default function RACCProgram() {
                       <Button
                         onClick={() => handleEnrollNow(pkg)}
                         disabled={isAddingToCart}
-                        className="w-full bg-[hsl(209,90%,38%)] hover:bg-[hsl(209,90%,35%)] text-white font-semibold text-sm"
+                        className="w-full bg-[hsl(209,90%,38%)] hover:bg-[#FD66C5] text-white font-semibold text-xs"
                         data-testid={`button-enroll-${pkg.name.replace(/\s+/g, '-').toLowerCase()}-bottom`}
                       >
-                        <ShoppingCart className="w-4 h-4 mr-2" />
                         Enroll Now
                       </Button>
                     </td>
