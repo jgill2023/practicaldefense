@@ -50,7 +50,7 @@ export default function RACCProgram() {
             How RACC Works
           </TitleCard>
 
-          <p className="text-base leading-relaxed text-foreground mb-8">
+          <p className="text-base leading-relaxed text-foreground mb-8 pt-[12px] pb-[12px]">
             You book flexible 1–2 hour private sessions any day of the week—mornings before work, evenings after kids' practice, or weekends—whatever fits your life. A dedicated professional trainer works exclusively with you, starting with a goal-setting conversation: "What do you want to achieve—safe home defense, confident carry, or stress-free range days?" From there, RACC unfolds in four clear phases:
           </p>
 
