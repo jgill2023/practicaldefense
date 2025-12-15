@@ -690,6 +690,8 @@ function DraggablePositionEditor({
     if (!containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    
     const deltaXPercent = (delta.x / rect.width) * 100;
     const deltaYPercent = (delta.y / rect.height) * 100;
 
@@ -737,47 +739,49 @@ function DraggablePositionEditor({
           Drag text boxes to position them on the gift card
         </div>
         <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToParentElement]}>
-          <div
-            ref={containerRef}
-            className="relative aspect-[3/2] w-full"
-            style={{
-              backgroundColor: accentColor || '#3b82f6',
-              backgroundImage: previewImageUrl ? `url(${previewImageUrl})` : undefined,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-            data-testid="drag-canvas"
-          >
-            <div 
-              className="absolute inset-0 flex items-center justify-center pointer-events-none"
-              style={{ opacity: previewImageUrl ? 0 : 0.3 }}
+          <div className="relative w-full" style={{ paddingBottom: '66.67%' }}>
+            <div
+              ref={containerRef}
+              className="absolute inset-0"
+              style={{
+                backgroundColor: accentColor || '#3b82f6',
+                backgroundImage: previewImageUrl ? `url(${previewImageUrl})` : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+              data-testid="drag-canvas"
             >
-              <Gift className="w-16 h-16 text-white" />
-            </div>
-            
-            <div onClick={() => setSelectedField('recipient')}>
-              <DraggableTextBox
-                id="recipient"
-                label="Recipient Name"
-                position={recipient}
-                containerRef={containerRef}
-              />
-            </div>
-            <div onClick={() => setSelectedField('sender')}>
-              <DraggableTextBox
-                id="sender"
-                label="Sender Name"
-                position={sender}
-                containerRef={containerRef}
-              />
-            </div>
-            <div onClick={() => setSelectedField('amount')}>
-              <DraggableTextBox
-                id="amount"
-                label="$Amount"
-                position={amount}
-                containerRef={containerRef}
-              />
+              <div 
+                className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                style={{ opacity: previewImageUrl ? 0 : 0.3 }}
+              >
+                <Gift className="w-16 h-16 text-white" />
+              </div>
+              
+              <div onClick={() => setSelectedField('recipient')}>
+                <DraggableTextBox
+                  id="recipient"
+                  label="Recipient Name"
+                  position={recipient}
+                  containerRef={containerRef}
+                />
+              </div>
+              <div onClick={() => setSelectedField('sender')}>
+                <DraggableTextBox
+                  id="sender"
+                  label="Sender Name"
+                  position={sender}
+                  containerRef={containerRef}
+                />
+              </div>
+              <div onClick={() => setSelectedField('amount')}>
+                <DraggableTextBox
+                  id="amount"
+                  label="$Amount"
+                  position={amount}
+                  containerRef={containerRef}
+                />
+              </div>
             </div>
           </div>
         </DndContext>
