@@ -116,7 +116,7 @@ export default function RACCProgram() {
             Why RACC Stands Alone
           </TitleCard>
 
-          <div className="space-y-4">
+          <div className="space-y-4 pt-[24px] pb-[24px]">
             <div className="flex gap-4">
               <CheckCircle className="w-6 h-6 text-[hsl(209,90%,38%)] flex-shrink-0 mt-1" />
               <div>
