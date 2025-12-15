@@ -361,15 +361,6 @@ export default function RACCProgram() {
                 Train Smarter. Live Safer.
               </p>
 
-              <div className="space-y-3 text-white/90">
-                <div className="flex items-center justify-center gap-3">
-                  <Mail className="w-5 h-5" />
-                  <a href="mailto:info@apachenc.com" className="hover:text-white">
-                    info@apachenc.com
-                  </a>
-                </div>
-              </div>
-
               <div className="mt-8 pt-8 border-t border-white/20">
                 <p className="text-white font-semibold mb-4">
                   Apache Solutions LLC
