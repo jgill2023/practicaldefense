@@ -413,6 +413,9 @@ router.post('/admin/themes/upload-image', requireAdmin, upload.single('image'), 
       },
     });
 
+    // Make the file publicly accessible
+    await file.makePublic();
+
     // Construct the public URL
     const publicUrl = `https://storage.googleapis.com/${bucketName}/${objectName}`;
     
