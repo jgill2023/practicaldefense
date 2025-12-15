@@ -1,7 +1,7 @@
 import PDFDocument from 'pdfkit';
 import { sendEmail } from '../emailService';
 import { storage } from '../storage';
-import type { GiftCard, GiftCardTheme } from '@shared/schema';
+import type { GiftCard, GiftCardTheme, TextPosition } from '@shared/schema';
 
 const DEFAULT_FROM_EMAIL = 'Info@ApacheNC.com';
 const DEFAULT_FROM_NAME = 'Tactical Advantage';
@@ -81,22 +81,35 @@ export async function sendGiftCardEmail(data: GiftCardEmailData): Promise<{ succ
           <!-- Gift Card Preview -->
           <tr>
             <td style="padding: 0 30px 30px;">
-              <div style="background: linear-gradient(135deg, ${accentColor} 0%, ${adjustColor(accentColor, -30)} 100%); border-radius: 12px; padding: 30px; text-align: center; position: relative;">
-                <p style="margin: 0 0 10px; color: rgba(255,255,255,0.9); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+              ${(() => {
+                const defaultAmountPos = { x: 50, y: 25, fontSize: 42, fontColor: '#FFFFFF', fontWeight: 'bold' as const, textAlign: 'center' as const };
+                const defaultRecipientPos = { x: 10, y: 70, fontSize: 14, fontColor: '#FFFFFF', fontWeight: 'normal' as const, textAlign: 'left' as const };
+                const defaultSenderPos = { x: 10, y: 80, fontSize: 14, fontColor: '#FFFFFF', fontWeight: 'normal' as const, textAlign: 'left' as const };
+                
+                const amountPos = { ...defaultAmountPos, ...(theme?.amountPosition || {}) };
+                const recipientPos = { ...defaultRecipientPos, ...(theme?.recipientNamePosition || {}) };
+                const senderPos = { ...defaultSenderPos, ...(theme?.senderNamePosition || {}) };
+                
+                return `
+              <div style="background: linear-gradient(135deg, ${accentColor} 0%, ${adjustColor(accentColor, -30)} 100%); border-radius: 12px; position: relative; width: 100%; height: 250px; overflow: hidden;">
+                <p style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); margin: 0; color: rgba(255,255,255,0.9); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">
                   ${COMPANY_NAME} Gift Card
                 </p>
-                <p style="margin: 0 0 20px; color: white; font-size: 42px; font-weight: bold;">
+                <p style="position: absolute; top: ${amountPos.y}%; left: ${amountPos.x}%; transform: translateX(-50%); margin: 0; color: ${amountPos.fontColor}; font-size: ${amountPos.fontSize}px; font-weight: ${amountPos.fontWeight}; white-space: nowrap;">
                   $${amount}
                 </p>
-                <div style="background-color: rgba(255,255,255,0.95); border-radius: 8px; padding: 15px; margin: 0 auto; max-width: 280px;">
+                <div style="position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(255,255,255,0.95); border-radius: 8px; padding: 15px; text-align: center; width: 250px;">
                   <p style="margin: 0 0 5px; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
                     Your Gift Card Code
                   </p>
-                  <p style="margin: 0; color: #111827; font-size: 20px; font-weight: bold; font-family: 'Courier New', monospace; letter-spacing: 2px;">
+                  <p style="margin: 0; color: #111827; font-size: 18px; font-weight: bold; font-family: 'Courier New', monospace; letter-spacing: 2px;">
                     ${code}
                   </p>
                 </div>
-              </div>
+                ${recipientName ? `<p style="position: absolute; top: ${recipientPos.y}%; left: ${recipientPos.x}%; margin: 0; color: ${recipientPos.fontColor}; font-size: ${recipientPos.fontSize}px; font-weight: ${recipientPos.fontWeight}; white-space: nowrap;">To: ${recipientName}</p>` : ''}
+                <p style="position: absolute; top: ${senderPos.y}%; left: ${senderPos.x}%; margin: 0; color: ${senderPos.fontColor}; font-size: ${senderPos.fontSize}px; font-weight: ${senderPos.fontWeight}; white-space: nowrap;">From: ${purchaserName}</p>
+              </div>`;
+              })()}
             </td>
           </tr>
           
@@ -367,11 +380,35 @@ export async function generateGiftCardPdf(data: {
         .fillColor('rgba(255,255,255,0.8)')
         .text('GIFT CARD', 50, 68);
 
-      doc.fontSize(56)
-        .font('Helvetica-Bold')
-        .fillColor('white')
-        .text(`$${amount}`, 0, 120, { align: 'center', width: 612 });
+      // Helper to convert percentage to pixels
+      const pctToX = (pct: number) => (pct / 100) * 612;
+      const pctToY = (pct: number) => (pct / 100) * 396;
+      
+      // Default position settings
+      const defaultAmountPos: TextPosition = { x: 50, y: 35, fontSize: 56, fontColor: '#FFFFFF', fontWeight: 'bold', textAlign: 'center' };
+      const defaultRecipientPos: TextPosition = { x: 10, y: 75, fontSize: 11, fontColor: '#FFFFFF', fontWeight: 'normal', textAlign: 'left' };
+      const defaultSenderPos: TextPosition = { x: 10, y: 80, fontSize: 11, fontColor: '#FFFFFF', fontWeight: 'normal', textAlign: 'left' };
+      
+      // Merge theme positions with defaults to handle partial data
+      const amountPos: TextPosition = { ...defaultAmountPos, ...(theme?.amountPosition || {}) };
+      const recipientPos: TextPosition = { ...defaultRecipientPos, ...(theme?.recipientNamePosition || {}) };
+      const senderPos: TextPosition = { ...defaultSenderPos, ...(theme?.senderNamePosition || {}) };
 
+      // Render amount with theme positioning
+      const amountFontSize = amountPos.fontSize || 56;
+      doc.fontSize(amountFontSize)
+        .font(amountPos.fontWeight === 'bold' ? 'Helvetica-Bold' : 'Helvetica')
+        .fillColor(amountPos.fontColor || 'white');
+      
+      if (amountPos.textAlign === 'center') {
+        doc.text(`$${amount}`, 0, pctToY(amountPos.y), { align: 'center', width: 612 });
+      } else if (amountPos.textAlign === 'right') {
+        doc.text(`$${amount}`, pctToX(amountPos.x) - 200, pctToY(amountPos.y), { align: 'right', width: 200 });
+      } else {
+        doc.text(`$${amount}`, pctToX(amountPos.x), pctToY(amountPos.y));
+      }
+
+      // Gift card code box (fixed position for clarity)
       doc.roundedRect(156, 200, 300, 70, 8)
         .fillAndStroke('white', 'white');
 
@@ -384,16 +421,41 @@ export async function generateGiftCardPdf(data: {
         .fillColor('#111827')
         .text(code, 0, 232, { align: 'center', width: 612 });
 
+      // Render recipient name with theme positioning
+      if (recipientName) {
+        const recipientFontSize = recipientPos.fontSize || 11;
+        doc.fontSize(recipientFontSize)
+          .font(recipientPos.fontWeight === 'bold' ? 'Helvetica-Bold' : 'Helvetica')
+          .fillColor(recipientPos.fontColor || 'rgba(255,255,255,0.9)');
+        
+        if (recipientPos.textAlign === 'center') {
+          doc.text(`To: ${recipientName}`, 0, pctToY(recipientPos.y), { align: 'center', width: 612 });
+        } else if (recipientPos.textAlign === 'right') {
+          doc.text(`To: ${recipientName}`, pctToX(recipientPos.x) - 200, pctToY(recipientPos.y), { align: 'right', width: 200 });
+        } else {
+          doc.text(`To: ${recipientName}`, pctToX(recipientPos.x), pctToY(recipientPos.y));
+        }
+      }
+      
+      // Render sender name with theme positioning
+      const senderFontSize = senderPos.fontSize || 11;
+      doc.fontSize(senderFontSize)
+        .font(senderPos.fontWeight === 'bold' ? 'Helvetica-Bold' : 'Helvetica')
+        .fillColor(senderPos.fontColor || 'rgba(255,255,255,0.9)');
+      
+      if (senderPos.textAlign === 'center') {
+        doc.text(`From: ${purchaserName}`, 0, pctToY(senderPos.y), { align: 'center', width: 612 });
+      } else if (senderPos.textAlign === 'right') {
+        doc.text(`From: ${purchaserName}`, pctToX(senderPos.x) - 200, pctToY(senderPos.y), { align: 'right', width: 200 });
+      } else {
+        doc.text(`From: ${purchaserName}`, pctToX(senderPos.x), pctToY(senderPos.y));
+      }
+
+      // Expiration date (fixed position)
       doc.fontSize(11)
         .font('Helvetica')
-        .fillColor('rgba(255,255,255,0.9)');
-
-      if (recipientName) {
-        doc.text(`To: ${recipientName}`, 50, 295);
-      }
-      doc.text(`From: ${purchaserName}`, 50, recipientName ? 312 : 295);
-
-      doc.text(`Expires: ${expiresAt}`, 400, 295, { align: 'right', width: 162 });
+        .fillColor('rgba(255,255,255,0.9)')
+        .text(`Expires: ${expiresAt}`, 400, 295, { align: 'right', width: 162 });
 
       if (personalMessage && personalMessage.length <= 60) {
         doc.fontSize(10)
