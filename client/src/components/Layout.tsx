@@ -252,6 +252,7 @@ export function Layout({ children, headerColor }: LayoutProps) {
                   }
                 }}>One/One Training</a>
                 <Link href="/contact" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-contact">Contact Us</Link>
+                <Link href="/a-girl-and-a-gun" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-agag">A Girl & A Gun</Link>
               </nav>
 
               {/* Desktop auth buttons */}
@@ -341,6 +342,7 @@ export function Layout({ children, headerColor }: LayoutProps) {
                   }
                 }}>One/One Training</a>
                 <Link href="/contact" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
+                <Link href="/a-girl-and-a-gun" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-agag-mobile" onClick={() => setIsMobileMenuOpen(false)}>A Girl & A Gun</Link>
 
                 {/* Mobile auth buttons */}
                 <div className="border-t border-white/20 mt-2 pt-2 space-y-2">
