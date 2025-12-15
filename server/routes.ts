@@ -3187,12 +3187,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/instructor/courses/:courseId", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
+      const userRole = req.user?.role;
       const courseId = req.params.courseId;
       const updateData = req.body;
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins can edit any course)
       const existingCourse = await storage.getCourse(courseId);
-      if (!existingCourse || existingCourse.instructorId !== userId) {
+      if (!existingCourse || (existingCourse.instructorId !== userId && userRole !== 'admin')) {
         return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
       }
 
@@ -3208,6 +3209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/instructor/schedules/:scheduleId/duplicate", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
+      const userRole = req.user?.role;
       const scheduleId = req.params.scheduleId;
 
       // Get the schedule and verify it belongs to the instructor's course
@@ -3217,7 +3219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const course = await storage.getCourse(schedule.courseId);
-      if (!course || course.instructorId !== userId) {
+      if (!course || (course.instructorId !== userId && userRole !== 'admin')) {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
@@ -3484,6 +3486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/instructor/events", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
+      const userRole = req.user?.role;
       const eventData = req.body;
 
       // Validate required fields
@@ -3491,9 +3494,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing required fields: courseId, startDate, endDate" });
       }
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins can create events for any course)
       const course = await storage.getCourse(eventData.courseId);
-      if (!course || course.instructorId !== userId) {
+      if (!course || (course.instructorId !== userId && userRole !== 'admin')) {
         return res.status(403).json({ error: "Unauthorized: Course not found or does not belong to instructor" });
       }
 
@@ -3528,6 +3531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/instructor/schedules/:scheduleId", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
+      const userRole = req.user?.role;
       const scheduleId = req.params.scheduleId;
 
       // Get schedule to verify ownership
@@ -3536,9 +3540,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Schedule not found" });
       }
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins can delete any schedule)
       const course = await storage.getCourse(schedule.courseId);
-      if (!course || course.instructorId !== userId) {
+      if (!course || (course.instructorId !== userId && userRole !== 'admin')) {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
@@ -3555,6 +3559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/instructor/schedules/:scheduleId", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
+      const userRole = req.user?.role;
       const scheduleId = req.params.scheduleId;
 
       console.log("Update schedule request - scheduleId:", scheduleId, "body:", JSON.stringify(req.body));
@@ -3565,9 +3570,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Schedule not found" });
       }
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins can update any schedule)
       const course = await storage.getCourse(schedule.courseId);
-      if (!course || course.instructorId !== userId) {
+      if (!course || (course.instructorId !== userId && userRole !== 'admin')) {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
@@ -3706,6 +3711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/instructor/schedules/:scheduleId/cancel", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
+      const userRole = req.user?.role;
       const scheduleId = req.params.scheduleId;
 
       // Get schedule to verify ownership
@@ -3714,9 +3720,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Schedule not found" });
       }
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins can cancel any schedule)
       const course = await storage.getCourse(schedule.courseId);
-      if (!course || course.instructorId !== userId) {
+      if (!course || (course.instructorId !== userId && userRole !== 'admin')) {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
@@ -3737,6 +3743,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/instructor/schedules/:scheduleId/unpublish", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
+      const userRole = req.user?.role;
       const scheduleId = req.params.scheduleId;
 
       // Get schedule to verify ownership
@@ -3745,9 +3752,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Schedule not found" });
       }
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins can unpublish any schedule)
       const course = await storage.getCourse(schedule.courseId);
-      if (!course || course.instructorId !== userId) {
+      if (!course || (course.instructorId !== userId && userRole !== 'admin')) {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
@@ -3806,6 +3813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/instructor/schedules/:scheduleId/waitlist", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
+      const userRole = req.user?.role;
       const { scheduleId } = req.params;
 
       // Get schedule to verify ownership
@@ -3814,9 +3822,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Schedule not found" });
       }
 
-      // Verify the course belongs to the instructor
+      // Verify the course belongs to the instructor (admins can view any schedule's waitlist)
       const course = await storage.getCourse(schedule.courseId);
-      if (!course || course.instructorId !== userId) {
+      if (!course || (course.instructorId !== userId && userRole !== 'admin')) {
         return res.status(403).json({ error: "Unauthorized: Schedule does not belong to instructor" });
       }
 
@@ -3832,6 +3840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/instructor/waitlist/:waitlistId/invite", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.id;
+      const userRole = req.user?.role;
       const { waitlistId } = req.params;
 
       // Get waitlist entry with proper method
@@ -3841,9 +3850,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Waitlist entry not found" });
       }
 
-      // Verify ownership through schedule -> course
+      // Verify ownership through schedule -> course (admins can invite from any course's waitlist)
       const course = await storage.getCourse(entry.courseId);
-      if (!course || course.instructorId !== userId) {
+      if (!course || (course.instructorId !== userId && userRole !== 'admin')) {
         return res.status(403).json({ error: "Unauthorized: Not your course" });
       }
 
@@ -3871,10 +3880,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Waitlist entry not found" });
       }
 
-      // Check authorization: either the student themselves or the instructor
+      // Check authorization: either the student themselves, the instructor, or an admin
       const isStudent = entry.studentId === userId;
+      const userRole = req.user?.role;
       
-      if (!isStudent) {
+      if (!isStudent && userRole !== 'admin') {
         // Check if user is instructor for this course
         const course = await storage.getCourse(entry.courseId);
         const isInstructor = course && course.instructorId === userId;
@@ -6331,7 +6341,8 @@ jeremy@abqconcealedcarry.com
         return res.status(404).json({ error: "Course not found" });
       }
 
-      if (currentCourse.instructorId !== userId || newCourse.instructorId !== userId) {
+      const userRole = req.user?.role;
+      if (userRole !== 'admin' && userRole !== 'superadmin' && (currentCourse.instructorId !== userId || newCourse.instructorId !== userId)) {
         return res.status(403).json({ error: "Unauthorized: You can only reschedule students between your own courses" });
       }
 
@@ -6433,7 +6444,8 @@ jeremy@abqconcealedcarry.com
       }
 
       const course = await storage.getCourse(schedule.courseId);
-      if (!course || course.instructorId !== userId) {
+      const userRole = req.user?.role;
+      if (!course || (course.instructorId !== userId && userRole !== 'admin' && userRole !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: You can only place students from your own courses on hold" });
       }
 
@@ -6481,7 +6493,8 @@ jeremy@abqconcealedcarry.com
       }
 
       const course = await storage.getCourse(schedule.courseId);
-      if (!course || course.instructorId !== userId) {
+      const userRole = req.user?.role;
+      if (!course || (course.instructorId !== userId && userRole !== 'admin' && userRole !== 'superadmin')) {
         return res.status(403).json({ error: "Unauthorized: You can only enroll students in your own courses" });
       }
 
