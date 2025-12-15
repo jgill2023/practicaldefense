@@ -45,6 +45,7 @@ import GiftCardsPage from "@/pages/gift-cards";
 import GiftCardManagement from "@/pages/gift-card-management";
 import CourseDetail from "@/pages/course-detail";
 import RACCProgram from "@/pages/racc-program";
+import AGirlAndAGun from "@/pages/a-girl-and-a-gun";
 import NotFound from "@/pages/not-found";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -165,6 +166,7 @@ function Router() {
       <Route path="/gift-cards" component={GiftCardsPage} />
       <Route path="/gift-card-management" component={GiftCardManagement} />
       <Route path="/racc-program" component={RACCProgram} />
+      <Route path="/a-girl-and-a-gun" component={AGirlAndAGun} />
       <Route component={NotFound} />
     </Switch>
   );
