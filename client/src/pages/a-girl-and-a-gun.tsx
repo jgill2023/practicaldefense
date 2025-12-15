@@ -64,9 +64,7 @@ export default function AGirlAndAGun() {
                   <Award className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
                   <CardTitle className="text-lg">Advocacy & Support</CardTitle>
                 </CardHeader>
-                <CardContent className="text-gray-700">
-                  We advocate for women's voices in the shooting sports community and provide resources to support your journey as a female shooter.
-                </CardContent>
+                <CardContent className="text-gray-700">We advocate for women's voices in the shooting sports community and provide resources to support your journey as a female shooter. Join our local chapter today!</CardContent>
               </Card>
             </div>
           </div>
