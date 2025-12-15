@@ -31,7 +31,7 @@ export default function AGirlAndAGun() {
             Program Overview
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
-            <Card className="border-2" data-testid="card-community">
+            <Card className="border-2 shadow-lg hover:shadow-xl transition-all" data-testid="card-community">
               <CardHeader className="flex flex-col space-y-1.5 p-6">
                 <Heart className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
                 <CardTitle className="text-lg">Community & Connection</CardTitle>
@@ -41,7 +41,7 @@ export default function AGirlAndAGun() {
               </CardContent>
             </Card>
 
-            <Card className="border-2" data-testid="card-education">
+            <Card className="border-2 shadow-lg hover:shadow-xl transition-all" data-testid="card-education">
               <CardHeader className="flex flex-col space-y-1.5 p-6">
                 <Shield className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
                 <CardTitle className="text-lg">Expert Training</CardTitle>
@@ -51,7 +51,7 @@ export default function AGirlAndAGun() {
               </CardContent>
             </Card>
 
-            <Card className="border-2" data-testid="card-advocacy">
+            <Card className="border-2 shadow-lg hover:shadow-xl transition-all" data-testid="card-advocacy">
               <CardHeader className="flex flex-col space-y-1.5 p-6">
                 <Award className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
                 <CardTitle className="text-lg">Advocacy & Support</CardTitle>
@@ -65,7 +65,7 @@ export default function AGirlAndAGun() {
 
         {/* Teresa Kelly Section */}
         <section className="mb-12">
-          <div className="rounded-lg p-8 md:p-12 border-2" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
+          <div className="rounded-lg p-8 md:p-12 border-2 shadow-lg hover:shadow-xl transition-all" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
             <div className="flex flex-col md:flex-row gap-8 items-stretch md:items-stretch">
               <div className="w-72 flex-shrink-0">
                 <img 
@@ -102,7 +102,7 @@ export default function AGirlAndAGun() {
           <h2 className="text-3xl font-bold mb-8 text-center" data-testid="heading-chapter">
             NC Yadkin Valley Chapter
           </h2>
-          <Card className="border-2" style={{ borderColor: '#6956A2' }}>
+          <Card className="border-2 shadow-lg hover:shadow-xl transition-all" style={{ borderColor: '#6956A2' }}>
             <CardHeader className="border-b" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
               <div className="flex items-center gap-2 mb-2">
                 <MapPin className="h-6 w-6" style={{ color: '#6956A2' }} />
