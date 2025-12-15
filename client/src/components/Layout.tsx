@@ -523,7 +523,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="flex items-start space-x-2">
                   <span>📍</span>
-                  <span>North Carolina</span>
+                  <span>Yadkinville, NC</span>
                 </div>
               </div>
             </div>
