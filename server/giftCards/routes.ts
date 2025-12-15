@@ -5,6 +5,21 @@ import { giftCardPurchaseRequestSchema, insertGiftCardThemeSchema } from '@share
 import { z } from 'zod';
 import { getStripeClient } from '../stripeClient';
 import { processGiftCardDelivery, generateGiftCardPdf } from './delivery';
+import multer from 'multer';
+import { objectStorageClient } from '../objectStorage';
+import { randomUUID } from 'crypto';
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  },
+});
 
 const router = Router();
 
@@ -350,6 +365,66 @@ router.get('/admin/themes/all', requireAdmin, async (req: Request, res: Response
   } catch (error) {
     console.error('Error fetching themes:', error);
     res.status(500).json({ error: 'Failed to fetch themes' });
+  }
+});
+
+// Upload theme image (admin)
+router.post('/admin/themes/upload-image', requireAdmin, upload.single('image'), async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+
+    const publicSearchPaths = process.env.PUBLIC_OBJECT_SEARCH_PATHS || '';
+    if (!publicSearchPaths) {
+      return res.status(500).json({ error: 'Object storage not configured. Please set up Object Storage first.' });
+    }
+
+    let searchPath = publicSearchPaths.split(',')[0].trim();
+    
+    // Handle various path formats
+    if (searchPath.startsWith('https://storage.googleapis.com/')) {
+      // Convert URL format to path format
+      const url = new URL(searchPath);
+      searchPath = url.pathname;
+    }
+    
+    // Ensure path starts with /
+    if (!searchPath.startsWith('/')) {
+      searchPath = '/' + searchPath;
+    }
+
+    const fileExt = req.file.originalname.split('.').pop()?.toLowerCase() || 'png';
+    const validExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    const finalExt = validExts.includes(fileExt) ? fileExt : 'png';
+    const fileName = `gift-card-themes/${randomUUID()}.${finalExt}`;
+    
+    // Parse the path to get bucket and object name
+    const fullPath = `${searchPath}/${fileName}`;
+    const pathParts = fullPath.slice(1).split('/'); // Remove leading / and split
+    const bucketName = pathParts[0];
+    const objectName = pathParts.slice(1).join('/');
+
+    console.log('Uploading gift card theme image:', { bucketName, objectName, contentType: req.file.mimetype });
+
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+    
+    await file.save(req.file.buffer, {
+      contentType: req.file.mimetype,
+      metadata: {
+        cacheControl: 'public, max-age=31536000',
+      },
+    });
+
+    // Construct the public URL
+    const publicUrl = `https://storage.googleapis.com/${bucketName}/${objectName}`;
+    
+    console.log('Gift card theme image uploaded successfully:', publicUrl);
+    res.json({ url: publicUrl });
+  } catch (error: any) {
+    console.error('Error uploading theme image:', error);
+    res.status(500).json({ error: error.message || 'Failed to upload image' });
   }
 });
 

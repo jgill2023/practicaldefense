@@ -65,7 +65,7 @@ const createThemeSchema = z.object({
   name: z.string().min(1, "Theme name is required"),
   description: z.string().optional(),
   accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format").default("#3b82f6"),
-  previewImageUrl: z.string().url().optional().or(z.literal("")),
+  previewImageUrl: z.string().optional(),
   isActive: z.boolean().default(true),
   sortOrder: z.coerce.number().default(0),
 });
@@ -599,10 +599,32 @@ function ThemeManagement() {
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTheme, setEditingTheme] = useState<GiftCardTheme | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [editSelectedFile, setEditSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { data: themes = [], isLoading } = useQuery<GiftCardTheme[]>({
     queryKey: ["/api/gift-cards/admin/themes/all"],
   });
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const res = await fetch('/api/gift-cards/admin/themes/upload-image', {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+    
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || 'Failed to upload image');
+    }
+    
+    const data = await res.json();
+    return data.url;
+  };
 
   const createForm = useForm<CreateThemeData>({
     resolver: zodResolver(createThemeSchema),
@@ -622,7 +644,25 @@ function ThemeManagement() {
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateThemeData) => {
-      const res = await apiRequest("POST", "/api/gift-cards/admin/themes", data);
+      let imageUrl = "";
+      
+      // Upload image first if selected
+      if (selectedFile) {
+        setIsUploading(true);
+        try {
+          imageUrl = await uploadImage(selectedFile);
+        } catch (uploadError: any) {
+          setIsUploading(false);
+          throw new Error(`Image upload failed: ${uploadError.message}`);
+        }
+        setIsUploading(false);
+      }
+      
+      // Create the theme with the image URL
+      const res = await apiRequest("POST", "/api/gift-cards/admin/themes", {
+        ...data,
+        previewImageUrl: imageUrl || undefined,
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -630,6 +670,7 @@ function ThemeManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/gift-cards/admin/themes/all"] });
       setIsCreateOpen(false);
       createForm.reset();
+      setSelectedFile(null);
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -638,13 +679,32 @@ function ThemeManagement() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CreateThemeData> }) => {
-      const res = await apiRequest("PATCH", `/api/gift-cards/admin/themes/${id}`, data);
+      // Keep existing image URL unless a new file is uploaded
+      let imageUrl = editingTheme?.previewImageUrl || data.previewImageUrl;
+      
+      // Upload new image if selected
+      if (editSelectedFile) {
+        setIsUploading(true);
+        try {
+          imageUrl = await uploadImage(editSelectedFile);
+        } catch (uploadError: any) {
+          setIsUploading(false);
+          throw new Error(`Image upload failed: ${uploadError.message}`);
+        }
+        setIsUploading(false);
+      }
+      
+      const res = await apiRequest("PATCH", `/api/gift-cards/admin/themes/${id}`, {
+        ...data,
+        previewImageUrl: imageUrl || undefined,
+      });
       return res.json();
     },
     onSuccess: () => {
       toast({ title: "Theme updated successfully" });
       queryClient.invalidateQueries({ queryKey: ["/api/gift-cards/admin/themes/all"] });
       setEditingTheme(null);
+      setEditSelectedFile(null);
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -747,19 +807,27 @@ function ThemeManagement() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={createForm.control}
-                  name="previewImageUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Preview Image URL (Optional)</FormLabel>
-                      <FormControl>
-                        <Input type="url" placeholder="https://..." {...field} data-testid="input-theme-image" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div>
+                  <Label>Preview Image (Optional)</Label>
+                  <div className="mt-2 space-y-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                      data-testid="input-theme-image"
+                    />
+                    {selectedFile && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <img
+                          src={URL.createObjectURL(selectedFile)}
+                          alt="Preview"
+                          className="w-16 h-12 object-cover rounded"
+                        />
+                        <span>{selectedFile.name}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <FormField
                   control={createForm.control}
                   name="sortOrder"
@@ -775,9 +843,9 @@ function ThemeManagement() {
                 />
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                  <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-theme">
-                    {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Create Theme
+                  <Button type="submit" disabled={createMutation.isPending || isUploading} data-testid="button-submit-theme">
+                    {(createMutation.isPending || isUploading) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {isUploading ? "Uploading..." : "Create Theme"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -883,19 +951,28 @@ function ThemeManagement() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={editForm.control}
-                name="previewImageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preview Image URL (Optional)</FormLabel>
-                    <FormControl>
-                      <Input type="url" placeholder="https://..." {...field} data-testid="input-edit-theme-image" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div>
+                <Label>Preview Image (Optional)</Label>
+                <div className="mt-2 space-y-2">
+                  {(editingTheme?.previewImageUrl || editSelectedFile) && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                      <img
+                        src={editSelectedFile ? URL.createObjectURL(editSelectedFile) : (editingTheme?.previewImageUrl || "")}
+                        alt="Current preview"
+                        className="w-16 h-12 object-cover rounded"
+                      />
+                      <span>{editSelectedFile ? editSelectedFile.name : "Current image"}</span>
+                    </div>
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setEditSelectedFile(e.target.files?.[0] || null)}
+                    data-testid="input-edit-theme-image"
+                  />
+                  <p className="text-xs text-muted-foreground">Upload a new image to replace the current one</p>
+                </div>
+              </div>
               <FormField
                 control={editForm.control}
                 name="isActive"
@@ -928,10 +1005,10 @@ function ThemeManagement() {
                 )}
               />
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setEditingTheme(null)}>Cancel</Button>
-                <Button type="submit" disabled={updateMutation.isPending} data-testid="button-submit-edit-theme">
-                  {updateMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Save Changes
+                <Button type="button" variant="outline" onClick={() => { setEditingTheme(null); setEditSelectedFile(null); }}>Cancel</Button>
+                <Button type="submit" disabled={updateMutation.isPending || isUploading} data-testid="button-submit-edit-theme">
+                  {(updateMutation.isPending || isUploading) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {isUploading ? "Uploading..." : "Save Changes"}
                 </Button>
               </DialogFooter>
             </form>
