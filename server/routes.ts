@@ -3557,6 +3557,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user?.id;
       const scheduleId = req.params.scheduleId;
 
+      console.log("Update schedule request - scheduleId:", scheduleId, "body:", JSON.stringify(req.body));
+
       // Get schedule to verify ownership
       const schedule = await storage.getCourseSchedule(scheduleId);
       if (!schedule) {
