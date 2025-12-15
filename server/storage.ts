@@ -5326,21 +5326,40 @@ export class DatabaseStorage implements IStorage {
 
   // Shopping Cart
   async addToCart(item: InsertCartItem): Promise<CartItem> {
-    // Check if item already exists in cart, if so update quantity
-    const existingItem = await db.query.cartItems.findFirst({
-      where: and(
-        eq(cartItems.productId, item.productId),
-        item.variantId ? eq(cartItems.variantId, item.variantId) : isNull(cartItems.variantId),
-        item.userId ? eq(cartItems.userId, item.userId) : isNull(cartItems.userId),
-        item.sessionId ? eq(cartItems.sessionId, item.sessionId) : isNull(cartItems.sessionId)
-      ),
-    });
-
-    if (existingItem) {
-      return this.updateCartItem(existingItem.id, existingItem.quantity + item.quantity);
+    // Build conditions based on item type (local vs printify)
+    const itemType = item.itemType || 'local';
+    let existingItem;
+    
+    if (itemType === 'printify') {
+      // For Printify items, check by printifyProductId and printifyVariantId
+      existingItem = await db.query.cartItems.findFirst({
+        where: and(
+          eq(cartItems.printifyProductId, item.printifyProductId!),
+          eq(cartItems.printifyVariantId, item.printifyVariantId!),
+          item.userId ? eq(cartItems.userId, item.userId) : isNull(cartItems.userId),
+          item.sessionId ? eq(cartItems.sessionId, item.sessionId) : isNull(cartItems.sessionId)
+        ),
+      });
+    } else {
+      // For local items, check by productId and variantId
+      existingItem = await db.query.cartItems.findFirst({
+        where: and(
+          item.productId ? eq(cartItems.productId, item.productId) : isNull(cartItems.productId),
+          item.variantId ? eq(cartItems.variantId, item.variantId) : isNull(cartItems.variantId),
+          item.userId ? eq(cartItems.userId, item.userId) : isNull(cartItems.userId),
+          item.sessionId ? eq(cartItems.sessionId, item.sessionId) : isNull(cartItems.sessionId)
+        ),
+      });
     }
 
-    const [created] = await db.insert(cartItems).values(item).returning();
+    if (existingItem) {
+      return this.updateCartItem(existingItem.id, existingItem.quantity + (item.quantity || 1));
+    }
+
+    const [created] = await db.insert(cartItems).values({
+      ...item,
+      itemType,
+    }).returning();
     return created;
   }
 

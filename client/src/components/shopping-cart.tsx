@@ -137,16 +137,24 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
               </div>
             ) : (
               <div className="space-y-4">
-                {cartItems.map((item: CartItemWithDetails) => (
+                {cartItems.map((item: CartItemWithDetails) => {
+                  // Get display info based on item type
+                  const isPrintify = item.itemType === 'printify';
+                  const displayName = isPrintify ? (item.productTitle || 'Merchandise Item') : (item.product?.name || 'Product');
+                  const displayVariant = isPrintify ? item.variantTitle : item.variant?.name;
+                  const displayImage = isPrintify ? item.imageUrl : item.product?.primaryImageUrl;
+                  const displaySku = isPrintify ? item.printifyProductId : item.product?.sku;
+                  
+                  return (
                   <Card key={item.id}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         {/* Product Image */}
                         <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
-                          {item.product.primaryImageUrl ? (
+                          {displayImage ? (
                             <img 
-                              src={item.product.primaryImageUrl} 
-                              alt={item.product.name}
+                              src={displayImage} 
+                              alt={displayName}
                               className="w-full h-full object-cover rounded-lg"
                               loading="lazy"
                               onError={(e) => {
@@ -156,7 +164,7 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
                               }}
                             />
                           ) : null}
-                          <div className={`w-full h-full flex items-center justify-center ${item.product.primaryImageUrl ? 'hidden' : ''}`}>
+                          <div className={`w-full h-full flex items-center justify-center ${displayImage ? 'hidden' : ''}`}>
                             <Package className="w-6 h-6 text-muted-foreground" />
                           </div>
                         </div>
@@ -164,19 +172,24 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
                         {/* Product Details */}
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium line-clamp-2" data-testid={`cart-item-name-${item.id}`}>
-                            {item.product.name}
+                            {displayName}
                           </h4>
-                          {item.variant && (
+                          {displayVariant && (
                             <p className="text-sm text-muted-foreground">
-                              {item.variant.name}
+                              {displayVariant}
                             </p>
                           )}
-                          <p className="text-sm text-muted-foreground">
-                            SKU: {item.product.sku}
-                          </p>
+                          {isPrintify && (
+                            <Badge variant="outline" className="text-xs mt-1">Merchandise</Badge>
+                          )}
+                          {displaySku && !isPrintify && (
+                            <p className="text-sm text-muted-foreground">
+                              SKU: {displaySku}
+                            </p>
+                          )}
                           <div className="flex items-center justify-between mt-2">
                             <p className="font-medium" data-testid={`cart-item-price-${item.id}`}>
-                              ${item.priceAtTime.toFixed(2)}
+                              ${Number(item.priceAtTime).toFixed(2)}
                             </p>
                             
                             {/* Quantity Controls */}
@@ -230,15 +243,16 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
                       {/* Item Total */}
                       <div className="flex justify-between items-center mt-3 pt-3 border-t">
                         <span className="text-sm text-muted-foreground">
-                          {item.quantity} × ${item.priceAtTime.toFixed(2)}
+                          {item.quantity} × ${Number(item.priceAtTime).toFixed(2)}
                         </span>
                         <span className="font-medium" data-testid={`cart-item-total-${item.id}`}>
-                          ${(item.priceAtTime * item.quantity).toFixed(2)}
+                          ${(Number(item.priceAtTime) * item.quantity).toFixed(2)}
                         </span>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -290,20 +304,64 @@ export function ShoppingCartComponent({ trigger, isOpen, onOpenChange }: Shoppin
   );
 }
 
+// Types for add to cart operations
+export interface AddToCartItem {
+  // For local products
+  productId?: string;
+  variantId?: string;
+  // For Printify products
+  printifyProductId?: string;
+  printifyVariantId?: string;
+  // Display info
+  productTitle?: string;
+  variantTitle?: string;
+  imageUrl?: string;
+  // Common
+  quantity?: number;
+  priceAtTime: number;
+  customization?: any;
+  itemType: 'local' | 'printify';
+}
+
 // Hook for managing cart state
 export function useCart() {
-  const { data: cartItems = [], isLoading } = useQuery({
+  const { toast } = useToast();
+  
+  const { data: cartItems = [], isLoading, refetch } = useQuery({
     queryKey: ['/api/cart'],
   });
 
   const addToCartMutation = useMutation({
-    mutationFn: (item: {
-      productId: string;
-      variantId?: string;
-      quantity?: number;
-      priceAtTime: number;
-      customization?: any;
-    }) => apiRequest('POST', '/api/cart', item),
+    mutationFn: (item: AddToCartItem) => apiRequest('POST', '/api/cart', item),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error adding to cart",
+        description: error.message || "Failed to add item to cart",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateQuantityMutation = useMutation({
+    mutationFn: ({ id, quantity }: { id: string; quantity: number }) =>
+      apiRequest('PUT', `/api/cart/${id}`, { quantity }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+    },
+  });
+
+  const removeItemMutation = useMutation({
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/cart/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+    },
+  });
+
+  const clearCartMutation = useMutation({
+    mutationFn: () => apiRequest('DELETE', '/api/cart'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
     },
@@ -314,15 +372,29 @@ export function useCart() {
   );
 
   const subtotal = cartItems.reduce((sum: number, item: CartItemWithDetails) => 
-    sum + (item.priceAtTime * item.quantity), 0
+    sum + (Number(item.priceAtTime) * item.quantity), 0
   );
+
+  // Get only printify items for merch checkout
+  const printifyItems = cartItems.filter((item: CartItemWithDetails) => item.itemType === 'printify');
+  const localItems = cartItems.filter((item: CartItemWithDetails) => item.itemType === 'local' || !item.itemType);
 
   return {
     cartItems,
+    printifyItems,
+    localItems,
     isLoading,
     itemCount,
     subtotal,
     addToCart: addToCartMutation.mutate,
+    addToCartAsync: addToCartMutation.mutateAsync,
     isAddingToCart: addToCartMutation.isPending,
+    updateQuantity: updateQuantityMutation.mutate,
+    isUpdatingQuantity: updateQuantityMutation.isPending,
+    removeItem: removeItemMutation.mutate,
+    isRemovingItem: removeItemMutation.isPending,
+    clearCart: clearCartMutation.mutate,
+    isClearingCart: clearCartMutation.isPending,
+    refetch,
   };
 }

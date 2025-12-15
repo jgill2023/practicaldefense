@@ -1899,16 +1899,33 @@ export const productVariants = pgTable("product_variants", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Shopping cart for guest and logged-in users
+// Shopping cart for guest and logged-in users (supports both local products and Printify items)
 export const cartItems = pgTable("cart_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id), // Null for guest users
   sessionId: varchar("session_id"), // For guest users
-  productId: varchar("product_id").notNull().references(() => products.id),
+  
+  // Local product reference (optional - null for Printify items)
+  productId: varchar("product_id").references(() => products.id),
   variantId: varchar("variant_id").references(() => productVariants.id),
+  
+  // Printify product reference (optional - null for local items)
+  printifyProductId: varchar("printify_product_id"),
+  printifyVariantId: varchar("printify_variant_id"),
+  
+  // Display info (required for all items, but especially important for Printify items)
+  productTitle: varchar("product_title", { length: 255 }),
+  variantTitle: varchar("variant_title", { length: 255 }),
+  imageUrl: varchar("image_url", { length: 500 }),
+  
+  // Common fields
   quantity: integer("quantity").notNull().default(1),
   customization: jsonb("customization"), // For personalized items
   priceAtTime: decimal("price_at_time", { precision: 10, scale: 2 }).notNull(), // Price when added to cart
+  
+  // Item type indicator
+  itemType: varchar("item_type", { length: 20 }).notNull().default('local'), // 'local' or 'printify'
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -2153,7 +2170,7 @@ export type ProductCategoryWithProducts = ProductCategory & {
 };
 
 export type CartItemWithDetails = CartItem & {
-  product: Product;
+  product?: Product;  // Optional for Printify items
   variant?: ProductVariant;
   user?: User;
 };

@@ -16,7 +16,8 @@ import { ShoppingCart, Plus, Minus, Trash2, X, Loader2 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { apiRequest } from "@/lib/queryClient";
-import type { CartItem } from "@shared/schema";
+import { useCart, type AddToCartItem } from "@/components/shopping-cart";
+import type { CartItem, CartItemWithDetails } from "@shared/schema";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || "");
 
@@ -39,10 +40,12 @@ interface Product {
 
 function ProductCard({ 
   product, 
-  onAddToCart 
+  onAddToCart,
+  isAddingToCart
 }: { 
   product: Product; 
-  onAddToCart: (item: CartItem) => void;
+  onAddToCart: (item: AddToCartItem) => void;
+  isAddingToCart?: boolean;
 }) {
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -62,8 +65,9 @@ function ProductCard({
       productTitle: product.title,
       variantTitle: selectedVariant.title,
       quantity: 1,
-      unitPrice: selectedVariant.price,
+      priceAtTime: selectedVariant.price,
       imageUrl: variantImage,
+      itemType: 'printify',
     });
     setIsDialogOpen(false);
   };
@@ -179,13 +183,13 @@ function CartSheet({
   onCheckout,
   isCheckingOut 
 }: { 
-  cart: CartItem[];
-  onUpdateQuantity: (printifyVariantId: string, quantity: number) => void;
-  onRemoveItem: (printifyVariantId: string) => void;
+  cart: CartItemWithDetails[];
+  onUpdateQuantity: (id: string, quantity: number) => void;
+  onRemoveItem: (id: string) => void;
   onCheckout: () => void;
   isCheckingOut: boolean;
 }) {
-  const subtotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + Number(item.priceAtTime) * item.quantity, 0);
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -213,56 +217,64 @@ function CartSheet({
         ) : (
           <div className="flex flex-col h-full">
             <div className="flex-1 overflow-y-auto py-4 space-y-4">
-              {cart.map((item) => (
-                <div key={item.printifyVariantId} className="flex gap-4" data-testid={`cart-item-${item.printifyVariantId}`}>
-                  <div className="w-20 h-20 rounded overflow-hidden bg-gray-100 flex-shrink-0">
-                    {item.imageUrl ? (
-                      <img src={item.imageUrl} alt={item.productTitle} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                        No image
+              {cart.map((item) => {
+                // Get display info - prefer stored display fields, fall back to product relation
+                const displayTitle = item.productTitle || item.product?.name || 'Product';
+                const displayVariant = item.variantTitle || item.variant?.name;
+                const displayImage = item.imageUrl || item.product?.primaryImageUrl;
+                const displayPrice = Number(item.priceAtTime);
+                
+                return (
+                  <div key={item.id} className="flex gap-4" data-testid={`cart-item-${item.id}`}>
+                    <div className="w-20 h-20 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                      {displayImage ? (
+                        <img src={displayImage} alt={displayTitle} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                          No image
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm line-clamp-1">{displayTitle}</h4>
+                      {displayVariant && <p className="text-xs text-muted-foreground">{displayVariant}</p>}
+                      <p className="text-sm font-medium mt-1">${displayPrice.toFixed(2)}</p>
+                      
+                      <div className="flex items-center gap-2 mt-2">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-7 w-7"
+                          onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                          disabled={item.quantity <= 1}
+                          data-testid={`decrease-qty-${item.id}`}
+                        >
+                          <Minus className="w-3 h-3" />
+                        </Button>
+                        <span className="w-8 text-center text-sm">{item.quantity}</span>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-7 w-7"
+                          onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                          data-testid={`increase-qty-${item.id}`}
+                        >
+                          <Plus className="w-3 h-3" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-7 w-7 text-destructive ml-auto"
+                          onClick={() => onRemoveItem(item.id)}
+                          data-testid={`remove-item-${item.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm line-clamp-1">{item.productTitle}</h4>
-                    <p className="text-xs text-muted-foreground">{item.variantTitle}</p>
-                    <p className="text-sm font-medium mt-1">${item.unitPrice.toFixed(2)}</p>
-                    
-                    <div className="flex items-center gap-2 mt-2">
-                      <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="h-7 w-7"
-                        onClick={() => onUpdateQuantity(item.printifyVariantId, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                        data-testid={`decrease-qty-${item.printifyVariantId}`}
-                      >
-                        <Minus className="w-3 h-3" />
-                      </Button>
-                      <span className="w-8 text-center text-sm">{item.quantity}</span>
-                      <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="h-7 w-7"
-                        onClick={() => onUpdateQuantity(item.printifyVariantId, item.quantity + 1)}
-                        data-testid={`increase-qty-${item.printifyVariantId}`}
-                      >
-                        <Plus className="w-3 h-3" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-7 w-7 text-destructive ml-auto"
-                        onClick={() => onRemoveItem(item.printifyVariantId)}
-                        data-testid={`remove-item-${item.printifyVariantId}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             
             <Separator />
@@ -428,10 +440,17 @@ function CheckoutForm({
 export default function Store() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('merch-cart');
-    return saved ? JSON.parse(saved) : [];
-  });
+  
+  // Use the unified cart hook
+  const { 
+    printifyItems: cart, 
+    addToCart, 
+    isAddingToCart, 
+    updateQuantity, 
+    removeItem, 
+    clearCart 
+  } = useCart();
+  
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -452,11 +471,6 @@ export default function Store() {
     zip: '',
     country: 'US',
   });
-
-  // Save cart to localStorage
-  useEffect(() => {
-    localStorage.setItem('merch-cart', JSON.stringify(cart));
-  }, [cart]);
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ['/api/store/products'],
@@ -536,12 +550,14 @@ export default function Store() {
       }
     });
 
+  // Calculate subtotal for validation
+  const cartSubtotal = cart.reduce((sum, item) => sum + Number(item.priceAtTime) * item.quantity, 0);
+
   const validateDiscountMutation = useMutation({
     mutationFn: async (code: string) => {
-      const subtotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
       const response = await apiRequest('/api/store/validate-discount', {
         method: 'POST',
-        body: JSON.stringify({ code, subtotal }),
+        body: JSON.stringify({ code, subtotal: cartSubtotal }),
       });
       return response;
     },
@@ -554,12 +570,23 @@ export default function Store() {
     },
   });
 
+  // Convert cart items to format expected by Printify checkout
+  const cartForCheckout = cart.map(item => ({
+    printifyProductId: item.printifyProductId,
+    printifyVariantId: item.printifyVariantId,
+    productTitle: item.productTitle,
+    variantTitle: item.variantTitle,
+    quantity: item.quantity,
+    unitPrice: Number(item.priceAtTime),
+    imageUrl: item.imageUrl,
+  }));
+
   const createPaymentMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest('/api/store/create-payment-intent', {
         method: 'POST',
         body: JSON.stringify({
-          items: cart,
+          items: cartForCheckout,
           discountCode: appliedDiscount?.code,
           shippingAddress: {
             address1: shippingInfo.address1,
@@ -593,30 +620,21 @@ export default function Store() {
     },
   });
 
-  const addToCart = (item: CartItem) => {
-    setCart(prev => {
-      const existing = prev.find(i => i.printifyVariantId === item.printifyVariantId);
-      if (existing) {
-        return prev.map(i => 
-          i.printifyVariantId === item.printifyVariantId 
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
-        );
-      }
-      return [...prev, item];
-    });
+  // Handler to add item to cart via unified API
+  const handleAddToCart = (item: AddToCartItem) => {
+    addToCart(item);
     toast({ title: "Added to cart", description: `${item.productTitle} - ${item.variantTitle}` });
   };
 
-  const updateQuantity = (printifyVariantId: string, quantity: number) => {
+  // Handler to update quantity via unified API
+  const handleUpdateQuantity = (id: string, quantity: number) => {
     if (quantity < 1) return;
-    setCart(prev => prev.map(i => 
-      i.printifyVariantId === printifyVariantId ? { ...i, quantity } : i
-    ));
+    updateQuantity({ id, quantity });
   };
 
-  const removeItem = (printifyVariantId: string) => {
-    setCart(prev => prev.filter(i => i.printifyVariantId !== printifyVariantId));
+  // Handler to remove item via unified API
+  const handleRemoveItem = (id: string) => {
+    removeItem(id);
   };
 
   const handleCheckout = () => {
@@ -637,14 +655,14 @@ export default function Store() {
   };
 
   const handlePaymentSuccess = () => {
-    setCart([]);
+    // Clear only printify items from cart (use the unified clearCart for now)
+    clearCart();
     setCheckoutOpen(false);
     setClientSecret(null);
     setOrderId(null);
     setOrderDetails(null);
     setAppliedDiscount(null);
     setDiscountCode('');
-    localStorage.removeItem('merch-cart');
   };
 
   return (
@@ -657,8 +675,8 @@ export default function Store() {
           </div>
           <CartSheet 
             cart={cart} 
-            onUpdateQuantity={updateQuantity} 
-            onRemoveItem={removeItem}
+            onUpdateQuantity={handleUpdateQuantity} 
+            onRemoveItem={handleRemoveItem}
             onCheckout={handleCheckout}
             isCheckingOut={createPaymentMutation.isPending}
           />
@@ -745,7 +763,7 @@ export default function Store() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredAndSortedProducts.map(product => (
-              <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+              <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} isAddingToCart={isAddingToCart} />
             ))}
           </div>
         )}

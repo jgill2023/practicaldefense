@@ -7247,8 +7247,8 @@ jeremy@abqconcealedcarry.com
     }
   });
 
-  // Shopping Cart Routes
-  app.get('/api/cart', isAuthenticated, async (req: any, res) => {
+  // Shopping Cart Routes (accessible by both authenticated and guest users)
+  app.get('/api/cart', async (req: any, res) => {
     try {
       const userId = req.user?.id; // May be null for guest users
       const sessionId = req.sessionID;
@@ -7273,32 +7273,57 @@ jeremy@abqconcealedcarry.com
     }
   });
 
-  app.post('/api/cart', isAuthenticated, async (req: any, res) => {
+  app.post('/api/cart', async (req: any, res) => {
     try {
       const userId = req.user?.id; // May be null for guest users
       const sessionId = req.sessionID;
 
-      console.log("POST /api/cart - userId:", userId, "sessionId:", sessionId);
+      console.log("POST /api/cart - userId:", userId, "sessionId:", sessionId, "body:", req.body);
 
+      // Schema that accepts both local products and Printify products
       const cartItemSchema = z.object({
-        productId: z.string().uuid(),
+        // Local product fields (optional for Printify items)
+        productId: z.string().uuid().optional(),
         variantId: z.string().uuid().optional(),
+        
+        // Printify product fields (optional for local items)
+        printifyProductId: z.string().optional(),
+        printifyVariantId: z.string().optional(),
+        
+        // Display fields (used mainly for Printify items but can be set for any)
+        productTitle: z.string().optional(),
+        variantTitle: z.string().optional(),
+        imageUrl: z.string().optional(),
+        
+        // Common fields
         quantity: z.number().int().min(1).default(1),
-        customization: z.object({}).optional(),
+        customization: z.any().optional(),
         priceAtTime: z.number(),
+        
+        // Item type
+        itemType: z.enum(['local', 'printify']).default('local'),
       });
 
       const validatedData = cartItemSchema.parse(req.body);
 
+      // Validate that either productId or printifyProductId is provided
+      if (!validatedData.productId && !validatedData.printifyProductId) {
+        return res.status(400).json({ error: "Either productId or printifyProductId is required" });
+      }
+
       const cartItem = await storage.addToCart({
         ...validatedData,
+        priceAtTime: validatedData.priceAtTime.toString(),
         userId: userId || null,
         sessionId: userId ? null : sessionId,
       });
 
-      console.log("POST /api/cart - created item with userId:", cartItem.userId, "sessionId:", cartItem.sessionId);
+      console.log("POST /api/cart - created item with userId:", cartItem.userId, "sessionId:", cartItem.sessionId, "type:", cartItem.itemType);
 
-      res.status(201).json(cartItem);
+      res.status(201).json({
+        ...cartItem,
+        priceAtTime: Number(cartItem.priceAtTime),
+      });
     } catch (error: any) {
       console.error("Error adding to cart:", error);
       if (error.name === 'ZodError') {
@@ -7308,7 +7333,7 @@ jeremy@abqconcealedcarry.com
     }
   });
 
-  app.put('/api/cart/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/cart/:id', async (req: any, res) => {
     try {
       const quantitySchema = z.object({
         quantity: z.number().int().min(1),
@@ -7326,7 +7351,7 @@ jeremy@abqconcealedcarry.com
     }
   });
 
-  app.delete('/api/cart/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/cart/:id', async (req: any, res) => {
     try {
       await storage.removeFromCart(req.params.id);
       res.status(204).send();
@@ -7336,7 +7361,7 @@ jeremy@abqconcealedcarry.com
     }
   });
 
-  app.delete('/api/cart', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/cart', async (req: any, res) => {
     try {
       const userId = req.user?.id;
       const sessionId = req.sessionID;
