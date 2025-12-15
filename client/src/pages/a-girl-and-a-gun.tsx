@@ -32,7 +32,7 @@ export default function AGirlAndAGun() {
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="border-2" data-testid="card-community">
-              <CardHeader style={{ backgroundColor: '#b6a8cc' }}>
+              <CardHeader className="flex flex-col space-y-1.5 p-6 bg-[#b6a8cc00]" style={{ backgroundColor: '#b6a8cc' }}>
                 <Heart className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
                 <CardTitle className="text-lg">Community & Connection</CardTitle>
               </CardHeader>
@@ -42,7 +42,7 @@ export default function AGirlAndAGun() {
             </Card>
 
             <Card className="border-2" data-testid="card-education">
-              <CardHeader style={{ backgroundColor: '#b6a8cc' }}>
+              <CardHeader className="flex flex-col space-y-1.5 p-6 bg-[#b6a8cc00]" style={{ backgroundColor: '#b6a8cc' }}>
                 <Shield className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
                 <CardTitle className="text-lg">Expert Training</CardTitle>
               </CardHeader>
@@ -52,7 +52,7 @@ export default function AGirlAndAGun() {
             </Card>
 
             <Card className="border-2" data-testid="card-advocacy">
-              <CardHeader style={{ backgroundColor: '#b6a8cc' }}>
+              <CardHeader className="flex flex-col space-y-1.5 p-6 bg-[#b6a8cc00]" style={{ backgroundColor: '#b6a8cc' }}>
                 <Award className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
                 <CardTitle className="text-lg">Advocacy & Support</CardTitle>
               </CardHeader>
