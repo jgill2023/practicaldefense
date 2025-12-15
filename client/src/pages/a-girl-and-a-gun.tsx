@@ -32,7 +32,7 @@ export default function AGirlAndAGun() {
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#8B7BB5] group-hover:to-[#C9BDDB]" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0]" />
               <Card className="relative border-2 border-[#6956A2] bg-white" data-testid="card-community">
                 <CardHeader className="flex flex-col space-y-1.5 p-6">
                   <Heart className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
@@ -45,7 +45,7 @@ export default function AGirlAndAGun() {
             </div>
 
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#8B7BB5] group-hover:to-[#C9BDDB]" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0]" />
               <Card className="relative border-2 border-[#6956A2] bg-white" data-testid="card-education">
                 <CardHeader className="flex flex-col space-y-1.5 p-6">
                   <Shield className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
@@ -58,7 +58,7 @@ export default function AGirlAndAGun() {
             </div>
 
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#8B7BB5] group-hover:to-[#C9BDDB]" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0]" />
               <Card className="relative border-2 border-[#6956A2] bg-white" data-testid="card-advocacy">
                 <CardHeader className="flex flex-col space-y-1.5 p-6">
                   <Award className="h-8 w-8 mb-2" style={{ color: '#6956A2' }} />
@@ -75,7 +75,7 @@ export default function AGirlAndAGun() {
         {/* Teresa Kelly Section */}
         <section className="mb-12">
           <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#8B7BB5] group-hover:to-[#C9BDDB]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0]" />
             <div className="relative rounded-lg p-8 md:p-12 border-2" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
             <div className="flex flex-col md:flex-row gap-8 items-stretch md:items-stretch">
               <div className="w-72 flex-shrink-0">
@@ -115,7 +115,7 @@ export default function AGirlAndAGun() {
             NC Yadkin Valley Chapter
           </h2>
           <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#8B7BB5] group-hover:to-[#C9BDDB]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0]" />
             <Card className="relative border-2 bg-white" style={{ borderColor: '#6956A2' }}>
               <CardHeader className="border-b" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
                 <div className="flex items-center gap-2 mb-2">
