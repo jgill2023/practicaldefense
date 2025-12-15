@@ -240,7 +240,7 @@ export default function CourseDetail() {
                   </div>
                 )}
 
-                {course.rounds && course.rounds > 0 && (
+                {Number(course.rounds) > 0 && (
                   <div className="flex items-center gap-3">
                     <div className="h-5 w-5 flex items-center justify-center text-primary font-bold text-sm">•</div>
                     <div>
