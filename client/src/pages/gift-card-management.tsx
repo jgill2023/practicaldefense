@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { DndContext, useDraggable, DragEndEvent } from "@dnd-kit/core";
+import { restrictToParentElement } from "@dnd-kit/modifiers";
 import { 
   Gift, 
   Search, 
@@ -33,7 +35,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Move
 } from "lucide-react";
 import type { GiftCard, GiftCardTheme, GiftCardRedemption, GiftCardBalanceAdjustment, TextPosition } from "@shared/schema";
 import { textPositionSchema } from "@shared/schema";
@@ -608,101 +611,275 @@ function CreateGiftCardDialog({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-function TextPositionEditor({ 
-  value, 
-  onChange, 
-  label 
+function DraggableTextBox({ 
+  id, 
+  label, 
+  position, 
+  containerRef 
 }: { 
-  value: TextPosition | undefined; 
-  onChange: (value: TextPosition) => void; 
-  label: string;
+  id: string; 
+  label: string; 
+  position: TextPosition;
+  containerRef: React.RefObject<HTMLDivElement>;
 }) {
-  const position = value || defaultTextPosition;
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
   
-  const updateField = (field: keyof TextPosition, newValue: any) => {
-    onChange({ ...position, [field]: newValue });
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    left: `${position.x}%`,
+    top: `${position.y}%`,
+    transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
+    cursor: 'grab',
+    userSelect: 'none',
+    fontSize: `${Math.min(position.fontSize, 24)}px`,
+    fontWeight: position.fontWeight,
+    color: position.fontColor,
+    textAlign: position.textAlign,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    border: '2px dashed #5170FF',
+    borderRadius: '4px',
+    padding: '4px 8px',
+    whiteSpace: 'nowrap',
+    zIndex: 10,
   };
 
   return (
-    <div className="border rounded-lg p-3 space-y-3">
-      <Label className="font-medium">{label}</Label>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label className="text-xs text-muted-foreground">X Position (%)</Label>
-          <Input
-            type="number"
-            min={0}
-            max={100}
-            value={position.x}
-            onChange={(e) => updateField('x', Number(e.target.value))}
-            data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}-x`}
-          />
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      data-testid={`draggable-${id}`}
+    >
+      <div className="flex items-center gap-1">
+        <Move className="w-3 h-3 text-[#5170FF]" />
+        <span>{label}</span>
+      </div>
+    </div>
+  );
+}
+
+function DraggablePositionEditor({
+  recipientPosition,
+  senderPosition,
+  amountPosition,
+  onRecipientChange,
+  onSenderChange,
+  onAmountChange,
+  previewImageUrl,
+  accentColor,
+}: {
+  recipientPosition: TextPosition | undefined;
+  senderPosition: TextPosition | undefined;
+  amountPosition: TextPosition | undefined;
+  onRecipientChange: (pos: TextPosition) => void;
+  onSenderChange: (pos: TextPosition) => void;
+  onAmountChange: (pos: TextPosition) => void;
+  previewImageUrl?: string;
+  accentColor?: string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [selectedField, setSelectedField] = useState<'recipient' | 'sender' | 'amount' | null>(null);
+
+  const recipient = recipientPosition || { ...defaultTextPosition, x: 10, y: 20 };
+  const sender = senderPosition || { ...defaultTextPosition, x: 10, y: 35 };
+  const amount = amountPosition || { ...defaultTextPosition, x: 50, y: 60, fontSize: 32 };
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, delta } = event;
+    if (!containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const deltaXPercent = (delta.x / rect.width) * 100;
+    const deltaYPercent = (delta.y / rect.height) * 100;
+
+    const id = active.id as string;
+    
+    if (id === 'recipient') {
+      const newX = Math.max(0, Math.min(100, recipient.x + deltaXPercent));
+      const newY = Math.max(0, Math.min(100, recipient.y + deltaYPercent));
+      onRecipientChange({ ...recipient, x: Math.round(newX), y: Math.round(newY) });
+    } else if (id === 'sender') {
+      const newX = Math.max(0, Math.min(100, sender.x + deltaXPercent));
+      const newY = Math.max(0, Math.min(100, sender.y + deltaYPercent));
+      onSenderChange({ ...sender, x: Math.round(newX), y: Math.round(newY) });
+    } else if (id === 'amount') {
+      const newX = Math.max(0, Math.min(100, amount.x + deltaXPercent));
+      const newY = Math.max(0, Math.min(100, amount.y + deltaYPercent));
+      onAmountChange({ ...amount, x: Math.round(newX), y: Math.round(newY) });
+    }
+  }, [recipient, sender, amount, onRecipientChange, onSenderChange, onAmountChange]);
+
+  const updateStyle = (field: 'recipient' | 'sender' | 'amount', key: keyof TextPosition, value: any) => {
+    if (field === 'recipient') {
+      onRecipientChange({ ...recipient, [key]: value });
+    } else if (field === 'sender') {
+      onSenderChange({ ...sender, [key]: value });
+    } else {
+      onAmountChange({ ...amount, [key]: value });
+    }
+  };
+
+  const getSelectedPosition = () => {
+    if (selectedField === 'recipient') return recipient;
+    if (selectedField === 'sender') return sender;
+    if (selectedField === 'amount') return amount;
+    return null;
+  };
+
+  const selectedPos = getSelectedPosition();
+
+  return (
+    <div className="space-y-4">
+      <div className="border rounded-lg overflow-hidden">
+        <div className="bg-muted px-3 py-2 text-sm font-medium flex items-center gap-2">
+          <Move className="w-4 h-4" />
+          Drag text boxes to position them on the gift card
         </div>
-        <div>
-          <Label className="text-xs text-muted-foreground">Y Position (%)</Label>
-          <Input
-            type="number"
-            min={0}
-            max={100}
-            value={position.y}
-            onChange={(e) => updateField('y', Number(e.target.value))}
-            data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}-y`}
-          />
-        </div>
-        <div>
-          <Label className="text-xs text-muted-foreground">Font Size (px)</Label>
-          <Input
-            type="number"
-            min={8}
-            max={72}
-            value={position.fontSize}
-            onChange={(e) => updateField('fontSize', Number(e.target.value))}
-            data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}-size`}
-          />
-        </div>
-        <div>
-          <Label className="text-xs text-muted-foreground">Font Color</Label>
-          <div className="flex gap-1">
-            <Input
-              type="color"
-              className="w-10 h-9 p-1"
-              value={position.fontColor}
-              onChange={(e) => updateField('fontColor', e.target.value)}
-              data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}-color`}
-            />
-            <Input
-              value={position.fontColor}
-              onChange={(e) => updateField('fontColor', e.target.value)}
-              className="flex-1"
-            />
+        <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToParentElement]}>
+          <div
+            ref={containerRef}
+            className="relative aspect-[3/2] w-full"
+            style={{
+              backgroundColor: accentColor || '#3b82f6',
+              backgroundImage: previewImageUrl ? `url(${previewImageUrl})` : undefined,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+            data-testid="drag-canvas"
+          >
+            <div 
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+              style={{ opacity: previewImageUrl ? 0 : 0.3 }}
+            >
+              <Gift className="w-16 h-16 text-white" />
+            </div>
+            
+            <div onClick={() => setSelectedField('recipient')}>
+              <DraggableTextBox
+                id="recipient"
+                label="Recipient Name"
+                position={recipient}
+                containerRef={containerRef}
+              />
+            </div>
+            <div onClick={() => setSelectedField('sender')}>
+              <DraggableTextBox
+                id="sender"
+                label="Sender Name"
+                position={sender}
+                containerRef={containerRef}
+              />
+            </div>
+            <div onClick={() => setSelectedField('amount')}>
+              <DraggableTextBox
+                id="amount"
+                label="$Amount"
+                position={amount}
+                containerRef={containerRef}
+              />
+            </div>
+          </div>
+        </DndContext>
+      </div>
+
+      <div className="text-xs text-muted-foreground text-center">
+        Click a text box to edit its style, then drag to reposition
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <Button
+          type="button"
+          variant={selectedField === 'recipient' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setSelectedField('recipient')}
+          data-testid="button-select-recipient"
+        >
+          Recipient
+        </Button>
+        <Button
+          type="button"
+          variant={selectedField === 'sender' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setSelectedField('sender')}
+          data-testid="button-select-sender"
+        >
+          Sender
+        </Button>
+        <Button
+          type="button"
+          variant={selectedField === 'amount' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setSelectedField('amount')}
+          data-testid="button-select-amount"
+        >
+          Amount
+        </Button>
+      </div>
+
+      {selectedField && selectedPos && (
+        <div className="border rounded-lg p-3 space-y-3 bg-muted/50">
+          <Label className="font-medium capitalize">{selectedField} Style</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Position: {selectedPos.x}% x {selectedPos.y}%</Label>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Font Size (px)</Label>
+              <Input
+                type="number"
+                min={8}
+                max={72}
+                value={selectedPos.fontSize}
+                onChange={(e) => updateStyle(selectedField, 'fontSize', Number(e.target.value))}
+                data-testid={`input-${selectedField}-size`}
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Font Color</Label>
+              <div className="flex gap-1">
+                <Input
+                  type="color"
+                  className="w-10 h-9 p-1"
+                  value={selectedPos.fontColor}
+                  onChange={(e) => updateStyle(selectedField, 'fontColor', e.target.value)}
+                  data-testid={`input-${selectedField}-color`}
+                />
+                <Input
+                  value={selectedPos.fontColor}
+                  onChange={(e) => updateStyle(selectedField, 'fontColor', e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Font Weight</Label>
+              <Select value={selectedPos.fontWeight} onValueChange={(v) => updateStyle(selectedField, 'fontWeight', v)}>
+                <SelectTrigger data-testid={`select-${selectedField}-weight`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="bold">Bold</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Text Align</Label>
+              <Select value={selectedPos.textAlign} onValueChange={(v) => updateStyle(selectedField, 'textAlign', v as 'left' | 'center' | 'right')}>
+                <SelectTrigger data-testid={`select-${selectedField}-align`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
-        <div>
-          <Label className="text-xs text-muted-foreground">Font Weight</Label>
-          <Select value={position.fontWeight} onValueChange={(v) => updateField('fontWeight', v)}>
-            <SelectTrigger data-testid={`select-${label.toLowerCase().replace(/\s+/g, '-')}-weight`}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="normal">Normal</SelectItem>
-              <SelectItem value="bold">Bold</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-xs text-muted-foreground">Text Align</Label>
-          <Select value={position.textAlign} onValueChange={(v) => updateField('textAlign', v as 'left' | 'center' | 'right')}>
-            <SelectTrigger data-testid={`select-${label.toLowerCase().replace(/\s+/g, '-')}-align`}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="left">Left</SelectItem>
-              <SelectItem value="center">Center</SelectItem>
-              <SelectItem value="right">Right</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -971,51 +1148,17 @@ function ThemeManagement() {
                 
                 <Separator className="my-4" />
                 <h4 className="font-medium text-sm">Text Position Mapping</h4>
-                <p className="text-xs text-muted-foreground mb-3">Configure where text elements appear on the gift card</p>
+                <p className="text-xs text-muted-foreground mb-3">Drag text boxes to position them on the gift card</p>
                 
-                <FormField
-                  control={createForm.control}
-                  name="recipientNamePosition"
-                  render={({ field }) => (
-                    <FormItem>
-                      <TextPositionEditor
-                        label="Recipient Name"
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={createForm.control}
-                  name="senderNamePosition"
-                  render={({ field }) => (
-                    <FormItem>
-                      <TextPositionEditor
-                        label="Sender Name"
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={createForm.control}
-                  name="amountPosition"
-                  render={({ field }) => (
-                    <FormItem>
-                      <TextPositionEditor
-                        label="Amount"
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <DraggablePositionEditor
+                  recipientPosition={createForm.watch('recipientNamePosition')}
+                  senderPosition={createForm.watch('senderNamePosition')}
+                  amountPosition={createForm.watch('amountPosition')}
+                  onRecipientChange={(pos) => createForm.setValue('recipientNamePosition', pos)}
+                  onSenderChange={(pos) => createForm.setValue('senderNamePosition', pos)}
+                  onAmountChange={(pos) => createForm.setValue('amountPosition', pos)}
+                  previewImageUrl={selectedFile ? URL.createObjectURL(selectedFile) : undefined}
+                  accentColor={createForm.watch('accentColor')}
                 />
                 
                 <DialogFooter>
@@ -1184,51 +1327,17 @@ function ThemeManagement() {
               
               <Separator className="my-4" />
               <h4 className="font-medium text-sm">Text Position Mapping</h4>
-              <p className="text-xs text-muted-foreground mb-3">Configure where text elements appear on the gift card</p>
+              <p className="text-xs text-muted-foreground mb-3">Drag text boxes to position them on the gift card</p>
               
-              <FormField
-                control={editForm.control}
-                name="recipientNamePosition"
-                render={({ field }) => (
-                  <FormItem>
-                    <TextPositionEditor
-                      label="Recipient Name"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={editForm.control}
-                name="senderNamePosition"
-                render={({ field }) => (
-                  <FormItem>
-                    <TextPositionEditor
-                      label="Sender Name"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={editForm.control}
-                name="amountPosition"
-                render={({ field }) => (
-                  <FormItem>
-                    <TextPositionEditor
-                      label="Amount"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <DraggablePositionEditor
+                recipientPosition={editForm.watch('recipientNamePosition')}
+                senderPosition={editForm.watch('senderNamePosition')}
+                amountPosition={editForm.watch('amountPosition')}
+                onRecipientChange={(pos) => editForm.setValue('recipientNamePosition', pos)}
+                onSenderChange={(pos) => editForm.setValue('senderNamePosition', pos)}
+                onAmountChange={(pos) => editForm.setValue('amountPosition', pos)}
+                previewImageUrl={editSelectedFile ? URL.createObjectURL(editSelectedFile) : editingTheme?.previewImageUrl}
+                accentColor={editForm.watch('accentColor')}
               />
               
               <DialogFooter>
