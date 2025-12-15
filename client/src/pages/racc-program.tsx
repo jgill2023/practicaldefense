@@ -323,7 +323,7 @@ export default function RACCProgram() {
                 </span>
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4">
-                <p className="text-muted-foreground leading-relaxed pt-[12px] pb-[12px]">
+                <p className="text-muted-foreground leading-relaxed pt-[12px] pb-[12px] mt-[12px] mb-[12px]">
                   The Responsibly Armed Citizen Criterion is Apache Solutions' 4-phase, belt-style progression system for civilian concealed carry—starting with safety & marksmanship and advancing to refined control & real-world competency. Every skill is pressure-tested with live-fire benchmarks, a written exam, and competency checks.
                 </p>
               </AccordionContent>
