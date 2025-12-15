@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import santaGiftCardImage from "@assets/SantaCallout_1765791736148.png";
+import santaGiftCardImage from "@assets/Apache_Santa_1765822664317.png";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
