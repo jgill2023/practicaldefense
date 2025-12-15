@@ -43,6 +43,7 @@ export function Layout({ children, headerColor }: LayoutProps) {
   const [isMobileCoursesOpen, setIsMobileCoursesOpen] = useState(false);
   const { counts } = useCommunicationCounts();
   const { pendingCount } = usePendingUsersCount();
+  const { itemCount } = useCart();
 
   const { data: coursesData } = useQuery<CourseWithSchedules[]>({
     queryKey: ['/api/courses'],
@@ -263,6 +264,15 @@ export function Layout({ children, headerColor }: LayoutProps) {
                   trigger={
                     <button className="relative text-white hover:text-[#FD66C5] transition-colors" data-testid="button-shopping-cart">
                       <ShoppingCart className="h-6 w-6" />
+                      {itemCount > 0 && (
+                        <Badge 
+                          variant="destructive" 
+                          className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-[20px]"
+                          data-testid="badge-cart-count"
+                        >
+                          {itemCount > 99 ? '99+' : itemCount}
+                        </Badge>
+                      )}
                     </button>
                   } 
                 />
