@@ -195,22 +195,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       <NavigationMenuTrigger className="bg-transparent text-base text-white hover:text-[#FD66C5] hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent" data-testid="dropdown-courses">
                         Courses
                       </NavigationMenuTrigger>
-                      <NavigationMenuContent className="min-w-[280px]">
-                        <div className="p-2">
+                      <NavigationMenuContent className="min-w-[600px]">
+                        <div className="p-4">
                           <NavigationMenuLink asChild>
-                            <Link href="/schedule-list" className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent cursor-pointer" data-testid="link-upcoming-events">
+                            <Link href="/schedule-list" className="flex items-center gap-2 px-3 py-2 rounded-md bg-[#5170FF]/10 hover:bg-[#5170FF]/20 cursor-pointer text-[#5170FF] font-medium" data-testid="link-upcoming-events">
                               <Calendar className="h-4 w-4" />
-                              Upcoming Events
+                              Upcoming Courses
                             </Link>
                           </NavigationMenuLink>
-                          <div className="mt-2 pt-2 border-t">
-                            <p className="px-3 py-1 text-sm font-medium text-muted-foreground flex items-center gap-2">
+                          <div className="mt-3 pt-3 border-t">
+                            <p className="px-3 py-1 text-sm font-medium text-muted-foreground flex items-center gap-2 mb-2">
                               <BookOpen className="h-4 w-4" />
                               Course Offerings
                             </p>
-                            <div className="mt-1 space-y-1">
-                              {activeCourses.length > 0 ? (
-                                activeCourses.map((course) => (
+                            {activeCourses.length > 0 ? (
+                              <div className="grid grid-cols-3 gap-2">
+                                {activeCourses.map((course) => (
                                   <NavigationMenuLink key={course.id} asChild>
                                     <Link 
                                       href={`/course/${course.id}`} 
@@ -220,11 +220,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                                       {course.title}
                                     </Link>
                                   </NavigationMenuLink>
-                                ))
-                              ) : (
-                                <p className="px-3 py-2 text-sm text-muted-foreground">No courses available</p>
-                              )}
-                            </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="px-3 py-2 text-sm text-muted-foreground">No courses available</p>
+                            )}
                           </div>
                         </div>
                       </NavigationMenuContent>
