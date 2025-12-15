@@ -552,7 +552,7 @@ export function Layout({ children, headerColor }: LayoutProps) {
         <img 
           src={santaGiftCardImage} 
           alt="Get Your Gift Card!" 
-          className="fixed bottom-6 right-6 z-50 w-32 cursor-pointer transition-all duration-200 drop-shadow-lg rounded-lg border-4 border-transparent hover:border-[#FD66C5] hover:shadow-[0_0_15px_#FD66C5]"
+          className="fixed bottom-6 right-6 z-50 w-32 cursor-pointer transition-all duration-200 drop-shadow-lg hover:drop-shadow-[0_0_10px_#FD66C5] hover:brightness-110"
           data-testid="button-floating-gift-card"
         />
       </Link>
