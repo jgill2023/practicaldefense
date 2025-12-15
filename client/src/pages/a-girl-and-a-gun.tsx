@@ -94,7 +94,7 @@ export default function AGirlAndAGun() {
                 <MapPin className="h-6 w-6" style={{ color: '#6956A2' }} />
                 <CardTitle data-testid="text-chapter-name">North Carolina - Yadkin Valley</CardTitle>
               </div>
-              <CardDescription className="text-base" data-testid="text-chapter-facilitator">
+              <CardDescription className="text-base text-[#372b4a] font-semibold" data-testid="text-chapter-facilitator">
                 Facilitated by Teresa Kelly
               </CardDescription>
             </CardHeader>
