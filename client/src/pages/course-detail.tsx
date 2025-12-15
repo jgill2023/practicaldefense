@@ -297,7 +297,7 @@ export default function CourseDetail() {
                                 {formatTime(schedule.startTime)} - {formatTime(schedule.endTime)}
                               </p>
                             </div>
-                            <Badge variant={isFull ? "destructive" : "secondary"}>
+                            <Badge variant={isFull ? "destructive" : "secondary"} className="text-center">
                               {isFull ? "Full" : `${availableSpots} spots`}
                             </Badge>
                           </div>
