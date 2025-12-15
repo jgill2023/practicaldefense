@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { Users, Award, Shield, Heart, MapPin, Mail, Phone, ExternalLink } from "lucide-react";
+import teresaKellyImage from "@assets/tk_1765820939527.png";
 
 export default function AGirlAndAGun() {
   return (
@@ -65,21 +66,34 @@ export default function AGirlAndAGun() {
         {/* Teresa Kelly Section */}
         <section className="mb-12">
           <div className="rounded-lg p-8 md:p-12 border-2" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
-            <div className="flex items-center gap-4 mb-4">
-              <Users className="h-8 w-8" style={{ color: '#6956A2' }} />
-              <h2 className="text-3xl font-bold" data-testid="heading-facilitator">
-                Meet Teresa Kelly
-              </h2>
+            <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
+              <div className="flex-shrink-0">
+                <img 
+                  src={teresaKellyImage} 
+                  alt="Teresa Kelly"
+                  className="w-48 h-auto rounded-lg shadow-lg border-2"
+                  style={{ borderColor: '#6956A2' }}
+                  data-testid="image-teresa"
+                />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-4 mb-4">
+                  <Users className="h-8 w-8" style={{ color: '#6956A2' }} />
+                  <h2 className="text-3xl font-bold" data-testid="heading-facilitator">
+                    Meet Teresa Kelly
+                  </h2>
+                </div>
+                <p className="text-lg text-gray-800 mb-4" data-testid="text-teresa-intro">
+                  Our local NC Yadkin Valley chapter is facilitated by Teresa Kelly, a dedicated educator and passionate advocate for women's empowerment in the shooting sports community.
+                </p>
+                <p className="text-gray-700 mb-6" data-testid="text-teresa-bio">
+                  Teresa brings years of experience, expertise, and a commitment to creating a welcoming environment for women of all experience levels. Whether you're picking up a firearm for the first time or you're an experienced shooter looking to refine your skills, Teresa is dedicated to supporting your journey with professionalism, patience, and encouragement.
+                </p>
+                <p className="text-gray-700" data-testid="text-teresa-mission">
+                  She believes that education and community are the foundations of responsible firearm ownership and use, and she's passionate about building that culture here in the Yadkin Valley.
+                </p>
+              </div>
             </div>
-            <p className="text-lg text-gray-800 mb-4" data-testid="text-teresa-intro">
-              Our local NC Yadkin Valley chapter is facilitated by Teresa Kelly, a dedicated educator and passionate advocate for women's empowerment in the shooting sports community.
-            </p>
-            <p className="text-gray-700 mb-6" data-testid="text-teresa-bio">
-              Teresa brings years of experience, expertise, and a commitment to creating a welcoming environment for women of all experience levels. Whether you're picking up a firearm for the first time or you're an experienced shooter looking to refine your skills, Teresa is dedicated to supporting your journey with professionalism, patience, and encouragement.
-            </p>
-            <p className="text-gray-700" data-testid="text-teresa-mission">
-              She believes that education and community are the foundations of responsible firearm ownership and use, and she's passionate about building that culture here in the Yadkin Valley.
-            </p>
           </div>
         </section>
 
