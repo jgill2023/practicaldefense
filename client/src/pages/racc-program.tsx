@@ -215,7 +215,7 @@ export default function RACCProgram() {
             </TitleCard>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
-                <CardHeader>
+                <CardHeader className="mt-[16px] mb-[16px]">
                   <Target className="w-12 h-12 text-[hsl(209,90%,38%)] mb-2" />
                   <CardTitle>Personalized Approach</CardTitle>
                 </CardHeader>
