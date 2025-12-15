@@ -368,7 +368,7 @@ export default function ScheduleList() {
                             </p>
                           </div>
                           
-                          <Link href={`/course-registration/${schedule.courseId}`}>
+                          <Link href={`/course-registration/${schedule.courseTitle}/${schedule.id}`}>
                             <Button 
                               className="whitespace-nowrap bg-[#010c84]"
                               disabled={schedule.availableSpots === 0}

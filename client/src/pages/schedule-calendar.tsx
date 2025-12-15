@@ -439,7 +439,7 @@ export default function ScheduleCalendar() {
                 </div>
                 
                 <div className="pt-4 border-t">
-                  <Link href={`/course-registration/${selectedEvent.resource.courseId}`}>
+                  <Link href={`/course-registration/${selectedEvent.resource.courseTitle}/${selectedEvent.resource.scheduleId}`}>
                     <Button 
                       className="w-full"
                       disabled={selectedEvent.resource.availableSpots === 0}
