@@ -363,12 +363,6 @@ export default function RACCProgram() {
 
               <div className="space-y-3 text-white/90">
                 <div className="flex items-center justify-center gap-3">
-                  <Phone className="w-5 h-5" />
-                  <a href="tel:3364226859" className="hover:text-white">
-                    Call/Text: 336-422-6859
-                  </a>
-                </div>
-                <div className="flex items-center justify-center gap-3">
                   <Globe className="w-5 h-5" />
                   <a href="https://apachenc.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">
                     ApacheNC.com
