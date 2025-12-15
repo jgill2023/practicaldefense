@@ -865,6 +865,16 @@ export default function Landing() {
                 <div className="mt-auto pt-4 border-t border-border">
                   <TestimonialSlider />
                 </div>
+
+                {/* Learn More Button */}
+                <div className="mt-4">
+                  <Button
+                    className="w-full bg-[hsl(209,90%,38%)] text-white hover:bg-[#FD66C5] font-heading uppercase tracking-wide"
+                    onClick={() => setLocation('/racc-program')}
+                  >
+                    Learn More
+                  </Button>
+                </div>
               </div>
               </ComicPanel>
             </div>
