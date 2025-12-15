@@ -1,10 +1,16 @@
-
 import { Layout } from "@/components/Layout";
 import { ComicPanel, TitleCard, HeroSection, FeatureCard } from "@/components/RACTheme";
-import { Award, Target, Clock, Users, Shield, BookOpen, TrendingUp, Calendar, CheckCircle } from "lucide-react";
+import { Award, Target, Clock, Users, Shield, BookOpen, TrendingUp, Calendar, CheckCircle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 
 export default function RACCProgram() {
   const [, setLocation] = useLocation();
@@ -33,7 +39,7 @@ export default function RACCProgram() {
               4-Phase Belt-Style Progression System
             </TitleCard>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Private 1-on-1 sessions with flexible scheduling. Develop your concealed carry skills 
+              Private 1-on-1 sessions with flexible scheduling. Develop your concealed carry skills
               through a structured, personalized curriculum designed for real-world application.
             </p>
           </div>
@@ -74,7 +80,7 @@ export default function RACCProgram() {
                     White Belt - Fundamentals
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Master the essential foundations of safe and effective concealed carry. 
+                    Master the essential foundations of safe and effective concealed carry.
                     Focus on safety protocols, basic marksmanship, and understanding your equipment.
                   </p>
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -110,7 +116,7 @@ export default function RACCProgram() {
                     Yellow Belt - Skill Development
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Build speed and accuracy while maintaining safety. Develop muscle memory 
+                    Build speed and accuracy while maintaining safety. Develop muscle memory
                     and consistency in your shooting fundamentals.
                   </p>
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -146,7 +152,7 @@ export default function RACCProgram() {
                     Orange Belt - Advanced Techniques
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Incorporate movement, shooting from cover, and scenario-based training. 
+                    Incorporate movement, shooting from cover, and scenario-based training.
                     Apply your skills in realistic defensive situations.
                   </p>
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -182,7 +188,7 @@ export default function RACCProgram() {
                     Green Belt - Mastery & Maintenance
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Achieve consistent performance under stress. Maintain and refine your skills 
+                    Achieve consistent performance under stress. Maintain and refine your skills
                     through advanced drills and continued practice.
                   </p>
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -272,7 +278,7 @@ export default function RACCProgram() {
                   Ready to Start Your Journey?
                 </h3>
                 <p className="text-white/90 text-lg mb-6 max-w-2xl mx-auto">
-                  Begin your progression through the Responsibly Armed Citizen Criterion program today. 
+                  Begin your progression through the Responsibly Armed Citizen Criterion program today.
                   Schedule your first private session and take the first step toward concealed carry mastery.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -296,6 +302,169 @@ export default function RACCProgram() {
               </div>
             </ComicPanel>
           </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl mb-4">
+              Frequently Asked Questions
+            </TitleCard>
+            <p className="text-muted-foreground">
+              Quick answers to get you started
+            </p>
+          </div>
+
+          <Accordion type="single" collapsible className="space-y-4">
+            <AccordionItem value="faq-1" className="bg-white rounded-lg shadow-sm border-0 overflow-hidden">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
+                <span className="font-heading text-lg uppercase tracking-wide text-left">
+                  What is RACC?
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4">
+                <p className="text-muted-foreground leading-relaxed">
+                  The Responsibly Armed Citizen Criterion is Apache Solutions' 4-phase, belt-style progression system for civilian concealed carry—starting with safety & marksmanship and advancing to refined control & real-world competency. Every skill is pressure-tested with live-fire benchmarks, a written exam, and competency checks.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="faq-2" className="bg-white rounded-lg shadow-sm border-0 overflow-hidden">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
+                <span className="font-heading text-lg uppercase tracking-wide text-left">
+                  How long does it take to complete?
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4">
+                <p className="text-muted-foreground leading-relaxed">
+                  No set timeline—you advance when you're ready. The full RACC program typically takes 12–24 months, depending on your schedule and goals. It is not designed to be something that someone can just walk in and complete. The real benefit is in the process. So, come into this with a process focus, and the results will come.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="faq-3" className="bg-white rounded-lg shadow-sm border-0 overflow-hidden">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
+                <span className="font-heading text-lg uppercase tracking-wide text-left">
+                  Do I need prior experience?
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4">
+                <p className="text-muted-foreground leading-relaxed">
+                  No. You don't even need any gear! Sometimes, we prefer it that way. RACC starts at zero. Whether you've never held a gun or you're a seasoned carrier, your trainer meets you exactly where you are.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="faq-4" className="bg-white rounded-lg shadow-sm border-0 overflow-hidden">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
+                <span className="font-heading text-lg uppercase tracking-wide text-left">
+                  What do I need for the first session?
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4">
+                <p className="text-muted-foreground leading-relaxed">
+                  A valid ID, a legal guardian must be present (if under 18), and a positive attitude!
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="faq-5" className="bg-white rounded-lg shadow-sm border-0 overflow-hidden">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
+                <span className="font-heading text-lg uppercase tracking-wide text-left">
+                  How much does it cost?
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4">
+                <p className="text-muted-foreground leading-relaxed">
+                  Private sessions are $60/hour or $100/2-hours for the first 10 sessions. Rate drops to $50/$90 after your first 10 sessions. Pay per session—or take advantage of our end-of-the-year deals for a significant discount.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="faq-6" className="bg-white rounded-lg shadow-sm border-0 overflow-hidden">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
+                <span className="font-heading text-lg uppercase tracking-wide text-left">
+                  Can I use my own gun and holster?
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4">
+                <p className="text-muted-foreground leading-relaxed">
+                  Yes—bring what you carry. We'll assess fit, safety, and function. If you don't have gear yet, please do not rush out and buy things; we'll guide you through the process.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="faq-7" className="bg-white rounded-lg shadow-sm border-0 overflow-hidden">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
+                <span className="font-heading text-lg uppercase tracking-wide text-left">
+                  Is this just for concealed carry permits?
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4">
+                <p className="text-muted-foreground leading-relaxed">
+                  No. This is not a "concealed carry permit" class. RACC goes beyond permit classes. It builds lifelong proficiency, not just a certificate. (Permit training can be added if needed.)
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="faq-8" className="bg-white rounded-lg shadow-sm border-0 overflow-hidden">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
+                <span className="font-heading text-lg uppercase tracking-wide text-left">
+                  What if I miss a week or two?
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4">
+                <p className="text-muted-foreground leading-relaxed">
+                  No problem! Sessions are 100% flexible—book when it works for you. Progress is tracked per phase, not calendar. We do ask students to retest on the previous phase if they have been absent for longer than 90 days.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="faq-9" className="bg-white rounded-lg shadow-sm border-0 overflow-hidden">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
+                <span className="font-heading text-lg uppercase tracking-wide text-left">
+                  Will I shoot on day one?
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4">
+                <p className="text-muted-foreground leading-relaxed">
+                  Only if you're ready. Phase 1 begins with safety, handling, and dry practice—live fire training comes after both you and your trainer feel that you are ready.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="faq-10" className="bg-white rounded-lg shadow-sm border-0 overflow-hidden">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
+                <span className="font-heading text-lg uppercase tracking-wide text-left">
+                  How do I know I'm improving?
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4">
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  Every phase ends with objective benchmarks:
+                </p>
+                <ul className="space-y-2 text-muted-foreground ml-4">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-5 h-5 text-[hsl(209,90%,38%)] flex-shrink-0 mt-0.5" />
+                    <span>Apache B-8 scores</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-5 h-5 text-[hsl(209,90%,38%)] flex-shrink-0 mt-0.5" />
+                    <span>Timed drills</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-5 h-5 text-[hsl(209,90%,38%)] flex-shrink-0 mt-0.5" />
+                    <span>Skill demos (reloads, malfunctions, one-hand shooting)</span>
+                  </li>
+                </ul>
+                <p className="text-muted-foreground mt-3">
+                  You'll see data-driven proof of progress.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </section>
     </Layout>
