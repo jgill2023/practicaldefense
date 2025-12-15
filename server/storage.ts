@@ -317,7 +317,7 @@ export interface IStorage {
     studentId?: string | null; // Optional studentId for authenticated users
     studentInfo?: { firstName: string; lastName: string; email: string } | null; // Store for guest enrollments
   }): Promise<Enrollment>;
-  upsertPaymentIntent(enrollmentId: string, promoCode?: string): Promise<{
+  upsertPaymentIntent(enrollmentId: string, promoCode?: string, handgunRentalAdded?: boolean): Promise<{
     clientSecret: string;
     originalAmount: number;
     subtotal: number;
@@ -326,6 +326,7 @@ export interface IStorage {
     total: number;
     tax_included: boolean;
     promoCode?: string;
+    handgunRentalFee?: number;
   }>;
   finalizeEnrollment(data: {
     enrollmentId: string;
@@ -2663,7 +2664,7 @@ export class DatabaseStorage implements IStorage {
     return enrollmentWithDetails || draftEnrollment;
   }
 
-  async upsertPaymentIntent(enrollmentId: string, promoCode?: string): Promise<{
+  async upsertPaymentIntent(enrollmentId: string, promoCode?: string, handgunRentalAdded?: boolean): Promise<{
     clientSecret: string;
     originalAmount: number;
     subtotal: number;
@@ -2672,10 +2673,14 @@ export class DatabaseStorage implements IStorage {
     total: number;
     tax_included: boolean;
     promoCode?: string;
+    handgunRentalFee?: number;
   }> {
     // Use the Stripe client from the Replit connector
     const { getStripeClient } = await import('./stripeClient');
     const stripe = await getStripeClient();
+
+    // Handgun rental fee amount (fixed price)
+    const HANDGUN_RENTAL_FEE = 25.00;
 
     // Get enrollment and course details
     const enrollment = await db.query.enrollments.findFirst({
@@ -2691,7 +2696,8 @@ export class DatabaseStorage implements IStorage {
       courseFound: !!enrollment?.course,
       paymentOption: enrollment?.paymentOption,
       coursePrice: enrollment?.course?.price,
-      depositAmount: enrollment?.course?.depositAmount
+      depositAmount: enrollment?.course?.depositAmount,
+      handgunRentalAdded
     });
 
     if (!enrollment || !enrollment.course) {
@@ -2718,7 +2724,23 @@ export class DatabaseStorage implements IStorage {
       paymentAmount = coursePrice;
     }
 
-    console.log('💵 Final payment amount:', paymentAmount);
+    // Add handgun rental fee if selected
+    const handgunRentalFee = handgunRentalAdded ? HANDGUN_RENTAL_FEE : 0;
+    paymentAmount += handgunRentalFee;
+
+    // Update enrollment with handgun rental info
+    if (handgunRentalAdded !== undefined) {
+      await db
+        .update(enrollments)
+        .set({
+          handgunRentalAdded: handgunRentalAdded || false,
+          handgunRentalFee: handgunRentalAdded ? HANDGUN_RENTAL_FEE.toString() : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(enrollments.id, enrollmentId));
+    }
+
+    console.log('💵 Final payment amount:', paymentAmount, '(includes rental fee:', handgunRentalFee, ')');
 
     if (paymentAmount <= 0) {
       console.error('❌ Invalid payment amount:', paymentAmount);
@@ -2790,6 +2812,7 @@ export class DatabaseStorage implements IStorage {
         total: 0,
         tax_included: false,
         promoCode: promoCodeInfo?.code,
+        handgunRentalFee: handgunRentalAdded ? HANDGUN_RENTAL_FEE : undefined,
         isFree: true, // Flag to indicate no payment is required
       };
     }
@@ -2887,6 +2910,7 @@ export class DatabaseStorage implements IStorage {
       total: finalAmount / 100,
       tax_included: taxAmount > 0,
       promoCode: promoCodeInfo?.code,
+      handgunRentalFee: handgunRentalAdded ? HANDGUN_RENTAL_FEE : undefined,
       isFree: false,
     };
   }

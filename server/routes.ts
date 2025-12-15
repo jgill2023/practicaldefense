@@ -1254,7 +1254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/course-registration/payment-intent', async (req: any, res) => {
     try {
       const validatedData = paymentIntentRequestSchema.parse(req.body);
-      const { enrollmentId, promoCode } = validatedData;
+      const { enrollmentId, promoCode, handgunRentalAdded } = validatedData;
 
       // Verify enrollment ownership
       const enrollment = await storage.getEnrollment(enrollmentId);
@@ -1276,7 +1276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied - authentication required" });
       }
 
-      const paymentData = await storage.upsertPaymentIntent(enrollmentId, promoCode);
+      const paymentData = await storage.upsertPaymentIntent(enrollmentId, promoCode, handgunRentalAdded);
 
       res.json(paymentData);
     } catch (error) {

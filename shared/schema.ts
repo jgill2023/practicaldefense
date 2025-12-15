@@ -219,6 +219,9 @@ export const enrollments = pgTable("enrollments", {
   taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }),
   taxRate: decimal("tax_rate", { precision: 5, scale: 4 }), // e.g., 0.0825 for 8.25%
   notes: text("notes"),
+  // Handgun rental upsell
+  handgunRentalAdded: boolean("handgun_rental_added").default(false),
+  handgunRentalFee: decimal("handgun_rental_fee", { precision: 10, scale: 2 }),
   // Form submission tracking
   formSubmissionData: jsonb("form_submission_data"),
   formSubmittedAt: timestamp("form_submitted_at"),
@@ -1801,6 +1804,7 @@ export const initiateRegistrationSchema = z.object({
 export const paymentIntentRequestSchema = z.object({
   enrollmentId: z.string().uuid("Valid enrollment ID is required"),
   promoCode: z.string().max(50).optional(),
+  handgunRentalAdded: z.boolean().optional(),
 });
 
 export const confirmEnrollmentSchema = z.object({

@@ -172,7 +172,8 @@ export default function CourseRegistration() {
 
   const [selectedSchedule, setSelectedSchedule] = useState<CourseSchedule | null>(null);
   const [clientSecret, setClientSecret] = useState("");
-  const [taxInfo, setTaxInfo] = useState<{subtotal: number, tax: number, total: number, tax_included: boolean, originalAmount?: number, discountAmount?: number, promoCode?: any} | null>(null);
+  const [taxInfo, setTaxInfo] = useState<{subtotal: number, tax: number, total: number, tax_included: boolean, originalAmount?: number, discountAmount?: number, promoCode?: any, handgunRentalFee?: number} | null>(null);
+  const [handgunRentalAdded, setHandgunRentalAdded] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [promoCodeApplied, setPromoCodeApplied] = useState<string | null>(null);
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
@@ -504,6 +505,7 @@ export default function CourseRegistration() {
         createPaymentIntentMutation.mutate({
           enrollmentId: enrollment.id,
           paymentOption: formData.paymentOption,
+          handgunRentalAdded,
         });
       }
     },
@@ -517,11 +519,12 @@ export default function CourseRegistration() {
   });
 
   const createPaymentIntentMutation = useMutation({
-    mutationFn: async ({ enrollmentId, paymentOption, promoCode }: { enrollmentId: string; paymentOption: string; promoCode?: string }) => {
+    mutationFn: async ({ enrollmentId, paymentOption, promoCode, handgunRentalAdded }: { enrollmentId: string; paymentOption: string; promoCode?: string; handgunRentalAdded?: boolean }) => {
       return await apiRequest("POST", "/api/course-registration/payment-intent", {
         enrollmentId,
         paymentOption,
         promoCode,
+        handgunRentalAdded,
       });
     },
     onSuccess: (data) => {
@@ -533,7 +536,8 @@ export default function CourseRegistration() {
         tax: data.tax,
         total: data.total,
         tax_included: data.tax_included,
-        promoCode: data.promoCode
+        promoCode: data.promoCode,
+        handgunRentalFee: data.handgunRentalFee,
       });
     },
     onError: (error) => {
@@ -593,6 +597,21 @@ export default function CourseRegistration() {
         enrollmentId: currentEnrollment.id,
         paymentOption,
         promoCode: promoCodeApplied || undefined,
+        handgunRentalAdded,
+      });
+    }
+  };
+
+  // Handle handgun rental option change
+  const handleHandgunRentalChange = (checked: boolean) => {
+    setHandgunRentalAdded(checked);
+    
+    if (currentEnrollment && isDraftCreated) {
+      createPaymentIntentMutation.mutate({
+        enrollmentId: currentEnrollment.id,
+        paymentOption: formData.paymentOption,
+        promoCode: promoCodeApplied || undefined,
+        handgunRentalAdded: checked,
       });
     }
   };
@@ -937,6 +956,40 @@ export default function CourseRegistration() {
             </Card>
           )}
 
+          {/* Handgun Rental Upsell Option - Only for concealed carry courses */}
+          {course && parseFloat(course.price) > 0 && selectedSchedule && (
+            <Card className="border-2 border-dashed border-primary/30 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center text-primary">
+                  <Shield className="mr-2 h-5 w-5" />
+                  Handgun Rental Option
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="handgun-rental"
+                    checked={handgunRentalAdded}
+                    onCheckedChange={handleHandgunRentalChange}
+                    data-testid="checkbox-handgun-rental"
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="handgun-rental" className="cursor-pointer">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-foreground">Add Rental Handgun + Ammunition</span>
+                        <Badge variant="secondary" className="ml-2">+$25.00</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Don't have your own handgun? We've got you covered! Includes rental handgun and all ammunition needed for the course.
+                      </p>
+                    </Label>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Payment Section - Show immediately when schedule is selected */}
           {selectedSchedule && parseFloat(course.price) > 0 && (
             <div className="space-y-6">
@@ -1001,6 +1054,14 @@ export default function CourseRegistration() {
                         <span>Subtotal</span>
                         <span>${taxInfo?.subtotal?.toFixed(2) || getPaymentAmount(currentEnrollment)}</span>
                       </div>
+
+                      {/* Show handgun rental if added */}
+                      {taxInfo?.handgunRentalFee && taxInfo.handgunRentalFee > 0 && (
+                        <div className="flex justify-between text-sm text-blue-600 dark:text-blue-400">
+                          <span>Handgun Rental + Ammo</span>
+                          <span data-testid="text-rental-amount">+${taxInfo.handgunRentalFee.toFixed(2)}</span>
+                        </div>
+                      )}
 
                       {/* Show discount if applied */}
                       {taxInfo?.discountAmount && taxInfo.discountAmount > 0 && (
