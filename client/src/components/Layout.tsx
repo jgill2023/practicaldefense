@@ -492,9 +492,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <h3 className="text-xl font-bold mb-4 font-heading uppercase tracking-wide">
                 Apache Solutions
               </h3>
-              <p className="text-white/80">
-                Results-driven firearms training tailored to the individual student. Traditional, deductive pistolcraft emphasizing fundamentals and quantifiable metrics.
-              </p>
+              <p className="text-white/80">We are known for meeting the student at their current skill level, while pushing them to the next level. Our one-on-one training sessions are dedicated training sessions tailored to the individual student.</p>
             </div>
 
             <div className="md:col-span-2">
