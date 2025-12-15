@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCommunicationCounts } from "@/hooks/useCommunicationCounts";
 import { hasInstructorPrivileges, canCreateAccounts, isInstructorOrHigher } from "@/lib/authUtils";
 import { usePendingUsersCount } from "@/hooks/usePendingUsersCount";
+import { useCart } from "@/components/shopping-cart";
+import { ShoppingCartComponent } from "@/components/shopping-cart";
 import { useQuery } from "@tanstack/react-query";
 import type { CourseWithSchedules } from "@shared/schema";
 import {
@@ -17,7 +19,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, User, Bell, MessageSquare, Settings, BookOpen } from "lucide-react";
+import { Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, User, Bell, MessageSquare, Settings, BookOpen, ShoppingCart } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -251,12 +253,19 @@ export function Layout({ children, headerColor }: LayoutProps) {
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>One/One Training</a>
-                <Link href="/contact" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-contact">Contact Us</Link>
                 <Link href="/a-girl-and-a-gun" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-agag">A Girl & A Gun</Link>
+                <Link href="/contact" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-contact">Contact Us</Link>
               </nav>
 
               {/* Desktop auth buttons */}
               <div className="hidden md:flex items-center space-x-4">
+                <ShoppingCartComponent 
+                  trigger={
+                    <button className="relative text-white hover:text-[#FD66C5] transition-colors" data-testid="button-shopping-cart">
+                      <ShoppingCart className="h-6 w-6" />
+                    </button>
+                  } 
+                />
                 {!isAuthenticated && (
                   <Button 
                     variant="accent"
@@ -341,8 +350,8 @@ export function Layout({ children, headerColor }: LayoutProps) {
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>One/One Training</a>
-                <Link href="/contact" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
                 <Link href="/a-girl-and-a-gun" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-agag-mobile" onClick={() => setIsMobileMenuOpen(false)}>A Girl & A Gun</Link>
+                <Link href="/contact" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
 
                 {/* Mobile auth buttons */}
                 <div className="border-t border-white/20 mt-2 pt-2 space-y-2">
