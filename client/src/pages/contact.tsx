@@ -145,7 +145,7 @@ export default function ContactPage() {
                 <div className="flex items-center space-x-3">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="font-medium" data-testid="text-location">Atlanta, GA</p>
+                    <p className="font-medium" data-testid="text-location">Yadkinville, NC</p>
                     <p className="text-sm text-muted-foreground">Contact us for specific range locations</p>
                   </div>
                 </div>
