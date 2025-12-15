@@ -29,9 +29,8 @@ export default function RACCProgram() {
           View Schedule & Register
         </Button>
       </HeroSection>
-
       {/* Introduction Section */}
-      <section className="py-16 bg-background">
+      <section className="py-16 bg-background pt-[24px] pb-[24px]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="prose prose-lg max-w-none">
             <p className="text-base leading-relaxed text-foreground mb-6">
@@ -44,7 +43,6 @@ export default function RACCProgram() {
           </div>
         </div>
       </section>
-
       {/* How RACC Works */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -111,7 +109,6 @@ export default function RACCProgram() {
           </p>
         </div>
       </section>
-
       {/* Why RACC Stands Alone */}
       <section className="py-16 bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -182,7 +179,6 @@ export default function RACCProgram() {
           </div>
         </div>
       </section>
-
       {/* FAQ Section */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -344,7 +340,6 @@ export default function RACCProgram() {
           </Accordion>
         </div>
       </section>
-
       {/* Ready to Start CTA */}
       <section className="py-16 bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
