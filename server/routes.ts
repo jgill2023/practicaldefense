@@ -21,6 +21,7 @@ import storeRouter from "./store/routes";
 import { googleCalendarRouter } from "./googleCalendar/routes";
 import giftCardRouter from "./giftCards/routes";
 import "./types"; // Import type declarations
+import { generateSitemap, generateRobotsTxt } from "./seo";
 
 import { getStripeClient } from './stripeClient';
 
@@ -48,6 +49,23 @@ async function ensureStripeInitialized(): Promise<Stripe | null> {
 ensureStripeInitialized();
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // SEO routes - sitemap.xml and robots.txt
+  app.get('/sitemap.xml', async (_req, res) => {
+    try {
+      const sitemap = await generateSitemap();
+      res.set('Content-Type', 'application/xml');
+      res.send(sitemap);
+    } catch (error) {
+      console.error('Error generating sitemap:', error);
+      res.status(500).send('Error generating sitemap');
+    }
+  });
+
+  app.get('/robots.txt', (_req, res) => {
+    res.set('Content-Type', 'text/plain');
+    res.send(generateRobotsTxt());
+  });
+
   // Auth middleware
   await setupAuth(app);
 

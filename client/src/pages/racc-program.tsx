@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/components/shopping-cart";
+import { useSEO, seoConfigs } from "@/hooks/use-seo";
 import {
   Accordion,
   AccordionContent,
@@ -164,6 +165,8 @@ export default function RACCProgram() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { addToCart, isAddingToCart } = useCart();
+  
+  useSEO(seoConfigs.raccProgram);
 
   const handleEnrollNow = (pkg: typeof raccPackages[0]) => {
     addToCart({

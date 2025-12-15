@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
+import { useSEO, seoConfigs } from "@/hooks/use-seo";
 import { ShoppingCart, Plus, Minus, Trash2, X, Loader2 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
@@ -440,6 +441,8 @@ function CheckoutForm({
 export default function Store() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  
+  useSEO(seoConfigs.store);
   
   // Use the unified cart hook
   const { 
