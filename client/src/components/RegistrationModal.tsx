@@ -122,6 +122,7 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
     lastName: '',
     email: '',
     phone: '',
+    smsConsent: false,
     agreeToTerms: false,
     paymentOption: 'full' as 'full' | 'deposit',
     password: '',
@@ -1006,7 +1007,21 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
 
           {/* Terms and Conditions */}
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6 space-y-4">
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="smsConsent"
+                  checked={formData.smsConsent}
+                  onCheckedChange={(checked) => 
+                    setFormData(prev => ({ ...prev, smsConsent: checked === true }))
+                  }
+                  data-testid="checkbox-sms-consent"
+                />
+                <label htmlFor="smsConsent" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                  By checking this box, I consent to receive automated text messages related to my class registration, reminders, and important updates from Apache Solutions. Message & data rates may apply. Reply STOP to unsubscribe or HELP for help.
+                </label>
+              </div>
+
               <div className="flex items-start space-x-3">
                 <Checkbox
                   id="terms"
@@ -1016,7 +1031,7 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
                   }
                   data-testid="checkbox-agree-terms"
                 />
-                <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed">
+                <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
                   I agree to the{' '}
                   <button
                     type="button"
@@ -1041,7 +1056,7 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
                   >
                     Refund Policy
                   </button>
-                  . I also consent to receive text messages related to my class registration, reminders, and important updates from Apache Solutions. Message and data rates may apply. You may reply STOP at anytime to unsubscribe from SMS notifications.
+                  .
                 </label>
               </div>
             </CardContent>
