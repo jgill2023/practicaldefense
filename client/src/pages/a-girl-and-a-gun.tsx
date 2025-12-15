@@ -145,7 +145,7 @@ export default function AGirlAndAGun() {
                       <span data-testid="text-offer-resources">Resources on safety, technique, and responsible ownership</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-red-600 font-bold">•</span>
+                      <span className="font-bold text-[#846da8]">•</span>
                       <span data-testid="text-offer-community">A welcoming community of like-minded women</span>
                     </li>
                   </ul>
