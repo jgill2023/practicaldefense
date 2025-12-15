@@ -107,7 +107,7 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
 
   const [selectedSchedule, setSelectedSchedule] = useState<CourseSchedule | null>(null);
   const [clientSecret, setClientSecret] = useState("");
-  const [taxInfo, setTaxInfo] = useState<{subtotal: number, tax: number, total: number, tax_included: boolean, originalAmount?: number, discountAmount?: number, promoCode?: any} | null>(null);
+  const [taxInfo, setTaxInfo] = useState<{subtotal: number, tax: number, total: number, tax_included: boolean, originalAmount?: number, discountAmount?: number, promoCode?: any, handgunRentalFee?: number} | null>(null);
   const [promoCode, setPromoCode] = useState("");
   const [promoCodeApplied, setPromoCodeApplied] = useState<string | null>(null);
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
@@ -115,6 +115,7 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
   const [currentEnrollment, setCurrentEnrollment] = useState<any>(null);
   const [isDraftCreated, setIsDraftCreated] = useState(false);
   const [policyModalOpen, setPolicyModalOpen] = useState<'terms' | 'privacy' | 'refund' | null>(null);
+  const [handgunRentalAdded, setHandgunRentalAdded] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -195,6 +196,7 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
         enrollmentId: currentEnrollment.id,
         promoCode: promoCode.trim(),
         paymentOption: formData.paymentOption,
+        handgunRentalAdded,
       });
 
       // Handle free enrollment (100% discount)
@@ -207,7 +209,8 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
           tax: 0,
           total: 0,
           tax_included: false,
-          promoCode: data.promoCode
+          promoCode: data.promoCode,
+          handgunRentalFee: data.handgunRentalFee || 0
         });
         toast({
           title: "Promo Code Applied!",
@@ -223,7 +226,8 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
           tax: data.tax,
           total: data.total,
           tax_included: data.tax_included,
-          promoCode: data.promoCode
+          promoCode: data.promoCode,
+          handgunRentalFee: data.handgunRentalFee || 0
         });
         toast({
           title: "Promo Code Applied!",
@@ -257,6 +261,7 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
       createPaymentIntentMutation.mutate({
         enrollmentId: currentEnrollment.id,
         paymentOption: formData.paymentOption,
+        handgunRentalAdded,
       });
     }
   };
@@ -331,6 +336,7 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
         createPaymentIntentMutation.mutate({
           enrollmentId: enrollment.id,
           paymentOption: formData.paymentOption,
+          handgunRentalAdded,
         });
       }
     },
@@ -344,11 +350,12 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
   });
 
   const createPaymentIntentMutation = useMutation({
-    mutationFn: async ({ enrollmentId, paymentOption, promoCode }: { enrollmentId: string; paymentOption: string; promoCode?: string }) => {
+    mutationFn: async ({ enrollmentId, paymentOption, promoCode, handgunRentalAdded }: { enrollmentId: string; paymentOption: string; promoCode?: string; handgunRentalAdded?: boolean }) => {
       return await apiRequest("POST", "/api/course-registration/payment-intent", {
         enrollmentId,
         paymentOption,
         promoCode,
+        handgunRentalAdded,
       });
     },
     onSuccess: (data) => {
@@ -360,7 +367,8 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
         tax: data.tax,
         total: data.total,
         tax_included: data.tax_included,
-        promoCode: data.promoCode
+        promoCode: data.promoCode,
+        handgunRentalFee: data.handgunRentalFee || 0
       });
     },
     onError: (error) => {
@@ -443,6 +451,20 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
         enrollmentId: currentEnrollment.id,
         paymentOption,
         promoCode: promoCodeApplied || undefined,
+        handgunRentalAdded,
+      });
+    }
+  };
+
+  const handleHandgunRentalChange = (checked: boolean) => {
+    setHandgunRentalAdded(checked);
+
+    if (currentEnrollment && isDraftCreated) {
+      createPaymentIntentMutation.mutate({
+        enrollmentId: currentEnrollment.id,
+        paymentOption: formData.paymentOption,
+        promoCode: promoCodeApplied || undefined,
+        handgunRentalAdded: checked,
       });
     }
   };
@@ -756,6 +778,33 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
             </Card>
           )}
 
+          {/* Handgun Rental Option */}
+          {!isWaitlist && selectedSchedule && parseFloat(course.price) > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Add-ons</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start space-x-3 p-3 border rounded-lg">
+                  <Checkbox
+                    id="handgunRental"
+                    checked={handgunRentalAdded}
+                    onCheckedChange={(checked) => handleHandgunRentalChange(checked === true)}
+                    data-testid="checkbox-handgun-rental"
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="handgunRental" className="cursor-pointer">
+                      <div className="font-medium">Handgun Rental - $25.00</div>
+                      <div className="text-sm text-muted-foreground">
+                        Includes rental handgun and all ammunition needed for the course
+                      </div>
+                    </Label>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Free Course Registration */}
           {!isWaitlist && selectedSchedule && parseFloat(course.price) === 0 && (
             <Card className="bg-green-50 border-green-200">
@@ -838,6 +887,12 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
                     <span>Subtotal</span>
                     <span>${taxInfo?.subtotal?.toFixed(2) || '0.00'}</span>
                   </div>
+                  {taxInfo?.handgunRentalFee && taxInfo.handgunRentalFee > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span>Handgun Rental</span>
+                      <span>${taxInfo.handgunRentalFee.toFixed(2)}</span>
+                    </div>
+                  )}
                   {taxInfo?.discountAmount && taxInfo.discountAmount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Discount</span>
