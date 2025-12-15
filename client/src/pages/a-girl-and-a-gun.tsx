@@ -149,7 +149,7 @@ export default function AGirlAndAGun() {
                       href="https://www.agirlandagun.org/chapter/nc-yadkin-valley/" 
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 font-semibold"
+                      className="inline-flex items-center gap-2 font-semibold text-[#292240]"
                       style={{ color: '#6956A2' }}
                       data-testid="link-chapter-page"
                     >
