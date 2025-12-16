@@ -143,7 +143,7 @@ export default function RefundPolicyPage() {
               <p><strong>Apache Solutions</strong></p>
               <p><strong>Email:</strong> <a href="mailto:Info@ApacheNC.com" className="text-accent hover:underline">Info@ApacheNC.com</a></p>
               <p><strong>Website:</strong> <a href="https://www.apachenc.com" className="text-accent hover:underline">www.apachenc.com</a></p>
-              <p><strong>Location:</strong> New Mexico, USA</p>
+              <p><strong>Location:</strong> North Carolina, USA</p>
             </div>
           </CardContent>
         </Card>
