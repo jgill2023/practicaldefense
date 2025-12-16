@@ -58,6 +58,10 @@ export function InstructorGoogleCalendarSettings() {
   const gcalSuccess = urlParams.get("gcal_success");
   const gcalError = urlParams.get("gcal_error");
 
+  const { data: status, isLoading: statusLoading } = useQuery<InstructorGoogleCalendarStatus>({
+    queryKey: ["/api/instructor-google-calendar/status"],
+  });
+
   useEffect(() => {
     if (googleConnected === "connected") {
       if (selectCalendar === "true" && !status?.selectedCalendarId) {
@@ -178,10 +182,6 @@ export function InstructorGoogleCalendarSettings() {
       setIsLoadingCalendars(false);
     }
   };
-
-  const { data: status, isLoading: statusLoading } = useQuery<InstructorGoogleCalendarStatus>({
-    queryKey: ["/api/instructor-google-calendar/status"],
-  });
 
   useEffect(() => {
     if (status?.selectedCalendarId) {
