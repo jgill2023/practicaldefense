@@ -2,6 +2,17 @@ import { storage } from '../storage';
 import type { User } from '@shared/schema';
 
 const INSTRUCTOROPS_AUTH_URL = process.env.INSTRUCTOROPS_AUTH_URL || "https://auth.instructorops.com";
+const INSTRUCTOROPS_API_KEY = process.env.INSTRUCTOROPS_API_KEY || "";
+
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (INSTRUCTOROPS_API_KEY) {
+    headers['x-instructorops-key'] = INSTRUCTOROPS_API_KEY;
+  }
+  return headers;
+}
 
 interface InstructorOpsCalendar {
   id: string;
@@ -34,7 +45,9 @@ class InstructorOpsCalendarService {
       const url = `${INSTRUCTOROPS_AUTH_URL}/api/calendars?instructorId=${instructorId}`;
       console.log(`[InstructorOps] Fetching calendars from: ${url}`);
       
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: getAuthHeaders(),
+      });
       
       if (!response.ok) {
         const text = await response.text();
@@ -55,7 +68,7 @@ class InstructorOpsCalendarService {
     try {
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/select`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ instructorId, calendarId }),
       });
       
@@ -87,7 +100,9 @@ class InstructorOpsCalendarService {
         end: endTime.toISOString(),
       });
       
-      const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/busy?${params}`);
+      const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/busy?${params}`, {
+        headers: getAuthHeaders(),
+      });
       
       if (!response.ok) {
         console.error(`Failed to fetch blocked times from InstructorOps: ${response.status}`);
@@ -106,7 +121,7 @@ class InstructorOpsCalendarService {
     try {
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/events/create`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(data),
       });
       
@@ -131,7 +146,7 @@ class InstructorOpsCalendarService {
     try {
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/events/${eventId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ instructorId, ...data }),
       });
       
@@ -146,7 +161,7 @@ class InstructorOpsCalendarService {
     try {
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/events/${eventId}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ instructorId, calendarId }),
       });
       
@@ -161,7 +176,7 @@ class InstructorOpsCalendarService {
     try {
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/create`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ instructorId, name: calendarName }),
       });
       
@@ -186,7 +201,9 @@ class InstructorOpsCalendarService {
       const url = `${INSTRUCTOROPS_AUTH_URL}/api/calendars/status?instructorId=${instructorId}`;
       console.log(`[InstructorOps] Checking connection status: ${url}`);
       
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: getAuthHeaders(),
+      });
       
       if (!response.ok) {
         const text = await response.text();
@@ -210,7 +227,7 @@ class InstructorOpsCalendarService {
     try {
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/disconnect`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ instructorId }),
       });
       
