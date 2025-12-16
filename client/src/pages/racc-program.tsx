@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Layout from "@/components/Layout";
 import { HeroSection, TitleCard, ComicPanel } from "@/components/RACTheme";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/components/shopping-cart";
 import { useSEO, seoConfigs } from "@/hooks/use-seo";
+import { BookingModal } from "@/components/BookingModal";
 import {
   Accordion,
   AccordionContent,
@@ -165,6 +167,7 @@ export default function RACCProgram() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { addToCart, isAddingToCart } = useCart();
+  const [showBookingModal, setShowBookingModal] = useState(false);
   
   useSEO(seoConfigs.raccProgram);
 
@@ -190,9 +193,10 @@ export default function RACCProgram() {
         <Button
           size="lg"
           className="bg-white text-[hsl(209,90%,38%)] hover:bg-white/90 font-heading uppercase tracking-wide"
-          onClick={() => setLocation('/schedule-list')}
+          onClick={() => setShowBookingModal(true)}
+          data-testid="button-hero-book-appointment"
         >
-          View Schedule & Register
+          Book Private Training
         </Button>
       </HeroSection>
       {/* Introduction Section */}
@@ -847,16 +851,22 @@ export default function RACCProgram() {
                 <Button
                   size="lg"
                   className="bg-white text-[hsl(209,90%,38%)] hover:bg-white/90 font-heading uppercase tracking-wide"
-                  onClick={() => setLocation('/schedule-list')}
+                  onClick={() => setShowBookingModal(true)}
+                  data-testid="button-cta-book-appointment"
                 >
                   <Calendar className="w-5 h-5 mr-2" />
-                  View Schedule & Register
+                  Book Private Training
                 </Button>
               </div>
             </div>
           </ComicPanel>
         </div>
       </section>
+
+      <BookingModal
+        open={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+      />
     </Layout>
   );
 }
