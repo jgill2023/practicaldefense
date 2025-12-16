@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -8,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { 
   CreditCard, 
@@ -17,7 +20,10 @@ import {
   ExternalLink, 
   Loader2,
   Link as LinkIcon,
-  Unlink
+  Unlink,
+  Key,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 interface StripeStatus {
@@ -26,34 +32,49 @@ interface StripeStatus {
   chargesEnabled: boolean;
   payoutsEnabled: boolean;
   businessName?: string;
+  keyPrefix?: string;
+  keyLast4?: string;
+  hasStoredCredentials?: boolean;
+  encryptionConfigured?: boolean;
   message: string;
 }
 
 export default function StripeConnectPage() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const [secretKey, setSecretKey] = useState("");
+  const [publishableKey, setPublishableKey] = useState("");
+  const [showSecretKey, setShowSecretKey] = useState(false);
 
   const { data: status, isLoading: statusLoading } = useQuery<StripeStatus>({
     queryKey: ["/api/stripe-connect/status"],
     enabled: !!user && isInstructorOrHigher(user),
   });
 
-  const onboardMutation = useMutation({
-    mutationFn: async () => {
-      return apiRequest("POST", "/api/stripe-connect/onboard");
+  const saveCredentialsMutation = useMutation({
+    mutationFn: async (data: { secretKey: string; publishableKey?: string }) => {
+      return apiRequest("POST", "/api/stripe-connect/credentials", data);
     },
     onSuccess: (data: any) => {
       toast({
         title: "Stripe Connected!",
-        description: data.message || "Stripe is now ready to accept payments.",
+        description: data.message || "Your Stripe API keys have been saved and validated.",
       });
+      setSecretKey("");
+      setPublishableKey("");
       queryClient.invalidateQueries({ queryKey: ["/api/stripe-connect/status"] });
     },
     onError: (error: any) => {
-      const errorData = error.message ? JSON.parse(error.message.split(': ')[1] || '{}') : {};
+      let errorMessage = "Failed to save Stripe credentials";
+      try {
+        const errorData = JSON.parse(error.message.split(': ')[1] || '{}');
+        errorMessage = errorData.error || errorMessage;
+      } catch {
+        errorMessage = error.message || errorMessage;
+      }
       toast({
         title: "Connection Failed",
-        description: errorData.error || error.message || "Failed to connect Stripe",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -78,6 +99,22 @@ export default function StripeConnectPage() {
       });
     },
   });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!secretKey.trim()) {
+      toast({
+        title: "Missing Secret Key",
+        description: "Please enter your Stripe Secret Key",
+        variant: "destructive",
+      });
+      return;
+    }
+    saveCredentialsMutation.mutate({ 
+      secretKey: secretKey.trim(),
+      publishableKey: publishableKey.trim() || undefined
+    });
+  };
 
   if (authLoading) {
     return (
@@ -193,10 +230,10 @@ export default function StripeConnectPage() {
                   </div>
                 </div>
 
-                {status.businessName && (
+                {status.keyPrefix && status.keyLast4 && (
                   <div className="mt-4 p-4 bg-muted rounded-lg">
-                    <span className="text-sm text-muted-foreground">Business Name:</span>
-                    <span className="ml-2 font-medium">{status.businessName}</span>
+                    <span className="text-sm text-muted-foreground">API Key:</span>
+                    <span className="ml-2 font-mono">{status.keyPrefix}...{status.keyLast4}</span>
                   </div>
                 )}
 
@@ -225,12 +262,12 @@ export default function StripeConnectPage() {
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Stripe Not Connected</AlertTitle>
                   <AlertDescription>
-                    {status?.message || "Connect your Stripe account to start accepting payments."}
+                    {status?.message || "Enter your Stripe API keys to start accepting payments."}
                   </AlertDescription>
                 </Alert>
 
                 {isAdmin && (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <h4 className="font-medium mb-3 text-blue-800">Setup Instructions:</h4>
                       <ol className="list-decimal list-inside text-sm text-blue-700 space-y-3">
@@ -249,7 +286,7 @@ export default function StripeConnectPage() {
                           <strong>Complete account setup:</strong> Stripe will guide you through identity verification, bank account connection, and tax information.
                         </li>
                         <li>
-                          <strong>Get your Secret Key:</strong> Go to{" "}
+                          <strong>Get your API keys:</strong> Go to{" "}
                           <a 
                             href="https://dashboard.stripe.com/apikeys" 
                             target="_blank" 
@@ -258,40 +295,91 @@ export default function StripeConnectPage() {
                           >
                             Developers → API keys
                           </a>{" "}
-                          and copy your <strong>Secret key</strong> (starts with "sk_")
+                          and copy your keys.
                         </li>
                         <li>
-                          <strong>Add the secret to this app:</strong> In Replit, go to the "Secrets" tab and add a new secret named <code className="bg-blue-100 px-1 rounded">STRIPE_SECRET_KEY</code> with your secret key as the value.
-                        </li>
-                        <li>
-                          <strong>Click the button below</strong> to verify your setup and start accepting payments.
+                          <strong>Enter your keys below</strong> to connect your Stripe account.
                         </li>
                       </ol>
                     </div>
 
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Important</AlertTitle>
-                      <AlertDescription>
-                        Make sure you've added your Stripe Secret Key to this app's secrets before clicking the button below. 
-                        The system will validate your key to ensure payments can be processed.
-                      </AlertDescription>
-                    </Alert>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="secretKey" className="flex items-center gap-2">
+                          <Key className="h-4 w-4" />
+                          Secret Key <span className="text-red-500">*</span>
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="secretKey"
+                            type={showSecretKey ? "text" : "password"}
+                            value={secretKey}
+                            onChange={(e) => setSecretKey(e.target.value)}
+                            placeholder="sk_live_... or sk_test_..."
+                            className="pr-10 font-mono"
+                            data-testid="input-secret-key"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3"
+                            onClick={() => setShowSecretKey(!showSecretKey)}
+                          >
+                            {showSecretKey ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Your secret key starts with "sk_live_" for production or "sk_test_" for testing.
+                        </p>
+                      </div>
 
-                    <Button
-                      size="lg"
-                      onClick={() => onboardMutation.mutate()}
-                      disabled={onboardMutation.isPending}
-                      className="w-full"
-                      data-testid="button-connect-stripe"
-                    >
-                      {onboardMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <LinkIcon className="h-4 w-4 mr-2" />
-                      )}
-                      Connect Stripe to Accept Payments
-                    </Button>
+                      <div className="space-y-2">
+                        <Label htmlFor="publishableKey" className="flex items-center gap-2">
+                          <Key className="h-4 w-4" />
+                          Publishable Key <span className="text-muted-foreground text-xs">(optional)</span>
+                        </Label>
+                        <Input
+                          id="publishableKey"
+                          type="text"
+                          value={publishableKey}
+                          onChange={(e) => setPublishableKey(e.target.value)}
+                          placeholder="pk_live_... or pk_test_..."
+                          className="font-mono"
+                          data-testid="input-publishable-key"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Your publishable key starts with "pk_live_" for production or "pk_test_" for testing.
+                        </p>
+                      </div>
+
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Security Note</AlertTitle>
+                        <AlertDescription>
+                          Your API keys are encrypted and stored securely. We only use them to process payments on your behalf.
+                        </AlertDescription>
+                      </Alert>
+
+                      <Button
+                        type="submit"
+                        size="lg"
+                        disabled={saveCredentialsMutation.isPending || !secretKey.trim()}
+                        className="w-full"
+                        data-testid="button-connect-stripe"
+                      >
+                        {saveCredentialsMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <LinkIcon className="h-4 w-4 mr-2" />
+                        )}
+                        Connect Stripe Account
+                      </Button>
+                    </form>
                   </div>
                 )}
 

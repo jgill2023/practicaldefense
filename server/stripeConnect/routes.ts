@@ -1,16 +1,15 @@
 import { Router, Request, Response } from 'express';
 import Stripe from 'stripe';
 import { isAuthenticated } from '../customAuth';
-import { getStripeClient } from '../stripeClient';
+import { getStripeClient, resetStripeClientCache, validateStripeSecretKey } from '../stripeClient';
 import { storage } from '../storage';
+import { encrypt, extractKeyMetadata, isEncryptionConfigured } from '../utils/encryption';
 
 export const stripeConnectRouter = Router();
 
 let stripe: Stripe | null = null;
 
 async function ensureStripeInitialized(): Promise<Stripe | null> {
-  // Always try to initialize if we don't have a client yet
-  // This allows initialization to succeed after a secret is added
   if (!stripe) {
     try {
       stripe = await getStripeClient();
@@ -22,9 +21,9 @@ async function ensureStripeInitialized(): Promise<Stripe | null> {
   return stripe;
 }
 
-// Force re-initialization (used after secrets are updated)
 function resetStripeClient(): void {
   stripe = null;
+  resetStripeClientCache();
 }
 
 // Check Stripe configuration status
@@ -35,21 +34,22 @@ stripeConnectRouter.get('/status', isAuthenticated, async (req: any, res: Respon
       return res.status(403).json({ error: 'Instructor or admin access required' });
     }
 
-    // Check if admin has completed Stripe onboarding
     const settings = await storage.getAppSettings();
     const stripeOnboarded = settings?.stripeOnboarded ?? false;
 
     if (!stripeOnboarded) {
+      const credentials = await storage.getStripeCredentials();
       return res.json({
         configured: false,
         onboarded: false,
         chargesEnabled: false,
         payoutsEnabled: false,
-        message: 'Stripe is not connected. Click "Connect Stripe" to set up payments.'
+        hasStoredCredentials: !!credentials,
+        encryptionConfigured: isEncryptionConfigured(),
+        message: 'Stripe is not connected. Enter your API keys to set up payments.'
       });
     }
 
-    // Verify the Stripe API key is working
     const stripeClient = await ensureStripeInitialized();
     
     if (!stripeClient) {
@@ -58,13 +58,15 @@ stripeConnectRouter.get('/status', isAuthenticated, async (req: any, res: Respon
         onboarded: true,
         chargesEnabled: false,
         payoutsEnabled: false,
-        message: 'Stripe API keys are not configured. Please add STRIPE_SECRET_KEY to complete setup.'
+        encryptionConfigured: isEncryptionConfigured(),
+        message: 'Stripe API keys need to be configured.'
       });
     }
 
-    // Verify the API key works by retrieving balance
     try {
       await stripeClient.balance.retrieve();
+      
+      const credentials = await storage.getStripeCredentials();
       
       return res.json({
         configured: true,
@@ -72,6 +74,8 @@ stripeConnectRouter.get('/status', isAuthenticated, async (req: any, res: Respon
         chargesEnabled: true,
         payoutsEnabled: true,
         businessName: 'Apache Solutions',
+        keyPrefix: credentials?.secretKeyPrefix || 'sk_***',
+        keyLast4: credentials?.secretKeyLast4 || '****',
         message: 'Stripe is configured and ready to accept payments.'
       });
     } catch (balanceError: any) {
@@ -81,7 +85,7 @@ stripeConnectRouter.get('/status', isAuthenticated, async (req: any, res: Respon
         onboarded: true,
         chargesEnabled: false,
         payoutsEnabled: false,
-        message: 'Stripe API key is invalid or has insufficient permissions. Please check your STRIPE_SECRET_KEY.'
+        message: 'Stripe API key is invalid or has insufficient permissions.'
       });
     }
   } catch (error: any) {
@@ -90,7 +94,94 @@ stripeConnectRouter.get('/status', isAuthenticated, async (req: any, res: Respon
   }
 });
 
-// Complete Stripe onboarding (admin confirms setup is complete)
+// Save Stripe credentials (admin submits API keys through web UI)
+stripeConnectRouter.post('/credentials', isAuthenticated, async (req: any, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { secretKey, publishableKey } = req.body;
+
+    if (!secretKey) {
+      return res.status(400).json({ error: 'Secret key is required' });
+    }
+
+    if (!secretKey.startsWith('sk_live_') && !secretKey.startsWith('sk_test_')) {
+      return res.status(400).json({ error: 'Invalid secret key format. Must start with sk_live_ or sk_test_' });
+    }
+
+    if (publishableKey && !publishableKey.startsWith('pk_live_') && !publishableKey.startsWith('pk_test_')) {
+      return res.status(400).json({ error: 'Invalid publishable key format. Must start with pk_live_ or pk_test_' });
+    }
+
+    if (!isEncryptionConfigured()) {
+      return res.status(500).json({ 
+        error: 'Encryption is not configured. Please contact the administrator.',
+        details: 'ENCRYPTION_MASTER_KEY environment variable is not set.'
+      });
+    }
+
+    // Validate the secret key with Stripe
+    const isValid = await validateStripeSecretKey(secretKey);
+    if (!isValid) {
+      return res.status(400).json({ 
+        error: 'Invalid Stripe API key. Please check your key and try again.',
+        details: 'The key could not be validated with Stripe.'
+      });
+    }
+
+    // Encrypt the keys
+    const secretKeyEncrypted = encrypt(secretKey);
+    const secretKeyMeta = extractKeyMetadata(secretKey);
+
+    let publishableKeyEncrypted = null;
+    let publishableKeyMeta = null;
+    if (publishableKey) {
+      publishableKeyEncrypted = encrypt(publishableKey);
+      publishableKeyMeta = extractKeyMetadata(publishableKey);
+    }
+
+    // Save to database
+    await storage.saveStripeCredentials({
+      encryptedSecretKey: secretKeyEncrypted.encrypted,
+      secretKeyIv: secretKeyEncrypted.iv,
+      secretKeyAuthTag: secretKeyEncrypted.authTag,
+      secretKeyLast4: secretKeyMeta.last4,
+      secretKeyPrefix: secretKeyMeta.prefix,
+      encryptedPublishableKey: publishableKeyEncrypted?.encrypted || null,
+      publishableKeyIv: publishableKeyEncrypted?.iv || null,
+      publishableKeyAuthTag: publishableKeyEncrypted?.authTag || null,
+      publishableKeyLast4: publishableKeyMeta?.last4 || null,
+      publishableKeyPrefix: publishableKeyMeta?.prefix || null,
+      isActive: true,
+    });
+
+    // Mark Stripe as onboarded
+    await storage.updateAppSettings({ stripeOnboarded: true });
+
+    // Reset client cache to use new credentials
+    resetStripeClient();
+
+    console.log(`Stripe credentials saved by admin ${user.id}`);
+
+    res.json({ 
+      success: true, 
+      message: 'Stripe API keys saved and validated successfully.',
+      configured: true,
+      chargesEnabled: true,
+      payoutsEnabled: true,
+      keyPrefix: secretKeyMeta.prefix,
+      keyLast4: secretKeyMeta.last4,
+    });
+  } catch (error: any) {
+    console.error('Error saving Stripe credentials:', error);
+    res.status(500).json({ error: 'Failed to save Stripe credentials' });
+  }
+});
+
+// Legacy onboard endpoint (for backwards compatibility)
 stripeConnectRouter.post('/onboard', isAuthenticated, async (req: any, res: Response) => {
   try {
     const user = req.user;
@@ -98,28 +189,25 @@ stripeConnectRouter.post('/onboard', isAuthenticated, async (req: any, res: Resp
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    // Verify Stripe API key is configured and working
     const stripeClient = await ensureStripeInitialized();
     
     if (!stripeClient) {
       return res.status(400).json({ 
-        error: 'Stripe API key is not configured. Please add STRIPE_SECRET_KEY as a secret first.',
+        error: 'Please enter your Stripe API keys first.',
         step: 'add_api_key'
       });
     }
 
-    // Test the API key by retrieving balance
     try {
       await stripeClient.balance.retrieve();
     } catch (balanceError: any) {
       console.error('Stripe API key validation failed:', balanceError);
       return res.status(400).json({ 
-        error: 'Stripe API key is invalid or has insufficient permissions. Please verify your API key.',
+        error: 'Stripe API key is invalid or has insufficient permissions.',
         step: 'verify_api_key'
       });
     }
 
-    // Mark Stripe as onboarded
     await storage.updateAppSettings({ stripeOnboarded: true });
 
     console.log(`Stripe onboarding completed by admin ${user.id}`);
@@ -145,10 +233,8 @@ stripeConnectRouter.delete('/disconnect', isAuthenticated, async (req: any, res:
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    // Reset Stripe onboarding status
     await storage.updateAppSettings({ stripeOnboarded: false });
-
-    // Reset Stripe client so new keys can be picked up without restart
+    await storage.deleteStripeCredentials();
     resetStripeClient();
 
     console.log(`Stripe disconnected by admin ${user.id}`);
@@ -173,13 +259,16 @@ stripeConnectRouter.get('/config', isAuthenticated, async (req: any, res: Respon
 
     const settings = await storage.getAppSettings();
     const stripeClient = await ensureStripeInitialized();
+    const credentials = await storage.getStripeCredentials();
     
     res.json({
       onboarded: settings?.stripeOnboarded ?? false,
       apiKeyConfigured: !!stripeClient,
+      hasStoredCredentials: !!credentials,
+      encryptionConfigured: isEncryptionConfigured(),
       message: settings?.stripeOnboarded 
         ? 'Stripe is configured. All payments go directly to Apache Solutions.' 
-        : 'Stripe is not yet configured. Complete onboarding to accept payments.'
+        : 'Stripe is not yet configured. Enter your API keys to accept payments.'
     });
   } catch (error: any) {
     console.error('Error fetching Stripe config:', error);
