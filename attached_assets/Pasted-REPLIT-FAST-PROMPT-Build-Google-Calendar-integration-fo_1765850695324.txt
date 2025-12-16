@@ -1,0 +1,235 @@
+REPLIT FAST PROMPT
+
+Build Google Calendar integration for InstructorOps with read + write capabilities and booking conflict detection.
+
+Requirements:
+
+OAuth
+
+Use Google OAuth 2.0
+
+Scopes:
+
+https://www.googleapis.com/auth/calendar.events
+
+https://www.googleapis.com/auth/calendar.readonly
+
+Redirect URI:
+
+https://apachenc.com/api/google/callback
+
+Support offline access (refresh tokens)
+
+Token Handling
+
+Securely store access_token, refresh_token, expiry, calendar_id
+
+Automatically refresh tokens when expired
+
+Associate tokens to instructor account
+
+Calendar Selection
+
+Fetch instructor’s calendars
+
+Allow instructor to select which calendars block availability
+
+Default to primary
+
+Availability Blocking Logic
+
+When generating availability:
+
+Query Google Calendar events using:
+
+events.list
+
+singleEvents=true
+
+orderBy=startTime
+
+timeMin/timeMax based on selected date range
+
+Treat the following as blocking:
+
+All-day events
+
+Timed events marked as “Busy”
+
+Recurring events (expanded)
+
+Remove overlapping time slots from availability
+
+Booking Conflict Detection
+
+Before confirming a booking:
+
+Re-query Google Calendar for the selected time window
+
+If any overlapping event exists → block booking and return error
+
+If clear → proceed
+
+Event Creation
+
+Upon successful booking:
+
+Create a Google Calendar event with:
+
+Title: Course Name
+
+Start/End time
+
+Location
+
+Description including:
+
+InstructorOps course ID
+
+Enrollment count
+
+Admin link
+
+Time Zones
+
+Store all times in UTC
+
+Convert to instructor timezone for display
+
+Instructor Controls
+
+Toggle:
+
+“Sync bookings to Google Calendar”
+
+“Block availability from Google Calendar”
+
+Disconnect Google Calendar (revokes tokens)
+
+Performance
+
+Cache calendar events per instructor per day
+
+Avoid unnecessary API calls
+
+Errors
+
+Handle token expiration
+
+Handle revoked permissions
+
+Display clear instructor-facing errors
+
+Deliverables
+
+API routes
+
+Database integration
+
+Clean reusable services for calendar logic
+
+No hardcoded values
+
+2️⃣ Data Model for Blocked Time
+
+This is simple, scalable, and production-safe.
+
+📦 Instructor Table (existing / extended)
+Instructor {
+  id
+  timezone
+  google_calendar_connected: boolean
+  google_calendar_blocking_enabled: boolean
+}
+
+🔐 GoogleCalendarConnection
+GoogleCalendarConnection {
+  instructor_id
+  access_token
+  refresh_token
+  token_expiry
+  primary_calendar_id
+}
+
+🗓️ InstructorCalendars
+InstructorCalendar {
+  instructor_id
+  calendar_id
+  calendar_name
+  blocks_availability: boolean
+}
+
+⛔ BlockedTime (optional cache table)
+BlockedTime {
+  instructor_id
+  start_time_utc
+  end_time_utc
+  source: "google"
+  calendar_event_id
+  is_all_day
+}
+
+
+⚠️ This table can be cached (recommended), not permanent truth.
+
+✅ Booking Flow Logic
+Student selects time
+→ Check BlockedTime cache
+→ Re-check Google Calendar live
+→ No overlap?
+   → Create booking
+   → Create Google event
+→ Overlap?
+   → Reject booking
+
+3️⃣ Instructor-Facing Explanation
+
+(Copy/Paste for onboarding, help center, or modal)
+
+📅 How Google Calendar Blocking Works
+
+When you connect your Google Calendar to InstructorOps, your calendar helps prevent double-bookings automatically.
+
+What this means for you
+
+Any event on your Google Calendar marked as Busy will block that time
+
+All-day events block the entire day
+
+Personal appointments, travel, and time off are respected
+
+InstructorOps will not book students over your existing events
+
+What InstructorOps controls
+
+Courses and bookings are created in InstructorOps
+
+Confirmed bookings are added to your Google Calendar
+
+You remain in full control of your schedule
+
+What Google Calendar controls
+
+Existing events block availability
+
+Recurring events are automatically respected
+
+Multiple calendars can be selected or ignored
+
+You can:
+
+Turn blocking on or off at any time
+
+Choose which calendars block availability
+
+Disconnect Google Calendar instantly
+
+Best practices
+
+Mark personal events as Busy
+
+Use all-day events for days off
+
+Avoid editing InstructorOps-created events directly in Google Calendar
+
+InstructorOps checks your Google Calendar every time someone books, ensuring you never get double-booked.
