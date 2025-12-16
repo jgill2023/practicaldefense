@@ -1,22 +1,18 @@
 import { useStripe, Elements, PaymentElement, useElements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { Stripe } from '@stripe/stripe-js';
 import { useEffect, useState } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getStripePromise } from "@/lib/stripe";
 import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { CreditCard, Shield, Tag, Check, X } from "lucide-react";
+import { CreditCard, Shield, Tag, Check, X, Loader2 } from "lucide-react";
 import type { EnrollmentWithDetails } from "@shared/schema";
-
-// Make sure to call `loadStripe` outside of a component's render to avoid
-// recreating the `Stripe` object on every render.
-const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
-const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : null;
 
 const CheckoutForm = ({ enrollment, totalAmount }: { enrollment: EnrollmentWithDetails; totalAmount: number }) => {
   const stripe = useStripe();
@@ -121,7 +117,17 @@ export default function Checkout() {
   const [promoCodeApplied, setPromoCodeApplied] = useState<string | null>(null);
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [stripeLoading, setStripeLoading] = useState(true);
   const { toast } = useToast();
+
+  // Fetch Stripe publishable key on mount
+  useEffect(() => {
+    getStripePromise().then(promise => {
+      setStripePromise(promise);
+      setStripeLoading(false);
+    });
+  }, []);
   
   // Get enrollment ID from URL params
   const urlParams = new URLSearchParams(window.location.search);
@@ -433,7 +439,12 @@ export default function Checkout() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {!stripePromise ? (
+            {stripeLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mr-2" />
+                <span className="text-muted-foreground">Loading payment form...</span>
+              </div>
+            ) : !stripePromise ? (
               <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-lg">
                 <p className="text-sm">
                   Payment processing is currently unavailable. Please contact support to complete your registration.

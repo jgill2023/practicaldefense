@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,16 +13,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { Stripe } from '@stripe/stripe-js';
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Calendar, Clock, Users, User, DollarSign, CreditCard, Shield, Tag, Check, X } from "lucide-react";
+import { getStripePromise } from "@/lib/stripe";
+import { Calendar, Clock, Users, User, DollarSign, CreditCard, Shield, Tag, Check, X, Loader2 } from "lucide-react";
 import type { CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
 import { PolicyModal } from "@/components/PolicyModal";
-
-// Load Stripe (if configured)
-const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
-const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : null;
 
 interface RegistrationModalProps {
   course: CourseWithSchedules;
@@ -116,6 +112,16 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
   const [isDraftCreated, setIsDraftCreated] = useState(false);
   const [policyModalOpen, setPolicyModalOpen] = useState<'terms' | 'privacy' | 'refund' | null>(null);
   const [handgunRentalAdded, setHandgunRentalAdded] = useState(false);
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [stripeLoading, setStripeLoading] = useState(true);
+
+  // Fetch Stripe publishable key on mount
+  useEffect(() => {
+    getStripePromise().then(promise => {
+      setStripePromise(promise);
+      setStripeLoading(false);
+    });
+  }, []);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -976,7 +982,12 @@ export function RegistrationModal({ course, onClose, isWaitlist = false }: Regis
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {!stripePromise ? (
+                    {stripeLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mr-2" />
+                        <span className="text-muted-foreground">Loading payment form...</span>
+                      </div>
+                    ) : !stripePromise ? (
                       <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-lg">
                         <p className="text-sm">
                           Payment processing is currently unavailable. Please contact support to complete your registration.

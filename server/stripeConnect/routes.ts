@@ -275,3 +275,43 @@ stripeConnectRouter.get('/config', isAuthenticated, async (req: any, res: Respon
     res.status(500).json({ error: 'Failed to fetch configuration' });
   }
 });
+
+// Public endpoint for frontend to get publishable key (no auth required)
+stripeConnectRouter.get('/public-key', async (req: Request, res: Response) => {
+  try {
+    const stripeClient = await ensureStripeInitialized();
+    
+    if (!stripeClient) {
+      return res.json({
+        configured: false,
+        publishableKey: null,
+        message: 'Stripe is not configured.'
+      });
+    }
+
+    // Get the publishable key
+    const { getStripePublishableKey } = await import('../stripeClient');
+    try {
+      const publishableKey = await getStripePublishableKey();
+      res.json({
+        configured: true,
+        publishableKey,
+        message: 'Stripe is ready to accept payments.'
+      });
+    } catch (error) {
+      console.error('Error getting publishable key:', error);
+      res.json({
+        configured: false,
+        publishableKey: null,
+        message: 'Stripe publishable key not available.'
+      });
+    }
+  } catch (error: any) {
+    console.error('Error fetching Stripe public key:', error);
+    res.json({
+      configured: false,
+      publishableKey: null,
+      message: 'Failed to fetch Stripe configuration.'
+    });
+  }
+});

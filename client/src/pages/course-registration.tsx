@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useRoute } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useStripe, useElements, PaymentElement, Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { Stripe } from '@stripe/stripe-js';
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/Layout";
@@ -16,15 +16,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Clock, Calendar, User, DollarSign, Users, CreditCard, Shield, Tag, Check, X } from "lucide-react";
+import { getStripePromise } from "@/lib/stripe";
+import { Clock, Calendar, User, DollarSign, Users, CreditCard, Shield, Tag, Check, X, Loader2 } from "lucide-react";
 import type { CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PolicyModal } from "@/components/PolicyModal";
-
-// Load Stripe outside of component render (if configured)
-const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
-const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : null;
 
 interface CheckoutFormProps {
   enrollment: any;
@@ -180,6 +177,16 @@ export default function CourseRegistration() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [currentEnrollment, setCurrentEnrollment] = useState<any>(null);
   const [isDraftCreated, setIsDraftCreated] = useState(false);
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [stripeLoading, setStripeLoading] = useState(true);
+
+  // Fetch Stripe publishable key on mount
+  useEffect(() => {
+    getStripePromise().then(promise => {
+      setStripePromise(promise);
+      setStripeLoading(false);
+    });
+  }, []);
 
   // Gift Card state
   const [giftCardCode, setGiftCardCode] = useState("");
@@ -1398,7 +1405,12 @@ export default function CourseRegistration() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {!stripePromise ? (
+                    {stripeLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mr-2" />
+                        <span className="text-muted-foreground">Loading payment form...</span>
+                      </div>
+                    ) : !stripePromise ? (
                       <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-lg">
                         <p className="text-sm">
                           Payment processing is currently unavailable. Please contact support to complete your registration.
