@@ -358,27 +358,26 @@ export default function ContactPage() {
               <CardContent className="space-y-4">
                 <div>
                   <h4 className="font-semibold mb-2">What training programs do you offer?</h4>
-                  <p className="text-sm text-muted-foreground">We offer a variety of specialized firearms training and mental management courses.</p>
+                  <p className="text-sm text-muted-foreground">
+                    We offer a variety of specialized firearms training. We have scheduled courses, workshops, private sessions and we can even customize a course to fit your needs. If you don't see what you are looking for, send us an email and we will be happy to help you out!
+                  </p>
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">How do I register for a course?</h4>
                   <p className="text-sm text-muted-foreground">
-                    You can register online through our website or contact us directly. 
-                    We accept deposits to secure your spot with full payment due by the course date.
+                    You can register online through our website or contact us directly.
                   </p>
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">Do you offer private training?</h4>
                   <p className="text-sm text-muted-foreground">
-                    Yes, we offer customized private training sessions for individuals or small groups. 
-                    Contact us to discuss your specific needs and schedule.
+                    Yes, we offer customized private training sessions for individuals or small groups. Contact us to discuss your specific needs and schedule.
                   </p>
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">What should I bring to training?</h4>
                   <p className="text-sm text-muted-foreground">
-                    Specific requirements vary by course. You'll receive detailed preparation 
-                    instructions after registration, including equipment needs and what to expect.
+                    Specific requirements vary by course. Our course descriptions should provide you with all of that information. If you have any questions on gear, send us an email or text message!
                   </p>
                 </div>
               </CardContent>
