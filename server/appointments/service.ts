@@ -1,12 +1,20 @@
 import { storage } from '../storage';
 import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 import { instructorGoogleCalendarService } from '../googleCalendar/instructorService';
+import { instructorOpsCalendarService } from '../googleCalendar/instructorOpsService';
 import type { 
   InstructorWeeklyTemplate, 
   InstructorAvailabilityOverride, 
   InstructorAppointment,
   CourseSchedule
 } from '@db/schema';
+
+function isUsingInstructorOps(): boolean {
+  // Always use InstructorOps centralized auth service
+  // This site is a CLIENT of auth.instructorops.com and should NOT handle OAuth locally
+  // Set USE_LEGACY_GOOGLE_CALENDAR=true only for migration purposes
+  return process.env.USE_LEGACY_GOOGLE_CALENDAR !== 'true';
+}
 
 // Hardcoded timezone for instructor - in a real app this would come from user settings
 const INSTRUCTOR_TIMEZONE = 'America/Denver';
@@ -211,19 +219,37 @@ export class AppointmentService {
     // Fetch Google Calendar busy events if blocking is enabled
     if (instructor?.googleCalendarBlockingEnabled && instructor?.googleCalendarConnected) {
       try {
-        const busyEvents = await instructorGoogleCalendarService.getBusyEvents(
-          instructorId,
-          startDate,
-          endDate
-        );
-        
-        busyEvents.forEach(event => {
-          conflicts.push({
-            startTime: event.start,
-            endTime: event.end,
-            source: 'google_calendar',
+        if (isUsingInstructorOps()) {
+          // Use InstructorOps centralized auth service
+          const busyTimes = await instructorOpsCalendarService.getBlockedTimes(
+            instructorId,
+            startDate,
+            endDate
+          );
+          
+          busyTimes.forEach(busy => {
+            conflicts.push({
+              startTime: new Date(busy.start),
+              endTime: new Date(busy.end),
+              source: 'google_calendar',
+            });
           });
-        });
+        } else {
+          // Use direct Google Calendar API
+          const busyEvents = await instructorGoogleCalendarService.getBusyEvents(
+            instructorId,
+            startDate,
+            endDate
+          );
+          
+          busyEvents.forEach(event => {
+            conflicts.push({
+              startTime: event.start,
+              endTime: event.end,
+              source: 'google_calendar',
+            });
+          });
+        }
       } catch (error) {
         console.error(`Failed to fetch Google Calendar busy events for instructor ${instructorId}:`, error);
         // Fail gracefully - continue without Google Calendar blocking
@@ -560,17 +586,33 @@ export class AppointmentService {
       ].filter(Boolean).join('\n');
 
       const attendeeEmails = student?.email ? [student.email] : [];
+      let eventId: string | null = null;
 
-      const eventId = await instructorGoogleCalendarService.createEvent(
-        appointment.instructorId,
-        {
+      if (isUsingInstructorOps()) {
+        // Use InstructorOps centralized auth service
+        const creds = await storage.getInstructorGoogleCredentials(appointment.instructorId);
+        eventId = await instructorOpsCalendarService.createEvent({
+          instructorId: appointment.instructorId,
           summary,
           description,
-          startTime: new Date(appointment.startTime),
-          endTime: new Date(appointment.endTime),
-          attendeeEmails,
-        }
-      );
+          start: new Date(appointment.startTime).toISOString(),
+          end: new Date(appointment.endTime).toISOString(),
+          attendees: attendeeEmails,
+          calendarId: creds?.primaryCalendarId || undefined,
+        });
+      } else {
+        // Use direct Google Calendar API
+        eventId = await instructorGoogleCalendarService.createEvent(
+          appointment.instructorId,
+          {
+            summary,
+            description,
+            startTime: new Date(appointment.startTime),
+            endTime: new Date(appointment.endTime),
+            attendeeEmails,
+          }
+        );
+      }
 
       if (eventId) {
         await storage.updateAppointment(appointment.id, {
@@ -604,21 +646,46 @@ export class AppointmentService {
         return false;
       }
 
-      if (updates.cancelled) {
-        return await instructorGoogleCalendarService.deleteEvent(
+      if (isUsingInstructorOps()) {
+        // Use InstructorOps centralized auth service
+        const creds = await storage.getInstructorGoogleCredentials(appointment.instructorId);
+        const calendarId = creds?.primaryCalendarId || undefined;
+        
+        if (updates.cancelled) {
+          return await instructorOpsCalendarService.deleteEvent(
+            appointment.instructorId,
+            appointment.googleEventId,
+            calendarId
+          );
+        }
+
+        return await instructorOpsCalendarService.updateEvent(
           appointment.instructorId,
-          appointment.googleEventId
+          appointment.googleEventId,
+          {
+            start: updates.startTime?.toISOString(),
+            end: updates.endTime?.toISOString(),
+            calendarId,
+          }
+        );
+      } else {
+        // Use direct Google Calendar API
+        if (updates.cancelled) {
+          return await instructorGoogleCalendarService.deleteEvent(
+            appointment.instructorId,
+            appointment.googleEventId
+          );
+        }
+
+        return await instructorGoogleCalendarService.updateEvent(
+          appointment.instructorId,
+          appointment.googleEventId,
+          {
+            startTime: updates.startTime,
+            endTime: updates.endTime,
+          }
         );
       }
-
-      return await instructorGoogleCalendarService.updateEvent(
-        appointment.instructorId,
-        appointment.googleEventId,
-        {
-          startTime: updates.startTime,
-          endTime: updates.endTime,
-        }
-      );
     } catch (error) {
       console.error(`Failed to update Google Calendar event for appointment ${appointmentId}:`, error);
       return false;

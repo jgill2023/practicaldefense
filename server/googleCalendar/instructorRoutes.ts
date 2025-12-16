@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { isAuthenticated, requireInstructorOrHigher } from '../customAuth';
 import { storage } from '../storage';
 import { instructorGoogleCalendarService } from './instructorService';
+import { instructorOpsCalendarService } from './instructorOpsService';
 
 export const instructorGoogleCalendarRouter = Router();
 
@@ -60,10 +61,45 @@ function getBaseUrl(req: Request): string {
   return `${proto}://${host}`;
 }
 
+function isUsingInstructorOps(): boolean {
+  // Always use InstructorOps centralized auth service
+  // This site is a CLIENT of auth.instructorops.com and should NOT handle OAuth locally
+  // Set USE_LEGACY_GOOGLE_CALENDAR=true only for migration purposes
+  return process.env.USE_LEGACY_GOOGLE_CALENDAR !== 'true';
+}
+
 instructorGoogleCalendarRouter.get('/status', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
   try {
-    const status = await instructorGoogleCalendarService.getInstructorStatus(req.user.id);
-    res.json(status);
+    if (isUsingInstructorOps()) {
+      const opsStatus = await instructorOpsCalendarService.getConnectionStatus(req.user.id);
+      const instructor = await storage.getUser(req.user.id);
+      const creds = await storage.getInstructorGoogleCredentials(req.user.id);
+      
+      const isConnected = opsStatus.connected || instructor?.googleCalendarConnected || false;
+      const calendars = isConnected 
+        ? await instructorOpsCalendarService.getCalendars(req.user.id)
+        : [];
+      
+      const selectedCalendarId = creds?.primaryCalendarId || opsStatus.selectedCalendarId;
+      
+      res.json({
+        configured: true,
+        connected: isConnected,
+        syncEnabled: instructor?.googleCalendarSyncEnabled ?? true,
+        blockingEnabled: instructor?.googleCalendarBlockingEnabled ?? true,
+        calendars: calendars.map(cal => ({
+          id: cal.id,
+          name: cal.name,
+          color: cal.color,
+          isPrimary: cal.isPrimary || cal.id === selectedCalendarId,
+        })),
+        selectedCalendarId,
+        timezone: instructor?.timezone || 'America/Denver',
+      });
+    } else {
+      const status = await instructorGoogleCalendarService.getInstructorStatus(req.user.id);
+      res.json(status);
+    }
   } catch (error: any) {
     console.error('Error fetching Google Calendar status:', error);
     res.status(500).json({ error: 'Failed to fetch status' });
@@ -140,9 +176,78 @@ instructorGoogleCalendarRouter.get('/oauth/callback', async (req: Request, res: 
   }
 });
 
+instructorGoogleCalendarRouter.post('/sync-from-instructorops', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const { calendarId } = req.body;
+    
+    await storage.updateGoogleCalendarSettings(req.user.id, {
+      googleCalendarConnected: true,
+    });
+    
+    console.log(`Synced InstructorOps calendar connection for instructor ${req.user.id}, calendar: ${calendarId}`);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Error syncing from InstructorOps:', error);
+    res.status(500).json({ error: 'Failed to sync calendar connection' });
+  }
+});
+
+instructorGoogleCalendarRouter.post('/select-calendar', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const { calendarId } = req.body;
+    
+    if (!calendarId) {
+      return res.status(400).json({ error: 'calendarId is required' });
+    }
+    
+    const success = await instructorOpsCalendarService.selectCalendar(req.user.id, calendarId);
+    
+    if (success) {
+      await storage.updateGoogleCalendarSettings(req.user.id, {
+        googleCalendarConnected: true,
+      });
+      
+      const existingCreds = await storage.getInstructorGoogleCredentials(req.user.id);
+      if (existingCreds) {
+        await storage.updateInstructorGoogleCredentials(req.user.id, {
+          primaryCalendarId: calendarId,
+        });
+      } else {
+        await storage.saveInstructorGoogleCredentials({
+          instructorId: req.user.id,
+          accessToken: 'instructorops-managed',
+          refreshToken: 'instructorops-managed',
+          tokenExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          primaryCalendarId: calendarId,
+        });
+        await storage.updateGoogleCalendarSettings(req.user.id, {
+          googleCalendarConnected: true,
+        });
+      }
+      
+      console.log(`Selected calendar ${calendarId} for instructor ${req.user.id}`);
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ error: 'Failed to select calendar in InstructorOps' });
+    }
+  } catch (error: any) {
+    console.error('Error selecting calendar:', error);
+    res.status(500).json({ error: 'Failed to select calendar' });
+  }
+});
+
 instructorGoogleCalendarRouter.post('/disconnect', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
   try {
-    await instructorGoogleCalendarService.disconnectInstructor(req.user.id);
+    if (isUsingInstructorOps()) {
+      await instructorOpsCalendarService.disconnect(req.user.id);
+    } else {
+      await instructorGoogleCalendarService.disconnectInstructor(req.user.id);
+    }
+    
+    await storage.updateGoogleCalendarSettings(req.user.id, {
+      googleCalendarConnected: false,
+    });
+    
     res.json({ success: true });
   } catch (error: any) {
     console.error('Error disconnecting Google Calendar:', error);
@@ -152,8 +257,13 @@ instructorGoogleCalendarRouter.post('/disconnect', isAuthenticated, requireInstr
 
 instructorGoogleCalendarRouter.get('/calendars', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
   try {
-    const calendars = await storage.getInstructorCalendars(req.user.id);
-    res.json(calendars);
+    if (isUsingInstructorOps()) {
+      const calendars = await instructorOpsCalendarService.getCalendars(req.user.id);
+      res.json(calendars);
+    } else {
+      const calendars = await storage.getInstructorCalendars(req.user.id);
+      res.json(calendars);
+    }
   } catch (error: any) {
     console.error('Error fetching calendars:', error);
     res.status(500).json({ error: 'Failed to fetch calendars' });
@@ -162,8 +272,13 @@ instructorGoogleCalendarRouter.get('/calendars', isAuthenticated, requireInstruc
 
 instructorGoogleCalendarRouter.post('/calendars/refresh', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
   try {
-    const calendars = await instructorGoogleCalendarService.syncInstructorCalendars(req.user.id);
-    res.json(calendars);
+    if (isUsingInstructorOps()) {
+      const calendars = await instructorOpsCalendarService.getCalendars(req.user.id);
+      res.json(calendars);
+    } else {
+      const calendars = await instructorGoogleCalendarService.syncInstructorCalendars(req.user.id);
+      res.json(calendars);
+    }
   } catch (error: any) {
     console.error('Error refreshing calendars:', error);
     
@@ -233,8 +348,19 @@ instructorGoogleCalendarRouter.get('/busy-events', isAuthenticated, requireInstr
       return res.status(400).json({ error: 'Invalid date format' });
     }
     
-    const busyEvents = await instructorGoogleCalendarService.getBusyEvents(req.user.id, start, end);
-    res.json(busyEvents);
+    if (isUsingInstructorOps()) {
+      const busyTimes = await instructorOpsCalendarService.getBlockedTimes(req.user.id, start, end);
+      res.json(busyTimes.map(bt => ({
+        id: `${bt.start}-${bt.end}`,
+        start: new Date(bt.start),
+        end: new Date(bt.end),
+        summary: bt.summary,
+        calendarId: bt.calendarId,
+      })));
+    } else {
+      const busyEvents = await instructorGoogleCalendarService.getBusyEvents(req.user.id, start, end);
+      res.json(busyEvents);
+    }
   } catch (error: any) {
     console.error('Error fetching busy events:', error);
     
@@ -249,6 +375,47 @@ instructorGoogleCalendarRouter.get('/busy-events', isAuthenticated, requireInstr
   }
 });
 
+instructorGoogleCalendarRouter.get('/blocked-times', async (req: Request, res: Response) => {
+  try {
+    const { instructorId, startDate, endDate } = req.query;
+    
+    if (!instructorId || !startDate || !endDate) {
+      return res.status(400).json({ error: 'instructorId, startDate, and endDate are required' });
+    }
+    
+    const start = new Date(startDate as string);
+    const end = new Date(endDate as string);
+    
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+    
+    const instructor = await storage.getUser(instructorId as string);
+    if (!instructor || !instructor.googleCalendarConnected || !instructor.googleCalendarBlockingEnabled) {
+      return res.json([]);
+    }
+    
+    if (isUsingInstructorOps()) {
+      const busyTimes = await instructorOpsCalendarService.getBlockedTimes(instructorId as string, start, end);
+      res.json(busyTimes.map(bt => ({
+        start: bt.start,
+        end: bt.end,
+        summary: bt.summary,
+      })));
+    } else {
+      const busyEvents = await instructorGoogleCalendarService.getBusyEvents(instructorId as string, start, end);
+      res.json(busyEvents.map(event => ({
+        start: event.start.toISOString(),
+        end: event.end.toISOString(),
+        summary: event.summary,
+      })));
+    }
+  } catch (error: any) {
+    console.error('Error fetching blocked times:', error);
+    res.status(500).json({ error: 'Failed to fetch blocked times' });
+  }
+});
+
 instructorGoogleCalendarRouter.post('/refresh-cache', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
   try {
     const { startDate, endDate } = req.body;
@@ -260,7 +427,9 @@ instructorGoogleCalendarRouter.post('/refresh-cache', isAuthenticated, requireIn
     const start = new Date(startDate);
     const end = new Date(endDate);
     
-    await instructorGoogleCalendarService.refreshBlockedTimeCache(req.user.id, start, end);
+    if (!isUsingInstructorOps()) {
+      await instructorGoogleCalendarService.refreshBlockedTimeCache(req.user.id, start, end);
+    }
     
     res.json({ success: true });
   } catch (error: any) {
@@ -280,11 +449,57 @@ instructorGoogleCalendarRouter.post('/check-conflict', isAuthenticated, requireI
     const start = new Date(startTime);
     const end = new Date(endTime);
     
-    const result = await instructorGoogleCalendarService.checkConflict(req.user.id, start, end);
-    
-    res.json(result);
+    if (isUsingInstructorOps()) {
+      const result = await instructorOpsCalendarService.checkConflict(req.user.id, start, end);
+      res.json(result);
+    } else {
+      const result = await instructorGoogleCalendarService.checkConflict(req.user.id, start, end);
+      res.json(result);
+    }
   } catch (error: any) {
     console.error('Error checking conflict:', error);
     res.status(500).json({ error: 'Failed to check conflict' });
+  }
+});
+
+instructorGoogleCalendarRouter.post('/create-event', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const { summary, description, startTime, endTime, attendees, location } = req.body;
+    
+    if (!summary || !startTime || !endTime) {
+      return res.status(400).json({ error: 'summary, startTime, and endTime are required' });
+    }
+    
+    let eventId: string | null = null;
+    
+    if (isUsingInstructorOps()) {
+      eventId = await instructorOpsCalendarService.createEvent({
+        instructorId: req.user.id,
+        summary,
+        description,
+        start: new Date(startTime).toISOString(),
+        end: new Date(endTime).toISOString(),
+        attendees,
+        location,
+      });
+    } else {
+      eventId = await instructorGoogleCalendarService.createEvent(req.user.id, {
+        summary,
+        description,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+        attendeeEmails: attendees,
+        location,
+      });
+    }
+    
+    if (eventId) {
+      res.json({ success: true, eventId });
+    } else {
+      res.status(500).json({ error: 'Failed to create calendar event' });
+    }
+  } catch (error: any) {
+    console.error('Error creating calendar event:', error);
+    res.status(500).json({ error: 'Failed to create calendar event' });
   }
 });
