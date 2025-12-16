@@ -303,12 +303,14 @@ export function InstructorGoogleCalendarSettings() {
   });
 
   const handleSelectCalendar = () => {
-    if (selectedCalendarId === "create_new") {
-      const calendarName = `${user?.firstName || 'My'} Website Appointments`;
-      createCalendarMutation.mutate(calendarName);
-    } else if (selectedCalendarId) {
+    if (selectedCalendarId && selectedCalendarId !== "no_calendars") {
       selectCalendarMutation.mutate(selectedCalendarId);
     }
+  };
+
+  const handleCreateNewCalendar = () => {
+    const calendarName = `${user?.firstName || 'My'} Website Appointments`;
+    createCalendarMutation.mutate(calendarName);
   };
 
   if (statusLoading) {
@@ -364,58 +366,81 @@ export function InstructorGoogleCalendarSettings() {
                     <SelectValue placeholder="Choose a calendar..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableCalendars.map((calendar) => (
-                      <SelectItem 
-                        key={calendar.id} 
-                        value={calendar.id}
-                        data-testid={`calendar-option-${calendar.id}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          {calendar.color && (
-                            <div 
-                              className="w-3 h-3 rounded-full" 
-                              style={{ backgroundColor: calendar.color }}
-                            />
-                          )}
-                          <span>{calendar.name}</span>
-                          {calendar.isPrimary && (
-                            <Badge variant="outline" className="text-xs">Primary</Badge>
-                          )}
-                        </div>
+                    {availableCalendars.length > 0 ? (
+                      availableCalendars.map((calendar) => (
+                        <SelectItem 
+                          key={calendar.id} 
+                          value={calendar.id}
+                          data-testid={`calendar-option-${calendar.id}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            {calendar.color && (
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: calendar.color }}
+                              />
+                            )}
+                            <span>{calendar.name}</span>
+                            {calendar.isPrimary && (
+                              <Badge variant="outline" className="text-xs">Primary</Badge>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no_calendars" disabled>
+                        No calendars found - try refreshing
                       </SelectItem>
-                    ))}
-                    <SelectItem value="create_new" data-testid="calendar-option-create-new">
-                      <div className="flex items-center gap-2">
-                        <Plus className="h-3 w-3" />
-                        <span>Create a new calendar for website bookings</span>
-                      </div>
-                    </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   onClick={handleSelectCalendar}
-                  disabled={!selectedCalendarId || selectCalendarMutation.isPending || createCalendarMutation.isPending}
+                  disabled={!selectedCalendarId || selectedCalendarId === "no_calendars" || selectCalendarMutation.isPending}
                   data-testid="button-confirm-calendar"
                 >
-                  {(selectCalendarMutation.isPending || createCalendarMutation.isPending) ? (
+                  {selectCalendarMutation.isPending ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                   )}
-                  {createCalendarMutation.isPending ? "Creating Calendar..." : "Confirm Selection"}
+                  Confirm Selection
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={fetchAvailableCalendars}
+                  disabled={isLoadingCalendars}
+                  data-testid="button-refresh-calendars-picker"
+                >
+                  {isLoadingCalendars ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Refresh
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setShowCalendarPicker(false)}
-                  disabled={selectCalendarMutation.isPending || createCalendarMutation.isPending}
+                  disabled={selectCalendarMutation.isPending}
                   data-testid="button-cancel-calendar-picker"
                 >
                   Cancel
                 </Button>
               </div>
+
+              {availableCalendars.length === 0 && !isLoadingCalendars && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>No calendars found</AlertTitle>
+                  <AlertDescription>
+                    We couldn't fetch your calendars. Try clicking "Refresh" or go back and use "Create New Calendar" instead.
+                  </AlertDescription>
+                </Alert>
+              )}
             </>
           )}
         </CardContent>

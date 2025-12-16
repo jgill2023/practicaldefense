@@ -71,16 +71,27 @@ function isUsingInstructorOps(): boolean {
 instructorGoogleCalendarRouter.get('/status', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
   try {
     if (isUsingInstructorOps()) {
-      const opsStatus = await instructorOpsCalendarService.getConnectionStatus(req.user.id);
       const instructor = await storage.getUser(req.user.id);
       const creds = await storage.getInstructorGoogleCredentials(req.user.id);
       
-      const isConnected = opsStatus.connected || instructor?.googleCalendarConnected || false;
-      const calendars = isConnected 
-        ? await instructorOpsCalendarService.getCalendars(req.user.id)
-        : [];
+      let opsStatus = { connected: false, selectedCalendarId: undefined as string | undefined };
+      try {
+        opsStatus = await instructorOpsCalendarService.getConnectionStatus(req.user.id);
+      } catch (e) {
+        console.log('InstructorOps status check failed, using local DB status');
+      }
       
+      const isConnected = opsStatus.connected || instructor?.googleCalendarConnected || false;
       const selectedCalendarId = creds?.primaryCalendarId || opsStatus.selectedCalendarId;
+      
+      let calendars: any[] = [];
+      if (isConnected) {
+        try {
+          calendars = await instructorOpsCalendarService.getCalendars(req.user.id);
+        } catch (e) {
+          console.log('InstructorOps calendar fetch failed');
+        }
+      }
       
       res.json({
         configured: true,
