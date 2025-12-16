@@ -730,30 +730,20 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
       });
     }
 
-    // Check if the instructor has a connected Stripe account
-    const instructor = await storage.getUser(instructorId);
-    const stripeConnectedAccountId = instructor?.stripeConnectAccountId && instructor.stripeConnectOnboardingComplete
-      ? instructor.stripeConnectAccountId
-      : null;
-    
-    if (stripeConnectedAccountId) {
-      console.log('💳 Routing appointment payment to connected account:', stripeConnectedAccountId);
-    }
-
-    // Create PaymentIntent
+    // Create PaymentIntent - Direct payment to Apache Solutions' Stripe account
     const subtotalInCents = Math.round(finalAmount * 100); // Subtotal before tax
     const paymentIntentParams: any = {
       amount: subtotalInCents, // Initial amount is subtotal (tax will be added later)
       currency: "usd",
       receipt_email: customerEmail || undefined, // Send receipt to customer email
       description: `${appointmentType.name} - Appointment Booking`,
+      automatic_payment_methods: { enabled: true },
       metadata: {
         instructorId,
         appointmentTypeId,
         startTime: new Date(startTime).toISOString(),
         endTime: new Date(endTime).toISOString(),
         subtotalCents: String(subtotalInCents), // CRITICAL: Store original subtotal for tax calculation
-        connected_account_id: stripeConnectedAccountId || null,
         ...(customerEmail && { customerEmail }),
         ...(customerName && { customerName }),
         ...(durationHours && { durationHours: String(durationHours) }),
@@ -778,15 +768,6 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
           country: billingAddress.country || 'US',
         },
       };
-    }
-
-    // Add transfer_data for connected accounts to route payment directly
-    if (stripeConnectedAccountId) {
-      paymentIntentParams.transfer_data = {
-        destination: stripeConnectedAccountId,
-      };
-      // Optionally add application_fee_amount for platform fees here
-      // paymentIntentParams.application_fee_amount = Math.round(subtotalInCents * 0.05); // 5% platform fee
     }
 
     const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
