@@ -1,0 +1,183 @@
+REPLIT FAST PROMPT
+
+Stripe Payments Onboarding for Apache Solutions, LLC (Single Business)
+
+Objective
+
+Implement Stripe Payments for ApacheSolutions.com / ApacheNC.com so that Apache Solutions, LLC can connect its own Stripe account to the website in order to accept payments, issue refunds, and receive daily payouts.
+
+This is a single-merchant integration, not a marketplace.
+
+🧠 Business Model (Authoritative)
+
+Business name: Apache Solutions, LLC
+
+Website owner: Apache Solutions, LLC
+
+Stripe account owner: Apache Solutions, LLC
+
+Merchant of record: Apache Solutions, LLC
+
+Branding on receipts: Apache Solutions
+
+Refund authority: Apache Solutions
+
+Payout destination: Apache Solutions’ bank account
+
+There are no third-party instructors or sellers.
+
+🟥 DO NOT USE (Explicitly Prohibited)
+
+Remove or do not implement:
+
+Stripe Connect (Standard, Express, or Custom)
+
+OAuth Connect (ca_ client IDs)
+
+application_fee_amount
+
+transfer_data
+
+on_behalf_of
+
+Multiple Stripe accounts
+
+Stripe Connect webhooks
+
+Any marketplace or revenue-splitting logic
+
+🟦 REQUIRED IMPLEMENTATION
+1️⃣ Stripe Account Onboarding (Single Business)
+
+Implement a “Connect Stripe” flow so Apache Solutions can:
+
+Connect an existing Stripe account, OR
+
+Create a new Stripe account during onboarding
+
+This should use Stripe’s standard account onboarding, not Connect payouts.
+
+Stripe handles:
+
+Bank account setup
+
+Identity verification
+
+Tax information
+
+PCI compliance
+
+2️⃣ Configuration
+
+Store securely:
+
+Stripe Secret Key
+
+Stripe Publishable Key
+
+No Stripe Client ID is required.
+
+3️⃣ Connect Stripe Flow
+
+Add endpoint:
+
+POST /api/stripe/onboard
+
+
+Behavior:
+
+Redirect Apache Solutions admin to Stripe’s hosted onboarding
+
+On completion, confirm Stripe account is enabled for charges and payouts
+
+Store a simple boolean flag: stripeEnabled = true
+
+⚠️ No Stripe account ID needs to be stored for Connect purposes.
+
+4️⃣ Payment Processing (Direct Payments Only)
+
+All payments are processed directly under Apache Solutions’ Stripe account:
+
+stripe.paymentIntents.create({
+  amount,
+  currency: "usd",
+  automatic_payment_methods: { enabled: true }
+});
+
+
+Results:
+
+Apache Solutions receives funds directly
+
+Daily payouts are controlled in Stripe Dashboard
+
+Stripe receipts are branded as Apache Solutions
+
+5️⃣ Refunds
+
+Refunds are handled by Apache Solutions:
+
+Via Stripe Dashboard, OR
+
+Via API:
+
+stripe.refunds.create({
+  payment_intent: paymentIntentId
+});
+
+
+Refund emails and confirmations are branded as Apache Solutions.
+
+6️⃣ Branding
+
+Stripe branding settings are configured in:
+
+Stripe Dashboard → Settings → Branding
+
+Business name: Apache Solutions, LLC
+
+Logo: Apache Solutions logo
+
+Support email: Apache Solutions support email
+
+Statement descriptor: APACHESOLUTIONS
+
+Customers will only ever see Apache Solutions.
+
+7️⃣ UI / UX Requirements
+
+Admin dashboard should show:
+
+Stripe status:
+
+Not connected
+
+Connected
+
+Button text:
+
+“Connect Stripe to Accept Payments”
+
+Disable checkout if Stripe is not enabled.
+
+✅ Acceptance Criteria
+
+Apache Solutions can connect its Stripe account
+
+Payments process successfully
+
+Daily payouts are enabled
+
+Refunds work end-to-end
+
+Receipts and statements show Apache Solutions branding
+
+No Stripe Connect or marketplace logic exists
+
+🔒 Compliance & Security
+
+Do not store bank or tax data
+
+Stripe handles PCI, KYC, and payouts
+
+Only store minimal payment references (PaymentIntent IDs)
