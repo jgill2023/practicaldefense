@@ -275,6 +275,28 @@ export const appSettings = pgTable("app_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Encrypted Stripe credentials storage (separate table for security)
+export const stripeCredentials = pgTable("stripe_credentials", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  // Encrypted secret key (AES-256-GCM)
+  encryptedSecretKey: text("encrypted_secret_key").notNull(),
+  secretKeyIv: text("secret_key_iv").notNull(), // Initialization vector
+  secretKeyAuthTag: text("secret_key_auth_tag").notNull(), // Authentication tag for GCM
+  // Masked display value (e.g., "sk_live_...abc123")
+  secretKeyLast4: varchar("secret_key_last_4", { length: 8 }),
+  secretKeyPrefix: varchar("secret_key_prefix", { length: 10 }), // "sk_live_" or "sk_test_"
+  // Optional publishable key (stored encrypted)
+  encryptedPublishableKey: text("encrypted_publishable_key"),
+  publishableKeyIv: text("publishable_key_iv"),
+  publishableKeyAuthTag: text("publishable_key_auth_tag"),
+  publishableKeyLast4: varchar("publishable_key_last_4", { length: 8 }),
+  publishableKeyPrefix: varchar("publishable_key_prefix", { length: 10 }), // "pk_live_" or "pk_test_"
+  // Metadata
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // ============================================
 // APPOINTMENT SCHEDULING SYSTEM (Calendly-style)
 // ============================================
@@ -617,6 +639,12 @@ export const insertAppSettingsSchema = createInsertSchema(appSettings).omit({
   ),
 });
 
+export const insertStripeCredentialsSchema = createInsertSchema(stripeCredentials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Appointment system insert schemas
 export const insertAppointmentTypeSchema = createInsertSchema(appointmentTypes).omit({
   id: true,
@@ -673,6 +701,8 @@ export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;
 export type WaitlistEntry = typeof waitlist.$inferSelect;
 export type InsertAppSettings = z.infer<typeof insertAppSettingsSchema>;
 export type AppSettings = typeof appSettings.$inferSelect;
+export type InsertStripeCredentials = z.infer<typeof insertStripeCredentialsSchema>;
+export type StripeCredentials = typeof stripeCredentials.$inferSelect;
 
 // Appointment system types
 export type InsertAppointmentType = z.infer<typeof insertAppointmentTypeSchema>;

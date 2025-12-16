@@ -6,6 +6,7 @@ import {
   enrollments,
   courseEnrollmentFeedback,
   appSettings,
+  stripeCredentials,
   courseInformationForms,
   courseInformationFormFields,
   studentFormResponses,
@@ -37,6 +38,8 @@ import {
   type InsertCourseEnrollmentFeedback,
   type AppSettings,
   type InsertAppSettings,
+  type StripeCredentials,
+  type InsertStripeCredentials,
   type CourseWithSchedules,
   type EnrollmentWithDetails,
   type CourseInformationForm,
@@ -393,6 +396,11 @@ export interface IStorage {
   // App settings operations
   getAppSettings(): Promise<AppSettings>;
   updateAppSettings(input: InsertAppSettings): Promise<AppSettings>;
+
+  // Stripe credentials operations
+  getStripeCredentials(): Promise<StripeCredentials | null>;
+  saveStripeCredentials(credentials: InsertStripeCredentials): Promise<StripeCredentials>;
+  deleteStripeCredentials(): Promise<void>;
 
   // Dashboard statistics
   getInstructorDashboardStats(instructorId: string): Promise<{
@@ -3220,6 +3228,34 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return updatedSettings;
+  }
+
+  // Stripe credentials operations
+  async getStripeCredentials(): Promise<StripeCredentials | null> {
+    const credentials = await db.select().from(stripeCredentials)
+      .where(eq(stripeCredentials.isActive, true))
+      .limit(1);
+    return credentials.length > 0 ? credentials[0] : null;
+  }
+
+  async saveStripeCredentials(credentials: InsertStripeCredentials): Promise<StripeCredentials> {
+    // Deactivate any existing credentials
+    await db.update(stripeCredentials)
+      .set({ isActive: false, updatedAt: sql`now()` })
+      .where(eq(stripeCredentials.isActive, true));
+
+    // Insert new credentials
+    const [newCredentials] = await db.insert(stripeCredentials)
+      .values(credentials)
+      .returning();
+
+    return newCredentials;
+  }
+
+  async deleteStripeCredentials(): Promise<void> {
+    await db.update(stripeCredentials)
+      .set({ isActive: false, updatedAt: sql`now()` })
+      .where(eq(stripeCredentials.isActive, true));
   }
 
   // Course Information Forms operations
