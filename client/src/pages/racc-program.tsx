@@ -8,13 +8,21 @@ import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/components/shopping-cart";
 import { useSEO, seoConfigs } from "@/hooks/use-seo";
 import { BookingModal } from "@/components/BookingModal";
+import { useQuery } from "@tanstack/react-query";
+import type { AppointmentType } from "@shared/schema";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { CheckCircle, Phone, Globe, Mail, Calendar, Check, Minus, ShoppingCart } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { CheckCircle, Phone, Globe, Mail, Calendar, Check, Minus, ShoppingCart, Clock, DollarSign } from "lucide-react";
 
 const raccPackages = [
   {
@@ -168,8 +176,41 @@ export default function RACCProgram() {
   const { toast } = useToast();
   const { addToCart, isAddingToCart } = useCart();
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showTypeSelection, setShowTypeSelection] = useState(false);
+  const [selectedAppointmentType, setSelectedAppointmentType] = useState<AppointmentType | null>(null);
   
   useSEO(seoConfigs.raccProgram);
+
+  const { data: appointmentTypes = [] } = useQuery<AppointmentType[]>({
+    queryKey: ["/api/appointments/types"],
+  });
+
+  const { data: appSettings } = useQuery<{ stripeOnboarded: boolean }>({
+    queryKey: ["/api/app-settings"],
+  });
+
+  const instructorId = appSettings?.stripeOnboarded ? "instructor" : undefined;
+
+  const handleBookPrivateTraining = () => {
+    if (appointmentTypes.length === 1) {
+      setSelectedAppointmentType(appointmentTypes[0]);
+      setShowBookingModal(true);
+    } else if (appointmentTypes.length > 1) {
+      setShowTypeSelection(true);
+    } else {
+      toast({
+        title: "No appointment types available",
+        description: "Please check back later for available training sessions.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSelectType = (type: AppointmentType) => {
+    setSelectedAppointmentType(type);
+    setShowTypeSelection(false);
+    setShowBookingModal(true);
+  };
 
   const handleEnrollNow = (pkg: typeof raccPackages[0]) => {
     addToCart({
@@ -193,7 +234,7 @@ export default function RACCProgram() {
         <Button
           size="lg"
           className="bg-white text-[hsl(209,90%,38%)] hover:bg-white/90 font-heading uppercase tracking-wide"
-          onClick={() => setShowBookingModal(true)}
+          onClick={handleBookPrivateTraining}
           data-testid="button-hero-book-appointment"
         >
           Book Private Training
@@ -851,7 +892,7 @@ export default function RACCProgram() {
                 <Button
                   size="lg"
                   className="bg-white text-[hsl(209,90%,38%)] hover:bg-white/90 font-heading uppercase tracking-wide"
-                  onClick={() => setShowBookingModal(true)}
+                  onClick={handleBookPrivateTraining}
                   data-testid="button-cta-book-appointment"
                 >
                   <Calendar className="w-5 h-5 mr-2" />
@@ -863,9 +904,56 @@ export default function RACCProgram() {
         </div>
       </section>
 
+      <Dialog open={showTypeSelection} onOpenChange={setShowTypeSelection}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Select Training Type</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {appointmentTypes.map((type) => (
+              <Card
+                key={type.id}
+                className="cursor-pointer hover:border-primary transition-colors"
+                onClick={() => handleSelectType(type)}
+                data-testid={`card-appointment-type-${type.id}`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-lg">{type.title}</h3>
+                      {type.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{type.description}</p>
+                      )}
+                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {type.durationMinutes} min
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <DollarSign className="h-4 w-4" />
+                          ${Number(type.price).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      Select
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <BookingModal
+        appointmentType={selectedAppointmentType}
+        instructorId={instructorId}
         open={showBookingModal}
-        onClose={() => setShowBookingModal(false)}
+        onClose={() => {
+          setShowBookingModal(false);
+          setSelectedAppointmentType(null);
+        }}
       />
     </Layout>
   );
