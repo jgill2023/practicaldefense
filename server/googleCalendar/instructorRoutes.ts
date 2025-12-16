@@ -277,7 +277,10 @@ instructorGoogleCalendarRouter.get('/calendars', isAuthenticated, requireInstruc
     }
   } catch (error: any) {
     console.error('Error fetching calendars:', error);
-    res.status(500).json({ error: 'Failed to fetch calendars' });
+    const errorMessage = error.message?.includes('Instructor ID missing') 
+      ? error.message 
+      : 'Failed to fetch calendars';
+    res.status(500).json({ error: errorMessage });
   }
 });
 
@@ -331,7 +334,10 @@ instructorGoogleCalendarRouter.post('/calendars/refresh', isAuthenticated, requi
       });
     }
     
-    res.status(500).json({ error: 'Failed to refresh calendars' });
+    const errorMessage = error.message?.includes('Instructor ID missing') 
+      ? error.message 
+      : 'Failed to refresh calendars';
+    res.status(500).json({ error: errorMessage });
   }
 });
 

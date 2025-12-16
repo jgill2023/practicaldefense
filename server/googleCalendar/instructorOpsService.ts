@@ -4,14 +4,25 @@ import type { User } from '@shared/schema';
 const INSTRUCTOROPS_AUTH_URL = process.env.INSTRUCTOROPS_AUTH_URL || "https://auth.instructorops.com";
 const INSTRUCTOROPS_API_KEY = process.env.INSTRUCTOROPS_API_KEY || "";
 
-function getAuthHeaders(): Record<string, string> {
+function getAuthHeaders(instructorId: string): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
   if (INSTRUCTOROPS_API_KEY) {
     headers['x-instructorops-key'] = INSTRUCTOROPS_API_KEY;
   }
+  if (instructorId) {
+    headers['x-instructor-id'] = instructorId;
+  }
   return headers;
+}
+
+function validateInstructorId(instructorId: string, operation: string): void {
+  if (!instructorId) {
+    console.error(`[InstructorOps Request] ERROR: Missing instructorId for ${operation}`);
+    throw new Error(`Instructor ID missing — cannot ${operation}`);
+  }
+  console.log(`[InstructorOps Request] instructorId: ${instructorId} for ${operation}`);
 }
 
 interface InstructorOpsCalendar {
@@ -42,11 +53,12 @@ interface InstructorOpsEventData {
 class InstructorOpsCalendarService {
   async getCalendars(instructorId: string): Promise<InstructorOpsCalendar[]> {
     try {
+      validateInstructorId(instructorId, 'fetch calendars');
       const url = `${INSTRUCTOROPS_AUTH_URL}/api/calendars?instructorId=${instructorId}`;
       console.log(`[InstructorOps] Fetching calendars from: ${url}`);
       
       const response = await fetch(url, {
-        headers: getAuthHeaders(),
+        headers: getAuthHeaders(instructorId),
       });
       
       if (!response.ok) {
@@ -60,15 +72,16 @@ class InstructorOpsCalendarService {
       return calendars;
     } catch (error) {
       console.error('[InstructorOps] Error fetching calendars:', error);
-      return [];
+      throw error;
     }
   }
 
   async selectCalendar(instructorId: string, calendarId: string): Promise<boolean> {
     try {
+      validateInstructorId(instructorId, 'select calendar');
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/select`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: getAuthHeaders(instructorId),
         body: JSON.stringify({ instructorId, calendarId }),
       });
       
@@ -94,6 +107,7 @@ class InstructorOpsCalendarService {
     endTime: Date
   ): Promise<InstructorOpsBusyTime[]> {
     try {
+      validateInstructorId(instructorId, 'get blocked times');
       const params = new URLSearchParams({
         instructorId,
         start: startTime.toISOString(),
@@ -101,7 +115,7 @@ class InstructorOpsCalendarService {
       });
       
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/busy?${params}`, {
-        headers: getAuthHeaders(),
+        headers: getAuthHeaders(instructorId),
       });
       
       if (!response.ok) {
@@ -119,9 +133,10 @@ class InstructorOpsCalendarService {
 
   async createEvent(data: InstructorOpsEventData): Promise<string | null> {
     try {
+      validateInstructorId(data.instructorId, 'create event');
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/events/create`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: getAuthHeaders(data.instructorId),
         body: JSON.stringify(data),
       });
       
@@ -144,9 +159,10 @@ class InstructorOpsCalendarService {
     data: Partial<InstructorOpsEventData>
   ): Promise<boolean> {
     try {
+      validateInstructorId(instructorId, 'update event');
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/events/${eventId}`, {
         method: 'PATCH',
-        headers: getAuthHeaders(),
+        headers: getAuthHeaders(instructorId),
         body: JSON.stringify({ instructorId, ...data }),
       });
       
@@ -159,9 +175,10 @@ class InstructorOpsCalendarService {
 
   async deleteEvent(instructorId: string, eventId: string, calendarId?: string): Promise<boolean> {
     try {
+      validateInstructorId(instructorId, 'delete event');
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/events/${eventId}`, {
         method: 'DELETE',
-        headers: getAuthHeaders(),
+        headers: getAuthHeaders(instructorId),
         body: JSON.stringify({ instructorId, calendarId }),
       });
       
@@ -174,9 +191,10 @@ class InstructorOpsCalendarService {
 
   async createCalendar(instructorId: string, calendarName: string): Promise<{ calendarId: string } | null> {
     try {
+      validateInstructorId(instructorId, 'create calendar');
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/create`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: getAuthHeaders(instructorId),
         body: JSON.stringify({ instructorId, name: calendarName }),
       });
       
@@ -198,11 +216,12 @@ class InstructorOpsCalendarService {
     selectedCalendarId?: string;
   }> {
     try {
+      validateInstructorId(instructorId, 'check connection status');
       const url = `${INSTRUCTOROPS_AUTH_URL}/api/calendars/status?instructorId=${instructorId}`;
       console.log(`[InstructorOps] Checking connection status: ${url}`);
       
       const response = await fetch(url, {
-        headers: getAuthHeaders(),
+        headers: getAuthHeaders(instructorId),
       });
       
       if (!response.ok) {
@@ -219,15 +238,16 @@ class InstructorOpsCalendarService {
       };
     } catch (error) {
       console.error('[InstructorOps] Error checking connection status:', error);
-      return { connected: false };
+      throw error;
     }
   }
 
   async disconnect(instructorId: string): Promise<boolean> {
     try {
+      validateInstructorId(instructorId, 'disconnect');
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/disconnect`, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: getAuthHeaders(instructorId),
         body: JSON.stringify({ instructorId }),
       });
       
