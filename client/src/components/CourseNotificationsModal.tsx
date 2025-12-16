@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
@@ -118,11 +118,13 @@ export function CourseNotificationsModal({ isOpen, onClose, course }: CourseNoti
   const triggerEvent = scheduleForm.watch("triggerEvent");
   
   // Reset timing fields when switching away from course_start
-  if (triggerEvent !== "course_start") {
-    scheduleForm.setValue("delayDays", 0);
-    scheduleForm.setValue("delayHours", 0);
-    scheduleForm.setValue("triggerTiming", undefined);
-  }
+  useEffect(() => {
+    if (triggerEvent !== "course_start") {
+      scheduleForm.setValue("delayDays", 0);
+      scheduleForm.setValue("delayHours", 0);
+      scheduleForm.setValue("triggerTiming", undefined);
+    }
+  }, [triggerEvent]);
 
   // Template form
   const templateForm = useForm<TemplateFormData>({
