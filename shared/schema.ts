@@ -2136,6 +2136,8 @@ export const insertProductCategorySchema = createInsertSchema(productCategories)
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  slug: z.string().optional(),
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({

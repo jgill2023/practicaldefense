@@ -7105,6 +7105,15 @@ jeremy@abqconcealedcarry.com
       }
 
       const validatedData = insertProductCategorySchema.parse(req.body);
+      // Auto-generate slug from name if not provided
+      if (!validatedData.slug && validatedData.name) {
+        validatedData.slug = validatedData.name
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s-]/g, '') // Remove special characters
+          .replace(/\s+/g, '-') // Replace spaces with hyphens
+          .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
+      }
       const category = await storage.createProductCategory(validatedData);
       res.status(201).json(category);
     } catch (error: any) {
@@ -7124,6 +7133,15 @@ jeremy@abqconcealedcarry.com
       }
 
       const validatedData = insertProductCategorySchema.partial().parse(req.body);
+      // Auto-generate slug from name if name is being updated and slug is not provided
+      if (validatedData.name && !validatedData.slug) {
+        validatedData.slug = validatedData.name
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s-]/g, '') // Remove special characters
+          .replace(/\s+/g, '-') // Replace spaces with hyphens
+          .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
+      }
       const category = await storage.updateProductCategory(req.params.id, validatedData);
       res.json(category);
     } catch (error: any) {
