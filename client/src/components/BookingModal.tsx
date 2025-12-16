@@ -1132,313 +1132,312 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
 
   return (
     <>
-    <Dialog open={open && !showBookingForm} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" data-testid="booking-modal">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl">{appointmentType.title}</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              data-testid="button-close-modal"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-            {(appointmentType as any).isVariableDuration ? (
-              <>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{(appointmentType as any).minimumDurationHours}+ hours</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <DollarSign className="h-4 w-4" />
-                  <span className="font-semibold">${Number((appointmentType as any).pricePerHour).toFixed(2)}/hour</span>
-                </div>
-                <Badge variant="outline" className="text-xs">Variable Duration</Badge>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{appointmentType.durationMinutes} minutes</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <DollarSign className="h-4 w-4" />
-                  <span className="font-semibold">${Number(appointmentType.price).toFixed(2)}</span>
-                </div>
-              </>
-            )}
-            {appointmentType?.requiresApproval && (
-              <Badge variant="secondary" className="text-xs">Requires Approval</Badge>
-            )}
-          </div>
-        </DialogHeader>
+      <Dialog open={open && !showBookingForm} onOpenChange={(isOpen) => !isOpen && onClose()}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" data-testid="booking-modal">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-2xl">{appointmentType.title}</DialogTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                data-testid="button-close-modal"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+              {(appointmentType as any).isVariableDuration ? (
+                <>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{(appointmentType as any).minimumDurationHours}+ hours</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="h-4 w-4" />
+                    <span className="font-semibold">${Number((appointmentType as any).pricePerHour).toFixed(2)}/hour</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">Variable Duration</Badge>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{appointmentType.durationMinutes} minutes</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="h-4 w-4" />
+                    <span className="font-semibold">${Number(appointmentType.price).toFixed(2)}</span>
+                  </div>
+                </>
+              )}
+              {appointmentType?.requiresApproval && (
+                <Badge variant="secondary" className="text-xs">Requires Approval</Badge>
+              )}
+            </div>
+          </DialogHeader>
 
-        {(appointmentType as any).isVariableDuration && (
-          <div>
-            <Label htmlFor="duration-select-main">
-              Select Duration
-            </Label>
-            <select
-              id="duration-select-main"
-              className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
-              value={selectedDurationHours}
-              onChange={(e) => {
-                setSelectedDurationHours(Number(e.target.value));
-                // Reset slot selection when duration changes
-                setSelectedSlot(null);
-              }}
-              data-testid="select-duration-main"
-            >
-              {getDurationOptions().map(hours => (
-                <option key={hours} value={hours}>
-                  {hours} {hours === 1 ? 'hour' : 'hours'} - ${getPriceForDuration(hours).toFixed(2)}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-muted-foreground mt-2">
-              {(appointmentType as any).useTieredPricing 
-                ? `1 hour: $${Number((appointmentType as any).firstHourPrice || 0).toFixed(2)} | 2+ hours: $${Number((appointmentType as any).additionalHourPrice || 0).toFixed(2)}/hour`
-                : `Time slots will show ${selectedDurationHours}-hour blocks at $${Number((appointmentType as any).pricePerHour).toFixed(2)}/hour`
-              }
-            </p>
-          </div>
-        )}
+          {(appointmentType as any).isVariableDuration && (
+            <div>
+              <Label htmlFor="duration-select-main">
+                Select Duration
+              </Label>
+              <select
+                id="duration-select-main"
+                className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background"
+                value={selectedDurationHours}
+                onChange={(e) => {
+                  setSelectedDurationHours(Number(e.target.value));
+                  // Reset slot selection when duration changes
+                  setSelectedSlot(null);
+                }}
+                data-testid="select-duration-main"
+              >
+                {getDurationOptions().map(hours => (
+                  <option key={hours} value={hours}>
+                    {hours} {hours === 1 ? 'hour' : 'hours'} - ${getPriceForDuration(hours).toFixed(2)}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground mt-2">
+                {(appointmentType as any).useTieredPricing 
+                  ? `1 hour: $${Number((appointmentType as any).firstHourPrice || 0).toFixed(2)} | 2+ hours: $${Number((appointmentType as any).additionalHourPrice || 0).toFixed(2)}/hour`
+                  : `Time slots will show ${selectedDurationHours}-hour blocks at $${Number((appointmentType as any).pricePerHour).toFixed(2)}/hour`
+                }
+              </p>
+            </div>
+          )}
 
-        <div className="grid md:grid-cols-2 gap-6 mt-4">
-          {/* Left Column - Calendar */}
-          <div className="border rounded-lg p-4">
-            <h3 className="font-semibold mb-4">Select a Date</h3>
-            <style>{`
-              .booking-calendar {
-                width: 100%;
-              }
-              .booking-calendar .rdp-months {
-                width: 100%;
-              }
-              .booking-calendar .rdp-month {
-                width: 100%;
-              }
-              .booking-calendar .rdp-caption {
-                display: flex;
-                justify-content: center;
-                padding: 0;
-                margin-bottom: 1rem;
-              }
-              .booking-calendar .rdp-caption_label {
-                font-size: 1rem;
-                font-weight: 600;
-              }
-              .booking-calendar .rdp-nav {
-                position: absolute;
-                width: 100%;
-                display: flex;
-                justify-content: space-between;
-              }
-              .booking-calendar .rdp-nav_button {
-                width: 2rem;
-                height: 2rem;
-              }
-              .booking-calendar .rdp-table {
-                width: 100%;
-                max-width: 100%;
-              }
-              .booking-calendar .rdp-head_cell {
-                font-size: 0.75rem;
-                font-weight: 600;
-                text-align: center;
-                padding: 0.25rem;
-              }
-              .booking-calendar .rdp-cell {
-                text-align: center;
-                padding: 2px;
-              }
-              .booking-calendar .rdp-day {
-                width: 2.5rem;
-                height: 2.5rem;
-                font-size: 0.875rem;
-                border-radius: 0.375rem;
-                position: relative;
-              }
-              .booking-calendar .rdp-day_button {
-                position: relative;
-                width: 100%;
-                height: 100%;
-              }
-              .booking-calendar .rdp-day.day-available::after {
-                content: '';
-                position: absolute;
-                bottom: 4px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 5px;
-                height: 5px;
-                border-radius: 50%;
-                background-color: #10b981;
-                pointer-events: none;
-                z-index: 10;
-              }
-              .booking-calendar .rdp-day.day-unavailable {
-                opacity: 0.4;
-              }
-              .booking-calendar .rdp-day.day-unavailable::before {
-                content: '';
-                position: absolute;
-                top: 50%;
-                left: 15%;
-                right: 15%;
-                height: 1.5px;
-                background-color: #ef4444;
-                transform: translateY(-50%);
-                pointer-events: none;
-                z-index: 10;
-              }
-              .booking-calendar .rdp-day_selected {
-                background-color: hsl(var(--primary));
-                color: hsl(var(--primary-foreground));
-              }
-              .booking-calendar .rdp-day_today {
-                font-weight: 600;
-              }
-            `}</style>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              onMonthChange={setCurrentMonth}
-              disabled={(date) => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                return date < today;
-              }}
-              modifiers={{
-                available: (date) => {
-                  const dateKey = formatLocalDate(date);
-                  return dayAvailability[dateKey] === true;
-                },
-                unavailable: (date) => {
+          <div className="grid md:grid-cols-2 gap-6 mt-4">
+            {/* Left Column - Calendar */}
+            <div className="border rounded-lg p-4">
+              <h3 className="font-semibold mb-4">Select a Date</h3>
+              <style>{`
+                .booking-calendar {
+                  width: 100%;
+                }
+                .booking-calendar .rdp-months {
+                  width: 100%;
+                }
+                .booking-calendar .rdp-month {
+                  width: 100%;
+                }
+                .booking-calendar .rdp-caption {
+                  display: flex;
+                  justify-content: center;
+                  padding: 0;
+                  margin-bottom: 1rem;
+                }
+                .booking-calendar .rdp-caption_label {
+                  font-size: 1rem;
+                  font-weight: 600;
+                }
+                .booking-calendar .rdp-nav {
+                  position: absolute;
+                  width: 100%;
+                  display: flex;
+                  justify-content: space-between;
+                }
+                .booking-calendar .rdp-nav_button {
+                  width: 2rem;
+                  height: 2rem;
+                }
+                .booking-calendar .rdp-table {
+                  width: 100%;
+                  max-width: 100%;
+                }
+                .booking-calendar .rdp-head_cell {
+                  font-size: 0.75rem;
+                  font-weight: 600;
+                  text-align: center;
+                  padding: 0.25rem;
+                }
+                .booking-calendar .rdp-cell {
+                  text-align: center;
+                  padding: 2px;
+                }
+                .booking-calendar .rdp-day {
+                  width: 2.5rem;
+                  height: 2.5rem;
+                  font-size: 0.875rem;
+                  border-radius: 0.375rem;
+                  position: relative;
+                }
+                .booking-calendar .rdp-day_button {
+                  position: relative;
+                  width: 100%;
+                  height: 100%;
+                }
+                .booking-calendar .rdp-day.day-available::after {
+                  content: '';
+                  position: absolute;
+                  bottom: 4px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  width: 5px;
+                  height: 5px;
+                  border-radius: 50%;
+                  background-color: #10b981;
+                  pointer-events: none;
+                  z-index: 10;
+                }
+                .booking-calendar .rdp-day.day-unavailable {
+                  opacity: 0.4;
+                }
+                .booking-calendar .rdp-day.day-unavailable::before {
+                  content: '';
+                  position: absolute;
+                  top: 50%;
+                  left: 15%;
+                  right: 15%;
+                  height: 1.5px;
+                  background-color: #ef4444;
+                  transform: translateY(-50%);
+                  pointer-events: none;
+                  z-index: 10;
+                }
+                .booking-calendar .rdp-day_selected {
+                  background-color: hsl(var(--primary));
+                  color: hsl(var(--primary-foreground));
+                }
+                .booking-calendar .rdp-day_today {
+                  font-weight: 600;
+                }
+              `}</style>
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                onMonthChange={setCurrentMonth}
+                disabled={(date) => {
                   const today = new Date();
                   today.setHours(0, 0, 0, 0);
-                  if (date < today) return false;
-                  const dateKey = formatLocalDate(date);
-                  return dayAvailability[dateKey] !== true;
-                },
-              }}
-              modifiersClassNames={{
-                available: "day-available",
-                unavailable: "day-unavailable",
-              }}
-              classNames={{
-                day: "rdp-day",
-              }}
-              className="booking-calendar"
-              data-testid="booking-calendar"
-            />
-            <div className="mt-4 space-y-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <div className="flex items-end justify-center w-6 h-6 border rounded relative">
-                  <span className="text-xs">1</span>
-                  <div className="absolute bottom-0.5 w-1 h-1 rounded-full bg-green-500"></div>
+                  return date < today;
+                }}
+                modifiers={{
+                  available: (date) => {
+                    const dateKey = formatLocalDate(date);
+                    return dayAvailability[dateKey] === true;
+                  },
+                  unavailable: (date) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (date < today) return false;
+                    const dateKey = formatLocalDate(date);
+                    return dayAvailability[dateKey] !== true;
+                  },
+                }}
+                modifiersClassNames={{
+                  available: "day-available",
+                  unavailable: "day-unavailable",
+                }}
+                classNames={{
+                  day: "rdp-day",
+                }}
+                className="booking-calendar"
+                data-testid="booking-calendar"
+              />
+              <div className="mt-4 space-y-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-end justify-center w-6 h-6 border rounded relative">
+                    <span className="text-xs">1</span>
+                    <div className="absolute bottom-0.5 w-1 h-1 rounded-full bg-green-500"></div>
+                  </div>
+                  <span>Available slots</span>
                 </div>
-                <span>Available slots</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-6 h-6 border rounded opacity-40 relative">
-                  <span className="text-xs">15</span>
-                  <div className="absolute top-1/2 left-1.5 right-1.5 h-px bg-red-500"></div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center w-6 h-6 border rounded opacity-40 relative">
+                    <span className="text-xs">15</span>
+                    <div className="absolute top-1/2 left-1.5 right-1.5 h-px bg-red-500"></div>
+                  </div>
+                  <span>No availability</span>
                 </div>
-                <span>No availability</span>
               </div>
             </div>
-          </div>
 
-          {/* Right Column - Time Slots */}
-          <div className="border rounded-lg p-4">
-            <h3 className="font-semibold mb-4">
-              {selectedDate ? `Available Times for ${selectedDate.toLocaleDateString()}` : "Select a date to see available times"}
-            </h3>
-            
-            {!selectedDate ? (
-              <div className="text-center text-muted-foreground py-12">
-                <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                <p>Please select a date from the calendar</p>
-              </div>
-            ) : slotsLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="h-12 bg-muted animate-pulse rounded"></div>
-                ))}
-              </div>
-            ) : availableSlots.length === 0 ? (
-              <div className="text-center text-muted-foreground py-12">
-                <X className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                <p>No available times for this date</p>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {availableSlots
-                  .filter(slot => slot.isAvailable !== false)
-                  .map((slot, index) => (
-                    <Button
-                      key={index}
-                      variant={selectedSlot === slot ? "default" : "outline"}
-                      className="w-full justify-start"
-                      onClick={() => setSelectedSlot(slot)}
-                      data-testid={`time-slot-${index}`}
-                    >
-                      <Clock className="h-4 w-4 mr-2" />
-                      {formatTimeFromISO(slot.startTime)} - {formatTimeFromISO(slot.endTime)}
-                      {selectedSlot === slot && <CheckCircle className="h-4 w-4 ml-auto" />}
-                    </Button>
-                  ))}
-              </div>
-            )}
-
-            {selectedSlot && (
-              <div className="mt-6 space-y-3">
-                <div className="border-t pt-4">
-                  {(appointmentType as any).isVariableDuration ? (
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>${Number((appointmentType as any).pricePerHour).toFixed(2)}/hour × {selectedDurationHours} hours</span>
-                        <span>${(Number((appointmentType as any).pricePerHour) * selectedDurationHours).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center border-t pt-2">
-                        <span className="text-sm font-medium">Total</span>
-                        <span className="text-lg font-bold">${getTotalPrice().toFixed(2)}</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-sm font-medium">Total</span>
-                      <span className="text-lg font-bold">${Number(appointmentType.price).toFixed(2)}</span>
-                    </div>
-                  )}
-                  
-                  <Button
-                    className="w-full bg-black text-white hover:bg-black/90"
-                    onClick={handleBooking}
-                    disabled={bookAppointmentMutation.isPending}
-                    data-testid="button-confirm-booking"
-                  >
-                    {bookAppointmentMutation.isPending ? "Booking..." : "Confirm Booking"}
-                  </Button>
-                  {appointmentType.requiresApproval && (
-                    <p className="text-xs text-muted-foreground text-center mt-2">
-                      Your booking will be pending instructor approval
-                    </p>
-                  )}
+            {/* Right Column - Time Slots */}
+            <div className="border rounded-lg p-4">
+              <h3 className="font-semibold mb-4">
+                {selectedDate ? `Available Times for ${selectedDate.toLocaleDateString()}` : "Select a date to see available times"}
+              </h3>
+              
+              {!selectedDate ? (
+                <div className="text-center text-muted-foreground py-12">
+                  <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                  <p>Please select a date from the calendar</p>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+              ) : slotsLoading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-12 bg-muted animate-pulse rounded"></div>
+                  ))}
+                </div>
+              ) : availableSlots.length === 0 ? (
+                <div className="text-center text-muted-foreground py-12">
+                  <X className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                  <p>No available times for this date</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {availableSlots
+                    .filter(slot => slot.isAvailable !== false)
+                    .map((slot, index) => (
+                      <Button
+                        key={index}
+                        variant={selectedSlot === slot ? "default" : "outline"}
+                        className="w-full justify-start"
+                        onClick={() => setSelectedSlot(slot)}
+                        data-testid={`time-slot-${index}`}
+                      >
+                        <Clock className="h-4 w-4 mr-2" />
+                        {formatTimeFromISO(slot.startTime)} - {formatTimeFromISO(slot.endTime)}
+                        {selectedSlot === slot && <CheckCircle className="h-4 w-4 ml-auto" />}
+                      </Button>
+                    ))}
+                </div>
+              )}
 
+              {selectedSlot && (
+                <div className="mt-6 space-y-3">
+                  <div className="border-t pt-4">
+                    {(appointmentType as any).isVariableDuration ? (
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>${Number((appointmentType as any).pricePerHour).toFixed(2)}/hour × {selectedDurationHours} hours</span>
+                          <span>${(Number((appointmentType as any).pricePerHour) * selectedDurationHours).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center border-t pt-2">
+                          <span className="text-sm font-medium">Total (paid/due in-person)</span>
+                          <span className="text-lg font-bold">${getTotalPrice().toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-sm font-medium">Total</span>
+                        <span className="text-lg font-bold">${Number(appointmentType.price).toFixed(2)}</span>
+                      </div>
+                    )}
+                    
+                    <Button
+                      className="w-full bg-black text-white hover:bg-black/90"
+                      onClick={handleBooking}
+                      disabled={bookAppointmentMutation.isPending}
+                      data-testid="button-confirm-booking"
+                    >
+                      {bookAppointmentMutation.isPending ? "Booking..." : "Confirm Booking"}
+                    </Button>
+                    {appointmentType.requiresApproval && (
+                      <p className="text-xs text-muted-foreground text-center mt-2">
+                        Your booking will be pending instructor approval
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Booking Form Dialog with Stripe Payment */}
       <Dialog open={showBookingForm} onOpenChange={setShowBookingForm}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="booking-form-dialog">
