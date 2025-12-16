@@ -31,17 +31,22 @@ interface InstructorOpsEventData {
 class InstructorOpsCalendarService {
   async getCalendars(instructorId: string): Promise<InstructorOpsCalendar[]> {
     try {
-      const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars?instructorId=${instructorId}`);
+      const url = `${INSTRUCTOROPS_AUTH_URL}/api/calendars?instructorId=${instructorId}`;
+      console.log(`[InstructorOps] Fetching calendars from: ${url}`);
+      
+      const response = await fetch(url);
       
       if (!response.ok) {
-        console.error(`Failed to fetch calendars from InstructorOps: ${response.status}`);
+        const text = await response.text();
+        console.error(`[InstructorOps] Failed to fetch calendars: ${response.status}`, text.substring(0, 200));
         return [];
       }
       
       const calendars = await response.json();
+      console.log(`[InstructorOps] Successfully fetched ${calendars.length} calendars`);
       return calendars;
     } catch (error) {
-      console.error('Error fetching calendars from InstructorOps:', error);
+      console.error('[InstructorOps] Error fetching calendars:', error);
       return [];
     }
   }
@@ -178,19 +183,25 @@ class InstructorOpsCalendarService {
     selectedCalendarId?: string;
   }> {
     try {
-      const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/status?instructorId=${instructorId}`);
+      const url = `${INSTRUCTOROPS_AUTH_URL}/api/calendars/status?instructorId=${instructorId}`;
+      console.log(`[InstructorOps] Checking connection status: ${url}`);
+      
+      const response = await fetch(url);
       
       if (!response.ok) {
+        const text = await response.text();
+        console.error(`[InstructorOps] Status check failed: ${response.status}`, text.substring(0, 200));
         return { connected: false };
       }
       
       const status = await response.json();
+      console.log(`[InstructorOps] Connection status:`, status);
       return {
         connected: status.connected || false,
         selectedCalendarId: status.calendarId,
       };
     } catch (error) {
-      console.error('Error checking connection status from InstructorOps:', error);
+      console.error('[InstructorOps] Error checking connection status:', error);
       return { connected: false };
     }
   }
