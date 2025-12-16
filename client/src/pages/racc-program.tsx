@@ -185,11 +185,7 @@ export default function RACCProgram() {
     queryKey: ["/api/appointments/types"],
   });
 
-  const { data: appSettings } = useQuery<{ stripeOnboarded: boolean }>({
-    queryKey: ["/api/app-settings"],
-  });
-
-  const instructorId = appSettings?.stripeOnboarded ? "instructor" : undefined;
+  const instructorId = appointmentTypes[0]?.instructorId || "";
 
   const handleBookPrivateTraining = () => {
     if (appointmentTypes.length === 1) {
@@ -948,7 +944,7 @@ export default function RACCProgram() {
 
       <BookingModal
         appointmentType={selectedAppointmentType}
-        instructorId={instructorId}
+        instructorId={selectedAppointmentType?.instructorId || instructorId}
         open={showBookingModal}
         onClose={() => {
           setShowBookingModal(false);
