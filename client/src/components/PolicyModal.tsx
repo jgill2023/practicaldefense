@@ -174,7 +174,7 @@ export function PolicyModal({ isOpen, onClose, type }: PolicyModalProps) {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Apache Solutions, LLC ("we," "our," or "us") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website www.tacticaladv.com, register for courses, or otherwise interact with our services.
+              Apache Solutions, LLC ("we," "our," or "us") respects your privacy and is committed to protecting the personal information you share with us. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website www.apachenc.com, register for courses, or otherwise interact with our services.
             </p>
             <p className="text-muted-foreground mt-4">
               By using our website or submitting your information, you agree to the terms of this Privacy Policy.

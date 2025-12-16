@@ -29,7 +29,7 @@ export default function RefundPolicyPage() {
               At Apache Solutions ("we," "us," or "our"), we understand that plans can change. Because class sizes are limited and range time is reserved in advance, we have established the following refund and cancellation policy to ensure fairness to all students and instructors.
             </p>
             <p className="text-muted-foreground mt-4">
-              By registering for a course on <a href="https://www.tacticaladv.com" className="text-accent hover:underline">www.tacticaladv.com</a>, you acknowledge and agree to the terms below.
+              By registering for a course on <a href="https://www.apachenc.com" className="text-accent hover:underline">www.apachenc.com</a>, you acknowledge and agree to the terms below.
             </p>
           </CardContent>
         </Card>
@@ -142,7 +142,7 @@ export default function RefundPolicyPage() {
             <div className="space-y-2 text-muted-foreground">
               <p><strong>Apache Solutions</strong></p>
               <p><strong>Email:</strong> <a href="mailto:Info@ApacheNC.com" className="text-accent hover:underline">Info@ApacheNC.com</a></p>
-              <p><strong>Website:</strong> <a href="https://www.tacticaladv.com" className="text-accent hover:underline">www.tacticaladv.com</a></p>
+              <p><strong>Website:</strong> <a href="https://www.apachenc.com" className="text-accent hover:underline">www.apachenc.com</a></p>
               <p><strong>Location:</strong> New Mexico, USA</p>
             </div>
           </CardContent>

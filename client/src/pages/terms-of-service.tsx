@@ -26,7 +26,7 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              By accessing or using <a href="https://www.tacticaladv.com" className="text-accent hover:underline">www.tacticaladv.com</a> (the "Site") or registering for any training, course, or service provided by Apache Solutions ("we," "us," or "our"), you agree to be bound by these Terms of Service ("Terms").
+              By accessing or using <a href="https://www.apachenc.com" className="text-accent hover:underline">www.apachenc.com</a> (the "Site") or registering for any training, course, or service provided by Apache Solutions ("we," "us," or "our"), you agree to be bound by these Terms of Service ("Terms").
             </p>
             <p className="text-muted-foreground mt-4">
               If you do not agree, do not use our website or services. These Terms apply to all users, including students, visitors, and account holders.
@@ -271,7 +271,7 @@ export default function TermsOfServicePage() {
             <div className="space-y-2 text-muted-foreground">
               <p><strong>Apache Solutions</strong></p>
               <p><strong>Email:</strong> <a href="mailto:Info@ApacheNC.com" className="hover:underline text-[#000000]">Info@ApacheNC.com</a></p>
-              <p><strong>Website:</strong> <a href="https://www.tacticaladv.com" className="hover:underline text-[#000000]">www.tacticaladv.com</a></p>
+              <p><strong>Website:</strong> <a href="https://www.apachenc.com" className="hover:underline text-[#000000]">www.apachenc.com</a></p>
               <p><strong>Location:</strong> Georgia, USA</p>
             </div>
           </CardContent>

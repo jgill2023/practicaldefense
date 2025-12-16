@@ -102,8 +102,8 @@ export class NotificationEngine {
     companyName: 'Apache Solutions',
     companyPhone: '(555) 123-4567',
     companyEmail: 'Info@ApacheNC.com',
-    website: 'tacticaladv.com',
-    websiteUrl: process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://tacticaladv.com',
+    website: 'apachenc.com',
+    websiteUrl: process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://apachenc.com',
     currentDate: new Date().toLocaleDateString()
   };
 
