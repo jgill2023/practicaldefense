@@ -100,26 +100,27 @@ instructorGoogleCalendarRouter.get('/oauth/callback', async (req: Request, res: 
 
     if (error) {
       console.error('Google Calendar OAuth error:', error);
-      return res.redirect('/instructor/settings?gcal_error=access_denied');
+      return res.redirect('/settings?gcal_error=access_denied');
     }
 
     if (!code || !state) {
-      return res.redirect('/instructor/settings?gcal_error=missing_params');
+      return res.redirect('/settings?gcal_error=missing_params');
     }
 
     const stateData = verifyState(state as string);
     if (!stateData) {
-      return res.redirect('/instructor/settings?gcal_error=invalid_state');
+      return res.redirect('/settings?gcal_error=invalid_state');
     }
 
     const user = await storage.getUser(stateData.userId);
     if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
-      return res.redirect('/instructor/settings?gcal_error=unauthorized');
+      return res.redirect('/settings?gcal_error=unauthorized');
     }
 
     const baseUrl = getBaseUrl(req);
     const redirectUri = `${baseUrl}/api/instructor-google-calendar/oauth/callback`;
 
+    console.log('Google Calendar OAuth callback - exchanging code with redirectUri:', redirectUri);
     const tokens = await instructorGoogleCalendarService.exchangeCodeForTokens(code as string, redirectUri);
 
     await instructorGoogleCalendarService.saveInstructorCredentials(user.id, {
@@ -132,10 +133,10 @@ instructorGoogleCalendarRouter.get('/oauth/callback', async (req: Request, res: 
     await instructorGoogleCalendarService.syncInstructorCalendars(user.id);
 
     console.log('Google Calendar connected successfully for instructor:', user.id);
-    res.redirect('/instructor/settings?gcal_success=true');
+    res.redirect('/settings?gcal_success=true');
   } catch (error: any) {
     console.error('Error during Google Calendar OAuth callback:', error);
-    res.redirect('/instructor/settings?gcal_error=exchange_failed');
+    res.redirect('/settings?gcal_error=exchange_failed');
   }
 });
 
