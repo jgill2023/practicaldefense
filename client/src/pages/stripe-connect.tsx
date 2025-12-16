@@ -1,22 +1,28 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { isInstructorOrHigher } from "@/lib/authUtils";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { isInstructorOrHigher, isAdminOrHigher } from "@/lib/authUtils";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 import { 
   CreditCard, 
   CheckCircle2, 
   XCircle, 
   AlertCircle, 
   ExternalLink, 
-  Loader2
+  Loader2,
+  Link as LinkIcon,
+  Unlink
 } from "lucide-react";
 
 interface StripeStatus {
   configured: boolean;
+  onboarded: boolean;
   chargesEnabled: boolean;
   payoutsEnabled: boolean;
   businessName?: string;
@@ -25,10 +31,52 @@ interface StripeStatus {
 
 export default function StripeConnectPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
 
   const { data: status, isLoading: statusLoading } = useQuery<StripeStatus>({
     queryKey: ["/api/stripe-connect/status"],
     enabled: !!user && isInstructorOrHigher(user),
+  });
+
+  const onboardMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/stripe-connect/onboard");
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Stripe Connected!",
+        description: data.message || "Stripe is now ready to accept payments.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/stripe-connect/status"] });
+    },
+    onError: (error: any) => {
+      const errorData = error.message ? JSON.parse(error.message.split(': ')[1] || '{}') : {};
+      toast({
+        title: "Connection Failed",
+        description: errorData.error || error.message || "Failed to connect Stripe",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const disconnectMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("DELETE", "/api/stripe-connect/disconnect");
+    },
+    onSuccess: () => {
+      toast({
+        title: "Stripe Disconnected",
+        description: "Stripe has been disconnected. You can reconnect anytime.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/stripe-connect/status"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to disconnect Stripe",
+        variant: "destructive",
+      });
+    },
   });
 
   if (authLoading) {
@@ -57,6 +105,8 @@ export default function StripeConnectPage() {
     );
   }
 
+  const isAdmin = isAdminOrHigher(user);
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -66,7 +116,7 @@ export default function StripeConnectPage() {
             Stripe Payments
           </h1>
           <p className="text-muted-foreground mt-2">
-            View the status of your Stripe payment processing
+            Connect your Stripe account to accept payments
           </p>
         </div>
 
@@ -83,9 +133,9 @@ export default function StripeConnectPage() {
                   Active
                 </Badge>
               ) : (
-                <Badge variant="destructive">
+                <Badge variant="secondary">
                   <XCircle className="h-3 w-3 mr-1" />
-                  Not Configured
+                  Not Connected
                 </Badge>
               )}
             </CardTitle>
@@ -149,19 +199,112 @@ export default function StripeConnectPage() {
                     <span className="ml-2 font-medium">{status.businessName}</span>
                   </div>
                 )}
+
+                {isAdmin && (
+                  <div className="mt-6 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      onClick={() => disconnectMutation.mutate()}
+                      disabled={disconnectMutation.isPending}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      data-testid="button-disconnect-stripe"
+                    >
+                      {disconnectMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Unlink className="h-4 w-4 mr-2" />
+                      )}
+                      Disconnect Stripe
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Stripe Not Configured</AlertTitle>
-                <AlertDescription>
-                  {status?.message || "Stripe API keys need to be configured to accept payments."}
-                  <br />
-                  <span className="text-sm mt-2 block">
-                    Please ensure STRIPE_SECRET_KEY is set in your environment variables.
-                  </span>
-                </AlertDescription>
-              </Alert>
+              <div className="space-y-6">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Stripe Not Connected</AlertTitle>
+                  <AlertDescription>
+                    {status?.message || "Connect your Stripe account to start accepting payments."}
+                  </AlertDescription>
+                </Alert>
+
+                {isAdmin && (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="font-medium mb-3 text-blue-800">Setup Instructions:</h4>
+                      <ol className="list-decimal list-inside text-sm text-blue-700 space-y-3">
+                        <li>
+                          <strong>Create or log in to your Stripe account:</strong>{" "}
+                          <a 
+                            href="https://dashboard.stripe.com/register" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            dashboard.stripe.com
+                          </a>
+                        </li>
+                        <li>
+                          <strong>Complete account setup:</strong> Stripe will guide you through identity verification, bank account connection, and tax information.
+                        </li>
+                        <li>
+                          <strong>Get your Secret Key:</strong> Go to{" "}
+                          <a 
+                            href="https://dashboard.stripe.com/apikeys" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            Developers → API keys
+                          </a>{" "}
+                          and copy your <strong>Secret key</strong> (starts with "sk_")
+                        </li>
+                        <li>
+                          <strong>Add the secret to this app:</strong> In Replit, go to the "Secrets" tab and add a new secret named <code className="bg-blue-100 px-1 rounded">STRIPE_SECRET_KEY</code> with your secret key as the value.
+                        </li>
+                        <li>
+                          <strong>Click the button below</strong> to verify your setup and start accepting payments.
+                        </li>
+                      </ol>
+                    </div>
+
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Important</AlertTitle>
+                      <AlertDescription>
+                        Make sure you've added your Stripe Secret Key to this app's secrets before clicking the button below. 
+                        The system will validate your key to ensure payments can be processed.
+                      </AlertDescription>
+                    </Alert>
+
+                    <Button
+                      size="lg"
+                      onClick={() => onboardMutation.mutate()}
+                      disabled={onboardMutation.isPending}
+                      className="w-full"
+                      data-testid="button-connect-stripe"
+                    >
+                      {onboardMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <LinkIcon className="h-4 w-4 mr-2" />
+                      )}
+                      Connect Stripe to Accept Payments
+                    </Button>
+                  </div>
+                )}
+
+                {!isAdmin && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Admin Required</AlertTitle>
+                    <AlertDescription>
+                      Please contact an administrator to connect Stripe and enable payment processing.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -174,7 +317,7 @@ export default function StripeConnectPage() {
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
               Apache Solutions uses Stripe for secure payment processing. All payments are processed 
-              directly through our Stripe account.
+              directly through your Stripe account.
             </p>
             
             <Separator />

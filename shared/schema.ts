@@ -269,8 +269,9 @@ export const waitlist = pgTable("waitlist", {
 export const appSettings = pgTable("app_settings", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   homeCoursesLimit: integer("home_courses_limit").notNull().default(20),
-  // Stripe Connect OAuth configuration
-  stripeClientId: varchar("stripe_client_id", { length: 255 }), // Stripe Connect OAuth Client ID (starts with "ca_")
+  // Stripe configuration - tracks whether admin has completed Stripe setup
+  stripeOnboarded: boolean("stripe_onboarded").notNull().default(false), // Set to true when admin confirms Stripe is configured
+  stripeClientId: varchar("stripe_client_id", { length: 255 }), // Legacy - no longer used for Connect
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
