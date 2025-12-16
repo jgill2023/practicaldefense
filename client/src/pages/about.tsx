@@ -187,6 +187,179 @@ export default function About() {
               </div>
             </div>
           </ComicPanel>
+
+          <div className="mt-12 mb-8">
+            <h2 className="font-heading text-3xl uppercase tracking-wide mb-2">Our Team of Instructors</h2>
+            <p className="text-muted-foreground text-lg">Dedicated professionals committed to building a competent armed society.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Derek Watkins */}
+            <ComicPanel shadow="md" data-testid="about-derek-watkins">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Derek Watkins</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Full-Time Instructor</p>
+                </div>
+                <p className="text-foreground leading-relaxed">
+                  Derek joined Apache in 2021 and worked his way through the apprenticeship program, becoming a full-time instructor in 2023. Originally from Oak Island, NC, he's passionate about teaching and helping people achieve their goals through tailored instruction.
+                </p>
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">Major Accomplishments:</p>
+                  <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
+                    <li>Rangemaster Professional Pistolcraft Instructor</li>
+                    <li>Rangemaster Shotgun Instructor</li>
+                    <li>Top 3 finisher in all Rangemaster Instructor classes</li>
+                    <li>Active Response Training Close Quarters Instructor</li>
+                    <li>Teaches 1000+ hours per year in private sessions</li>
+                  </ul>
+                </div>
+              </div>
+            </ComicPanel>
+
+            {/* Derek Wright */}
+            <ComicPanel shadow="md" data-testid="about-derek-wright">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Derek Wright</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Professional Pistolcraft Instructor</p>
+                </div>
+                <p className="text-foreground leading-relaxed">
+                  A Rangemaster-certified Professional Pistolcraft Instructor and Apache Instructor Enrichment Program graduate, Derek focuses on empowering law-abiding citizens with the skills and mindset to safely carry and responsibly defend themselves.
+                </p>
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">Certifications:</p>
+                  <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
+                    <li>Rangemaster Professional Pistolcraft Instructor</li>
+                    <li>NRA Basics of Pistol & RSO</li>
+                    <li>NC Department of Justice Concealed Carry Instructor</li>
+                  </ul>
+                </div>
+              </div>
+            </ComicPanel>
+
+            {/* Dan Brady */}
+            <ComicPanel shadow="md" data-testid="about-dan-brady">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Dan Brady</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Law Enforcement Firearms Instructor</p>
+                </div>
+                <p className="text-foreground leading-relaxed">
+                  A career law enforcement officer with 25+ years of experience and 20+ years as an active firearms instructor, Dan approaches teaching with deep knowledge of Adult Learning Theory, Motor Learning Processes, and performance-based methods.
+                </p>
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">Expertise:</p>
+                  <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
+                    <li>20+ years law enforcement firearms instruction</li>
+                    <li>10+ years civilian firearms instruction</li>
+                    <li>Subject matter expert in defensive white light use</li>
+                  </ul>
+                </div>
+              </div>
+            </ComicPanel>
+
+            {/* David Church */}
+            <ComicPanel shadow="md" data-testid="about-david-church">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">David Church</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Apache Handgun Instructor</p>
+                </div>
+                <p className="text-foreground leading-relaxed">
+                  An Apache handgun instructor since March 2020, David's goal is to help develop essential skills that may one day save lives. Beyond firearms, he's a self-employed entrepreneur, avid rock climber, and triathlon runner.
+                </p>
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">Certifications:</p>
+                  <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
+                    <li>Rangemaster Professional Pistolcraft Instructor</li>
+                    <li>Defense Training International Instructor</li>
+                    <li>NRA Basic Pistol Instructor</li>
+                  </ul>
+                </div>
+              </div>
+            </ComicPanel>
+
+            {/* Teresa Kelly */}
+            <ComicPanel shadow="md" data-testid="about-teresa-kelly">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Teresa Kelly</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Co-Owner & Certified Instructor</p>
+                </div>
+                <p className="text-foreground leading-relaxed">
+                  Co-owner of Apache Solutions LLC, Teresa has trained with renowned instructors including Tatiana Whitlock and Tom Givens. She's passionate about building community and empowering women through firearms training and education.
+                </p>
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">Certifications:</p>
+                  <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
+                    <li>Rangemaster Certified Pistol Instructor</li>
+                    <li>DTI-Certified Instructor</li>
+                    <li>CPR, AED, and NRA RSO Certified</li>
+                  </ul>
+                </div>
+              </div>
+            </ComicPanel>
+
+            {/* Wes Matthews */}
+            <ComicPanel shadow="md" data-testid="about-wes-matthews">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Wes Matthews</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Rescue Services & Firearms Instructor</p>
+                </div>
+                <p className="text-foreground leading-relaxed">
+                  Affiliated with the Yadkin County Rescue Squad, Wes provides specialized rescue services and supports emergency medical operations while sharing his firearms expertise through instruction.
+                </p>
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">Certifications:</p>
+                  <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
+                    <li>Rangemaster Advanced Pistol Instructor</li>
+                    <li>Rangemaster Shotgun Instructor</li>
+                    <li>EMR (Emergency Medical Responder)</li>
+                  </ul>
+                </div>
+              </div>
+            </ComicPanel>
+
+            {/* Patrice Nye */}
+            <ComicPanel shadow="md" data-testid="about-patrice-nye">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Patrice Nye</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Apprentice Instructor</p>
+                </div>
+                <p className="text-foreground leading-relaxed">
+                  Training with Apache for five years, Patrice progressed from never handling a weapon to pursuing the Assistant Instructor track. A Banking Compliance professional by day, she's passionate about educating a responsibly armed citizenry.
+                </p>
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">About Patrice:</p>
+                  <p className="text-sm text-foreground">Writer, runner, foodie, traveler, and huntress committed to training and education.</p>
+                </div>
+              </div>
+            </ComicPanel>
+
+            {/* Zack Halstead */}
+            <ComicPanel shadow="md" data-testid="about-zack-halstead">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Zack Halstead</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Marine Corps Veteran & Instructor</p>
+                </div>
+                <p className="text-foreground leading-relaxed">
+                  A Marine Corps veteran turned Law Enforcement Officer, Zack brings discipline and precision to his instruction. Apache instructor since 2023, he's driven by integrity and commitment to creating a better armed society.
+                </p>
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">Certifications:</p>
+                  <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
+                    <li>Rangemaster Advanced Certified Pistol Instructor</li>
+                    <li>Marine Corps Veteran</li>
+                    <li>Law Enforcement Officer</li>
+                  </ul>
+                </div>
+              </div>
+            </ComicPanel>
+          </div>
         </div>
       </div>
     </Layout>
