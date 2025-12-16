@@ -301,7 +301,7 @@ export function InstructorGoogleCalendarSettings() {
                         </Button>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Select which calendars should block your appointment availability
+                        Select which calendars should block your appointment availability. No calendars are selected by default - enable the ones you want to use for blocking.
                       </p>
                       <div className="space-y-2">
                         {status.calendars.map((calendar) => (

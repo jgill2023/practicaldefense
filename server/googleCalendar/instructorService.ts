@@ -173,7 +173,7 @@ class InstructorGoogleCalendarService {
         calendarId: cal.id,
         calendarName: cal.name,
         calendarColor: cal.color,
-        blocksAvailability: cal.isPrimary,
+        blocksAvailability: false,
         isPrimary: cal.isPrimary,
       });
       savedCalendars.push(saved);
