@@ -9,6 +9,7 @@ import { db } from '../db';
 import { appointmentTypes } from '@shared/schema';
 import { eq, asc } from 'drizzle-orm';
 import { googleCalendarService } from '../googleCalendar/service';
+import { instructorGoogleCalendarService } from '../googleCalendar/instructorService';
 
 import { getStripeClient } from '../stripeClient';
 
@@ -563,13 +564,16 @@ appointmentRouter.post('/instructor/appointments/:id/cancel', isAuthenticated, a
       console.error('Failed to send cancellation notification:', err);
     });
 
-    // Delete Google Calendar event if exists
+    // Delete Google Calendar event using instructor-scoped service
     if (existingAppointment?.googleEventId) {
       try {
-        await googleCalendarService.deleteEvent(existingAppointment.googleEventId);
-        await googleCalendarService.updateAppointmentGoogleEventId(id, null);
+        await instructorGoogleCalendarService.deleteEvent(
+          existingAppointment.instructorId, 
+          existingAppointment.googleEventId
+        );
+        await storage.updateAppointment(id, { googleEventId: null });
       } catch (err) {
-        console.error('Failed to delete Google Calendar event:', err);
+        console.error('Failed to delete instructor Google Calendar event:', err);
       }
     }
     
@@ -1238,13 +1242,16 @@ appointmentRouter.post('/:id/cancel', isAuthenticated, async (req: any, res) => 
       console.error('Failed to send cancellation notification:', err);
     });
 
-    // Delete Google Calendar event if exists
+    // Delete Google Calendar event using instructor-scoped service
     if (appointment.googleEventId) {
       try {
-        await googleCalendarService.deleteEvent(appointment.googleEventId);
-        await googleCalendarService.updateAppointmentGoogleEventId(id, null);
+        await instructorGoogleCalendarService.deleteEvent(
+          appointment.instructorId, 
+          appointment.googleEventId
+        );
+        await storage.updateAppointment(id, { googleEventId: null });
       } catch (err) {
-        console.error('Failed to delete Google Calendar event:', err);
+        console.error('Failed to delete instructor Google Calendar event:', err);
       }
     }
     

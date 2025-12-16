@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { isAdminOrHigher } from "@/lib/authUtils";
+import { isAdminOrHigher, isInstructorOrHigher } from "@/lib/authUtils";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { InstructorGoogleCalendarSettings } from "@/components/instructor/GoogleCalendarSettings";
 import { 
   Calendar, 
   CheckCircle2, 
@@ -148,7 +149,7 @@ export default function SettingsPage() {
     );
   }
 
-  if (!user || !isAdminOrHigher(user)) {
+  if (!user || !isInstructorOrHigher(user)) {
     return (
       <Layout>
         <div className="container mx-auto py-8 px-4">
@@ -156,13 +157,15 @@ export default function SettingsPage() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Access Denied</AlertTitle>
             <AlertDescription>
-              You don't have permission to access settings. Admin access is required.
+              You don't have permission to access settings. Instructor or admin access is required.
             </AlertDescription>
           </Alert>
         </div>
       </Layout>
     );
   }
+
+  const isAdmin = isAdminOrHigher(user);
 
   return (
     <Layout>
@@ -175,7 +178,10 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-6">
-          <Card data-testid="card-google-calendar">
+          <InstructorGoogleCalendarSettings />
+
+          {isAdmin && (
+            <Card data-testid="card-google-calendar">
             <CardHeader>
               <div className="flex items-center gap-3">
                 <Calendar className="h-6 w-6 text-primary" />
@@ -290,6 +296,7 @@ export default function SettingsPage() {
               )}
             </CardContent>
           </Card>
+          )}
         </div>
       </div>
     </Layout>

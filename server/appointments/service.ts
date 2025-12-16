@@ -1,5 +1,6 @@
 import { storage } from '../storage';
 import { toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { instructorGoogleCalendarService } from '../googleCalendar/instructorService';
 import type { 
   InstructorWeeklyTemplate, 
   InstructorAvailabilityOverride, 
@@ -176,23 +177,25 @@ export class AppointmentService {
     instructorId: string,
     startDate: Date,
     endDate: Date
-  ): Promise<{ startTime: Date; endTime: Date }[]> {
-    const [appointments, courseSchedules] = await Promise.all([
+  ): Promise<{ startTime: Date; endTime: Date; source?: string }[]> {
+    const [appointments, courseSchedules, instructor] = await Promise.all([
       storage.getAppointments({
         instructorId,
         startDate,
         endDate,
       }),
       storage.getInstructorCourseSchedules(instructorId, startDate, endDate),
+      storage.getUser(instructorId),
     ]);
 
-    const conflicts: { startTime: Date; endTime: Date }[] = [];
+    const conflicts: { startTime: Date; endTime: Date; source?: string }[] = [];
 
     appointments.forEach(apt => {
       if (apt.status === 'confirmed' || apt.status === 'pending') {
         conflicts.push({
           startTime: new Date(apt.startTime),
           endTime: new Date(apt.endTime),
+          source: 'appointment',
         });
       }
     });
@@ -201,8 +204,31 @@ export class AppointmentService {
       conflicts.push({
         startTime: new Date(schedule.startDate),
         endTime: new Date(schedule.endDate),
+        source: 'course',
       });
     });
+
+    // Fetch Google Calendar busy events if blocking is enabled
+    if (instructor?.googleCalendarBlockingEnabled && instructor?.googleCalendarConnected) {
+      try {
+        const busyEvents = await instructorGoogleCalendarService.getBusyEvents(
+          instructorId,
+          startDate,
+          endDate
+        );
+        
+        busyEvents.forEach(event => {
+          conflicts.push({
+            startTime: event.start,
+            endTime: event.end,
+            source: 'google_calendar',
+          });
+        });
+      } catch (error) {
+        console.error(`Failed to fetch Google Calendar busy events for instructor ${instructorId}:`, error);
+        // Fail gracefully - continue without Google Calendar blocking
+      }
+    }
 
     return conflicts;
   }
@@ -418,6 +444,29 @@ export class AppointmentService {
       return { valid: false, reason: 'Time conflicts with instructor course schedule' };
     }
 
+    // Check Google Calendar conflict if blocking is enabled
+    const instructor = await storage.getUser(instructorId);
+    if (instructor?.googleCalendarBlockingEnabled && instructor?.googleCalendarConnected) {
+      try {
+        const conflict = await instructorGoogleCalendarService.checkConflict(
+          instructorId,
+          startTime,
+          endTime
+        );
+        
+        if (conflict.hasConflict) {
+          const eventName = conflict.conflictingEvent?.summary || 'a calendar event';
+          return { 
+            valid: false, 
+            reason: `Time conflicts with ${eventName} on instructor's calendar` 
+          };
+        }
+      } catch (error) {
+        console.error(`Failed to check Google Calendar conflict for instructor ${instructorId}:`, error);
+        // Fail gracefully - continue without Google Calendar check
+      }
+    }
+
     return { valid: true };
   }
 
@@ -474,11 +523,110 @@ export class AppointmentService {
         taxRate: data.taxRate || null,
       });
 
+      // Sync to Google Calendar if sync is enabled
+      await this.syncAppointmentToGoogleCalendar(appointment, appointmentType.name);
+
       return { success: true, appointment };
     } catch (error) {
       console.error('Error creating appointment:', error);
       return { success: false, error: 'Failed to create appointment' };
     }
+  }
+
+  async syncAppointmentToGoogleCalendar(
+    appointment: InstructorAppointment,
+    appointmentTypeName: string
+  ): Promise<string | null> {
+    try {
+      const instructor = await storage.getUser(appointment.instructorId);
+      
+      if (!instructor?.googleCalendarSyncEnabled || !instructor?.googleCalendarConnected) {
+        return null;
+      }
+
+      const student = await storage.getUser(appointment.studentId);
+      const studentName = student 
+        ? `${student.firstName || ''} ${student.lastName || ''}`.trim() || student.email 
+        : 'Unknown Student';
+
+      const summary = `${appointmentTypeName} - ${studentName}`;
+      const description = [
+        `Appointment Type: ${appointmentTypeName}`,
+        `Student: ${studentName}`,
+        student?.email ? `Email: ${student.email}` : null,
+        student?.phone ? `Phone: ${student.phone}` : null,
+        appointment.studentNotes ? `Notes: ${appointment.studentNotes}` : null,
+        appointment.partySize && appointment.partySize > 1 ? `Party Size: ${appointment.partySize}` : null,
+      ].filter(Boolean).join('\n');
+
+      const attendeeEmails = student?.email ? [student.email] : [];
+
+      const eventId = await instructorGoogleCalendarService.createEvent(
+        appointment.instructorId,
+        {
+          summary,
+          description,
+          startTime: new Date(appointment.startTime),
+          endTime: new Date(appointment.endTime),
+          attendeeEmails,
+        }
+      );
+
+      if (eventId) {
+        await storage.updateAppointment(appointment.id, {
+          googleEventId: eventId,
+        });
+      }
+
+      return eventId;
+    } catch (error) {
+      console.error(`Failed to sync appointment ${appointment.id} to Google Calendar:`, error);
+      return null;
+    }
+  }
+
+  async updateAppointmentGoogleCalendarEvent(
+    appointmentId: string,
+    updates: {
+      startTime?: Date;
+      endTime?: Date;
+      cancelled?: boolean;
+    }
+  ): Promise<boolean> {
+    try {
+      const appointment = await storage.getAppointment(appointmentId);
+      if (!appointment?.googleEventId) {
+        return false;
+      }
+
+      const instructor = await storage.getUser(appointment.instructorId);
+      if (!instructor?.googleCalendarSyncEnabled || !instructor?.googleCalendarConnected) {
+        return false;
+      }
+
+      if (updates.cancelled) {
+        return await instructorGoogleCalendarService.deleteEvent(
+          appointment.instructorId,
+          appointment.googleEventId
+        );
+      }
+
+      return await instructorGoogleCalendarService.updateEvent(
+        appointment.instructorId,
+        appointment.googleEventId,
+        {
+          startTime: updates.startTime,
+          endTime: updates.endTime,
+        }
+      );
+    } catch (error) {
+      console.error(`Failed to update Google Calendar event for appointment ${appointmentId}:`, error);
+      return false;
+    }
+  }
+
+  async deleteAppointmentGoogleCalendarEvent(appointmentId: string): Promise<boolean> {
+    return this.updateAppointmentGoogleCalendarEvent(appointmentId, { cancelled: true });
   }
 }
 

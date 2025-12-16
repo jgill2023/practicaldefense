@@ -89,6 +89,11 @@ export const users = pgTable("users", {
   stripeConnectChargesEnabled: boolean("stripe_connect_charges_enabled").default(false),
   stripeConnectPayoutsEnabled: boolean("stripe_connect_payouts_enabled").default(false),
   stripeConnectCreatedAt: timestamp("stripe_connect_created_at"),
+  // Google Calendar integration settings (instructor-specific)
+  googleCalendarConnected: boolean("google_calendar_connected").default(false), // Whether instructor has connected Google Calendar
+  googleCalendarSyncEnabled: boolean("google_calendar_sync_enabled").default(true), // Sync bookings to Google Calendar
+  googleCalendarBlockingEnabled: boolean("google_calendar_blocking_enabled").default(true), // Block availability from Google Calendar events
+  timezone: varchar("timezone", { length: 100 }).default('America/Denver'), // Instructor's timezone for calendar operations
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -2599,7 +2604,7 @@ export type CartItem = {
 // GOOGLE CALENDAR INTEGRATION
 // ============================================
 
-// Google Calendar credentials for OAuth tokens (single shared calendar)
+// Google Calendar credentials for OAuth tokens (single shared calendar - legacy)
 export const googleCalendarCredentials = pgTable("google_calendar_credentials", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   accessToken: text("access_token").notNull(),
@@ -2620,6 +2625,123 @@ export const insertGoogleCalendarCredentialsSchema = createInsertSchema(googleCa
 // Types for Google Calendar credentials
 export type InsertGoogleCalendarCredentials = z.infer<typeof insertGoogleCalendarCredentialsSchema>;
 export type GoogleCalendarCredentials = typeof googleCalendarCredentials.$inferSelect;
+
+// ============================================
+// PER-INSTRUCTOR GOOGLE CALENDAR INTEGRATION
+// ============================================
+
+// Per-instructor Google Calendar OAuth credentials
+export const instructorGoogleCredentials = pgTable("instructor_google_credentials", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instructorId: varchar("instructor_id").notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  tokenExpiry: timestamp("token_expiry").notNull(),
+  primaryCalendarId: varchar("primary_calendar_id", { length: 255 }).default('primary'), // Default calendar for event creation
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Instructor calendar selections (which calendars block availability)
+export const instructorCalendars = pgTable("instructor_calendars", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  calendarId: varchar("calendar_id", { length: 255 }).notNull(), // Google Calendar ID
+  calendarName: varchar("calendar_name", { length: 255 }).notNull(),
+  calendarColor: varchar("calendar_color", { length: 7 }), // Hex color from Google
+  blocksAvailability: boolean("blocks_availability").notNull().default(true), // Whether events on this calendar block availability
+  isPrimary: boolean("is_primary").notNull().default(false), // Primary calendar flag
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [{
+  uniqueInstructorCalendar: sql`UNIQUE(${table.instructorId}, ${table.calendarId})`
+}]);
+
+// Blocked time cache - cached Google Calendar events that block availability
+export const blockedTimeCache = pgTable("blocked_time_cache", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  startTimeUtc: timestamp("start_time_utc").notNull(),
+  endTimeUtc: timestamp("end_time_utc").notNull(),
+  source: varchar("source", { length: 20 }).notNull().default('google'), // 'google', 'manual', etc.
+  calendarEventId: varchar("calendar_event_id", { length: 255 }), // Google Calendar event ID
+  calendarId: varchar("calendar_id", { length: 255 }), // Which calendar this came from
+  isAllDay: boolean("is_all_day").notNull().default(false),
+  eventSummary: varchar("event_summary", { length: 255 }), // Event title for debugging
+  cachedAt: timestamp("cached_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(), // When this cache entry expires
+}, (table) => [{
+  instructorTimeIndex: sql`CREATE INDEX IF NOT EXISTS idx_blocked_time_instructor_time ON ${table}(${table.instructorId}, ${table.startTimeUtc}, ${table.endTimeUtc})`
+}]);
+
+// Relations for per-instructor Google Calendar
+export const instructorGoogleCredentialsRelations = relations(instructorGoogleCredentials, ({ one }) => ({
+  instructor: one(users, {
+    fields: [instructorGoogleCredentials.instructorId],
+    references: [users.id],
+  }),
+}));
+
+export const instructorCalendarsRelations = relations(instructorCalendars, ({ one }) => ({
+  instructor: one(users, {
+    fields: [instructorCalendars.instructorId],
+    references: [users.id],
+  }),
+}));
+
+export const blockedTimeCacheRelations = relations(blockedTimeCache, ({ one }) => ({
+  instructor: one(users, {
+    fields: [blockedTimeCache.instructorId],
+    references: [users.id],
+  }),
+}));
+
+// Insert schemas for per-instructor Google Calendar
+export const insertInstructorGoogleCredentialsSchema = createInsertSchema(instructorGoogleCredentials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInstructorCalendarSchema = createInsertSchema(instructorCalendars).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBlockedTimeCacheSchema = createInsertSchema(blockedTimeCache).omit({
+  id: true,
+  cachedAt: true,
+});
+
+// Types for per-instructor Google Calendar
+export type InsertInstructorGoogleCredentials = z.infer<typeof insertInstructorGoogleCredentialsSchema>;
+export type InstructorGoogleCredentials = typeof instructorGoogleCredentials.$inferSelect;
+
+export type InsertInstructorCalendar = z.infer<typeof insertInstructorCalendarSchema>;
+export type InstructorCalendar = typeof instructorCalendars.$inferSelect;
+
+export type InsertBlockedTimeCache = z.infer<typeof insertBlockedTimeCacheSchema>;
+export type BlockedTimeCache = typeof blockedTimeCache.$inferSelect;
+
+// Google Calendar busy event type (for API responses)
+export type GoogleCalendarBusyEvent = {
+  id: string;
+  calendarId: string;
+  summary?: string;
+  start: Date;
+  end: Date;
+  isAllDay: boolean;
+};
+
+// Google Calendar list item type (for fetching available calendars)
+export type GoogleCalendarListItem = {
+  id: string;
+  name: string;
+  color?: string;
+  isPrimary: boolean;
+  accessRole: string;
+};
 
 // ============================================
 // GIFT CARD SYSTEM

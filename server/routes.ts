@@ -19,6 +19,7 @@ import { appointmentRouter } from "./appointments/routes";
 import { stripeConnectRouter } from "./stripeConnect/routes";
 import storeRouter from "./store/routes";
 import { googleCalendarRouter } from "./googleCalendar/routes";
+import { instructorGoogleCalendarRouter } from "./googleCalendar/instructorRoutes";
 import giftCardRouter from "./giftCards/routes";
 import "./types"; // Import type declarations
 import { generateSitemap, generateRobotsTxt } from "./seo";
@@ -8823,6 +8824,9 @@ jeremy@abqconcealedcarry.com
 
   // Mount Google Calendar routes
   app.use('/api/google-calendar', googleCalendarRouter);
+
+  // Mount instructor-specific Google Calendar routes
+  app.use('/api/instructor-google-calendar', instructorGoogleCalendarRouter);
 
   // Gift card routes
   app.use('/api/gift-cards', giftCardRouter);
