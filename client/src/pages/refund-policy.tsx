@@ -38,38 +38,10 @@ export default function RefundPolicyPage() {
           <CardHeader>
             <CardTitle>2. Student Cancellations</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-muted-foreground font-semibold mb-2">Cancellations More Than 21 Days Before Class Start</p>
-              <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
-                <li>Students who cancel more than 21 calendar days prior to the first day of class are eligible for a full refund</li>
-                <li>Refunds will be processed to the original payment method, and any Stripe processing fees will be covered by us</li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="text-muted-foreground font-semibold mb-2">Cancellations Within 14–21 Days of Class Start</p>
-              <p className="text-muted-foreground">
-                Students who cancel within 14 to 21 calendar days of the first day of class are not eligible for a refund, but may apply 100% of the payment toward a future course within 12 calendar months of the original class date.
-              </p>
-            </div>
-
-            <div>
-              <p className="text-muted-foreground font-semibold mb-2">Cancellations With Less Than 14 Days' Notice</p>
-              <p className="text-muted-foreground mb-2">
-                Cancellations made less than 14 calendar days before the first day of class will forfeit the deposit but may apply any payment made beyond the deposit toward a future course within 12 calendar months.
-              </p>
-              <p className="text-muted-foreground italic">
-                Example: If a course has a $165 enrollment fee and a $50 deposit, and a student cancels within 14 days of the class after paying in full, the $50 deposit will be forfeited, but the $115 remaining balance may be applied to a future class within 12 months.
-              </p>
-            </div>
-
-            <div>
-              <p className="text-muted-foreground font-semibold mb-2">Emergency Cancellations</p>
-              <p className="text-muted-foreground">
-                Emergencies and exceptional circumstances (e.g., illness, family emergency, military deployment) will be considered on a case-by-case basis. Supporting documentation may be requested.
-              </p>
-            </div>
+          <CardContent>
+            <p className="text-muted-foreground">
+              To ensure proper planning and class availability, cancellations made within 30 calendar days of the class start date are not eligible for a refund.
+            </p>
           </CardContent>
         </Card>
 
