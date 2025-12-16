@@ -152,6 +152,27 @@ class InstructorOpsCalendarService {
     }
   }
 
+  async createCalendar(instructorId: string, calendarName: string): Promise<{ calendarId: string } | null> {
+    try {
+      const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instructorId, name: calendarName }),
+      });
+      
+      if (!response.ok) {
+        console.error(`Failed to create calendar in InstructorOps: ${response.status}`);
+        return null;
+      }
+      
+      const result = await response.json();
+      return { calendarId: result.calendarId || result.id };
+    } catch (error) {
+      console.error('Error creating calendar in InstructorOps:', error);
+      return null;
+    }
+  }
+
   async getConnectionStatus(instructorId: string): Promise<{
     connected: boolean;
     selectedCalendarId?: string;

@@ -270,6 +270,37 @@ instructorGoogleCalendarRouter.get('/calendars', isAuthenticated, requireInstruc
   }
 });
 
+instructorGoogleCalendarRouter.post('/create-calendar', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const { name } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Calendar name is required' });
+    }
+    
+    if (isUsingInstructorOps()) {
+      const result = await instructorOpsCalendarService.createCalendar(req.user.id, name);
+      
+      if (result) {
+        res.json({ success: true, calendarId: result.calendarId });
+      } else {
+        res.status(500).json({ error: 'Failed to create calendar' });
+      }
+    } else {
+      const calendar = await instructorGoogleCalendarService.createCalendar(req.user.id, name);
+      
+      if (calendar) {
+        res.json({ success: true, calendarId: calendar.id });
+      } else {
+        res.status(500).json({ error: 'Failed to create calendar' });
+      }
+    }
+  } catch (error: any) {
+    console.error('Error creating calendar:', error);
+    res.status(500).json({ error: 'Failed to create calendar' });
+  }
+});
+
 instructorGoogleCalendarRouter.post('/calendars/refresh', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
   try {
     if (isUsingInstructorOps()) {

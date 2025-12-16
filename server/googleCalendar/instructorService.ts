@@ -163,6 +163,35 @@ class InstructorGoogleCalendarService {
     }
   }
 
+  async createCalendar(instructorId: string, calendarName: string): Promise<{ id: string; name: string } | null> {
+    const calendar = await this.getAuthenticatedClient(instructorId);
+    if (!calendar) {
+      console.log(`Google Calendar: Not authenticated for instructor ${instructorId}`);
+      return null;
+    }
+
+    try {
+      const response = await calendar.calendars.insert({
+        requestBody: {
+          summary: calendarName,
+          description: 'Calendar for website appointment bookings',
+          timeZone: 'America/Denver',
+        },
+      });
+
+      const newCalendar = response.data;
+      console.log(`Created new Google Calendar '${calendarName}' for instructor ${instructorId}: ${newCalendar.id}`);
+      
+      return {
+        id: newCalendar.id!,
+        name: newCalendar.summary || calendarName,
+      };
+    } catch (error) {
+      console.error(`Failed to create calendar for instructor ${instructorId}:`, error);
+      return null;
+    }
+  }
+
   async syncInstructorCalendars(instructorId: string): Promise<InstructorCalendar[]> {
     const calendarList = await this.listCalendars(instructorId);
     

@@ -58,28 +58,21 @@ export function InstructorGoogleCalendarSettings() {
   const gcalSuccess = urlParams.get("gcal_success");
   const gcalError = urlParams.get("gcal_error");
 
-  const { data: status, isLoading: statusLoading } = useQuery<InstructorGoogleCalendarStatus>({
+  const { data: status, isLoading: statusLoading, refetch: refetchStatus } = useQuery<InstructorGoogleCalendarStatus>({
     queryKey: ["/api/instructor-google-calendar/status"],
   });
 
   useEffect(() => {
     if (googleConnected === "connected") {
-      if (selectCalendar === "true" && !status?.selectedCalendarId) {
-        setShowCalendarPicker(true);
-        fetchAvailableCalendars();
-      } else if (selectCalendar === "true" && status?.selectedCalendarId) {
-        toast({
-          title: "Success!",
-          description: "Your Google Calendar is already connected with a selected calendar.",
-        });
-        queryClient.invalidateQueries({ queryKey: ["/api/instructor-google-calendar/status"] });
-      } else {
-        toast({
-          title: "Success!",
-          description: "Your Google Calendar has been connected successfully.",
-        });
-        queryClient.invalidateQueries({ queryKey: ["/api/instructor-google-calendar/status"] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor-google-calendar/status"] });
+      
+      setShowCalendarPicker(true);
+      fetchAvailableCalendars();
+      
+      toast({
+        title: "Google Connected!",
+        description: "Please select a calendar for your appointments.",
+      });
       
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete("google");
@@ -121,12 +114,16 @@ export function InstructorGoogleCalendarSettings() {
     }
     
     if (gcalSuccess === "true") {
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor-google-calendar/status"] });
+      
+      setShowCalendarPicker(true);
+      fetchAvailableCalendars();
+      
       toast({
-        title: "Success!",
-        description: "Your Google Calendar has been connected successfully.",
+        title: "Google Connected!",
+        description: "Please select a calendar for your appointments.",
       });
       window.history.replaceState({}, "", window.location.pathname);
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor-google-calendar/status"] });
     } else if (gcalError) {
       let errorMessage = "Failed to connect Google Calendar.";
       switch (gcalError) {
@@ -276,9 +273,39 @@ export function InstructorGoogleCalendarSettings() {
     },
   });
 
+  const createCalendarMutation = useMutation({
+    mutationFn: async (calendarName: string) => {
+      const response = await apiRequest("POST", "/api/instructor-google-calendar/create-calendar", {
+        name: calendarName,
+      });
+      return response.json();
+    },
+    onSuccess: async (data) => {
+      toast({
+        title: "Calendar Created",
+        description: "Your new calendar has been created successfully.",
+      });
+      
+      await fetchAvailableCalendars();
+      
+      if (data.calendarId) {
+        setSelectedCalendarId(data.calendarId);
+        selectCalendarMutation.mutate(data.calendarId);
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create calendar",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSelectCalendar = () => {
     if (selectedCalendarId === "create_new") {
-      handleConnectGoogleCalendar("create");
+      const calendarName = `${user?.firstName || 'My'} Website Appointments`;
+      createCalendarMutation.mutate(calendarName);
     } else if (selectedCalendarId) {
       selectCalendarMutation.mutate(selectedCalendarId);
     }
@@ -370,19 +397,20 @@ export function InstructorGoogleCalendarSettings() {
               <div className="flex gap-2">
                 <Button
                   onClick={handleSelectCalendar}
-                  disabled={!selectedCalendarId || selectCalendarMutation.isPending}
+                  disabled={!selectedCalendarId || selectCalendarMutation.isPending || createCalendarMutation.isPending}
                   data-testid="button-confirm-calendar"
                 >
-                  {selectCalendarMutation.isPending ? (
+                  {(selectCalendarMutation.isPending || createCalendarMutation.isPending) ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                   )}
-                  Confirm Selection
+                  {createCalendarMutation.isPending ? "Creating Calendar..." : "Confirm Selection"}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setShowCalendarPicker(false)}
+                  disabled={selectCalendarMutation.isPending || createCalendarMutation.isPending}
                   data-testid="button-cancel-calendar-picker"
                 >
                   Cancel
