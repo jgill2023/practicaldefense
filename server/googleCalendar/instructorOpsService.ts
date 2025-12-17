@@ -190,17 +190,35 @@ class InstructorOpsCalendarService {
       const url = `${AUTH_SERVICE_URL}/api/calendars/events`;
       console.log(`[InstructorOps] Creating calendar event at: ${url}`);
       
+      // Build request body with all fields per API spec
+      const requestBody: Record<string, unknown> = {
+        summary: data.summary,
+        description: data.description,
+        startTime: data.start,
+        endTime: data.end,
+        sendNotifications: true,
+      };
+      
+      // Include calendarId if specified
+      if (data.calendarId) {
+        requestBody.calendarId = data.calendarId;
+      }
+      
+      // Format attendees per API spec
+      if (data.attendees && data.attendees.length > 0) {
+        requestBody.attendees = data.attendees.map(email => ({ email }));
+      }
+      
+      if (data.location) {
+        requestBody.location = data.location;
+      }
+      
+      console.log(`[InstructorOps] Event request body:`, JSON.stringify(requestBody));
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: getAuthHeaders(data.instructorId),
-        body: JSON.stringify({
-          instructorId: data.instructorId,
-          summary: data.summary,
-          description: data.description,
-          startTime: data.start,
-          endTime: data.end,
-          attendees: data.attendees,
-        }),
+        body: JSON.stringify(requestBody),
       });
       
       if (!response.ok) {
