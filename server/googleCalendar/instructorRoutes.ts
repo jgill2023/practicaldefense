@@ -423,6 +423,57 @@ instructorGoogleCalendarRouter.get('/busy-events', isAuthenticated, requireInstr
   }
 });
 
+instructorGoogleCalendarRouter.get('/events', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const userRole = req.user.role;
+    const instructorId = req.user.id;
+    
+    console.log(`[Dashboard Access] role: ${userRole}, instructorId: ${instructorId}`);
+    
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: 'startDate and endDate are required' });
+    }
+    
+    const start = new Date(startDate as string);
+    const end = new Date(endDate as string);
+    
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+    
+    if (isUsingInstructorOps()) {
+      const googleEvents = await instructorOpsCalendarService.getEvents(instructorId, start, end);
+      
+      const internalBookings = await storage.getAppointmentsByDateRange(start, end);
+      const instructorBookings = internalBookings
+        .filter(apt => apt.instructorId === instructorId)
+        .map(apt => ({
+          id: apt.id,
+          title: apt.notes || 'Appointment',
+          startTime: apt.startTime.toISOString(),
+          endTime: apt.endTime.toISOString(),
+          source: 'internal' as const,
+          studentName: apt.studentName,
+          appointmentType: apt.appointmentType,
+        }));
+      
+      res.json({
+        googleEvents,
+        internalBookings: instructorBookings,
+      });
+    } else {
+      res.json({
+        googleEvents: [],
+        internalBookings: [],
+      });
+    }
+  } catch (error: any) {
+    console.error('Error fetching calendar events:', error);
+    res.status(500).json({ error: 'Failed to fetch calendar events' });
+  }
+});
+
 instructorGoogleCalendarRouter.get('/blocked-times', async (req: Request, res: Response) => {
   try {
     const { instructorId, startDate, endDate } = req.query;

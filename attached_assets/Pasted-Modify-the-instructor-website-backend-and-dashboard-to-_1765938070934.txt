@@ -1,0 +1,87 @@
+Modify the instructor website backend and dashboard to support
+Google Calendar busy-event visibility for instructors/admins ONLY,
+while continuing to hide these events from students and public users.
+
+CONTEXT
+- Google OAuth and tokens are already handled by auth.instructorops.com
+- OAuth tokens are stored server-side and keyed ONLY by instructorId
+- This app already fetches available booking slots via:
+  GET /api/appointments/available-slots
+- Google Calendar blocking is already required for availability logic
+
+GOALS
+1. Block availability for students/public users based on Google Calendar busy times
+2. Display Google Calendar booked/busy events inside the instructor/admin dashboard
+3. Ensure Google Calendar events are NEVER exposed to students or unauthenticated users
+
+ROLE & ACCESS RULES
+- Visible Google Calendar events:
+  ✔️ INSTRUCTOR
+  ✔️ ADMIN
+  ✔️ SUPERADMIN
+- Hidden Google Calendar events:
+  ❌ STUDENT
+  ❌ PUBLIC / UNAUTHENTICATED USERS
+- Public booking pages should ONLY see filtered availability, never raw events
+
+IMPLEMENTATION REQUIREMENTS
+
+A) SERVER-SIDE GOOGLE CALENDAR FETCH
+- Add a server-only service that:
+  - Uses instructorId to load Google OAuth tokens
+  - Fetches Google Calendar events using:
+    calendar.events.list
+    with:
+      - timeMin / timeMax (current view range)
+      - singleEvents: true
+      - orderBy: "startTime"
+- Normalize returned events into:
+  {
+    id,
+    title,
+    startTime,
+    endTime,
+    source: "google",
+    calendarId
+  }
+
+B) AVAILABILITY FILTERING (STUDENTS / PUBLIC)
+- Continue using Google Calendar busy times to REMOVE conflicting slots
+- Do NOT expose event titles, descriptions, or calendar names
+- Availability API should return ONLY free slots
+
+C) DASHBOARD EVENTS API (INSTRUCTORS / ADMINS ONLY)
+- Add a new endpoint:
+  GET /api/instructor/calendar/events
+- Protect it with role-based authorization:
+  - instructor, admin, superadmin ONLY
+- Response should include:
+  - Google Calendar events
+  - Internal bookings (if applicable)
+  - Clearly mark event source ("google" vs "internal")
+
+D) FRONTEND DASHBOARD DISPLAY
+- In instructor/admin dashboard:
+  - Display Google Calendar events in a read-only list or calendar view
+  - Label them clearly as:
+    "Google Calendar (External)"
+- Do NOT allow editing or deletion of Google Calendar events from this UI
+
+E) SECURITY & SEPARATION
+- Do NOT reuse student-facing endpoints for Google Calendar events
+- Do NOT include Google Calendar data in:
+  - /available-slots
+  - public booking pages
+  - student APIs
+- Ensure all Google Calendar access happens server-side only
+
+F) LOGGING (TEMPORARY)
+Add logs to confirm correct behavior:
+- [Google Events Fetch] instructorId, eventsCount
+- [Availability Filter] slotsRemovedDueToGoogle
+- [Dashboard Access] role, instructorId
+
+EXPECTED RESULTS
+- Students only see available time slots (Google Calendar conflicts removed)
+- Instructors/admins see their booked Google Calendar events in the dashboard
+- No Google Calendar event data leaks to public or student users
