@@ -118,6 +118,56 @@ instructorGoogleCalendarRouter.get('/status', isAuthenticated, requireInstructor
   }
 });
 
+// Sync connection status from InstructorOps to local database
+// Called when returning from OAuth with ?google=connected
+instructorGoogleCalendarRouter.post('/sync-status', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const instructorId = req.user.id;
+    console.log(`[Google Calendar Sync] Starting status sync for instructor: ${instructorId}`);
+    
+    if (isUsingInstructorOps()) {
+      // Check connection status with InstructorOps
+      const opsStatus = await instructorOpsCalendarService.getConnectionStatus(instructorId);
+      console.log(`[Google Calendar Sync] InstructorOps status:`, opsStatus);
+      
+      if (opsStatus.connected) {
+        // Update local database to reflect the connection
+        await storage.updateGoogleCalendarSettings(instructorId, {
+          googleCalendarConnected: true,
+        });
+        console.log(`[Google Calendar Sync] Updated local DB - google_calendar_connected = true`);
+        
+        res.json({
+          success: true,
+          connected: true,
+          message: 'Google Calendar connection synced successfully',
+        });
+      } else {
+        console.log(`[Google Calendar Sync] InstructorOps reports not connected`);
+        res.json({
+          success: true,
+          connected: false,
+          message: 'No active Google Calendar connection found',
+        });
+      }
+    } else {
+      // For legacy mode, just return current status
+      const instructor = await storage.getUser(instructorId);
+      res.json({
+        success: true,
+        connected: instructor?.googleCalendarConnected || false,
+        message: 'Using legacy Google Calendar integration',
+      });
+    }
+  } catch (error: any) {
+    console.error('[Google Calendar Sync] Error syncing status:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to sync Google Calendar status',
+    });
+  }
+});
+
 instructorGoogleCalendarRouter.get('/oauth-link', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
   try {
     if (!instructorGoogleCalendarService.isConfigured()) {

@@ -64,15 +64,43 @@ export function InstructorGoogleCalendarSettings() {
 
   useEffect(() => {
     if (googleConnected === "connected") {
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor-google-calendar/status"] });
+      // First, sync the connection status from InstructorOps to local database
+      const syncConnectionStatus = async () => {
+        try {
+          console.log("[Google Calendar] Syncing connection status from InstructorOps...");
+          const response = await fetch("/api/instructor-google-calendar/sync-status", {
+            method: "POST",
+            credentials: "include",
+          });
+          const result = await response.json();
+          console.log("[Google Calendar] Sync result:", result);
+          
+          if (result.connected) {
+            queryClient.invalidateQueries({ queryKey: ["/api/instructor-google-calendar/status"] });
+            setShowCalendarPicker(true);
+            fetchAvailableCalendars();
+            
+            toast({
+              title: "Google Connected!",
+              description: "Please select a calendar for your appointments.",
+            });
+          } else {
+            toast({
+              title: "Connection Issue",
+              description: "Google Calendar connection not found. Please try connecting again.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error("[Google Calendar] Failed to sync status:", error);
+          // Still try to proceed with the normal flow
+          queryClient.invalidateQueries({ queryKey: ["/api/instructor-google-calendar/status"] });
+          setShowCalendarPicker(true);
+          fetchAvailableCalendars();
+        }
+      };
       
-      setShowCalendarPicker(true);
-      fetchAvailableCalendars();
-      
-      toast({
-        title: "Google Connected!",
-        description: "Please select a calendar for your appointments.",
-      });
+      syncConnectionStatus();
       
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete("google");
