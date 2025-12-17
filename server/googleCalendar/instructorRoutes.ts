@@ -424,6 +424,11 @@ instructorGoogleCalendarRouter.get('/busy-events', isAuthenticated, requireInstr
 });
 
 instructorGoogleCalendarRouter.get('/events', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  // Disable caching to ensure fresh calendar data on every request
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  
   try {
     const { startDate, endDate } = req.query;
     const userRole = req.user.role;
