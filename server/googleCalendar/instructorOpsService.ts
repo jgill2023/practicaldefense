@@ -303,37 +303,22 @@ class InstructorOpsCalendarService {
   ): Promise<InstructorOpsCalendarEvent[]> {
     try {
       validateInstructorId(instructorId, 'fetch events');
-      const params = new URLSearchParams({
-        instructorId,
-        timeMin: startTime.toISOString(),
-        timeMax: endTime.toISOString(),
-      });
       
-      const url = `${INSTRUCTOROPS_AUTH_URL}/api/calendars/events?${params}`;
       console.log(`[Google Events Fetch] instructorId: ${instructorId}, timeRange: ${startTime.toISOString()} to ${endTime.toISOString()}`);
       
-      const response = await fetch(url, {
-        headers: getAuthHeaders(instructorId),
-      });
+      // Use the busy endpoint which returns event summaries
+      const busyTimes = await this.getBlockedTimes(instructorId, startTime, endTime);
       
-      if (!response.ok) {
-        const text = await response.text();
-        console.error(`[InstructorOps] Failed to fetch events: ${response.status}`, text.substring(0, 200));
-        return [];
-      }
+      console.log(`[Google Events Fetch] instructorId: ${instructorId}, eventsCount: ${busyTimes.length}`);
       
-      const events = await response.json();
-      console.log(`[Google Events Fetch] instructorId: ${instructorId}, eventsCount: ${events.length}`);
-      
-      return events.map((event: any) => ({
-        id: event.id,
-        title: event.summary || event.title || 'Busy',
-        startTime: event.start?.dateTime || event.start || event.startTime,
-        endTime: event.end?.dateTime || event.end || event.endTime,
+      // Convert busy times to calendar events format
+      return busyTimes.map((busy, index) => ({
+        id: `google-busy-${index}-${busy.start}`,
+        title: busy.summary || 'Busy',
+        startTime: busy.start,
+        endTime: busy.end,
         source: 'google' as const,
-        calendarId: event.calendarId,
-        description: event.description,
-        location: event.location,
+        calendarId: busy.calendarId,
       }));
     } catch (error) {
       console.error('[InstructorOps] Error fetching events:', error);
