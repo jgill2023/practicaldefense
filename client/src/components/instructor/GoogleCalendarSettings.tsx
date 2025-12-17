@@ -195,9 +195,10 @@ export function InstructorGoogleCalendarSettings() {
   };
 
   const selectCalendarMutation = useMutation({
-    mutationFn: async (calendarId: string) => {
+    mutationFn: async ({ calendarId, calendarName }: { calendarId: string; calendarName?: string }) => {
       return apiRequest("POST", "/api/instructor-google-calendar/select-calendar", {
         calendarId,
+        calendarName,
       });
     },
     onSuccess: () => {
@@ -284,7 +285,8 @@ export function InstructorGoogleCalendarSettings() {
       const response = await apiRequest("POST", "/api/instructor-google-calendar/create-calendar", {
         name: calendarName,
       });
-      return response.json();
+      const result = await response.json();
+      return { ...result, requestedName: calendarName };
     },
     onSuccess: async (data) => {
       toast({
@@ -296,7 +298,10 @@ export function InstructorGoogleCalendarSettings() {
       
       if (data.calendarId) {
         setSelectedCalendarId(data.calendarId);
-        selectCalendarMutation.mutate(data.calendarId);
+        selectCalendarMutation.mutate({ 
+          calendarId: data.calendarId, 
+          calendarName: data.requestedName 
+        });
       }
     },
     onError: (error: any) => {
@@ -310,7 +315,11 @@ export function InstructorGoogleCalendarSettings() {
 
   const handleSelectCalendar = () => {
     if (selectedCalendarId && selectedCalendarId !== "no_calendars") {
-      selectCalendarMutation.mutate(selectedCalendarId);
+      const selectedCal = availableCalendars.find(c => c.id === selectedCalendarId);
+      selectCalendarMutation.mutate({ 
+        calendarId: selectedCalendarId, 
+        calendarName: selectedCal?.name 
+      });
     }
   };
 

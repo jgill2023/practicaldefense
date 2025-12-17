@@ -87,17 +87,18 @@ class InstructorOpsCalendarService {
     }
   }
 
-  async selectCalendar(instructorId: string, calendarId: string): Promise<boolean> {
+  async selectCalendar(instructorId: string, calendarId: string, calendarName?: string): Promise<boolean> {
     try {
       validateInstructorId(instructorId, 'select calendar');
       const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/select`, {
         method: 'POST',
         headers: getAuthHeaders(instructorId),
-        body: JSON.stringify({ instructorId, calendarId }),
+        body: JSON.stringify({ instructorId, calendarId, calendarName: calendarName || calendarId }),
       });
       
       if (!response.ok) {
-        console.error(`Failed to select calendar in InstructorOps: ${response.status}`);
+        const text = await response.text();
+        console.error(`Failed to select calendar in InstructorOps: ${response.status}`, text.substring(0, 200));
         return false;
       }
       
@@ -109,6 +110,31 @@ class InstructorOpsCalendarService {
     } catch (error) {
       console.error('Error selecting calendar in InstructorOps:', error);
       return false;
+    }
+  }
+
+  async getCalendarSelections(instructorId: string): Promise<InstructorOpsCalendar[]> {
+    try {
+      validateInstructorId(instructorId, 'fetch calendar selections');
+      const url = `${INSTRUCTOROPS_AUTH_URL}/api/calendars/selections?instructorId=${instructorId}`;
+      console.log(`[InstructorOps] Fetching calendar selections from: ${url}`);
+      
+      const response = await fetch(url, {
+        headers: getAuthHeaders(instructorId),
+      });
+      
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(`[InstructorOps] Failed to fetch calendar selections: ${response.status}`, text.substring(0, 200));
+        return [];
+      }
+      
+      const selections = await response.json();
+      console.log(`[InstructorOps] Successfully fetched ${selections.length} calendar selections`);
+      return selections;
+    } catch (error) {
+      console.error('[InstructorOps] Error fetching calendar selections:', error);
+      return [];
     }
   }
 

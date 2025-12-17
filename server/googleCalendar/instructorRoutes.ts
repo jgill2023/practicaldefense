@@ -87,9 +87,10 @@ instructorGoogleCalendarRouter.get('/status', isAuthenticated, requireInstructor
       let calendars: any[] = [];
       if (isConnected) {
         try {
-          calendars = await instructorOpsCalendarService.getCalendars(req.user.id);
+          // Use getCalendarSelections to show ONLY selected calendars (not all available calendars)
+          calendars = await instructorOpsCalendarService.getCalendarSelections(req.user.id);
         } catch (e) {
-          console.log('InstructorOps calendar fetch failed');
+          console.log('InstructorOps calendar selections fetch failed');
         }
       }
       
@@ -205,13 +206,13 @@ instructorGoogleCalendarRouter.post('/sync-from-instructorops', isAuthenticated,
 
 instructorGoogleCalendarRouter.post('/select-calendar', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
   try {
-    const { calendarId } = req.body;
+    const { calendarId, calendarName } = req.body;
     
     if (!calendarId) {
       return res.status(400).json({ error: 'calendarId is required' });
     }
     
-    const success = await instructorOpsCalendarService.selectCalendar(req.user.id, calendarId);
+    const success = await instructorOpsCalendarService.selectCalendar(req.user.id, calendarId, calendarName);
     
     if (success) {
       await storage.updateGoogleCalendarSettings(req.user.id, {
