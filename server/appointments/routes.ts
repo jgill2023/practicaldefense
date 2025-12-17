@@ -564,16 +564,13 @@ appointmentRouter.post('/instructor/appointments/:id/cancel', isAuthenticated, a
       console.error('Failed to send cancellation notification:', err);
     });
 
-    // Delete Google Calendar event using instructor-scoped service
+    // Delete Google Calendar event using appointment service (handles InstructorOps vs local)
     if (existingAppointment?.googleEventId) {
       try {
-        await instructorGoogleCalendarService.deleteEvent(
-          existingAppointment.instructorId, 
-          existingAppointment.googleEventId
-        );
+        await appointmentService.deleteAppointmentGoogleCalendarEvent(id);
         await storage.updateAppointment(id, { googleEventId: null });
       } catch (err) {
-        console.error('Failed to delete instructor Google Calendar event:', err);
+        console.error('Failed to delete Google Calendar event:', err);
       }
     }
     
@@ -1242,16 +1239,13 @@ appointmentRouter.post('/:id/cancel', isAuthenticated, async (req: any, res) => 
       console.error('Failed to send cancellation notification:', err);
     });
 
-    // Delete Google Calendar event using instructor-scoped service
+    // Delete Google Calendar event using appointment service (handles InstructorOps vs local)
     if (appointment.googleEventId) {
       try {
-        await instructorGoogleCalendarService.deleteEvent(
-          appointment.instructorId, 
-          appointment.googleEventId
-        );
+        await appointmentService.deleteAppointmentGoogleCalendarEvent(id);
         await storage.updateAppointment(id, { googleEventId: null });
       } catch (err) {
-        console.error('Failed to delete instructor Google Calendar event:', err);
+        console.error('Failed to delete Google Calendar event:', err);
       }
     }
     

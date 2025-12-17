@@ -654,8 +654,7 @@ export class AppointmentService {
         if (updates.cancelled) {
           return await instructorOpsCalendarService.deleteEvent(
             appointment.instructorId,
-            appointment.googleEventId,
-            calendarId
+            appointment.googleEventId
           );
         }
 

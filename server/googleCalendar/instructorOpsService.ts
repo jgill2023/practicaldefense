@@ -225,31 +225,55 @@ class InstructorOpsCalendarService {
   ): Promise<boolean> {
     try {
       validateInstructorId(instructorId, 'update event');
-      const response = await fetch(`${AUTH_SERVICE_URL}/api/events/${eventId}`, {
+      const url = `${AUTH_SERVICE_URL}/api/calendars/events/${eventId}`;
+      console.log(`[InstructorOps] Updating calendar event: ${url}`);
+      
+      const response = await fetch(url, {
         method: 'PATCH',
         headers: getAuthHeaders(instructorId),
-        body: JSON.stringify({ instructorId, ...data }),
+        body: JSON.stringify({
+          startTime: data.start,
+          endTime: data.end,
+          summary: data.summary,
+          description: data.description,
+        }),
       });
       
-      return response.ok;
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(`[InstructorOps] Failed to update event: ${response.status}`, text.substring(0, 300));
+        return false;
+      }
+      
+      console.log(`[InstructorOps] Event updated successfully: ${eventId}`);
+      return true;
     } catch (error) {
-      console.error('Error updating event in InstructorOps:', error);
+      console.error('[InstructorOps] Error updating event:', error);
       return false;
     }
   }
 
-  async deleteEvent(instructorId: string, eventId: string, calendarId?: string): Promise<boolean> {
+  async deleteEvent(instructorId: string, eventId: string): Promise<boolean> {
     try {
       validateInstructorId(instructorId, 'delete event');
-      const response = await fetch(`${AUTH_SERVICE_URL}/api/events/${eventId}`, {
+      const url = `${AUTH_SERVICE_URL}/api/calendars/events/${eventId}`;
+      console.log(`[InstructorOps] Deleting calendar event: ${url}`);
+      
+      const response = await fetch(url, {
         method: 'DELETE',
         headers: getAuthHeaders(instructorId),
-        body: JSON.stringify({ instructorId, calendarId }),
       });
       
-      return response.ok;
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(`[InstructorOps] Failed to delete event: ${response.status}`, text.substring(0, 300));
+        return false;
+      }
+      
+      console.log(`[InstructorOps] Event deleted successfully: ${eventId}`);
+      return true;
     } catch (error) {
-      console.error('Error deleting event in InstructorOps:', error);
+      console.error('[InstructorOps] Error deleting event:', error);
       return false;
     }
   }
