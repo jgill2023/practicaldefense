@@ -445,17 +445,22 @@ instructorGoogleCalendarRouter.get('/events', isAuthenticated, requireInstructor
     if (isUsingInstructorOps()) {
       const googleEvents = await instructorOpsCalendarService.getEvents(instructorId, start, end);
       
-      const internalBookings = await storage.getAppointmentsByDateRange(start, end);
-      const instructorBookings = internalBookings
-        .filter(apt => apt.instructorId === instructorId)
+      const allAppointments = await storage.getAppointmentsByInstructor(instructorId);
+      const instructorBookings = allAppointments
+        .filter(apt => {
+          const aptStart = new Date(apt.startTime);
+          return aptStart >= start && aptStart <= end;
+        })
         .map(apt => ({
           id: apt.id,
           title: apt.notes || 'Appointment',
-          startTime: apt.startTime.toISOString(),
-          endTime: apt.endTime.toISOString(),
+          startTime: apt.startTime instanceof Date ? apt.startTime.toISOString() : apt.startTime,
+          endTime: apt.endTime instanceof Date ? apt.endTime.toISOString() : apt.endTime,
           source: 'internal' as const,
-          studentName: apt.studentName,
-          appointmentType: apt.appointmentType,
+          studentName: apt.student?.firstName && apt.student?.lastName 
+            ? `${apt.student.firstName} ${apt.student.lastName}` 
+            : undefined,
+          appointmentType: apt.appointmentType?.name,
         }));
       
       res.json({
