@@ -125,16 +125,21 @@ class InstructorOpsCalendarService {
         end: endTime.toISOString(),
       });
       
-      const response = await fetch(`${INSTRUCTOROPS_AUTH_URL}/api/calendars/busy?${params}`, {
+      const url = `${INSTRUCTOROPS_AUTH_URL}/api/calendars/busy?${params}`;
+      console.log(`[InstructorOps] Fetching busy times from: ${url}`);
+      
+      const response = await fetch(url, {
         headers: getAuthHeaders(instructorId),
       });
       
       if (!response.ok) {
-        console.error(`Failed to fetch blocked times from InstructorOps: ${response.status}`);
+        const text = await response.text();
+        console.error(`[InstructorOps] Failed to fetch blocked times: ${response.status}`, text.substring(0, 300));
         return [];
       }
       
       const busyTimes = await response.json();
+      console.log(`[InstructorOps] Received ${busyTimes.length} busy times`);
       return busyTimes;
     } catch (error) {
       console.error('Error fetching blocked times from InstructorOps:', error);
