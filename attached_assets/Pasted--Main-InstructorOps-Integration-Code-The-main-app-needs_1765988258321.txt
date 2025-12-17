@@ -1,0 +1,93 @@
+
+Main InstructorOps Integration Code
+The main app needs to call POST /api/calendars/events when a booking is confirmed:
+
+// When a booking is created in InstructorOps, sync to Google Calendar
+async function syncBookingToGoogleCalendar(booking: {
+  instructorId: string;
+  studentName: string;
+  studentEmail: string;
+  startTime: string;  // ISO format: "2025-12-17T10:00:00Z"
+  endTime: string;
+  serviceName: string;
+  notes?: string;
+}) {
+  const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "https://auth.instructorops.com";
+  const API_KEY = process.env.INSTRUCTOROPS_API_KEY;
+  try {
+    const response = await fetch(`${AUTH_SERVICE_URL}/api/calendars/events`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-instructorops-key": API_KEY,
+        "x-instructor-id": booking.instructorId,
+      },
+      body: JSON.stringify({
+        summary: `${booking.serviceName} with ${booking.studentName}`,
+        description: booking.notes || `Booking for ${booking.serviceName}`,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        attendees: [
+          { email: booking.studentEmail, displayName: booking.studentName }
+        ],
+        sendNotifications: true,  // Sends email invite to student
+      }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      console.error("Failed to create Google Calendar event:", error);
+      
+      // Handle specific errors
+      if (error.requiresAuth || error.requiresReauth) {
+        // Instructor needs to reconnect Google Calendar
+        // Mark instructor as needing reconnection
+      }
+      return null;
+    }
+    const createdEvent = await response.json();
+    console.log("Google Calendar event created:", createdEvent.id);
+    
+    // IMPORTANT: Store createdEvent.id in your booking record
+    // You'll need it for updates and cancellations
+    return createdEvent;
+  } catch (error) {
+    console.error("Error syncing to Google Calendar:", error);
+    return null;
+  }
+}
+// Example usage when confirming a booking:
+const googleEvent = await syncBookingToGoogleCalendar({
+  instructorId: "instructor-123",
+  studentName: "John Doe",
+  studentEmail: "john@example.com",
+  startTime: "2025-12-20T10:00:00Z",
+  endTime: "2025-12-20T11:00:00Z",
+  serviceName: "Private Lesson",
+  notes: "Beginner session",
+});
+// Save the Google event ID with your booking
+if (googleEvent) {
+  await updateBooking(bookingId, { googleEventId: googleEvent.id });
+}
+For Updating/Cancelling Bookings:
+// Update an event
+await fetch(`${AUTH_SERVICE_URL}/api/calendars/events/${googleEventId}`, {
+  method: "PATCH",
+  headers: {
+    "Content-Type": "application/json",
+    "x-instructorops-key": API_KEY,
+    "x-instructor-id": instructorId,
+  },
+  body: JSON.stringify({
+    startTime: newStartTime,
+    endTime: newEndTime,
+  }),
+});
+// Delete/cancel an event
+await fetch(`${AUTH_SERVICE_URL}/api/calendars/events/${googleEventId}`, {
+  method: "DELETE",
+  headers: {
+    "x-instructorops-key": API_KEY,
+    "x-instructor-id": instructorId,
+  },
+});
