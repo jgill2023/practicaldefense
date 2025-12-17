@@ -1,0 +1,56 @@
+## Main App Integration Guide
+
+The main InstructorOps app must follow this integration flow:
+
+### Calendar Connection Flow (mode=existing)
+
+1. **Start OAuth**: Redirect user to `/google/start?instructorId=xxx&returnUrl=xxx&mode=existing`
+2. **Handle Callback**: User returns with `?google=connected`
+3. **Show Calendar Picker**: Call `GET /api/calendars` to get all available calendars
+4. **User Selects Calendar**: Call `POST /api/calendars/select` with `{ calendarId: "...", calendarName: "..." }`
+   - This saves the selection to `instructor_calendar_selections` table
+5. **Display Connected Calendars**: Call `GET /api/calendars/selections` to show ONLY selected calendars
+6. **Fetch Events**: Call `GET /api/calendars/events?start=...&end=...` - returns events from selected calendars only
+
+### Calendar Connection Flow (mode=create)
+
+1. **Start OAuth**: Redirect to `/google/start?instructorId=xxx&returnUrl=xxx&mode=create`
+2. **Handle Callback**: User returns with `?google=connected`
+   - A new "WebSite Books" calendar is automatically created and saved to selections
+3. **Display Connected Calendars**: Call `GET /api/calendars/selections` to show the created calendar
+
+### Key Endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/calendars` | List ALL available calendars (for picker UI) |
+| `GET /api/calendars/selections` | List SELECTED calendars only (for display) |
+| `POST /api/calendars/select` | Select a single calendar (saves to selections) |
+| `POST /api/calendars/selections` | Replace all selections with array of calendars |
+| `GET /api/calendars/events` | Fetch events from SELECTED calendars only |
+| `GET /api/calendars/busy` | Fetch busy times from SELECTED calendars only |
+
+### Important Notes
+
+- **DO NOT use `GET /api/calendars` to display "Connected Calendars"** - use `GET /api/calendars/selections` instead
+- **MUST call `POST /api/calendars/select`** after user selects a calendar to save the selection
+- Events and busy times only fetch from calendars in `instructor_calendar_selections` table
+- If no selections exist, system falls back to querying all calendars (legacy behavior)
+
+## Recent Changes
+- **Added calendar selections** - Instructors can now select specific calendars to sync (Dec 2025)
+  - New `instructor_calendar_selections` table with unique constraint on (instructorId, calendarId)
+  - GET/POST `/api/calendars/selections` endpoints for managing selections
+  - Events and busy times now fetch from selected calendars only (with legacy fallback to all calendars)
+- **Fixed calendar events fetching** - Now fetches events from ALL connected calendars, not just primary (Dec 2025)
+- **Fixed busy times fetching** - Now queries busy times across all calendars (Dec 2025)
+- Simplified to neutral OAuth broker (no domain registration, no admin keys)
+- Added root URL (/) JSON health response
+- returnUrl validation: https required, no InstructorOps fallback
+- Returns HTTP 400 JSON for missing/invalid returnUrl (never redirects on error)
+- Added GET `/api/calendars/events` endpoint with role-based access control
+- Updated OAuth scopes to always include full calendar access
+- Added GET `/api/calendars/busy` endpoint for read-only busy times
+- Blocked domains: .replit.dev, .repl.co, localhost (in production only)
+- Added POST `/api/calendars/disconnect` endpoint for full OAuth disconnect
+- Headless broker design (never renders UI)
