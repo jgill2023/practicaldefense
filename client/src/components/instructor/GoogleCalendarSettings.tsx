@@ -221,12 +221,18 @@ export function InstructorGoogleCalendarSettings() {
     mutationFn: async () => {
       return apiRequest("POST", "/api/instructor-google-calendar/disconnect");
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      setAvailableCalendars([]);
+      setSelectedCalendarId("");
+      setShowCalendarPicker(false);
+      
+      await queryClient.invalidateQueries({ queryKey: ["/api/instructor-google-calendar/status"] });
+      await refetchStatus();
+      
       toast({
         title: "Disconnected",
         description: "Google Calendar has been disconnected.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/instructor-google-calendar/status"] });
     },
     onError: (error: any) => {
       toast({
