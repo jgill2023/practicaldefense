@@ -43,3 +43,8 @@ externalPort = 80
 
 [objectStorage]
 defaultBucketID = "replit-objstore-d234c724-ef81-452d-aa6d-eb6e7039b675"
+
+[userenv]
+
+[userenv.shared]
+AUTH_SERVICE_URL = "https://auth.instructorops.com"
