@@ -4,6 +4,10 @@ import type { User } from '@shared/schema';
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "https://auth.instructorops.com";
 const INSTRUCTOROPS_API_KEY = process.env.INSTRUCTOROPS_API_KEY || "";
 
+// Log configuration on startup
+console.log(`[InstructorOps Config] AUTH_SERVICE_URL: ${AUTH_SERVICE_URL}`);
+console.log(`[InstructorOps Config] INSTRUCTOROPS_API_KEY configured: ${INSTRUCTOROPS_API_KEY ? 'YES (length: ' + INSTRUCTOROPS_API_KEY.length + ', starts with: ' + INSTRUCTOROPS_API_KEY.substring(0, 8) + '...)' : 'NO'}`);
+
 function getAuthHeaders(instructorId: string): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -143,6 +147,8 @@ class InstructorOpsCalendarService {
     startTime: Date,
     endTime: Date
   ): Promise<InstructorOpsBusyTime[]> {
+    console.log(`[InstructorOps getBlockedTimes] START - instructorId: ${instructorId}, range: ${startTime.toISOString()} to ${endTime.toISOString()}`);
+    
     try {
       validateInstructorId(instructorId, 'get blocked times');
       const params = new URLSearchParams({
@@ -152,26 +158,28 @@ class InstructorOpsCalendarService {
       });
       
       const url = `${AUTH_SERVICE_URL}/api/calendars/busy?${params}`;
-      console.log(`[InstructorOps] Fetching busy times from: ${url}`);
+      const headers = getAuthHeaders(instructorId);
+      console.log(`[InstructorOps getBlockedTimes] Calling: GET ${url}`);
+      console.log(`[InstructorOps getBlockedTimes] Headers: x-instructorops-key=${headers['x-instructorops-key'] ? 'SET (' + headers['x-instructorops-key'].length + ' chars)' : 'NOT SET'}, x-instructor-id=${headers['x-instructor-id'] || 'NOT SET'}`);
       
-      const response = await fetch(url, {
-        headers: getAuthHeaders(instructorId),
-      });
+      const response = await fetch(url, { headers });
+      
+      console.log(`[InstructorOps getBlockedTimes] Response status: ${response.status} ${response.statusText}`);
       
       if (!response.ok) {
         const text = await response.text();
-        console.error(`[InstructorOps] Failed to fetch blocked times: ${response.status}`, text.substring(0, 300));
+        console.error(`[InstructorOps getBlockedTimes] FAILED: ${response.status}`, text.substring(0, 500));
         return [];
       }
       
       const busyTimes = await response.json();
-      console.log(`[InstructorOps] Received ${busyTimes.length} busy times`);
+      console.log(`[InstructorOps getBlockedTimes] SUCCESS - Received ${busyTimes.length} busy times`);
       if (busyTimes.length > 0) {
-        console.log(`[InstructorOps] Sample busy time:`, JSON.stringify(busyTimes[0]));
+        console.log(`[InstructorOps getBlockedTimes] Sample busy time:`, JSON.stringify(busyTimes[0]));
       }
       return busyTimes;
     } catch (error) {
-      console.error('Error fetching blocked times from InstructorOps:', error);
+      console.error('[InstructorOps getBlockedTimes] ERROR:', error);
       return [];
     }
   }
