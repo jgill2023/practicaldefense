@@ -140,6 +140,9 @@ class InstructorOpsCalendarService {
       
       const busyTimes = await response.json();
       console.log(`[InstructorOps] Received ${busyTimes.length} busy times`);
+      if (busyTimes.length > 0) {
+        console.log(`[InstructorOps] Sample busy time:`, JSON.stringify(busyTimes[0]));
+      }
       return busyTimes;
     } catch (error) {
       console.error('Error fetching blocked times from InstructorOps:', error);
