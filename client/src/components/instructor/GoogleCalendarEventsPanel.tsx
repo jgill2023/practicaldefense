@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Calendar, ExternalLink, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
-import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
+import { format, startOfWeek, endOfWeek, addWeeks, isValid, parseISO } from "date-fns";
 
 interface GoogleCalendarEvent {
   id: string;
@@ -53,15 +53,37 @@ export function GoogleCalendarEventsPanel() {
     },
   });
 
+  const safeParseDate = (dateStr: string | undefined | null): Date | null => {
+    if (!dateStr) return null;
+    try {
+      const date = typeof dateStr === 'string' ? parseISO(dateStr) : new Date(dateStr);
+      return isValid(date) ? date : null;
+    } catch {
+      return null;
+    }
+  };
+
   const allEvents = [
     ...(data?.googleEvents || []).map(e => ({ ...e, type: 'google' as const })),
     ...(data?.internalBookings || []).map(e => ({ ...e, type: 'internal' as const })),
-  ].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  ]
+    .filter(e => safeParseDate(e.startTime) !== null)
+    .sort((a, b) => {
+      const dateA = safeParseDate(a.startTime);
+      const dateB = safeParseDate(b.startTime);
+      if (!dateA || !dateB) return 0;
+      return dateA.getTime() - dateB.getTime();
+    });
 
   const formatEventTime = (startTime: string, endTime: string) => {
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    return `${format(start, 'EEE, MMM d')} · ${format(start, 'h:mm a')} - ${format(end, 'h:mm a')}`;
+    const start = safeParseDate(startTime);
+    const end = safeParseDate(endTime);
+    if (!start || !end) return 'Time not available';
+    try {
+      return `${format(start, 'EEE, MMM d')} · ${format(start, 'h:mm a')} - ${format(end, 'h:mm a')}`;
+    } catch {
+      return 'Time not available';
+    }
   };
 
   return (
