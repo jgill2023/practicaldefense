@@ -1377,6 +1377,12 @@ function WaitlistInvitationsSection() {
   });
 
   const handleRegisterClick = (entry: any) => {
+    // If course has a destination URL, redirect externally
+    if (entry.course?.destinationUrl) {
+      window.open(entry.course.destinationUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     // Check if both course AND schedule support deposits
     const courseAllowsDeposits = entry.course?.depositAllowed && entry.course?.depositAmount && entry.course.depositAmount > 0;
     const scheduleAllowsDeposits = entry.schedule?.allowDeposits !== false;
@@ -1765,6 +1771,12 @@ function LiveFireRangeSessionsSection() {
   const displayedSchedules = showAll ? upcomingSchedules : upcomingSchedules.slice(0, 5);
 
   const handleRegisterClick = (schedule: any) => {
+    // If course has a destination URL, redirect externally
+    if (liveFireCourse?.destinationUrl) {
+      window.open(liveFireCourse.destinationUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     setSelectedSchedule(schedule);
     setShowRegistrationForm(true);
   };
