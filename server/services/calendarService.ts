@@ -226,13 +226,14 @@ export class CalendarService {
   }
 
   /**
-   * Merge overlapping busy periods
+   * Merge overlapping busy periods into a consolidated list
+   * All timestamps are handled as UTC milliseconds
    */
   private mergeOverlappingPeriods(periods: BusyPeriod[]): BusyPeriod[] {
     if (periods.length === 0) return [];
 
     const sorted = [...periods].sort((a, b) => a.start.getTime() - b.start.getTime());
-    const merged: BusyPeriod[] = [sorted[0]];
+    const merged: BusyPeriod[] = [{ ...sorted[0] }];
 
     for (let i = 1; i < sorted.length; i++) {
       const current = sorted[i];
@@ -241,7 +242,7 @@ export class CalendarService {
       if (current.start.getTime() <= last.end.getTime()) {
         last.end = new Date(Math.max(last.end.getTime(), current.end.getTime()));
       } else {
-        merged.push(current);
+        merged.push({ ...current });
       }
     }
 
@@ -249,32 +250,76 @@ export class CalendarService {
   }
 
   /**
-   * Get unified free slots by merging Google Calendar events with manual overrides
-   * Returns an array of free 30-minute slots
+   * Interval subtraction algorithm: Given a base interval [baseStart, baseEnd] and
+   * a list of busy intervals, return the remaining free intervals.
+   * All operations use UTC timestamps.
+   */
+  private subtractBusyFromBase(
+    baseStartMs: number,
+    baseEndMs: number,
+    busyPeriods: BusyPeriod[]
+  ): Array<{ start: number; end: number }> {
+    const freeIntervals: Array<{ start: number; end: number }> = [];
+    let currentStart = baseStartMs;
+
+    const relevantBusy = busyPeriods
+      .filter(b => b.start.getTime() < baseEndMs && b.end.getTime() > baseStartMs)
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+    for (const busy of relevantBusy) {
+      const busyStart = busy.start.getTime();
+      const busyEnd = busy.end.getTime();
+
+      if (busyStart > currentStart) {
+        freeIntervals.push({
+          start: currentStart,
+          end: Math.min(busyStart, baseEndMs),
+        });
+      }
+
+      currentStart = Math.max(currentStart, busyEnd);
+
+      if (currentStart >= baseEndMs) break;
+    }
+
+    if (currentStart < baseEndMs) {
+      freeIntervals.push({ start: currentStart, end: baseEndMs });
+    }
+
+    return freeIntervals;
+  }
+
+  /**
+   * Get unified free slots by merging Google Calendar events with manual overrides.
+   * 
+   * Logic:
+   * 1. Fetch Base Hours: Use weekly templates or default 9 AM - 5 PM UTC
+   * 2. Fetch Google Busy: Query Google's freeBusy.query for the specific date
+   * 3. Fetch Internal Blocks: Query instructor_availability_overrides and instructor_appointments
+   * 4. Merge & Subtract: Combine all busy blocks, use interval-subtraction to find gaps
+   * 5. Slotify: Divide remaining gaps into slots based on duration
+   * 
+   * All calculations use UTC ISO strings to prevent timezone shifts.
    */
   async getUnifiedFreeSlots(
     instructorId: string,
     date: Date,
     slotDurationMinutes: number = 30
   ): Promise<FreeSlot[]> {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const dateStr = date.toISOString().split('T')[0];
+    const startOfDayUTC = new Date(`${dateStr}T00:00:00.000Z`);
+    const endOfDayUTC = new Date(`${dateStr}T23:59:59.999Z`);
 
     const [
       googleBusy,
       manualBlocks,
       existingBookings,
       weeklyAvailability,
-      timezone
     ] = await Promise.all([
-      this.getGoogleBusyPeriods(instructorId, startOfDay, endOfDay),
-      this.getManualBlocks(instructorId, startOfDay, endOfDay),
-      this.getExistingBookings(instructorId, startOfDay, endOfDay),
+      this.getGoogleBusyPeriods(instructorId, startOfDayUTC, endOfDayUTC),
+      this.getManualBlocks(instructorId, startOfDayUTC, endOfDayUTC),
+      this.getExistingBookings(instructorId, startOfDayUTC, endOfDayUTC),
       this.getWeeklyAvailability(instructorId),
-      this.getInstructorTimezone(instructorId),
     ]);
 
     const allBusyPeriods = this.mergeOverlappingPeriods([
@@ -283,44 +328,43 @@ export class CalendarService {
       ...existingBookings,
     ]);
 
-    const dayOfWeek = date.getDay();
-    const availabilityBlocks = weeklyAvailability.filter(a => a.dayOfWeek === dayOfWeek);
+    const dayOfWeek = startOfDayUTC.getUTCDay();
+    let baseHoursBlocks = weeklyAvailability.filter(a => a.dayOfWeek === dayOfWeek);
 
-    if (availabilityBlocks.length === 0) {
-      return [];
+    if (baseHoursBlocks.length === 0) {
+      baseHoursBlocks = [{ dayOfWeek, startTime: '09:00:00', endTime: '17:00:00' }];
     }
 
     const freeSlots: FreeSlot[] = [];
 
-    for (const block of availabilityBlocks) {
+    for (const block of baseHoursBlocks) {
       const [startHour, startMin] = block.startTime.split(':').map(Number);
       const [endHour, endMin] = block.endTime.split(':').map(Number);
 
-      const blockStart = new Date(date);
-      blockStart.setHours(startHour, startMin, 0, 0);
-      
-      const blockEnd = new Date(date);
-      blockEnd.setHours(endHour, endMin, 0, 0);
+      const blockStartUTC = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00.000Z`);
+      const blockEndUTC = new Date(`${dateStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00.000Z`);
 
-      let slotStart = new Date(blockStart);
-      
-      while (slotStart.getTime() + slotDurationMinutes * 60000 <= blockEnd.getTime()) {
-        const slotEnd = new Date(slotStart.getTime() + slotDurationMinutes * 60000);
-        
-        const isConflict = allBusyPeriods.some(busy => 
-          slotStart.getTime() < busy.end.getTime() && 
-          slotEnd.getTime() > busy.start.getTime()
-        );
+      const freeIntervals = this.subtractBusyFromBase(
+        blockStartUTC.getTime(),
+        blockEndUTC.getTime(),
+        allBusyPeriods
+      );
 
-        if (!isConflict) {
+      for (const interval of freeIntervals) {
+        let slotStartMs = interval.start;
+        const slotDurationMs = slotDurationMinutes * 60 * 1000;
+
+        while (slotStartMs + slotDurationMs <= interval.end) {
+          const slotEndMs = slotStartMs + slotDurationMs;
+
           freeSlots.push({
-            startTime: new Date(slotStart),
-            endTime: new Date(slotEnd),
+            startTime: new Date(slotStartMs),
+            endTime: new Date(slotEndMs),
             durationMinutes: slotDurationMinutes,
           });
-        }
 
-        slotStart = new Date(slotStart.getTime() + slotDurationMinutes * 60000);
+          slotStartMs = slotEndMs;
+        }
       }
     }
 
