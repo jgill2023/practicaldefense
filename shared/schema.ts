@@ -2829,6 +2829,41 @@ export type GiftCardBalanceAdjustment = typeof giftCardBalanceAdjustments.$infer
 export type InsertGiftCardValidationAttempt = z.infer<typeof insertGiftCardValidationAttemptSchema>;
 export type GiftCardValidationAttempt = typeof giftCardValidationAttempts.$inferSelect;
 
+// ============================================
+// GOOGLE CALENDAR INTEGRATION
+// ============================================
+
+// Instructor Google Credentials for OAuth token storage
+export const instructorGoogleCredentials = pgTable("instructor_google_credentials", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  tokenExpiry: timestamp("token_expiry").notNull(),
+  primaryCalendarId: varchar("primary_calendar_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Relations for Google credentials
+export const instructorGoogleCredentialsRelations = relations(instructorGoogleCredentials, ({ one }) => ({
+  instructor: one(users, {
+    fields: [instructorGoogleCredentials.instructorId],
+    references: [users.id],
+  }),
+}));
+
+// Insert schema
+export const insertInstructorGoogleCredentialsSchema = createInsertSchema(instructorGoogleCredentials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types
+export type InsertInstructorGoogleCredentials = z.infer<typeof insertInstructorGoogleCredentialsSchema>;
+export type InstructorGoogleCredentials = typeof instructorGoogleCredentials.$inferSelect;
+
 // Extended types with relations
 export type GiftCardWithDetails = GiftCard & {
   theme?: GiftCardTheme;

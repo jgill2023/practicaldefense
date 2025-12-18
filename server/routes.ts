@@ -19,6 +19,7 @@ import { appointmentRouter } from "./appointments/routes";
 import { stripeConnectRouter } from "./stripeConnect/routes";
 import storeRouter from "./store/routes";
 import giftCardRouter from "./giftCards/routes";
+import { calendarRouter } from "./calendar/routes";
 import "./types"; // Import type declarations
 import { generateSitemap, generateRobotsTxt } from "./seo";
 
@@ -8828,6 +8829,9 @@ jeremy@abqconcealedcarry.com
       res.status(500).json({ message: "Failed to grant credits" });
     }
   });
+
+  // Mount calendar/availability routes
+  app.use('/api/availability', calendarRouter);
 
   // Mount appointment routes
   app.use('/api/appointments', appointmentRouter);
