@@ -20,6 +20,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, User, Bell, MessageSquare, Settings, BookOpen, ShoppingCart } from "lucide-react";
+import { SiFacebook, SiInstagram, SiYoutube, SiGoogle } from "react-icons/si";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -549,6 +550,47 @@ export function Layout({ children, headerColor }: LayoutProps) {
                 <div className="flex items-start space-x-2">
                   <span>📍</span>
                   <span>Yadkinville, NC</span>
+                </div>
+              </div>
+              <div className="mt-6">
+                <h4 className="font-semibold mb-3 text-[#34B8FE]">Follow Us</h4>
+                <div className="flex items-center gap-4">
+                  <a 
+                    href="https://www.facebook.com/ApacheSolutionsLLC" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-white/80 hover:text-[#FD66C5] transition-colors"
+                    data-testid="link-social-facebook"
+                  >
+                    <SiFacebook className="h-6 w-6" />
+                  </a>
+                  <a 
+                    href="https://www.instagram.com/apachesolutionsllc/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-white/80 hover:text-[#FD66C5] transition-colors"
+                    data-testid="link-social-instagram"
+                  >
+                    <SiInstagram className="h-6 w-6" />
+                  </a>
+                  <a 
+                    href="https://www.youtube.com/channel/UCAFrVq3vmAQdCWGBlSohkCw" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-white/80 hover:text-[#FD66C5] transition-colors"
+                    data-testid="link-social-youtube"
+                  >
+                    <SiYoutube className="h-6 w-6" />
+                  </a>
+                  <a 
+                    href="https://www.google.com/maps/place//data=!4m3!3m2!1s0x8853d3abcfe118c9:0x443e0b064a5777b5!12e1?source=g.page.m.ad._" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-white/80 hover:text-[#FD66C5] transition-colors"
+                    data-testid="link-social-google"
+                  >
+                    <SiGoogle className="h-6 w-6" />
+                  </a>
                 </div>
               </div>
             </div>
