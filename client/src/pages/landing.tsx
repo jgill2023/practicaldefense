@@ -201,6 +201,7 @@ function TestimonialSlider() {
 }
 
 function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSchedules) => void }) {
+  const [, setLocation] = useLocation();
   const [currentPage, setCurrentPage] = useState(0);
   const coursesPerPage = 3;
   
@@ -324,8 +325,9 @@ function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSc
         {currentSchedules.map(({ schedule, course }) => (
           <div 
             key={schedule.id}
-            className="py-6 hover:bg-gray-50 transition-colors duration-200"
+            className="py-6 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
             data-testid={`upcoming-course-${schedule.id}`}
+            onClick={() => setLocation(`/course/${course.id}`)}
           >
             <div className="flex flex-col md:flex-row gap-6">
               {/* Course Image */}
@@ -379,7 +381,8 @@ function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSc
                   <Button 
                     size="sm"
                     className="bg-[hsl(209,90%,38%)] text-white hover:bg-[#FD66C5] font-heading uppercase tracking-wide"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       // If course is in "Hosted Courses" category or has a destination URL, redirect externally
                       const isHostedCourse = course.category === "Hosted Courses";
                       if (isHostedCourse || course.destinationUrl) {
