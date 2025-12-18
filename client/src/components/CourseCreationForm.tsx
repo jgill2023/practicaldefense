@@ -38,6 +38,7 @@ const courseSchema = z.object({
   prerequisites: z.string().optional(),
   maxStudents: z.number().min(1, "Must allow at least 1 student").max(100, "Cannot exceed 100 students"),
   imageUrl: z.string().optional(),
+  destinationUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
 }).refine((data) => {
   if (!data.depositAmount || data.depositAmount === "") return true;
   const deposit = parseFloat(data.depositAmount);
@@ -471,6 +472,22 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
                   <p className="text-sm text-muted-foreground">
                     Upload an image to represent your course. Recommended size: 800x600px or larger.
                   </p>
+
+                  <div className="pt-4 border-t">
+                    <Label htmlFor="destinationUrl">External Registration URL (Optional)</Label>
+                    <Input
+                      id="destinationUrl"
+                      {...form.register("destinationUrl")}
+                      placeholder="https://example.com/register"
+                      data-testid="input-destination-url"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      For hosted courses: When set, "Register Now" will redirect students to this URL instead of the built-in registration.
+                    </p>
+                    {form.formState.errors.destinationUrl && (
+                      <p className="text-sm text-destructive mt-1">{form.formState.errors.destinationUrl.message}</p>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

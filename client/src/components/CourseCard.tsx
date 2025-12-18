@@ -175,9 +175,14 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
           }`}
           onClick={(e) => {
             e.stopPropagation();
+            // If course has a destination URL, redirect externally
+            if (course.destinationUrl) {
+              window.open(course.destinationUrl, '_blank', 'noopener,noreferrer');
+              return;
+            }
             onRegister(course);
           }}
-          disabled={!nextSchedule}
+          disabled={!nextSchedule && !course.destinationUrl}
           data-testid={`button-register-${course.id}`}
         >
           {isFull ? "JOIN WAITLIST" : "REGISTER NOW"}

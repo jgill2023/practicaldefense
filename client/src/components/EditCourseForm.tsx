@@ -43,6 +43,7 @@ const courseSchema = z.object({
   prerequisites: z.string().optional(),
   maxStudents: z.number().min(1, "Must allow at least 1 student").max(100, "Cannot exceed 100 students"),
   imageUrl: z.string().optional(),
+  destinationUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
   handgunRentalEnabled: z.boolean().optional(),
   handgunRentalPrice: z.string().optional().refine((val) => {
     if (!val || val === "") return true;
@@ -112,6 +113,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       prerequisites: course.prerequisites || "",
       maxStudents: course.maxStudents,
       imageUrl: course.imageUrl || "",
+      destinationUrl: course.destinationUrl || "",
       handgunRentalEnabled: course.handgunRentalEnabled || false,
       handgunRentalPrice: course.handgunRentalPrice ? course.handgunRentalPrice.toString() : "25.00",
     },
@@ -148,6 +150,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       prerequisites: course.prerequisites || "",
       maxStudents: course.maxStudents,
       imageUrl: course.imageUrl || "",
+      destinationUrl: course.destinationUrl || "",
       handgunRentalEnabled: course.handgunRentalEnabled || false,
       handgunRentalPrice: course.handgunRentalPrice ? course.handgunRentalPrice.toString() : "25.00",
     });
@@ -636,6 +639,22 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                         </div>
                       </ObjectUploader>
                     </div>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <Label htmlFor="destinationUrl">External Registration URL (Optional)</Label>
+                    <Input
+                      id="destinationUrl"
+                      {...form.register("destinationUrl")}
+                      placeholder="https://example.com/register"
+                      data-testid="input-destination-url"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      For hosted courses: When set, "Register Now" will redirect students to this URL instead of the built-in registration.
+                    </p>
+                    {form.formState.errors.destinationUrl && (
+                      <p className="text-sm text-destructive mt-1">{form.formState.errors.destinationUrl.message}</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>

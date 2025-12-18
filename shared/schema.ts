@@ -142,6 +142,7 @@ export const courses = pgTable("courses", {
   imageUrl: varchar("image_url"),
   showOnHomePage: boolean("show_on_home_page").notNull().default(true), // Control home page visibility
   sortOrder: integer("sort_order").default(0), // For display ordering on home page
+  destinationUrl: varchar("destination_url", { length: 500 }), // External registration URL (e.g., for Hosted Courses)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

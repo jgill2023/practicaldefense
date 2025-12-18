@@ -301,15 +301,25 @@ export default function CourseDetail() {
                             </div>
                           )}
 
-                          <Link href={`/course-registration/${course.title}/${schedule.id}`}>
+                          {course.destinationUrl ? (
                             <Button 
                               className="w-full mt-[12px] mb-[12px]" 
-                              disabled={isFull}
                               data-testid={`button-register-${schedule.id}`}
+                              onClick={() => window.open(course.destinationUrl!, '_blank', 'noopener,noreferrer')}
                             >
-                              {isFull ? "Full - Join Waitlist" : "Register Now"}
+                              Register Now
                             </Button>
-                          </Link>
+                          ) : (
+                            <Link href={`/course-registration/${course.title}/${schedule.id}`}>
+                              <Button 
+                                className="w-full mt-[12px] mb-[12px]" 
+                                disabled={isFull}
+                                data-testid={`button-register-${schedule.id}`}
+                              >
+                                {isFull ? "Full - Join Waitlist" : "Register Now"}
+                              </Button>
+                            </Link>
+                          )}
                         </div>
                       );
                     })}
