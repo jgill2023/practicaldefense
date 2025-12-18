@@ -3997,7 +3997,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
-      const validatedData = insertProductSchema.parse(req.body);
+      // Preprocess sale pricing fields for schema compatibility
+      const processedBody = {
+        ...req.body,
+        salePrice: req.body.salePrice !== undefined && req.body.salePrice !== null 
+          ? String(req.body.salePrice) 
+          : null,
+        saleStartDate: req.body.saleStartDate 
+          ? new Date(req.body.saleStartDate) 
+          : null,
+        saleEndDate: req.body.saleEndDate 
+          ? new Date(req.body.saleEndDate) 
+          : null,
+      };
+
+      const validatedData = insertProductSchema.parse(processedBody);
       const product = await storage.createProduct({
         ...validatedData,
         createdBy: userId,
@@ -4019,7 +4033,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied. Instructor role required." });
       }
 
-      const validatedData = insertProductSchema.partial().parse(req.body);
+      // Preprocess sale pricing fields for schema compatibility
+      const processedBody = { ...req.body };
+      if (processedBody.salePrice !== undefined) {
+        processedBody.salePrice = processedBody.salePrice !== null 
+          ? String(processedBody.salePrice) 
+          : null;
+      }
+      if (processedBody.saleStartDate !== undefined) {
+        processedBody.saleStartDate = processedBody.saleStartDate 
+          ? new Date(processedBody.saleStartDate) 
+          : null;
+      }
+      if (processedBody.saleEndDate !== undefined) {
+        processedBody.saleEndDate = processedBody.saleEndDate 
+          ? new Date(processedBody.saleEndDate) 
+          : null;
+      }
+
+      const validatedData = insertProductSchema.partial().parse(processedBody);
       const product = await storage.updateProduct(req.params.id, {
         ...validatedData,
         updatedBy: userId,
