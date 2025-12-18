@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import santaGiftCardImage from "@assets/Apache_Santa_1765822664317.png";
+import apacheHeaderImage from "@assets/ApacheRACC-Header_1766029952667.png";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -182,8 +183,12 @@ export function Layout({ children, headerColor }: LayoutProps) {
             {/* Company logo aligned to the left */}
             <div className="flex-shrink-0">
               <Link href="/" data-testid="link-home" className="flex items-center gap-2">
-                <div className="flex flex-col">
-                </div>
+                <img 
+                  src={apacheHeaderImage} 
+                  alt="Apache RACC" 
+                  className="h-12 w-auto"
+                  data-testid="img-header-logo"
+                />
               </Link>
             </div>
 
