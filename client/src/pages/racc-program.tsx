@@ -891,7 +891,7 @@ export default function RACCProgram() {
                   data-testid="button-cta-book-appointment"
                 >
                   <Calendar className="w-5 h-5 mr-2" />
-                  Book Private Training
+                  Book Your First RACC Session!
                 </Button>
               </div>
             </div>
