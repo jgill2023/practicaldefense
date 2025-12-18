@@ -623,8 +623,33 @@ export default function Store() {
     return false;
   };
 
-  // Filter and sort products
+  // Helper to check if product is a RACC digital product (not apparel)
+  const isRaccDigitalProduct = (product: Product) => {
+    // Check if it's a local product with RACC/Digital category
+    if (product.isLocal && product.categoryName) {
+      const categoryLower = product.categoryName.toLowerCase();
+      if (categoryLower.includes('digital') || categoryLower.includes('racc packages')) {
+        return true;
+      }
+    }
+    // Check tags for digital RACC products
+    const hasRaccTag = product.tags.some(tag => 
+      tag.toLowerCase().includes('racc') && 
+      (tag.toLowerCase().includes('digital') || tag.toLowerCase().includes('package'))
+    );
+    if (hasRaccTag) return true;
+    
+    // Check for Digital Products category
+    if (product.tags.some(tag => tag.toLowerCase() === 'digital' || tag.toLowerCase() === 'digital products')) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Filter and sort products (excluding RACC digital products)
   const filteredAndSortedProducts = [...products]
+    .filter(product => !isRaccDigitalProduct(product)) // Exclude RACC digital products
     .filter(product => productMatchesCategory(product, selectedCategory))
     .sort((a, b) => {
       const aPrice = Math.min(...a.variants.filter(v => v.isAvailable && v.isEnabled).map(v => v.price));
@@ -786,7 +811,6 @@ export default function Store() {
                 { value: 'Kids', label: 'Kids' },
                 { value: 'Women', label: 'Women' },
                 { value: 'Home & Living', label: 'Home & Living' },
-                { value: 'RACC Packages', label: 'RACC Packages' },
               ].map((category) => (
                 <button
                   key={category.value}
