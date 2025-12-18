@@ -1,10 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, Users, ArrowRight } from "lucide-react";
+import { Clock, Calendar, Users, ArrowRight, Tag } from "lucide-react";
 import type { CourseWithSchedules } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
 import { useLocation } from "wouter";
+import { SalePrice, SalePriceBadge, isSaleActive } from "@/components/SalePrice";
 
 interface CourseCardProps {
   course: CourseWithSchedules;
@@ -121,12 +122,27 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
       </div>
       <CardContent className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
-          <Badge className="bg-[hsl(190,65%,47%,0.15)] text-[hsl(190,65%,40%)] font-heading uppercase tracking-wide text-xs" data-testid={`badge-category-${course.id}`}>
-            {getCategoryName()}
-          </Badge>
-          <span className="text-2xl font-bold text-[hsl(209,90%,38%)] font-heading" data-testid={`text-price-${course.id}`}>
-            ${course.price}
-          </span>
+          <div className="flex items-center gap-2">
+            <Badge className="bg-[hsl(190,65%,47%,0.15)] text-[hsl(190,65%,40%)] font-heading uppercase tracking-wide text-xs" data-testid={`badge-category-${course.id}`}>
+              {getCategoryName()}
+            </Badge>
+            <SalePriceBadge
+              saleEnabled={(course as any).saleEnabled}
+              saleStartDate={(course as any).saleStartDate}
+              saleEndDate={(course as any).saleEndDate}
+            />
+          </div>
+          <div data-testid={`text-price-${course.id}`}>
+            <SalePrice
+              originalPrice={course.price}
+              salePrice={(course as any).salePrice}
+              saleEnabled={(course as any).saleEnabled}
+              saleStartDate={(course as any).saleStartDate}
+              saleEndDate={(course as any).saleEndDate}
+              showBadge={false}
+              size="md"
+            />
+          </div>
         </div>
 
         <h3 className="font-heading text-xl uppercase tracking-wide text-card-foreground mb-3" data-testid={`text-title-${course.id}`}>

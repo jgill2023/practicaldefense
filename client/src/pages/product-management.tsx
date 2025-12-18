@@ -16,6 +16,8 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/Layout";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { Switch } from "@/components/ui/switch";
+import { SalePrice } from "@/components/SalePrice";
 import { Trash2, Edit, Plus, Package, Tag, ShoppingCart, DollarSign, Download, Upload, X } from "lucide-react";
 import type { ProductWithDetails, ProductCategory, ProductCategoryWithProducts } from "@shared/schema";
 
@@ -41,6 +43,14 @@ const productSchema = z.object({
   imageUrls: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]),
   sortOrder: z.number().int().min(0).default(0),
+  // Sale pricing fields
+  saleEnabled: z.boolean().default(false),
+  salePrice: z.string().optional().refine((val) => {
+    if (!val || val === "") return true;
+    return !isNaN(Number(val)) && Number(val) >= 0;
+  }, "Sale price must be a valid non-negative number"),
+  saleStartDate: z.string().optional(),
+  saleEndDate: z.string().optional(),
 });
 
 type ProductCategoryFormData = z.infer<typeof productCategorySchema>;
@@ -94,6 +104,10 @@ export default function ProductManagement() {
       imageUrls: [],
       tags: [],
       sortOrder: 0,
+      saleEnabled: false,
+      salePrice: "",
+      saleStartDate: "",
+      saleEndDate: "",
     },
   });
 
@@ -225,6 +239,10 @@ export default function ProductManagement() {
       imageUrls: product.imageUrls || [],
       tags: product.tags || [],
       sortOrder: product.sortOrder || 0,
+      saleEnabled: (product as any).saleEnabled || false,
+      salePrice: (product as any).salePrice ? (product as any).salePrice.toString() : "",
+      saleStartDate: (product as any).saleStartDate ? new Date((product as any).saleStartDate).toISOString().slice(0, 16) : "",
+      saleEndDate: (product as any).saleEndDate ? new Date((product as any).saleEndDate).toISOString().slice(0, 16) : "",
     });
     setProductDialogOpen(true);
   };
@@ -249,6 +267,11 @@ export default function ProductManagement() {
       ...data,
       price: data.price, // Keep as string for decimal conversion
       sortOrder: Number(data.sortOrder), // Convert to number
+      // Sale pricing fields - convert salePrice to number for decimal column
+      saleEnabled: data.saleEnabled || false,
+      salePrice: data.salePrice && data.salePrice !== "" ? parseFloat(data.salePrice) : null,
+      saleStartDate: data.saleStartDate && data.saleStartDate !== "" ? new Date(data.saleStartDate).toISOString() : null,
+      saleEndDate: data.saleEndDate && data.saleEndDate !== "" ? new Date(data.saleEndDate).toISOString() : null,
     };
 
     if (editingProduct) {
@@ -416,7 +439,16 @@ export default function ProductManagement() {
                             </Button>
                           </div>
                         </div>
-                        <p className="text-lg font-bold" data-testid={`product-price-${product.id}`}>${Number(product.price || 0).toFixed(2)}</p>
+                        <div data-testid={`product-price-${product.id}`}>
+                          <SalePrice
+                            originalPrice={Number(product.price || 0)}
+                            salePrice={(product as any).salePrice}
+                            saleEnabled={(product as any).saleEnabled}
+                            saleStartDate={(product as any).saleStartDate}
+                            saleEndDate={(product as any).saleEndDate}
+                            size="sm"
+                          />
+                        </div>
                         <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <span className={`px-2 py-1 rounded-full text-xs ${
@@ -823,6 +855,95 @@ export default function ProductManagement() {
                   )}
                 />
               </div>
+
+              {/* Sale Pricing Section */}
+              <div className="border rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label htmlFor="saleEnabled" className="text-base font-medium">
+                      Enable Sale Price
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Offer this product at a discounted price
+                    </p>
+                  </div>
+                  <Switch
+                    id="saleEnabled"
+                    checked={productForm.watch("saleEnabled") || false}
+                    onCheckedChange={(checked) => productForm.setValue("saleEnabled", checked)}
+                    data-testid="switch-product-sale-enabled"
+                  />
+                </div>
+
+                {productForm.watch("saleEnabled") && (
+                  <div className="space-y-4 pt-2 border-t">
+                    <FormField
+                      control={productForm.control}
+                      name="salePrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sale Price ($)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01"
+                              placeholder="Enter sale price (must be less than regular price)" 
+                              {...field}
+                              data-testid="input-product-sale-price"
+                            />
+                          </FormControl>
+                          {field.value && productForm.watch("price") && parseFloat(productForm.watch("price")) > 0 && (
+                            <p className="text-xs text-green-600 mt-1">
+                              Save ${(parseFloat(productForm.watch("price")) - parseFloat(field.value || "0")).toFixed(2)} 
+                              ({Math.round((1 - parseFloat(field.value || "0") / parseFloat(productForm.watch("price"))) * 100)}% off)
+                            </p>
+                          )}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={productForm.control}
+                        name="saleStartDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sale Start Date</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="datetime-local"
+                                {...field}
+                                data-testid="input-product-sale-start-date"
+                              />
+                            </FormControl>
+                            <p className="text-xs text-muted-foreground">Leave empty to start immediately</p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={productForm.control}
+                        name="saleEndDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sale End Date</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="datetime-local"
+                                {...field}
+                                data-testid="input-product-sale-end-date"
+                              />
+                            </FormControl>
+                            <p className="text-xs text-muted-foreground">Leave empty for no end date</p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-4">
                 <FormField
                   control={productForm.control}

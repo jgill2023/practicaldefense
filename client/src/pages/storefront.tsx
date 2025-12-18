@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ShoppingCartComponent, useCart } from "@/components/shopping-cart";
 import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/Layout";
+import { SalePrice, SalePriceBadge } from "@/components/SalePrice";
 import { Search, Filter, Package, Star, ShoppingCart, Eye } from "lucide-react";
 import type { ProductWithDetails, ProductCategoryWithProducts } from "@shared/schema";
 
@@ -265,10 +266,15 @@ export default function Storefront() {
                           {product.shortDescription}
                         </p>
                       )}
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold" data-testid={`product-price-${product.id}`}>
-                          ${Number(product.price || 0).toFixed(2)}
-                        </span>
+                      <div className="flex items-center justify-between" data-testid={`product-price-${product.id}`}>
+                        <SalePrice
+                          originalPrice={Number(product.price || 0)}
+                          salePrice={(product as any).salePrice}
+                          saleEnabled={(product as any).saleEnabled}
+                          saleStartDate={(product as any).saleStartDate}
+                          saleEndDate={(product as any).saleEndDate}
+                          size="sm"
+                        />
                       </div>
                       
 
@@ -327,8 +333,15 @@ export default function Storefront() {
                 {/* Product Details */}
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-2xl font-bold">${Number(selectedProduct.price || 0).toFixed(2)}</h3>
-                    <p className="text-sm text-muted-foreground">SKU: {selectedProduct.sku}</p>
+                    <SalePrice
+                      originalPrice={Number(selectedProduct.price || 0)}
+                      salePrice={(selectedProduct as any).salePrice}
+                      saleEnabled={(selectedProduct as any).saleEnabled}
+                      saleStartDate={(selectedProduct as any).saleStartDate}
+                      saleEndDate={(selectedProduct as any).saleEndDate}
+                      size="lg"
+                    />
+                    <p className="text-sm text-muted-foreground mt-2">SKU: {selectedProduct.sku}</p>
                   </div>
                   
                   {selectedProduct.shortDescription && (

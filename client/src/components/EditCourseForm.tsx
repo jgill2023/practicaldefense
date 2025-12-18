@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { Switch } from "@/components/ui/switch";
-import { Edit, FileText, ImageIcon, Target, Package } from "lucide-react";
+import { Edit, FileText, ImageIcon, Target, Package, Tag, CalendarDays } from "lucide-react";
 import type { CourseWithSchedules, Category } from "@shared/schema";
 import type { UploadResult } from "@uppy/core";
 
@@ -52,6 +52,43 @@ const courseSchema = z.object({
   }, {
     message: "Rental price must be a valid non-negative number"
   }),
+  // Sale pricing fields
+  saleEnabled: z.boolean().optional(),
+  salePrice: z.string().optional().refine((val) => {
+    if (!val || val === "") return true;
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= 0;
+  }, {
+    message: "Sale price must be a valid non-negative number"
+  }),
+  saleStartDate: z.string().optional(),
+  saleEndDate: z.string().optional(),
+}).refine((data) => {
+  // Validate sale price is less than regular price
+  if (data.saleEnabled && data.salePrice && data.salePrice !== "") {
+    const salePrice = parseFloat(data.salePrice);
+    const regularPrice = parseFloat(data.price);
+    if (!isNaN(salePrice) && !isNaN(regularPrice) && salePrice >= regularPrice) {
+      return false;
+    }
+  }
+  return true;
+}, {
+  message: "Sale price must be less than the regular price",
+  path: ["salePrice"]
+}).refine((data) => {
+  // Validate sale end date is after start date
+  if (data.saleStartDate && data.saleEndDate) {
+    const startDate = new Date(data.saleStartDate);
+    const endDate = new Date(data.saleEndDate);
+    if (endDate <= startDate) {
+      return false;
+    }
+  }
+  return true;
+}, {
+  message: "Sale end date must be after the start date",
+  path: ["saleEndDate"]
 }).refine((data) => {
   if (!data.depositAmount || data.depositAmount === "") return true;
   const deposit = parseFloat(data.depositAmount);
@@ -116,6 +153,10 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       destinationUrl: course.destinationUrl || "",
       handgunRentalEnabled: course.handgunRentalEnabled || false,
       handgunRentalPrice: course.handgunRentalPrice ? course.handgunRentalPrice.toString() : "25.00",
+      saleEnabled: (course as any).saleEnabled || false,
+      salePrice: (course as any).salePrice ? (course as any).salePrice.toString() : "",
+      saleStartDate: (course as any).saleStartDate ? new Date((course as any).saleStartDate).toISOString().slice(0, 16) : "",
+      saleEndDate: (course as any).saleEndDate ? new Date((course as any).saleEndDate).toISOString().slice(0, 16) : "",
     },
   });
 
@@ -153,6 +194,10 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       destinationUrl: course.destinationUrl || "",
       handgunRentalEnabled: course.handgunRentalEnabled || false,
       handgunRentalPrice: course.handgunRentalPrice ? course.handgunRentalPrice.toString() : "25.00",
+      saleEnabled: (course as any).saleEnabled || false,
+      salePrice: (course as any).salePrice ? (course as any).salePrice.toString() : "",
+      saleStartDate: (course as any).saleStartDate ? new Date((course as any).saleStartDate).toISOString().slice(0, 16) : "",
+      saleEndDate: (course as any).saleEndDate ? new Date((course as any).saleEndDate).toISOString().slice(0, 16) : "",
     });
   }, [course, form, categories]);
 
@@ -170,6 +215,11 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
         imageUrl: uploadedImageUrl || data.imageUrl || undefined,
         handgunRentalEnabled: data.handgunRentalEnabled || false,
         handgunRentalPrice: data.handgunRentalPrice && data.handgunRentalPrice !== "" ? parseFloat(data.handgunRentalPrice) : 25.00,
+        // Sale pricing fields
+        saleEnabled: data.saleEnabled || false,
+        salePrice: data.salePrice && data.salePrice !== "" ? parseFloat(data.salePrice) : null,
+        saleStartDate: data.saleStartDate && data.saleStartDate !== "" ? new Date(data.saleStartDate).toISOString() : null,
+        saleEndDate: data.saleEndDate && data.saleEndDate !== "" ? new Date(data.saleEndDate).toISOString() : null,
       };
       console.log("Updating course with data:", courseData);
       return await apiRequest("PUT", `/api/instructor/courses/${course.id}`, courseData);
@@ -465,6 +515,93 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                       {form.formState.errors.handgunRentalPrice && (
                         <p className="text-sm text-red-600 mt-1">{form.formState.errors.handgunRentalPrice.message}</p>
                       )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Sale Pricing Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Tag className="h-5 w-5" />
+                    <span>Sale Pricing</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-1">
+                      <Label htmlFor="saleEnabled" className="text-base font-medium">
+                        Enable Sale Price
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Offer this course at a discounted price for a limited time
+                      </p>
+                    </div>
+                    <Switch
+                      id="saleEnabled"
+                      checked={form.watch("saleEnabled") || false}
+                      onCheckedChange={(checked) => form.setValue("saleEnabled", checked, { shouldDirty: true })}
+                      data-testid="switch-sale-enabled"
+                    />
+                  </div>
+
+                  {form.watch("saleEnabled") && (
+                    <div className="space-y-4 pt-2">
+                      <div>
+                        <Label htmlFor="salePrice">Sale Price ($) *</Label>
+                        <Input
+                          id="salePrice"
+                          type="number"
+                          step="0.01"
+                          {...form.register("salePrice")}
+                          placeholder="Enter sale price (must be less than regular price)"
+                          data-testid="input-sale-price"
+                        />
+                        {form.formState.errors.salePrice && (
+                          <p className="text-sm text-red-600 mt-1">{form.formState.errors.salePrice.message}</p>
+                        )}
+                        {form.watch("salePrice") && form.watch("price") && parseFloat(form.watch("price")) > 0 && (
+                          <p className="text-xs text-green-600 mt-1">
+                            Save ${(parseFloat(form.watch("price")) - parseFloat(form.watch("salePrice") || "0")).toFixed(2)} 
+                            ({Math.round((1 - parseFloat(form.watch("salePrice") || "0") / parseFloat(form.watch("price"))) * 100)}% off)
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="saleStartDate">Sale Start Date</Label>
+                          <Input
+                            id="saleStartDate"
+                            type="datetime-local"
+                            {...form.register("saleStartDate")}
+                            data-testid="input-sale-start-date"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Leave empty to start immediately
+                          </p>
+                          {form.formState.errors.saleStartDate && (
+                            <p className="text-sm text-red-600 mt-1">{form.formState.errors.saleStartDate.message}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <Label htmlFor="saleEndDate">Sale End Date</Label>
+                          <Input
+                            id="saleEndDate"
+                            type="datetime-local"
+                            {...form.register("saleEndDate")}
+                            data-testid="input-sale-end-date"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Leave empty for no end date
+                          </p>
+                          {form.formState.errors.saleEndDate && (
+                            <p className="text-sm text-red-600 mt-1">{form.formState.errors.saleEndDate.message}</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </CardContent>

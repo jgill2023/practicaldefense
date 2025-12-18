@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SalePrice, SalePriceBadge } from "@/components/SalePrice";
 import { 
   Calendar, 
   Clock, 
@@ -208,7 +209,16 @@ export default function CourseDetail() {
                   <DollarSign className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Price</p>
-                    <p className="font-semibold text-lg" data-testid="text-price">${parseFloat(course.price).toFixed(2)}</p>
+                    <div data-testid="text-price">
+                      <SalePrice
+                        originalPrice={course.price}
+                        salePrice={(course as any).salePrice}
+                        saleEnabled={(course as any).saleEnabled}
+                        saleStartDate={(course as any).saleStartDate}
+                        saleEndDate={(course as any).saleEndDate}
+                        size="lg"
+                      />
+                    </div>
                   </div>
                 </div>
                 
