@@ -10,7 +10,8 @@ import { useCart } from "@/components/shopping-cart";
 import { useSEO, seoConfigs } from "@/hooks/use-seo";
 import { BookingModal } from "@/components/BookingModal";
 import { useQuery } from "@tanstack/react-query";
-import type { AppointmentType } from "@shared/schema";
+import type { AppointmentType, Product } from "@shared/schema";
+import { SalePrice, isSaleActive, getEffectivePrice } from "@/components/SalePrice";
 import {
   Accordion,
   AccordionContent,
@@ -186,6 +187,23 @@ export default function RACCProgram() {
     queryKey: ["/api/appointments/types"],
   });
 
+  // Fetch products to get sale pricing data
+  const { data: products = [] } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
+
+  // Helper to get product sale info by productId
+  const getProductSaleInfo = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return null;
+    return {
+      salePrice: product.salePrice ? Number(product.salePrice) : null,
+      saleEnabled: product.saleEnabled || false,
+      saleStartDate: product.saleStartDate,
+      saleEndDate: product.saleEndDate,
+    };
+  };
+
   const instructorId = appointmentTypes[0]?.instructorId || "";
 
   const handleBookPrivateTraining = () => {
@@ -210,10 +228,22 @@ export default function RACCProgram() {
   };
 
   const handleEnrollNow = (pkg: typeof raccPackages[0]) => {
+    // Use effective price (sale price if active)
+    const saleInfo = getProductSaleInfo(pkg.productId);
+    const effectivePrice = saleInfo 
+      ? getEffectivePrice(
+          pkg.priceNum,
+          saleInfo.salePrice,
+          saleInfo.saleEnabled,
+          saleInfo.saleStartDate,
+          saleInfo.saleEndDate
+        )
+      : pkg.priceNum;
+    
     addToCart({
       productId: pkg.productId,
       quantity: 1,
-      priceAtTime: pkg.priceNum,
+      priceAtTime: effectivePrice,
     });
     toast({
       title: "Added to cart",
@@ -357,16 +387,36 @@ export default function RACCProgram() {
                   <td className="sticky left-0 z-10 bg-muted px-4 py-3 font-semibold text-foreground border-r border-border">
                     Price
                   </td>
-                  {raccPackages.map((pkg) => (
-                    <td
-                      key={pkg.name}
-                      className={`px-3 py-3 text-center font-heading text-lg ${
-                        pkg.highlight ? "bg-[hsl(209,90%,38%)]/10 text-[hsl(209,90%,38%)] font-bold" : "text-foreground"
-                      }`}
-                    >
-                      {pkg.price}
-                    </td>
-                  ))}
+                  {raccPackages.map((pkg) => {
+                    const saleInfo = getProductSaleInfo(pkg.productId);
+                    const isOnSale = saleInfo && isSaleActive(
+                      saleInfo.saleEnabled,
+                      saleInfo.saleStartDate,
+                      saleInfo.saleEndDate
+                    );
+                    
+                    return (
+                      <td
+                        key={pkg.name}
+                        className={`px-3 py-3 text-center font-heading text-lg ${
+                          pkg.highlight ? "bg-[hsl(209,90%,38%)]/10 text-[hsl(209,90%,38%)] font-bold" : "text-foreground"
+                        }`}
+                      >
+                        {isOnSale && saleInfo?.salePrice ? (
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-sm line-through text-muted-foreground">
+                              {pkg.price}
+                            </span>
+                            <span className="text-red-600 font-bold">
+                              ${saleInfo.salePrice.toLocaleString()}
+                            </span>
+                          </div>
+                        ) : (
+                          pkg.price
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
 
                 <tr className="bg-card border-t-2">
