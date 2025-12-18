@@ -34,7 +34,6 @@ import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Ar
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 import { AppointmentsModal } from "@/components/AppointmentsModal";
-import { GoogleCalendarEventsPanel } from "@/components/instructor/GoogleCalendarEventsPanel";
 import { getEnrollmentStatusClassName } from "@/lib/statusColors";
 
 // Placeholder for SmsNotificationModal component
@@ -1343,11 +1342,6 @@ export default function InstructorDashboard() {
               <p className="text-sm text-muted-foreground">Pending refunds</p>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Google Calendar Events Panel */}
-        <div className="mb-8">
-          <GoogleCalendarEventsPanel />
         </div>
 
         {/* Schedule Section */}

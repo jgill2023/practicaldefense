@@ -420,29 +420,6 @@ export class AppointmentService {
       return { valid: false, reason: 'Time conflicts with instructor course schedule' };
     }
 
-    // Check Google Calendar conflict if blocking is enabled
-    const instructor = await storage.getUser(instructorId);
-    if (instructor?.googleCalendarBlockingEnabled && instructor?.googleCalendarConnected) {
-      try {
-        const conflict = await instructorGoogleCalendarService.checkConflict(
-          instructorId,
-          startTime,
-          endTime
-        );
-        
-        if (conflict.hasConflict) {
-          const eventName = conflict.conflictingEvent?.summary || 'a calendar event';
-          return { 
-            valid: false, 
-            reason: `Time conflicts with ${eventName} on instructor's calendar` 
-          };
-        }
-      } catch (error) {
-        console.error(`Failed to check Google Calendar conflict for instructor ${instructorId}:`, error);
-        // Fail gracefully - continue without Google Calendar check
-      }
-    }
-
     return { valid: true };
   }
 

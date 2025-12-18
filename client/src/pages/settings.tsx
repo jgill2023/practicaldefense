@@ -2,7 +2,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { isInstructorOrHigher } from "@/lib/authUtils";
 import { Layout } from "@/components/Layout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InstructorGoogleCalendarSettings } from "@/components/instructor/GoogleCalendarSettings";
 import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -40,12 +39,12 @@ export default function SettingsPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold" data-testid="text-page-title">Settings</h1>
           <p className="text-muted-foreground mt-2">
-            Configure integrations and platform settings
+            Configure platform settings
           </p>
         </div>
 
         <div className="space-y-6">
-          <InstructorGoogleCalendarSettings />
+          <p className="text-muted-foreground">No settings available at this time.</p>
         </div>
       </div>
     </Layout>
