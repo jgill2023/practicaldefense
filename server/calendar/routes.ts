@@ -256,53 +256,23 @@ calendarRouter.get('/instructor/blocks', isAuthenticated, requireInstructorOrHig
 calendarRouter.get('/instructor/google-status', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
   try {
     const instructorId = req.user.id;
-    const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL;
-    const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
 
-    if (!AUTH_SERVICE_URL || !INTERNAL_API_KEY) {
-      console.warn('AUTH_SERVICE_URL or INTERNAL_API_KEY not configured');
-      return res.json({ 
-        connected: false, 
-        email: null,
-        syncStatus: null,
-        message: 'Auth service not configured' 
+    // Check local database for connection record
+    const credentials = await db.query.instructorGoogleCredentials.findFirst({
+      where: eq(instructorGoogleCredentials.instructorId, instructorId),
+    });
+    
+    if (credentials) {
+      // We have a local record - instructor is connected
+      return res.json({
+        connected: true,
+        email: credentials.primaryCalendarId || null,
+        syncStatus: credentials.syncStatus || 'active',
       });
     }
-
-    try {
-      const response = await fetch(`${AUTH_SERVICE_URL}/api/tokens/status?instructorId=${instructorId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${INTERNAL_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          return res.json({ connected: false, email: null, syncStatus: null });
-        }
-        throw new Error(`Auth service returned ${response.status}`);
-      }
-
-      const data = await response.json();
-      res.json({
-        connected: data.hasTokens || false,
-        email: data.email || null,
-        syncStatus: data.syncStatus || 'unknown',
-      });
-    } catch (fetchError) {
-      console.error('Error calling auth service:', fetchError);
-      const credentials = await db.query.instructorGoogleCredentials.findFirst({
-        where: eq(instructorGoogleCredentials.instructorId, instructorId),
-      });
-      
-      res.json({
-        connected: !!credentials,
-        email: credentials?.email || null,
-        syncStatus: credentials ? 'local' : null,
-      });
-    }
+    
+    // No local record - not connected
+    res.json({ connected: false, email: null, syncStatus: null });
   } catch (error) {
     console.error('Error checking Google status:', error);
     res.status(500).json({ message: 'Failed to check Google connection status' });

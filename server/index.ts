@@ -3,6 +3,9 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { createSeoMiddleware } from "./seoMiddleware";
 import { cronService } from "./services/cronService";
+import { db } from "./db";
+import { instructorGoogleCredentials } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 const app = express();
 
@@ -58,9 +61,41 @@ app.use((req, res, next) => {
   app.use(createSeoMiddleware());
 
   // Google Calendar OAuth callback from Central Auth - MUST be before Vite catch-all
-  app.get("/auth/callback", (req, res) => {
+  app.get("/auth/callback", async (req, res) => {
     const { instructorId } = req.query;
     console.log(`Successfully returned from Central Auth for instructor: ${instructorId}`);
+    
+    if (instructorId && typeof instructorId === 'string') {
+      try {
+        // Check if record exists
+        const existing = await db.query.instructorGoogleCredentials.findFirst({
+          where: eq(instructorGoogleCredentials.instructorId, instructorId),
+        });
+        
+        if (existing) {
+          // Update existing record - tokens are managed by Central Auth
+          await db.update(instructorGoogleCredentials)
+            .set({
+              syncStatus: 'active',
+              updatedAt: new Date(),
+            })
+            .where(eq(instructorGoogleCredentials.instructorId, instructorId));
+        } else {
+          // Insert placeholder - tokens are managed by Central Auth App
+          await db.insert(instructorGoogleCredentials).values({
+            instructorId,
+            accessToken: 'managed-by-central-auth',
+            refreshToken: 'managed-by-central-auth',
+            tokenExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year placeholder
+            syncStatus: 'active',
+          });
+        }
+        console.log(`Updated Google credentials for instructor: ${instructorId}`);
+      } catch (error) {
+        console.error('Error updating Google credentials:', error);
+      }
+    }
+    
     res.redirect("/settings?google_connected=true");
   });
 
