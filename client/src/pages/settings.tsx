@@ -38,25 +38,32 @@ export default function SettingsPage() {
     enabled: !!user && isInstructorOrHigher(user),
   });
 
-  const handleConnectGoogle = async () => {
-    setIsConnecting(true);
-    try {
-      const response = await fetch("/api/availability/instructor/google-auth-url", {
-        credentials: "include",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to get authorization URL");
-      }
-      const { authUrl } = await response.json();
-      window.location.href = authUrl;
-    } catch (error: any) {
+  const handleConnectGoogle = () => {
+    if (!user?.id) {
       toast({
-        title: "Connection Failed",
-        description: error.message || "Unable to connect to Google Calendar",
+        title: "Error",
+        description: "User not authenticated",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsConnecting(true);
+    
+    const authServiceUrl = import.meta.env.VITE_AUTH_SERVICE_URL;
+    if (!authServiceUrl) {
+      toast({
+        title: "Configuration Error",
+        description: "Auth service URL is not configured",
         variant: "destructive",
       });
       setIsConnecting(false);
+      return;
     }
+    
+    const returnUrl = encodeURIComponent(window.location.href);
+    const authUrl = `${authServiceUrl}/auth?instructorId=${user.id}&returnUrl=${returnUrl}`;
+    window.location.href = authUrl;
   };
 
   const handleDisconnectGoogle = async () => {
