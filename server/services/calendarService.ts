@@ -2,6 +2,7 @@ import { db } from '../db';
 import { instructorGoogleCredentials, instructorAvailabilityOverrides, instructorAppointments, instructorWeeklyTemplates, users } from '@shared/schema';
 import { eq, and, gte, lte, lt, or } from 'drizzle-orm';
 import { google, calendar_v3 } from 'googleapis';
+import { fromZonedTime, toZonedTime, format } from 'date-fns-tz';
 
 const AUTH_BROKER_URL = process.env.AUTH_SERVICE_URL || 'https://auth.instructorops.com';
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
@@ -139,8 +140,26 @@ export class CalendarService {
       }
 
       return busyPeriods;
-    } catch (error) {
-      console.error('Error fetching Google busy periods:', error);
+    } catch (error: any) {
+      const status = error?.response?.status || error?.code;
+      const message = error?.response?.data?.error?.message || error?.message || 'Unknown error';
+      
+      if (status === 403) {
+        console.error(`[CalendarService] Google API 403 Forbidden for instructor ${instructorId}. ` +
+          `The user may have revoked access or the token scope is insufficient. ` +
+          `Error: ${message}`);
+      } else if (status === 404) {
+        console.error(`[CalendarService] Google API 404 Not Found for instructor ${instructorId}. ` +
+          `The calendar may have been deleted or the calendar ID is invalid. ` +
+          `Error: ${message}`);
+      } else if (status === 401) {
+        console.error(`[CalendarService] Google API 401 Unauthorized for instructor ${instructorId}. ` +
+          `The access token may have been revoked by the user. ` +
+          `Error: ${message}`);
+      } else {
+        console.error(`[CalendarService] Error fetching Google busy periods for instructor ${instructorId}:`, error);
+      }
+      
       return [];
     }
   }
@@ -293,22 +312,31 @@ export class CalendarService {
    * Get unified free slots by merging Google Calendar events with manual overrides.
    * 
    * Logic:
-   * 1. Fetch Base Hours: Use weekly templates or default 9 AM - 5 PM UTC
+   * 1. Fetch Base Hours: Use weekly templates or default 9 AM - 5 PM in instructor's timezone
    * 2. Fetch Google Busy: Query Google's freeBusy.query for the specific date
    * 3. Fetch Internal Blocks: Query instructor_availability_overrides and instructor_appointments
    * 4. Merge & Subtract: Combine all busy blocks, use interval-subtraction to find gaps
-   * 5. Slotify: Divide remaining gaps into slots based on duration
+   * 5. Slotify: Divide remaining gaps into slots based on duration with optional buffer
    * 
-   * All calculations use UTC ISO strings to prevent timezone shifts.
+   * Uses date-fns-tz for proper timezone handling - converts instructor's local times to UTC.
+   * 
+   * @param instructorId - The instructor's ID
+   * @param date - The date to check availability for
+   * @param slotDurationMinutes - Duration of each slot (default 30)
+   * @param bufferMinutes - Mandatory gap between back-to-back slots (default 0)
    */
   async getUnifiedFreeSlots(
     instructorId: string,
     date: Date,
-    slotDurationMinutes: number = 30
+    slotDurationMinutes: number = 30,
+    bufferMinutes: number = 0
   ): Promise<FreeSlot[]> {
+    const timezone = await this.getInstructorTimezone(instructorId);
+    
     const dateStr = date.toISOString().split('T')[0];
-    const startOfDayUTC = new Date(`${dateStr}T00:00:00.000Z`);
-    const endOfDayUTC = new Date(`${dateStr}T23:59:59.999Z`);
+    
+    const startOfDayUTC = fromZonedTime(new Date(`${dateStr}T00:00:00`), timezone);
+    const endOfDayUTC = fromZonedTime(new Date(`${dateStr}T23:59:59`), timezone);
 
     const [
       googleBusy,
@@ -328,7 +356,8 @@ export class CalendarService {
       ...existingBookings,
     ]);
 
-    const dayOfWeek = startOfDayUTC.getUTCDay();
+    const targetLocalDate = new Date(`${dateStr}T12:00:00`);
+    const dayOfWeek = targetLocalDate.getDay();
     let baseHoursBlocks = weeklyAvailability.filter(a => a.dayOfWeek === dayOfWeek);
 
     if (baseHoursBlocks.length === 0) {
@@ -341,8 +370,11 @@ export class CalendarService {
       const [startHour, startMin] = block.startTime.split(':').map(Number);
       const [endHour, endMin] = block.endTime.split(':').map(Number);
 
-      const blockStartUTC = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00.000Z`);
-      const blockEndUTC = new Date(`${dateStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00.000Z`);
+      const blockStartLocal = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`);
+      const blockEndLocal = new Date(`${dateStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`);
+      
+      const blockStartUTC = fromZonedTime(blockStartLocal, timezone);
+      const blockEndUTC = fromZonedTime(blockEndLocal, timezone);
 
       const freeIntervals = this.subtractBusyFromBase(
         blockStartUTC.getTime(),
@@ -353,6 +385,8 @@ export class CalendarService {
       for (const interval of freeIntervals) {
         let slotStartMs = interval.start;
         const slotDurationMs = slotDurationMinutes * 60 * 1000;
+        const bufferMs = bufferMinutes * 60 * 1000;
+        const slotIncrementMs = slotDurationMs + bufferMs;
 
         while (slotStartMs + slotDurationMs <= interval.end) {
           const slotEndMs = slotStartMs + slotDurationMs;
@@ -363,7 +397,7 @@ export class CalendarService {
             durationMinutes: slotDurationMinutes,
           });
 
-          slotStartMs = slotEndMs;
+          slotStartMs += slotIncrementMs;
         }
       }
     }
@@ -372,7 +406,15 @@ export class CalendarService {
   }
 
   /**
-   * Create a Google Calendar event with Meet link
+   * Helper function to delay execution
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Create a Google Calendar event with Meet link.
+   * Includes retry logic for Meet link if not immediately available.
    */
   async createGoogleEvent(
     instructorId: string,
@@ -417,9 +459,35 @@ export class CalendarService {
       sendUpdates: 'all',
     });
 
+    const eventId = response.data.id || '';
+    let meetLink = response.data.hangoutLink || undefined;
+
+    if (!meetLink && eventId) {
+      console.log(`[CalendarService] Meet link not immediately available for event ${eventId}, retrying in 1.5s...`);
+      
+      await this.delay(1500);
+      
+      try {
+        const retryResponse = await calendar.events.get({
+          calendarId,
+          eventId,
+        });
+        
+        meetLink = retryResponse.data.hangoutLink || undefined;
+        
+        if (meetLink) {
+          console.log(`[CalendarService] Meet link retrieved on retry for event ${eventId}`);
+        } else {
+          console.warn(`[CalendarService] Meet link still not available after retry for event ${eventId}`);
+        }
+      } catch (retryError) {
+        console.error(`[CalendarService] Error retrying to fetch Meet link for event ${eventId}:`, retryError);
+      }
+    }
+
     return {
-      eventId: response.data.id || '',
-      meetLink: response.data.hangoutLink || undefined,
+      eventId,
+      meetLink,
     };
   }
 
