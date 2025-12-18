@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Calendar, Users, ArrowRight } from "lucide-react";
 import type { CourseWithSchedules } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
+import { useLocation } from "wouter";
 
 interface CourseCardProps {
   course: CourseWithSchedules;
@@ -11,6 +12,7 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course, onRegister }: CourseCardProps) {
+  const [, setLocation] = useLocation();
 
   // Find the next available schedule (including full ones for waitlist)
   const nextSchedule = course.schedules
@@ -87,8 +89,8 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
 
   const handleCardClick = (e: React.MouseEvent) => {
     console.log('Card clicked!', { course: course.title, hasSchedule: !!nextSchedule });
-    if (!nextSchedule) return;
-    onRegister(course);
+    // Navigate to course detail page
+    setLocation(`/course/${course.id}`);
   };
 
   return (
