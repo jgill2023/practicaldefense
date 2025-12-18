@@ -234,9 +234,7 @@ export default function RACCProgram() {
           className="bg-white text-[hsl(209,90%,38%)] hover:bg-white/90 font-heading uppercase tracking-wide"
           onClick={handleBookPrivateTraining}
           data-testid="button-hero-book-appointment"
-        >
-          Book Private Training
-        </Button>
+        >Book Your First RACC Session!</Button>
       </HeroSection>
       {/* Introduction Section */}
       <section className="py-16 bg-background pt-[24px] pb-[24px]">
@@ -860,7 +858,6 @@ export default function RACCProgram() {
           </Accordion>
         </div>
       </section>
-
       {/* Ready to Start CTA */}
       <section className="py-16 bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -901,7 +898,6 @@ export default function RACCProgram() {
           </ComicPanel>
         </div>
       </section>
-
       <Dialog open={showTypeSelection} onOpenChange={setShowTypeSelection}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -943,7 +939,6 @@ export default function RACCProgram() {
           </div>
         </DialogContent>
       </Dialog>
-
       <BookingModal
         appointmentType={selectedAppointmentType}
         instructorId={selectedAppointmentType?.instructorId || instructorId}
