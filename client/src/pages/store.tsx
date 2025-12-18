@@ -743,6 +743,7 @@ export default function Store() {
                 { value: 'Kids', label: 'Kids' },
                 { value: 'Women', label: 'Women' },
                 { value: 'Home & Living', label: 'Home & Living' },
+                { value: 'Digital Products', label: 'Digital Products' },
               ].map((category) => (
                 <button
                   key={category.value}
