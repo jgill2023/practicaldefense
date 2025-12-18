@@ -524,10 +524,10 @@ export default function Store() {
       tags: ["Indoor", "Outdoor", "Home & Living", "Home"],
       titleKeywords: ["Mug", "Mat", "Desk"]
     },
-    'Digital Products': {
-      tags: ["Digital", "Digital Products", "digital"],
-      titleKeywords: [],
-      categoryNames: ["Digital Products", "Digital"],
+    'RACC Packages': {
+      tags: ["Digital", "Digital Products", "digital", "RACC", "RACC Packages"],
+      titleKeywords: ["RACC"],
+      categoryNames: ["Digital Products", "Digital", "RACC Packages"],
       productTypes: ["digital"]
     },
     'Training Materials': {
@@ -743,7 +743,7 @@ export default function Store() {
                 { value: 'Kids', label: 'Kids' },
                 { value: 'Women', label: 'Women' },
                 { value: 'Home & Living', label: 'Home & Living' },
-                { value: 'Digital Products', label: 'Digital Products' },
+                { value: 'RACC Packages', label: 'RACC Packages' },
               ].map((category) => (
                 <button
                   key={category.value}
