@@ -2834,7 +2834,7 @@ export type GiftCardValidationAttempt = typeof giftCardValidationAttempts.$infer
 // ============================================
 
 // Instructor Google Credentials for OAuth token storage
-export const instructorGoogleCredentials = pgTable("instructor_google_credentials", {
+export const instructorGoogleCredentials = pgTable("google_credentials", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   instructorId: varchar("instructor_id").notNull().references(() => users.id),
   accessToken: text("access_token").notNull(),
