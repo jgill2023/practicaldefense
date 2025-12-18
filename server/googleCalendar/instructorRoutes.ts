@@ -498,37 +498,35 @@ instructorGoogleCalendarRouter.get('/events', isAuthenticated, requireInstructor
       return res.status(400).json({ error: 'Invalid date format' });
     }
     
+    // Always fetch internal bookings from database
+    const allAppointments = await storage.getAppointmentsByInstructor(instructorId);
+    const instructorBookings = allAppointments
+      .filter(apt => {
+        const aptStart = new Date(apt.startTime);
+        return aptStart >= start && aptStart <= end;
+      })
+      .map(apt => ({
+        id: apt.id,
+        title: apt.notes || 'Appointment',
+        startTime: apt.startTime instanceof Date ? apt.startTime.toISOString() : apt.startTime,
+        endTime: apt.endTime instanceof Date ? apt.endTime.toISOString() : apt.endTime,
+        source: 'internal' as const,
+        studentName: apt.student?.firstName && apt.student?.lastName 
+          ? `${apt.student.firstName} ${apt.student.lastName}` 
+          : undefined,
+        appointmentType: apt.appointmentType?.name,
+      }));
+    
+    // Only fetch Google Calendar events if using InstructorOps
+    let googleEvents: any[] = [];
     if (isUsingInstructorOps()) {
-      const googleEvents = await instructorOpsCalendarService.getEvents(instructorId, start, end);
-      
-      const allAppointments = await storage.getAppointmentsByInstructor(instructorId);
-      const instructorBookings = allAppointments
-        .filter(apt => {
-          const aptStart = new Date(apt.startTime);
-          return aptStart >= start && aptStart <= end;
-        })
-        .map(apt => ({
-          id: apt.id,
-          title: apt.notes || 'Appointment',
-          startTime: apt.startTime instanceof Date ? apt.startTime.toISOString() : apt.startTime,
-          endTime: apt.endTime instanceof Date ? apt.endTime.toISOString() : apt.endTime,
-          source: 'internal' as const,
-          studentName: apt.student?.firstName && apt.student?.lastName 
-            ? `${apt.student.firstName} ${apt.student.lastName}` 
-            : undefined,
-          appointmentType: apt.appointmentType?.name,
-        }));
-      
-      res.json({
-        googleEvents,
-        internalBookings: instructorBookings,
-      });
-    } else {
-      res.json({
-        googleEvents: [],
-        internalBookings: [],
-      });
+      googleEvents = await instructorOpsCalendarService.getEvents(instructorId, start, end);
     }
+    
+    res.json({
+      googleEvents,
+      internalBookings: instructorBookings,
+    });
   } catch (error: any) {
     console.error('Error fetching calendar events:', error);
     res.status(500).json({ error: 'Failed to fetch calendar events' });
