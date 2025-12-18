@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarX2, Plus, Clock, RefreshCw, CalendarCheck } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { CalendarX2, Plus, Clock, RefreshCw, CalendarCheck, CalendarDays, Trash2 } from "lucide-react";
 import { format, addDays, parseISO } from "date-fns";
 
 interface FreeSlot {
@@ -27,6 +28,16 @@ interface ManualBlock {
   source: string;
 }
 
+interface WeeklyHour {
+  id: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+}
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 export function ManageAvailabilityTab() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -34,10 +45,14 @@ export function ManageAvailabilityTab() {
   
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [showBlockDialog, setShowBlockDialog] = useState(false);
+  const [showWeeklyHourDialog, setShowWeeklyHourDialog] = useState(false);
   const [blockReason, setBlockReason] = useState("");
   const [blockStartTime, setBlockStartTime] = useState("09:00");
   const [blockEndTime, setBlockEndTime] = useState("17:00");
   const [slotDuration, setSlotDuration] = useState("30");
+  const [newWeeklyDay, setNewWeeklyDay] = useState("1");
+  const [newWeeklyStart, setNewWeeklyStart] = useState("09:00");
+  const [newWeeklyEnd, setNewWeeklyEnd] = useState("17:00");
   
   const instructorId = user?.id || "";
 
@@ -80,6 +95,78 @@ export function ManageAvailabilityTab() {
     enabled: !!instructorId,
   });
 
+  const { data: weeklyHoursData = { weeklyHours: [] }, isLoading: weeklyHoursLoading } = useQuery<{ weeklyHours: WeeklyHour[] }>({
+    queryKey: ["/api/availability/instructor/weekly-hours", instructorId],
+    queryFn: async () => {
+      const response = await fetch("/api/availability/instructor/weekly-hours", { credentials: "include" });
+      if (!response.ok) {
+        throw new Error("Failed to fetch weekly hours");
+      }
+      return response.json();
+    },
+    enabled: !!instructorId,
+  });
+
+  const createWeeklyHourMutation = useMutation({
+    mutationFn: async (data: { dayOfWeek: number; startTime: string; endTime: string }) => {
+      return apiRequest("POST", "/api/availability/instructor/weekly-hours", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Weekly Hours Added",
+        description: "Your standard working hours have been updated.",
+      });
+      setShowWeeklyHourDialog(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/availability/instructor/weekly-hours"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/availability"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add weekly hours",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteWeeklyHourMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/availability/instructor/weekly-hours/${id}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Removed",
+        description: "Weekly hours entry has been removed.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/availability/instructor/weekly-hours"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/availability"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove weekly hours",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const toggleWeeklyHourMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      return apiRequest("PUT", `/api/availability/instructor/weekly-hours/${id}`, { isActive });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/availability/instructor/weekly-hours"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/availability"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update weekly hours",
+        variant: "destructive",
+      });
+    },
+  });
+
   const createBlockMutation = useMutation({
     mutationFn: async (data: { startTime: string; endTime: string; reason?: string }) => {
       return apiRequest("POST", "/api/availability/manual-block", data);
@@ -117,6 +204,25 @@ export function ManageAvailabilityTab() {
       endTime: endDateTime.toISOString(),
       reason: blockReason || undefined,
     });
+  };
+
+  const handleCreateWeeklyHour = () => {
+    createWeeklyHourMutation.mutate({
+      dayOfWeek: parseInt(newWeeklyDay),
+      startTime: newWeeklyStart,
+      endTime: newWeeklyEnd,
+    });
+  };
+
+  const formatWeeklyTime = (timeStr: string) => {
+    try {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const date = new Date();
+      date.setHours(hours, minutes);
+      return format(date, "h:mm a");
+    } catch {
+      return timeStr;
+    }
   };
 
   const formatTime = (isoString: string) => {
@@ -240,6 +346,74 @@ export function ManageAvailabilityTab() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5" />
+              Standard Weekly Hours
+            </span>
+            <Button size="sm" onClick={() => setShowWeeklyHourDialog(true)} data-testid="button-add-weekly-hour">
+              <Plus className="h-4 w-4 mr-1" />
+              Add Hours
+            </Button>
+          </CardTitle>
+          <CardDescription>
+            Define your regular working hours. Appointments can only be booked within these times.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {weeklyHoursLoading ? (
+            <div className="text-center py-4 text-muted-foreground">Loading weekly hours...</div>
+          ) : weeklyHoursData.weeklyHours.length > 0 ? (
+            <div className="space-y-2">
+              {weeklyHoursData.weeklyHours
+                .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+                .map((hour) => (
+                <div
+                  key={hour.id}
+                  className={`flex items-center justify-between p-3 rounded-md border ${
+                    hour.isActive 
+                      ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' 
+                      : 'bg-gray-50 dark:bg-gray-800/20 border-gray-200 dark:border-gray-700 opacity-60'
+                  }`}
+                  data-testid={`weekly-hour-${hour.id}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={hour.isActive}
+                      onCheckedChange={(checked) => toggleWeeklyHourMutation.mutate({ id: hour.id, isActive: checked })}
+                      data-testid={`switch-weekly-hour-${hour.id}`}
+                    />
+                    <div>
+                      <span className="font-medium">{DAY_NAMES[hour.dayOfWeek]}</span>
+                      <span className="text-muted-foreground ml-2">
+                        {formatWeeklyTime(hour.startTime)} - {formatWeeklyTime(hour.endTime)}
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteWeeklyHourMutation.mutate(hour.id)}
+                    disabled={deleteWeeklyHourMutation.isPending}
+                    data-testid={`button-delete-weekly-hour-${hour.id}`}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground" data-testid="text-no-weekly-hours">
+              <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p className="font-medium">No weekly hours configured</p>
+              <p className="text-sm mt-1">Add your standard working hours to enable appointment booking.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CalendarX2 className="h-5 w-5" />
             Upcoming Manual Blocks
@@ -338,6 +512,78 @@ export function ManageAvailabilityTab() {
               data-testid="button-confirm-block"
             >
               {createBlockMutation.isPending ? "Creating..." : "Create Block"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showWeeklyHourDialog} onOpenChange={setShowWeeklyHourDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Weekly Hours</DialogTitle>
+            <DialogDescription>
+              Define standard working hours for a day of the week
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Day of Week</Label>
+              <Select value={newWeeklyDay} onValueChange={setNewWeeklyDay}>
+                <SelectTrigger data-testid="select-weekly-day">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DAY_NAMES.map((day, index) => (
+                    <SelectItem key={index} value={index.toString()}>
+                      {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Time</Label>
+                <Select value={newWeeklyStart} onValueChange={setNewWeeklyStart}>
+                  <SelectTrigger data-testid="select-weekly-start-time">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeOptions.map((time) => (
+                      <SelectItem key={time} value={time}>
+                        {format(new Date(`2000-01-01T${time}`), "h:mm a")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>End Time</Label>
+                <Select value={newWeeklyEnd} onValueChange={setNewWeeklyEnd}>
+                  <SelectTrigger data-testid="select-weekly-end-time">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeOptions.map((time) => (
+                      <SelectItem key={time} value={time}>
+                        {format(new Date(`2000-01-01T${time}`), "h:mm a")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowWeeklyHourDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateWeeklyHour}
+              disabled={createWeeklyHourMutation.isPending}
+              data-testid="button-confirm-weekly-hour"
+            >
+              {createWeeklyHourMutation.isPending ? "Adding..." : "Add Hours"}
             </Button>
           </DialogFooter>
         </DialogContent>

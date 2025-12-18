@@ -4,7 +4,8 @@ import { calendarService } from '../services/calendarService';
 import { isAuthenticated, requireInstructorOrHigher } from '../customAuth';
 import { storage } from '../storage';
 import { db } from '../db';
-import { instructorAppointments, appointmentTypes } from '@shared/schema';
+import { instructorAppointments, appointmentTypes, instructorWeeklyTemplates } from '@shared/schema';
+import { eq, and } from 'drizzle-orm';
 
 export const calendarRouter = Router();
 
@@ -249,5 +250,142 @@ calendarRouter.get('/instructor/blocks', isAuthenticated, requireInstructorOrHig
   } catch (error) {
     console.error('Error fetching manual blocks:', error);
     res.status(500).json({ message: 'Failed to fetch manual blocks' });
+  }
+});
+
+const weeklyTemplateSchema = z.object({
+  dayOfWeek: z.number().min(0).max(6),
+  startTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Time must be in HH:MM or HH:MM:SS format'),
+  endTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Time must be in HH:MM or HH:MM:SS format'),
+  isActive: z.boolean().optional().default(true),
+});
+
+calendarRouter.get('/instructor/weekly-hours', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const instructorId = req.user.id;
+
+    const templates = await db.query.instructorWeeklyTemplates.findMany({
+      where: eq(instructorWeeklyTemplates.instructorId, instructorId),
+    });
+
+    res.json({
+      weeklyHours: templates.map(t => ({
+        id: t.id,
+        dayOfWeek: t.dayOfWeek,
+        startTime: t.startTime,
+        endTime: t.endTime,
+        isActive: t.isActive,
+      })),
+    });
+  } catch (error) {
+    console.error('Error fetching weekly hours:', error);
+    res.status(500).json({ message: 'Failed to fetch weekly hours' });
+  }
+});
+
+calendarRouter.post('/instructor/weekly-hours', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const instructorId = req.user.id;
+    const validated = weeklyTemplateSchema.parse(req.body);
+
+    const normalizedStartTime = validated.startTime.length === 5 ? `${validated.startTime}:00` : validated.startTime;
+    const normalizedEndTime = validated.endTime.length === 5 ? `${validated.endTime}:00` : validated.endTime;
+
+    const [newTemplate] = await db.insert(instructorWeeklyTemplates).values({
+      instructorId,
+      dayOfWeek: validated.dayOfWeek,
+      startTime: normalizedStartTime,
+      endTime: normalizedEndTime,
+      isActive: validated.isActive,
+    }).returning();
+
+    res.status(201).json({
+      success: true,
+      weeklyHour: {
+        id: newTemplate.id,
+        dayOfWeek: newTemplate.dayOfWeek,
+        startTime: newTemplate.startTime,
+        endTime: newTemplate.endTime,
+        isActive: newTemplate.isActive,
+      },
+    });
+  } catch (error) {
+    console.error('Error creating weekly hour:', error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: 'Invalid data', errors: error.errors });
+    }
+    res.status(500).json({ message: 'Failed to create weekly hour' });
+  }
+});
+
+calendarRouter.delete('/instructor/weekly-hours/:id', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const instructorId = req.user.id;
+    const { id } = req.params;
+
+    const existing = await db.query.instructorWeeklyTemplates.findFirst({
+      where: and(
+        eq(instructorWeeklyTemplates.id, id),
+        eq(instructorWeeklyTemplates.instructorId, instructorId)
+      ),
+    });
+
+    if (!existing) {
+      return res.status(404).json({ message: 'Weekly hour not found' });
+    }
+
+    await db.delete(instructorWeeklyTemplates).where(eq(instructorWeeklyTemplates.id, id));
+
+    res.json({ success: true, message: 'Weekly hour deleted' });
+  } catch (error) {
+    console.error('Error deleting weekly hour:', error);
+    res.status(500).json({ message: 'Failed to delete weekly hour' });
+  }
+});
+
+calendarRouter.put('/instructor/weekly-hours/:id', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const instructorId = req.user.id;
+    const { id } = req.params;
+    const validated = weeklyTemplateSchema.partial().parse(req.body);
+
+    const existing = await db.query.instructorWeeklyTemplates.findFirst({
+      where: and(
+        eq(instructorWeeklyTemplates.id, id),
+        eq(instructorWeeklyTemplates.instructorId, instructorId)
+      ),
+    });
+
+    if (!existing) {
+      return res.status(404).json({ message: 'Weekly hour not found' });
+    }
+
+    const updateData: any = {};
+    if (validated.dayOfWeek !== undefined) updateData.dayOfWeek = validated.dayOfWeek;
+    if (validated.startTime) updateData.startTime = validated.startTime.length === 5 ? `${validated.startTime}:00` : validated.startTime;
+    if (validated.endTime) updateData.endTime = validated.endTime.length === 5 ? `${validated.endTime}:00` : validated.endTime;
+    if (validated.isActive !== undefined) updateData.isActive = validated.isActive;
+
+    const [updated] = await db.update(instructorWeeklyTemplates)
+      .set(updateData)
+      .where(eq(instructorWeeklyTemplates.id, id))
+      .returning();
+
+    res.json({
+      success: true,
+      weeklyHour: {
+        id: updated.id,
+        dayOfWeek: updated.dayOfWeek,
+        startTime: updated.startTime,
+        endTime: updated.endTime,
+        isActive: updated.isActive,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating weekly hour:', error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: 'Invalid data', errors: error.errors });
+    }
+    res.status(500).json({ message: 'Failed to update weekly hour' });
   }
 });
