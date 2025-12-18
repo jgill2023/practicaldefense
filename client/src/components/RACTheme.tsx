@@ -319,13 +319,11 @@ export function HeroSection({
           style={{ backgroundImage: `url(${backgroundImage})` }}
         />
       )}
-      
       {overlay && (
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(204,27%,16%,0.9)] via-[hsl(209,90%,38%,0.7)] to-[hsl(190,65%,47%,0.6)]" />
       )}
-
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-        <h1 className="font-display text-5xl md:text-7xl lg:text-8xl text-white uppercase tracking-wider mb-4 animate-slide-up">
+        <h1 className="font-display md:text-7xl lg:text-8xl text-white uppercase tracking-wider mb-4 animate-slide-up text-[90px]">
           {title}
         </h1>
         {subtitle && (
