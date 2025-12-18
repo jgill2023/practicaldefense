@@ -1,6 +1,6 @@
 /**
  * Store Routes - Handles merch store API endpoints
- * Products from Printify, checkout via Stripe, discount codes
+ * Products from Printify AND local database, checkout via Stripe, discount codes
  */
 
 import { Router, Request, Response } from 'express';
@@ -15,6 +15,7 @@ import {
 } from '@shared/schema';
 import { printifyService, type NormalizedProduct } from '../printify/service';
 import { eq, and, sql, gt, or, isNull, lte } from 'drizzle-orm';
+import { storage } from '../storage';
 import Stripe from 'stripe';
 import { getStripeClient } from '../stripeClient';
 
@@ -59,21 +60,82 @@ router.get('/shops', async (req: Request, res: Response) => {
 
 /**
  * GET /api/store/products
- * Fetch all products from Printify
+ * Fetch all products from Printify AND local database
  */
 router.get('/products', async (req: Request, res: Response) => {
   try {
-    // Check cache
+    // Fetch Printify products (with cache)
+    let printifyProducts: NormalizedProduct[] = [];
     if (productCache && Date.now() - productCache.timestamp < CACHE_TTL) {
-      return res.json(productCache.data);
+      printifyProducts = productCache.data;
+    } else {
+      try {
+        printifyProducts = await printifyService.getProducts();
+        productCache = { data: printifyProducts, timestamp: Date.now() };
+      } catch (printifyError) {
+        console.warn('Could not fetch Printify products:', printifyError);
+      }
     }
 
-    const products = await printifyService.getProducts();
+    // Fetch local products from database
+    const localProducts = await storage.getProducts();
     
-    // Update cache
-    productCache = { data: products, timestamp: Date.now() };
+    // Helper to generate deterministic numeric ID from string
+    const hashStringToNumber = (str: string): number => {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return Math.abs(hash);
+    };
+
+    // Normalize local products to match Printify structure
+    const normalizedLocalProducts: NormalizedProduct[] = localProducts
+      .filter(p => p.status === 'active')
+      .map(product => ({
+        id: `local_${product.id}`,
+        title: product.name,
+        description: product.description || '',
+        images: product.primaryImageUrl 
+          ? [{ src: product.primaryImageUrl, variantIds: [], isDefault: true }]
+          : [],
+        variants: product.variants && product.variants.length > 0
+          ? product.variants.map(v => ({
+              id: hashStringToNumber(v.id),
+              title: v.name,
+              price: Number(v.price),
+              isAvailable: v.stock === null || v.stock > 0,
+              isEnabled: true,
+              sku: v.sku || '',
+              localVariantId: v.id,
+            }))
+          : [{
+              id: hashStringToNumber(`default_${product.id}`),
+              title: 'Default',
+              price: Number(product.price),
+              isAvailable: true,
+              isEnabled: true,
+              sku: product.sku || '',
+              localVariantId: undefined,
+            }],
+        options: [],
+        tags: [
+          ...(product.tags || []),
+          product.category?.name || '',
+          product.productType || '',
+        ].filter(Boolean),
+        isLocal: true,
+        localProductId: product.id,
+        categoryName: product.category?.name,
+        productType: product.productType,
+      }));
+
+    // Combine both product sources
+    const allProducts = [...printifyProducts, ...normalizedLocalProducts];
     
-    res.json(products);
+    res.json(allProducts);
   } catch (error) {
     console.error('Error fetching products:', error);
     res.status(500).json({ message: 'Failed to fetch products' });
@@ -109,6 +171,74 @@ router.get('/products/:id', async (req: Request, res: Response) => {
   }
 });
 
+// Helper to get all products (Printify + local) for validation
+async function getAllProductsForValidation(): Promise<NormalizedProduct[]> {
+  // Get Printify products from cache or fetch
+  let printifyProducts: NormalizedProduct[] = [];
+  if (productCache && Date.now() - productCache.timestamp < CACHE_TTL) {
+    printifyProducts = productCache.data;
+  } else {
+    try {
+      printifyProducts = await printifyService.getProducts();
+      productCache = { data: printifyProducts, timestamp: Date.now() };
+    } catch (error) {
+      console.warn('Could not fetch Printify products for validation:', error);
+    }
+  }
+  
+  // Get local products
+  const localProducts = await storage.getProducts();
+  
+  // Helper to generate deterministic numeric ID from string
+  const hashStringToNumber = (str: string): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash);
+  };
+  
+  const normalizedLocalProducts: NormalizedProduct[] = localProducts
+    .filter(p => p.status === 'active')
+    .map(product => ({
+      id: `local_${product.id}`,
+      title: product.name,
+      description: product.description || '',
+      images: product.primaryImageUrl 
+        ? [{ src: product.primaryImageUrl, variantIds: [], isDefault: true }]
+        : [],
+      variants: product.variants && product.variants.length > 0
+        ? product.variants.map(v => ({
+            id: hashStringToNumber(v.id),
+            title: v.name,
+            price: Number(v.price),
+            isAvailable: v.stock === null || v.stock > 0,
+            isEnabled: true,
+            sku: v.sku || '',
+            localVariantId: v.id,
+          }))
+        : [{
+            id: hashStringToNumber(`default_${product.id}`),
+            title: 'Default',
+            price: Number(product.price),
+            isAvailable: true,
+            isEnabled: true,
+            sku: product.sku || '',
+            localVariantId: undefined,
+          }],
+      options: [],
+      tags: (product.tags || []).filter(Boolean),
+      isLocal: true,
+      localProductId: product.id,
+      categoryName: product.category?.name,
+      productType: product.productType,
+    }));
+  
+  return [...printifyProducts, ...normalizedLocalProducts];
+}
+
 /**
  * POST /api/store/validate-cart
  * Validate cart items and return current prices
@@ -121,13 +251,76 @@ router.post('/validate-cart', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Cart is empty' });
     }
 
-    // Fetch all products to validate prices
-    const products = productCache?.data || await printifyService.getProducts();
+    // Fetch all products (Printify + local) to validate prices
+    const products = await getAllProductsForValidation();
     
     const validatedItems: CartItem[] = [];
     let subtotal = 0;
 
     for (const item of items) {
+      // Handle local products (productId present, no printifyProductId)
+      if (item.productId && !item.printifyProductId) {
+        // This is a local product - validate using local product lookup
+        const localProduct = products.find(p => p.localProductId === item.productId);
+        if (!localProduct) {
+          return res.status(400).json({ 
+            message: `Local product ${item.productId} not found` 
+          });
+        }
+        
+        // Find the variant by localVariantId (canonical UUID)
+        let variant;
+        if (item.variantId) {
+          // Match by localVariantId (canonical identifier)
+          variant = localProduct.variants.find(v => v.localVariantId === item.variantId);
+          
+          // For single-variant products without localVariantId (synthesized defaults), 
+          // allow matching by hashed ID as the variant is authoritative
+          if (!variant && localProduct.variants.length === 1) {
+            const onlyVariant = localProduct.variants[0];
+            if (!onlyVariant.localVariantId) {
+              // This is a synthesized default variant - accept if hash matches
+              if (onlyVariant.id === Number(item.variantId)) {
+                variant = onlyVariant;
+              }
+            }
+          }
+          
+          if (!variant) {
+            return res.status(400).json({ 
+              message: `Selected variant for ${localProduct.title} is no longer available. Please reselect.` 
+            });
+          }
+        } else if (localProduct.variants.length === 1) {
+          // Single-variant product - use the only variant
+          variant = localProduct.variants[0];
+        } else {
+          // Multi-variant product without variant selection - error
+          return res.status(400).json({ 
+            message: `Please select a variant for ${localProduct.title}` 
+          });
+        }
+        
+        if (!variant.isAvailable) {
+          return res.status(400).json({ 
+            message: `${localProduct.title} - ${variant.title} is currently unavailable` 
+          });
+        }
+        
+        const validatedItem: CartItem = {
+          ...item,
+          variantId: variant.localVariantId || item.variantId,
+          unitPrice: variant.price,
+          productTitle: localProduct.title,
+          variantTitle: variant.title !== 'Default' ? variant.title : undefined,
+        };
+        
+        validatedItems.push(validatedItem);
+        subtotal += variant.price * item.quantity;
+        continue;
+      }
+      
+      // Handle Printify products
       const product = products.find(p => p.id === item.printifyProductId);
       if (!product) {
         return res.status(400).json({ 

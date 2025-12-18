@@ -78,9 +78,14 @@ export interface NormalizedProduct {
     isAvailable: boolean;
     isEnabled: boolean;
     sku: string;
+    localVariantId?: string;
   }[];
   options: { name: string; values: { id: number; title: string }[] }[];
   tags: string[];
+  isLocal?: boolean;
+  localProductId?: string;
+  categoryName?: string;
+  productType?: string;
 }
 
 export interface PrintifyOrderAddress {

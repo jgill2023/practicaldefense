@@ -34,9 +34,14 @@ interface Product {
     isAvailable: boolean;
     isEnabled: boolean;
     sku: string;
+    localVariantId?: string;
   }[];
   options: { name: string; values: { id: number; title: string }[] }[];
   tags: string[];
+  isLocal?: boolean;
+  localProductId?: string;
+  categoryName?: string;
+  productType?: string;
 }
 
 function ProductCard({ 
@@ -60,16 +65,29 @@ function ProductCard({
     
     const variantImage = product.images.find(img => img.variantIds.includes(selectedVariant.id))?.src || defaultImage;
     
-    onAddToCart({
-      printifyProductId: product.id,
-      printifyVariantId: String(selectedVariant.id),
-      productTitle: product.title,
-      variantTitle: selectedVariant.title,
-      quantity: 1,
-      priceAtTime: selectedVariant.price,
-      imageUrl: variantImage,
-      itemType: 'printify',
-    });
+    if (product.isLocal && product.localProductId) {
+      onAddToCart({
+        productId: product.localProductId,
+        variantId: selectedVariant.localVariantId || String(selectedVariant.id),
+        productTitle: product.title,
+        variantTitle: selectedVariant.title !== 'Default' ? selectedVariant.title : undefined,
+        quantity: 1,
+        priceAtTime: selectedVariant.price,
+        imageUrl: variantImage,
+        itemType: 'local',
+      });
+    } else {
+      onAddToCart({
+        printifyProductId: product.id,
+        printifyVariantId: String(selectedVariant.id),
+        productTitle: product.title,
+        variantTitle: selectedVariant.title,
+        quantity: 1,
+        priceAtTime: selectedVariant.price,
+        imageUrl: variantImage,
+        itemType: 'printify',
+      });
+    }
     setIsDialogOpen(false);
   };
 
@@ -485,7 +503,7 @@ export default function Store() {
   ).filter(tag => tag && tag.trim()).sort();
 
   // Category mapping - filter value to actual Printify tags AND title keywords
-  const categoryConfig: Record<string, { tags: string[], titleKeywords: string[] }> = {
+  const categoryConfig: Record<string, { tags: string[], titleKeywords: string[], categoryNames?: string[], productTypes?: string[] }> = {
     'Men': { 
       tags: ["Men's Clothing", "Hoodies", "Sportswear", "AOP", "All Over Print"],
       titleKeywords: ["Hoodie", "Tee", "T-Shirt", "Sun Hoodie", "Adult", "Hat", "Dad Hat"]
@@ -506,15 +524,43 @@ export default function Store() {
       tags: ["Indoor", "Outdoor", "Home & Living", "Home"],
       titleKeywords: ["Mug", "Mat", "Desk"]
     },
+    'Digital Products': {
+      tags: ["Digital", "Digital Products", "digital"],
+      titleKeywords: [],
+      categoryNames: ["Digital Products", "Digital"],
+      productTypes: ["digital"]
+    },
+    'Training Materials': {
+      tags: ["Training", "Training Materials", "Education"],
+      titleKeywords: ["Guide", "Manual", "Course"],
+      categoryNames: ["Training Materials", "Training"],
+      productTypes: ["service"]
+    },
   };
 
-  // Helper to check if product matches category by tags or title
+  // Helper to check if product matches category by tags, title, category name, or product type
   const productMatchesCategory = (product: Product, category: string) => {
     if (category === 'all') return true;
     const config = categoryConfig[category];
     if (!config) return false;
     
-    // Check tags first
+    // Check local product category name
+    if (product.isLocal && product.categoryName && config.categoryNames) {
+      const categoryMatch = config.categoryNames.some(name => 
+        product.categoryName?.toLowerCase().includes(name.toLowerCase())
+      );
+      if (categoryMatch) return true;
+    }
+    
+    // Check local product type
+    if (product.isLocal && product.productType && config.productTypes) {
+      const typeMatch = config.productTypes.some(type => 
+        product.productType?.toLowerCase() === type.toLowerCase()
+      );
+      if (typeMatch) return true;
+    }
+    
+    // Check tags
     const tagMatch = product.tags.some(tag => 
       config.tags.some(matchTag => 
         tag.toLowerCase().includes(matchTag.toLowerCase())
@@ -523,11 +569,12 @@ export default function Store() {
     if (tagMatch) return true;
     
     // Fall back to title keyword matching for products without tags
-    if (product.tags.length === 0) {
+    if (product.tags.length === 0 || config.titleKeywords.length > 0) {
       const titleLower = product.title.toLowerCase();
-      return config.titleKeywords.some(keyword => 
+      const titleMatch = config.titleKeywords.some(keyword => 
         titleLower.includes(keyword.toLowerCase())
       );
+      if (titleMatch) return true;
     }
     
     return false;
