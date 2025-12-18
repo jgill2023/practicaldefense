@@ -122,7 +122,7 @@ export default function About() {
             <p className="text-muted-foreground text-lg">Dedicated professionals committed to building a competent armed society.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8 items-start">
             {/* Derek Watkins */}
             <ComicPanel shadow="md" data-testid="about-derek-watkins">
               <div className="space-y-4">
