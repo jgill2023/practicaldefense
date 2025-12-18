@@ -8,8 +8,6 @@ import { NotificationEngine } from '../notificationEngine';
 import { db } from '../db';
 import { appointmentTypes } from '@shared/schema';
 import { eq, asc } from 'drizzle-orm';
-import { googleCalendarService } from '../googleCalendar/service';
-import { instructorGoogleCalendarService } from '../googleCalendar/instructorService';
 
 import { getStripeClient } from '../stripeClient';
 

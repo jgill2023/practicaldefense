@@ -1,20 +1,11 @@
 import { storage } from '../storage';
 import { toZonedTime, fromZonedTime } from 'date-fns-tz';
-import { instructorGoogleCalendarService } from '../googleCalendar/instructorService';
-import { instructorOpsCalendarService } from '../googleCalendar/instructorOpsService';
 import type { 
   InstructorWeeklyTemplate, 
   InstructorAvailabilityOverride, 
   InstructorAppointment,
   CourseSchedule
 } from '@db/schema';
-
-function isUsingInstructorOps(): boolean {
-  // Always use InstructorOps centralized auth service
-  // This site is a CLIENT of auth.instructorops.com and should NOT handle OAuth locally
-  // Set USE_LEGACY_GOOGLE_CALENDAR=true only for migration purposes
-  return process.env.USE_LEGACY_GOOGLE_CALENDAR !== 'true';
-}
 
 // Hardcoded timezone for instructor - in a real app this would come from user settings
 const INSTRUCTOR_TIMEZONE = 'America/Denver';
@@ -186,14 +177,13 @@ export class AppointmentService {
     startDate: Date,
     endDate: Date
   ): Promise<{ startTime: Date; endTime: Date; source?: string }[]> {
-    const [appointments, courseSchedules, instructor] = await Promise.all([
+    const [appointments, courseSchedules] = await Promise.all([
       storage.getAppointments({
         instructorId,
         startDate,
         endDate,
       }),
       storage.getInstructorCourseSchedules(instructorId, startDate, endDate),
-      storage.getUser(instructorId),
     ]);
 
     const conflicts: { startTime: Date; endTime: Date; source?: string }[] = [];
@@ -215,46 +205,6 @@ export class AppointmentService {
         source: 'course',
       });
     });
-
-    // Fetch Google Calendar busy events if blocking is enabled
-    if (instructor?.googleCalendarBlockingEnabled && instructor?.googleCalendarConnected) {
-      try {
-        if (isUsingInstructorOps()) {
-          // Use InstructorOps centralized auth service
-          const busyTimes = await instructorOpsCalendarService.getBlockedTimes(
-            instructorId,
-            startDate,
-            endDate
-          );
-          
-          busyTimes.forEach(busy => {
-            conflicts.push({
-              startTime: new Date(busy.start),
-              endTime: new Date(busy.end),
-              source: 'google_calendar',
-            });
-          });
-        } else {
-          // Use direct Google Calendar API
-          const busyEvents = await instructorGoogleCalendarService.getBusyEvents(
-            instructorId,
-            startDate,
-            endDate
-          );
-          
-          busyEvents.forEach(event => {
-            conflicts.push({
-              startTime: event.start,
-              endTime: event.end,
-              source: 'google_calendar',
-            });
-          });
-        }
-      } catch (error) {
-        console.error(`Failed to fetch Google Calendar busy events for instructor ${instructorId}:`, error);
-        // Fail gracefully - continue without Google Calendar blocking
-      }
-    }
 
     return conflicts;
   }
