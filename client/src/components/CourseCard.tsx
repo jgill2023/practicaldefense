@@ -175,14 +175,17 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
           }`}
           onClick={(e) => {
             e.stopPropagation();
-            // If course has a destination URL, redirect externally
-            if (course.destinationUrl) {
-              window.open(course.destinationUrl, '_blank', 'noopener,noreferrer');
+            // If course is in "Hosted Courses" category or has a destination URL, redirect externally
+            const isHostedCourse = course.category === "Hosted Courses";
+            if (isHostedCourse || course.destinationUrl) {
+              if (course.destinationUrl) {
+                window.open(course.destinationUrl, '_blank', 'noopener,noreferrer');
+              }
               return;
             }
             onRegister(course);
           }}
-          disabled={!nextSchedule && !course.destinationUrl}
+          disabled={!nextSchedule && !(course.category === "Hosted Courses" || course.destinationUrl)}
           data-testid={`button-register-${course.id}`}
         >
           {isFull ? "JOIN WAITLIST" : "REGISTER NOW"}

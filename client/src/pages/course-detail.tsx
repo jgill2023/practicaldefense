@@ -301,11 +301,15 @@ export default function CourseDetail() {
                             </div>
                           )}
 
-                          {course.destinationUrl ? (
+                          {(course.category === "Hosted Courses" || course.destinationUrl) ? (
                             <Button 
                               className="w-full mt-[12px] mb-[12px]" 
                               data-testid={`button-register-${schedule.id}`}
-                              onClick={() => window.open(course.destinationUrl!, '_blank', 'noopener,noreferrer')}
+                              onClick={() => {
+                                if (course.destinationUrl) {
+                                  window.open(course.destinationUrl, '_blank', 'noopener,noreferrer');
+                                }
+                              }}
                             >
                               Register Now
                             </Button>

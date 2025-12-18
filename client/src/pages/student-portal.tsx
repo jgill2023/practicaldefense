@@ -1377,9 +1377,12 @@ function WaitlistInvitationsSection() {
   });
 
   const handleRegisterClick = (entry: any) => {
-    // If course has a destination URL, redirect externally
-    if (entry.course?.destinationUrl) {
-      window.open(entry.course.destinationUrl, '_blank', 'noopener,noreferrer');
+    // If course is in "Hosted Courses" category or has a destination URL, redirect externally
+    const isHostedCourse = entry.course?.category === "Hosted Courses";
+    if (isHostedCourse || entry.course?.destinationUrl) {
+      if (entry.course?.destinationUrl) {
+        window.open(entry.course.destinationUrl, '_blank', 'noopener,noreferrer');
+      }
       return;
     }
 
@@ -1771,9 +1774,12 @@ function LiveFireRangeSessionsSection() {
   const displayedSchedules = showAll ? upcomingSchedules : upcomingSchedules.slice(0, 5);
 
   const handleRegisterClick = (schedule: any) => {
-    // If course has a destination URL, redirect externally
-    if (liveFireCourse?.destinationUrl) {
-      window.open(liveFireCourse.destinationUrl, '_blank', 'noopener,noreferrer');
+    // If course is in "Hosted Courses" category or has a destination URL, redirect externally
+    const isHostedCourse = liveFireCourse?.category === "Hosted Courses";
+    if (isHostedCourse || liveFireCourse?.destinationUrl) {
+      if (liveFireCourse?.destinationUrl) {
+        window.open(liveFireCourse.destinationUrl, '_blank', 'noopener,noreferrer');
+      }
       return;
     }
 
