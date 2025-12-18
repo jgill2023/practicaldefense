@@ -2841,6 +2841,14 @@ export const instructorGoogleCredentials = pgTable("instructor_google_credential
   refreshToken: text("refresh_token").notNull(),
   tokenExpiry: timestamp("token_expiry").notNull(),
   primaryCalendarId: varchar("primary_calendar_id"),
+  // Webhook subscription fields
+  webhookResourceId: varchar("webhook_resource_id", { length: 255 }), // Google's resourceId for watch verification
+  webhookChannelId: varchar("webhook_channel_id", { length: 255 }), // Our channel ID for the subscription
+  webhookExpiry: timestamp("webhook_expiry"), // When the watch subscription expires
+  // Token health status
+  syncStatus: varchar("sync_status", { length: 20 }).default('active'), // 'active', 'sync_error', 'revoked'
+  lastSyncError: text("last_sync_error"), // Error message if sync failed
+  lastSyncAt: timestamp("last_sync_at"), // Last successful token refresh
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -4,7 +4,7 @@ import { calendarService } from '../services/calendarService';
 import { isAuthenticated, requireInstructorOrHigher } from '../customAuth';
 import { storage } from '../storage';
 import { db } from '../db';
-import { instructorAppointments, appointmentTypes, instructorWeeklyTemplates } from '@shared/schema';
+import { instructorAppointments, appointmentTypes, instructorWeeklyTemplates, instructorGoogleCredentials } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 
 export const calendarRouter = Router();
@@ -387,5 +387,56 @@ calendarRouter.put('/instructor/weekly-hours/:id', isAuthenticated, requireInstr
       return res.status(400).json({ message: 'Invalid data', errors: error.errors });
     }
     res.status(500).json({ message: 'Failed to update weekly hour' });
+  }
+});
+
+// ============================================
+// GOOGLE CALENDAR WEBHOOK ENDPOINT
+// ============================================
+
+/**
+ * Webhook endpoint for Google Calendar push notifications
+ * Google sends notifications here when calendar events change
+ * We verify the resourceId to ensure the notification is legitimate
+ */
+calendarRouter.post('/webhook/calendar', async (req: Request, res: Response) => {
+  try {
+    const resourceId = req.headers['x-goog-resource-id'] as string;
+    const channelId = req.headers['x-goog-channel-id'] as string;
+    const resourceState = req.headers['x-goog-resource-state'] as string;
+    const channelExpiration = req.headers['x-goog-channel-expiration'] as string;
+
+    console.log(`[CalendarWebhook] Received notification - resourceId: ${resourceId}, channelId: ${channelId}, state: ${resourceState}`);
+
+    if (!resourceId || !channelId) {
+      console.warn('[CalendarWebhook] Missing required headers');
+      return res.status(400).json({ message: 'Missing required headers' });
+    }
+
+    const credentials = await db.query.instructorGoogleCredentials.findFirst({
+      where: eq(instructorGoogleCredentials.webhookResourceId, resourceId),
+    });
+
+    if (!credentials) {
+      console.warn(`[CalendarWebhook] Unknown resourceId: ${resourceId} - notification may be stale or fraudulent`);
+      return res.status(404).json({ message: 'Unknown resource' });
+    }
+
+    if (credentials.webhookChannelId !== channelId) {
+      console.warn(`[CalendarWebhook] Channel ID mismatch for instructor ${credentials.instructorId}. Expected: ${credentials.webhookChannelId}, Got: ${channelId}`);
+      return res.status(403).json({ message: 'Channel ID mismatch' });
+    }
+
+    if (resourceState === 'sync') {
+      console.log(`[CalendarWebhook] Sync notification for instructor ${credentials.instructorId} - initial subscription confirmation`);
+      return res.status(200).json({ message: 'Sync acknowledged' });
+    }
+
+    console.log(`[CalendarWebhook] Calendar change detected for instructor ${credentials.instructorId}, state: ${resourceState}`);
+
+    res.status(200).json({ message: 'Notification received' });
+  } catch (error) {
+    console.error('[CalendarWebhook] Error processing webhook:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
