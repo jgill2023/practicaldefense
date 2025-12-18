@@ -368,15 +368,29 @@ export default function ScheduleList() {
                             </p>
                           </div>
                           
-                          <Link href={`/course-registration/${schedule.courseTitle}/${schedule.id}`}>
+                          {(getCategoryName(schedule.courseCategory) === "Hosted Courses" || schedule.course?.destinationUrl) ? (
                             <Button 
                               className="whitespace-nowrap bg-[#010c84]"
-                              disabled={schedule.availableSpots === 0}
                               data-testid={`button-register-${schedule.courseId}`}
+                              onClick={() => {
+                                if (schedule.course?.destinationUrl) {
+                                  window.open(schedule.course.destinationUrl, '_blank', 'noopener,noreferrer');
+                                }
+                              }}
                             >
-                              {schedule.availableSpots === 0 ? "Full" : "Register"}
+                              Register
                             </Button>
-                          </Link>
+                          ) : (
+                            <Link href={`/course-registration/${schedule.courseTitle}/${schedule.id}`}>
+                              <Button 
+                                className="whitespace-nowrap bg-[#010c84]"
+                                disabled={schedule.availableSpots === 0}
+                                data-testid={`button-register-${schedule.courseId}`}
+                              >
+                                {schedule.availableSpots === 0 ? "Full" : "Register"}
+                              </Button>
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </CardContent>
