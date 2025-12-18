@@ -87,8 +87,8 @@ async function verifyReminderScheduleOwnership(scheduleId: string, user: any): P
 }
 
 async function verifyAppointmentOwnership(appointmentId: string, user: any): Promise<boolean> {
-  // Admin and superadmin can access all appointments
-  if (user.role === 'admin' || user.role === 'superadmin') {
+  // Instructors, admins, and superadmins can access all appointments
+  if (user.role === 'instructor' || user.role === 'admin' || user.role === 'superadmin') {
     return true;
   }
   const appointment = await storage.getAppointment(appointmentId);
@@ -105,16 +105,16 @@ appointmentRouter.get('/instructor/:instructorId/appointments', isAuthenticated,
     const currentUserId = req.user.id;
     const currentUser = req.user;
     
-    // Admin and superadmin have global visibility (admin-level data access)
-    const isAdminOrHigher = currentUser.role === 'admin' || currentUser.role === 'superadmin';
+    // Instructors, admins, and superadmins have global visibility (admin-level data access)
+    const isInstructorOrHigher = currentUser.role === 'instructor' || currentUser.role === 'admin' || currentUser.role === 'superadmin';
     
-    // Verify the user is authorized: either requesting their own appointments OR is admin/superadmin
-    if (instructorId !== currentUserId && !isAdminOrHigher) {
+    // Verify the user is authorized: either requesting their own appointments OR is instructor/admin/superadmin
+    if (instructorId !== currentUserId && !isInstructorOrHigher) {
       return res.status(403).json({ message: "Not authorized to view these appointments" });
     }
     
-    // Admins/superadmins can view all appointments across all instructors
-    const appointments = isAdminOrHigher
+    // Instructors/admins/superadmins can view all appointments across all instructors
+    const appointments = isInstructorOrHigher
       ? await storage.getAllAppointments()
       : await storage.getAppointmentsByInstructor(instructorId);
       
@@ -473,8 +473,13 @@ appointmentRouter.delete('/instructor/reminder-schedules/:id', isAuthenticated, 
 
 appointmentRouter.get('/instructor/appointments', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.id;
-    const appointments = await storage.getAppointmentsByInstructor(instructorId);
+    const currentUser = req.user;
+    // Instructors, admins, and superadmins can see all appointments
+    const isInstructorOrHigher = currentUser.role === 'instructor' || currentUser.role === 'admin' || currentUser.role === 'superadmin';
+    
+    const appointments = isInstructorOrHigher
+      ? await storage.getAllAppointments()
+      : await storage.getAppointmentsByInstructor(currentUser.id);
     res.json(appointments);
   } catch (error) {
     console.error("Error fetching appointments:", error);
@@ -484,8 +489,13 @@ appointmentRouter.get('/instructor/appointments', isAuthenticated, async (req: a
 
 appointmentRouter.get('/instructor/appointments/pending', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.id;
-    const appointments = await storage.getPendingAppointments(instructorId);
+    const currentUser = req.user;
+    // Instructors, admins, and superadmins can see all pending appointments
+    const isInstructorOrHigher = currentUser.role === 'instructor' || currentUser.role === 'admin' || currentUser.role === 'superadmin';
+    
+    const appointments = isInstructorOrHigher
+      ? await storage.getAllPendingAppointments()
+      : await storage.getPendingAppointments(currentUser.id);
     res.json(appointments);
   } catch (error) {
     console.error("Error fetching pending appointments:", error);
@@ -495,9 +505,14 @@ appointmentRouter.get('/instructor/appointments/pending', isAuthenticated, async
 
 appointmentRouter.get('/instructor/appointments/upcoming', isAuthenticated, async (req: any, res) => {
   try {
-    const instructorId = req.user.id;
+    const currentUser = req.user;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
-    const appointments = await storage.getUpcomingAppointments(instructorId, limit);
+    // Instructors, admins, and superadmins can see all upcoming appointments
+    const isInstructorOrHigher = currentUser.role === 'instructor' || currentUser.role === 'admin' || currentUser.role === 'superadmin';
+    
+    const appointments = isInstructorOrHigher
+      ? await storage.getAllUpcomingAppointments(limit)
+      : await storage.getUpcomingAppointments(currentUser.id, limit);
     res.json(appointments);
   } catch (error) {
     console.error("Error fetching upcoming appointments:", error);

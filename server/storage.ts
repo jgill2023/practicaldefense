@@ -686,7 +686,9 @@ export interface IStorage {
   getAppointmentsByInstructor(instructorId: string): Promise<InstructorAppointmentWithDetails[]>;
   getAppointmentsByStudent(studentId: string): Promise<InstructorAppointmentWithDetails[]>;
   getPendingAppointments(instructorId: string): Promise<InstructorAppointmentWithDetails[]>;
+  getAllPendingAppointments(): Promise<InstructorAppointmentWithDetails[]>;
   getUpcomingAppointments(instructorId: string, limit?: number): Promise<InstructorAppointmentWithDetails[]>;
+  getAllUpcomingAppointments(limit?: number): Promise<InstructorAppointmentWithDetails[]>;
   approveAppointment(id: string): Promise<InstructorAppointment>;
   rejectAppointment(id: string, reason: string): Promise<InstructorAppointment>;
 
@@ -6320,12 +6322,42 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  async getAllPendingAppointments(): Promise<InstructorAppointmentWithDetails[]> {
+    return db.query.instructorAppointments.findMany({
+      where: eq(instructorAppointments.status, 'pending'),
+      with: {
+        appointmentType: true,
+        instructor: true,
+        student: true,
+      },
+      orderBy: [asc(instructorAppointments.startTime)],
+    });
+  }
+
   async getUpcomingAppointments(instructorId: string, limit: number = 10): Promise<InstructorAppointmentWithDetails[]> {
     const now = new Date();
     
     return db.query.instructorAppointments.findMany({
       where: and(
         eq(instructorAppointments.instructorId, instructorId),
+        gte(instructorAppointments.startTime, now),
+        inArray(instructorAppointments.status, ['pending', 'confirmed'])
+      ),
+      with: {
+        appointmentType: true,
+        instructor: true,
+        student: true,
+      },
+      orderBy: [asc(instructorAppointments.startTime)],
+      limit,
+    });
+  }
+
+  async getAllUpcomingAppointments(limit: number = 10): Promise<InstructorAppointmentWithDetails[]> {
+    const now = new Date();
+    
+    return db.query.instructorAppointments.findMany({
+      where: and(
         gte(instructorAppointments.startTime, now),
         inArray(instructorAppointments.status, ['pending', 'confirmed'])
       ),
