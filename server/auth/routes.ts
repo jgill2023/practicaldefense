@@ -65,7 +65,7 @@ authRouter.post("/signup", async (req, res) => {
         lastName,
         isEmailVerified: true,
         role: "student",
-        userStatus: "pending",
+        userStatus: "active",
         statusUpdatedAt: new Date(),
       })
       .returning();

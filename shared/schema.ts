@@ -79,7 +79,7 @@ export const users = pgTable("users", {
   replyToEmail: varchar("reply_to_email"), // Custom reply-to email for instructor communications
   role: userRoleEnum("role").notNull().default('student'), // 'student', 'instructor', 'admin', or 'superadmin'
   // Account status for approval workflow
-  userStatus: userStatusEnum("user_status").notNull().default('pending'), // 'pending', 'active', 'suspended', or 'rejected'
+  userStatus: userStatusEnum("user_status").notNull().default('active'), // 'pending', 'active', 'suspended', or 'rejected'
   statusUpdatedAt: timestamp("status_updated_at"),
   statusReason: text("status_reason"), // Reason for suspension or rejection
   // Stripe Connect fields for instructor payment routing

@@ -1089,7 +1089,7 @@ appointmentRouter.post('/book-with-signup', async (req: any, res) => {
         lastName,
         phone: phone || null,
         role: 'student',
-        userStatus: 'pending',
+        userStatus: 'active',
         isEmailVerified: true,
         passwordResetToken: resetToken,
         passwordResetExpiry: resetExpiry,

@@ -2994,12 +2994,13 @@ export class DatabaseStorage implements IStorage {
     let user = await this.getUserByEmail(data.studentInfo.email);
 
     if (!user) {
-      // Create new user
+      // Create new user - auto-approve students on registration
       user = await this.upsertUser({
         email: data.studentInfo.email,
         firstName: data.studentInfo.firstName,
         lastName: data.studentInfo.lastName,
         role: 'student',
+        userStatus: 'active',
       });
     }
 
