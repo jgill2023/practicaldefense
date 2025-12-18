@@ -130,6 +130,11 @@ export const courses = pgTable("courses", {
   // Add-on options
   handgunRentalEnabled: boolean("handgun_rental_enabled").notNull().default(false),
   handgunRentalPrice: decimal("handgun_rental_price", { precision: 10, scale: 2 }).default("25.00"),
+  // Sale pricing fields
+  salePrice: decimal("sale_price", { precision: 10, scale: 2 }),
+  saleStartDate: timestamp("sale_start_date"),
+  saleEndDate: timestamp("sale_end_date"),
+  saleEnabled: boolean("sale_enabled").notNull().default(false),
   instructorId: varchar("instructor_id").notNull().references(() => users.id),
   isActive: boolean("is_active").notNull().default(true),
   status: courseStatusEnum("status").notNull().default("published"), // Course lifecycle status
@@ -1890,6 +1895,12 @@ export const products = pgTable("products", {
   status: varchar("status", { length: 20 }).default('draft'), // 'draft', 'active', 'inactive'
   featured: boolean("featured").default(false),
   sortOrder: integer("sort_order").default(0),
+
+  // Sale pricing fields
+  salePrice: decimal("sale_price", { precision: 10, scale: 2 }),
+  saleStartDate: timestamp("sale_start_date"),
+  saleEndDate: timestamp("sale_end_date"),
+  saleEnabled: boolean("sale_enabled").notNull().default(false),
 
   // Media
   primaryImageUrl: varchar("primary_image_url"),
