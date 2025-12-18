@@ -130,6 +130,11 @@ router.get('/products', async (req: Request, res: Response) => {
         localProductId: product.id,
         categoryName: product.category?.name,
         productType: product.productType,
+        // Sale pricing fields
+        salePrice: product.salePrice ? Number(product.salePrice) : null,
+        saleEnabled: product.saleEnabled || false,
+        saleStartDate: product.saleStartDate,
+        saleEndDate: product.saleEndDate,
       }));
 
     // Combine both product sources

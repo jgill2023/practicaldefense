@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSEO, seoConfigs } from "@/hooks/use-seo";
 import { ShoppingCart, Plus, Minus, Trash2, X, Loader2 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
+import { SalePrice, isSaleActive, getEffectivePrice } from "@/components/SalePrice";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { apiRequest } from "@/lib/queryClient";
 import { useCart, type AddToCartItem } from "@/components/shopping-cart";
@@ -42,6 +43,11 @@ interface Product {
   localProductId?: string;
   categoryName?: string;
   productType?: string;
+  // Sale pricing fields for local products
+  salePrice?: number | null;
+  saleEnabled?: boolean;
+  saleStartDate?: string | null;
+  saleEndDate?: string | null;
 }
 
 function ProductCard({ 
@@ -65,6 +71,17 @@ function ProductCard({
     
     const variantImage = product.images.find(img => img.variantIds.includes(selectedVariant.id))?.src || defaultImage;
     
+    // Use effective price (sale price if active) for local products
+    const effectivePrice = product.isLocal 
+      ? getEffectivePrice(
+          selectedVariant.price,
+          product.salePrice,
+          product.saleEnabled,
+          product.saleStartDate,
+          product.saleEndDate
+        )
+      : selectedVariant.price;
+    
     if (product.isLocal && product.localProductId) {
       onAddToCart({
         productId: product.localProductId,
@@ -72,7 +89,7 @@ function ProductCard({
         productTitle: product.title,
         variantTitle: selectedVariant.title !== 'Default' ? selectedVariant.title : undefined,
         quantity: 1,
-        priceAtTime: selectedVariant.price,
+        priceAtTime: effectivePrice,
         imageUrl: variantImage,
         itemType: 'local',
       });
@@ -83,7 +100,7 @@ function ProductCard({
         productTitle: product.title,
         variantTitle: selectedVariant.title,
         quantity: 1,
-        priceAtTime: selectedVariant.price,
+        priceAtTime: effectivePrice,
         imageUrl: variantImage,
         itemType: 'printify',
       });
@@ -113,10 +130,23 @@ function ProductCard({
           <CardTitle className="text-lg line-clamp-2">{product.title}</CardTitle>
         </CardHeader>
         <CardFooter className="p-4 pt-0 flex justify-between items-center">
-          <span className="text-lg font-bold text-primary">
-            ${lowestPrice.toFixed(2)}
+          <div className="flex items-center gap-1">
+            {product.isLocal && product.saleEnabled ? (
+              <SalePrice
+                originalPrice={lowestPrice}
+                salePrice={product.salePrice}
+                saleEnabled={product.saleEnabled}
+                saleStartDate={product.saleStartDate}
+                saleEndDate={product.saleEndDate}
+                size="sm"
+              />
+            ) : (
+              <span className="text-lg font-bold text-primary">
+                ${lowestPrice.toFixed(2)}
+              </span>
+            )}
             {availableVariants.length > 1 && <span className="text-sm font-normal text-muted-foreground">+</span>}
-          </span>
+          </div>
           <Button size="sm" className="bg-[#5170FF] hover:bg-[#FD66C5] text-white" data-testid={`add-to-cart-${product.id}`}>
             View Options
           </Button>
@@ -172,8 +202,21 @@ function ProductCard({
               )}
               
               <div className="pt-4">
-                <div className="text-2xl font-bold text-primary mb-4">
-                  ${selectedVariant?.price.toFixed(2) || lowestPrice.toFixed(2)}
+                <div className="mb-4">
+                  {product.isLocal && product.saleEnabled ? (
+                    <SalePrice
+                      originalPrice={selectedVariant?.price || lowestPrice}
+                      salePrice={product.salePrice}
+                      saleEnabled={product.saleEnabled}
+                      saleStartDate={product.saleStartDate}
+                      saleEndDate={product.saleEndDate}
+                      size="lg"
+                    />
+                  ) : (
+                    <div className="text-2xl font-bold text-primary">
+                      ${selectedVariant?.price.toFixed(2) || lowestPrice.toFixed(2)}
+                    </div>
+                  )}
                 </div>
                 
                 <Button 
