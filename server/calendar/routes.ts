@@ -253,6 +253,93 @@ calendarRouter.get('/instructor/blocks', isAuthenticated, requireInstructorOrHig
   }
 });
 
+calendarRouter.get('/instructor/google-status', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const instructorId = req.user.id;
+    const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL;
+    const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
+
+    if (!AUTH_SERVICE_URL || !INTERNAL_API_KEY) {
+      console.warn('AUTH_SERVICE_URL or INTERNAL_API_KEY not configured');
+      return res.json({ 
+        connected: false, 
+        email: null,
+        syncStatus: null,
+        message: 'Auth service not configured' 
+      });
+    }
+
+    try {
+      const response = await fetch(`${AUTH_SERVICE_URL}/api/tokens/status?instructorId=${instructorId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${INTERNAL_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return res.json({ connected: false, email: null, syncStatus: null });
+        }
+        throw new Error(`Auth service returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      res.json({
+        connected: data.hasTokens || false,
+        email: data.email || null,
+        syncStatus: data.syncStatus || 'unknown',
+      });
+    } catch (fetchError) {
+      console.error('Error calling auth service:', fetchError);
+      const credentials = await db.query.instructorGoogleCredentials.findFirst({
+        where: eq(instructorGoogleCredentials.instructorId, instructorId),
+      });
+      
+      res.json({
+        connected: !!credentials,
+        email: credentials?.email || null,
+        syncStatus: credentials ? 'local' : null,
+      });
+    }
+  } catch (error) {
+    console.error('Error checking Google status:', error);
+    res.status(500).json({ message: 'Failed to check Google connection status' });
+  }
+});
+
+calendarRouter.post('/instructor/google-disconnect', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const instructorId = req.user.id;
+    const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL;
+    const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
+
+    await db.delete(instructorGoogleCredentials)
+      .where(eq(instructorGoogleCredentials.instructorId, instructorId));
+
+    if (AUTH_SERVICE_URL && INTERNAL_API_KEY) {
+      try {
+        await fetch(`${AUTH_SERVICE_URL}/api/tokens/revoke`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${INTERNAL_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ instructorId }),
+        });
+      } catch (fetchError) {
+        console.warn('Failed to revoke tokens on auth service:', fetchError);
+      }
+    }
+
+    res.json({ success: true, message: 'Google Calendar disconnected' });
+  } catch (error) {
+    console.error('Error disconnecting Google:', error);
+    res.status(500).json({ message: 'Failed to disconnect Google Calendar' });
+  }
+});
+
 const weeklyTemplateSchema = z.object({
   dayOfWeek: z.number().min(0).max(6),
   startTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Time must be in HH:MM or HH:MM:SS format'),

@@ -66,14 +66,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.send(generateRobotsTxt());
   });
 
-  // Google Calendar OAuth callback from Central Auth
-  app.get("/auth/callback", (req, res) => {
-    const { instructorId } = req.query;
-    console.log(`Successfully returned from Central Auth for instructor: ${instructorId}`);
-    // Redirect back to the settings page with a success flag
-    res.redirect("/dashboard/settings?google_connected=true");
-  });
-
   // Auth middleware
   await setupAuth(app);
 

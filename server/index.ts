@@ -57,6 +57,13 @@ app.use((req, res, next) => {
   // This runs before Vite's catch-all to inject route-specific SEO metadata
   app.use(createSeoMiddleware());
 
+  // Google Calendar OAuth callback from Central Auth - MUST be before Vite catch-all
+  app.get("/auth/callback", (req, res) => {
+    const { instructorId } = req.query;
+    console.log(`Successfully returned from Central Auth for instructor: ${instructorId}`);
+    res.redirect("/settings?google_connected=true");
+  });
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
