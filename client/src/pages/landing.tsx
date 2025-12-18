@@ -379,7 +379,17 @@ function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSc
                   <Button 
                     size="sm"
                     className="bg-[hsl(209,90%,38%)] text-white hover:bg-[#FD66C5] font-heading uppercase tracking-wide"
-                    onClick={() => onRegister(course)}
+                    onClick={() => {
+                      // If course is in "Hosted Courses" category or has a destination URL, redirect externally
+                      const isHostedCourse = course.category === "Hosted Courses";
+                      if (isHostedCourse || course.destinationUrl) {
+                        if (course.destinationUrl) {
+                          window.open(course.destinationUrl, '_blank', 'noopener,noreferrer');
+                        }
+                        return;
+                      }
+                      onRegister(course);
+                    }}
                     data-testid={`button-book-${schedule.id}`}
                   >
                     Register
