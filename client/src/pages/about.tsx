@@ -153,9 +153,7 @@ export default function About() {
                   <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Derek Wright</h3>
                   <p className="text-sm font-medium text-muted-foreground">Professional Pistolcraft Instructor</p>
                 </div>
-                <p className="text-foreground leading-relaxed">
-                  A Rangemaster-certified Professional Pistolcraft Instructor and Apache Instructor Enrichment Program graduate, Derek focuses on empowering law-abiding citizens with the skills and mindset to safely carry and responsibly defend themselves.
-                </p>
+                <p className="text-foreground leading-relaxed">Protective Pistolcraft and Shotgun Instructor certified through Rangemaster, and a graduate of the Apache Instructor Enrichment Program. He maintains his annual instructor ratings for NRA (Basics of Pistol and RSO), and the North Carolina Department of Justice to teach North Carolina Concealed Carry. He also holds numerous additional certifications, reflecting a strong commitment to ongoing education and responsible instruction.</p>
                 <div className="border-t border-gray-200 pt-4">
                   <p className="text-sm font-medium text-foreground mb-2">Certifications:</p>
                   <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
