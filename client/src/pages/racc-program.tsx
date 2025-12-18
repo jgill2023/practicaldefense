@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import { HeroSection, TitleCard, ComicPanel } from "@/components/RACTheme";
+import raccHeaderImage from "@assets/ApacheRACC-Header_1766030105352.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
@@ -225,6 +226,7 @@ export default function RACCProgram() {
       <HeroSection
         title="Responsibly Armed Citizen Criterion"
         subtitle="Your personal development path to concealed carry excellence"
+        backgroundImage={raccHeaderImage}
         overlay={true}
       >
         <Button
