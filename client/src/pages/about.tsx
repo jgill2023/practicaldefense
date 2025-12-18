@@ -287,6 +287,48 @@ export default function About() {
                 </div>
               </div>
             </ComicPanel>
+
+            {/* Nancy Caron */}
+            <ComicPanel shadow="md" data-testid="about-nancy-caron">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Nancy Caron</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Apache Instructor</p>
+                </div>
+                <p className="text-foreground leading-relaxed">
+                  Nancy Caron joined the Apache cadre in 2025 after completing our Apache instructor apprentice program. She has a passion for helping others become the best version of themselves through education and mentoring.
+                </p>
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">Certifications & Achievements:</p>
+                  <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
+                    <li>Rangemaster Advanced Instructor</li>
+                    <li>IEP graduate</li>
+                    <li>First female RACC graduate</li>
+                    <li>20 years as Registered Nurse</li>
+                    <li>Retired PGA Class A Golf Professional</li>
+                  </ul>
+                </div>
+              </div>
+            </ComicPanel>
+
+            {/* Rodney White */}
+            <ComicPanel shadow="md" data-testid="about-rodney-white">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Rodney White</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Apache Instructor</p>
+                </div>
+                <p className="text-foreground leading-relaxed">
+                  Rodney White brings over a decade of retail management experience, during which he regularly educated and led groups of up to 70 individuals at a time. After obtaining his concealed carry permit, Rodney recognized a gap between his personal standards and the training options available. This realization led him to begin training with Apache.
+                </p>
+                <p className="text-foreground leading-relaxed">
+                  After several years of dedicated development, Rodney pursued instructor credentials, first earning certification through the NRA and later achieving Rangemaster Instructor certification. He has trained with a wide range of nationally recognized instructors, including Tatiana Whitlock, VIGR Training, Dave Spaulding, and John Murphy, among others.
+                </p>
+                <p className="text-foreground leading-relaxed">
+                  Rodney is passionate about leadership and coaching new shooters and is committed to supporting Apache's mission of building a more capable, confident, and responsible armed community.
+                </p>
+              </div>
+            </ComicPanel>
           </div>
 
           <ComicPanel shadow="lg" className="mt-8" data-testid="about-apache-letter">
