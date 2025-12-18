@@ -34,7 +34,6 @@ import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Ar
 import type { CourseWithSchedules, EnrollmentWithDetails, User } from "@shared/schema";
 import { formatDateShort, formatDateSafe } from "@/lib/dateUtils";
 import { AppointmentsModal } from "@/components/AppointmentsModal";
-import { ManageAvailabilityTab } from "@/components/ManageAvailabilityTab";
 import { getEnrollmentStatusClassName } from "@/lib/statusColors";
 
 // Placeholder for SmsNotificationModal component
@@ -1394,14 +1393,6 @@ export default function InstructorDashboard() {
                     <Trash2 className="w-4 h-4" />
                     Deleted ({deletedSchedules.length})
                   </TabsTrigger>
-                  <TabsTrigger
-                    value="availability"
-                    className="flex items-center gap-2 pb-4 pt-0 px-0 mr-4 sm:mr-8 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary rounded-none bg-transparent shadow-none text-muted-foreground data-[state=active]:bg-transparent hover:text-foreground whitespace-nowrap"
-                    data-testid="tab-manage-availability"
-                  >
-                    <CalendarClock className="w-4 h-4" />
-                    Manage Availability
-                  </TabsTrigger>
                 </TabsList>
               </div>
 
@@ -1475,12 +1466,6 @@ export default function InstructorDashboard() {
                       ))}
                     </div>
                   )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="availability" className="mt-0">
-                <div className="py-6">
-                  <ManageAvailabilityTab />
                 </div>
               </TabsContent>
             </Tabs>
