@@ -890,11 +890,36 @@ appointmentRouter.get('/available-slots', async (req, res) => {
       durationMinutes = appointmentType.durationMinutes;
     }
 
+    // Parse dates - handle date-only strings (YYYY-MM-DD) by treating them as local dates
+    // This ensures conflict detection works correctly regardless of timezone
+    let parsedStartDate: Date;
+    let parsedEndDate: Date;
+    
+    const startDateStr = startDate as string;
+    const endDateStr = endDate as string;
+    
+    // If date-only format (YYYY-MM-DD), parse as local date at start/end of day
+    if (startDateStr.length === 10) {
+      // Parse as local date at start of day
+      const [year, month, day] = startDateStr.split('-').map(Number);
+      parsedStartDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+    } else {
+      parsedStartDate = new Date(startDateStr);
+    }
+    
+    if (endDateStr.length === 10) {
+      // Parse as local date at end of day
+      const [year, month, day] = endDateStr.split('-').map(Number);
+      parsedEndDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+    } else {
+      parsedEndDate = new Date(endDateStr);
+    }
+
     const slots = await appointmentService.generateAvailableSlots(
       instructorId as string,
       appointmentTypeId as string,
-      new Date(startDate as string),
-      new Date(endDate as string),
+      parsedStartDate,
+      parsedEndDate,
       durationMinutes
     );
 

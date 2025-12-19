@@ -186,7 +186,7 @@ import {
   type GiftCardValidationResult,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, ne, inArray, notInArray } from "drizzle-orm";
+import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, gt, lt, lte, ne, inArray, notInArray } from "drizzle-orm";
 import Stripe from 'stripe';
 
 /**
@@ -6207,12 +6207,19 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(instructorAppointments.status, filters.status));
     }
 
-    if (filters.startDate) {
+    // When both dates provided, use overlap detection for conflict checking:
+    // Two ranges overlap if: range1.start < range2.end AND range1.end > range2.start
+    // This ensures we find ALL appointments that overlap with the filter range
+    if (filters.startDate && filters.endDate) {
+      // Appointment overlaps if: appointment.startTime < filterEndDate AND appointment.endTime > filterStartDate
+      conditions.push(lt(instructorAppointments.startTime, filters.endDate));
+      conditions.push(gt(instructorAppointments.endTime, filters.startDate));
+    } else if (filters.startDate) {
+      // Just startDate: get appointments starting on or after this date (for listing views)
       conditions.push(gte(instructorAppointments.startTime, filters.startDate));
-    }
-
-    if (filters.endDate) {
-      conditions.push(gte(filters.endDate, instructorAppointments.endTime));
+    } else if (filters.endDate) {
+      // Just endDate: get appointments ending on or before this date (for listing views)
+      conditions.push(lte(instructorAppointments.endTime, filters.endDate));
     }
 
     return db.query.instructorAppointments.findMany({
