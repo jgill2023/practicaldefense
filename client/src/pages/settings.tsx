@@ -1,20 +1,31 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { isInstructorOrHigher } from "@/lib/authUtils";
 import { Layout } from "@/components/Layout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Loader2, Calendar, CheckCircle2, XCircle, ExternalLink, RefreshCw } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { AlertCircle, Loader2, Calendar, CheckCircle2, XCircle, ExternalLink, RefreshCw, Save } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
+
+interface GoogleCalendar {
+  id: string;
+  summary: string;
+  primary?: boolean;
+  accessRole?: string;
+}
 
 export default function SettingsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [selectedCalendarId, setSelectedCalendarId] = useState<string>("");
+  const [isSavingCalendar, setIsSavingCalendar] = useState(false);
 
   // Fetch runtime config for auth service URL
   const { data: appConfig } = useQuery<{ authServiceUrl: string | null }>({
@@ -33,6 +44,7 @@ export default function SettingsPage() {
     email?: string;
     syncStatus?: string;
     lastSyncAt?: string;
+    selectedCalendarId?: string;
   }>({
     queryKey: ["/api/availability/instructor/google-status"],
     queryFn: async () => {
@@ -45,10 +57,89 @@ export default function SettingsPage() {
         }
         throw new Error("Failed to fetch calendar status");
       }
-      return response.json();
+      const data = await response.json();
+      if (data.selectedCalendarId) {
+        setSelectedCalendarId(data.selectedCalendarId);
+      }
+      return data;
     },
     enabled: !!user && isInstructorOrHigher(user),
   });
+
+  // Fetch available calendars from the Auth Broker when connected
+  const { data: calendars, isLoading: calendarsLoading, refetch: refetchCalendars } = useQuery<GoogleCalendar[]>({
+    queryKey: ["/api/calendars/list", user?.id],
+    queryFn: async () => {
+      const authServiceUrl = appConfig?.authServiceUrl;
+      if (!authServiceUrl || !user?.id) {
+        return [];
+      }
+      const response = await fetch(`${authServiceUrl}/api/calendars/list?instructorId=${user.id}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch calendars");
+      }
+      const data = await response.json();
+      return data.calendars || [];
+    },
+    enabled: !!calendarStatus?.connected && !!appConfig?.authServiceUrl && !!user?.id,
+  });
+
+  // Save selected calendar to the Auth Broker
+  const handleSaveCalendar = async () => {
+    if (!selectedCalendarId || !user?.id) {
+      toast({
+        title: "Error",
+        description: "Please select a calendar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const authServiceUrl = appConfig?.authServiceUrl;
+    if (!authServiceUrl) {
+      toast({
+        title: "Configuration Error",
+        description: "Auth service URL is not configured",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSavingCalendar(true);
+    try {
+      const response = await fetch(`${authServiceUrl}/api/calendars/select`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          instructorId: user.id,
+          selectedCalendarId: selectedCalendarId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save calendar selection");
+      }
+
+      toast({
+        title: "Calendar Saved",
+        description: "Your calendar selection has been saved successfully.",
+      });
+      refetchCalendarStatus();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save calendar selection",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingCalendar(false);
+    }
+  };
 
   const handleConnectGoogle = () => {
     if (!user?.id) {
@@ -188,6 +279,59 @@ export default function SettingsPage() {
                       >
                         <RefreshCw className="h-4 w-4" />
                       </Button>
+                    </div>
+                  </div>
+
+                  {/* Calendar Selection */}
+                  <div className="p-4 rounded-lg bg-muted/50 border">
+                    <Label htmlFor="calendar-select" className="text-sm font-medium mb-2 block">
+                      Select Calendar for Availability Sync
+                    </Label>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Choose which calendar to use for checking your availability and blocking busy times.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      {calendarsLoading ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Loading calendars...
+                        </div>
+                      ) : calendars && calendars.length > 0 ? (
+                        <>
+                          <Select
+                            value={selectedCalendarId}
+                            onValueChange={setSelectedCalendarId}
+                          >
+                            <SelectTrigger className="w-full sm:w-[300px]" id="calendar-select" data-testid="select-calendar">
+                              <SelectValue placeholder="Select a calendar" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {calendars.map((calendar) => (
+                                <SelectItem key={calendar.id} value={calendar.id}>
+                                  {calendar.summary}
+                                  {calendar.primary && " (Primary)"}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            onClick={handleSaveCalendar}
+                            disabled={isSavingCalendar || !selectedCalendarId}
+                            data-testid="button-save-calendar"
+                          >
+                            {isSavingCalendar ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <Save className="h-4 w-4 mr-2" />
+                            )}
+                            Save Selection
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          No calendars available. Try reconnecting your account.
+                        </p>
+                      )}
                     </div>
                   </div>
 
