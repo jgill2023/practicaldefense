@@ -1062,9 +1062,7 @@ export default function Landing() {
               <h2 className="font-heading text-3xl uppercase tracking-wide text-white mb-4">
                 Transform Your Mindset
               </h2>
-              <p className="text-lg text-white/90 mb-6">
-                Authored by Tim Kelly, our founder and lead instructor, "Your World Is Not a Gun-Free Zone" challenges conventional thinking about personal safety and empowerment. This essential read explores practical strategies for responsible citizens to navigate an unpredictable world.
-              </p>
+              <p className="text-lg text-white/90 mb-6">Whether you are a gun owner or not, your children will inevitably encounter firearms—at a friend’s house, in the media, or out in the community. "Your World Is Not a Gun-Free Zone" by Tim Kelly is an essential guide for parents and caregivers on how to raise curious children to be responsible and safe in an armed world.</p>
               <a 
                 href="https://www.amazon.com/Your-World-Not-Gun-Free-Zone/dp/B0DT1J5THS/ref=sr_1_1?crid=COV2QJKGRHT9&dib=eyJ2IjoiMSJ9.u_bOjWq3og8B0Tzci7HG7FwgI0Ec2KlpKYJiYYoK_8R3TbXaAJq939KERS7CDNL5GAzU9YeWLL-_acy9eyGh6lLJiiWqPe6TX3cnXN5zOZX0YeFe9-O2E5glv1YXCKzPOKRr0gZhvHBwuCmPGTXqW0F0xNEFzQD3mYd472HPXsQ8Krki2qhdCeD0NEmmThAjkvmdIvf-ePj0h3SbGAuxzBVm4MzCyKY2QXwj5X1Xm5o.n7XEezhP3wUjp1Zl_qZpH-hOnHSLoMW3mEwtLEahrd8&dib_tag=se&keywords=your+world+is+not+a+gun+free+zone&nsdOptOutParam=true&qid=1765547397&sprefix=your+world+is+no,aps,174&sr=8-1"
                 target="_blank"
