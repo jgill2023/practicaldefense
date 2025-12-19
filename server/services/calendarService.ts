@@ -548,8 +548,8 @@ export class CalendarService {
       // Fetch events from Central Auth service which manages the Google OAuth tokens
       const url = new URL(`${AUTH_BROKER_URL}/api/calendars/events`);
       url.searchParams.set('instructorId', instructorId);
-      url.searchParams.set('start', startDate.toISOString());
-      url.searchParams.set('end', endDate.toISOString());
+      url.searchParams.set('timeMin', startDate.toISOString());
+      url.searchParams.set('timeMax', endDate.toISOString());
 
       const response = await fetch(url.toString(), {
         method: 'GET',
