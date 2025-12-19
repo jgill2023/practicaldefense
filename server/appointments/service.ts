@@ -1,5 +1,5 @@
 import { storage } from '../storage';
-import { toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { toZonedTime, fromZonedTime, format } from 'date-fns-tz';
 import type { 
   InstructorWeeklyTemplate, 
   InstructorAvailabilityOverride, 
@@ -32,15 +32,20 @@ export class AppointmentService {
   }
 
   private setTimeOnDate(date: Date, timeStr: string): Date {
-    // Get the date in YYYY-MM-DD format
+    // Get the date in YYYY-MM-DD format in INSTRUCTOR'S timezone (not UTC!)
     const dateStr = this.getDateKey(date);
     
-    // Create a datetime string in the instructor's timezone
-    const localDateTimeStr = `${dateStr}T${timeStr}:00`;
+    // Create a datetime string in instructor's timezone format
+    // CRITICAL: Use space separator, not 'T', to avoid parsing issues
+    // The timeStr is the instructor's local time (e.g., "09:00")
+    const localDateTimeStr = `${dateStr} ${timeStr}`;
     
-    // Parse as a date in the instructor's timezone, then convert to UTC
-    // fromZonedTime treats the input as if it's in the specified timezone
+    // fromZonedTime converts "9 AM in Denver" to the equivalent UTC timestamp
+    // This ensures slot times are in UTC for comparison with database timestamps
     const utcDate = fromZonedTime(localDateTimeStr, INSTRUCTOR_TIMEZONE);
+    
+    console.log(`[AppointmentService] setTimeOnDate: ${dateStr} ${timeStr} (${INSTRUCTOR_TIMEZONE}) -> ${utcDate.toISOString()} (UTC)`);
+    
     return utcDate;
   }
 
@@ -54,11 +59,16 @@ export class AppointmentService {
     start2: Date,
     end2: Date
   ): boolean {
-    return start1 < end2 && start2 < end1;
+    const overlaps = start1 < end2 && start2 < end1;
+    return overlaps;
   }
 
   private getDateKey(date: Date): string {
-    return date.toISOString().split('T')[0];
+    // CRITICAL: Get the date string in INSTRUCTOR'S timezone, not UTC
+    // Using toISOString() would shift the date to UTC, potentially changing the day
+    // For example, Dec 19 11PM MST would become Dec 20 in UTC
+    const zonedDate = toZonedTime(date, INSTRUCTOR_TIMEZONE);
+    return format(zonedDate, 'yyyy-MM-dd', { timeZone: INSTRUCTOR_TIMEZONE });
   }
 
   private subtractTimeBlock(
