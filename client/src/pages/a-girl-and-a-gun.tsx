@@ -200,13 +200,13 @@ export default function AGirlAndAGun() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
-              href="https://www.agirlandagun.org/" 
+              href="https://www.agirlandagun.org/chapter/nc-yadkin-valley/" 
               target="_blank"
               rel="noopener noreferrer"
             >
               <Button size="lg" variant="default" className="gap-2" data-testid="button-learn-more">
                 <ExternalLink className="h-4 w-4" />
-                Learn More About A Girl and a Gun
+                Join Now
               </Button>
             </a>
             <Link href="/contact">
