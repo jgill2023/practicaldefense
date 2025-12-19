@@ -4,7 +4,7 @@ import { eq, and, gte, lte, lt, or } from 'drizzle-orm';
 import { google, calendar_v3 } from 'googleapis';
 import { fromZonedTime, toZonedTime, format } from 'date-fns-tz';
 
-const AUTH_BROKER_URL = process.env.AUTH_SERVICE_URL || 'https://auth.instructorops.com';
+const AUTH_BROKER_URL = (process.env.AUTH_SERVICE_URL || 'https://auth.instructorops.com').replace(/\/$/, '');
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
 
 export interface FreeSlot {

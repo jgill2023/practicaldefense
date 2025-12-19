@@ -2666,6 +2666,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==========================================
+  // Calendar Proxy Routes (to Auth Broker)
+  // ==========================================
+  
+  const AUTH_BROKER_URL = (process.env.AUTH_SERVICE_URL || 'https://auth.instructorops.com').replace(/\/$/, '');
+  const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
+
+  // Proxy endpoint to fetch available calendars from Auth Broker
+  app.get('/api/calendars/list', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const instructorId = req.query.instructorId as string || userId;
+
+      if (!INTERNAL_API_KEY) {
+        console.error('[CalendarProxy] INTERNAL_API_KEY not configured');
+        return res.status(500).json({ message: "Calendar integration not configured" });
+      }
+
+      const url = `${AUTH_BROKER_URL}/api/calendars/list?instructorId=${encodeURIComponent(instructorId)}`;
+      console.log(`[CalendarProxy] Fetching calendars from: ${url}`);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'x-instructorops-key': INTERNAL_API_KEY,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[CalendarProxy] Auth Broker error (${response.status}): ${errorText}`);
+        return res.status(response.status).json({ 
+          message: "Failed to fetch calendars",
+          error: errorText 
+        });
+      }
+
+      const data = await response.json();
+      res.json(data);
+    } catch (error: any) {
+      console.error('[CalendarProxy] Error fetching calendars:', error);
+      res.status(500).json({ message: "Failed to fetch calendars" });
+    }
+  });
+
+  // Proxy endpoint to select/save calendar to Auth Broker
+  app.patch('/api/calendars/select', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { calendarId } = req.body;
+      const instructorId = req.body.instructorId || userId;
+
+      if (!calendarId) {
+        return res.status(400).json({ message: "calendarId is required" });
+      }
+
+      if (!INTERNAL_API_KEY) {
+        console.error('[CalendarProxy] INTERNAL_API_KEY not configured');
+        return res.status(500).json({ message: "Calendar integration not configured" });
+      }
+
+      const url = `${AUTH_BROKER_URL}/api/calendars/select`;
+      console.log(`[CalendarProxy] Saving calendar selection to: ${url}`);
+
+      const response = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-instructorops-key': INTERNAL_API_KEY,
+        },
+        body: JSON.stringify({
+          instructorId,
+          calendarId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[CalendarProxy] Auth Broker error (${response.status}): ${errorText}`);
+        return res.status(response.status).json({ 
+          message: "Failed to save calendar selection",
+          error: errorText 
+        });
+      }
+
+      const data = await response.json();
+      res.json(data);
+    } catch (error: any) {
+      console.error('[CalendarProxy] Error saving calendar selection:', error);
+      res.status(500).json({ message: "Failed to save calendar selection" });
+    }
+  });
+
   // Course roster view route (for dialog display)
   app.get('/api/instructor/roster', isAuthenticated, async (req: any, res) => {
     try {

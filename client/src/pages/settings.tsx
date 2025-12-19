@@ -66,15 +66,14 @@ export default function SettingsPage() {
     enabled: !!user && isInstructorOrHigher(user),
   });
 
-  // Fetch available calendars from the Auth Broker when connected
+  // Fetch available calendars from our backend proxy (which calls Auth Broker with API key)
   const { data: calendars, isLoading: calendarsLoading, refetch: refetchCalendars } = useQuery<GoogleCalendar[]>({
     queryKey: ["/api/calendars/list", user?.id],
     queryFn: async () => {
-      const authServiceUrl = appConfig?.authServiceUrl;
-      if (!authServiceUrl || !user?.id) {
+      if (!user?.id) {
         return [];
       }
-      const response = await fetch(`${authServiceUrl}/api/calendars/list?instructorId=${user.id}`, {
+      const response = await fetch(`/api/calendars/list?instructorId=${user.id}`, {
         credentials: "include",
       });
       if (!response.ok) {
@@ -83,10 +82,10 @@ export default function SettingsPage() {
       const data = await response.json();
       return data.calendars || [];
     },
-    enabled: !!calendarStatus?.connected && !!appConfig?.authServiceUrl && !!user?.id,
+    enabled: !!calendarStatus?.connected && !!user?.id,
   });
 
-  // Save selected calendar to the Auth Broker
+  // Save selected calendar via our backend proxy (which calls Auth Broker with API key)
   const handleSaveCalendar = async () => {
     if (!selectedCalendarId || !user?.id) {
       toast({
@@ -97,19 +96,9 @@ export default function SettingsPage() {
       return;
     }
 
-    const authServiceUrl = appConfig?.authServiceUrl;
-    if (!authServiceUrl) {
-      toast({
-        title: "Configuration Error",
-        description: "Auth service URL is not configured",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSavingCalendar(true);
     try {
-      const response = await fetch(`${authServiceUrl}/api/calendars/select`, {
+      const response = await fetch(`/api/calendars/select`, {
         method: "PATCH",
         credentials: "include",
         headers: {
@@ -117,7 +106,7 @@ export default function SettingsPage() {
         },
         body: JSON.stringify({
           instructorId: user.id,
-          selectedCalendarId: selectedCalendarId,
+          calendarId: selectedCalendarId,
         }),
       });
 
