@@ -397,18 +397,24 @@ export class CalendarService {
   ): Promise<FreeSlot[]> {
     const timezone = await this.getInstructorTimezone(instructorId);
     
-    const dateStr = date.toISOString().split('T')[0];
+    // CRITICAL: Use format() to get the date string in instructor's timezone
+    // Do NOT use date.toISOString().split('T')[0] as that converts to UTC first,
+    // which can shift the date by a day (e.g., Dec 19 11PM MST -> Dec 20 in UTC)
+    const dateStr = format(toZonedTime(date, timezone), 'yyyy-MM-dd', { timeZone: timezone });
+    
+    console.log(`[CalendarService] Input date: ${date.toISOString()}, formatted in ${timezone}: ${dateStr}`);
     
     // Convert instructor's local day boundaries to UTC
-    // Important: Pass strings directly to fromZonedTime, NOT Date objects
-    // Using Date objects would interpret in server's timezone, not instructor's
+    // Important: Use space separator (not 'T') for consistent parsing across environments
     const startOfDayUTC = fromZonedTime(`${dateStr} 00:00:00`, timezone);
     const endOfDayUTC = fromZonedTime(`${dateStr} 23:59:59`, timezone);
     
     console.log(`[CalendarService] Day boundary conversion for ${dateStr}:`, {
       timezone,
       startOfDayUTC: startOfDayUTC.toISOString(),
+      startOfDayMs: startOfDayUTC.getTime(),
       endOfDayUTC: endOfDayUTC.toISOString(),
+      endOfDayMs: endOfDayUTC.getTime(),
     });
 
     const [
@@ -463,11 +469,20 @@ export class CalendarService {
       }))
     );
 
-    // Calculate day of week in instructor's timezone
-    // Use toZonedTime to get the date in instructor's local timezone, then get day of week
-    const targetLocalDate = toZonedTime(fromZonedTime(`${dateStr} 12:00:00`, timezone), timezone);
-    const dayOfWeek = targetLocalDate.getDay();
-    console.log(`[CalendarService] Day of week for ${dateStr} in ${timezone}: ${dayOfWeek} (0=Sun, 6=Sat)`);
+    // Calculate day of week directly from the dateStr (which is already in instructor's timezone)
+    // Parse the date components directly to avoid any timezone conversion issues
+    const [year, month, day] = dateStr.split('-').map(Number);
+    // Create a date at noon in instructor's timezone to determine day of week
+    // Using noon avoids any DST edge cases at midnight
+    const noonInTz = fromZonedTime(`${dateStr} 12:00:00`, timezone);
+    const dayOfWeek = noonInTz.getUTCDay(); // Use getUTCDay() since noonInTz is now a UTC timestamp
+    console.log(`[CalendarService] Day of week calculation:`, {
+      dateStr,
+      timezone,
+      noonInTzUTC: noonInTz.toISOString(),
+      dayOfWeek,
+      dayName: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayOfWeek],
+    });
     
     let baseHoursBlocks = weeklyAvailability.filter(a => a.dayOfWeek === dayOfWeek);
 
@@ -523,13 +538,34 @@ export class CalendarService {
           const slotStart = new Date(slotStartMs);
           const slotEnd = new Date(slotEndMs);
           
-          // Verification log: Check slot against all busy periods
+          // Millisecond comparison logging - prove if we're comparing numbers that are hours apart
           for (const busy of allBusyPeriods) {
-            const busyStart = busy.start.getTime();
-            const busyEnd = busy.end.getTime();
-            const overlaps = slotStartMs < busyEnd && slotEndMs > busyStart;
+            const busyStartMs = busy.start.getTime();
+            const busyEndMs = busy.end.getTime();
+            const overlaps = slotStartMs < busyEndMs && slotEndMs > busyStartMs;
+            const timeDiffMs = slotStartMs - busyStartMs;
+            const timeDiffHours = timeDiffMs / (1000 * 60 * 60);
+            
+            // Log comparison for slots near busy periods (within 12 hours)
+            if (Math.abs(timeDiffHours) < 12) {
+              console.log(`[CalendarService] Comparing Slot (ms): ${slotStartMs} to Busy (ms): ${busyStartMs}`, {
+                slotStartUTC: slotStart.toISOString(),
+                slotEndUTC: slotEnd.toISOString(),
+                busyStartUTC: busy.start.toISOString(),
+                busyEndUTC: busy.end.toISOString(),
+                slotStartMs,
+                slotEndMs,
+                busyStartMs,
+                busyEndMs,
+                timeDiffMs,
+                timeDiffHours: timeDiffHours.toFixed(2),
+                overlaps,
+                source: busy.source,
+              });
+            }
+            
             if (overlaps) {
-              console.log(`[CalendarService] Checking slot ${slotStart.toISOString()} against busy period ${busy.start.toISOString()} - OVERLAP DETECTED (should be excluded by subtractBusyFromBase)`);
+              console.log(`[CalendarService] OVERLAP DETECTED - slot ${slotStart.toISOString()} overlaps with busy ${busy.start.toISOString()} (should be excluded by subtractBusyFromBase)`);
             }
           }
 
