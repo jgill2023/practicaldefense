@@ -329,6 +329,33 @@ export default function About() {
                 </p>
               </div>
             </ComicPanel>
+
+            {/* Legacy Members */}
+            <ComicPanel shadow="md" data-testid="about-legacy-members" className="md:col-span-2">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Legacy Members of the Apache Instructor Cadre</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Honored Contributors</p>
+                </div>
+                <p className="text-foreground leading-relaxed">
+                  These names have contributed heavily to shaping our company. Their dedication and expertise continue to inspire us. Some still contribute, others have moved on, but ALL are our family.
+                </p>
+                <div className="border-t border-gray-200 pt-4">
+                  <ul className="text-sm text-foreground space-y-1">
+                    <li>Greg Sidden</li>
+                    <li>Frank Horvath</li>
+                    <li>Joel Hardison</li>
+                    <li>Ryan Okeefe</li>
+                    <li>Landon Nelson</li>
+                    <li>Scott Foster</li>
+                    <li>Dawn Cheek</li>
+                    <li>Zach Cox</li>
+                    <li>Jessie Fletcher</li>
+                    <li>Josh Cook</li>
+                  </ul>
+                </div>
+              </div>
+            </ComicPanel>
           </div>
 
           <ComicPanel shadow="lg" className="mt-8" data-testid="about-apache-letter">
