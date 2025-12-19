@@ -197,6 +197,7 @@ export default function RACCProgram() {
     const product = products.find(p => p.id === productId);
     if (!product) return null;
     return {
+      originalPrice: product.price ? Number(product.price) : null,
       salePrice: product.salePrice ? Number(product.salePrice) : null,
       saleEnabled: product.saleEnabled || false,
       saleStartDate: product.saleStartDate,
@@ -402,15 +403,17 @@ export default function RACCProgram() {
                           pkg.highlight ? "bg-[hsl(209,90%,38%)]/10 text-[hsl(209,90%,38%)] font-bold" : "text-foreground"
                         }`}
                       >
-                        {isOnSale && saleInfo?.salePrice ? (
+                        {isOnSale && saleInfo?.salePrice && saleInfo?.originalPrice ? (
                           <div className="flex flex-col items-center gap-1">
                             <span className="text-sm line-through text-muted-foreground">
-                              {pkg.price}
+                              ${saleInfo.originalPrice.toLocaleString()}
                             </span>
                             <span className="text-red-600 font-bold">
                               ${saleInfo.salePrice.toLocaleString()}
                             </span>
                           </div>
+                        ) : saleInfo?.originalPrice ? (
+                          `$${saleInfo.originalPrice.toLocaleString()}`
                         ) : (
                           pkg.price
                         )}
