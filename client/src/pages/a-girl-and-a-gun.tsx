@@ -209,11 +209,6 @@ export default function AGirlAndAGun() {
                 Join Now
               </Button>
             </a>
-            <Link href="/contact">
-              <Button size="lg" variant="outline" data-testid="button-contact">
-                Get in Touch with Us
-              </Button>
-            </Link>
           </div>
         </section>
 
