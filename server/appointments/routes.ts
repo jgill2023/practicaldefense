@@ -9,6 +9,7 @@ import { db } from '../db';
 import { appointmentTypes, instructorAppointments } from '@shared/schema';
 import { eq, asc } from 'drizzle-orm';
 import { calendarService } from '../services/calendarService';
+import { fromZonedTime } from 'date-fns-tz';
 
 import { getStripeClient } from '../stripeClient';
 
@@ -891,30 +892,36 @@ appointmentRouter.get('/available-slots', async (req, res) => {
       durationMinutes = appointmentType.durationMinutes;
     }
 
-    // Parse dates - handle date-only strings (YYYY-MM-DD) by treating them as local dates
-    // This ensures conflict detection works correctly regardless of timezone
+    // Parse dates - CRITICAL: Interpret date-only strings in INSTRUCTOR'S timezone
+    // When user requests Dec 19, they mean Dec 19 in Denver, not Dec 19 UTC
+    const INSTRUCTOR_TIMEZONE = 'America/Denver';
+    
     let parsedStartDate: Date;
     let parsedEndDate: Date;
     
     const startDateStr = startDate as string;
     const endDateStr = endDate as string;
     
-    // If date-only format (YYYY-MM-DD), parse as local date at start/end of day
+    // If date-only format (YYYY-MM-DD), interpret as instructor's timezone
     if (startDateStr.length === 10) {
-      // Parse as local date at start of day
-      const [year, month, day] = startDateStr.split('-').map(Number);
-      parsedStartDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+      // Parse as start of day in instructor's timezone, then convert to UTC
+      // "2025-12-19T00:00:00" in Denver = some UTC time on Dec 19
+      parsedStartDate = fromZonedTime(`${startDateStr}T00:00:00`, INSTRUCTOR_TIMEZONE);
     } else {
       parsedStartDate = new Date(startDateStr);
     }
     
     if (endDateStr.length === 10) {
-      // Parse as local date at end of day
-      const [year, month, day] = endDateStr.split('-').map(Number);
-      parsedEndDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+      // Parse as end of day in instructor's timezone
+      parsedEndDate = fromZonedTime(`${endDateStr}T23:59:59`, INSTRUCTOR_TIMEZONE);
     } else {
       parsedEndDate = new Date(endDateStr);
     }
+    
+    console.log(`[Route] Parsed dates for ${startDateStr} to ${endDateStr}:`, {
+      startUTC: parsedStartDate.toISOString(),
+      endUTC: parsedEndDate.toISOString(),
+    });
 
     const slots = await appointmentService.generateAvailableSlots(
       instructorId as string,

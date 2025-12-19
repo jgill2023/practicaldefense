@@ -35,16 +35,19 @@ export class AppointmentService {
     // Get the date in YYYY-MM-DD format in INSTRUCTOR'S timezone (not UTC!)
     const dateStr = this.getDateKey(date);
     
-    // Create a datetime string in instructor's timezone format
-    // CRITICAL: Use space separator, not 'T', to avoid parsing issues
-    // The timeStr is the instructor's local time (e.g., "09:00")
-    const localDateTimeStr = `${dateStr} ${timeStr}`;
+    // Ensure timeStr has seconds component for proper ISO format
+    const normalizedTime = timeStr.includes(':') && timeStr.split(':').length === 2 
+      ? `${timeStr}:00` 
+      : timeStr;
     
-    // fromZonedTime converts "9 AM in Denver" to the equivalent UTC timestamp
-    // This ensures slot times are in UTC for comparison with database timestamps
+    // Create a standard ISO datetime string with 'T' separator
+    // This is required for reliable parsing by date-fns
+    const localDateTimeStr = `${dateStr}T${normalizedTime}`;
+    
+    // fromZonedTime interprets the string as instructor's local time and converts to UTC
     const utcDate = fromZonedTime(localDateTimeStr, INSTRUCTOR_TIMEZONE);
     
-    console.log(`[AppointmentService] setTimeOnDate: ${dateStr} ${timeStr} (${INSTRUCTOR_TIMEZONE}) -> ${utcDate.toISOString()} (UTC)`);
+    console.log(`[AppointmentService] setTimeOnDate: ${localDateTimeStr} (${INSTRUCTOR_TIMEZONE}) -> ${utcDate.toISOString()} (UTC), ms=${utcDate.getTime()}`);
     
     return utcDate;
   }
@@ -53,14 +56,30 @@ export class AppointmentService {
     return new Date(date.getTime() + minutes * 60000);
   }
 
+  // Use raw milliseconds for comparison to avoid any timezone/formatting issues
+  private timeRangesOverlapMs(
+    start1Ms: number,
+    end1Ms: number,
+    start2Ms: number,
+    end2Ms: number
+  ): boolean {
+    // Two ranges overlap if: start1 < end2 AND start2 < end1
+    return start1Ms < end2Ms && start2Ms < end1Ms;
+  }
+
   private timeRangesOverlap(
     start1: Date,
     end1: Date,
     start2: Date,
     end2: Date
   ): boolean {
-    const overlaps = start1 < end2 && start2 < end1;
-    return overlaps;
+    // Convert to milliseconds for reliable comparison
+    return this.timeRangesOverlapMs(
+      start1.getTime(),
+      end1.getTime(),
+      start2.getTime(),
+      end2.getTime()
+    );
   }
 
   private getDateKey(date: Date): string {
@@ -251,6 +270,17 @@ export class AppointmentService {
       this.getInstructorConflicts(instructorId, startDate, endDate),
     ]);
 
+    // Precompute conflict milliseconds for efficient comparison
+    const conflictRangesMs = conflicts.map(c => ({
+      startMs: c.startTime.getTime(),
+      endMs: c.endTime.getTime(),
+      source: c.source,
+      startISO: c.startTime.toISOString(),
+      endISO: c.endTime.toISOString(),
+    }));
+
+    console.log(`[AppointmentService] Precomputed conflict ranges (ms):`, conflictRangesMs);
+
     const slots: TimeSlot[] = [];
     const currentDate = new Date(startDate);
 
@@ -271,14 +301,27 @@ export class AppointmentService {
             break;
           }
 
-          const hasConflict = conflicts.some(conflict =>
-            this.timeRangesOverlap(
-              slotStart,
-              slotEnd,
-              conflict.startTime,
-              conflict.endTime
-            )
+          // Get slot times in milliseconds
+          const slotStartMs = slotStart.getTime();
+          const slotEndMs = slotEnd.getTime();
+
+          // Check for conflicts using raw millisecond comparison
+          const conflictingRange = conflictRangesMs.find(conflict =>
+            this.timeRangesOverlapMs(slotStartMs, slotEndMs, conflict.startMs, conflict.endMs)
           );
+
+          const hasConflict = !!conflictingRange;
+
+          // Debug logging for conflict detection
+          if (hasConflict) {
+            console.log(`[AppointmentService] CONFLICT DETECTED for slot:`, {
+              slotStart: slotStart.toISOString(),
+              slotEnd: slotEnd.toISOString(),
+              slotStartMs,
+              slotEndMs,
+              conflictWith: conflictingRange,
+            });
+          }
 
           slots.push({
             startTime: new Date(slotStart),
@@ -294,6 +337,10 @@ export class AppointmentService {
 
       currentDate.setDate(currentDate.getDate() + 1);
     }
+
+    // Log summary of blocked slots
+    const blockedSlots = slots.filter(s => !s.isAvailable);
+    console.log(`[AppointmentService] Generated ${slots.length} total slots, ${blockedSlots.length} blocked by conflicts`);
 
     return slots;
   }
