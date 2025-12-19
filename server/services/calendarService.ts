@@ -399,8 +399,17 @@ export class CalendarService {
     
     const dateStr = date.toISOString().split('T')[0];
     
-    const startOfDayUTC = fromZonedTime(new Date(`${dateStr}T00:00:00`), timezone);
-    const endOfDayUTC = fromZonedTime(new Date(`${dateStr}T23:59:59`), timezone);
+    // Convert instructor's local day boundaries to UTC
+    // Important: Pass strings directly to fromZonedTime, NOT Date objects
+    // Using Date objects would interpret in server's timezone, not instructor's
+    const startOfDayUTC = fromZonedTime(`${dateStr} 00:00:00`, timezone);
+    const endOfDayUTC = fromZonedTime(`${dateStr} 23:59:59`, timezone);
+    
+    console.log(`[CalendarService] Day boundary conversion for ${dateStr}:`, {
+      timezone,
+      startOfDayUTC: startOfDayUTC.toISOString(),
+      endOfDayUTC: endOfDayUTC.toISOString(),
+    });
 
     const [
       googleBusy,
@@ -454,8 +463,12 @@ export class CalendarService {
       }))
     );
 
-    const targetLocalDate = new Date(`${dateStr}T12:00:00`);
+    // Calculate day of week in instructor's timezone
+    // Use toZonedTime to get the date in instructor's local timezone, then get day of week
+    const targetLocalDate = toZonedTime(fromZonedTime(`${dateStr} 12:00:00`, timezone), timezone);
     const dayOfWeek = targetLocalDate.getDay();
+    console.log(`[CalendarService] Day of week for ${dateStr} in ${timezone}: ${dayOfWeek} (0=Sun, 6=Sat)`);
+    
     let baseHoursBlocks = weeklyAvailability.filter(a => a.dayOfWeek === dayOfWeek);
 
     if (baseHoursBlocks.length === 0) {
@@ -465,14 +478,29 @@ export class CalendarService {
     const freeSlots: FreeSlot[] = [];
 
     for (const block of baseHoursBlocks) {
+      // Parse the time components from the weekly template
       const [startHour, startMin] = block.startTime.split(':').map(Number);
       const [endHour, endMin] = block.endTime.split(':').map(Number);
 
-      const blockStartLocal = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`);
-      const blockEndLocal = new Date(`${dateStr}T${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`);
+      // Build datetime strings in instructor's local timezone format
+      // Important: Pass strings directly to fromZonedTime, NOT Date objects
+      // Using Date objects would interpret in server's timezone, not instructor's
+      const startTimeStr = `${dateStr} ${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`;
+      const endTimeStr = `${dateStr} ${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}:00`;
       
-      const blockStartUTC = fromZonedTime(blockStartLocal, timezone);
-      const blockEndUTC = fromZonedTime(blockEndLocal, timezone);
+      // Convert instructor's local time to UTC for comparison with database timestamps
+      const blockStartUTC = fromZonedTime(startTimeStr, timezone);
+      const blockEndUTC = fromZonedTime(endTimeStr, timezone);
+
+      console.log(`[CalendarService] Base availability block conversion:`, {
+        instructorLocalStart: startTimeStr,
+        instructorLocalEnd: endTimeStr,
+        timezone,
+        blockStartUTC: blockStartUTC.toISOString(),
+        blockEndUTC: blockEndUTC.toISOString(),
+        blockStartMs: blockStartUTC.getTime(),
+        blockEndMs: blockEndUTC.getTime(),
+      });
 
       const freeIntervals = this.subtractBusyFromBase(
         blockStartUTC.getTime(),
