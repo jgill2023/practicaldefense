@@ -20,6 +20,7 @@ import practiceForMasteryImage from "@assets/Performance-Shooting_1762673186670.
 import performanceShootingImage from "@assets/Practical-Mastery-2025_1762674118627.jpg";
 import coachingBackgroundImage from "@assets/Main_1762715966076.jpg";
 import oneOnOneTrainingBg from "@assets/header02_1765735082776.jpg";
+import bookCoverImage from "@assets/book_1766120705865.jpg";
 import {
   Select,
   SelectContent,
@@ -1063,12 +1064,12 @@ export default function Landing() {
               </a>
             </div>
             <div className="flex-1 text-center">
-              <div className="bg-white rounded-lg shadow-lg p-6 inline-block">
-                <div className="text-sm font-semibold text-gray-600 mb-2">NEW BOOK</div>
-                <h3 className="text-2xl font-bold text-[hsl(209,90%,38%)] mb-2">Your World Is Not a Gun-Free Zone</h3>
-                <p className="text-sm text-gray-700 mb-4">By Tim Kelly</p>
-                <p className="text-xs text-gray-600 italic">Empowerment through Knowledge & Action</p>
-              </div>
+              <img 
+                src={bookCoverImage}
+                alt="Your World Is Not a Gun-Free Zone by Tim Kelly"
+                className="max-w-sm mx-auto shadow-lg rounded-lg"
+                data-testid="img-book-cover"
+              />
             </div>
           </div>
         </div>
