@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { instructorGoogleCredentials, instructorAvailabilityOverrides, instructorAppointments, instructorWeeklyTemplates, users } from '@shared/schema';
-import { eq, and, gte, lte, lt, or } from 'drizzle-orm';
+import { eq, and, gte, lte, lt, gt, or } from 'drizzle-orm';
 import { google, calendar_v3 } from 'googleapis';
 import { fromZonedTime, toZonedTime, format } from 'date-fns-tz';
 
@@ -58,6 +58,13 @@ export class CalendarService {
       throw new Error('INTERNAL_API_KEY is not configured - cannot fetch tokens from Central Auth');
     }
 
+    console.log(`[CalendarService] Fetching token from Central Auth:`, {
+      url: `${AUTH_BROKER_URL}/api/tokens/get`,
+      instructorId,
+      hasApiKey: !!INTERNAL_API_KEY,
+      apiKeyPrefix: INTERNAL_API_KEY?.substring(0, 8) + '...',
+    });
+
     try {
       // Request fresh token from Central Auth service
       const response = await fetch(`${AUTH_BROKER_URL}/api/tokens/get`, {
@@ -72,13 +79,23 @@ export class CalendarService {
         }),
       });
 
+      // Read the full response text first to diagnose HTML vs JSON issues
+      const responseText = await response.text();
+      console.log(`[CalendarService] Auth Broker Response (status ${response.status}):`, responseText.substring(0, 500));
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[CalendarService] Failed to get token from Central Auth: ${response.status} - ${errorText}`);
-        throw new Error(`Token fetch failed: ${response.status} - ${errorText}`);
+        console.error(`[CalendarService] Failed to get token from Central Auth: ${response.status} - ${responseText}`);
+        throw new Error(`Token fetch failed: ${response.status} - ${responseText}`);
       }
 
-      const tokenData: TokenRefreshResponse = await response.json();
+      // Try to parse as JSON
+      let tokenData: TokenRefreshResponse;
+      try {
+        tokenData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error(`[CalendarService] Response is not valid JSON:`, responseText.substring(0, 500));
+        throw new Error(`Invalid JSON response from Central Auth: ${responseText.substring(0, 200)}`);
+      }
 
       // Update local cache with the fresh token
       const newExpiry = new Date(Date.now() + (tokenData.expires_in || 3600) * 1000);
