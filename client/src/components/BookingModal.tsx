@@ -1361,27 +1361,40 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 {selectedDate ? `Available Times for ${selectedDate.toLocaleDateString()}` : "Select a date to see available times"}
               </h3>
               
-              {!selectedDate ? (
-                <div className="text-center text-muted-foreground py-12">
-                  <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                  <p>Please select a date from the calendar</p>
-                </div>
-              ) : slotsLoading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="h-12 bg-muted animate-pulse rounded"></div>
-                  ))}
-                </div>
-              ) : availableSlots.length === 0 ? (
-                <div className="text-center text-muted-foreground py-12">
-                  <X className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                  <p>No available times for this date</p>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {availableSlots
-                    .filter(slot => slot.isAvailable !== false)
-                    .map((slot, index) => (
+              {(() => {
+                const filteredSlots = availableSlots.filter(slot => slot.isAvailable !== false);
+                
+                if (!selectedDate) {
+                  return (
+                    <div className="text-center text-muted-foreground py-12">
+                      <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                      <p>Please select a date from the calendar</p>
+                    </div>
+                  );
+                }
+                
+                if (slotsLoading) {
+                  return (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="h-12 bg-muted animate-pulse rounded"></div>
+                      ))}
+                    </div>
+                  );
+                }
+                
+                if (filteredSlots.length === 0) {
+                  return (
+                    <div className="text-center text-muted-foreground py-12">
+                      <X className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                      <p>No available times for this date</p>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {filteredSlots.map((slot, index) => (
                       <Button
                         key={index}
                         variant={selectedSlot === slot ? "default" : "outline"}
@@ -1394,8 +1407,9 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                         {selectedSlot === slot && <CheckCircle className="h-4 w-4 ml-auto" />}
                       </Button>
                     ))}
-                </div>
-              )}
+                  </div>
+                );
+              })()}
 
               {selectedSlot && (
                 <div className="mt-6 space-y-3">
