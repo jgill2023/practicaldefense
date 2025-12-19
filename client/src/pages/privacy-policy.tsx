@@ -227,7 +227,7 @@ export default function PrivacyPolicyPage() {
               <p><strong>Apache Solutions</strong></p>
               <p><strong>Email:</strong> Info@ApacheNC.com</p>
               <p><strong>Website:</strong> www.apachenc.com</p>
-              <p><strong>Location:</strong> New Mexico, USA</p>
+              <p><strong>Location:</strong> North Carolina, USA</p>
             </div>
           </CardContent>
         </Card>
