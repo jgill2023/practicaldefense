@@ -423,8 +423,8 @@ export class CalendarService {
   }
 
   /**
-   * Create a Google Calendar event with Meet link.
-   * Includes retry logic for Meet link if not immediately available.
+   * Create a Google Calendar event with Meet link via Central Auth Broker.
+   * The Central Auth service manages OAuth tokens and creates the event on behalf of the instructor.
    */
   async createGoogleEvent(
     instructorId: string,
@@ -434,71 +434,56 @@ export class CalendarService {
     endTime: Date,
     attendeeEmail?: string
   ): Promise<{ eventId: string; meetLink?: string }> {
-    const calendar = await this.getCalendarClient(instructorId);
-    
-    const credentials = await db.query.instructorGoogleCredentials.findFirst({
-      where: eq(instructorGoogleCredentials.instructorId, instructorId),
-    });
-
-    const calendarId = credentials?.primaryCalendarId || 'primary';
-
-    const event: calendar_v3.Schema$Event = {
-      summary,
-      description,
-      start: {
-        dateTime: startTime.toISOString(),
-        timeZone: 'UTC',
-      },
-      end: {
-        dateTime: endTime.toISOString(),
-        timeZone: 'UTC',
-      },
-      conferenceData: {
-        createRequest: {
-          requestId: `booking-${Date.now()}`,
-          conferenceSolutionKey: { type: 'hangoutsMeet' },
-        },
-      },
-      attendees: attendeeEmail ? [{ email: attendeeEmail }] : undefined,
-    };
-
-    const response = await calendar.events.insert({
-      calendarId,
-      requestBody: event,
-      conferenceDataVersion: 1,
-      sendUpdates: 'all',
-    });
-
-    const eventId = response.data.id || '';
-    let meetLink = response.data.hangoutLink || undefined;
-
-    if (!meetLink && eventId) {
-      console.log(`[CalendarService] Meet link not immediately available for event ${eventId}, retrying in 1.5s...`);
-      
-      await this.delay(1500);
-      
-      try {
-        const retryResponse = await calendar.events.get({
-          calendarId,
-          eventId,
-        });
-        
-        meetLink = retryResponse.data.hangoutLink || undefined;
-        
-        if (meetLink) {
-          console.log(`[CalendarService] Meet link retrieved on retry for event ${eventId}`);
-        } else {
-          console.warn(`[CalendarService] Meet link still not available after retry for event ${eventId}`);
-        }
-      } catch (retryError) {
-        console.error(`[CalendarService] Error retrying to fetch Meet link for event ${eventId}:`, retryError);
-      }
+    if (!INTERNAL_API_KEY) {
+      throw new Error('INTERNAL_API_KEY is not configured - cannot create events via Central Auth');
     }
 
-    return {
-      eventId,
-      meetLink,
-    };
+    try {
+      const response = await fetch(`${AUTH_BROKER_URL}/api/calendars/events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-instructorops-key': INTERNAL_API_KEY,
+        },
+        body: JSON.stringify({
+          instructorId,
+          summary,
+          description,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          attendeeEmail,
+          createMeetLink: true,
+        }),
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[CalendarService] Central Auth event creation failed (${response.status}): ${errorText.substring(0, 500)}`);
+        throw new Error(`Failed to create Google Calendar event: ${response.status} - ${errorText.substring(0, 200)}`);
+      }
+
+      if (!contentType.includes('application/json')) {
+        console.error(`[CalendarService] Central Auth returned non-JSON response (${contentType})`);
+        throw new Error('Central Auth returned invalid response format');
+      }
+
+      const data = await response.json();
+      
+      console.log(`[CalendarService] Event created via Central Auth for instructor ${instructorId}:`, {
+        eventId: data.eventId || data.id,
+        meetLink: data.meetLink || data.hangoutLink,
+      });
+
+      return {
+        eventId: data.eventId || data.id || '',
+        meetLink: data.meetLink || data.hangoutLink || undefined,
+      };
+    } catch (error: any) {
+      console.error(`[CalendarService] Error creating Google Calendar event via Central Auth for instructor ${instructorId}:`, error);
+      throw error;
+    }
   }
 
   /**
