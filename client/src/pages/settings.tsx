@@ -61,7 +61,9 @@ export default function SettingsPage() {
       return;
     }
     
-    const returnUrl = encodeURIComponent(window.location.href);
+    // Use /auth/callback as the return URL so the server can save credentials
+    const callbackUrl = `${window.location.origin}/auth/callback?instructorId=${user.id}`;
+    const returnUrl = encodeURIComponent(callbackUrl);
     const authUrl = `${authServiceUrl}/auth?instructorId=${user.id}&returnUrl=${returnUrl}`;
     window.location.href = authUrl;
   };

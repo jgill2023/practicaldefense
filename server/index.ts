@@ -62,38 +62,47 @@ app.use((req, res, next) => {
 
   // Google Calendar OAuth callback from Central Auth - MUST be before Vite catch-all
   app.get("/auth/callback", async (req, res) => {
-    const { instructorId } = req.query;
-    console.log(`Successfully returned from Central Auth for instructor: ${instructorId}`);
+    console.log("[Google OAuth Callback] Received callback with query params:", req.query);
     
-    if (instructorId && typeof instructorId === 'string') {
-      try {
-        // Check if record exists
-        const existing = await db.query.instructorGoogleCredentials.findFirst({
-          where: eq(instructorGoogleCredentials.instructorId, instructorId),
-        });
-        
-        if (existing) {
-          // Update existing record - tokens are managed by Central Auth
-          await db.update(instructorGoogleCredentials)
-            .set({
-              syncStatus: 'active',
-              updatedAt: new Date(),
-            })
-            .where(eq(instructorGoogleCredentials.instructorId, instructorId));
-        } else {
-          // Insert placeholder - tokens are managed by Central Auth App
-          await db.insert(instructorGoogleCredentials).values({
-            instructorId,
-            accessToken: 'managed-by-central-auth',
-            refreshToken: 'managed-by-central-auth',
-            tokenExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year placeholder
+    const { instructorId } = req.query;
+    
+    if (!instructorId || typeof instructorId !== 'string') {
+      console.error("[Google OAuth Callback] Missing or invalid instructorId:", instructorId);
+      return res.redirect("/settings?google_error=missing_instructor_id");
+    }
+    
+    console.log(`[Google OAuth Callback] Processing for instructor: ${instructorId}`);
+    
+    try {
+      // Check if record exists
+      const existing = await db.query.instructorGoogleCredentials.findFirst({
+        where: eq(instructorGoogleCredentials.instructorId, instructorId),
+      });
+      
+      if (existing) {
+        // Update existing record - tokens are managed by Central Auth
+        console.log(`[Google OAuth Callback] Updating existing record for instructor: ${instructorId}`);
+        await db.update(instructorGoogleCredentials)
+          .set({
             syncStatus: 'active',
-          });
-        }
-        console.log(`Updated Google credentials for instructor: ${instructorId}`);
-      } catch (error) {
-        console.error('Error updating Google credentials:', error);
+            updatedAt: new Date(),
+          })
+          .where(eq(instructorGoogleCredentials.instructorId, instructorId));
+      } else {
+        // Insert placeholder - tokens are managed by Central Auth App
+        console.log(`[Google OAuth Callback] Creating new record for instructor: ${instructorId}`);
+        await db.insert(instructorGoogleCredentials).values({
+          instructorId,
+          accessToken: 'managed-by-central-auth',
+          refreshToken: 'managed-by-central-auth',
+          tokenExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year placeholder
+          syncStatus: 'active',
+        });
       }
+      console.log(`[Google OAuth Callback] Successfully saved credentials for instructor: ${instructorId}`);
+    } catch (error) {
+      console.error('[Google OAuth Callback] Error saving credentials:', error);
+      return res.redirect("/settings?google_error=save_failed");
     }
     
     res.redirect("/settings?google_connected=true");
