@@ -546,7 +546,6 @@ export function Layout({ children, headerColor }: LayoutProps) {
               <div className="space-y-2">
                 <Link href="/schedule-list" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
                 <Link href="/student-portal" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-footer-student-dashboard">Student Dashboard</Link>
-                <a href="#resources" className="block text-white/80 hover:text-[#FD66C5] transition-colors">Resources</a>
               </div>
             </div>
 
