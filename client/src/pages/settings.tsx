@@ -16,6 +16,18 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [isConnecting, setIsConnecting] = useState(false);
 
+  // Fetch runtime config for auth service URL
+  const { data: appConfig } = useQuery<{ authServiceUrl: string | null }>({
+    queryKey: ["/api/config"],
+    queryFn: async () => {
+      const response = await fetch("/api/config");
+      if (!response.ok) {
+        throw new Error("Failed to fetch config");
+      }
+      return response.json();
+    },
+  });
+
   const { data: calendarStatus, isLoading: calendarStatusLoading, refetch: refetchCalendarStatus } = useQuery<{
     connected: boolean;
     email?: string;
@@ -50,7 +62,7 @@ export default function SettingsPage() {
     
     setIsConnecting(true);
     
-    const authServiceUrl = import.meta.env.VITE_AUTH_SERVICE_URL;
+    const authServiceUrl = appConfig?.authServiceUrl;
     if (!authServiceUrl) {
       toast({
         title: "Configuration Error",

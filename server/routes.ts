@@ -66,6 +66,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.send(generateRobotsTxt());
   });
 
+  // Runtime configuration endpoint - provides config values that aren't available at build time
+  app.get('/api/config', (_req, res) => {
+    res.json({
+      authServiceUrl: process.env.AUTH_SERVICE_URL || null,
+    });
+  });
+
   // Auth middleware
   await setupAuth(app);
 
