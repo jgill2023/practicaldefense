@@ -209,21 +209,39 @@ export class CalendarService {
     startDate: Date,
     endDate: Date
   ): Promise<BusyPeriod[]> {
+    console.log(`[CalendarService] getExistingBookings query params:`, {
+      instructorId,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
+
     const appointments = await db.query.instructorAppointments.findMany({
       where: and(
         eq(instructorAppointments.instructorId, instructorId),
         lt(instructorAppointments.startTime, endDate),
-        gte(instructorAppointments.endTime, startDate)
+        gt(instructorAppointments.endTime, startDate)
       ),
     });
 
-    return appointments
-      .filter(apt => apt.status !== 'cancelled' && apt.status !== 'rejected')
-      .map(apt => ({
-        start: new Date(apt.startTime),
-        end: new Date(apt.endTime),
-        source: 'existing_booking' as const,
-      }));
+    console.log(`[CalendarService] Found ${appointments.length} total appointments for instructor ${instructorId}`);
+    
+    const filtered = appointments.filter(apt => apt.status !== 'cancelled' && apt.status !== 'rejected');
+    
+    console.log(`[CalendarService] Found ${filtered.length} existing bookings (non-cancelled) for date range`, {
+      dateRange: `${startDate.toISOString()} to ${endDate.toISOString()}`,
+      bookings: filtered.map(apt => ({
+        id: apt.id,
+        status: apt.status,
+        startTime: apt.startTime,
+        endTime: apt.endTime,
+      })),
+    });
+
+    return filtered.map(apt => ({
+      start: new Date(apt.startTime),
+      end: new Date(apt.endTime),
+      source: 'existing_booking' as const,
+    }));
   }
 
   /**
@@ -360,11 +378,25 @@ export class CalendarService {
       this.getWeeklyAvailability(instructorId),
     ]);
 
+    console.log(`[CalendarService] getUnifiedFreeSlots - Sources for ${dateStr}:`, {
+      googleBusy: googleBusy.length,
+      manualBlocks: manualBlocks.length,
+      existingBookings: existingBookings.length,
+    });
+
     const allBusyPeriods = this.mergeOverlappingPeriods([
       ...googleBusy,
       ...manualBlocks,
       ...existingBookings,
     ]);
+
+    console.log(`[CalendarService] Consolidated ${allBusyPeriods.length} busy periods:`, 
+      allBusyPeriods.map(p => ({
+        start: p.start.toISOString(),
+        end: p.end.toISOString(),
+        source: p.source,
+      }))
+    );
 
     const targetLocalDate = new Date(`${dateStr}T12:00:00`);
     const dayOfWeek = targetLocalDate.getDay();
