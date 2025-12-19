@@ -6,8 +6,9 @@ import { appointmentService } from './service';
 import { isAuthenticated } from '../customAuth';
 import { NotificationEngine } from '../notificationEngine';
 import { db } from '../db';
-import { appointmentTypes } from '@shared/schema';
+import { appointmentTypes, instructorAppointments } from '@shared/schema';
 import { eq, asc } from 'drizzle-orm';
+import { calendarService } from '../services/calendarService';
 
 import { getStripeClient } from '../stripeClient';
 
@@ -994,6 +995,50 @@ appointmentRouter.post('/book', isAuthenticated, async (req: any, res) => {
 
     if (!result.success) {
       return res.status(400).json({ message: result.error });
+    }
+
+    // Push to Google Calendar
+    if (result.appointment) {
+      try {
+        console.log('Attempting to push to Google Calendar for instructor:', instructorId);
+        
+        const student = await storage.getUser(studentId);
+        const appointmentType = await storage.getAppointmentType(appointmentTypeId);
+        const studentName = student ? `${student.firstName || ''} ${student.lastName || ''}`.trim() || 'Student' : 'Student';
+        const studentEmail = student?.email;
+        
+        const eventResult = await calendarService.createGoogleEvent(
+          instructorId,
+          `Booking: ${appointmentType?.title || 'Appointment'} with ${studentName}`,
+          `Appointment booked via booking system.
+          
+Student: ${studentName}
+Email: ${studentEmail || 'N/A'}
+${studentNotes ? `Notes: ${studentNotes}` : ''}`,
+          new Date(startTime),
+          new Date(endTime),
+          studentEmail
+        );
+
+        // Update the appointment with Google event ID and meet link
+        if (eventResult.eventId) {
+          await db.update(instructorAppointments)
+            .set({
+              googleEventId: eventResult.eventId,
+              meetLink: eventResult.meetLink || null,
+            })
+            .where(eq(instructorAppointments.id, result.appointment.id));
+          
+          // Update the result object with the new data
+          result.appointment.googleEventId = eventResult.eventId;
+          result.appointment.meetLink = eventResult.meetLink || null;
+        }
+        
+        console.log('Google Calendar event created successfully:', eventResult.eventId);
+      } catch (googleError: any) {
+        console.error('[CRITICAL] Google Sync Failed:', googleError.message);
+        // Don't fail the booking if Google Calendar sync fails
+      }
     }
 
     // Send notification for booking confirmation
