@@ -547,6 +547,7 @@ export class CalendarService {
 
       // Fetch events from Central Auth service which manages the Google OAuth tokens
       const url = new URL(`${AUTH_BROKER_URL}/api/calendars/events`);
+      url.searchParams.set('instructorId', instructorId);
       url.searchParams.set('start', startDate.toISOString());
       url.searchParams.set('end', endDate.toISOString());
 
@@ -554,23 +555,33 @@ export class CalendarService {
         method: 'GET',
         headers: {
           'x-instructorops-key': INTERNAL_API_KEY,
-          'x-instructor-id': instructorId,
         },
       });
 
+      // Check content type before parsing
+      const contentType = response.headers.get('content-type') || '';
+      
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[CalendarService] Central Auth events fetch failed (${response.status}): ${errorText}`);
+        console.error(`[CalendarService] Central Auth events fetch failed (${response.status}): ${errorText.substring(0, 200)}`);
         
-        // Check if re-auth is needed
-        try {
-          const errorData = JSON.parse(errorText);
-          if (errorData.requiresAuth || errorData.requiresReauth) {
-            console.warn(`[CalendarService] Instructor ${instructorId} needs to reconnect Google Calendar`);
+        // Check if re-auth is needed (only if JSON response)
+        if (contentType.includes('application/json')) {
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.requiresAuth || errorData.requiresReauth) {
+              console.warn(`[CalendarService] Instructor ${instructorId} needs to reconnect Google Calendar`);
+            }
+          } catch (e) {
+            // Not valid JSON, ignore
           }
-        } catch (e) {
-          // Not JSON, ignore
         }
+        return [];
+      }
+
+      // If response is not JSON (e.g., HTML error page), return empty
+      if (!contentType.includes('application/json')) {
+        console.warn(`[CalendarService] Central Auth returned non-JSON response (${contentType})`);
         return [];
       }
 
