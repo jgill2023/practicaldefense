@@ -82,6 +82,10 @@ export function Layout({ children, headerColor }: LayoutProps) {
                       <Link href="/instructor-dashboard" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-dashboard">
                         Dashboard
                       </Link>
+                      <Link href="/instructor-calendar" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors flex items-center gap-1" data-testid="link-secondary-calendar">
+                        <Calendar className="h-3 w-3" />
+                        Calendar
+                      </Link>
                       <Link href="/students" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-students">
                         Students
                       </Link>
@@ -380,6 +384,12 @@ export function Layout({ children, headerColor }: LayoutProps) {
                           <Link href="/instructor-dashboard" className="block">
                             <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-instructor-dashboard-mobile">
                               Dashboard
+                            </Button>
+                          </Link>
+                          <Link href="/instructor-calendar" className="block">
+                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-instructor-calendar-mobile">
+                              <Calendar className="h-4 w-4 mr-2" />
+                              Calendar
                             </Button>
                           </Link>
                           <Link href="/students" className="block">

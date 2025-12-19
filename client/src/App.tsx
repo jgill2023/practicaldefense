@@ -11,6 +11,7 @@ import Signup from "@/pages/Signup";
 import VerifyEmail from "@/pages/VerifyEmail";
 import ResetPassword from "@/pages/ResetPassword";
 import InstructorDashboard from "@/pages/instructor-dashboard";
+import InstructorCalendar from "@/pages/instructor-calendar";
 import CourseManagement from "@/pages/course-management";
 import CourseFormsManagement from "@/pages/course-forms-management";
 import ProductManagement from "@/pages/product-management";
@@ -149,6 +150,8 @@ function Router() {
       <Route path="/refund-policy" component={RefundPolicyPage} />
       <Route path="/book-appointment/:instructorId" component={BookAppointmentPage} />
       <Route path="/instructor-dashboard" component={InstructorDashboard} />
+      <Route path="/instructor-calendar" component={InstructorCalendar} />
+      <Route path="/instructor" component={InstructorDashboard} />
       <Route path="/course-management" component={CourseManagement} />
       <Route path="/course-forms-management" component={CourseFormsManagement} />
       <Route path="/product-management" component={ProductManagement} />

@@ -510,6 +510,121 @@ export class CalendarService {
       reason: reason || 'Manual block',
     });
   }
+
+  /**
+   * Fetch actual Google Calendar events with titles and details
+   */
+  async getGoogleCalendarEvents(
+    instructorId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<{
+    id: string;
+    title: string;
+    description?: string;
+    start: Date;
+    end: Date;
+    location?: string;
+    isAllDay: boolean;
+    source: 'google';
+  }[]> {
+    try {
+      const calendar = await this.getCalendarClient(instructorId);
+      
+      const credentials = await db.query.instructorGoogleCredentials.findFirst({
+        where: eq(instructorGoogleCredentials.instructorId, instructorId),
+      });
+
+      const calendarId = credentials?.primaryCalendarId || 'primary';
+
+      const response = await calendar.events.list({
+        calendarId,
+        timeMin: startDate.toISOString(),
+        timeMax: endDate.toISOString(),
+        singleEvents: true,
+        orderBy: 'startTime',
+        maxResults: 500,
+      });
+
+      const events = response.data.items || [];
+      
+      return events.map(event => {
+        const isAllDay = !event.start?.dateTime;
+        const start = isAllDay 
+          ? new Date(event.start?.date || '')
+          : new Date(event.start?.dateTime || '');
+        const end = isAllDay
+          ? new Date(event.end?.date || '')
+          : new Date(event.end?.dateTime || '');
+
+        return {
+          id: event.id || '',
+          title: event.summary || '(No title)',
+          description: event.description || undefined,
+          start,
+          end,
+          location: event.location || undefined,
+          isAllDay,
+          source: 'google' as const,
+        };
+      });
+    } catch (error: any) {
+      const status = error?.response?.status || error?.code;
+      const message = error?.response?.data?.error?.message || error?.message || 'Unknown error';
+      
+      if (status === 403 || status === 401) {
+        console.error(`[CalendarService] Google Calendar access error (${status}) for instructor ${instructorId}: ${message}`);
+      } else {
+        console.error(`[CalendarService] Error fetching Google Calendar events for instructor ${instructorId}:`, error);
+      }
+      
+      return [];
+    }
+  }
+
+  /**
+   * Get all appointments for the instructor with details
+   */
+  async getInstructorAppointments(
+    instructorId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<{
+    id: string;
+    title: string;
+    description?: string;
+    start: Date;
+    end: Date;
+    studentName: string;
+    studentEmail: string;
+    status: string;
+    appointmentTypeName?: string;
+    source: 'appointment';
+  }[]> {
+    const appointments = await db.query.instructorAppointments.findMany({
+      where: and(
+        eq(instructorAppointments.instructorId, instructorId),
+        lt(instructorAppointments.startTime, endDate),
+        gte(instructorAppointments.endTime, startDate)
+      ),
+      with: {
+        appointmentType: true,
+      },
+    });
+
+    return appointments.map(apt => ({
+      id: apt.id,
+      title: apt.appointmentType?.name || 'Appointment',
+      description: apt.studentNotes || undefined,
+      start: new Date(apt.startTime),
+      end: new Date(apt.endTime),
+      studentName: apt.studentName,
+      studentEmail: apt.studentEmail,
+      status: apt.status,
+      appointmentTypeName: apt.appointmentType?.name,
+      source: 'appointment' as const,
+    }));
+  }
 }
 
 export const calendarService = new CalendarService();

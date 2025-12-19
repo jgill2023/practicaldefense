@@ -310,6 +310,70 @@ calendarRouter.post('/instructor/google-disconnect', isAuthenticated, requireIns
   }
 });
 
+calendarRouter.get('/instructor/calendar-events', isAuthenticated, requireInstructorOrHigher, async (req: any, res: Response) => {
+  try {
+    const instructorId = req.user.id;
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ message: 'startDate and endDate are required' });
+    }
+
+    const start = new Date(startDate as string);
+    const end = new Date(endDate as string);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ message: 'Invalid date format' });
+    }
+
+    const credentials = await db.query.instructorGoogleCredentials.findFirst({
+      where: eq(instructorGoogleCredentials.instructorId, instructorId),
+    });
+
+    const googleEvents = credentials 
+      ? await calendarService.getGoogleCalendarEvents(instructorId, start, end)
+      : [];
+
+    const appointments = await calendarService.getInstructorAppointments(instructorId, start, end);
+
+    const manualBlocks = await calendarService.getManualBlocks(instructorId, start, end);
+
+    res.json({
+      googleEvents: googleEvents.map(event => ({
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        start: event.start.toISOString(),
+        end: event.end.toISOString(),
+        location: event.location,
+        isAllDay: event.isAllDay,
+        source: 'google',
+      })),
+      appointments: appointments.map(apt => ({
+        id: apt.id,
+        title: apt.title,
+        description: apt.description,
+        start: apt.start.toISOString(),
+        end: apt.end.toISOString(),
+        studentName: apt.studentName,
+        studentEmail: apt.studentEmail,
+        status: apt.status,
+        appointmentTypeName: apt.appointmentTypeName,
+        source: 'appointment',
+      })),
+      manualBlocks: manualBlocks.map(block => ({
+        start: block.start.toISOString(),
+        end: block.end.toISOString(),
+        source: 'manual_block',
+      })),
+      googleConnected: !!credentials,
+    });
+  } catch (error) {
+    console.error('Error fetching calendar events:', error);
+    res.status(500).json({ message: 'Failed to fetch calendar events' });
+  }
+});
+
 const weeklyTemplateSchema = z.object({
   dayOfWeek: z.number().min(0).max(6),
   startTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Time must be in HH:MM or HH:MM:SS format'),
