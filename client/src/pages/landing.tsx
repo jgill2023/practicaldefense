@@ -1037,6 +1037,42 @@ export default function Landing() {
           <UpcomingCoursesList onRegister={handleRegisterCourse} />
         </div>
       </section>
+      {/* Book Promotion Section */}
+      <section className="bg-gradient-to-r from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)] py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="flex-1">
+              <h2 className="font-heading text-3xl uppercase tracking-wide text-white mb-4">
+                Transform Your Mindset
+              </h2>
+              <p className="text-lg text-white/90 mb-6">
+                Authored by Tim Kelly, our founder and lead instructor, "Your World Is Not a Gun-Free Zone" challenges conventional thinking about personal safety and empowerment. This essential read explores practical strategies for responsible citizens to navigate an unpredictable world.
+              </p>
+              <a 
+                href="https://www.amazon.com/Your-World-Not-Gun-Free-Zone/dp/B0DT1J5THS/ref=sr_1_1?crid=COV2QJKGRHT9&dib=eyJ2IjoiMSJ9.u_bOjWq3og8B0Tzci7HG7FwgI0Ec2KlpKYJiYYoK_8R3TbXaAJq939KERS7CDNL5GAzU9YeWLL-_acy9eyGh6lLJiiWqPe6TX3cnXN5zOZX0YeFe9-O2E5glv1YXCKzPOKRr0gZhvHBwuCmPGTXqW0F0xNEFzQD3mYd472HPXsQ8Krki2qhdCeD0NEmmThAjkvmdIvf-ePj0h3SbGAuxzBVm4MzCyKY2QXwj5X1Xm5o.n7XEezhP3wUjp1Zl_qZpH-hOnHSLoMW3mEwtLEahrd8&dib_tag=se&keywords=your+world+is+not+a+gun+free+zone&nsdOptOutParam=true&qid=1765547397&sprefix=your+world+is+no,aps,174&sr=8-1"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button 
+                  size="lg" 
+                  className="bg-white text-[hsl(209,90%,38%)] hover:bg-gray-100 font-heading uppercase tracking-wide"
+                  data-testid="button-book-promotion"
+                >
+                  Get Your Copy on Amazon
+                </Button>
+              </a>
+            </div>
+            <div className="flex-1 text-center">
+              <div className="bg-white rounded-lg shadow-lg p-6 inline-block">
+                <div className="text-sm font-semibold text-gray-600 mb-2">NEW BOOK</div>
+                <h3 className="text-2xl font-bold text-[hsl(209,90%,38%)] mb-2">Your World Is Not a Gun-Free Zone</h3>
+                <p className="text-sm text-gray-700 mb-4">By Tim Kelly</p>
+                <p className="text-xs text-gray-600 italic">Empowerment through Knowledge & Action</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* Customer Testimonials */}
       <section className="bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
