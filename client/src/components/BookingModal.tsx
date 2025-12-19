@@ -708,11 +708,12 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
     if (!(appointmentType as any)?.isVariableDuration) return [];
     
     const minHours = (appointmentType as any).minimumDurationHours || 2;
+    const maxHours = (appointmentType as any).maximumDurationHours || minHours + 6;
     const incrementMinutes = (appointmentType as any).durationIncrementMinutes || 60;
     const incrementHours = incrementMinutes / 60;
     
     const options = [];
-    for (let hours = minHours; hours <= minHours + 6; hours += incrementHours) {
+    for (let hours = minHours; hours <= maxHours; hours += incrementHours) {
       options.push(hours);
     }
     return options;
@@ -1151,7 +1152,7 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                 <>
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
-                    <span>{(appointmentType as any).minimumDurationHours}+ hours</span>
+                    <span>{(appointmentType as any).minimumDurationHours}-{(appointmentType as any).maximumDurationHours || ((appointmentType as any).minimumDurationHours + 6)} hours</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <DollarSign className="h-4 w-4" />

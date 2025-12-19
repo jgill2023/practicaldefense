@@ -99,6 +99,7 @@ export default function AppointmentsPage() {
     isActive: true,
     isVariableDuration: false,
     minimumDurationHours: 2,
+    maximumDurationHours: 8,
     durationIncrementMinutes: 60,
     pricePerHour: 0,
     useTieredPricing: false,
@@ -423,6 +424,7 @@ export default function AppointmentsPage() {
       isActive: true,
       isVariableDuration: false,
       minimumDurationHours: 2,
+      maximumDurationHours: 8,
       durationIncrementMinutes: 60,
       pricePerHour: 0,
       useTieredPricing: false,
@@ -464,6 +466,7 @@ export default function AppointmentsPage() {
         isActive: type.isActive,
         isVariableDuration: (type as any).isVariableDuration || false,
         minimumDurationHours: (type as any).minimumDurationHours || 2,
+        maximumDurationHours: (type as any).maximumDurationHours || 8,
         durationIncrementMinutes: (type as any).durationIncrementMinutes || 60,
         pricePerHour: Number((type as any).pricePerHour) || 0,
         useTieredPricing: (type as any).useTieredPricing || false,
@@ -680,8 +683,12 @@ export default function AppointmentsPage() {
                                 isActive: type.isActive,
                                 isVariableDuration: type.isVariableDuration || false,
                                 minimumDurationHours: type.minimumDurationHours || 2,
+                                maximumDurationHours: type.maximumDurationHours || 8,
                                 durationIncrementMinutes: type.durationIncrementMinutes || 60,
                                 pricePerHour: type.pricePerHour || 0,
+                                useTieredPricing: type.useTieredPricing || false,
+                                firstHourPrice: type.firstHourPrice || 0,
+                                additionalHourPrice: type.additionalHourPrice || 0,
                               });
                               setEditingType(null);
                               setShowTypeDialog(true);
@@ -1268,7 +1275,7 @@ export default function AppointmentsPage() {
                 </div>
               ) : (
                 <div className="space-y-4 p-4 border rounded-md">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="minimum-hours">Minimum Hours*</Label>
                       <Input
@@ -1277,13 +1284,26 @@ export default function AppointmentsPage() {
                         min="1"
                         step="1"
                         value={typeForm.minimumDurationHours}
-                        onChange={(e) => setTypeForm({ ...typeForm, minimumDurationHours: parseInt(e.target.value) || 2 })}
+                        onChange={(e) => setTypeForm({ ...typeForm, minimumDurationHours: parseInt(e.target.value) || 1 })}
                         data-testid="input-type-minimum-hours"
                       />
-                      <p className="text-xs text-muted-foreground mt-1">Minimum appointment length</p>
+                      <p className="text-xs text-muted-foreground mt-1">Minimum length</p>
                     </div>
                     <div>
-                      <Label htmlFor="increment-minutes">Increment (minutes)*</Label>
+                      <Label htmlFor="maximum-hours">Maximum Hours*</Label>
+                      <Input
+                        id="maximum-hours"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={typeForm.maximumDurationHours}
+                        onChange={(e) => setTypeForm({ ...typeForm, maximumDurationHours: parseInt(e.target.value) || 8 })}
+                        data-testid="input-type-maximum-hours"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Maximum length</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="increment-minutes">Increment*</Label>
                       <select
                         id="increment-minutes"
                         className="w-full border border-input rounded-md px-3 py-2 text-sm"
@@ -1296,7 +1316,7 @@ export default function AppointmentsPage() {
                         <option value="90">1.5 hours</option>
                         <option value="120">2 hours</option>
                       </select>
-                      <p className="text-xs text-muted-foreground mt-1">Duration increases in these steps</p>
+                      <p className="text-xs text-muted-foreground mt-1">Duration steps</p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between border-t pt-4">

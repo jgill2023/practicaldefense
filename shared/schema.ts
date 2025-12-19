@@ -324,6 +324,7 @@ export const appointmentTypes = pgTable("appointment_types", {
   // Variable duration fields
   isVariableDuration: boolean("is_variable_duration").notNull().default(false), // Enable variable-duration booking
   minimumDurationHours: integer("minimum_duration_hours"), // Minimum hours for variable duration (e.g., 2)
+  maximumDurationHours: integer("maximum_duration_hours"), // Maximum hours for variable duration (e.g., 8)
   durationIncrementMinutes: integer("duration_increment_minutes"), // Increment in minutes (e.g., 60 for 1-hour increments)
   pricePerHour: decimal("price_per_hour", { precision: 10, scale: 2 }), // Price per hour for variable duration bookings
   // Tiered pricing fields - e.g., $60 for first hour, $50 for each additional hour
