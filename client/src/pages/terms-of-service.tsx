@@ -243,9 +243,7 @@ export default function TermsOfServicePage() {
             <CardTitle>14. Governing Law and Jurisdiction</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">
-              These Terms are governed by the laws of the State of New Mexico, without regard to conflict-of-law principles. Any disputes shall be resolved exclusively in the state or federal courts located in Bernalillo County, New Mexico.
-            </p>
+            <p className="text-muted-foreground">These Terms are governed by the laws of the State of North Carolina, without regard to conflict-of-law principles. Any disputes shall be resolved exclusively in the state or federal courts located in North Carolina.</p>
           </CardContent>
         </Card>
 
