@@ -1042,7 +1042,15 @@ export default function Landing() {
       <section className="bg-gradient-to-r from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)] py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1">
+            <div className="md:w-1/3 flex justify-center">
+              <img 
+                src={bookCoverImage}
+                alt="Your World Is Not a Gun-Free Zone by Tim Kelly"
+                className="w-auto h-auto max-h-96 shadow-lg rounded-lg"
+                data-testid="img-book-cover"
+              />
+            </div>
+            <div className="md:w-2/3">
               <h2 className="font-heading text-3xl uppercase tracking-wide text-white mb-4">
                 Transform Your Mindset
               </h2>
@@ -1062,14 +1070,6 @@ export default function Landing() {
                   Get Your Copy on Amazon
                 </Button>
               </a>
-            </div>
-            <div className="flex-1 text-center">
-              <img 
-                src={bookCoverImage}
-                alt="Your World Is Not a Gun-Free Zone by Tim Kelly"
-                className="max-w-sm mx-auto shadow-lg rounded-lg"
-                data-testid="img-book-cover"
-              />
             </div>
           </div>
         </div>
