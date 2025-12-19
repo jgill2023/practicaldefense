@@ -338,8 +338,14 @@ calendarRouter.get('/instructor/calendar-events', isAuthenticated, requireInstru
 
     const manualBlocks = await calendarService.getManualBlocks(instructorId, start, end);
 
+    // Filter out events with invalid dates
+    const validGoogleEvents = googleEvents.filter(event => 
+      event.start instanceof Date && !isNaN(event.start.getTime()) &&
+      event.end instanceof Date && !isNaN(event.end.getTime())
+    );
+
     res.json({
-      googleEvents: googleEvents.map(event => ({
+      googleEvents: validGoogleEvents.map(event => ({
         id: event.id,
         title: event.title,
         description: event.description,
