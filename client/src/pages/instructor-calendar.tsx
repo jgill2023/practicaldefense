@@ -432,7 +432,7 @@ export default function InstructorCalendar() {
       </div>
 
       <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="event-details-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" data-testid="text-event-title">
               {selectedEvent?.resource.type === 'google' && (
@@ -453,6 +453,9 @@ export default function InstructorCalendar() {
               )}
               {selectedEvent?.title}
             </DialogTitle>
+            <DialogDescription id="event-details-description" className="sr-only">
+              Event details and information
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">

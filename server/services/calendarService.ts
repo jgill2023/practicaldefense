@@ -28,7 +28,7 @@ interface TokenRefreshResponse {
 export class CalendarService {
   /**
    * Get a valid access token for the instructor.
-   * If the token is expired, refresh it via the central auth broker.
+   * Fetches fresh tokens from the Central Auth service since tokens are managed there.
    */
   async getValidAccessToken(instructorId: string): Promise<string> {
     const credentials = await db.query.instructorGoogleCredentials.findFirst({
@@ -39,39 +39,49 @@ export class CalendarService {
       throw new Error(`No Google credentials found for instructor ${instructorId}`);
     }
 
-    const now = Date.now();
-    const tokenExpiryTime = new Date(credentials.tokenExpiry).getTime();
-    const bufferMs = 5 * 60 * 1000;
+    // Check if we have placeholder tokens (managed by Central Auth)
+    const isPlaceholderToken = credentials.accessToken === 'managed-by-central-auth';
+    
+    // If we have a real token that hasn't expired, use it
+    if (!isPlaceholderToken) {
+      const now = Date.now();
+      const tokenExpiryTime = new Date(credentials.tokenExpiry).getTime();
+      const bufferMs = 5 * 60 * 1000;
 
-    if (tokenExpiryTime > now + bufferMs) {
-      return credentials.accessToken;
+      if (tokenExpiryTime > now + bufferMs) {
+        return credentials.accessToken;
+      }
     }
 
+    // Need to get fresh token from Central Auth service
     if (!INTERNAL_API_KEY) {
-      throw new Error('INTERNAL_API_KEY is not configured');
+      throw new Error('INTERNAL_API_KEY is not configured - cannot fetch tokens from Central Auth');
     }
 
     try {
-      const response = await fetch(`${AUTH_BROKER_URL}/refresh`, {
+      // Request fresh token from Central Auth service
+      const response = await fetch(`${AUTH_BROKER_URL}/api/tokens/get`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${INTERNAL_API_KEY}`,
+          'x-instructorops-key': INTERNAL_API_KEY,
+          'x-instructor-id': instructorId,
         },
         body: JSON.stringify({
-          refresh_token: credentials.refreshToken,
           instructor_id: instructorId,
         }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Token refresh failed: ${response.status} - ${errorText}`);
+        console.error(`[CalendarService] Failed to get token from Central Auth: ${response.status} - ${errorText}`);
+        throw new Error(`Token fetch failed: ${response.status} - ${errorText}`);
       }
 
       const tokenData: TokenRefreshResponse = await response.json();
 
-      const newExpiry = new Date(Date.now() + tokenData.expires_in * 1000);
+      // Update local cache with the fresh token
+      const newExpiry = new Date(Date.now() + (tokenData.expires_in || 3600) * 1000);
       await db.update(instructorGoogleCredentials)
         .set({
           accessToken: tokenData.access_token,
@@ -82,8 +92,8 @@ export class CalendarService {
 
       return tokenData.access_token;
     } catch (error) {
-      console.error('Error refreshing Google access token:', error);
-      throw new Error('Failed to refresh Google access token');
+      console.error('[CalendarService] Error getting access token from Central Auth:', error);
+      throw new Error('Failed to get Google access token from Central Auth');
     }
   }
 
@@ -512,7 +522,8 @@ export class CalendarService {
   }
 
   /**
-   * Fetch actual Google Calendar events with titles and details
+   * Fetch Google Calendar events via Central Auth service
+   * The Central Auth service manages the OAuth tokens and makes the Google API calls
    */
   async getGoogleCalendarEvents(
     instructorId: string,
@@ -529,37 +540,56 @@ export class CalendarService {
     source: 'google';
   }[]> {
     try {
-      const calendar = await this.getCalendarClient(instructorId);
-      
-      const credentials = await db.query.instructorGoogleCredentials.findFirst({
-        where: eq(instructorGoogleCredentials.instructorId, instructorId),
+      if (!INTERNAL_API_KEY) {
+        console.error('[CalendarService] INTERNAL_API_KEY not configured - cannot fetch from Central Auth');
+        return [];
+      }
+
+      // Fetch events from Central Auth service which manages the Google OAuth tokens
+      const url = new URL(`${AUTH_BROKER_URL}/api/calendars/events`);
+      url.searchParams.set('start', startDate.toISOString());
+      url.searchParams.set('end', endDate.toISOString());
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'x-instructorops-key': INTERNAL_API_KEY,
+          'x-instructor-id': instructorId,
+        },
       });
 
-      const calendarId = credentials?.primaryCalendarId || 'primary';
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[CalendarService] Central Auth events fetch failed (${response.status}): ${errorText}`);
+        
+        // Check if re-auth is needed
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.requiresAuth || errorData.requiresReauth) {
+            console.warn(`[CalendarService] Instructor ${instructorId} needs to reconnect Google Calendar`);
+          }
+        } catch (e) {
+          // Not JSON, ignore
+        }
+        return [];
+      }
 
-      const response = await calendar.events.list({
-        calendarId,
-        timeMin: startDate.toISOString(),
-        timeMax: endDate.toISOString(),
-        singleEvents: true,
-        orderBy: 'startTime',
-        maxResults: 500,
-      });
-
-      const events = response.data.items || [];
+      const data = await response.json();
+      const events = data.events || data || [];
       
-      return events.map(event => {
-        const isAllDay = !event.start?.dateTime;
+      return events.map((event: any) => {
+        // Handle all-day events (date only) vs timed events (dateTime)
+        const isAllDay = !event.start?.dateTime && !!event.start?.date;
         const start = isAllDay 
-          ? new Date(event.start?.date || '')
-          : new Date(event.start?.dateTime || '');
+          ? new Date(event.start?.date || event.startTime || '')
+          : new Date(event.start?.dateTime || event.startTime || '');
         const end = isAllDay
-          ? new Date(event.end?.date || '')
-          : new Date(event.end?.dateTime || '');
+          ? new Date(event.end?.date || event.endTime || '')
+          : new Date(event.end?.dateTime || event.endTime || '');
 
         return {
-          id: event.id || '',
-          title: event.summary || '(No title)',
+          id: event.id || event.googleEventId || '',
+          title: event.summary || event.title || '(No title)',
           description: event.description || undefined,
           start,
           end,
@@ -569,15 +599,7 @@ export class CalendarService {
         };
       });
     } catch (error: any) {
-      const status = error?.response?.status || error?.code;
-      const message = error?.response?.data?.error?.message || error?.message || 'Unknown error';
-      
-      if (status === 403 || status === 401) {
-        console.error(`[CalendarService] Google Calendar access error (${status}) for instructor ${instructorId}: ${message}`);
-      } else {
-        console.error(`[CalendarService] Error fetching Google Calendar events for instructor ${instructorId}:`, error);
-      }
-      
+      console.error(`[CalendarService] Error fetching Google Calendar events from Central Auth for instructor ${instructorId}:`, error);
       return [];
     }
   }
