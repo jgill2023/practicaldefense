@@ -177,6 +177,12 @@ export class AppointmentService {
     startDate: Date,
     endDate: Date
   ): Promise<{ startTime: Date; endTime: Date; source?: string }[]> {
+    console.log(`[AppointmentService] getInstructorConflicts called:`, {
+      instructorId,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
+
     const [appointments, courseSchedules] = await Promise.all([
       storage.getAppointments({
         instructorId,
@@ -186,9 +192,12 @@ export class AppointmentService {
       storage.getInstructorCourseSchedules(instructorId, startDate, endDate),
     ]);
 
+    console.log(`[AppointmentService] Found ${appointments.length} appointments for date range`);
+
     const conflicts: { startTime: Date; endTime: Date; source?: string }[] = [];
 
     appointments.forEach(apt => {
+      console.log(`[AppointmentService] Appointment: id=${apt.id}, status=${apt.status}, start=${apt.startTime}, end=${apt.endTime}`);
       if (apt.status === 'confirmed' || apt.status === 'pending') {
         conflicts.push({
           startTime: new Date(apt.startTime),
@@ -205,6 +214,12 @@ export class AppointmentService {
         source: 'course',
       });
     });
+
+    console.log(`[AppointmentService] Total conflicts found: ${conflicts.length}`, conflicts.map(c => ({
+      source: c.source,
+      start: c.startTime.toISOString(),
+      end: c.endTime.toISOString(),
+    })));
 
     return conflicts;
   }
