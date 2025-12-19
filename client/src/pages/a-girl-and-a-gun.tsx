@@ -107,45 +107,6 @@ export default function AGirlAndAGun() {
           </div>
         </section>
 
-        {/* Legacy Members Section */}
-        <section className="mb-12">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#69579e] to-[#b6a8cc] rounded-lg transition-all duration-200 translate-x-2 -translate-y-2 rotate-2 group-hover:from-[#FD66C5] group-hover:to-[#FBA3F0]" />
-            <div className="relative rounded-lg p-8 md:p-12 border-2" style={{ backgroundColor: '#b6a8cc', borderColor: '#6956A2' }}>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-4 mb-6">
-                  <Users className="h-8 w-8" style={{ color: '#6956A2' }} />
-                  <h2 className="text-3xl font-bold" data-testid="heading-legacy">
-                    Legacy Members of the Apache Instructor Cadre
-                  </h2>
-                </div>
-                <p className="text-lg text-gray-800 mb-6" data-testid="text-legacy-intro">
-                  These names have contributed heavily to shaping our company. Their dedication and expertise continue to inspire us. Some still contribute, others have moved on, but ALL are our family.
-                </p>
-                <div className="grid md:grid-cols-2 gap-4 text-gray-800">
-                  {[
-                    "Greg Sidden",
-                    "Frank Horvath",
-                    "Joel Hardison",
-                    "Ryan Okeefe",
-                    "Landon Nelson",
-                    "Scott Foster",
-                    "Dawn Cheek",
-                    "Zach Cox",
-                    "Jessie Fletcher",
-                    "Josh Cook"
-                  ].map((name) => (
-                    <div key={name} className="flex items-start gap-2">
-                      <span className="font-bold text-[#846da8] mt-1">•</span>
-                      <span>{name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Local Chapter */}
         <section className="mb-12">
           <h2 className="text-3xl font-bold mb-8 text-center" data-testid="heading-chapter">
