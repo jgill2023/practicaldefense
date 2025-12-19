@@ -316,7 +316,7 @@ export class CalendarService {
   /**
    * Interval subtraction algorithm: Given a base interval [baseStart, baseEnd] and
    * a list of busy intervals, return the remaining free intervals.
-   * All operations use UTC timestamps.
+   * All operations use UTC timestamps (milliseconds since epoch).
    */
   private subtractBusyFromBase(
     baseStartMs: number,
@@ -326,30 +326,49 @@ export class CalendarService {
     const freeIntervals: Array<{ start: number; end: number }> = [];
     let currentStart = baseStartMs;
 
+    console.log(`[CalendarService] subtractBusyFromBase - Base interval: ${new Date(baseStartMs).toISOString()} to ${new Date(baseEndMs).toISOString()}`);
+
     const relevantBusy = busyPeriods
       .filter(b => b.start.getTime() < baseEndMs && b.end.getTime() > baseStartMs)
       .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+    console.log(`[CalendarService] subtractBusyFromBase - Relevant busy periods: ${relevantBusy.length}`, 
+      relevantBusy.map(b => ({
+        startMs: b.start.getTime(),
+        endMs: b.end.getTime(),
+        startUTC: b.start.toISOString(),
+        endUTC: b.end.toISOString(),
+        source: b.source,
+      }))
+    );
 
     for (const busy of relevantBusy) {
       const busyStart = busy.start.getTime();
       const busyEnd = busy.end.getTime();
 
+      console.log(`[CalendarService] Processing busy: ${busy.start.toISOString()} to ${busy.end.toISOString()} (source: ${busy.source}), currentStart: ${new Date(currentStart).toISOString()}`);
+
       if (busyStart > currentStart) {
+        const freeEnd = Math.min(busyStart, baseEndMs);
+        console.log(`[CalendarService] Adding free interval: ${new Date(currentStart).toISOString()} to ${new Date(freeEnd).toISOString()}`);
         freeIntervals.push({
           start: currentStart,
-          end: Math.min(busyStart, baseEndMs),
+          end: freeEnd,
         });
       }
 
       currentStart = Math.max(currentStart, busyEnd);
+      console.log(`[CalendarService] Updated currentStart to: ${new Date(currentStart).toISOString()}`);
 
       if (currentStart >= baseEndMs) break;
     }
 
     if (currentStart < baseEndMs) {
+      console.log(`[CalendarService] Adding final free interval: ${new Date(currentStart).toISOString()} to ${new Date(baseEndMs).toISOString()}`);
       freeIntervals.push({ start: currentStart, end: baseEndMs });
     }
 
+    console.log(`[CalendarService] subtractBusyFromBase - Result: ${freeIntervals.length} free intervals`);
     return freeIntervals;
   }
 
@@ -399,18 +418,38 @@ export class CalendarService {
       googleBusy: googleBusy.length,
       manualBlocks: manualBlocks.length,
       existingBookings: existingBookings.length,
+      timezone,
+    });
+
+    // Convert existing bookings to instructor's timezone for proper comparison
+    // The database stores UTC, so we use toZonedTime to interpret in instructor's local time
+    const existingBookingsInTz = existingBookings.map(booking => {
+      const startZoned = toZonedTime(booking.start, timezone);
+      const endZoned = toZonedTime(booking.end, timezone);
+      console.log(`[CalendarService] Booking conversion - UTC: ${booking.start.toISOString()} -> Local(${timezone}): ${format(startZoned, 'yyyy-MM-dd HH:mm:ss', { timeZone: timezone })}`);
+      return {
+        ...booking,
+        start: booking.start, // Keep as UTC for millisecond comparison
+        end: booking.end,     // Keep as UTC for millisecond comparison
+        _localStart: startZoned, // For debugging
+        _localEnd: endZoned,     // For debugging
+      };
     });
 
     const allBusyPeriods = this.mergeOverlappingPeriods([
       ...googleBusy,
       ...manualBlocks,
-      ...existingBookings,
+      ...existingBookingsInTz,
     ]);
 
-    console.log(`[CalendarService] Consolidated ${allBusyPeriods.length} busy periods:`, 
+    console.log(`[CalendarService] Consolidated ${allBusyPeriods.length} busy periods (all in UTC ms):`, 
       allBusyPeriods.map(p => ({
-        start: p.start.toISOString(),
-        end: p.end.toISOString(),
+        startUTC: p.start.toISOString(),
+        endUTC: p.end.toISOString(),
+        startMs: p.start.getTime(),
+        endMs: p.end.getTime(),
+        startLocal: format(toZonedTime(p.start, timezone), 'yyyy-MM-dd HH:mm:ss', { timeZone: timezone }),
+        endLocal: format(toZonedTime(p.end, timezone), 'yyyy-MM-dd HH:mm:ss', { timeZone: timezone }),
         source: p.source,
       }))
     );
@@ -441,7 +480,11 @@ export class CalendarService {
         allBusyPeriods
       );
 
+      console.log(`[CalendarService] Processing ${freeIntervals.length} free intervals for block ${block.startTime}-${block.endTime}`);
+      
       for (const interval of freeIntervals) {
+        console.log(`[CalendarService] Free interval: ${new Date(interval.start).toISOString()} to ${new Date(interval.end).toISOString()}`);
+        
         let slotStartMs = interval.start;
         const slotDurationMs = slotDurationMinutes * 60 * 1000;
         const bufferMs = bufferMinutes * 60 * 1000;
@@ -449,10 +492,22 @@ export class CalendarService {
 
         while (slotStartMs + slotDurationMs <= interval.end) {
           const slotEndMs = slotStartMs + slotDurationMs;
+          const slotStart = new Date(slotStartMs);
+          const slotEnd = new Date(slotEndMs);
+          
+          // Verification log: Check slot against all busy periods
+          for (const busy of allBusyPeriods) {
+            const busyStart = busy.start.getTime();
+            const busyEnd = busy.end.getTime();
+            const overlaps = slotStartMs < busyEnd && slotEndMs > busyStart;
+            if (overlaps) {
+              console.log(`[CalendarService] Checking slot ${slotStart.toISOString()} against busy period ${busy.start.toISOString()} - OVERLAP DETECTED (should be excluded by subtractBusyFromBase)`);
+            }
+          }
 
           freeSlots.push({
-            startTime: new Date(slotStartMs),
-            endTime: new Date(slotEndMs),
+            startTime: slotStart,
+            endTime: slotEnd,
             durationMinutes: slotDurationMinutes,
           });
 
@@ -461,6 +516,7 @@ export class CalendarService {
       }
     }
 
+    console.log(`[CalendarService] Generated ${freeSlots.length} free slots for ${dateStr}`);
     return freeSlots;
   }
 
