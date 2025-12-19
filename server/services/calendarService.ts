@@ -588,15 +588,57 @@ export class CalendarService {
       const data = await response.json();
       const events = data.events || data || [];
       
+      console.log(`[CalendarService] Received ${events.length} events from Central Auth`);
+      if (events.length > 0) {
+        console.log(`[CalendarService] Sample event structure:`, JSON.stringify(events[0], null, 2));
+      }
+      
       return events.map((event: any) => {
-        // Handle all-day events (date only) vs timed events (dateTime)
-        const isAllDay = !event.start?.dateTime && !!event.start?.date;
-        const start = isAllDay 
-          ? new Date(event.start?.date || event.startTime || '')
-          : new Date(event.start?.dateTime || event.startTime || '');
-        const end = isAllDay
-          ? new Date(event.end?.date || event.endTime || '')
-          : new Date(event.end?.dateTime || event.endTime || '');
+        // Parse start date - handle multiple formats from Google Calendar API
+        // Format 1: { date: '2025-12-18' } - all-day event
+        // Format 2: { dateTime: '2025-12-19T12:00:00-07:00' } - timed event
+        // Format 3: Direct string (startTime/endTime from Central Auth)
+        
+        let startStr: string | undefined;
+        let endStr: string | undefined;
+        let isAllDay = false;
+        
+        // Check for Google Calendar API nested structure
+        if (event.start?.date) {
+          // All-day event: date only (e.g., '2025-12-18')
+          // Add time component for proper Date parsing
+          startStr = event.start.date + 'T00:00:00';
+          isAllDay = true;
+        } else if (event.start?.dateTime) {
+          // Timed event with timezone (e.g., '2025-12-19T12:00:00-07:00')
+          startStr = event.start.dateTime;
+        } else if (typeof event.start === 'string') {
+          // Direct string format
+          startStr = event.start;
+        } else if (event.startTime) {
+          // Fallback: startTime field
+          startStr = event.startTime;
+        }
+        
+        if (event.end?.date) {
+          endStr = event.end.date + 'T00:00:00';
+        } else if (event.end?.dateTime) {
+          endStr = event.end.dateTime;
+        } else if (typeof event.end === 'string') {
+          endStr = event.end;
+        } else if (event.endTime) {
+          endStr = event.endTime;
+        }
+        
+        const start = startStr ? new Date(startStr) : new Date(NaN);
+        const end = endStr ? new Date(endStr) : new Date(NaN);
+        
+        // Log if dates are invalid
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          console.warn(`[CalendarService] Invalid date for event "${event.summary || event.title}":`, {
+            startStr, endStr, originalStart: event.start, originalEnd: event.end
+          });
+        }
 
         return {
           id: event.id || event.googleEventId || '',
