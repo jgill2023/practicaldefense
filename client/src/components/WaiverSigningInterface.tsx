@@ -11,7 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 
 interface InitialSection {
   id: string;
-  content: string;
+  label: string;
+  description: string;
 }
 
 interface WaiverSigningInterfaceProps {
@@ -19,6 +20,7 @@ interface WaiverSigningInterfaceProps {
   waiverTitle: string;
   enrollmentId: string;
   instanceId: string;
+  initialFields?: InitialSection[];
   onComplete: () => void;
   onCancel: () => void;
 }
@@ -28,11 +30,11 @@ export function WaiverSigningInterface({
   waiverTitle,
   enrollmentId,
   instanceId,
+  initialFields = [],
   onComplete,
   onCancel,
 }: WaiverSigningInterfaceProps) {
   const { toast } = useToast();
-  const [initialSections, setInitialSections] = useState<InitialSection[]>([]);
   const [initials, setInitials] = useState<Record<string, string>>({});
   const [fullName, setFullName] = useState('');
   const [address, setAddress] = useState('');
@@ -43,21 +45,24 @@ export function WaiverSigningInterface({
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
 
-  // Parse waiver content for initial sections
-  useEffect(() => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(waiverContent, 'text/html');
-    const sections = doc.querySelectorAll('.initial-section');
-    
-    const parsedSections: InitialSection[] = [];
-    sections.forEach((section) => {
-      const id = section.getAttribute('data-section-id') || `section-${parsedSections.length + 1}`;
-      const content = section.textContent || '';
-      parsedSections.push({ id, content: content.trim() });
-    });
-    
-    setInitialSections(parsedSections);
-  }, [waiverContent]);
+  // Use initialFields from template props (or parse from HTML as fallback)
+  const initialSections: InitialSection[] = initialFields.length > 0 
+    ? initialFields 
+    : (() => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(waiverContent, 'text/html');
+        const sections = doc.querySelectorAll('.initial-section');
+        
+        const parsedSections: InitialSection[] = [];
+        sections.forEach((section) => {
+          const id = section.getAttribute('data-section-id') || `section-${parsedSections.length + 1}`;
+          const label = section.getAttribute('data-label') || `Section ${parsedSections.length + 1}`;
+          const description = section.textContent || '';
+          parsedSections.push({ id, label, description: description.trim() });
+        });
+        
+        return parsedSections;
+      })();
 
   // Initialize signature canvas
   useEffect(() => {
@@ -267,11 +272,15 @@ export function WaiverSigningInterface({
               <CardContent className="pt-6">
                 <div className="space-y-3">
                   <div className="flex items-start gap-2">
-                    <span className="font-semibold text-sm">Section {index + 1}:</span>
-                    <p className="text-sm text-muted-foreground flex-1">
-                      {section.content.substring(0, 150)}...
-                    </p>
+                    <span className="font-semibold text-sm">Section {index + 1}: {section.label}</span>
                   </div>
+                  {section.description && (
+                    <p className="text-sm text-muted-foreground">
+                      {section.description.length > 200 
+                        ? `${section.description.substring(0, 200)}...` 
+                        : section.description}
+                    </p>
+                  )}
                   <div className="flex items-center gap-3">
                     <Label htmlFor={`initial-${section.id}`} className="min-w-[100px]">
                       Your Initials:

@@ -5406,6 +5406,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Seed FTA Release and Waiver Template
+  app.post("/api/admin/waiver-templates/seed-fta", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+
+      // Only allow instructors and admins
+      const user = await storage.getUser(userId);
+      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      const { courseIds = [] } = req.body;
+
+      // FTA Release and Waiver content
+      const ftaWaiverContent = `
+<h1 style="text-align: center; margin-bottom: 20px;">FTA RELEASE AND WAIVER</h1>
+
+<p>The individual named below (referred to as "I" or "me") desires to participate in <strong>{{courseName}}</strong> ("Activity" or "Activities") provided by the FTA member (the "Member"). As lawful consideration for being permitted by the Member to participate in the Activity, and the intangible value that I will gain by participating in the Activity, I agree to all the terms and conditions set forth in this agreement (this "Agreement").</p>
+
+<div class="initial-section" data-section-id="risk-acknowledgment" style="background-color: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 8px;">
+<p style="font-weight: bold; text-transform: uppercase; font-size: 14px; line-height: 1.6;">
+I AM AWARE AND UNDERSTAND THAT THE ACTIVITIES ARE DANGEROUS ACTIVITIES AND INVOLVE THE RISK OF SERIOUS INJURY, DEATH, AND/OR PROPERTY DAMAGE. I ACKNOWLEDGE THAT ANY INJURIES THAT I SUSTAIN MAY BE COMPOUNDED BY NEGLIGENT EMERGENCY RESPONSE OR RESCUE OPERATIONS OF THE MEMBER. I ACKNOWLEDGE THAT I AM VOLUNTARILY PARTICIPATING IN THE ACTIVITIES WITH KNOWLEDGE OF THE DANGER INVOLVED AND HEREBY AGREE TO ACCEPT AND ASSUME ANY AND ALL RISKS OF INJURY, DEATH, OR PROPERTY DAMAGE, WHETHER CAUSED BY THE NEGLIGENCE OF THE MEMBER OR OTHERWISE.
+</p>
+</div>
+
+<p>I hereby expressly waive and release any and all claims, now known or hereafter known in any jurisdiction throughout the world, against the Member, its officers, directors, employees, agents, affiliates, members, successors, and assigns (collectively, "Releasees"), on account of injury, death, or property damage arising out of or attributable to my participation in the Activities, whether arising out of the negligence of the Member or any Releasees or otherwise. I covenant not to make or bring any such claim against the Member or any other Releasee, and forever release and discharge the Member and all other Releasees from liability under such claims.</p>
+
+<p>I shall defend, indemnify, and hold harmless the Member and all other Releasees against any and all losses, damages, liabilities, deficiencies, claims, actions, judgments, settlements, interest, awards, penalties, fines, costs, or expenses of whatever kind, including reasonable attorney fees, that are incurred by the indemnified party arising out of or related to any third-party claim alleging any bodily injury to or death of any person, or damage to real or tangible personal property caused by my negligence or other more culpable act or omission (including any reckless or willful misconduct) in connection with my participation in the Activities.</p>
+
+<p>Any controversy or claim arising out of or relating to this Agreement, or the breach thereof, shall be determined by final and binding arbitration administered by the American Arbitration Association ("AAA") under its Commercial Arbitration Rules and Mediation Procedures ("Commercial Rules"). There shall be one arbitrator agreed to by the parties within twenty (20) days of receipt by respondent of the request for arbitration, or in default thereof appointed by the AAA in accordance with its Commercial Rules. The award rendered by the arbitrator shall be final, non-reviewable, and non-appealable and binding on the parties and may be entered and enforced in any court having jurisdiction. The place of arbitration shall be Los Angeles, California. Except as may be required by law, neither a party nor the arbitrator may disclose the existence, content, or results of any arbitration without the prior written consent of both parties, unless to protect or pursue a legal right. The arbitrator will have no authority to award punitive damages or consequential damages.</p>
+
+<div class="initial-section" data-section-id="jury-waiver" style="background-color: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 8px;">
+<p style="font-weight: bold; text-transform: uppercase; font-size: 14px; line-height: 1.6;">
+I IRREVOCABLY AND UNCONDITIONALLY WAIVE, TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, ANY RIGHT I MAY HAVE TO A TRIAL BY JURY IN ANY LEGAL ACTION, PROCEEDING, CAUSE OF ACTION, OR COUNTERCLAIM ARISING OUT OF OR RELATING TO MY PARTICIPATION IN THE ACTIVITIES. I CERTIFY AND ACKNOWLEDGE THAT I MAKE THIS WAIVER KNOWINGLY AND VOLUNTARILY.
+</p>
+</div>
+
+<p>This Agreement constitutes the sole and entire agreement of the Member and me with respect to the subject matter contained herein and supersedes all prior and contemporaneous understandings, agreements, representations, and warranties, both written and oral, with respect to such subject matter. If any term or provision of this Agreement is invalid, illegal, or unenforceable in any jurisdiction, such invalidity, illegality, or unenforceability shall not affect any other term or provision of this Agreement or invalidate or render unenforceable such term or provision in any other jurisdiction. This Agreement is binding on and shall inure to the benefit of the Member and me and their respective successors and assigns.</p>
+
+<div style="background-color: #fef2f2; border: 2px solid #ef4444; padding: 20px; margin: 30px 0; border-radius: 8px;">
+<p style="font-weight: bold; text-transform: uppercase; font-size: 14px; text-align: center;">
+BY SIGNING, I ACKNOWLEDGE THAT I HAVE READ AND UNDERSTOOD ALL OF THE TERMS OF THIS AGREEMENT AND THAT I AM VOLUNTARILY GIVING UP SUBSTANTIAL LEGAL RIGHTS, INCLUDING THE RIGHT TO SUE THE MEMBER.
+</p>
+</div>
+`;
+
+      // Initial fields configuration
+      const initialFields = [
+        {
+          id: 'risk-acknowledgment',
+          label: 'Acknowledgment of Risk',
+          description: 'I am aware and understand that the activities are dangerous and involve the risk of serious injury, death, and/or property damage. I acknowledge that I am voluntarily participating with knowledge of the danger involved and agree to accept and assume all risks.'
+        },
+        {
+          id: 'jury-waiver',
+          label: 'Jury Trial Waiver',
+          description: 'I irrevocably and unconditionally waive any right I may have to a trial by jury in any legal action arising out of or relating to my participation in the activities. I certify that I make this waiver knowingly and voluntarily.'
+        }
+      ];
+
+      // Create the FTA waiver template
+      const template = await storage.createWaiverTemplate({
+        name: 'FTA Release and Waiver',
+        content: ftaWaiverContent,
+        version: 1,
+        scope: 'course',
+        courseIds: courseIds,
+        categoryIds: [],
+        validityDays: 365,
+        requiresGuardian: false,
+        isActive: true,
+        forceReSign: false,
+        availableFields: ['studentName', 'courseName', 'date', 'instructorName', 'location'],
+        initialFields: initialFields,
+        createdBy: userId,
+        updatedBy: userId,
+      });
+
+      res.status(201).json({
+        message: 'FTA Release and Waiver template created successfully',
+        template
+      });
+    } catch (error: any) {
+      console.error("Error seeding FTA waiver template:", error);
+      res.status(500).json({ error: "Failed to create FTA waiver template" });
+    }
+  });
+
   // Waiver Instances Routes
   app.get("/api/waiver-instances/enrollment/:enrollmentId", isAuthenticated, async (req: any, res) => {
     try {

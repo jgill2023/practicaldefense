@@ -471,7 +471,7 @@ export default function CourseFormsManagement() {
     });
   };
 
-  const handleCreateWaiver = (data: { name: string; content: string; isActive: boolean; courseIds: string[] }) => {
+  const handleCreateWaiver = (data: { name: string; content: string; isActive: boolean; courseIds: string[]; initialFields?: Array<{ id: string; label: string; description: string }> }) => {
     if (!(user as any)?.id) {
       toast({
         title: "Error",
@@ -493,6 +493,7 @@ export default function CourseFormsManagement() {
       requiresGuardian: false, // Default value
       forceReSign: false, // Default value  
       availableFields: ['studentName', 'courseName', 'date', 'instructorName', 'location'], // Default merge fields
+      initialFields: data.initialFields || [], // Initial sections requiring initials
       createdBy: (user as any).id // Required audit field
     };
     waiverTemplateMutation.mutate(waiverData);
@@ -847,13 +848,37 @@ export default function CourseFormsManagement() {
                         Create and manage digital waiver templates that can be assigned to courses.
                       </p>
                     </div>
-                    <Dialog open={showCreateWaiverDialog} onOpenChange={setShowCreateWaiverDialog}>
-                      <DialogTrigger asChild>
-                        <Button data-testid="button-create-waiver">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create Waiver Template
-                        </Button>
-                      </DialogTrigger>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            const response = await apiRequest("POST", "/api/admin/waiver-templates/seed-fta", { courseIds: [] });
+                            toast({
+                              title: "FTA Waiver Created",
+                              description: "FTA Release and Waiver template has been created. You can now assign it to courses.",
+                            });
+                            queryClient.invalidateQueries({ queryKey: ["/api/admin/waiver-templates"] });
+                          } catch (error: any) {
+                            toast({
+                              title: "Error",
+                              description: error.message || "Failed to create FTA waiver template",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        data-testid="button-create-fta-waiver"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Create FTA Waiver
+                      </Button>
+                      <Dialog open={showCreateWaiverDialog} onOpenChange={setShowCreateWaiverDialog}>
+                        <DialogTrigger asChild>
+                          <Button data-testid="button-create-waiver">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create Waiver Template
+                          </Button>
+                        </DialogTrigger>
                       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle>
@@ -874,6 +899,7 @@ export default function CourseFormsManagement() {
                         />
                       </DialogContent>
                     </Dialog>
+                    </div>
                   </div>
                 </CardHeader>
               </Card>
@@ -1483,6 +1509,13 @@ function FieldEditor({
   );
 }
 
+// Initial field type for waiver sections requiring initials
+interface InitialFieldConfig {
+  id: string;
+  label: string;
+  description: string;
+}
+
 // Create Waiver Dialog Component
 function CreateWaiverDialog({ 
   waiver,
@@ -1492,7 +1525,7 @@ function CreateWaiverDialog({
 }: { 
   waiver?: WaiverTemplateWithDetails | null;
   courses: CourseWithSchedules[];
-  onSubmit: (data: { name: string; content: string; isActive: boolean; courseIds: string[] }) => void;
+  onSubmit: (data: { name: string; content: string; isActive: boolean; courseIds: string[]; initialFields: InitialFieldConfig[] }) => void;
   onCancel: () => void;
 }) {
   const [waiverData, setWaiverData] = useState({
@@ -1515,7 +1548,8 @@ function CreateWaiverDialog({
 </ul>
 <p><strong>By signing below, I acknowledge that I have read, understood, and agree to be bound by this waiver.</strong></p>`,
     isActive: waiver?.isActive ?? true,
-    courseIds: waiver?.courseIds || []
+    courseIds: waiver?.courseIds || [],
+    initialFields: (waiver?.initialFields as InitialFieldConfig[]) || []
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1524,8 +1558,31 @@ function CreateWaiverDialog({
       name: waiverData.name,
       content: waiverData.content,
       isActive: waiverData.isActive,
-      courseIds: waiverData.courseIds
+      courseIds: waiverData.courseIds,
+      initialFields: waiverData.initialFields
     });
+  };
+
+  const addInitialField = () => {
+    const newId = `section-${Date.now()}`;
+    setWaiverData(prev => ({
+      ...prev,
+      initialFields: [...prev.initialFields, { id: newId, label: '', description: '' }]
+    }));
+  };
+
+  const removeInitialField = (index: number) => {
+    setWaiverData(prev => ({
+      ...prev,
+      initialFields: prev.initialFields.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateInitialField = (index: number, field: Partial<InitialFieldConfig>) => {
+    setWaiverData(prev => ({
+      ...prev,
+      initialFields: prev.initialFields.map((f, i) => i === index ? { ...f, ...field } : f)
+    }));
   };
 
   const handleCourseToggle = (courseId: string, checked: boolean) => {
@@ -1580,6 +1637,76 @@ function CreateWaiverDialog({
           data-testid="checkbox-waiver-active"
         />
         <Label htmlFor="waiver-active">Active template (available for assignment to courses)</Label>
+      </div>
+
+      <div className="border rounded-lg p-4 bg-muted/20">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <Label className="text-base font-semibold">Required Initial Sections</Label>
+            <p className="text-sm text-muted-foreground">
+              Add sections that require the student to initial, acknowledging they have read and understood that portion.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addInitialField}
+            data-testid="button-add-initial-field"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Add Section
+          </Button>
+        </div>
+
+        {waiverData.initialFields.length === 0 ? (
+          <div className="text-center py-4 border border-dashed rounded-lg">
+            <p className="text-sm text-muted-foreground">No initial sections configured. Students will only need to sign at the bottom.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {waiverData.initialFields.map((field, index) => (
+              <div key={field.id} className="border rounded-lg p-4 bg-background">
+                <div className="flex items-start justify-between mb-3">
+                  <span className="text-sm font-medium text-muted-foreground">Section {index + 1}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeInitialField(index)}
+                    className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                    data-testid={`button-remove-initial-${index}`}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor={`initial-label-${index}`}>Section Label *</Label>
+                    <Input
+                      id={`initial-label-${index}`}
+                      value={field.label}
+                      onChange={(e) => updateInitialField(index, { label: e.target.value })}
+                      placeholder="e.g., Acknowledgment of Risk"
+                      data-testid={`input-initial-label-${index}`}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`initial-desc-${index}`}>Section Description</Label>
+                    <Textarea
+                      id={`initial-desc-${index}`}
+                      value={field.description}
+                      onChange={(e) => updateInitialField(index, { description: e.target.value })}
+                      placeholder="Brief summary of what the student is acknowledging..."
+                      rows={2}
+                      data-testid={`textarea-initial-desc-${index}`}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>

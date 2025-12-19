@@ -1327,6 +1327,10 @@ export const waiverTemplates = pgTable("waiver_templates", {
   // Merge fields available for this template
   availableFields: text("available_fields").array().default(sql`ARRAY['studentName', 'courseName', 'date', 'instructorName', 'location']`),
 
+  // Initial fields configuration - sections that require initials
+  // Format: [{ id: string, label: string, description: string }]
+  initialFields: jsonb("initial_fields"),
+
   // Audit fields
   createdBy: varchar("created_by").notNull().references(() => users.id),
   updatedBy: varchar("updated_by").references(() => users.id),

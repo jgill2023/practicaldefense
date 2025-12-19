@@ -3369,6 +3369,7 @@ function WaiverDialog({ enrollment, onClose }: { enrollment: EnrollmentWithDetai
             waiverTitle={waiverTemplate.name}
             enrollmentId={enrollment.id}
             instanceId={pendingWaiver.id}
+            initialFields={waiverTemplate.initialFields as Array<{ id: string; label: string; description: string }> || []}
             onComplete={handleComplete}
             onCancel={onClose}
           />
