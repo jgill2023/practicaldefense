@@ -6531,18 +6531,15 @@ export class DatabaseStorage implements IStorage {
     endTime: Date,
     excludeAppointmentId?: string
   ): Promise<boolean> {
+    // Use exclusive inequality for proper back-to-back booking support:
+    // Conflict exists if: existingStart < newEnd AND existingEnd > newStart
+    // This allows a 1-2 PM appointment to NOT conflict with a 2-3 PM appointment
     const conditions = [
       eq(instructorAppointments.instructorId, instructorId),
       inArray(instructorAppointments.status, ['pending', 'confirmed']),
-      or(
-        and(
-          gte(instructorAppointments.startTime, startTime),
-          gte(endTime, instructorAppointments.startTime)
-        ),
-        and(
-          gte(instructorAppointments.endTime, startTime),
-          gte(endTime, instructorAppointments.endTime)
-        )
+      and(
+        lt(instructorAppointments.startTime, endTime),
+        gt(instructorAppointments.endTime, startTime)
       ),
     ];
 
