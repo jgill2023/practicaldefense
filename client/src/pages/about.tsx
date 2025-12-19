@@ -342,7 +342,7 @@ export default function About() {
                 These names have contributed heavily to shaping our company. Their dedication and expertise continue to inspire us. Some still contribute, others have moved on, but ALL are our family.
               </p>
               <div className="border-t border-gray-200 pt-4">
-                <ul className="text-sm text-foreground space-y-1">
+                <ul className="text-sm text-foreground grid grid-cols-2 md:grid-cols-4 gap-4">
                   <li>Greg Sidden</li>
                   <li>Frank Horvath</li>
                   <li>Joel Hardison</li>
