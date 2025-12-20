@@ -270,7 +270,7 @@ export default function TermsOfServicePage() {
               <p><strong>Apache Solutions</strong></p>
               <p><strong>Email:</strong> <a href="mailto:Info@ApacheNC.com" className="hover:underline text-[#000000]">Info@ApacheNC.com</a></p>
               <p><strong>Website:</strong> <a href="https://www.apachenc.com" className="hover:underline text-[#000000]">www.apachenc.com</a></p>
-              <p><strong>Location:</strong> Georgia, USA</p>
+              <p><strong>Location:</strong> North Carolina, USA</p>
             </div>
           </CardContent>
         </Card>
