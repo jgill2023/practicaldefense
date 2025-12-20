@@ -1363,7 +1363,9 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
               </h3>
               
               {(() => {
-                const filteredSlots = availableSlots.filter(slot => slot.isAvailable !== false);
+                // Show all slots - unavailable ones will be visually blocked
+                const allSlots = availableSlots;
+                const availableSlotsCount = allSlots.filter(slot => slot.isAvailable !== false).length;
                 
                 if (!selectedDate) {
                   return (
@@ -1384,30 +1386,47 @@ export function BookingModal({ appointmentType, instructorId, open, onClose }: B
                   );
                 }
                 
-                if (filteredSlots.length === 0) {
+                if (allSlots.length === 0) {
                   return (
                     <div className="text-center text-muted-foreground py-12">
                       <X className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                      <p>No available times for this date</p>
+                      <p>No times available for this date</p>
+                    </div>
+                  );
+                }
+                
+                if (availableSlotsCount === 0) {
+                  return (
+                    <div className="text-center text-muted-foreground py-12">
+                      <X className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                      <p>All times are booked for this date</p>
                     </div>
                   );
                 }
                 
                 return (
                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {filteredSlots.map((slot, index) => (
-                      <Button
-                        key={index}
-                        variant={selectedSlot === slot ? "default" : "outline"}
-                        className="w-full justify-start"
-                        onClick={() => setSelectedSlot(slot)}
-                        data-testid={`time-slot-${index}`}
-                      >
-                        <Clock className="h-4 w-4 mr-2" />
-                        {formatTimeFromISO(slot.startTime)} - {formatTimeFromISO(slot.endTime)}
-                        {selectedSlot === slot && <CheckCircle className="h-4 w-4 ml-auto" />}
-                      </Button>
-                    ))}
+                    {allSlots.map((slot, index) => {
+                      const isUnavailable = slot.isAvailable === false;
+                      return (
+                        <Button
+                          key={index}
+                          variant={selectedSlot === slot ? "default" : "outline"}
+                          className={`w-full justify-start ${isUnavailable ? "opacity-50 cursor-not-allowed line-through bg-gray-100 dark:bg-gray-800 text-gray-400" : ""}`}
+                          onClick={() => !isUnavailable && setSelectedSlot(slot)}
+                          disabled={isUnavailable}
+                          data-testid={`time-slot-${index}`}
+                        >
+                          <Clock className="h-4 w-4 mr-2" />
+                          {formatTimeFromISO(slot.startTime)} - {formatTimeFromISO(slot.endTime)}
+                          {isUnavailable ? (
+                            <span className="ml-auto text-xs text-gray-400">Booked</span>
+                          ) : (
+                            selectedSlot === slot && <CheckCircle className="h-4 w-4 ml-auto" />
+                          )}
+                        </Button>
+                      );
+                    })}
                   </div>
                 );
               })()}
