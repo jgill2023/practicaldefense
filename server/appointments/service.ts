@@ -213,8 +213,9 @@ export class AppointmentService {
       endDate: endDate.toISOString(),
     });
 
-    // Fetch all conflict sources in parallel: appointments, course schedules, and Google Calendar events
-    const [appointments, courseSchedules, googleBusyPeriods] = await Promise.all([
+    // Fetch all conflict sources in parallel: appointments, course schedules, Google Calendar events, and manual blocks
+    // This ensures ALL appointment types share the same availability and respect the same busy blocks
+    const [appointments, courseSchedules, googleBusyPeriods, manualBlocks] = await Promise.all([
       storage.getAppointments({
         instructorId,
         startDate,
@@ -225,14 +226,20 @@ export class AppointmentService {
         console.error(`[AppointmentService] Error fetching Google busy periods:`, err);
         return []; // Return empty array if Google Calendar fails
       }),
+      calendarService.getManualBlocks(instructorId, startDate, endDate).catch(err => {
+        console.error(`[AppointmentService] Error fetching manual blocks:`, err);
+        return []; // Return empty array if manual blocks fetch fails
+      }),
     ]);
 
     console.log(`[AppointmentService] Found ${appointments.length} appointments for date range`);
     console.log(`[AppointmentService] Found ${googleBusyPeriods.length} Google Calendar busy periods`);
+    console.log(`[AppointmentService] Found ${manualBlocks.length} manual blocks (availability overrides)`);
 
     const conflicts: { startTime: Date; endTime: Date; source?: string }[] = [];
 
-    // Add database appointments
+    // Add database appointments (ALL types - no filtering by appointmentTypeId)
+    // Every confirmed/pending appointment blocks availability for all appointment types
     appointments.forEach(apt => {
       console.log(`[AppointmentService] Appointment: id=${apt.id}, status=${apt.status}, start=${apt.startTime}, end=${apt.endTime}`);
       if (apt.status === 'confirmed' || apt.status === 'pending') {
@@ -253,13 +260,23 @@ export class AppointmentService {
       });
     });
 
-    // Add Google Calendar busy periods
+    // Add Google Calendar busy periods - applied globally to all appointment types
     googleBusyPeriods.forEach(period => {
       console.log(`[AppointmentService] Google Calendar event: start=${period.start.toISOString()}, end=${period.end.toISOString()}`);
       conflicts.push({
         startTime: period.start,
         endTime: period.end,
         source: 'google',
+      });
+    });
+
+    // Add manual blocks (availability overrides) - applied globally to all appointment types
+    manualBlocks.forEach(block => {
+      console.log(`[AppointmentService] Manual block: start=${block.start.toISOString()}, end=${block.end.toISOString()}`);
+      conflicts.push({
+        startTime: block.start,
+        endTime: block.end,
+        source: 'manual_block',
       });
     });
 
