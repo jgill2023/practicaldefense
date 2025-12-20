@@ -3590,6 +3590,9 @@ export class DatabaseStorage implements IStorage {
     const payload: any = {
       ...promoCode,
       value: String(promoCode.value), // Force string conversion for database
+      // Convert date strings to Date objects for database
+      startDate: promoCode.startDate ? new Date(promoCode.startDate) : null,
+      endDate: promoCode.endDate ? new Date(promoCode.endDate) : null,
     };
     const [newPromoCode] = await db
       .insert(promoCodes)
@@ -3604,6 +3607,14 @@ export class DatabaseStorage implements IStorage {
       ...(promoCodeData.value !== undefined ? { value: String(promoCodeData.value) } : {}),
       updatedAt: new Date() 
     };
+    
+    // Convert date strings to Date objects for database
+    if (promoCodeData.startDate !== undefined) {
+      updateData.startDate = promoCodeData.startDate ? new Date(promoCodeData.startDate) : null;
+    }
+    if (promoCodeData.endDate !== undefined) {
+      updateData.endDate = promoCodeData.endDate ? new Date(promoCodeData.endDate) : null;
+    }
 
     const [updatedPromoCode] = await db
       .update(promoCodes)
