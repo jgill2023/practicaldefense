@@ -115,7 +115,20 @@ function AmountSelector({
   const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
   const isCustom = !PRESET_AMOUNTS.includes(value) && value > 0 && selectedClassOptions.length === 0;
 
-  const classAmountOptions: ClassAmountOption[] = courses.flatMap((course) => {
+  // Filter out hosted courses and conference courses from Class Specific Amounts
+  // Matches variations like "Hosted", "Hosted Courses", "Conference", "Conference Courses"
+  const eligibleCourses = courses.filter((course) => {
+    // course.category may be a string or an object with a name property
+    const categoryValue = typeof course.category === 'string' 
+      ? course.category 
+      : (course.category as { name?: string })?.name ?? '';
+    const categoryLower = categoryValue.toLowerCase();
+    const isHosted = categoryLower.startsWith('hosted');
+    const isConference = categoryLower.startsWith('conference');
+    return !isHosted && !isConference;
+  });
+
+  const classAmountOptions: ClassAmountOption[] = eligibleCourses.flatMap((course) => {
     const options: ClassAmountOption[] = [];
     const coursePrice = Number(course.price) || 0;
     if (coursePrice > 0) {
