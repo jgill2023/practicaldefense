@@ -71,6 +71,7 @@ export class CalendarService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'x-instructorops-key': INTERNAL_API_KEY,
           'x-instructor-id': instructorId,
         },
@@ -127,7 +128,8 @@ export class CalendarService {
   }
 
   /**
-   * Fetch busy periods from Google Calendar using freeBusy query
+   * Fetch busy periods from Google Calendar using Central Auth's calendar events endpoint
+   * This method uses the working /api/calendars/events endpoint instead of trying to get tokens directly
    */
   async getGoogleBusyPeriods(
     instructorId: string,
@@ -135,58 +137,28 @@ export class CalendarService {
     endDate: Date
   ): Promise<BusyPeriod[]> {
     try {
-      const calendar = await this.getCalendarClient(instructorId);
+      // Use the working getGoogleCalendarEvents method which fetches from Central Auth
+      const events = await this.getGoogleCalendarEvents(instructorId, startDate, endDate);
       
-      const credentials = await db.query.instructorGoogleCredentials.findFirst({
-        where: eq(instructorGoogleCredentials.instructorId, instructorId),
-      });
-
-      const calendarId = credentials?.primaryCalendarId || 'primary';
-
-      const response = await calendar.freebusy.query({
-        requestBody: {
-          timeMin: startDate.toISOString(),
-          timeMax: endDate.toISOString(),
-          items: [{ id: calendarId }],
-        },
-      });
-
-      const busyPeriods: BusyPeriod[] = [];
-      const calendars = response.data.calendars;
+      console.log(`[CalendarService] Converting ${events.length} Google events to busy periods`);
       
-      if (calendars && calendars[calendarId] && calendars[calendarId].busy) {
-        for (const period of calendars[calendarId].busy!) {
-          if (period.start && period.end) {
-            busyPeriods.push({
-              start: new Date(period.start),
-              end: new Date(period.end),
-              source: 'google',
-            });
-          }
-        }
-      }
-
+      // Convert events to busy periods
+      const busyPeriods: BusyPeriod[] = events
+        .filter(event => {
+          // Only include events with valid dates
+          return !isNaN(event.start.getTime()) && !isNaN(event.end.getTime());
+        })
+        .map(event => ({
+          start: event.start,
+          end: event.end,
+          source: 'google' as const,
+        }));
+      
+      console.log(`[CalendarService] Returning ${busyPeriods.length} busy periods for conflict detection`);
+      
       return busyPeriods;
     } catch (error: any) {
-      const status = error?.response?.status || error?.code;
-      const message = error?.response?.data?.error?.message || error?.message || 'Unknown error';
-      
-      if (status === 403) {
-        console.error(`[CalendarService] Google API 403 Forbidden for instructor ${instructorId}. ` +
-          `The user may have revoked access or the token scope is insufficient. ` +
-          `Error: ${message}`);
-      } else if (status === 404) {
-        console.error(`[CalendarService] Google API 404 Not Found for instructor ${instructorId}. ` +
-          `The calendar may have been deleted or the calendar ID is invalid. ` +
-          `Error: ${message}`);
-      } else if (status === 401) {
-        console.error(`[CalendarService] Google API 401 Unauthorized for instructor ${instructorId}. ` +
-          `The access token may have been revoked by the user. ` +
-          `Error: ${message}`);
-      } else {
-        console.error(`[CalendarService] Error fetching Google busy periods for instructor ${instructorId}:`, error);
-      }
-      
+      console.error(`[CalendarService] Error fetching Google busy periods for instructor ${instructorId}:`, error);
       return [];
     }
   }
