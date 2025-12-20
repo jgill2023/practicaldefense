@@ -160,7 +160,7 @@ export async function getDynamicSEOConfig(path: string): Promise<SEOConfig> {
         const c = course[0];
         baseConfig.title = `${c.title} | Apache Solutions`;
         baseConfig.description = c.description?.slice(0, 160) || `Learn more about ${c.title} at Apache Solutions.`;
-        baseConfig.canonicalUrl = `${BASE_URL}/courses/${courseId}`;
+        baseConfig.canonicalUrl = `${BASE_URL}/course/${courseId}`;
         
         if (c.imageUrl) {
           baseConfig.ogImage = c.imageUrl.startsWith("http") ? c.imageUrl : `${BASE_URL}${c.imageUrl}`;
@@ -281,11 +281,19 @@ function escapeHtml(text: string): string {
 export async function generateSitemap(): Promise<string> {
   const staticPages = [
     { loc: "/", priority: "1.0", changefreq: "weekly" },
+    { loc: "/schedule-list", priority: "0.9", changefreq: "daily" },
+    { loc: "/schedule-calendar", priority: "0.8", changefreq: "daily" },
     { loc: "/racc-program", priority: "0.9", changefreq: "weekly" },
     { loc: "/store", priority: "0.8", changefreq: "weekly" },
-    { loc: "/courses", priority: "0.8", changefreq: "weekly" },
+    { loc: "/gift-cards", priority: "0.7", changefreq: "monthly" },
     { loc: "/about", priority: "0.7", changefreq: "monthly" },
+    { loc: "/about-chris", priority: "0.6", changefreq: "monthly" },
     { loc: "/contact", priority: "0.7", changefreq: "monthly" },
+    { loc: "/articles", priority: "0.6", changefreq: "weekly" },
+    { loc: "/a-girl-and-a-gun", priority: "0.5", changefreq: "monthly" },
+    { loc: "/privacy-policy", priority: "0.3", changefreq: "yearly" },
+    { loc: "/terms-of-service", priority: "0.3", changefreq: "yearly" },
+    { loc: "/refund-policy", priority: "0.3", changefreq: "yearly" },
   ];
 
   let dynamicPages: { loc: string; priority: string; changefreq: string }[] = [];
@@ -297,7 +305,7 @@ export async function generateSitemap(): Promise<string> {
       .where(eq(courses.isPublished, true));
 
     dynamicPages = activeCourses.map(c => ({
-      loc: `/courses/${c.id}`,
+      loc: `/course/${c.id}`,
       priority: "0.7",
       changefreq: "weekly"
     }));
@@ -326,16 +334,55 @@ export function generateRobotsTxt(): string {
   return `User-agent: *
 Allow: /
 
-# Disallow admin and private paths
-Disallow: /dashboard
-Disallow: /admin
-Disallow: /login
-Disallow: /register
-Disallow: /api
-Disallow: /cart
+# Disallow admin and private routes
+Disallow: /instructor-dashboard
+Disallow: /instructor-calendar
+Disallow: /instructor
+Disallow: /course-management
+Disallow: /course-forms-management
+Disallow: /product-management
+Disallow: /admin/users
+Disallow: /admin/credits
+Disallow: /promo-codes
+Disallow: /communications
+Disallow: /reports
+Disallow: /settings
+Disallow: /stripe-connect
+Disallow: /gift-card-management
+Disallow: /appointments
+Disallow: /student-portal
+Disallow: /students
+Disallow: /student-resources
+Disallow: /pending-approval
 Disallow: /checkout
+Disallow: /cart
+Disallow: /api
+Disallow: /login
+Disallow: /signup
+Disallow: /register
+Disallow: /verify-email
+Disallow: /reset-password
+Disallow: /course-registration
 
-# Sitemap
+# Allow important pages
+Allow: /
+Allow: /course/
+Allow: /store
+Allow: /about
+Allow: /about-chris
+Allow: /contact
+Allow: /book-appointment/
+Allow: /schedule-list
+Allow: /schedule-calendar
+Allow: /articles
+Allow: /gift-cards
+Allow: /racc-program
+Allow: /a-girl-and-a-gun
+Allow: /privacy-policy
+Allow: /terms-of-service
+Allow: /refund-policy
+
+# Sitemap location
 Sitemap: ${BASE_URL}/sitemap.xml
 `;
 }

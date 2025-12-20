@@ -10,6 +10,7 @@ import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
 import { BookingModal } from "@/components/BookingModal";
 import { ComicPanel, TitleCard } from "@/components/RACTheme";
+import { SEO } from "@/components/SEO";
 import type { CourseWithSchedules, AppSettings, AppointmentType } from "@shared/schema";
 import heroImage from "@assets/headerfinal_1765735206003.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
@@ -338,6 +339,7 @@ function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSc
                     src={course.imageUrl} 
                     alt={course.title}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)] flex items-center justify-center">
@@ -777,6 +779,10 @@ export default function Landing() {
 
   return (
     <Layout>
+      <SEO 
+        title="Professional Firearms Training"
+        description="Master concealed carry, defensive shooting, and tactical skills with personalized instruction from certified professionals. Group classes and private sessions available."
+      />
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden grain-texture">
         {/* Background Image */}
@@ -1054,6 +1060,7 @@ export default function Landing() {
                   src={bookCoverImage}
                   alt="Your World Is Not a Gun-Free Zone by Tim Kelly"
                   className="w-auto h-auto max-h-96 shadow-lg rounded-lg cursor-pointer"
+                  loading="lazy"
                   data-testid="img-book-cover"
                 />
               </a>

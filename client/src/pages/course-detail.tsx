@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SalePrice, SalePriceBadge } from "@/components/SalePrice";
+import { SEO, generateCourseJsonLd } from "@/components/SEO";
 import { 
   Calendar, 
   Clock, 
@@ -130,8 +131,24 @@ export default function CourseDetail() {
   const upcomingSchedules = course.schedules?.filter(s => new Date(s.startDate) >= now && !s.deletedAt) || [];
   upcomingSchedules.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
+  const courseJsonLd = generateCourseJsonLd({
+    id: course.id,
+    title: course.title,
+    description: course.briefDescription || course.description?.replace(/<[^>]*>/g, '').substring(0, 160),
+    price: Number(course.price) || undefined,
+    imageUrl: imageUrl,
+    category: categoryName,
+  });
+
   return (
     <Layout>
+      <SEO 
+        title={course.title}
+        description={course.briefDescription || course.description?.replace(/<[^>]*>/g, '').substring(0, 160) || `${course.title} - Professional firearms training course`}
+        image={imageUrl}
+        type="article"
+        jsonLd={courseJsonLd}
+      />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link href="/schedule-list">
           <Button variant="ghost" className="mb-6" data-testid="button-back">

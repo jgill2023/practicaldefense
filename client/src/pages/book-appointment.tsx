@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { Layout } from "@/components/Layout";
+import { SEO } from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -286,6 +287,10 @@ export default function BookAppointmentPage() {
 
   return (
     <Layout>
+      <SEO 
+        title="Book Private Training"
+        description="Schedule one-on-one firearms coaching sessions with a certified instructor. Personalized training tailored to your skill level and goals."
+      />
       <div className="container mx-auto px-12 py-24 md:px-16 lg:px-24">
         <div className="mb-24">
           <h1 className="text-3xl font-bold mb-2" data-testid="text-page-title">Book a One-on-One Coaching Session</h1>

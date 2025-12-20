@@ -1,5 +1,6 @@
 import { Layout } from "@/components/Layout";
 import { ComicPanel, TitleCard } from "@/components/RACTheme";
+import { SEO } from "@/components/SEO";
 import { Award, GraduationCap, Shield, Target, BookOpen, Medal, Quote } from "lucide-react";
 import teamCollageImage from "@assets/image_1765700410773.png";
 import timKellyImage from "@assets/Tim_Kelly_1765700546617.jpg";
@@ -53,6 +54,10 @@ const accomplishments = [
 export default function About() {
   return (
     <Layout>
+      <SEO 
+        title="About Us"
+        description="Meet the Apache Solutions team. Combat veterans and certified instructors dedicated to professional firearms training and defensive skills education."
+      />
       <div className="relative h-[75vh] min-h-[500px] w-full overflow-hidden">
         <img 
           src={heroImage} 
@@ -79,6 +84,7 @@ export default function About() {
                     src={TK01} 
                     alt="Tim Kelly - Owner & Lead Instructor" 
                     className="w-full aspect-square object-cover rounded-xl"
+                    loading="lazy"
                     data-testid="img-tim-kelly"
                   />
                   <div className="mt-4 text-center">
@@ -422,6 +428,7 @@ export default function About() {
                     src={teamCollageImage} 
                     alt="Apache Solutions team throughout the years" 
                     className="w-full rounded-lg shadow-md"
+                    loading="lazy"
                     data-testid="img-team-collage"
                   />
                 </div>

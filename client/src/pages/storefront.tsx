@@ -10,6 +10,7 @@ import { ShoppingCartComponent, useCart } from "@/components/shopping-cart";
 import { useToast } from "@/hooks/use-toast";
 import { Layout } from "@/components/Layout";
 import { SalePrice, SalePriceBadge } from "@/components/SalePrice";
+import { SEO } from "@/components/SEO";
 import { Search, Filter, Package, Star, ShoppingCart, Eye } from "lucide-react";
 import type { ProductWithDetails, ProductCategoryWithProducts } from "@shared/schema";
 
@@ -109,6 +110,11 @@ export default function Storefront() {
 
   return (
     <Layout>
+      <SEO 
+        title="Store"
+        description="Shop firearms training gear, accessories, and merchandise from Apache Solutions. Quality products for serious shooters."
+        type="website"
+      />
       <div className="container mx-auto px-6 md:px-12 lg:px-16 py-6 space-y-6" data-testid="storefront-page">
       {/* Header */}
       <div>

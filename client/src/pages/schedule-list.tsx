@@ -2,6 +2,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
+import { SEO } from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -163,6 +164,10 @@ export default function ScheduleList() {
 
   return (
     <Layout>
+      <SEO 
+        title="Course Schedule"
+        description="Browse upcoming firearms training courses, concealed carry classes, and defensive shooting sessions. View dates, times, and register online."
+      />
       <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
