@@ -6,6 +6,7 @@ import type {
   InstructorAppointment,
   CourseSchedule
 } from '@db/schema';
+import { calendarService } from '../services/calendarService';
 
 // Hardcoded timezone for instructor - in a real app this would come from user settings
 const INSTRUCTOR_TIMEZONE = 'America/Denver';
@@ -212,19 +213,26 @@ export class AppointmentService {
       endDate: endDate.toISOString(),
     });
 
-    const [appointments, courseSchedules] = await Promise.all([
+    // Fetch all conflict sources in parallel: appointments, course schedules, and Google Calendar events
+    const [appointments, courseSchedules, googleBusyPeriods] = await Promise.all([
       storage.getAppointments({
         instructorId,
         startDate,
         endDate,
       }),
       storage.getInstructorCourseSchedules(instructorId, startDate, endDate),
+      calendarService.getGoogleBusyPeriods(instructorId, startDate, endDate).catch(err => {
+        console.error(`[AppointmentService] Error fetching Google busy periods:`, err);
+        return []; // Return empty array if Google Calendar fails
+      }),
     ]);
 
     console.log(`[AppointmentService] Found ${appointments.length} appointments for date range`);
+    console.log(`[AppointmentService] Found ${googleBusyPeriods.length} Google Calendar busy periods`);
 
     const conflicts: { startTime: Date; endTime: Date; source?: string }[] = [];
 
+    // Add database appointments
     appointments.forEach(apt => {
       console.log(`[AppointmentService] Appointment: id=${apt.id}, status=${apt.status}, start=${apt.startTime}, end=${apt.endTime}`);
       if (apt.status === 'confirmed' || apt.status === 'pending') {
@@ -236,11 +244,22 @@ export class AppointmentService {
       }
     });
 
+    // Add course schedules
     courseSchedules.forEach(schedule => {
       conflicts.push({
         startTime: new Date(schedule.startDate),
         endTime: new Date(schedule.endDate),
         source: 'course',
+      });
+    });
+
+    // Add Google Calendar busy periods
+    googleBusyPeriods.forEach(period => {
+      console.log(`[AppointmentService] Google Calendar event: start=${period.start.toISOString()}, end=${period.end.toISOString()}`);
+      conflicts.push({
+        startTime: period.start,
+        endTime: period.end,
+        source: 'google',
       });
     });
 
