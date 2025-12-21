@@ -33,6 +33,7 @@ import RefundPolicyPage from "@/pages/refund-policy";
 import AppointmentsPage from "@/pages/appointments";
 import BookAppointmentPage from "@/pages/book-appointment";
 import AdminCreditsPage from "@/pages/admin-credits";
+import AdminWaiversPage from "@/pages/admin-waivers";
 import UserManagementPage from "@/pages/user-management";
 import PendingApprovalPage from "@/pages/pending-approval";
 import AboutChris from "@/pages/about-chris";
@@ -161,6 +162,7 @@ function Router() {
       <Route path="/reports" component={Reports} />
       <Route path="/appointments" component={AppointmentsPage} />
       <Route path="/admin/credits" component={AdminCreditsPage} />
+      <Route path="/admin/waivers" component={AdminWaiversPage} />
       <Route path="/admin/users" component={UserManagementPage} />
       <Route path="/stripe-connect" component={StripeConnectPage} />
       <Route path="/settings" component={SettingsPage} />
