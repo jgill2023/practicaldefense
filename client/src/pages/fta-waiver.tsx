@@ -78,13 +78,10 @@ export default function FtaWaiverPage() {
 
   const submitWaiverMutation = useMutation({
     mutationFn: async (data: WaiverFormData & { signatureData: string; signatureType: string; typedSignature?: string }) => {
-      const response = await apiRequest('/api/waivers/submit', {
-        method: 'POST',
-        body: JSON.stringify({
-          ...data,
-          waiverTextVersion: FTA_WAIVER_TEXT,
-          waiverVersion: FTA_WAIVER_VERSION,
-        }),
+      const response = await apiRequest('POST', '/api/waivers/submit', {
+        ...data,
+        waiverTextVersion: FTA_WAIVER_TEXT,
+        waiverVersion: FTA_WAIVER_VERSION,
       });
       return response;
     },
