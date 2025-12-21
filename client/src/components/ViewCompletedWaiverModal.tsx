@@ -290,18 +290,30 @@ export function ViewCompletedWaiverModal({ enrollmentId, studentName, isOpen, on
                           </div>
                         </div>
 
-                        {/* Signature Image */}
+                        {/* Signature Display */}
                         {signature.signatureData ? (
                           <div className="mt-4">
                             <label className="text-sm font-medium text-muted-foreground block mb-2">Digital Signature</label>
-                            <div className="border-2 border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-900 inline-block">
-                              <img 
-                                src={signature.signatureData} 
-                                alt="Digital Signature" 
-                                className="max-w-md h-24 object-contain"
-                                data-testid="signature-image"
-                              />
-                            </div>
+                            {signature.signatureMethod === 'typed' || !signature.signatureData.startsWith('data:image') ? (
+                              <div className="border-2 border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-900 inline-block">
+                                <p 
+                                  className="text-2xl font-signature italic text-gray-800 dark:text-gray-200"
+                                  style={{ fontFamily: "'Brush Script MT', 'Segoe Script', cursive" }}
+                                  data-testid="signature-typed"
+                                >
+                                  {signature.signatureData}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="border-2 border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-900 inline-block">
+                                <img 
+                                  src={signature.signatureData} 
+                                  alt="Digital Signature" 
+                                  className="max-w-md h-24 object-contain"
+                                  data-testid="signature-image"
+                                />
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="mt-4 flex items-center gap-2 text-amber-600 dark:text-amber-400">
