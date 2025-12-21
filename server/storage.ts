@@ -476,6 +476,14 @@ export interface IStorage {
   // Waiver Instance operations
   createWaiverInstance(instance: InsertWaiverInstance): Promise<WaiverInstance>;
   updateWaiverInstance(id: string, instance: Partial<InsertWaiverInstance>): Promise<WaiverInstance>;
+  signWaiverInstance(instanceId: string, signatureData: {
+    signerName: string;
+    signatureData: string;
+    signatureMethod: 'typed' | 'canvas';
+    consentCheckboxes: Array<{ sectionId: string; initial: string; timestamp: string }>;
+    acknowledgementsCompleted: boolean;
+    metadata?: Record<string, any>;
+  }): Promise<WaiverInstance>;
   getWaiverInstance(id: string): Promise<WaiverInstanceWithDetails | undefined>;
   getWaiverInstancesByEnrollment(enrollmentId: string): Promise<WaiverInstanceWithDetails[]>;
   getWaiverInstancesByTemplate(templateId: string): Promise<WaiverInstanceWithDetails[]>;
@@ -4460,6 +4468,53 @@ export class DatabaseStorage implements IStorage {
       .where(eq(waiverInstances.id, id))
       .returning();
     return updated;
+  }
+
+  async signWaiverInstance(instanceId: string, signatureData: {
+    signerName: string;
+    signatureData: string;
+    signatureMethod: 'typed' | 'canvas';
+    consentCheckboxes: Array<{ sectionId: string; initial: string; timestamp: string }>;
+    acknowledgementsCompleted: boolean;
+    metadata?: Record<string, any>;
+  }): Promise<WaiverInstance> {
+    const now = new Date();
+    
+    // Get the waiver instance with enrollment to get student email
+    const instance = await this.getWaiverInstance(instanceId);
+    if (!instance) {
+      throw new Error(`Waiver instance ${instanceId} not found`);
+    }
+    
+    const studentEmail = instance.enrollment?.student?.email || signatureData.metadata?.email || 'unknown@example.com';
+    
+    // Update the waiver instance status to signed
+    const [updatedInstance] = await db
+      .update(waiverInstances)
+      .set({ 
+        status: 'signed',
+        signedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(waiverInstances.id, instanceId))
+      .returning();
+    
+    // Create a waiver signature record
+    await db.insert(waiverSignatures).values({
+      instanceId,
+      signerName: signatureData.signerName,
+      signerEmail: studentEmail,
+      signerRole: 'student',
+      signatureData: signatureData.signatureData,
+      signatureMethod: signatureData.signatureMethod,
+      ipAddress: signatureData.metadata?.ipAddress || 'unknown',
+      userAgent: signatureData.metadata?.browserUserAgent || 'unknown',
+      consentCheckboxes: signatureData.consentCheckboxes,
+      acknowledgementsCompleted: signatureData.acknowledgementsCompleted,
+      timestamp: now,
+    });
+    
+    return updatedInstance;
   }
 
   async getWaiverInstance(id: string): Promise<WaiverInstanceWithDetails | undefined> {
