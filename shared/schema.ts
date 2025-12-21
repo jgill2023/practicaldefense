@@ -2888,6 +2888,61 @@ export const insertInstructorGoogleCredentialsSchema = createInsertSchema(instru
 export type InsertInstructorGoogleCredentials = z.infer<typeof insertInstructorGoogleCredentialsSchema>;
 export type InstructorGoogleCredentials = typeof instructorGoogleCredentials.$inferSelect;
 
+// FTA Waiver Submission table for legally binding digital waivers
+export const ftaWaiverSubmissions = pgTable("fta_waiver_submissions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  // Student information
+  studentName: varchar("student_name", { length: 255 }).notNull(),
+  studentEmail: varchar("student_email", { length: 255 }).notNull(),
+  // Activity being participated in
+  activityName: varchar("activity_name", { length: 500 }).notNull(),
+  // Section initials (3 required initial inputs)
+  initialRiskAssumption: varchar("initial_risk_assumption", { length: 10 }).notNull(), // Section 1: Risk Assumption
+  initialReleaseOfLiability: varchar("initial_release_of_liability", { length: 10 }).notNull(), // Section 2: Release of Liability
+  initialJuryTrialWaiver: varchar("initial_jury_trial_waiver", { length: 10 }).notNull(), // Section 3: Waiver of Jury Trial
+  // Signature data (base64 encoded image from signature canvas)
+  signatureData: text("signature_data").notNull(),
+  signatureType: varchar("signature_type", { length: 20 }).notNull().default('drawn'), // 'drawn' or 'typed'
+  typedSignature: varchar("typed_signature", { length: 255 }), // For typed signatures
+  // Printed name and address from form
+  printedName: varchar("printed_name", { length: 255 }).notNull(),
+  address: text("address").notNull(),
+  // Electronic consent
+  electronicConsent: boolean("electronic_consent").notNull().default(false),
+  // Full waiver text version (for legal record of what was signed)
+  waiverTextVersion: text("waiver_text_version").notNull(),
+  waiverVersion: varchar("waiver_version", { length: 50 }).notNull().default('2021-v1'),
+  // Capture metadata
+  ipAddress: varchar("ip_address", { length: 45 }).notNull(), // IPv6 can be up to 45 chars
+  browserUserAgent: text("browser_user_agent").notNull(),
+  // Timestamps
+  signedAt: timestamp("signed_at").notNull().defaultNow(),
+  emailSentAt: timestamp("email_sent_at"),
+  // Optional link to enrollment if applicable
+  enrollmentId: uuid("enrollment_id").references(() => enrollments.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Relations for FTA Waiver Submissions
+export const ftaWaiverSubmissionRelations = relations(ftaWaiverSubmissions, ({ one }) => ({
+  enrollment: one(enrollments, {
+    fields: [ftaWaiverSubmissions.enrollmentId],
+    references: [enrollments.id],
+  }),
+}));
+
+// Insert schema for FTA Waiver Submission
+export const insertFtaWaiverSubmissionSchema = createInsertSchema(ftaWaiverSubmissions).omit({
+  id: true,
+  createdAt: true,
+  signedAt: true,
+  emailSentAt: true,
+});
+
+// Types for FTA Waiver Submission
+export type InsertFtaWaiverSubmission = z.infer<typeof insertFtaWaiverSubmissionSchema>;
+export type FtaWaiverSubmission = typeof ftaWaiverSubmissions.$inferSelect;
+
 // Extended types with relations
 export type GiftCardWithDetails = GiftCard & {
   theme?: GiftCardTheme;

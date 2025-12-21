@@ -184,6 +184,10 @@ import {
   type GiftCardWithDetails,
   type GiftCardRedemptionWithDetails,
   type GiftCardValidationResult,
+  // FTA Waiver Submission imports
+  ftaWaiverSubmissions,
+  type FtaWaiverSubmission,
+  type InsertFtaWaiverSubmission,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, gt, lt, lte, ne, inArray, notInArray } from "drizzle-orm";
@@ -777,6 +781,15 @@ export interface IStorage {
   createGiftCardValidationAttempt(attempt: InsertGiftCardValidationAttempt): Promise<GiftCardValidationAttempt>;
   getRecentValidationAttempts(ipAddress: string, minutes: number): Promise<GiftCardValidationAttempt[]>;
   getRecentValidationAttemptsBySession(sessionId: string, minutes: number): Promise<GiftCardValidationAttempt[]>;
+
+  // ============================================
+  // FTA WAIVER SUBMISSION METHODS
+  // ============================================
+  createFtaWaiverSubmission(submission: InsertFtaWaiverSubmission): Promise<FtaWaiverSubmission>;
+  getFtaWaiverSubmission(id: string): Promise<FtaWaiverSubmission | undefined>;
+  getFtaWaiverSubmissionsByEmail(email: string): Promise<FtaWaiverSubmission[]>;
+  getFtaWaiverSubmissions(): Promise<FtaWaiverSubmission[]>;
+  updateFtaWaiverSubmissionEmailSent(id: string): Promise<FtaWaiverSubmission>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -7100,6 +7113,45 @@ export class DatabaseStorage implements IStorage {
         gte(giftCardValidationAttempts.attemptedAt, cutoffTime)
       ))
       .orderBy(desc(giftCardValidationAttempts.attemptedAt));
+  }
+
+  // ============================================
+  // FTA WAIVER SUBMISSION OPERATIONS
+  // ============================================
+
+  async createFtaWaiverSubmission(submission: InsertFtaWaiverSubmission): Promise<FtaWaiverSubmission> {
+    const [created] = await db.insert(ftaWaiverSubmissions).values(submission).returning();
+    return created;
+  }
+
+  async getFtaWaiverSubmission(id: string): Promise<FtaWaiverSubmission | undefined> {
+    const [submission] = await db.select().from(ftaWaiverSubmissions).where(eq(ftaWaiverSubmissions.id, id));
+    return submission;
+  }
+
+  async getFtaWaiverSubmissionsByEmail(email: string): Promise<FtaWaiverSubmission[]> {
+    return db
+      .select()
+      .from(ftaWaiverSubmissions)
+      .where(eq(ftaWaiverSubmissions.studentEmail, email))
+      .orderBy(desc(ftaWaiverSubmissions.signedAt));
+  }
+
+  async getFtaWaiverSubmissions(): Promise<FtaWaiverSubmission[]> {
+    return db
+      .select()
+      .from(ftaWaiverSubmissions)
+      .orderBy(desc(ftaWaiverSubmissions.signedAt));
+  }
+
+  async updateFtaWaiverSubmissionEmailSent(id: string): Promise<FtaWaiverSubmission> {
+    const [updated] = await db
+      .update(ftaWaiverSubmissions)
+      .set({ emailSentAt: new Date() })
+      .where(eq(ftaWaiverSubmissions.id, id))
+      .returning();
+    if (!updated) throw new Error('Waiver submission not found');
+    return updated;
   }
 }
 
