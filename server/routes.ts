@@ -5527,50 +5527,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { courseIds = [] } = req.body;
 
-      // FTA Release and Waiver content
+      // FTA Release and Waiver content with 3 required initial sections
       const ftaWaiverContent = `
 <h1 style="text-align: center; margin-bottom: 20px;">FTA RELEASE AND WAIVER</h1>
 
 <p>The individual named below (referred to as "I" or "me") desires to participate in <strong>{{courseName}}</strong> ("Activity" or "Activities") provided by the FTA member (the "Member"). As lawful consideration for being permitted by the Member to participate in the Activity, and the intangible value that I will gain by participating in the Activity, I agree to all the terms and conditions set forth in this agreement (this "Agreement").</p>
 
-<div class="initial-section" data-section-id="risk-acknowledgment" style="background-color: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 8px;">
+<div class="initial-section" data-section-id="risk-assumption" style="background-color: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 8px;">
+<h4 style="color: #92400e; font-weight: bold; margin-bottom: 10px;">SECTION 1: ASSUMPTION OF RISK</h4>
 <p style="font-weight: bold; text-transform: uppercase; font-size: 14px; line-height: 1.6;">
-I AM AWARE AND UNDERSTAND THAT THE ACTIVITIES ARE DANGEROUS ACTIVITIES AND INVOLVE THE RISK OF SERIOUS INJURY, DEATH, AND/OR PROPERTY DAMAGE. I ACKNOWLEDGE THAT ANY INJURIES THAT I SUSTAIN MAY BE COMPOUNDED BY NEGLIGENT EMERGENCY RESPONSE OR RESCUE OPERATIONS OF THE MEMBER. I ACKNOWLEDGE THAT I AM VOLUNTARILY PARTICIPATING IN THE ACTIVITIES WITH KNOWLEDGE OF THE DANGER INVOLVED AND HEREBY AGREE TO ACCEPT AND ASSUME ANY AND ALL RISKS OF INJURY, DEATH, OR PROPERTY DAMAGE, WHETHER CAUSED BY THE NEGLIGENCE OF THE MEMBER OR OTHERWISE.
+I AM AWARE AND UNDERSTAND THAT THE ACTIVITIES ARE DANGEROUS ACTIVITIES AND INVOLVE THE RISK OF SERIOUS INJURY, DEATH, AND/OR PROPERTY DAMAGE. I ACKNOWLEDGE THAT ANY INJURIES THAT I SUSTAIN MAY BE COMPOUNDED BY NEGLIGENT EMERGENCY RESPONSE OR RESCUE OPERATIONS OF THE MEMBER. I ACKNOWLEDGE THAT I AM VOLUNTARILY PARTICIPATING IN THE ACTIVITIES WITH KNOWLEDGE OF THE DANGER INVOLVED AND HEREBY AGREE TO <strong>ACCEPT AND ASSUME ANY AND ALL RISKS OF INJURY, DEATH, OR PROPERTY DAMAGE, WHETHER CAUSED BY THE NEGLIGENCE OF THE MEMBER OR OTHERWISE.</strong>
 </p>
 </div>
 
-<p>I hereby expressly waive and release any and all claims, now known or hereafter known in any jurisdiction throughout the world, against the Member, its officers, directors, employees, agents, affiliates, members, successors, and assigns (collectively, "Releasees"), on account of injury, death, or property damage arising out of or attributable to my participation in the Activities, whether arising out of the negligence of the Member or any Releasees or otherwise. I covenant not to make or bring any such claim against the Member or any other Releasee, and forever release and discharge the Member and all other Releasees from liability under such claims.</p>
+<div class="initial-section" data-section-id="release-liability" style="background-color: #ffedd5; border: 2px solid #f97316; padding: 20px; margin: 20px 0; border-radius: 8px;">
+<h4 style="color: #c2410c; font-weight: bold; margin-bottom: 10px;">SECTION 2: RELEASE OF LIABILITY</h4>
+<p style="font-size: 14px; line-height: 1.6;">
+I hereby expressly waive and release any and all claims, now known or hereafter known in any jurisdiction throughout the world, against the Member, its officers, directors, employees, agents, affiliates, members, successors, and assigns (collectively, "Releasees"), on account of injury, death, or property damage arising out of or attributable to my participation in the Activities, whether arising out of the negligence of the Member or any Releasees or otherwise. <strong>I COVENANT NOT TO MAKE OR BRING ANY SUCH CLAIM AGAINST THE MEMBER OR ANY OTHER RELEASEE, AND FOREVER RELEASE AND DISCHARGE THE MEMBER AND ALL OTHER RELEASEES FROM LIABILITY UNDER SUCH CLAIMS.</strong>
+</p>
+</div>
 
 <p>I shall defend, indemnify, and hold harmless the Member and all other Releasees against any and all losses, damages, liabilities, deficiencies, claims, actions, judgments, settlements, interest, awards, penalties, fines, costs, or expenses of whatever kind, including reasonable attorney fees, that are incurred by the indemnified party arising out of or related to any third-party claim alleging any bodily injury to or death of any person, or damage to real or tangible personal property caused by my negligence or other more culpable act or omission (including any reckless or willful misconduct) in connection with my participation in the Activities.</p>
 
-<p>Any controversy or claim arising out of or relating to this Agreement, or the breach thereof, shall be determined by final and binding arbitration administered by the American Arbitration Association ("AAA") under its Commercial Arbitration Rules and Mediation Procedures ("Commercial Rules"). There shall be one arbitrator agreed to by the parties within twenty (20) days of receipt by respondent of the request for arbitration, or in default thereof appointed by the AAA in accordance with its Commercial Rules. The award rendered by the arbitrator shall be final, non-reviewable, and non-appealable and binding on the parties and may be entered and enforced in any court having jurisdiction. The place of arbitration shall be Los Angeles, California. Except as may be required by law, neither a party nor the arbitrator may disclose the existence, content, or results of any arbitration without the prior written consent of both parties, unless to protect or pursue a legal right. The arbitrator will have no authority to award punitive damages or consequential damages.</p>
+<p>Any controversy or claim arising out of or relating to this Agreement, or the breach thereof, shall be determined by final and binding arbitration administered by the American Arbitration Association ("AAA") under its Commercial Arbitration Rules and Mediation Procedures ("Commercial Rules"). There shall be one arbitrator agreed to by the parties within twenty (20) days of receipt by respondent of the request for arbitration, or in default thereof appointed by the AAA in accordance with its Commercial Rules. The award rendered by the arbitrator shall be final, non-reviewable, and non-appealable and binding on the parties and may be entered and enforced in any court having jurisdiction. The place of arbitration shall be Los Angeles, California.</p>
 
-<div class="initial-section" data-section-id="jury-waiver" style="background-color: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 8px;">
+<div class="initial-section" data-section-id="jury-waiver" style="background-color: #fee2e2; border: 2px solid #ef4444; padding: 20px; margin: 20px 0; border-radius: 8px;">
+<h4 style="color: #b91c1c; font-weight: bold; margin-bottom: 10px;">SECTION 3: WAIVER OF JURY TRIAL</h4>
 <p style="font-weight: bold; text-transform: uppercase; font-size: 14px; line-height: 1.6;">
-I IRREVOCABLY AND UNCONDITIONALLY WAIVE, TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, ANY RIGHT I MAY HAVE TO A TRIAL BY JURY IN ANY LEGAL ACTION, PROCEEDING, CAUSE OF ACTION, OR COUNTERCLAIM ARISING OUT OF OR RELATING TO MY PARTICIPATION IN THE ACTIVITIES. I CERTIFY AND ACKNOWLEDGE THAT I MAKE THIS WAIVER KNOWINGLY AND VOLUNTARILY.
+I IRREVOCABLY AND UNCONDITIONALLY WAIVE, TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, ANY RIGHT I MAY HAVE TO A TRIAL BY JURY IN ANY LEGAL ACTION, PROCEEDING, CAUSE OF ACTION, OR COUNTERCLAIM ARISING OUT OF OR RELATING TO MY PARTICIPATION IN THE ACTIVITIES. <strong>I CERTIFY AND ACKNOWLEDGE THAT I MAKE THIS WAIVER KNOWINGLY AND VOLUNTARILY.</strong>
 </p>
 </div>
 
 <p>This Agreement constitutes the sole and entire agreement of the Member and me with respect to the subject matter contained herein and supersedes all prior and contemporaneous understandings, agreements, representations, and warranties, both written and oral, with respect to such subject matter. If any term or provision of this Agreement is invalid, illegal, or unenforceable in any jurisdiction, such invalidity, illegality, or unenforceability shall not affect any other term or provision of this Agreement or invalidate or render unenforceable such term or provision in any other jurisdiction. This Agreement is binding on and shall inure to the benefit of the Member and me and their respective successors and assigns.</p>
 
-<div style="background-color: #fef2f2; border: 2px solid #ef4444; padding: 20px; margin: 30px 0; border-radius: 8px;">
+<div style="background-color: #1f2937; color: white; padding: 20px; margin: 30px 0; border-radius: 8px;">
 <p style="font-weight: bold; text-transform: uppercase; font-size: 14px; text-align: center;">
 BY SIGNING, I ACKNOWLEDGE THAT I HAVE READ AND UNDERSTOOD ALL OF THE TERMS OF THIS AGREEMENT AND THAT I AM VOLUNTARILY GIVING UP SUBSTANTIAL LEGAL RIGHTS, INCLUDING THE RIGHT TO SUE THE MEMBER.
 </p>
 </div>
 `;
 
-      // Initial fields configuration
+      // Initial fields configuration - 3 sections requiring initials
       const initialFields = [
         {
-          id: 'risk-acknowledgment',
-          label: 'Acknowledgment of Risk',
-          description: 'I am aware and understand that the activities are dangerous and involve the risk of serious injury, death, and/or property damage. I acknowledge that I am voluntarily participating with knowledge of the danger involved and agree to accept and assume all risks.'
+          id: 'risk-assumption',
+          label: 'Assumption of Risk',
+          description: 'I am aware and understand that the activities are dangerous and involve the risk of serious injury, death, and/or property damage. I agree to accept and assume any and all risks.'
+        },
+        {
+          id: 'release-liability',
+          label: 'Release of Liability',
+          description: 'I hereby waive and release all claims against the Member and Releasees on account of injury, death, or property damage arising from my participation in the Activities.'
         },
         {
           id: 'jury-waiver',
           label: 'Jury Trial Waiver',
-          description: 'I irrevocably and unconditionally waive any right I may have to a trial by jury in any legal action arising out of or relating to my participation in the activities. I certify that I make this waiver knowingly and voluntarily.'
+          description: 'I irrevocably waive any right I may have to a trial by jury in any legal action arising out of my participation in the activities.'
         }
       ];
 
