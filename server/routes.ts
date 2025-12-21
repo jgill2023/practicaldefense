@@ -9073,6 +9073,235 @@ jeremy@abqconcealedcarry.com
   // Gift card routes
   app.use('/api/gift-cards', giftCardRouter);
 
+  // ============================================
+  // FTA WAIVER SUBMISSION ROUTES
+  // ============================================
+
+  // Submit FTA waiver (public route - no auth required)
+  app.post('/api/waivers/submit', async (req, res) => {
+    try {
+      const {
+        studentName,
+        studentEmail,
+        activityName,
+        initialRiskAssumption,
+        initialReleaseOfLiability,
+        initialJuryTrialWaiver,
+        printedName,
+        address,
+        electronicConsent,
+        signatureData,
+        signatureType,
+        typedSignature,
+        waiverTextVersion,
+        waiverVersion,
+        enrollmentId,
+      } = req.body;
+
+      // Validate required fields
+      if (!studentName || !studentEmail || !activityName) {
+        return res.status(400).json({ message: "Student name, email, and activity are required" });
+      }
+
+      if (!initialRiskAssumption || !initialReleaseOfLiability || !initialJuryTrialWaiver) {
+        return res.status(400).json({ message: "All three section initials are required" });
+      }
+
+      if (!signatureData) {
+        return res.status(400).json({ message: "Signature is required" });
+      }
+
+      if (!electronicConsent) {
+        return res.status(400).json({ message: "Electronic consent is required" });
+      }
+
+      if (!printedName || !address) {
+        return res.status(400).json({ message: "Printed name and address are required" });
+      }
+
+      // Capture IP address and browser user agent
+      const ipAddress = req.headers['x-forwarded-for']?.toString()?.split(',')[0]?.trim() 
+        || req.headers['x-real-ip']?.toString() 
+        || req.socket?.remoteAddress 
+        || 'unknown';
+      
+      const browserUserAgent = req.headers['user-agent'] || 'unknown';
+
+      // Create the waiver submission record
+      const waiverSubmission = await storage.createFtaWaiverSubmission({
+        studentName,
+        studentEmail,
+        activityName,
+        initialRiskAssumption: initialRiskAssumption.toUpperCase(),
+        initialReleaseOfLiability: initialReleaseOfLiability.toUpperCase(),
+        initialJuryTrialWaiver: initialJuryTrialWaiver.toUpperCase(),
+        signatureData,
+        signatureType: signatureType || 'drawn',
+        typedSignature: typedSignature || null,
+        printedName,
+        address,
+        electronicConsent: true,
+        waiverTextVersion: waiverTextVersion || '',
+        waiverVersion: waiverVersion || '2021-v1',
+        ipAddress,
+        browserUserAgent,
+        enrollmentId: enrollmentId || null,
+      });
+
+      // Send confirmation email with the signed waiver
+      try {
+        const { NotificationEmailService } = await import('./emailService');
+        
+        const signedDate = new Date().toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZoneName: 'short',
+        });
+
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #1a1a1a; border-bottom: 2px solid #e5e5e5; padding-bottom: 10px;">FTA Release and Waiver - Confirmation</h1>
+            
+            <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0;">
+              <h2 style="color: #333; margin-top: 0;">Submission Details</h2>
+              <p><strong>Name:</strong> ${studentName}</p>
+              <p><strong>Email:</strong> ${studentEmail}</p>
+              <p><strong>Activity:</strong> ${activityName}</p>
+              <p><strong>Date Signed:</strong> ${signedDate}</p>
+              <p><strong>IP Address:</strong> ${ipAddress}</p>
+            </div>
+
+            <div style="background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin: 20px 0;">
+              <p style="margin: 0; color: #856404;"><strong>Important:</strong> This email serves as your permanent record of the signed waiver. Please keep it for your records.</p>
+            </div>
+
+            <h2 style="color: #333;">Signed Waiver Document</h2>
+            
+            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; background-color: #fafafa;">
+              <h3 style="text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px;">FTA RELEASE AND WAIVER</h3>
+              
+              <p style="font-size: 14px; line-height: 1.6;">
+                The individual named below (referred to as "I" or "me") desires to participate in <strong>${activityName}</strong> ("Activity" or "Activities") provided by the FTA member (the "Member"). As lawful consideration for being permitted by the Member to participate in the Activity, and the intangible value that I will gain by participating in the Activity, I agree to all the terms and conditions set forth in this agreement (this "Agreement").
+              </p>
+
+              <div style="background-color: #fff8e1; border-left: 4px solid #ffc107; padding: 15px; margin: 15px 0;">
+                <p style="font-size: 14px; line-height: 1.6; margin: 0;">
+                  I AM AWARE AND UNDERSTAND THAT THE ACTIVITIES ARE DANGEROUS ACTIVITIES AND INVOLVE THE RISK OF SERIOUS INJURY, DEATH, AND/OR PROPERTY DAMAGE. I ACKNOWLEDGE THAT ANY INJURIES THAT I SUSTAIN MAY BE COMPOUNDED BY NEGLIGENT EMERGENCY RESPONSE OR RESCUE OPERATIONS OF THE MEMBER. I ACKNOWLEDGE THAT I AM VOLUNTARILY PARTICIPATING IN THE ACTIVITIES WITH KNOWLEDGE OF THE DANGER INVOLVED AND HEREBY AGREE TO ACCEPT AND ASSUME ANY AND ALL RISKS OF INJURY, DEATH, OR PROPERTY DAMAGE, WHETHER CAUSED BY THE NEGLIGENCE OF THE MEMBER OR OTHERWISE.
+                </p>
+                <p style="margin-top: 10px; font-weight: bold;">Initial: ${initialRiskAssumption.toUpperCase()}</p>
+              </div>
+
+              <div style="background-color: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin: 15px 0;">
+                <p style="font-size: 14px; line-height: 1.6; margin: 0;">
+                  I hereby expressly waive and release any and all claims, now known or hereafter known in any jurisdiction throughout the world, against the Member, its officers, directors, employees, agents, affiliates, members, successors, and assigns (collectively, "Releasees"), on account of injury, death, or property damage arising out of or attributable to my participation in the Activities, whether arising out of the negligence of the Member or any Releasees or otherwise. I covenant not to make or bring any such claim against the Member or any other Releasee, and forever release and discharge the Member and all other Releasees from liability under such claims.
+                </p>
+                <p style="margin-top: 10px; font-weight: bold;">Initial: ${initialReleaseOfLiability.toUpperCase()}</p>
+              </div>
+
+              <p style="font-size: 14px; line-height: 1.6;">
+                I shall defend, indemnify, and hold harmless the Member and all other Releasees against any and all losses, damages, liabilities, deficiencies, claims, actions, judgments, settlements, interest, awards, penalties, fines, costs, or expenses of whatever kind, including reasonable attorney fees, that are incurred by the indemnified party arising out of or related to any third-party claim alleging any bodily injury to or death of any person, or damage to real or tangible personal property caused by my negligence or other more culpable act or omission (including any reckless or willful misconduct) in connection with my participation in the Activities.
+              </p>
+
+              <p style="font-size: 14px; line-height: 1.6;">
+                Any controversy or claim arising out of or relating to this Agreement, or the breach thereof, shall be determined by final and binding arbitration administered by the American Arbitration Association ("AAA") under its Commercial Arbitration Rules and Mediation Procedures ("Commercial Rules"). There shall be one arbitrator agreed to by the parties within twenty (20) days of receipt by respondent of the request for arbitration, or in default thereof appointed by the AAA in accordance with its Commercial Rules. The award rendered by the arbitrator shall be final, non-reviewable, and non-appealable and binding on the parties and may be entered and enforced in any court having jurisdiction. The place of arbitration shall be Los Angeles, California. Except as may be required by law, neither a party nor the arbitrator may disclose the existence, content, or results of any arbitration without the prior written consent of both parties, unless to protect or pursue a legal right. The arbitrator will have no authority to award punitive damages or consequential damages.
+              </p>
+
+              <div style="background-color: #ffebee; border-left: 4px solid #f44336; padding: 15px; margin: 15px 0;">
+                <p style="font-size: 14px; line-height: 1.6; margin: 0;">
+                  I IRREVOCABLY AND UNCONDITIONALLY WAIVE, TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, ANY RIGHT I MAY HAVE TO A TRIAL BY JURY IN ANY LEGAL ACTION, PROCEEDING, CAUSE OF ACTION, OR COUNTERCLAIM ARISING OUT OF OR RELATING TO MY PARTICIPATION IN THE ACTIVITIES. I CERTIFY AND ACKNOWLEDGE THAT I MAKE THIS WAIVER KNOWINGLY AND VOLUNTARILY.
+                </p>
+                <p style="margin-top: 10px; font-weight: bold;">Initial: ${initialJuryTrialWaiver.toUpperCase()}</p>
+              </div>
+
+              <p style="font-size: 14px; line-height: 1.6;">
+                This Agreement constitutes the sole and entire agreement of the Member and me with respect to the subject matter contained herein and supersedes all prior and contemporaneous understandings, agreements, representations, and warranties, both written and oral, with respect to such subject matter. If any term or provision of this Agreement is invalid, illegal, or unenforceable in any jurisdiction, such invalidity, illegality, or unenforceability shall not affect any other term or provision of this Agreement or invalidate or render unenforceable such term or provision in any other jurisdiction. This Agreement is binding on and shall inure to the benefit of the Member and me and their respective successors and assigns.
+              </p>
+
+              <div style="background-color: #1a1a1a; color: #fff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p style="font-weight: bold; margin: 0;">
+                  BY SIGNING, I ACKNOWLEDGE THAT I HAVE READ AND UNDERSTOOD ALL OF THE TERMS OF THIS AGREEMENT AND THAT I AM VOLUNTARILY GIVING UP SUBSTANTIAL LEGAL RIGHTS, INCLUDING THE RIGHT TO SUE THE MEMBER.
+                </p>
+              </div>
+
+              <div style="border-top: 2px solid #333; margin-top: 30px; padding-top: 20px;">
+                <p style="margin: 5px 0;"><strong>Signature:</strong> ${signatureType === 'typed' ? typedSignature : '[Electronic Signature on File]'}</p>
+                <p style="margin: 5px 0;"><strong>Printed Name:</strong> ${printedName}</p>
+                <p style="margin: 5px 0;"><strong>Address:</strong> ${address}</p>
+                <p style="margin: 5px 0;"><strong>Date:</strong> ${signedDate}</p>
+              </div>
+            </div>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
+              <p>This is an automated confirmation email. Please do not reply directly to this message.</p>
+              <p>Reference ID: ${waiverSubmission.id}</p>
+            </div>
+          </div>
+        `;
+
+        await NotificationEmailService.sendNotificationEmail({
+          to: [studentEmail],
+          subject: `FTA Release and Waiver - Signed Confirmation for ${activityName}`,
+          htmlContent: emailHtml,
+          textContent: `FTA Release and Waiver Confirmation\n\nYour waiver for ${activityName} has been successfully submitted.\n\nName: ${studentName}\nEmail: ${studentEmail}\nActivity: ${activityName}\nDate Signed: ${signedDate}\n\nPlease keep this email for your records.`,
+          fromName: 'Apache Solutions',
+        });
+
+        // Update the waiver submission with email sent timestamp
+        await storage.updateFtaWaiverSubmissionEmailSent(waiverSubmission.id);
+        
+        console.log(`Waiver confirmation email sent to ${studentEmail}`);
+      } catch (emailError) {
+        console.error('Failed to send waiver confirmation email:', emailError);
+        // Don't fail the submission if email fails - the waiver is already saved
+      }
+
+      res.status(201).json({
+        success: true,
+        id: waiverSubmission.id,
+        studentName: waiverSubmission.studentName,
+        studentEmail: waiverSubmission.studentEmail,
+        activityName: waiverSubmission.activityName,
+        signedAt: waiverSubmission.signedAt,
+        message: "Waiver submitted successfully",
+      });
+    } catch (error) {
+      console.error("Error submitting waiver:", error);
+      res.status(500).json({ message: "Failed to submit waiver" });
+    }
+  });
+
+  // Get waiver submission by ID (admin route)
+  app.get('/api/waivers/:id', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const waiver = await storage.getFtaWaiverSubmission(id);
+      
+      if (!waiver) {
+        return res.status(404).json({ message: "Waiver not found" });
+      }
+
+      res.json(waiver);
+    } catch (error) {
+      console.error("Error fetching waiver:", error);
+      res.status(500).json({ message: "Failed to fetch waiver" });
+    }
+  });
+
+  // List all waiver submissions (admin route)
+  app.get('/api/waivers', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      const waivers = await storage.getFtaWaiverSubmissions();
+      res.json(waivers);
+    } catch (error) {
+      console.error("Error fetching waivers:", error);
+      res.status(500).json({ message: "Failed to fetch waivers" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

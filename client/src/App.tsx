@@ -48,6 +48,7 @@ import CourseDetail from "@/pages/course-detail";
 import RACCProgram from "@/pages/racc-program";
 import AGirlAndAGun from "@/pages/a-girl-and-a-gun";
 import Register from "@/pages/register";
+import FtaWaiverPage from "@/pages/fta-waiver";
 import NotFound from "@/pages/not-found";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -172,6 +173,7 @@ function Router() {
       <Route path="/racc-program" component={RACCProgram} />
       <Route path="/a-girl-and-a-gun" component={AGirlAndAGun} />
       <Route path="/register" component={Register} />
+      <Route path="/waiver" component={FtaWaiverPage} />
       <Route component={NotFound} />
     </Switch>
   );
