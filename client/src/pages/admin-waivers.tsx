@@ -154,24 +154,74 @@ export default function AdminWaiversPage() {
                       <p className="text-sm text-muted-foreground">Address</p>
                       <p className="font-medium">{selectedWaiver.address}</p>
                     </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Calendar className="w-3 h-3" /> Submitted
+                      </p>
+                      <p className="font-medium">{formatDate(selectedWaiver.submittedAt)}</p>
+                    </div>
                   </div>
 
                   <Separator />
 
                   <div className="space-y-3">
-                    <p className="font-semibold">Initials</p>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-                        <p className="text-xs text-yellow-800 font-medium">Risk Assumption</p>
-                        <p className="text-lg font-bold">{selectedWaiver.initialRiskAssumption}</p>
+                    <p className="font-semibold text-lg">Complete Waiver Agreement</p>
+                    <div className="bg-white border rounded-lg p-6">
+                      <h3 className="text-center font-bold text-xl mb-4">FTA RELEASE AND WAIVER</h3>
+                      
+                      <p className="text-sm text-gray-700 leading-relaxed mb-4">
+                        The individual named below (referred to as "I" or "me") desires to participate in <span className="font-medium underline">{selectedWaiver.activityName}</span> ("Activity" or "Activities") provided by the FTA member (the "Member"). As lawful consideration for being permitted by the Member to participate in the Activity, and the intangible value that I will gain by participating in the Activity, I agree to all the terms and conditions set forth in this agreement (this "Agreement").
+                      </p>
+
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 my-4">
+                        <p className="font-bold text-yellow-800 uppercase text-sm mb-2">Section 1: Risk Assumption</p>
+                        <p className="text-sm text-gray-700 leading-relaxed mb-2">
+                          I AM AWARE AND UNDERSTAND THAT THE ACTIVITIES ARE DANGEROUS ACTIVITIES AND INVOLVE THE RISK OF SERIOUS INJURY, DEATH, AND/OR PROPERTY DAMAGE. I ACKNOWLEDGE THAT ANY INJURIES THAT I SUSTAIN MAY BE COMPOUNDED BY NEGLIGENT EMERGENCY RESPONSE OR RESCUE OPERATIONS OF THE MEMBER. I ACKNOWLEDGE THAT I AM VOLUNTARILY PARTICIPATING IN THE ACTIVITIES WITH KNOWLEDGE OF THE DANGER INVOLVED AND HEREBY AGREE TO <strong>ACCEPT AND ASSUME ANY AND ALL RISKS OF INJURY, DEATH, OR PROPERTY DAMAGE, WHETHER CAUSED BY THE NEGLIGENCE OF THE MEMBER OR OTHERWISE.</strong>
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-yellow-200">
+                          <span className="text-sm font-medium">Initialed:</span>
+                          <Badge variant="outline" className="font-bold">{selectedWaiver.initialRiskAssumption}</Badge>
+                        </div>
                       </div>
-                      <div className="bg-orange-50 border border-orange-200 rounded p-3">
-                        <p className="text-xs text-orange-800 font-medium">Release of Liability</p>
-                        <p className="text-lg font-bold">{selectedWaiver.initialReleaseOfLiability}</p>
+
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 my-4">
+                        <p className="font-bold text-orange-800 uppercase text-sm mb-2">Section 2: Release of Liability</p>
+                        <p className="text-sm text-gray-700 leading-relaxed mb-2">
+                          I hereby expressly waive and release any and all claims, now known or hereafter known in any jurisdiction throughout the world, against the Member, its officers, directors, employees, agents, affiliates, members, successors, and assigns (collectively, "Releasees"), on account of injury, death, or property damage arising out of or attributable to my participation in the Activities, whether arising out of the negligence of the Member or any Releasees or otherwise. <strong>I covenant not to make or bring any such claim against the Member or any other Releasee, and forever release and discharge the Member and all other Releasees from liability under such claims.</strong>
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-orange-200">
+                          <span className="text-sm font-medium">Initialed:</span>
+                          <Badge variant="outline" className="font-bold">{selectedWaiver.initialReleaseOfLiability}</Badge>
+                        </div>
                       </div>
-                      <div className="bg-red-50 border border-red-200 rounded p-3">
-                        <p className="text-xs text-red-800 font-medium">Jury Trial Waiver</p>
-                        <p className="text-lg font-bold">{selectedWaiver.initialJuryTrialWaiver}</p>
+
+                      <p className="text-sm text-gray-700 leading-relaxed my-4">
+                        I shall defend, indemnify, and hold harmless the Member and all other Releasees against any and all losses, damages, liabilities, deficiencies, claims, actions, judgments, settlements, interest, awards, penalties, fines, costs, or expenses of whatever kind, including reasonable attorney fees, that are incurred by the indemnified party arising out of or related to any third-party claim alleging any bodily injury to or death of any person, or damage to real or tangible personal property caused by my negligence or other more culpable act or omission (including any reckless or willful misconduct) in connection with my participation in the Activities.
+                      </p>
+
+                      <p className="text-sm text-gray-700 leading-relaxed my-4">
+                        Any controversy or claim arising out of or relating to this Agreement, or the breach thereof, shall be determined by final and binding arbitration administered by the American Arbitration Association ("AAA") under its Commercial Arbitration Rules and Mediation Procedures ("Commercial Rules"). There shall be one arbitrator agreed to by the parties within twenty (20) days of receipt by respondent of the request for arbitration, or in default thereof appointed by the AAA in accordance with its Commercial Rules. The award rendered by the arbitrator shall be final, non-reviewable, and non-appealable and binding on the parties and may be entered and enforced in any court having jurisdiction. The place of arbitration shall be Los Angeles, California.
+                      </p>
+
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
+                        <p className="font-bold text-red-800 uppercase text-sm mb-2">Section 3: Waiver of Jury Trial</p>
+                        <p className="text-sm text-gray-700 leading-relaxed mb-2">
+                          I IRREVOCABLY AND UNCONDITIONALLY WAIVE, TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, ANY RIGHT I MAY HAVE TO A TRIAL BY JURY IN ANY LEGAL ACTION, PROCEEDING, CAUSE OF ACTION, OR COUNTERCLAIM ARISING OUT OF OR RELATING TO MY PARTICIPATION IN THE ACTIVITIES. <strong>I CERTIFY AND ACKNOWLEDGE THAT I MAKE THIS WAIVER KNOWINGLY AND VOLUNTARILY.</strong>
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-red-200">
+                          <span className="text-sm font-medium">Initialed:</span>
+                          <Badge variant="outline" className="font-bold">{selectedWaiver.initialJuryTrialWaiver}</Badge>
+                        </div>
+                      </div>
+
+                      <p className="text-sm text-gray-700 leading-relaxed my-4">
+                        This Agreement constitutes the sole and entire agreement of the Member and me with respect to the subject matter contained herein and supersedes all prior and contemporaneous understandings, agreements, representations, and warranties, both written and oral, with respect to such subject matter. If any term or provision of this Agreement is invalid, illegal, or unenforceable in any jurisdiction, such invalidity, illegality, or unenforceability shall not affect any other term or provision of this Agreement or invalidate or render unenforceable such term or provision in any other jurisdiction.
+                      </p>
+
+                      <div className="bg-gray-900 text-white rounded-lg p-4 my-4">
+                        <p className="text-sm font-bold leading-relaxed">
+                          BY SIGNING, I ACKNOWLEDGE THAT I HAVE READ AND UNDERSTOOD ALL OF THE TERMS OF THIS AGREEMENT AND THAT I AM VOLUNTARILY GIVING UP SUBSTANTIAL LEGAL RIGHTS, INCLUDING THE RIGHT TO SUE THE MEMBER.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -183,7 +233,7 @@ export default function AdminWaiversPage() {
                     {selectedWaiver.signatureType === 'typed' ? (
                       <div className="border rounded p-4 bg-gray-50">
                         <p className="text-sm text-muted-foreground mb-1">Typed Signature</p>
-                        <p className="text-2xl font-script italic">{selectedWaiver.typedSignature}</p>
+                        <p className="text-2xl italic" style={{ fontFamily: 'cursive' }}>{selectedWaiver.typedSignature}</p>
                       </div>
                     ) : (
                       <div className="border rounded p-4 bg-white">
@@ -195,6 +245,9 @@ export default function AdminWaiversPage() {
                         />
                       </div>
                     )}
+                    <div className="text-sm text-muted-foreground">
+                      Date: {formatDate(selectedWaiver.submittedAt)}
+                    </div>
                   </div>
 
                   <Separator />
@@ -203,26 +256,30 @@ export default function AdminWaiversPage() {
                     <p className="font-semibold">Electronic Consent</p>
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span>Consent provided: {selectedWaiver.electronicConsent ? 'Yes' : 'No'}</span>
+                      <span>Electronic signature consent provided: {selectedWaiver.electronicConsent ? 'Yes' : 'No'}</span>
                     </div>
                   </div>
 
                   <Separator />
 
                   <div className="space-y-3">
-                    <p className="font-semibold">Technical Details</p>
+                    <p className="font-semibold">Technical Details (Legal Record)</p>
                     <div className="bg-gray-100 rounded p-4 text-sm space-y-2">
-                      <div className="flex justify-between">
+                      <div className="grid grid-cols-2 gap-2">
                         <span className="text-muted-foreground">IP Address:</span>
                         <span className="font-mono">{selectedWaiver.ipAddress}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="grid grid-cols-2 gap-2">
                         <span className="text-muted-foreground">Browser Agent:</span>
-                        <span className="font-mono text-xs break-all">{selectedWaiver.browserAgent?.substring(0, 80)}...</span>
+                        <span className="font-mono text-xs break-all">{selectedWaiver.browserAgent}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="grid grid-cols-2 gap-2">
                         <span className="text-muted-foreground">Waiver Version:</span>
                         <span className="font-mono">{selectedWaiver.waiverVersion}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <span className="text-muted-foreground">Submission ID:</span>
+                        <span className="font-mono">{selectedWaiver.id}</span>
                       </div>
                     </div>
                   </div>
