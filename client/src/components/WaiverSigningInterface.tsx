@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Check, X, PenTool } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Check, X, PenTool, Type, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface InitialSection {
@@ -39,8 +40,12 @@ export function WaiverSigningInterface({
   const [fullName, setFullName] = useState('');
   const [address, setAddress] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [electronicConsent, setElectronicConsent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Signature state
+  const [signatureType, setSignatureType] = useState<'draw' | 'type'>('draw');
+  const [typedSignature, setTypedSignature] = useState('');
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
@@ -173,12 +178,31 @@ export function WaiverSigningInterface({
       return false;
     }
 
-    // Check signature
-    if (!hasSignature) {
+    // Check signature based on type
+    if (signatureType === 'draw' && !hasSignature) {
       toast({
         variant: 'destructive',
         title: 'Missing Signature',
-        description: 'Please provide your signature.',
+        description: 'Please draw your signature.',
+      });
+      return false;
+    }
+
+    if (signatureType === 'type' && !typedSignature.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Missing Signature',
+        description: 'Please type your signature.',
+      });
+      return false;
+    }
+
+    // Check electronic consent (ESIGN Act compliance)
+    if (!electronicConsent) {
+      toast({
+        variant: 'destructive',
+        title: 'Electronic Consent Required',
+        description: 'You must consent to sign this document electronically.',
       });
       return false;
     }
@@ -202,10 +226,13 @@ export function WaiverSigningInterface({
     setIsSubmitting(true);
 
     try {
-      const canvas = signatureCanvasRef.current;
-      if (!canvas) throw new Error('Signature canvas not found');
-
-      const signatureData = canvas.toDataURL('image/png');
+      let signatureData = '';
+      
+      if (signatureType === 'draw') {
+        const canvas = signatureCanvasRef.current;
+        if (!canvas) throw new Error('Signature canvas not found');
+        signatureData = canvas.toDataURL('image/png');
+      }
 
       const response = await fetch(`/api/waiver-instances/${instanceId}/sign`, {
         method: 'POST',
@@ -213,17 +240,21 @@ export function WaiverSigningInterface({
         credentials: 'include',
         body: JSON.stringify({
           signerName: fullName,
-          signatureData,
-          signatureMethod: 'canvas',
+          signatureData: signatureType === 'draw' ? signatureData : null,
+          typedSignature: signatureType === 'type' ? typedSignature : null,
+          signatureMethod: signatureType === 'draw' ? 'canvas' : 'typed',
           consentCheckboxes: initialSections.map(section => ({
             sectionId: section.id,
             initial: initials[section.id],
             timestamp: new Date().toISOString(),
           })),
           acknowledgementsCompleted: true,
+          electronicConsent: electronicConsent,
           metadata: {
             address,
             agreedToTerms,
+            electronicConsent,
+            signatureType,
           },
         }),
       });
@@ -234,7 +265,7 @@ export function WaiverSigningInterface({
 
       toast({
         title: 'Waiver Signed',
-        description: 'Your waiver has been successfully submitted.',
+        description: 'Your waiver has been successfully submitted. A confirmation email will be sent to you.',
       });
 
       onComplete();
@@ -338,39 +369,104 @@ export function WaiverSigningInterface({
 
       {/* Signature */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold">Your Signature *</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={clearSignature}
-            data-testid="button-clear-signature"
-          >
-            <X className="h-4 w-4 mr-1" />
-            Clear
-          </Button>
+        <h3 className="font-semibold">Your Signature *</h3>
+        
+        <Tabs value={signatureType} onValueChange={(v) => setSignatureType(v as 'draw' | 'type')}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="draw" className="flex items-center gap-2" data-testid="tab-draw-signature">
+              <PenTool className="h-4 w-4" />
+              Draw Signature
+            </TabsTrigger>
+            <TabsTrigger value="type" className="flex items-center gap-2" data-testid="tab-type-signature">
+              <Type className="h-4 w-4" />
+              Type Signature
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="draw" className="mt-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex justify-end mb-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={clearSignature}
+                    data-testid="button-clear-signature"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Clear
+                  </Button>
+                </div>
+                <canvas
+                  ref={signatureCanvasRef}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  className="border-2 border-dashed border-muted-foreground/30 rounded-lg w-full cursor-crosshair bg-white dark:bg-gray-900"
+                  style={{ height: '150px', touchAction: 'none' }}
+                  data-testid="canvas-signature"
+                />
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Sign above using your mouse or touch screen
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="type" className="mt-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="typedSignature">Type your full legal name as your signature</Label>
+                    <Input
+                      id="typedSignature"
+                      value={typedSignature}
+                      onChange={(e) => setTypedSignature(e.target.value)}
+                      placeholder="Your Full Legal Name"
+                      className="text-xl"
+                      style={{ fontFamily: 'cursive' }}
+                      data-testid="input-typed-signature"
+                    />
+                  </div>
+                  {typedSignature && (
+                    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                      <p className="text-sm text-muted-foreground mb-2">Signature Preview:</p>
+                      <p className="text-2xl" style={{ fontFamily: 'cursive' }}>{typedSignature}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <Separator />
+
+      {/* Electronic Consent (ESIGN Act Compliance) */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-amber-500" />
+          <h3 className="font-semibold">Electronic Signature Consent</h3>
         </div>
-        <Card>
-          <CardContent className="pt-6">
-            <canvas
-              ref={signatureCanvasRef}
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
-              onTouchStart={startDrawing}
-              onTouchMove={draw}
-              onTouchEnd={stopDrawing}
-              className="border-2 border-dashed border-muted-foreground/30 rounded-lg w-full cursor-crosshair bg-white dark:bg-gray-900"
-              style={{ height: '150px', touchAction: 'none' }}
-              data-testid="canvas-signature"
-            />
-            <p className="text-xs text-muted-foreground mt-2 text-center">
-              Sign above using your mouse or touch screen
-            </p>
-          </CardContent>
-        </Card>
+        
+        <div className="flex items-start space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <Checkbox
+            id="electronicConsent"
+            checked={electronicConsent}
+            onCheckedChange={(checked) => setElectronicConsent(checked as boolean)}
+            data-testid="checkbox-electronic-consent"
+          />
+          <Label htmlFor="electronicConsent" className="text-sm leading-tight cursor-pointer">
+            <strong>I consent to sign this document electronically.</strong> I understand that my electronic signature has the same legal effect as a handwritten signature. I acknowledge that I can request a paper copy of this document at any time.
+          </Label>
+        </div>
       </div>
 
       {/* Agreement Checkbox */}
