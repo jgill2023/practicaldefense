@@ -2992,3 +2992,46 @@ export type GiftCardValidationResult = {
   errorMessage?: string;
   remainingBalance?: number;
 };
+
+// Student Feedback table - for instructor notes on students
+export const studentFeedback = pgTable("student_feedback", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  instructorId: varchar("instructor_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  content: text("content").notNull(),
+  feedbackType: varchar("feedback_type", { length: 50 }).notNull().default('general'), // general, performance, behavior, commendation
+  isPrivate: boolean("is_private").notNull().default(false), // If true, only visible to admins/superadmins
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Relations for Student Feedback
+export const studentFeedbackRelations = relations(studentFeedback, ({ one }) => ({
+  student: one(users, {
+    fields: [studentFeedback.studentId],
+    references: [users.id],
+    relationName: 'studentFeedback',
+  }),
+  instructor: one(users, {
+    fields: [studentFeedback.instructorId],
+    references: [users.id],
+    relationName: 'instructorFeedback',
+  }),
+}));
+
+// Insert schema for Student Feedback
+export const insertStudentFeedbackSchema = createInsertSchema(studentFeedback).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for Student Feedback
+export type InsertStudentFeedback = z.infer<typeof insertStudentFeedbackSchema>;
+export type StudentFeedback = typeof studentFeedback.$inferSelect;
+
+// Extended type with relations
+export type StudentFeedbackWithDetails = StudentFeedback & {
+  student?: User;
+  instructor?: User;
+};
