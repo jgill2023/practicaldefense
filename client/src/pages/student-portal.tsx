@@ -26,6 +26,7 @@ import { useLocation } from "wouter";
 import { StudentBookingsModal } from "@/components/StudentBookingsModal";
 import { EnrollmentFeedbackModal } from "@/components/EnrollmentFeedbackModal";
 import { WaiverSigningInterface } from "@/components/WaiverSigningInterface";
+import { FtaWaiverForm } from "@/components/FtaWaiverForm";
 import { getEnrollmentStatusClassName } from "@/lib/statusColors";
 
 // Types for the query responses
@@ -3353,6 +3354,15 @@ function WaiverDialog({ enrollment, onClose }: { enrollment: EnrollmentWithDetai
   }
 
   const mergedContent = getMergedContent(waiverTemplate.content);
+  
+  // Check if this is an FTA waiver - primarily by type field, fallback to name check for legacy templates
+  const isFtaWaiver = waiverTemplate.type === 'fta' ||
+                      waiverTemplate.name?.toLowerCase().includes('fta release') ||
+                      waiverTemplate.name?.toLowerCase().includes('fta waiver');
+  
+  // Get student info for pre-filling FTA form
+  const studentName = `${enrollment.student?.firstName || ''} ${enrollment.student?.lastName || ''}`.trim();
+  const studentEmail = enrollment.student?.email || '';
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
@@ -3364,15 +3374,27 @@ function WaiverDialog({ enrollment, onClose }: { enrollment: EnrollmentWithDetai
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto pr-2">
-          <WaiverSigningInterface
-            waiverContent={mergedContent}
-            waiverTitle={waiverTemplate.name}
-            enrollmentId={enrollment.id}
-            instanceId={pendingWaiver.id}
-            initialFields={waiverTemplate.initialFields as Array<{ id: string; label: string; description: string }> || []}
-            onComplete={handleComplete}
-            onCancel={onClose}
-          />
+          {isFtaWaiver ? (
+            <FtaWaiverForm
+              activityName={enrollment.course.title}
+              studentName={studentName}
+              studentEmail={studentEmail}
+              instanceId={pendingWaiver.id}
+              onComplete={handleComplete}
+              onCancel={onClose}
+              showCancelButton={true}
+            />
+          ) : (
+            <WaiverSigningInterface
+              waiverContent={mergedContent}
+              waiverTitle={waiverTemplate.name}
+              enrollmentId={enrollment.id}
+              instanceId={pendingWaiver.id}
+              initialFields={waiverTemplate.initialFields as Array<{ id: string; label: string; description: string }> || []}
+              onComplete={handleComplete}
+              onCancel={onClose}
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -5476,9 +5476,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ error: "Unauthorized: Admin access required" });
       }
 
+      // Get existing template to check type protection
+      const existingTemplate = await storage.getWaiverTemplate(id);
+      if (!existingTemplate) {
+        return res.status(404).json({ error: "Waiver template not found" });
+      }
+
+      // Protect the type field - FTA waivers cannot be changed to generic
+      // This ensures legal compliance is maintained
+      const bodyWithProtectedType = { ...req.body };
+      if (existingTemplate.type === 'fta') {
+        bodyWithProtectedType.type = 'fta'; // Force preserve FTA type
+      }
+
       // Validate request body - use partial schema for updates
       const updateData = insertWaiverTemplateSchema.partial().parse({
-        ...req.body,
+        ...bodyWithProtectedType,
         updatedBy: userId,
       });
 
@@ -5591,6 +5604,7 @@ BY SIGNING, I ACKNOWLEDGE THAT I HAVE READ AND UNDERSTOOD ALL OF THE TERMS OF TH
         name: 'FTA Release and Waiver',
         content: ftaWaiverContent,
         version: 1,
+        type: 'fta', // FTA waiver type for legally compliant interface
         scope: 'course',
         courseIds: courseIds,
         categoryIds: [],
@@ -9108,6 +9122,7 @@ jeremy@abqconcealedcarry.com
         waiverTextVersion,
         waiverVersion,
         enrollmentId,
+        instanceId,
       } = req.body;
 
       // Validate required fields
@@ -9269,6 +9284,36 @@ jeremy@abqconcealedcarry.com
       } catch (emailError) {
         console.error('Failed to send waiver confirmation email:', emailError);
         // Don't fail the submission if email fails - the waiver is already saved
+      }
+
+      // If instanceId is provided (course enrollment waiver), update the waiver instance status
+      if (instanceId) {
+        try {
+          await storage.signWaiverInstance(instanceId, {
+            signerName: printedName,
+            signatureData,
+            signatureMethod: signatureType === 'typed' ? 'typed' : 'canvas',
+            consentCheckboxes: [
+              { sectionId: 'riskAssumption', initial: initialRiskAssumption.toUpperCase(), timestamp: new Date().toISOString() },
+              { sectionId: 'releaseOfLiability', initial: initialReleaseOfLiability.toUpperCase(), timestamp: new Date().toISOString() },
+              { sectionId: 'juryTrialWaiver', initial: initialJuryTrialWaiver.toUpperCase(), timestamp: new Date().toISOString() },
+            ],
+            acknowledgementsCompleted: true,
+            metadata: {
+              address,
+              electronicConsent: true,
+              signatureType,
+              typedSignature: typedSignature || null,
+              ipAddress,
+              browserUserAgent,
+              ftaWaiverSubmissionId: waiverSubmission.id,
+            },
+          });
+          console.log(`Waiver instance ${instanceId} updated to signed status`);
+        } catch (instanceError) {
+          console.error(`Failed to update waiver instance ${instanceId}:`, instanceError);
+          // Don't fail - the FTA waiver submission is the primary record
+        }
       }
 
       res.status(201).json({

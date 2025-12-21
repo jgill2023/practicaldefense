@@ -1312,6 +1312,9 @@ export const waiverTemplates = pgTable("waiver_templates", {
   name: varchar("name", { length: 255 }).notNull(),
   content: text("content").notNull(), // Rich text HTML content
   version: integer("version").notNull().default(1),
+  
+  // Template type - 'fta' for FTA Release and Waiver, 'generic' for custom waivers
+  type: varchar("type", { length: 20 }).notNull().default('generic'),
 
   // Scope configuration
   scope: varchar("scope", { length: 20 }).notNull().default('course'), // 'global', 'course', 'category'
