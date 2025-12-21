@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunicationCounts } from "@/hooks/useCommunicationCounts";
-import { hasInstructorPrivileges, canCreateAccounts, isInstructorOrHigher } from "@/lib/authUtils";
+import { hasInstructorPrivileges, canCreateAccounts, isInstructorOrHigher, isAdminOrHigher } from "@/lib/authUtils";
 import { usePendingUsersCount } from "@/hooks/usePendingUsersCount";
 import { useCart } from "@/components/shopping-cart";
 import { ShoppingCartComponent } from "@/components/shopping-cart";
@@ -100,10 +100,12 @@ export function Layout({ children, headerColor }: LayoutProps) {
                           </Badge>
                         )}
                       </Link>
-                      <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-products">
-                        Products
-                      </Link>
                     </>
+                  )}
+                  {isAdminOrHigher(user) && (
+                    <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-products">
+                      Products
+                    </Link>
                   )}
                   <Link href="/student-resources" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-student-resources">
                     Student Resources
@@ -121,16 +123,20 @@ export function Layout({ children, headerColor }: LayoutProps) {
                             Google Calendar
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/stripe-connect" className="w-full cursor-pointer" data-testid="link-settings-payment">
-                            Payment Settings
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/gift-card-management" className="w-full cursor-pointer" data-testid="link-settings-gift-cards">
-                            Gift Card Admin
-                          </Link>
-                        </DropdownMenuItem>
+                        {isAdminOrHigher(user) && (
+                          <>
+                            <DropdownMenuItem asChild>
+                              <Link href="/stripe-connect" className="w-full cursor-pointer" data-testid="link-settings-payment">
+                                Payment Settings
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href="/gift-card-management" className="w-full cursor-pointer" data-testid="link-settings-gift-cards">
+                                Gift Card Admin
+                              </Link>
+                            </DropdownMenuItem>
+                          </>
+                        )}
                         {canCreateAccounts(user) && (
                           <DropdownMenuItem asChild>
                             <Link href="/admin/users" className="w-full cursor-pointer relative" data-testid="link-settings-user-management">
@@ -410,11 +416,13 @@ export function Layout({ children, headerColor }: LayoutProps) {
                               )}
                             </Button>
                           </Link>
-                          <Link href="/product-management" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-products-mobile">
-                              Products
-                            </Button>
-                          </Link>
+                          {isAdminOrHigher(user) && (
+                            <Link href="/product-management" className="block">
+                              <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-products-mobile">
+                                Products
+                              </Button>
+                            </Link>
+                          )}
                           <Link href="/student-resources" className="block">
                             <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-student-resources-instructor-mobile">
                               Student Resources
@@ -440,16 +448,20 @@ export function Layout({ children, headerColor }: LayoutProps) {
                                     Google Calendar
                                   </Button>
                                 </Link>
-                                <Link href="/stripe-connect" className="block" onClick={() => setIsMobileMenuOpen(false)}>
-                                  <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-payment-settings-mobile">
-                                    Payment Settings
-                                  </Button>
-                                </Link>
-                                <Link href="/gift-card-management" className="block" onClick={() => setIsMobileMenuOpen(false)}>
-                                  <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-gift-card-admin-mobile">
-                                    Gift Card Admin
-                                  </Button>
-                                </Link>
+                                {isAdminOrHigher(user) && (
+                                  <>
+                                    <Link href="/stripe-connect" className="block" onClick={() => setIsMobileMenuOpen(false)}>
+                                      <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-payment-settings-mobile">
+                                        Payment Settings
+                                      </Button>
+                                    </Link>
+                                    <Link href="/gift-card-management" className="block" onClick={() => setIsMobileMenuOpen(false)}>
+                                      <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-gift-card-admin-mobile">
+                                        Gift Card Admin
+                                      </Button>
+                                    </Link>
+                                  </>
+                                )}
                                 {canCreateAccounts(user as any) && (
                                   <Link href="/admin/users" className="block" onClick={() => setIsMobileMenuOpen(false)}>
                                     <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent relative" data-testid="link-user-management-mobile">

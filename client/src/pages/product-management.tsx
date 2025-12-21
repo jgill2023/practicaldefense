@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { isAdminOrHigher } from "@/lib/authUtils";
 import { Layout } from "@/components/Layout";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { Switch } from "@/components/ui/switch";
@@ -58,6 +61,8 @@ type ProductFormData = z.infer<typeof productSchema>;
 
 export default function ProductManagement() {
   const { toast } = useToast();
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
@@ -65,6 +70,18 @@ export default function ProductManagement() {
   const [deleteProductDialogOpen, setDeleteProductDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<ProductWithDetails | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  // Access control - redirect non-admin users
+  useEffect(() => {
+    if (!authLoading && (!isAuthenticated || !isAdminOrHigher(user))) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access product management.",
+        variant: "destructive",
+      });
+      setLocation("/instructor-dashboard");
+    }
+  }, [authLoading, isAuthenticated, user, setLocation, toast]);
 
   // Fetch categories
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
@@ -302,6 +319,22 @@ export default function ProductManagement() {
       ? (products.reduce((sum, p) => sum + Number(p.price || 0), 0) / products.length).toFixed(2)
       : '0.00',
   };
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      </Layout>
+    );
+  }
+
+  // Don't render if not authorized (redirect is handled in useEffect)
+  if (!isAuthenticated || !isAdminOrHigher(user)) {
+    return null;
+  }
 
   return (
     <Layout>

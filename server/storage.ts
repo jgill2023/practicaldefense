@@ -188,6 +188,11 @@ import {
   ftaWaiverSubmissions,
   type FtaWaiverSubmission,
   type InsertFtaWaiverSubmission,
+  // Student Feedback imports
+  studentFeedback,
+  type StudentFeedback,
+  type InsertStudentFeedback,
+  type StudentFeedbackWithDetails,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, gt, lt, lte, ne, inArray, notInArray } from "drizzle-orm";
@@ -798,6 +803,16 @@ export interface IStorage {
   getFtaWaiverSubmissionsByEmail(email: string): Promise<FtaWaiverSubmission[]>;
   getFtaWaiverSubmissions(): Promise<FtaWaiverSubmission[]>;
   updateFtaWaiverSubmissionEmailSent(id: string): Promise<FtaWaiverSubmission>;
+
+  // ============================================
+  // STUDENT FEEDBACK METHODS
+  // ============================================
+  createStudentFeedback(feedback: InsertStudentFeedback): Promise<StudentFeedback>;
+  getStudentFeedback(id: string): Promise<StudentFeedbackWithDetails | undefined>;
+  getStudentFeedbackByStudent(studentId: string): Promise<StudentFeedbackWithDetails[]>;
+  getStudentFeedbackByInstructor(instructorId: string): Promise<StudentFeedbackWithDetails[]>;
+  updateStudentFeedback(id: string, feedback: Partial<InsertStudentFeedback>): Promise<StudentFeedback>;
+  deleteStudentFeedback(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -7207,6 +7222,63 @@ export class DatabaseStorage implements IStorage {
       .returning();
     if (!updated) throw new Error('Waiver submission not found');
     return updated;
+  }
+
+  // ============================================
+  // STUDENT FEEDBACK OPERATIONS
+  // ============================================
+
+  async createStudentFeedback(feedback: InsertStudentFeedback): Promise<StudentFeedback> {
+    const [created] = await db.insert(studentFeedback).values(feedback).returning();
+    return created;
+  }
+
+  async getStudentFeedback(id: string): Promise<StudentFeedbackWithDetails | undefined> {
+    const result = await db.query.studentFeedback.findFirst({
+      where: eq(studentFeedback.id, id),
+      with: {
+        student: true,
+        instructor: true,
+      },
+    });
+    return result as StudentFeedbackWithDetails | undefined;
+  }
+
+  async getStudentFeedbackByStudent(studentId: string): Promise<StudentFeedbackWithDetails[]> {
+    const results = await db.query.studentFeedback.findMany({
+      where: eq(studentFeedback.studentId, studentId),
+      with: {
+        student: true,
+        instructor: true,
+      },
+      orderBy: [desc(studentFeedback.createdAt)],
+    });
+    return results as StudentFeedbackWithDetails[];
+  }
+
+  async getStudentFeedbackByInstructor(instructorId: string): Promise<StudentFeedbackWithDetails[]> {
+    const results = await db.query.studentFeedback.findMany({
+      where: eq(studentFeedback.instructorId, instructorId),
+      with: {
+        student: true,
+        instructor: true,
+      },
+      orderBy: [desc(studentFeedback.createdAt)],
+    });
+    return results as StudentFeedbackWithDetails[];
+  }
+
+  async updateStudentFeedback(id: string, feedback: Partial<InsertStudentFeedback>): Promise<StudentFeedback> {
+    const [updated] = await db
+      .update(studentFeedback)
+      .set({ ...feedback, updatedAt: new Date() })
+      .where(eq(studentFeedback.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteStudentFeedback(id: string): Promise<void> {
+    await db.delete(studentFeedback).where(eq(studentFeedback.id, id));
   }
 }
 

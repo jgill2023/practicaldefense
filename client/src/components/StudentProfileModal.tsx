@@ -1,17 +1,32 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Phone, Calendar, Award, X, CheckCircle, XCircle, Clock, RotateCcw, FileText, MessageSquare } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { User, Mail, Phone, Calendar, Award, X, CheckCircle, XCircle, Clock, RotateCcw, FileText, MessageSquare, Plus, Trash2, Edit2, Lock, Unlock } from "lucide-react";
 import { format } from "date-fns";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { EnrollmentFeedbackModal } from "@/components/EnrollmentFeedbackModal";
 import { EmailNotificationModal } from "@/components/EmailNotificationModal";
 import { SmsNotificationModal } from "@/components/SmsNotificationModal";
 import { getEnrollmentStatusClassName, getAppointmentStatusClassName } from "@/lib/statusColors";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+
+interface StudentFeedback {
+  id: string;
+  studentId: string;
+  instructorId: string;
+  feedbackText: string;
+  isPrivate: boolean;
+  createdAt: string;
+  updatedAt: string;
+  instructorFirstName?: string;
+  instructorLastName?: string;
+}
 
 interface StudentProfileModalProps {
   isOpen: boolean;
@@ -75,6 +90,8 @@ export function StudentProfileModal({
   onEmailClick,
   onSmsClick
 }: StudentProfileModalProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [feedbackModal, setFeedbackModal] = useState<{ isOpen: boolean; enrollmentId: string }>({
     isOpen: false,
     enrollmentId: ""
@@ -83,6 +100,12 @@ export function StudentProfileModal({
   const [showSmsModal, setShowSmsModal] = useState(false);
   const [selectedAppointmentForEmail, setSelectedAppointmentForEmail] = useState<any>(null);
   const [selectedAppointmentForSms, setSelectedAppointmentForSms] = useState<any>(null);
+  
+  // Student feedback state
+  const [showAddFeedbackForm, setShowAddFeedbackForm] = useState(false);
+  const [newFeedbackText, setNewFeedbackText] = useState("");
+  const [newFeedbackPrivate, setNewFeedbackPrivate] = useState(false);
+  const [editingFeedback, setEditingFeedback] = useState<StudentFeedback | null>(null);
 
   const { data: profile, isLoading, isError } = useQuery<StudentProfile>({
     queryKey: [`/api/students/${studentId}/profile`],
@@ -96,6 +119,62 @@ export function StudentProfileModal({
     enabled: isOpen && !!studentId,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  });
+
+  // Student feedback query
+  const { data: studentFeedback = [], isLoading: feedbackLoading } = useQuery<StudentFeedback[]>({
+    queryKey: [`/api/students/${studentId}/feedback`],
+    enabled: isOpen && !!studentId,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Add feedback mutation
+  const addFeedbackMutation = useMutation({
+    mutationFn: async (data: { feedbackText: string; isPrivate: boolean }) => {
+      return await apiRequest("POST", `/api/students/${studentId}/feedback`, data);
+    },
+    onSuccess: () => {
+      toast({ title: "Feedback added", description: "Your feedback has been saved." });
+      queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/feedback`] });
+      setShowAddFeedbackForm(false);
+      setNewFeedbackText("");
+      setNewFeedbackPrivate(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to add feedback.", variant: "destructive" });
+    },
+  });
+
+  // Update feedback mutation
+  const updateFeedbackMutation = useMutation({
+    mutationFn: async (data: { feedbackId: string; feedbackText: string; isPrivate: boolean }) => {
+      return await apiRequest("PATCH", `/api/students/${studentId}/feedback/${data.feedbackId}`, {
+        feedbackText: data.feedbackText,
+        isPrivate: data.isPrivate,
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Feedback updated", description: "Your changes have been saved." });
+      queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/feedback`] });
+      setEditingFeedback(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to update feedback.", variant: "destructive" });
+    },
+  });
+
+  // Delete feedback mutation
+  const deleteFeedbackMutation = useMutation({
+    mutationFn: async (feedbackId: string) => {
+      return await apiRequest("DELETE", `/api/students/${studentId}/feedback/${feedbackId}`);
+    },
+    onSuccess: () => {
+      toast({ title: "Feedback deleted", description: "The feedback has been removed." });
+      queryClient.invalidateQueries({ queryKey: [`/api/students/${studentId}/feedback`] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to delete feedback.", variant: "destructive" });
+    },
   });
 
   const getCompletionStatus = (enrollment: EnrollmentHistory) => {
@@ -386,6 +465,210 @@ export function StudentProfileModal({
                               {status.label}
                             </Badge>
                           </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Separator />
+
+            {/* Student Feedback Section */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg">Instructor Notes</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {studentFeedback.length} note{studentFeedback.length !== 1 ? 's' : ''} from instructors
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAddFeedbackForm(true)}
+                    data-testid="button-add-feedback"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Note
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* Add Feedback Form */}
+                {showAddFeedbackForm && (
+                  <div className="mb-4 p-4 border rounded-lg bg-muted/30">
+                    <Textarea
+                      placeholder="Enter your note about this student..."
+                      value={newFeedbackText}
+                      onChange={(e) => setNewFeedbackText(e.target.value)}
+                      className="mb-3"
+                      data-testid="textarea-new-feedback"
+                    />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setNewFeedbackPrivate(!newFeedbackPrivate)}
+                          data-testid="button-toggle-private"
+                        >
+                          {newFeedbackPrivate ? (
+                            <>
+                              <Lock className="h-4 w-4 mr-1" />
+                              Private (instructors only)
+                            </>
+                          ) : (
+                            <>
+                              <Unlock className="h-4 w-4 mr-1" />
+                              Visible to student
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setShowAddFeedbackForm(false);
+                            setNewFeedbackText("");
+                            setNewFeedbackPrivate(false);
+                          }}
+                          data-testid="button-cancel-feedback"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => addFeedbackMutation.mutate({ feedbackText: newFeedbackText, isPrivate: newFeedbackPrivate })}
+                          disabled={!newFeedbackText.trim() || addFeedbackMutation.isPending}
+                          data-testid="button-save-feedback"
+                        >
+                          {addFeedbackMutation.isPending ? "Saving..." : "Save Note"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {feedbackLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : studentFeedback.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No instructor notes yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {studentFeedback.map((feedback) => {
+                      const isOwnFeedback = user?.id === feedback.instructorId;
+                      const isEditing = editingFeedback?.id === feedback.id;
+
+                      return (
+                        <div
+                          key={feedback.id}
+                          className={`border rounded-lg p-4 ${feedback.isPrivate ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-200' : 'bg-background'}`}
+                          data-testid={`feedback-${feedback.id}`}
+                        >
+                          {isEditing ? (
+                            <div>
+                              <Textarea
+                                value={editingFeedback.feedbackText}
+                                onChange={(e) => setEditingFeedback({ ...editingFeedback, feedbackText: e.target.value })}
+                                className="mb-3"
+                                data-testid="textarea-edit-feedback"
+                              />
+                              <div className="flex items-center justify-between">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setEditingFeedback({ ...editingFeedback, isPrivate: !editingFeedback.isPrivate })}
+                                  data-testid="button-toggle-edit-private"
+                                >
+                                  {editingFeedback.isPrivate ? (
+                                    <>
+                                      <Lock className="h-4 w-4 mr-1" />
+                                      Private
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Unlock className="h-4 w-4 mr-1" />
+                                      Public
+                                    </>
+                                  )}
+                                </Button>
+                                <div className="flex gap-2">
+                                  <Button variant="outline" size="sm" onClick={() => setEditingFeedback(null)}>
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => updateFeedbackMutation.mutate({
+                                      feedbackId: editingFeedback.id,
+                                      feedbackText: editingFeedback.feedbackText,
+                                      isPrivate: editingFeedback.isPrivate,
+                                    })}
+                                    disabled={updateFeedbackMutation.isPending}
+                                  >
+                                    {updateFeedbackMutation.isPending ? "Saving..." : "Save"}
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                  <p className="text-sm whitespace-pre-wrap">{feedback.feedbackText}</p>
+                                  <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                                    <User className="h-3 w-3" />
+                                    <span>
+                                      {feedback.instructorFirstName} {feedback.instructorLastName}
+                                    </span>
+                                    <span>•</span>
+                                    <span>{format(new Date(feedback.createdAt), "MMM d, yyyy 'at' h:mm a")}</span>
+                                    {feedback.isPrivate && (
+                                      <>
+                                        <span>•</span>
+                                        <Badge variant="outline" className="text-xs py-0 px-1.5 text-amber-700 border-amber-300">
+                                          <Lock className="h-3 w-3 mr-0.5" />
+                                          Private
+                                        </Badge>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                                {isOwnFeedback && (
+                                  <div className="flex gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 p-0"
+                                      onClick={() => setEditingFeedback(feedback)}
+                                      data-testid={`button-edit-feedback-${feedback.id}`}
+                                    >
+                                      <Edit2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                                      onClick={() => deleteFeedbackMutation.mutate(feedback.id)}
+                                      disabled={deleteFeedbackMutation.isPending}
+                                      data-testid={`button-delete-feedback-${feedback.id}`}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
                         </div>
                       );
                     })}

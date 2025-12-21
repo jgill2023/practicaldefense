@@ -653,14 +653,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/courses', isAuthenticated, async (req: any, res) => {
+  app.post('/api/courses', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const user = await storage.getUser(userId);
-
-      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
-        return res.status(403).json({ message: "Access denied. Instructor role required." });
-      }
 
       const validatedData = insertCourseSchema.parse({
         ...req.body,
@@ -1773,6 +1769,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating student:", error);
       res.status(500).json({ message: "Failed to update student" });
+    }
+  });
+
+  // ============================================
+  // STUDENT FEEDBACK ROUTES
+  // ============================================
+
+  // Get all feedback for a student (visible to student, instructors, and admins)
+  app.get('/api/students/:studentId/feedback', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const studentId = req.params.studentId;
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Students can only see their own feedback (non-private)
+      // Instructors and above can see all feedback
+      const isInstructorOrHigher = ['instructor', 'admin', 'superadmin'].includes(user.role);
+      const isOwnProfile = userId === studentId;
+
+      if (!isInstructorOrHigher && !isOwnProfile) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const allFeedback = await storage.getStudentFeedbackByStudent(studentId);
+      
+      // Filter out private feedback for students viewing their own profile
+      const visibleFeedback = isOwnProfile && !isInstructorOrHigher
+        ? allFeedback.filter(f => !f.isPrivate)
+        : allFeedback;
+
+      res.json(visibleFeedback);
+    } catch (error) {
+      console.error("Error fetching student feedback:", error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+  });
+
+  // Add feedback for a student (instructors and above only)
+  app.post('/api/students/:studentId/feedback', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      const instructorId = req.user.id;
+      const studentId = req.params.studentId;
+
+      const feedbackSchema = z.object({
+        content: z.string().min(1).max(5000),
+        feedbackType: z.enum(['general', 'performance', 'behavior', 'commendation']).optional().default('general'),
+        isPrivate: z.boolean().optional().default(false),
+      });
+
+      const validatedData = feedbackSchema.parse(req.body);
+
+      // Verify student exists
+      const student = await storage.getUser(studentId);
+      if (!student || student.role !== 'student') {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      const feedback = await storage.createStudentFeedback({
+        studentId,
+        instructorId,
+        content: validatedData.content,
+        feedbackType: validatedData.feedbackType,
+        isPrivate: validatedData.isPrivate,
+      });
+
+      // Fetch with instructor details
+      const feedbackWithDetails = await storage.getStudentFeedback(feedback.id);
+      res.status(201).json(feedbackWithDetails);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      console.error("Error creating student feedback:", error);
+      res.status(500).json({ message: "Failed to create feedback" });
+    }
+  });
+
+  // Update feedback (only the instructor who created it, or admins)
+  app.patch('/api/students/:studentId/feedback/:feedbackId', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const feedbackId = req.params.feedbackId;
+      const user = await storage.getUser(userId);
+
+      const feedback = await storage.getStudentFeedback(feedbackId);
+      if (!feedback) {
+        return res.status(404).json({ message: "Feedback not found" });
+      }
+
+      // Only the original author or admins can edit
+      const isAdmin = ['admin', 'superadmin'].includes(user?.role || '');
+      if (feedback.instructorId !== userId && !isAdmin) {
+        return res.status(403).json({ message: "You can only edit your own feedback" });
+      }
+
+      const updateSchema = z.object({
+        content: z.string().min(1).max(5000).optional(),
+        feedbackType: z.enum(['general', 'performance', 'behavior', 'commendation']).optional(),
+        isPrivate: z.boolean().optional(),
+      });
+
+      const validatedData = updateSchema.parse(req.body);
+      const updated = await storage.updateStudentFeedback(feedbackId, validatedData);
+      const updatedWithDetails = await storage.getStudentFeedback(updated.id);
+      
+      res.json(updatedWithDetails);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input", errors: error.errors });
+      }
+      console.error("Error updating student feedback:", error);
+      res.status(500).json({ message: "Failed to update feedback" });
+    }
+  });
+
+  // Delete feedback (only the instructor who created it, or admins)
+  app.delete('/api/students/:studentId/feedback/:feedbackId', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const feedbackId = req.params.feedbackId;
+      const user = await storage.getUser(userId);
+
+      const feedback = await storage.getStudentFeedback(feedbackId);
+      if (!feedback) {
+        return res.status(404).json({ message: "Feedback not found" });
+      }
+
+      // Only the original author or admins can delete
+      const isAdmin = ['admin', 'superadmin'].includes(user?.role || '');
+      if (feedback.instructorId !== userId && !isAdmin) {
+        return res.status(403).json({ message: "You can only delete your own feedback" });
+      }
+
+      await storage.deleteStudentFeedback(feedbackId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting student feedback:", error);
+      res.status(500).json({ message: "Failed to delete feedback" });
     }
   });
 
@@ -3004,16 +3142,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Process refund through Stripe and update enrollment
-  app.post('/api/instructor/refund-requests/:enrollmentId/process', isAuthenticated, async (req: any, res) => {
+  // Process refund through Stripe and update enrollment (admin+ only)
+  app.post('/api/instructor/refund-requests/:enrollmentId/process', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const user = await storage.getUser(userId);
-
-      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
-        return res.status(403).json({ message: "Access denied. Instructor role required." });
-      }
-
       const { enrollmentId } = req.params;
 
       // Validate request body
@@ -3259,8 +3391,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Course creation endpoint
-  app.post("/api/instructor/courses", isAuthenticated, async (req: any, res) => {
+  // Course creation endpoint (admin+ only)
+  app.post("/api/instructor/courses", isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const userId = req.user?.id;
 
@@ -4096,14 +4228,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/products', isAuthenticated, async (req: any, res) => {
+  // Product management (admin+ only)
+  app.post('/api/products', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const user = await storage.getUser(userId);
-
-      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
-        return res.status(403).json({ message: "Access denied. Instructor role required." });
-      }
 
       // Preprocess sale pricing fields for schema compatibility
       const processedBody = {
@@ -4132,14 +4260,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/products/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/products/:id', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const user = await storage.getUser(userId);
-
-      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
-        return res.status(403).json({ message: "Access denied. Instructor role required." });
-      }
 
       // Preprocess sale pricing fields for schema compatibility
       const processedBody = { ...req.body };
@@ -4171,15 +4294,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/products/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/products/:id', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const user = await storage.getUser(userId);
-
-      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
-        return res.status(403).json({ message: "Access denied. Instructor role required." });
-      }
-
       const productId = req.params.id;
 
       // First, remove this product from all carts
@@ -7453,67 +7570,6 @@ jeremy@abqconcealedcarry.com
     }
   });
 
-  app.post('/api/products', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.id);
-      if (user?.role !== 'instructor' && user?.role !== 'admin' && user?.role !== 'superadmin') {
-        return res.status(403).json({ error: "Only instructors can create products" });
-      }
-
-      const validatedData = insertProductSchema.parse({
-        ...req.body,
-        createdBy: user.id,
-      });
-
-      const product = await storage.createProduct(validatedData);
-      res.status(201).json(product);
-    } catch (error: any) {
-      console.error("Error creating product:", error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ error: "Invalid product data", details: error.errors });
-      }
-      res.status(500).json({ error: "Failed to create product: " + error.message });
-    }
-  });
-
-  app.put('/api/products/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.id);
-      if (user?.role !== 'instructor' && user?.role !== 'admin' && user?.role !== 'superadmin') {
-        return res.status(403).json({ error: "Only instructors can update products" });
-      }
-
-      const validatedData = insertProductSchema.partial().parse({
-        ...req.body,
-        updatedBy: user.id,
-      });
-
-      const product = await storage.updateProduct(req.params.id, validatedData);
-      res.json(product);
-    } catch (error: any) {
-      console.error("Error updating product:", error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ error: "Invalid product data", details: error.errors });
-      }
-      res.status(500).json({ error: "Failed to update product: " + error.message });
-    }
-  });
-
-  app.delete('/api/products/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = await storage.getUser(req.user.id);
-      if (user?.role !== 'instructor' && user?.role !== 'admin' && user?.role !== 'superadmin') {
-        return res.status(403).json({ error: "Only instructors can delete products" });
-      }
-
-      await storage.deleteProduct(req.params.id);
-      res.status(204).send();
-    } catch (error: any) {
-      console.error("Error deleting product:", error);
-      res.status(500).json({ error: "Failed to delete product: " + error.message });
-    }
-  });
-
   // Product Variants Routes
   app.get('/api/products/:productId/variants', async (req, res) => {
     try {
@@ -7525,13 +7581,9 @@ jeremy@abqconcealedcarry.com
     }
   });
 
-  app.post('/api/products/:productId/variants', isAuthenticated, async (req: any, res) => {
+  app.post('/api/products/:productId/variants', isAuthenticated, requireAdminOrHigher, async (req: any, res) => {
     try {
       const user = await storage.getUser(req.user.id);
-      if (user?.role !== 'instructor' && user?.role !== 'admin' && user?.role !== 'superadmin') {
-        return res.status(403).json({ error: "Only instructors can create product variants" });
-      }
-
       const validatedData = insertProductVariantSchema.parse({
         ...req.body,
         productId: req.params.productId,

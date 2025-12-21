@@ -42,7 +42,7 @@ import {
   ChevronUp
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
+import { isUnauthorizedError, hasInstructorPrivileges, isAdminOrHigher } from "@/lib/authUtils";
 import type { CourseWithSchedules, CourseScheduleWithSessions, User, AppSettings, InsertAppSettings } from "@shared/schema";
 import { insertAppSettingsSchema } from "@shared/schema";
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -728,13 +728,13 @@ export default function CourseManagement() {
     };
   };
 
-  if (!isAuthenticated || !hasInstructorPrivileges(user as User)) {
+  if (!isAuthenticated || !isAdminOrHigher(user as User)) {
     return (
       <Layout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-            <p className="text-muted-foreground">You need instructor access to view this page.</p>
+            <p className="text-muted-foreground">You need admin access to manage courses.</p>
           </div>
         </div>
       </Layout>
