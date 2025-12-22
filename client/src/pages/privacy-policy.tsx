@@ -125,6 +125,14 @@ export default function PrivacyPolicyPage() {
             <p className="text-muted-foreground mt-4">
               All third-party processors are contractually bound to keep your data secure and use it only for authorized purposes.
             </p>
+            
+            <p className="text-muted-foreground mt-4 font-semibold">SMS Communications and Data Protection</p>
+            <p className="text-muted-foreground">
+              All of the above categories exclude text messaging originator opt-in data and consent; this information will not be shared with any third parties. We will not share your opt-in to an SMS campaign with any third party for purposes unrelated to providing you with the services of that campaign.
+            </p>
+            <p className="text-muted-foreground mt-3">
+              We may share your Personal Data, including your SMS opt-in or consent status, with third parties that help us provide our messaging services, including but not limited to platform providers, phone companies, and any other vendors who assist us in the delivery of text messages. These service providers are strictly limited to using your information solely for the purpose of providing messaging services on our behalf and are contractually prohibited from using your information for any other purpose, including sharing your SMS opt-in data with their own customers or business partners.
+            </p>
           </CardContent>
         </Card>
 
