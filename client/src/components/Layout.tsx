@@ -110,6 +110,9 @@ export function Layout({ children, headerColor }: LayoutProps) {
                   <Link href="/student-resources" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-student-resources">
                     Student Resources
                   </Link>
+                  <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-student-dashboard">
+                    Student Dashboard
+                  </Link>
                   {isInstructorOrHigher(user) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors flex items-center gap-1" data-testid="dropdown-settings">
