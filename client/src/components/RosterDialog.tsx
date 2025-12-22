@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Phone, Mail, Calendar, DollarSign, X, FileText, AlertCircle, Award, RotateCcw, MessageSquare, FileSignature } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { Users, Phone, Mail, Calendar, DollarSign, X, FileText, AlertCircle, Award, RotateCcw, MessageSquare, FileSignature, UserPlus } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { SmsNotificationModal } from "./SmsNotificationModal";
 import { EmailNotificationModal } from "./EmailNotificationModal";
@@ -82,6 +82,7 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
   const [feedbackModal, setFeedbackModal] = useState<{ isOpen: boolean; enrollmentId: string; studentName: string }>({ isOpen: false, enrollmentId: "", studentName: "" });
   const [viewWaiverModal, setViewWaiverModal] = useState<{ isOpen: boolean; enrollmentId: string; studentName: string }>({ isOpen: false, enrollmentId: "", studentName: "" });
   const [viewFormsModal, setViewFormsModal] = useState<{ isOpen: boolean; enrollmentId: string; courseId: string; studentName: string }>({ isOpen: false, enrollmentId: "", courseId: "", studentName: "" });
+  const [addStudentModal, setAddStudentModal] = useState<{ isOpen: boolean; selectedStudentId: string }>({ isOpen: false, selectedStudentId: "" });
 
 
   const { data: rosterData, isLoading, error } = useQuery<RosterData>({
@@ -93,6 +94,31 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
     },
     enabled: (!!scheduleId || !!courseId) && isOpen,
   });
+
+  const { data: allUsers = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/users"],
+  });
+
+  const addStudentMutation = useMutation({
+    mutationFn: async (studentId: string) => {
+      return await apiRequest("POST", "/api/admin/enrollments/manual", {
+        studentId,
+        scheduleId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/instructor/roster", scheduleId, courseId] });
+      setAddStudentModal({ isOpen: false, selectedStudentId: "" });
+    },
+    onError: (error: any) => {
+      alert(error.message || "Failed to enroll student");
+    },
+  });
+
+  const availableStudents = allUsers.filter(user => 
+    user.role === 'student' && 
+    !rosterData?.current.some(enrolled => enrolled.studentId === user.id)
+  );
 
   const getPaymentStatusBadge = (status: string, remainingBalance?: number, onClick?: () => void) => {
     const className = onClick ? "cursor-pointer hover:opacity-80" : "";
@@ -257,16 +283,70 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
               <p className="text-muted-foreground">Unable to load roster data.</p>
             </div>
           </div>
-        ) : rosterData.current.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Students Enrolled</h3>
-              <p className="text-muted-foreground">This course schedule doesn't have any enrolled students yet.</p>
-            </div>
-          </div>
         ) : (
           <div className="space-y-6">
+            {/* Add Student Button */}
+            {availableStudents.length > 0 && (
+              <div className="flex justify-end">
+                <Dialog open={addStudentModal.isOpen} onOpenChange={(open) => setAddStudentModal({ ...addStudentModal, isOpen: open })}>
+                  <Button onClick={() => setAddStudentModal({ ...addStudentModal, isOpen: true })} data-testid="button-add-student">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Add Student
+                  </Button>
+                  <DialogContent data-testid="dialog-add-student">
+                    <DialogHeader>
+                      <DialogTitle>Add Student to Course</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <select 
+                        value={addStudentModal.selectedStudentId} 
+                        onChange={(e) => setAddStudentModal({ ...addStudentModal, selectedStudentId: e.target.value })}
+                        className="w-full px-3 py-2 border border-input rounded-md"
+                        data-testid="select-student"
+                      >
+                        <option value="">Select a student...</option>
+                        {availableStudents.map(student => (
+                          <option key={student.id} value={student.id}>
+                            {student.firstName} {student.lastName} ({student.email})
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2 justify-end">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setAddStudentModal({ isOpen: false, selectedStudentId: "" })}
+                          data-testid="button-cancel-add"
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={() => {
+                            if (addStudentModal.selectedStudentId) {
+                              addStudentMutation.mutate(addStudentModal.selectedStudentId);
+                            }
+                          }}
+                          disabled={!addStudentModal.selectedStudentId || addStudentMutation.isPending}
+                          data-testid="button-confirm-add"
+                        >
+                          {addStudentMutation.isPending ? "Adding..." : "Add Student"}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            )}
+
+            {rosterData.current.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Students Enrolled</h3>
+                  <p className="text-muted-foreground">This course schedule doesn't have any enrolled students yet.</p>
+                </div>
+              </div>
+            ) : null}
+
             {/* Course Summary */}
             <Card>
               <CardHeader>
@@ -351,12 +431,13 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
             </div>
 
             {/* Student Roster Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Student Roster</CardTitle>
-              </CardHeader>
-              <CardContent className="pr-4">
-                <div className="overflow-x-auto">
+            {rosterData.current.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Student Roster</CardTitle>
+                </CardHeader>
+                <CardContent className="pr-4">
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>

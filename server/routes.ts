@@ -1208,6 +1208,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual enrollment endpoint (Instructor/Admin only)
+  app.post('/api/admin/enrollments/manual', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const user = await storage.getUser(userId);
+
+      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
+        return res.status(403).json({ message: "Access denied. Instructor role required." });
+      }
+
+      const { studentId, scheduleId } = req.body;
+
+      // Validate inputs
+      if (!studentId || !scheduleId) {
+        return res.status(400).json({ message: "Student ID and Schedule ID are required" });
+      }
+
+      // Verify student exists
+      const student = await storage.getUser(studentId);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      // Get schedule with course info
+      const schedule = await storage.getCourseSchedule(scheduleId);
+      if (!schedule) {
+        return res.status(404).json({ message: "Schedule not found" });
+      }
+
+      // Get course
+      const course = await storage.getCourse(schedule.courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      // Check if instructor/admin has access to this course
+      if (user.role === 'instructor' && course.instructorId !== userId) {
+        return res.status(403).json({ message: "Access denied. You can only enroll students in your own courses." });
+      }
+
+      // Check if student is already enrolled in this schedule
+      const existingEnrollment = await db.query.enrollments.findFirst({
+        where: and(
+          eq(enrollments.studentId, studentId),
+          eq(enrollments.scheduleId, scheduleId)
+        ),
+      });
+
+      if (existingEnrollment) {
+        return res.status(400).json({ message: "Student is already enrolled in this course schedule" });
+      }
+
+      // Check schedule capacity
+      if (schedule.availableSpots <= 0) {
+        return res.status(400).json({ message: "No available spots in this course schedule" });
+      }
+
+      // Create manual enrollment with confirmed status and paid payment status
+      const enrollment = await storage.createEnrollment({
+        studentId,
+        courseId: schedule.courseId,
+        scheduleId,
+        status: 'confirmed',
+        paymentStatus: 'paid',
+        paymentOption: 'full',
+        notes: `Manually enrolled by ${user.firstName} ${user.lastName}`,
+      });
+
+      // Decrement available spots atomically
+      await db
+        .update(courseSchedules)
+        .set({
+          availableSpots: sql`${courseSchedules.availableSpots} - 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(courseSchedules.id, scheduleId));
+
+      res.status(201).json(enrollment);
+    } catch (error) {
+      console.error("Error manually enrolling student:", error);
+      res.status(500).json({ message: "Failed to enroll student" });
+    }
+  });
+
   // DEPRECATED: Legacy course registration endpoint - Use the new secure flow instead
   // This endpoint bypassed security checks and is now disabled
   app.post('/api/course-registration', async (req: any, res) => {
