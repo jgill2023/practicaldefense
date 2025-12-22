@@ -310,9 +310,7 @@ export default function Register() {
                   }
                   data-testid="checkbox-sms-consent"
                 />
-                <label htmlFor="smsConsent" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                  By checking this box, I consent to receive automated text messages related to my class registration, reminders, and important updates from Apache Solutions. Message & data rates may apply. Reply STOP to unsubscribe or HELP for help.
-                </label>
+                <label htmlFor="smsConsent" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">By checking this box, I consent to receive automated text messages related to my class registration, reminders, and important updates from Apache Solutions. Message frequency may vary. Message & data rates may apply. Reply STOP to unsubscribe or HELP for help.</label>
               </div>
 
               <div className="flex items-start space-x-3">
@@ -367,7 +365,6 @@ export default function Register() {
           </Button>
         </div>
       </div>
-
       {policyModalOpen && (
         <PolicyModal 
           isOpen={true} 
