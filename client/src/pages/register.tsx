@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { Calendar, Clock, Users, ChevronRight, BookOpen } from "lucide-react";
+import { Calendar, Clock, Users, ChevronRight, BookOpen, AlertCircle } from "lucide-react";
 import type { CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
 import { PolicyModal } from "@/components/PolicyModal";
@@ -27,9 +27,13 @@ export default function Register() {
     lastName: '',
     email: '',
     phone: '',
+    birthDate: '',
     smsConsent: false,
     agreeToTerms: false,
   });
+
+  const [ageVerified, setAgeVerified] = useState(false);
+  const [ageError, setAgeError] = useState('');
 
   const { data: courses, isLoading } = useQuery<CourseWithSchedules[]>({
     queryKey: ["/api/courses"],
@@ -86,6 +90,31 @@ export default function Register() {
     setSelectedScheduleId("");
   };
 
+  const calculateAge = (birthDate: string): number => {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const handleVerifyAge = () => {
+    setAgeError('');
+    if (!formData.birthDate) {
+      setAgeError('Please enter your date of birth');
+      return;
+    }
+    const age = calculateAge(formData.birthDate);
+    if (age < 21) {
+      setAgeError('You must be 21 or older to register.');
+    } else {
+      setAgeVerified(true);
+    }
+  };
+
   const handleProceedToPayment = () => {
     if (!selectedCourse || !selectedSchedule) return;
     
@@ -94,7 +123,7 @@ export default function Register() {
   };
 
   const canProceed = selectedCourseId && selectedScheduleId && formData.firstName && 
-    formData.lastName && formData.email && formData.phone && formData.agreeToTerms;
+    formData.lastName && formData.email && formData.phone && ageVerified && formData.agreeToTerms;
 
   if (isLoading) {
     return (
@@ -296,6 +325,45 @@ export default function Register() {
                   data-testid="input-phone"
                 />
               </div>
+
+              {!ageVerified && (
+                <div>
+                  <Label htmlFor="birthDate">Date of Birth *</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="birthDate"
+                      type="date"
+                      value={formData.birthDate}
+                      onChange={(e) => {
+                        setFormData(prev => ({ ...prev, birthDate: e.target.value }));
+                        setAgeError('');
+                      }}
+                      required
+                      data-testid="input-birthdate"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={handleVerifyAge}
+                      data-testid="button-verify-age"
+                    >
+                      Verify Age
+                    </Button>
+                  </div>
+                  {ageError && (
+                    <div className="mt-2 p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-destructive" />
+                      <p className="text-sm text-destructive">{ageError}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {ageVerified && (
+                <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-2">
+                  <span className="h-5 w-5 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">✓</span>
+                  <p className="text-sm text-green-700 dark:text-green-200">Age verified</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
