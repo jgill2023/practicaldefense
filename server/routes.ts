@@ -1392,6 +1392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         enrollmentId,
         paymentIntentId,
         studentInfo,
+        accountCreation: validatedData.accountCreation,
       });
 
       // Trigger enrollment confirmation notifications (educational purpose)

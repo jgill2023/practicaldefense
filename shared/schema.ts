@@ -1860,6 +1860,7 @@ export const confirmEnrollmentSchema = z.object({
   enrollmentId: z.string().uuid("Valid enrollment ID is required"),
   paymentIntentId: z.string().min(1, "Payment intent ID is required").max(255),
   studentInfo: studentInfoSchema.optional(),
+  accountCreation: accountCreationSchema,
 });
 
 // Types for course registration API

@@ -3026,6 +3026,13 @@ export class DatabaseStorage implements IStorage {
     // with Stripe Tax API, so we trust that amount rather than recalculating
     const subtotal = expectedAmount - discountAmount;
 
+    // Hash password if provided (for new account creation)
+    let passwordHash: string | undefined;
+    if (data.accountCreation?.password) {
+      const { hashPassword } = await import('./customAuth');
+      passwordHash = await hashPassword(data.accountCreation.password);
+    }
+
     // Create or find user by email
     let user = await this.getUserByEmail(data.studentInfo.email);
 
@@ -3035,9 +3042,22 @@ export class DatabaseStorage implements IStorage {
         email: data.studentInfo.email,
         firstName: data.studentInfo.firstName,
         lastName: data.studentInfo.lastName,
+        passwordHash,
         role: 'student',
         userStatus: 'active',
       });
+    } else if (passwordHash && !user.passwordHash) {
+      // If user exists but has no password, update the password (account creation scenario)
+      await db
+        .update(users)
+        .set({
+          passwordHash,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, user.id));
+      
+      // Refresh user object to get the updated password hash
+      user = (await this.getUser(user.id))!;
     }
 
     // WRAP ENTIRE PROCESS IN TRANSACTION FOR ATOMICITY
