@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useLocation } from "wouter";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -267,13 +268,15 @@ function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSc
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long',
-      month: 'long', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        return "Date TBD";
+      }
+      return format(date, "MMM d, yyyy");
+    } catch {
+      return "Date TBD";
+    }
   };
 
   const formatTime = (startTime: string, endTime: string) => {
