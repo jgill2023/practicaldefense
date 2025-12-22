@@ -438,8 +438,8 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
                 </CardHeader>
                 <CardContent className="pr-4">
                   <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
+                    <Table>
+                      <TableHeader>
                       <TableRow>
                         <TableHead className="text-left">Student Name</TableHead>
                         <TableHead className="text-left">Phone</TableHead>
@@ -644,10 +644,11 @@ export function RosterDialog({ scheduleId, courseId, isOpen, onClose }: RosterDi
                         </TableRow>
                       ))}
                     </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
