@@ -831,8 +831,7 @@ export default function Landing() {
                 </Button>
                 <Button
                   size="lg"
-                  variant="outline"
-                  className="border border-zinc-400 hover:bg-white hover:text-zinc-950 font-display uppercase tracking-widest px-8 py-6 text-lg text-white bg-transparent rounded-sm"
+                  className="hover:bg-gray-100 text-black font-display uppercase tracking-widest px-8 py-6 text-lg bg-white rounded-sm"
                   onClick={() => setLocation('/online-ccw-class')}
                   data-testid="button-online-ccw"
                 >
