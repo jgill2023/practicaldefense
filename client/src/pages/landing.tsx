@@ -808,7 +808,7 @@ export default function Landing() {
           <div className="grid grid-cols-1 gap-8 lg:gap-16 w-full items-end lg:[grid-template-columns:55%_45%]">
             {/* Left side - Title split over 3 rows */}
             <div className="animate-fade-in">
-              <h1 className="font-display uppercase tracking-tight leading-[0.8]">
+              <h1 className="font-display uppercase tracking-tight leading-[0.8] pl-[10px] pr-[10px]">
                 <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-white text-left font-extralight pt-[20px] pb-[20px]">PRACTICAL</span>
                 <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-left text-[#ffffff] md:-mt-8 lg:-mt-10 md:ml-32 lg:ml-40 pt-[0px] pb-[0px] mt-[-50px] mb-[-50px] ml-[70px] mr-[70px] font-thin">DEFENSE</span>
                 <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-[#ffffff] md:-mt-8 lg:-mt-10 md:ml-16 lg:ml-20 ml-[20px] mr-[20px] pt-[20px] pb-[20px] mt-[-10px] mb-[-10px] font-thin">TRAINING</span>
