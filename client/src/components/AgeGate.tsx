@@ -55,34 +55,36 @@ export function AgeGate({ children }: { children: React.ReactNode }) {
     }
   }, [verified]);
 
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
-  const months = [
-    { value: 1, label: "January" },
-    { value: 2, label: "February" },
-    { value: 3, label: "March" },
-    { value: 4, label: "April" },
-    { value: 5, label: "May" },
-    { value: 6, label: "June" },
-    { value: 7, label: "July" },
-    { value: 8, label: "August" },
-    { value: 9, label: "September" },
-    { value: 10, label: "October" },
-    { value: 11, label: "November" },
-    { value: 12, label: "December" },
-  ];
-  
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
 
   const handleSubmit = () => {
     setError("");
 
     if (!day || !month || !year) {
-      setError("Please select your complete date of birth.");
+      setError("Please enter your complete date of birth.");
       return;
     }
 
-    const age = calculateAge(parseInt(day), parseInt(month), parseInt(year));
+    const monthNum = parseInt(month);
+    const dayNum = parseInt(day);
+    const yearNum = parseInt(year);
+
+    if (isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+      setError("Please enter a valid month (1-12).");
+      return;
+    }
+
+    if (isNaN(dayNum) || dayNum < 1 || dayNum > 31) {
+      setError("Please enter a valid day (1-31).");
+      return;
+    }
+
+    if (isNaN(yearNum) || yearNum < 1900 || yearNum > currentYear) {
+      setError(`Please enter a valid year (1900-${currentYear}).`);
+      return;
+    }
+
+    const age = calculateAge(dayNum, monthNum, yearNum);
 
     if (age >= 21) {
       setVerified();
@@ -93,10 +95,17 @@ export function AgeGate({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const handleDateChange = (type: 'day' | 'month' | 'year', value: string) => {
-    if (type === 'day') setDay(value);
-    if (type === 'month') setMonth(value);
-    if (type === 'year') setYear(value);
+  const handleInputChange = (type: 'day' | 'month' | 'year', value: string) => {
+    const numericValue = value.replace(/\D/g, '');
+    
+    if (type === 'month') {
+      setMonth(numericValue.slice(0, 2));
+    } else if (type === 'day') {
+      setDay(numericValue.slice(0, 2));
+    } else if (type === 'year') {
+      setYear(numericValue.slice(0, 4));
+    }
+    
     setIsUnder21(false);
     setError("");
   };
@@ -165,53 +174,44 @@ export function AgeGate({ children }: { children: React.ReactNode }) {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs text-zinc-500 mb-1">Month</label>
-                  <select
+                  <input
+                    type="text"
+                    inputMode="numeric"
                     value={month}
-                    onChange={(e) => handleDateChange('month', e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-600 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent appearance-none cursor-pointer"
-                    data-testid="select-month"
-                  >
-                    <option value="">Month</option>
-                    {months.map((m) => (
-                      <option key={m.value} value={m.value}>
-                        {m.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(e) => handleInputChange('month', e.target.value)}
+                    placeholder="MM"
+                    maxLength={2}
+                    className="w-full bg-zinc-800 border border-zinc-600 rounded-lg px-3 py-2.5 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    data-testid="input-month"
+                  />
                 </div>
                 
                 <div>
                   <label className="block text-xs text-zinc-500 mb-1">Day</label>
-                  <select
+                  <input
+                    type="text"
+                    inputMode="numeric"
                     value={day}
-                    onChange={(e) => handleDateChange('day', e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-600 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent appearance-none cursor-pointer"
-                    data-testid="select-day"
-                  >
-                    <option value="">Day</option>
-                    {days.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(e) => handleInputChange('day', e.target.value)}
+                    placeholder="DD"
+                    maxLength={2}
+                    className="w-full bg-zinc-800 border border-zinc-600 rounded-lg px-3 py-2.5 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    data-testid="input-day"
+                  />
                 </div>
                 
                 <div>
                   <label className="block text-xs text-zinc-500 mb-1">Year</label>
-                  <select
+                  <input
+                    type="text"
+                    inputMode="numeric"
                     value={year}
-                    onChange={(e) => handleDateChange('year', e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-600 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent appearance-none cursor-pointer"
-                    data-testid="select-year"
-                  >
-                    <option value="">Year</option>
-                    {years.map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(e) => handleInputChange('year', e.target.value)}
+                    placeholder="YYYY"
+                    maxLength={4}
+                    className="w-full bg-zinc-800 border border-zinc-600 rounded-lg px-3 py-2.5 text-white text-sm text-center focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    data-testid="input-year"
+                  />
                 </div>
               </div>
 
