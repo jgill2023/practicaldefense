@@ -223,8 +223,8 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
             )}
 
             {/* Quote Bar */}
-            <div className="bg-[#004149] py-4 px-4 pt-[0px] pb-[0px] pl-[0px] pr-[0px] text-[18px]">
-              <div className="max-w-7xl mx-auto text-center text-white text-lg" style={{ fontFamily: 'Georgia, serif' }}>
+            <div className="bg-[#004149] py-6 px-4 flex items-center justify-center">
+              <div className="max-w-7xl mx-auto text-center text-white text-xl" style={{ fontFamily: 'Georgia, serif' }}>
                 <p>
                   It's <i>your</i> life. It's <i>your</i> safety and protection. It's <b>YOUR responsibility.</b>
                 </p>
@@ -659,8 +659,8 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
         )}
 
         {/* Quote Bar */}
-        <div className="bg-[#004149] py-4 px-4">
-          <div className="max-w-7xl mx-auto text-center text-white text-lg" style={{ fontFamily: 'Georgia, serif' }}>
+        <div className="bg-[#004149] py-6 px-4 flex items-center justify-center">
+          <div className="max-w-7xl mx-auto text-center text-white text-xl" style={{ fontFamily: 'Georgia, serif' }}>
             <p>
               It's <i>your</i> life. It's <i>your</i> safety and protection. It's <b>YOUR responsibility.</b>
             </p>
