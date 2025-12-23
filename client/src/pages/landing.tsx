@@ -810,7 +810,7 @@ export default function Landing() {
             <div className="animate-fade-in">
               <h1 className="font-display uppercase tracking-tight leading-[0.9]">
                 <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-white font-extralight text-left">PRACTICAL</span>
-                <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-zinc-400">DEFENSE</span>
+                <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-left text-[#ffffff] ml-[0px] mr-[0px] pl-[0px] pr-[0px]">DEFENSE</span>
                 <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-zinc-500">TRAINING</span>
               </h1>
             </div>
