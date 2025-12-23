@@ -804,8 +804,8 @@ export default function Landing() {
         </div>
 
         {/* Content - Split layout: Title left (55%), Subtitle + buttons right (45%) */}
-        <div className="relative z-20 text-white px-4 sm:px-6 lg:px-0 w-full max-w-7xl mx-auto h-full flex items-end pb-12">
-          <div className="grid grid-cols-1 gap-8 lg:gap-16 w-full items-end lg:[grid-template-columns:55%_45%]">
+        <div className="relative z-20 text-white px-4 sm:px-6 lg:px-0 w-full max-w-7xl mx-auto h-full flex items-center">
+          <div className="grid grid-cols-1 gap-8 lg:gap-16 w-full items-center lg:[grid-template-columns:55%_45%]">
             {/* Left side - Title split over 3 rows */}
             <div className="animate-fade-in">
               <h1 className="font-display uppercase tracking-tight leading-[0.8] pl-[10px] pr-[10px]">
@@ -816,7 +816,7 @@ export default function Landing() {
             </div>
             
             {/* Right side - Subtitle and buttons */}
-            <div className="flex flex-col items-start lg:items-start justify-center animate-fade-in pl-4 sm:pl-6 lg:pl-0 pr-8 lg:pr-16" style={{ animationDelay: '0.15s' }}>
+            <div className="flex flex-col items-start lg:items-start justify-center animate-fade-in pl-4 sm:pl-6 lg:pl-0 pr-4 lg:pr-8" style={{ animationDelay: '0.15s' }}>
               <p className="text-xl md:text-2xl lg:text-3xl font-body font-light tracking-wide mb-8 text-zinc-200">
                 You Don't Have to be Defenseless
               </p>
