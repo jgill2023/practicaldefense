@@ -842,6 +842,14 @@ export default function Landing() {
           </div>
         </div>
 
+        {/* Quote Bar */}
+        <div className="absolute bottom-0 left-0 right-0 bg-[#004149] py-6 px-4 z-10">
+          <div className="max-w-7xl mx-auto text-center text-white font-body text-lg md:text-xl">
+            <p>
+              It's <i>your</i> life. It's <i>your</i> safety and protection. It's <b>YOUR responsibility.</b>
+            </p>
+          </div>
+        </div>
       </section>
       {/* Results-Driven Training Section */}
       <section id="results-driven-training" className="bg-zinc-900 py-20">
