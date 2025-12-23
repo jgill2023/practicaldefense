@@ -222,15 +222,6 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
               </div>
             )}
 
-            {/* Quote Bar */}
-            <div className="bg-[#004149] py-6 px-4 flex items-center justify-center pt-[8px] pb-[8px]">
-              <div className="max-w-7xl mx-auto text-center text-white text-[18px] font-body" style={{ fontFamily: 'Inter, sans-serif' }}>
-                <p className="text-[22px]">
-                  It's <i>your</i> life. It's <i>your</i> safety and protection. It's <b>YOUR responsibility.</b>
-                </p>
-              </div>
-            </div>
-
             {/* Header Navigation */}
             <header className={`transition-all duration-300 ${isNavSticky ? 'shadow-lg bg-zinc-950 border-b border-zinc-800' : 'bg-transparent'}`}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -539,7 +530,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
   return (
     <div className="min-h-screen bg-zinc-950 font-body">
       {/* Quote Bar - Not sticky, scrolls away */}
-      <div className="bg-[#004149] py-6 px-4 flex items-center justify-center" style={{ position: 'static' }}>
+      <div className="bg-[#004149] py-6 px-4 flex items-center justify-center">
         <div className="max-w-7xl mx-auto text-center text-white text-[18px] font-body" style={{ fontFamily: 'Inter, sans-serif' }}>
           <p>
             It's <i>your</i> life. It's <i>your</i> safety and protection. It's <b>YOUR responsibility.</b>
