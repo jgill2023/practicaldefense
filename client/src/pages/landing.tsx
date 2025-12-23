@@ -804,19 +804,19 @@ export default function Landing() {
         </div>
 
         {/* Content - Split layout: Title left (55%), Subtitle + buttons right (45%) */}
-        <div className="relative z-20 text-white px-4 sm:px-6 lg:px-8 w-full max-w-7xl mx-auto h-full flex items-center pb-24">
-          <div className="grid grid-cols-1 gap-8 lg:gap-16 w-full items-center lg:[grid-template-columns:55%_45%]">
+        <div className="relative z-20 text-white px-4 sm:px-6 lg:px-0 w-full max-w-7xl mx-auto h-full flex items-end pb-12">
+          <div className="grid grid-cols-1 gap-8 lg:gap-16 w-full items-end lg:[grid-template-columns:55%_45%]">
             {/* Left side - Title split over 3 rows */}
             <div className="animate-fade-in">
-              <h1 className="font-avenir uppercase tracking-tight leading-[0.9]">
-                <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-white text-left font-normal">PRACTICAL</span>
-                <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-left text-[#ffffff]">DEFENSE</span>
-                <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-[#ffffff] font-normal">TRAINING</span>
+              <h1 className="font-display uppercase tracking-tight leading-[0.8]">
+                <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-white text-left">PRACTICAL</span>
+                <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-left text-[#ffffff] -mt-6 md:-mt-8 lg:-mt-10 ml-24 md:ml-32 lg:ml-40">DEFENSE</span>
+                <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-[#ffffff] -mt-6 md:-mt-8 lg:-mt-10 ml-12 md:ml-16 lg:ml-20">TRAINING</span>
               </h1>
             </div>
             
             {/* Right side - Subtitle and buttons */}
-            <div className="flex flex-col items-start lg:items-start justify-center animate-fade-in" style={{ animationDelay: '0.15s' }}>
+            <div className="flex flex-col items-start lg:items-start justify-end animate-fade-in pl-4 sm:pl-6 lg:pl-8 pb-2" style={{ animationDelay: '0.15s' }}>
               <p className="text-xl md:text-2xl lg:text-3xl font-body font-light tracking-wide mb-8 text-zinc-200">
                 You Don't Have to be Defenseless
               </p>
