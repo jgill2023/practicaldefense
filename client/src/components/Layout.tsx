@@ -539,7 +539,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
   return (
     <div className="min-h-screen bg-zinc-950 font-body">
       {/* Quote Bar - Not sticky, scrolls away */}
-      <div className="bg-[#004149] py-6 px-4 flex items-center justify-center">
+      <div className="bg-[#004149] py-6 px-4 flex items-center justify-center" style={{ position: 'static' }}>
         <div className="max-w-7xl mx-auto text-center text-white text-[18px] font-body" style={{ fontFamily: 'Inter, sans-serif' }}>
           <p>
             It's <i>your</i> life. It's <i>your</i> safety and protection. It's <b>YOUR responsibility.</b>
