@@ -809,7 +809,7 @@ export default function Landing() {
             {/* Left side - Title split over 3 rows */}
             <div className="animate-fade-in">
               <h1 className="font-display uppercase tracking-tight leading-[0.9]">
-                <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-white">PRACTICAL</span>
+                <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-white font-extralight text-left">PRACTICAL</span>
                 <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-zinc-400">DEFENSE</span>
                 <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-zinc-500">TRAINING</span>
               </h1>
