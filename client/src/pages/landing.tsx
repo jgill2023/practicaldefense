@@ -13,7 +13,7 @@ import { BookingModal } from "@/components/BookingModal";
 import { ComicPanel, TitleCard } from "@/components/RACTheme";
 import { SEO } from "@/components/SEO";
 import type { CourseWithSchedules, AppSettings, AppointmentType } from "@shared/schema";
-import heroImage from "@assets/MainHeader2Andy_1766469942641.jpg";
+import heroImage from "@assets/Header01_1766473082844.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
