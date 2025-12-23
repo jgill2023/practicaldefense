@@ -803,9 +803,9 @@ export default function Landing() {
           <div className="absolute inset-0 bg-black/60"></div>
         </div>
 
-        {/* Content - Split layout: Title left, Subtitle + buttons right */}
+        {/* Content - Split layout: Title left (55%), Subtitle + buttons right (45%) */}
         <div className="relative z-20 text-white px-4 sm:px-6 lg:px-8 w-full max-w-7xl mx-auto h-full flex items-center pb-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 w-full items-center">
+          <div className="grid grid-cols-1 gap-8 lg:gap-16 w-full items-center lg:[grid-template-columns:55%_45%]">
             {/* Left side - Title split over 3 rows */}
             <div className="animate-fade-in">
               <h1 className="font-avenir uppercase tracking-tight leading-[0.9]">
