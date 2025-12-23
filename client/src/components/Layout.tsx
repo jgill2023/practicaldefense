@@ -222,6 +222,15 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
               </div>
             )}
 
+            {/* Quote Bar */}
+            <div className="bg-[#004149] py-4 px-4">
+              <div className="max-w-7xl mx-auto text-center text-white text-lg" style={{ fontFamily: 'Georgia, serif' }}>
+                <p>
+                  It's <i>your</i> life. It's <i>your</i> safety and protection. It's <b>YOUR responsibility.</b>
+                </p>
+              </div>
+            </div>
+
             {/* Header Navigation */}
             <header className={`transition-all duration-300 ${isNavSticky ? 'shadow-lg bg-zinc-950 border-b border-zinc-800' : 'bg-transparent'}`}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -648,6 +657,15 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
             </div>
           </div>
         )}
+
+        {/* Quote Bar */}
+        <div className="bg-[#004149] py-4 px-4">
+          <div className="max-w-7xl mx-auto text-center text-white text-lg" style={{ fontFamily: 'Georgia, serif' }}>
+            <p>
+              It's <i>your</i> life. It's <i>your</i> safety and protection. It's <b>YOUR responsibility.</b>
+            </p>
+          </div>
+        </div>
 
         {/* Header Navigation */}
         <header className="shadow-lg bg-zinc-950 border-b border-zinc-800">
