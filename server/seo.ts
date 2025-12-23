@@ -158,8 +158,8 @@ export async function getDynamicSEOConfig(path: string): Promise<SEOConfig> {
       const course = await db.select().from(courses).where(eq(courses.id, courseId)).limit(1);
       if (course.length > 0) {
         const c = course[0];
-        baseConfig.title = `${c.title} | Apache Solutions`;
-        baseConfig.description = c.description?.slice(0, 160) || `Learn more about ${c.title} at Apache Solutions.`;
+        baseConfig.title = `${c.title} | Practical Defense Training`;
+        baseConfig.description = c.description?.slice(0, 160) || `Learn more about ${c.title} at Practical Defense Training.`;
         baseConfig.canonicalUrl = `${BASE_URL}/course/${courseId}`;
         
         if (c.imageUrl) {
@@ -198,8 +198,8 @@ export async function getDynamicSEOConfig(path: string): Promise<SEOConfig> {
       if (instructor.length > 0) {
         const i = instructor[0];
         const name = `${i.firstName || ""} ${i.lastName || ""}`.trim() || "Instructor";
-        baseConfig.title = `${name} - Firearms Instructor | Apache Solutions`;
-        baseConfig.description = `Meet ${name}, a professional firearms instructor at Apache Solutions.`;
+        baseConfig.title = `${name} - Firearms Instructor | Practical Defense Training`;
+        baseConfig.description = `Meet ${name}, a professional firearms instructor at Practical Defense Training.`;
         baseConfig.canonicalUrl = `${BASE_URL}/instructors/${instructorId}`;
 
         if (i.profileImageUrl) {

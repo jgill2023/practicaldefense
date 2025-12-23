@@ -95,10 +95,10 @@ export default function About() {
 
                 <div className="md:w-2/3">
                   <p className="text-foreground leading-relaxed text-lg mb-6">
-                    Tim Kelly is the owner of Practical Defense Training in Albuquerque, NM. Tim started Apache in 2017 with the intention of creating a stronger and more competent armed society. He recognized the need for safe and effective firearms training in his community and structured his business accordingly.
+                    Tim Kelly is the owner of Practical Defense Training in Albuquerque, NM. Tim started Practical Defense Training in 2017 with the intention of creating a stronger and more competent armed society. He recognized the need for safe and effective firearms training in his community and structured his business accordingly.
                   </p>
                   <p className="text-foreground leading-relaxed text-lg mb-6">
-                    Apache specializes in individual private sessions and teaches over 1000 hours of private sessions throughout each year. A dedicated husband and father, Tim has a strong desire to lead and help others achieve their goals.
+                    Practical Defense Training specializes in individual private sessions and teaches over 1000 hours of private sessions throughout each year. A dedicated husband and father, Tim has a strong desire to lead and help others achieve their goals.
                   </p>
                 </div>
               </div>
@@ -137,7 +137,7 @@ export default function About() {
                   <p className="text-sm font-medium text-muted-foreground">Full-Time Instructor</p>
                 </div>
                 <p className="text-foreground leading-relaxed">
-                  Derek joined Apache in 2021 and worked his way through the apprenticeship program, becoming a full-time instructor in 2023. Originally from Oak Island, NC, he's passionate about teaching and helping people achieve their goals through tailored instruction.
+                  Derek joined Practical Defense Training in 2021 and worked his way through the apprenticeship program, becoming a full-time instructor in 2023. Originally from Oak Island, NC, he's passionate about teaching and helping people achieve their goals through tailored instruction.
                 </p>
                 <div className="border-t border-gray-200 pt-4">
                   <p className="text-sm font-medium text-foreground mb-2">Major Accomplishments:</p>
@@ -198,10 +198,10 @@ export default function About() {
               <div className="space-y-4">
                 <div>
                   <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">David Church</h3>
-                  <p className="text-sm font-medium text-muted-foreground">Apache Handgun Instructor</p>
+                  <p className="text-sm font-medium text-muted-foreground">PDT Handgun Instructor</p>
                 </div>
                 <p className="text-foreground leading-relaxed">
-                  An Apache handgun instructor since March 2020, David's goal is to help develop essential skills that may one day save lives. Beyond firearms, he's a self-employed entrepreneur, avid rock climber, and triathlon runner.
+                  A PDT handgun instructor since March 2020, David's goal is to help develop essential skills that may one day save lives. Beyond firearms, he's a self-employed entrepreneur, avid rock climber, and triathlon runner.
                 </p>
                 <div className="border-t border-gray-200 pt-4">
                   <p className="text-sm font-medium text-foreground mb-2">Certifications:</p>
@@ -243,7 +243,7 @@ export default function About() {
                   <p className="text-sm font-medium text-muted-foreground">Rescue Services & Firearms Instructor</p>
                 </div>
                 <p className="text-foreground leading-relaxed">
-                  Affiliated with the Yadkin County Rescue Squad, Wes provides specialized rescue services and supports emergency medical operations while sharing his firearms expertise through instruction.
+                  Affiliated with local emergency rescue services, Wes provides specialized rescue services and supports emergency medical operations while sharing his firearms expertise through instruction.
                 </p>
                 <div className="border-t border-gray-200 pt-4">
                   <p className="text-sm font-medium text-foreground mb-2">Certifications:</p>
@@ -264,7 +264,7 @@ export default function About() {
                   <p className="text-sm font-medium text-muted-foreground">Apprentice Instructor</p>
                 </div>
                 <p className="text-foreground leading-relaxed">
-                  Training with Apache for five years, Patrice progressed from never handling a weapon to pursuing the Assistant Instructor track. A Banking Compliance professional by day, she's passionate about educating a responsibly armed citizenry.
+                  Training with Practical Defense Training for five years, Patrice progressed from never handling a weapon to pursuing the Assistant Instructor track. A Banking Compliance professional by day, she's passionate about educating a responsibly armed citizenry.
                 </p>
                 <div className="border-t border-gray-200 pt-4">
                   <p className="text-sm font-medium text-foreground mb-2">About Patrice:</p>
@@ -281,7 +281,7 @@ export default function About() {
                   <p className="text-sm font-medium text-muted-foreground">Marine Corps Veteran & Instructor</p>
                 </div>
                 <p className="text-foreground leading-relaxed">
-                  A Marine Corps veteran turned Law Enforcement Officer, Zack brings discipline and precision to his instruction. Apache instructor since 2023, he's driven by integrity and commitment to creating a better armed society.
+                  A Marine Corps veteran turned Law Enforcement Officer, Zack brings discipline and precision to his instruction. PDT instructor since 2023, he's driven by integrity and commitment to creating a better armed society.
                 </p>
                 <div className="border-t border-gray-200 pt-4">
                   <p className="text-sm font-medium text-foreground mb-2">Certifications:</p>
@@ -299,10 +299,10 @@ export default function About() {
               <div className="space-y-4">
                 <div>
                   <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Nancy Caron</h3>
-                  <p className="text-sm font-medium text-muted-foreground">Apache Instructor</p>
+                  <p className="text-sm font-medium text-muted-foreground">PDT Instructor</p>
                 </div>
                 <p className="text-foreground leading-relaxed">
-                  Nancy Caron joined the Apache cadre in 2025 after completing our Apache instructor apprentice program. She has a passion for helping others become the best version of themselves through education and mentoring.
+                  Nancy Caron joined the PDT cadre in 2025 after completing our instructor apprentice program. She has a passion for helping others become the best version of themselves through education and mentoring.
                 </p>
                 <div className="border-t border-gray-200 pt-4">
                   <p className="text-sm font-medium text-foreground mb-2">Certifications & Achievements:</p>
@@ -322,16 +322,16 @@ export default function About() {
               <div className="space-y-4">
                 <div>
                   <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Rodney White</h3>
-                  <p className="text-sm font-medium text-muted-foreground">Apache Instructor</p>
+                  <p className="text-sm font-medium text-muted-foreground">PDT Instructor</p>
                 </div>
                 <p className="text-foreground leading-relaxed">
-                  Rodney White brings over a decade of retail management experience, during which he regularly educated and led groups of up to 70 individuals at a time. After obtaining his concealed carry permit, Rodney recognized a gap between his personal standards and the training options available. This realization led him to begin training with Apache.
+                  Rodney White brings over a decade of retail management experience, during which he regularly educated and led groups of up to 70 individuals at a time. After obtaining his concealed carry permit, Rodney recognized a gap between his personal standards and the training options available. This realization led him to begin training with Practical Defense Training.
                 </p>
                 <p className="text-foreground leading-relaxed">
                   After several years of dedicated development, Rodney pursued instructor credentials, first earning certification through the NRA and later achieving Rangemaster Instructor certification. He has trained with a wide range of nationally recognized instructors, including Tatiana Whitlock, VIGR Training, Dave Spaulding, and John Murphy, among others.
                 </p>
                 <p className="text-foreground leading-relaxed">
-                  Rodney is passionate about leadership and coaching new shooters and is committed to supporting Apache's mission of building a more capable, confident, and responsible armed community.
+                  Rodney is passionate about leadership and coaching new shooters and is committed to supporting Practical Defense Training's mission of building a more capable, confident, and responsible armed community.
                 </p>
               </div>
             </ComicPanel>
@@ -341,7 +341,7 @@ export default function About() {
           <ComicPanel shadow="md" data-testid="about-legacy-members" className="mt-8">
             <div className="space-y-4">
               <div>
-                <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Legacy Members of the Apache Instructor Cadre</h3>
+                <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]">Legacy Members of the PDT Instructor Cadre</h3>
                 <p className="text-sm font-medium text-muted-foreground">Honored Contributors</p>
               </div>
               <p className="text-foreground leading-relaxed">
@@ -415,7 +415,7 @@ export default function About() {
                 </p>
 
                 <p>
-                  Apache now has grown to nearly a dozen instructors with several coming up through our apprenticeship program. Together, we have taught over 4,000 students in the last 3 years, built a range, classroom, and pro-shop. I am proud to say, even if it is only in the small community of Yadkin County, NC., we are making a difference.
+                  Practical Defense Training has now grown to nearly a dozen instructors with several coming up through our apprenticeship program. Together, we have taught over 4,000 students in the last several years, built a range, classroom, and pro-shop. I am proud to say, even if it is only in the small community of Albuquerque, NM, we are making a difference.
                 </p>
 
                 <div className="border-t border-gray-200 pt-6 mt-8">

@@ -75,7 +75,7 @@ const googleReviews = [
     id: 3,
     author: "Adam W.",
     rating: 5,
-    quote: "When someone is so dedicated to growth – as the Apache crew evidently are, the results always ultimately prove it out. This excellent instructor level course is quickly going to become renowned as top flight.",
+    quote: "When someone is so dedicated to growth – as this team evidently is, the results always ultimately prove it out. This excellent instructor level course is quickly going to become renowned as top flight.",
     size: "small" as const,
   },
   {
@@ -300,7 +300,7 @@ function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSc
     return (
       <div className="space-y-4">
         {[1, 2, 3].map(i => (
-          <div key={i} className="bg-white rounded-xl p-6 shadow-md animate-pulse">
+          <div key={i} className="bg-zinc-900 rounded-sm p-6 shadow-md animate-pulse border border-zinc-800">
             <div className="flex gap-6">
               <div className="w-32 h-24 bg-gray-200 rounded-lg"></div>
               <div className="flex-1 space-y-3">
@@ -330,7 +330,7 @@ function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSc
         {currentSchedules.map(({ schedule, course }) => (
           <div 
             key={schedule.id}
-            className="py-6 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+            className="py-6 hover:bg-zinc-800 transition-colors duration-200 cursor-pointer"
             data-testid={`upcoming-course-${schedule.id}`}
             onClick={() => setLocation(`/course/${course.id}`)}
           >
@@ -526,7 +526,7 @@ function MosaicTestimonialSlider() {
 
   const TestimonialCard = ({ review, className = "" }: { review: typeof googleReviews[0], className?: string }) => (
     <div 
-      className={`bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 min-h-[280px] flex flex-col ${className}`}
+      className={`bg-zinc-900 rounded-sm shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-zinc-800 min-h-[280px] flex flex-col ${className}`}
       data-testid={`testimonial-card-${review.id}`}
     >
       <Quote className="w-8 h-8 text-[hsl(209,90%,38%)] opacity-20 mb-3 rotate-180" />
@@ -781,12 +781,12 @@ export default function Landing() {
   };
 
   return (
-    <Layout>
+    <Layout isLandingPage>
       <SEO 
         title="Professional Firearms Training"
         description="Master concealed carry, defensive shooting, and tactical skills with personalized instruction from certified professionals. Group classes and private sessions available."
       />
-      {/* Hero Section */}
+      {/* Hero Section - Full viewport height container for navigation positioning */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0">
@@ -804,7 +804,7 @@ export default function Landing() {
         </div>
 
         {/* Content */}
-        <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center h-full">
+        <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center h-full pb-24">
           <h1 className="font-display text-5xl md:text-7xl lg:text-8xl uppercase tracking-widest mb-4 animate-fade-in">
             Practical Defense Training
           </h1>
@@ -840,7 +840,7 @@ export default function Landing() {
 
       </section>
       {/* Results-Driven Training Section */}
-      <section id="results-driven-training" className="bg-gray-50 py-20">
+      <section id="results-driven-training" className="bg-zinc-900 py-20">
         <div className="w-[80%] mx-auto px-4 text-center">
           {/* RACC Feature Section with Testimonials */}
           <div className="flex flex-col lg:flex-row gap-8 mt-12 text-left pr-4 pb-4" style={{ alignItems: 'stretch' }}>
@@ -1040,7 +1040,7 @@ export default function Landing() {
         </div>
       </section>
       {/* Upcoming Courses */}
-      <section id="upcoming-events" className="bg-white py-16">
+      <section id="upcoming-events" className="bg-zinc-950 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
@@ -1097,7 +1097,7 @@ export default function Landing() {
         </div>
       </section>
       {/* Customer Testimonials */}
-      <section className="bg-gray-50 py-16">
+      <section className="bg-zinc-900 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">

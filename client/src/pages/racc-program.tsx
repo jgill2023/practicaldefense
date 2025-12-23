@@ -301,7 +301,7 @@ export default function RACCProgram() {
                 </h3>
               </div>
               <p className="text-foreground leading-relaxed">
-                Master the 4 universal safety rules, range commands, gear fit, and precision shooting. You'll pass the Apache Level 1 B-8 live-fire test, demonstrate safe loading/unloading, field maintenance, tourniquet application, and holster familiarization (transport & carry)—all pressure-tested under real range conditions.
+                Master the 4 universal safety rules, range commands, gear fit, and precision shooting. You'll pass the PDT Level 1 B-8 live-fire test, demonstrate safe loading/unloading, field maintenance, tourniquet application, and holster familiarization (transport & carry)—all pressure-tested under real range conditions.
               </p>
             </ComicPanel>
 
@@ -313,7 +313,7 @@ export default function RACCProgram() {
                 </h3>
               </div>
               <p className="text-foreground leading-relaxed">
-                Build speed and control with the Apache Level 2 B-8, malfunction clearing, holster draw from concealment, our 2nd Level of Control, recoil management, and reactive reloads—proven under timed scrutiny.
+                Build speed and control with the PDT Level 2 B-8, malfunction clearing, holster draw from concealment, our 2nd Level of Control, recoil management, and reactive reloads—proven under timed scrutiny.
               </p>
             </ComicPanel>
 
@@ -325,7 +325,7 @@ export default function RACCProgram() {
                 </h3>
               </div>
               <p className="text-foreground leading-relaxed">
-                Master precision under pressure with Apache Pistol Metrics, proactive/retention reloads, and our 2nd Level of Control—every rep verified.
+                Master precision under pressure with PDT Pistol Metrics, proactive/retention reloads, and our 2nd Level of Control—every rep verified.
               </p>
             </ComicPanel>
 
@@ -891,7 +891,7 @@ export default function RACCProgram() {
                   <ul className="space-y-2 ml-4">
                     <li className="flex items-start gap-2">
                       <CheckCircle className="w-5 h-5 text-[hsl(209,90%,38%)] flex-shrink-0 mt-0.5" />
-                      <span>Apache B-8 scores</span>
+                      <span>PDT B-8 scores</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle className="w-5 h-5 text-[hsl(209,90%,38%)] flex-shrink-0 mt-0.5" />

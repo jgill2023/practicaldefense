@@ -312,7 +312,7 @@ export async function sendVerificationEmail(
         <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
         
         <p style="font-size: 12px; color: #999; text-align: center;">
-          Apache Solutions - Professional Firearms Training<br>
+          Practical Defense Training - Professional Firearms Training<br>
           This is an automated message, please do not reply.
         </p>
       </div>
@@ -320,7 +320,7 @@ export async function sendVerificationEmail(
     </html>
   `;
 
-  return await sendAuthEmail(email, "Verify Your Email - Apache Solutions", html);
+  return await sendAuthEmail(email, "Verify Your Email - Practical Defense Training", html);
 }
 
 export async function sendPasswordResetEmail(
@@ -367,7 +367,7 @@ export async function sendPasswordResetEmail(
         <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
         
         <p style="font-size: 12px; color: #999; text-align: center;">
-          Apache Solutions - Professional Firearms Training<br>
+          Practical Defense Training - Professional Firearms Training<br>
           This is an automated message, please do not reply.
         </p>
       </div>
@@ -375,7 +375,7 @@ export async function sendPasswordResetEmail(
     </html>
   `;
 
-  return await sendAuthEmail(email, "Reset Your Password - Apache Solutions", html);
+  return await sendAuthEmail(email, "Reset Your Password - Practical Defense Training", html);
 }
 
 export async function sendWelcomeEmail(
@@ -390,11 +390,11 @@ export async function sendWelcomeEmail(
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Welcome to Apache Solutions</title>
+      <title>Welcome to Practical Defense Training</title>
     </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
-        <h1 style="color: #2c3e50; margin-bottom: 20px;">Welcome to Apache Solutions!</h1>
+        <h1 style="color: #2c3e50; margin-bottom: 20px;">Welcome to Practical Defense Training!</h1>
         
         <p style="font-size: 16px;">Hi ${firstName},</p>
         
@@ -420,7 +420,7 @@ export async function sendWelcomeEmail(
         <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
         
         <p style="font-size: 12px; color: #999; text-align: center;">
-          Apache Solutions - Professional Firearms Training<br>
+          Practical Defense Training - Professional Firearms Training<br>
           This is an automated message, please do not reply.
         </p>
       </div>
@@ -428,5 +428,5 @@ export async function sendWelcomeEmail(
     </html>
   `;
 
-  return await sendAuthEmail(email, "Welcome to Apache Solutions!", html);
+  return await sendAuthEmail(email, "Welcome to Practical Defense Training!", html);
 }
