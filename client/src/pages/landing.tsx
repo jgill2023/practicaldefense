@@ -816,7 +816,7 @@ export default function Landing() {
             </div>
             
             {/* Right side - Subtitle and buttons */}
-            <div className="flex flex-col items-start lg:items-start justify-end animate-fade-in pl-4 sm:pl-6 lg:pl-8 pb-2" style={{ animationDelay: '0.15s' }}>
+            <div className="flex flex-col items-start lg:items-start justify-center animate-fade-in pl-4 sm:pl-6 lg:pl-0 pr-8 lg:pr-16" style={{ animationDelay: '0.15s' }}>
               <p className="text-xl md:text-2xl lg:text-3xl font-body font-light tracking-wide mb-8 text-zinc-200">
                 You Don't Have to be Defenseless
               </p>
