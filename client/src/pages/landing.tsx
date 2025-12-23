@@ -803,38 +803,43 @@ export default function Landing() {
           <div className="absolute inset-0 bg-black/60"></div>
         </div>
 
-        {/* Content */}
-        <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center h-full pb-24">
-          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl uppercase tracking-widest mb-4 animate-fade-in">
-            Practical Defense Training
-          </h1>
-          <p className="text-xl md:text-2xl lg:text-3xl font-body font-light tracking-wide mb-12 animate-fade-in" style={{ animationDelay: '0.15s' }}>
-            You Don't Have to be Defenseless
-          </p>
-          <div className="flex justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <Button
-              size="lg"
-              className="hover:bg-[#006d7a] text-white font-display uppercase tracking-widest px-8 py-6 text-lg shadow-lg bg-[#004149] border border-zinc-700 rounded-sm"
-              onClick={() => setLocation('/schedule-list')}
-              data-testid="button-browse-courses"
-            >
-              <Target className="w-5 h-5 mr-2" />
-              FIND A CLASS
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border border-zinc-400 hover:bg-white hover:text-zinc-950 font-display uppercase tracking-widest px-8 py-6 text-lg text-white bg-transparent rounded-sm"
-              onClick={() => {
-                const appointmentsSection = document.getElementById('appointments');
-                if (appointmentsSection) {
-                  appointmentsSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              data-testid="button-book-training"
-            >
-              BOOK TRAINING
-            </Button>
+        {/* Content - Split layout: Title left, Subtitle + buttons right */}
+        <div className="relative z-20 text-white px-4 sm:px-6 lg:px-8 w-full max-w-7xl mx-auto h-full flex items-center pb-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 w-full items-center">
+            {/* Left side - Title split over 3 rows */}
+            <div className="animate-fade-in">
+              <h1 className="font-display uppercase tracking-tight leading-[0.9]">
+                <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-white">PRACTICAL</span>
+                <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-zinc-400">DEFENSE</span>
+                <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-zinc-500">TRAINING</span>
+              </h1>
+            </div>
+            
+            {/* Right side - Subtitle and buttons */}
+            <div className="flex flex-col items-start lg:items-start justify-center animate-fade-in" style={{ animationDelay: '0.15s' }}>
+              <p className="text-xl md:text-2xl lg:text-3xl font-body font-light tracking-wide mb-8 text-zinc-200">
+                You Don't Have to be Defenseless
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                <Button
+                  size="lg"
+                  className="hover:bg-[#006d7a] text-white font-display uppercase tracking-widest px-8 py-6 text-lg shadow-lg bg-[#004149] border border-zinc-700 rounded-sm"
+                  onClick={() => setLocation('/schedule-list')}
+                  data-testid="button-browse-courses"
+                >
+                  Upcoming Courses
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border border-zinc-400 hover:bg-white hover:text-zinc-950 font-display uppercase tracking-widest px-8 py-6 text-lg text-white bg-transparent rounded-sm"
+                  onClick={() => setLocation('/online-ccw-class')}
+                  data-testid="button-online-ccw"
+                >
+                  Online CCW Course
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 
