@@ -233,17 +233,17 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
 
                   <div className="flex justify-between items-center flex-1">
                     <nav className="hidden md:flex items-center justify-center flex-1 space-x-8 text-[20px]">
-                      <a href="/" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-home" onClick={(e) => {
+                      <a href="/" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-home" onClick={(e) => {
                         if (window.location.pathname === '/') {
                           e.preventDefault();
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                       }}>Home</a>
-                      <Link href="/about" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-about">About Us</Link>
+                      <Link href="/about" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-about">About Us</Link>
                       <NavigationMenu>
                         <NavigationMenuList>
                           <NavigationMenuItem>
-                            <NavigationMenuTrigger className="bg-transparent text-base text-zinc-100 hover:text-[#006d7a] hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent font-display tracking-widest uppercase" data-testid="dropdown-courses">
+                            <NavigationMenuTrigger className="bg-transparent text-[20px] text-zinc-100 hover:text-[#006d7a] hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent font-display tracking-widest uppercase" data-testid="dropdown-courses">
                               Courses
                             </NavigationMenuTrigger>
                             <NavigationMenuContent className="min-w-[600px]">
@@ -282,10 +282,10 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                           </NavigationMenuItem>
                         </NavigationMenuList>
                       </NavigationMenu>
-                      <Link href="/articles" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-articles">Articles</Link>
-                      <Link href="/merch" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-merch">Store</Link>
-                      <Link href="/gift-cards" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-gift-cards">Gift Cards</Link>
-                      <a href="/#appointments" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" onClick={(e) => {
+                      <Link href="/articles" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-articles">Articles</Link>
+                      <Link href="/merch" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-merch">Store</Link>
+                      <Link href="/gift-cards" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-gift-cards">Gift Cards</Link>
+                      <a href="/#appointments" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" onClick={(e) => {
                         const appointmentsSection = document.getElementById('appointments');
                         if (appointmentsSection && window.location.pathname === '/') {
                           e.preventDefault();
@@ -296,7 +296,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                           window.scrollTo({ top: y, behavior: 'smooth' });
                         }
                       }}>One/One Training</a>
-                      <Link href="/contact" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-contact">Contact Us</Link>
+                      <Link href="/contact" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-contact">Contact Us</Link>
                     </nav>
 
                     <div className="hidden md:flex items-center space-x-4">
@@ -662,17 +662,17 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
             {/* Navigation centered, auth buttons on right */}
             <div className="flex justify-between items-center flex-1">
               <nav className="hidden md:flex items-center justify-center flex-1 space-x-8">
-                <a href="/" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-home" onClick={(e) => {
+                <a href="/" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-home" onClick={(e) => {
                   if (window.location.pathname === '/') {
                     e.preventDefault();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <Link href="/about" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-about">About Us</Link>
+                <Link href="/about" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-about">About Us</Link>
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
-                      <NavigationMenuTrigger className="bg-transparent text-base text-zinc-100 hover:text-[#006d7a] hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent font-display tracking-widest uppercase" data-testid="dropdown-courses">
+                      <NavigationMenuTrigger className="bg-transparent text-[20px] text-zinc-100 hover:text-[#006d7a] hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent font-display tracking-widest uppercase" data-testid="dropdown-courses">
                         Courses
                       </NavigationMenuTrigger>
                       <NavigationMenuContent className="min-w-[600px]">
@@ -711,10 +711,10 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                     </NavigationMenuItem>
                   </NavigationMenuList>
                 </NavigationMenu>
-                <Link href="/articles" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-articles">Articles</Link>
-                <Link href="/merch" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-merch">Store</Link>
-                <Link href="/gift-cards" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-gift-cards">Gift Cards</Link>
-                <a href="/#appointments" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" onClick={(e) => {
+                <Link href="/articles" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-articles">Articles</Link>
+                <Link href="/merch" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-merch">Store</Link>
+                <Link href="/gift-cards" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-gift-cards">Gift Cards</Link>
+                <a href="/#appointments" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" onClick={(e) => {
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
                     e.preventDefault();
@@ -726,7 +726,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>One/One Training</a>
-                <Link href="/contact" className="text-base text-white hover:text-[#006d7a] transition-colors font-medium font-display tracking-widest" data-testid="link-contact">Contact Us</Link>
+                <Link href="/contact" className="text-[20px] text-white hover:text-[#006d7a] transition-colors font-medium font-display tracking-widest" data-testid="link-contact">Contact Us</Link>
               </nav>
 
               {/* Desktop auth buttons */}
