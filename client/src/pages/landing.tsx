@@ -820,7 +820,7 @@ export default function Landing() {
               <p className="text-xl md:text-2xl lg:text-3xl font-body font-light tracking-wide mb-8 text-zinc-200">
                 You Don't Have to be Defenseless
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: '0.3s' }}>
                 <Button
                   size="lg"
                   className="hover:bg-[#006d7a] text-white font-display uppercase tracking-widest px-8 py-6 text-lg shadow-lg bg-[#004149] border border-zinc-700 rounded-sm"
