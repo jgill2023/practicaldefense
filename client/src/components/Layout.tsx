@@ -222,6 +222,17 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
               </div>
             )}
 
+            {/* Quote Bar - Only visible when nav is not sticky (scrolls away with hero) */}
+            {!isNavSticky && (
+              <div className="bg-[#004149] py-2 px-4 flex items-center justify-center">
+                <div className="max-w-7xl mx-auto text-center text-white text-[18px] font-body" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  <p>
+                    It's <i>your</i> life. It's <i>your</i> safety and protection. It's <b>YOUR responsibility.</b>
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Header Navigation */}
             <header className={`transition-all duration-300 ${isNavSticky ? 'shadow-lg bg-zinc-950 border-b border-zinc-800' : 'bg-transparent'}`}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
