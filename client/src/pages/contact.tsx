@@ -114,13 +114,13 @@ export default function ContactPage() {
     <Layout>
       <SEO 
         title="Contact Us"
-        description="Get in touch with Apache Solutions for firearms training inquiries, course registration help, or private instruction scheduling. We respond within 24 hours."
+        description="Get in touch with Practical Defense Training for firearms training inquiries, course registration help, or private instruction scheduling. We respond within 24 hours."
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4" data-testid="text-page-title">
-            Contact Apache Solutions
+            Contact Practical Defense Training
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Have questions about our firearms training programs? Need help with registration? 
@@ -143,14 +143,14 @@ export default function ContactPage() {
                 <div className="flex items-center space-x-3">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="font-medium" data-testid="text-email">Info@ApacheNC.com</p>
+                    <p className="font-medium" data-testid="text-email">Info@abqconcealedcarry.com</p>
                     <p className="text-sm text-muted-foreground">Email us anytime</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="font-medium" data-testid="text-location">Yadkinville, NC</p>
+                    <p className="font-medium" data-testid="text-location">Albuquerque, NM</p>
                     <p className="text-sm text-muted-foreground">Contact us for specific range locations</p>
                   </div>
                 </div>

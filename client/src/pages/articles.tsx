@@ -22,8 +22,8 @@ const blogPosts: BlogPost[] = [
     author: "Zach Cox",
     date: "March 21, 2024",
     excerpt: "Being \"traumatized\" by Jonathan Willis is something I will never forget... Trauma care, emergency medicine, and even first aid, is something that I think everyone should at least have a basic understanding of. Whether you work in a dangerous industry or not, LIFE HAPPENS! Recently I had the honor of taking Jonathan Willis' \"Real World Trauma\" class and I wanted to share with you, my experience.",
-    imageUrl: "https://apachenc.com/wp-content/uploads/2024/03/image_123650291-2-1024x768.jpg",
-    externalUrl: "https://apachenc.com/real-world-trauma-jonathan-willis/",
+    imageUrl: "https://abqconcealedcarry.com/wp-content/uploads/2024/03/image_123650291-2-1024x768.jpg",
+    externalUrl: "https://abqconcealedcarry.com/real-world-trauma-jonathan-willis/",
     category: "Training"
   },
   {
@@ -32,8 +32,8 @@ const blogPosts: BlogPost[] = [
     author: "Zach Cox",
     date: "January 5, 2024",
     excerpt: "In August 2023, Tim and I assisted Tom Givens with Rangemaster's Shotgun Instructor Course in Oklahoma. During the class, something caught our eye - a Turkish clone of the Benelli M4. My initial thoughts were skeptical, but boy was I wrong! It made it through with flying colors. At the end of it all, I RECOMMEND THIS SHOTGUN!",
-    imageUrl: "https://apachenc.com/wp-content/uploads/2024/01/image.png",
-    externalUrl: "https://apachenc.com/mac1014/",
+    imageUrl: "https://abqconcealedcarry.com/wp-content/uploads/2024/01/image.png",
+    externalUrl: "https://abqconcealedcarry.com/mac1014/",
     category: "Gear Review"
   },
   {
@@ -43,7 +43,7 @@ const blogPosts: BlogPost[] = [
     date: "December 2, 2022",
     excerpt: "It is said that a journey of a thousand miles begins with a single step. Author Simon Sinek's \"The Infinite Game\" expands on James Carse's theory of finite versus infinite games. Personal defensive instruction is most certainly an infinite game. It will continue no matter who leaves the industry or who joins it. Be the infinite player. Play the infinite game.",
     imageUrl: "",
-    externalUrl: "https://apachenc.com/infinite-player/",
+    externalUrl: "https://abqconcealedcarry.com/infinite-player/",
     category: "Philosophy"
   }
 ];
@@ -55,7 +55,7 @@ export default function Articles() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl md:text-5xl font-bold font-heading mb-4" data-testid="text-articles-title">The Tribe</h1>
           <p className="text-xl text-white/90 max-w-2xl" data-testid="text-articles-subtitle">
-            Insights, reviews, and training philosophy from the Apache Solutions team.
+            Insights, reviews, and training philosophy from the Practical Defense Training team.
           </p>
         </div>
       </div>
@@ -124,7 +124,7 @@ export default function Articles() {
             Want to read more from our team?
           </p>
           <Button asChild variant="default" className="bg-[#5170FF] hover:bg-[#5170FF]/90" data-testid="button-visit-blog">
-            <a href="https://apachenc.com/the-tribe/" target="_blank" rel="noopener noreferrer">
+            <a href="https://abqconcealedcarry.com/the-tribe/" target="_blank" rel="noopener noreferrer">
               Visit Our Full Blog
               <ExternalLink className="h-4 w-4 ml-2" />
             </a>

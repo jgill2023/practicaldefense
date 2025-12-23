@@ -73,7 +73,7 @@ stripeConnectRouter.get('/status', isAuthenticated, async (req: any, res: Respon
         onboarded: true,
         chargesEnabled: true,
         payoutsEnabled: true,
-        businessName: 'Apache Solutions',
+        businessName: 'Practical Defense Training',
         keyPrefix: credentials?.secretKeyPrefix || 'sk_***',
         keyLast4: credentials?.secretKeyLast4 || '****',
         message: 'Stripe is configured and ready to accept payments.'
@@ -267,7 +267,7 @@ stripeConnectRouter.get('/config', isAuthenticated, async (req: any, res: Respon
       hasStoredCredentials: !!credentials,
       encryptionConfigured: isEncryptionConfigured(),
       message: settings?.stripeOnboarded 
-        ? 'Stripe is configured. All payments go directly to Apache Solutions.' 
+        ? 'Stripe is configured. All payments go directly to Practical Defense Training.' 
         : 'Stripe is not yet configured. Enter your API keys to accept payments.'
     });
   } catch (error: any) {

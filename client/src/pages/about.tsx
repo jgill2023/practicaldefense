@@ -56,12 +56,12 @@ export default function About() {
     <Layout>
       <SEO 
         title="About Us"
-        description="Meet the Apache Solutions team. Combat veterans and certified instructors dedicated to professional firearms training and defensive skills education."
+        description="Meet the Practical Defense Training team. Combat veterans and certified instructors dedicated to professional firearms training and defensive skills education."
       />
       <div className="relative h-[75vh] min-h-[500px] w-full overflow-hidden">
         <img 
           src={heroImage} 
-          alt="Tim Kelly instructing at Apache Solutions" 
+          alt="Tim Kelly instructing at Practical Defense Training" 
           className="w-full h-full object-cover object-top"
           data-testid="img-about-hero"
         />
@@ -69,7 +69,7 @@ export default function About() {
         <div className="absolute bottom-0 left-0 right-0 p-8 text-white pt-[64px] pb-[64px] pl-[16px] pr-[16px]">
           <div className="max-w-5xl mx-auto">
             <h1 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide mb-2">About Us</h1>
-            <p className="text-white/80 text-lg">Meet the team behind Apache Solutions Firearms Training.</p>
+            <p className="text-white/80 text-lg">Meet the team behind Practical Defense Training.</p>
           </div>
         </div>
       </div>
@@ -95,7 +95,7 @@ export default function About() {
 
                 <div className="md:w-2/3">
                   <p className="text-foreground leading-relaxed text-lg mb-6">
-                    Tim Kelly is the owner of Apache Solutions Firearms Training in Yadkinville, NC. Tim started Apache in 2017 with the intention of creating a stronger and more competent armed society. He recognized the need for safe and effective firearms training in his community and structured his business accordingly.
+                    Tim Kelly is the owner of Practical Defense Training in Albuquerque, NM. Tim started Apache in 2017 with the intention of creating a stronger and more competent armed society. He recognized the need for safe and effective firearms training in his community and structured his business accordingly.
                   </p>
                   <p className="text-foreground leading-relaxed text-lg mb-6">
                     Apache specializes in individual private sessions and teaches over 1000 hours of private sessions throughout each year. A dedicated husband and father, Tim has a strong desire to lead and help others achieve their goals.
@@ -160,7 +160,7 @@ export default function About() {
                   <p className="text-sm font-medium text-muted-foreground">Professional Pistolcraft Instructor</p>
                 </div>
                 <p className="text-foreground leading-relaxed">Protective Pistolcraft and Shotgun Instructor certified through Rangemaster, and a graduate of the Apache Instructor Enrichment Program. He maintains his annual instructor ratings for NRA (Basics of Pistol and RSO), and the North Carolina Department of Justice to teach North Carolina Concealed Carry. He also holds numerous additional certifications, reflecting a strong commitment to ongoing education and responsible instruction.</p>
-                <p className="text-foreground leading-relaxed">Through Apache Solutions LLC, Derek focuses on empowering everyday, law-abiding citizens with the skills, knowledge, and mindset to safely carry and responsibly defend themselves. His training emphasizes safe gun handling, practical decision-making, and understanding the serious responsibility that comes with concealed carry. Derek believes informed, well-trained citizens are a critical part of personal and community safety.</p>
+                <p className="text-foreground leading-relaxed">Through Practical Defense Training, Derek focuses on empowering everyday, law-abiding citizens with the skills, knowledge, and mindset to safely carry and responsibly defend themselves. His training emphasizes safe gun handling, practical decision-making, and understanding the serious responsibility that comes with concealed carry. Derek believes informed, well-trained citizens are a critical part of personal and community safety.</p>
                 <div className="border-t border-gray-200 pt-4">
                   <p className="text-sm font-medium text-foreground mb-2">Certifications:</p>
                   <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
@@ -222,7 +222,7 @@ export default function About() {
                   <p className="text-sm font-medium text-muted-foreground">Co-Owner & Certified Instructor</p>
                 </div>
                 <p className="text-foreground leading-relaxed">
-                  Co-owner of Apache Solutions LLC, Teresa has trained with renowned instructors including Tatiana Whitlock and Tom Givens. She's passionate about building community and empowering women through firearms training and education.
+                  Co-owner of Practical Defense Training, Teresa has trained with renowned instructors including Tatiana Whitlock and Tom Givens. She's passionate about building community and empowering women through firearms training and education.
                 </p>
                 <div className="border-t border-gray-200 pt-4">
                   <p className="text-sm font-medium text-foreground mb-2">Certifications:</p>
@@ -420,13 +420,13 @@ export default function About() {
 
                 <div className="border-t border-gray-200 pt-6 mt-8">
                   <p className="font-heading text-lg uppercase tracking-wide text-[hsl(209,90%,38%)]">Tim Kelly</p>
-                  <p className="text-muted-foreground">Owner / Chief Instructor at Apache Solutions LLC</p>
+                  <p className="text-muted-foreground">Owner / Chief Instructor at Practical Defense Training</p>
                 </div>
 
                 <div className="mt-8">
                   <img 
                     src={teamCollageImage} 
-                    alt="Apache Solutions team throughout the years" 
+                    alt="Practical Defense Training team throughout the years" 
                     className="w-full rounded-lg shadow-md"
                     loading="lazy"
                     data-testid="img-team-collage"

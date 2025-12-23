@@ -272,7 +272,7 @@ export default function RACCProgram() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="prose prose-lg max-w-none">
             <p className="text-base leading-relaxed text-foreground mb-6">
-              Every year, Apache Solutions LLC delivers over 1,000 hours of private, one-on-one firearms training to students from all walks of life—beginners, seasoned carriers, parents, professionals, and first-time gun owners. Apache has become a true "Talent Hot Spot" (as described in The Talent Code by Daniel Coyle)—a rare environment where deep practice, expert coaching, and ignition combine to produce extraordinary skill. With over 1,000 hours of private 1-on-1 sessions taught annually, our Responsibly Armed Citizen Criterion (RACC) mirrors the small, intense training hubs Coyle studied—like the Spartanburg tennis academy or Brazilian soccer fields—that churn out disproportionate numbers of masters.
+              Every year, Practical Defense Training LLC delivers over 1,000 hours of private, one-on-one firearms training to students from all walks of life—beginners, seasoned carriers, parents, professionals, and first-time gun owners. We have become a true "Talent Hot Spot" (as described in The Talent Code by Daniel Coyle)—a rare environment where deep practice, expert coaching, and ignition combine to produce extraordinary skill. With over 1,000 hours of private 1-on-1 sessions taught annually, our Responsibly Armed Citizen Criterion (RACC) mirrors the small, intense training hubs Coyle studied—like the Spartanburg tennis academy or Brazilian soccer fields—that churn out disproportionate numbers of masters.
             </p>
 
             <p className="text-base leading-relaxed text-foreground mb-8">
@@ -768,7 +768,7 @@ export default function RACCProgram() {
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4">
                 <p className="text-foreground leading-relaxed">
-                  The Responsibly Armed Citizen Criterion is Apache Solutions' 4-phase, belt-style progression system for civilian concealed carry—starting with safety & marksmanship and advancing to refined control & real-world competency. Every skill is pressure-tested with live-fire benchmarks, a written exam, and competency checks.
+                  The Responsibly Armed Citizen Criterion is Practical Defense Training's 4-phase, belt-style progression system for civilian concealed carry—starting with safety & marksmanship and advancing to refined control & real-world competency. Every skill is pressure-tested with live-fire benchmarks, a written exam, and competency checks.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -929,10 +929,10 @@ export default function RACCProgram() {
 
               <div className="mt-8 pt-8 border-t border-white/20">
                 <p className="text-white font-semibold mb-4">
-                  Apache Solutions LLC
+                  Practical Defense Training LLC
                 </p>
                 <p className="text-white/80 text-sm">
-                  Private Firearms Training | Yadkinville, NC
+                  Private Firearms Training | Albuquerque, NM
                 </p>
               </div>
 

@@ -13,7 +13,7 @@ import { BookingModal } from "@/components/BookingModal";
 import { ComicPanel, TitleCard } from "@/components/RACTheme";
 import { SEO } from "@/components/SEO";
 import type { CourseWithSchedules, AppSettings, AppointmentType } from "@shared/schema";
-import heroImage from "@assets/headerfinal_1765735206003.jpg";
+import heroImage from "@assets/MainHeader2Andy_1766469942641.jpg";
 import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
 import laptopImage from "@assets/laptop2_1757565355142.jpg";
 import dhcImage from "@assets/DHC_1757565361710.jpg";
@@ -787,7 +787,7 @@ export default function Landing() {
         description="Master concealed carry, defensive shooting, and tactical skills with personalized instruction from certified professionals. Group classes and private sessions available."
       />
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden grain-texture">
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0">
           <div
@@ -799,16 +799,22 @@ export default function Landing() {
               backgroundRepeat: 'no-repeat'
             }}
           ></div>
-          {/* RAC Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(204,27%,16%,0.85)] via-[hsl(209,90%,38%,0.6)] to-[hsl(190,65%,47%,0.5)]"></div>
+          {/* Semi-transparent black overlay */}
+          <div className="absolute inset-0 bg-black/60"></div>
         </div>
 
         {/* Content */}
-        <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8 flex flex-col justify-end h-full pt-[120px] pb-[120px]">
+        <div className="relative z-20 text-center text-white px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center h-full">
+          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl uppercase tracking-widest mb-4 animate-fade-in">
+            Practical Defense Training
+          </h1>
+          <p className="text-xl md:text-2xl lg:text-3xl font-body font-light tracking-wide mb-12 animate-fade-in" style={{ animationDelay: '0.15s' }}>
+            You Don't Have to be Defenseless
+          </p>
           <div className="flex justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <Button
               size="lg"
-              className="hover:bg-[#FD66C5] text-white font-heading uppercase tracking-wide px-8 py-6 text-lg shadow-lg bg-[#5170FF] border-2 border-black"
+              className="hover:bg-[#006d7a] text-white font-display uppercase tracking-widest px-8 py-6 text-lg shadow-lg bg-[#004149] border border-zinc-700 rounded-sm"
               onClick={() => setLocation('/schedule-list')}
               data-testid="button-browse-courses"
             >
@@ -818,7 +824,7 @@ export default function Landing() {
             <Button
               size="lg"
               variant="outline"
-              className="border-2 border-black hover:bg-white hover:text-[hsl(204,27%,16%)] font-heading uppercase tracking-wide px-8 py-6 text-lg text-[#5170FF]"
+              className="border border-zinc-400 hover:bg-white hover:text-zinc-950 font-display uppercase tracking-widest px-8 py-6 text-lg text-white bg-transparent rounded-sm"
               onClick={() => {
                 const appointmentsSection = document.getElementById('appointments');
                 if (appointmentsSection) {

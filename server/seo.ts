@@ -2,9 +2,9 @@ import { db } from "./db";
 import { courses, courseSchedules, users } from "@shared/schema";
 import { eq, and, gte } from "drizzle-orm";
 
-const SITE_NAME = "Apache Solutions";
-const BASE_URL = "https://apachenc.com";
-const DEFAULT_DESCRIPTION = "Professional firearms training courses, private instruction, and defensive skills education offered by Apache Solutions with online registration and scheduling.";
+const SITE_NAME = "Practical Defense Training";
+const BASE_URL = "https://abqconcealedcarry.com";
+const DEFAULT_DESCRIPTION = "Professional firearms training courses, private instruction, and defensive skills education offered by Practical Defense Training with online registration and scheduling.";
 const DEFAULT_OG_IMAGE = `${BASE_URL}/public/og-image.jpg`;
 const LOGO_URL = `${BASE_URL}/public/logo.png`;
 
@@ -28,58 +28,58 @@ interface RouteConfig {
 
 const routeConfigs: Record<string, RouteConfig> = {
   "/": {
-    title: "Apache Solutions | Professional Firearms Training",
+    title: "Practical Defense Training | Professional Firearms Training",
     description: DEFAULT_DESCRIPTION,
   },
   "/racc-program": {
-    title: "RACC Training Program | Apache Solutions",
-    description: "The Responsibly Armed Citizen Criterion (RACC) program offers 8 comprehensive training packages for individuals, couples, and families. Professional firearms instruction in Yadkinville, NC.",
+    title: "RACC Training Program | Practical Defense Training",
+    description: "The Responsibly Armed Citizen Criterion (RACC) program offers 8 comprehensive training packages for individuals, couples, and families. Professional firearms instruction in Albuquerque, NM.",
   },
   "/store": {
-    title: "Training Store | Apache Solutions",
-    description: "Shop firearms training packages, merchandise, and gear from Apache Solutions. Professional equipment for responsible gun owners.",
+    title: "Training Store | Practical Defense Training",
+    description: "Shop firearms training packages, merchandise, and gear from Practical Defense Training. Professional equipment for responsible gun owners.",
   },
   "/courses": {
-    title: "Training Courses | Apache Solutions",
+    title: "Training Courses | Practical Defense Training",
     description: "Browse our comprehensive firearms training courses. From beginner to advanced, find the right course for your skill level.",
   },
   "/login": {
-    title: "Sign In | Apache Solutions",
-    description: "Sign in to your Apache Solutions account to manage enrollments and track your training progress.",
+    title: "Sign In | Practical Defense Training",
+    description: "Sign in to your Practical Defense Training account to manage enrollments and track your training progress.",
     noIndex: true,
   },
   "/register": {
-    title: "Create Account | Apache Solutions",
-    description: "Create your Apache Solutions account to register for courses and access exclusive training materials.",
+    title: "Create Account | Practical Defense Training",
+    description: "Create your Practical Defense Training account to register for courses and access exclusive training materials.",
     noIndex: true,
   },
   "/dashboard": {
-    title: "Dashboard | Apache Solutions",
+    title: "Dashboard | Practical Defense Training",
     description: "Manage your training schedule, enrollments, and account settings.",
     noIndex: true,
   },
   "/admin": {
-    title: "Admin Panel | Apache Solutions",
-    description: "Administrative dashboard for Apache Solutions.",
+    title: "Admin Panel | Practical Defense Training",
+    description: "Administrative dashboard for Practical Defense Training.",
     noIndex: true,
   },
   "/cart": {
-    title: "Shopping Cart | Apache Solutions",
+    title: "Shopping Cart | Practical Defense Training",
     description: "Review and checkout your selected training packages and merchandise.",
     noIndex: true,
   },
   "/checkout": {
-    title: "Checkout | Apache Solutions",
+    title: "Checkout | Practical Defense Training",
     description: "Complete your purchase securely.",
     noIndex: true,
   },
   "/about": {
-    title: "About Us | Apache Solutions",
-    description: "Learn about Apache Solutions and our commitment to professional firearms training and safety education in North Carolina.",
+    title: "About Us | Practical Defense Training",
+    description: "Learn about Practical Defense Training and our commitment to professional firearms training and safety education in New Mexico.",
   },
   "/contact": {
-    title: "Contact Us | Apache Solutions",
-    description: "Get in touch with Apache Solutions for questions about our firearms training programs, scheduling, or private instruction.",
+    title: "Contact Us | Practical Defense Training",
+    description: "Get in touch with Practical Defense Training for questions about our firearms training programs, scheduling, or private instruction.",
   },
 };
 
@@ -93,8 +93,8 @@ function getOrganizationSchema() {
     "description": DEFAULT_DESCRIPTION,
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": "Yadkinville",
-      "addressRegion": "NC",
+      "addressLocality": "Albuquerque",
+      "addressRegion": "NM",
       "addressCountry": "US"
     },
     "sameAs": []
@@ -112,8 +112,8 @@ function getLocalBusinessSchema() {
     "description": DEFAULT_DESCRIPTION,
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": "Yadkinville",
-      "addressRegion": "NC",
+      "addressLocality": "Albuquerque",
+      "addressRegion": "NM",
       "addressCountry": "US"
     },
     "priceRange": "$$"

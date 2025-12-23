@@ -7,9 +7,9 @@ interface SEOConfig {
   noIndex?: boolean;
 }
 
-const SITE_NAME = "Apache Solutions";
-const BASE_URL = "https://apachenc.com";
-const DEFAULT_DESCRIPTION = "Professional firearms training courses, private instruction, and defensive skills education offered by Apache Solutions with online registration and scheduling.";
+const SITE_NAME = "Practical Defense Training";
+const BASE_URL = "https://abqconcealedcarry.com";
+const DEFAULT_DESCRIPTION = "Professional firearms training courses, private instruction, and defensive skills education offered by Practical Defense Training with online registration and scheduling.";
 const DEFAULT_OG_IMAGE = `${BASE_URL}/public/og-image.jpg`;
 
 export function useSEO(config: SEOConfig) {
@@ -66,11 +66,11 @@ export const seoConfigs = {
   },
   raccProgram: {
     title: "RACC Training Program",
-    description: "The Responsibly Armed Citizen Criterion (RACC) program offers 8 comprehensive training packages for individuals, couples, and families. Professional firearms instruction in Yadkinville, NC.",
+    description: "The Responsibly Armed Citizen Criterion (RACC) program offers 8 comprehensive training packages for individuals, couples, and families. Professional firearms instruction in Albuquerque, NM.",
   },
   store: {
     title: "Training Store",
-    description: "Shop firearms training packages, merchandise, and gear from Apache Solutions. Professional equipment for responsible gun owners.",
+    description: "Shop firearms training packages, merchandise, and gear from Practical Defense Training. Professional equipment for responsible gun owners.",
   },
   courses: {
     title: "Training Courses",
@@ -78,12 +78,12 @@ export const seoConfigs = {
   },
   login: {
     title: "Sign In",
-    description: "Sign in to your Apache Solutions account to manage enrollments and track your training progress.",
+    description: "Sign in to your Practical Defense Training account to manage enrollments and track your training progress.",
     noIndex: true,
   },
   register: {
     title: "Create Account",
-    description: "Create your Apache Solutions account to register for courses and access exclusive training materials.",
+    description: "Create your Practical Defense Training account to register for courses and access exclusive training materials.",
     noIndex: true,
   },
   dashboard: {
@@ -103,10 +103,10 @@ export const seoConfigs = {
   },
   about: {
     title: "About Us",
-    description: "Learn about Apache Solutions and our commitment to professional firearms training and safety education in North Carolina.",
+    description: "Learn about Practical Defense Training and our commitment to professional firearms training and safety education in New Mexico.",
   },
   contact: {
     title: "Contact Us",
-    description: "Get in touch with Apache Solutions for questions about our firearms training programs, scheduling, or private instruction.",
+    description: "Get in touch with Practical Defense Training for questions about our firearms training programs, scheduling, or private instruction.",
   },
 };

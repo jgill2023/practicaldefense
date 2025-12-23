@@ -3,10 +3,10 @@ import { sendEmail } from '../emailService';
 import { storage } from '../storage';
 import type { GiftCard, GiftCardTheme, TextPosition } from '@shared/schema';
 
-const DEFAULT_FROM_EMAIL = 'Info@ApacheNC.com';
-const DEFAULT_FROM_NAME = 'Tactical Advantage';
-const COMPANY_NAME = 'Tactical Advantage';
-const COMPANY_WEBSITE = 'https://www.apachenc.com';
+const DEFAULT_FROM_EMAIL = 'Info@abqconcealedcarry.com';
+const DEFAULT_FROM_NAME = 'Practical Defense Training';
+const COMPANY_NAME = 'Practical Defense Training';
+const COMPANY_WEBSITE = 'https://www.abqconcealedcarry.com';
 
 interface GiftCardEmailData {
   giftCard: GiftCard;

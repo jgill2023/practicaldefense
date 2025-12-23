@@ -26,10 +26,10 @@ export default function RefundPolicyPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              At Apache Solutions ("we," "us," or "our"), we understand that plans can change. Because class sizes are limited and range time is reserved in advance, we have established the following refund and cancellation policy to ensure fairness to all students and instructors.
+              At Practical Defense Training ("we," "us," or "our"), we understand that plans can change. Because class sizes are limited and range time is reserved in advance, we have established the following refund and cancellation policy to ensure fairness to all students and instructors.
             </p>
             <p className="text-muted-foreground mt-4">
-              By registering for a course on <a href="https://www.apachenc.com" className="text-accent hover:underline">www.apachenc.com</a>, you acknowledge and agree to the terms below.
+              By registering for a course on <a href="https://www.abqconcealedcarry.com" className="text-accent hover:underline">www.abqconcealedcarry.com</a>, you acknowledge and agree to the terms below.
             </p>
           </CardContent>
         </Card>
@@ -64,7 +64,7 @@ export default function RefundPolicyPage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>4. Cancellations by Apache Solutions</CardTitle>
+            <CardTitle>4. Cancellations by Practical Defense Training</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
@@ -96,7 +96,7 @@ export default function RefundPolicyPage() {
           <CardContent className="space-y-4">
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
               <li>Refunds are issued to the original payment method used at registration</li>
-              <li>Stripe processing fees are covered by Apache Solutions</li>
+              <li>Stripe processing fees are covered by Practical Defense Training</li>
               <li>Refunds typically appear within 5–10 business days, depending on your financial institution</li>
             </ul>
           </CardContent>
@@ -140,10 +140,10 @@ export default function RefundPolicyPage() {
               For questions or cancellation requests, please contact:
             </p>
             <div className="space-y-2 text-muted-foreground">
-              <p><strong>Apache Solutions</strong></p>
-              <p><strong>Email:</strong> <a href="mailto:Info@ApacheNC.com" className="text-accent hover:underline">Info@ApacheNC.com</a></p>
-              <p><strong>Website:</strong> <a href="https://www.apachenc.com" className="text-accent hover:underline">www.apachenc.com</a></p>
-              <p><strong>Location:</strong> North Carolina, USA</p>
+              <p><strong>Practical Defense Training</strong></p>
+              <p><strong>Email:</strong> <a href="mailto:Info@abqconcealedcarry.com" className="text-accent hover:underline">Info@abqconcealedcarry.com</a></p>
+              <p><strong>Website:</strong> <a href="https://www.abqconcealedcarry.com" className="text-accent hover:underline">www.abqconcealedcarry.com</a></p>
+              <p><strong>Location:</strong> New Mexico, USA</p>
             </div>
           </CardContent>
         </Card>

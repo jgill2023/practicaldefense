@@ -6332,7 +6332,7 @@ BY SIGNING, I ACKNOWLEDGE THAT I HAVE READ AND UNDERSTOOD ALL OF THE TERMS OF TH
         subject: processedSubject,
         htmlContent: isHtml ? processedContent : `<pre>${processedContent}</pre>`,
         textContent: isHtml ? undefined : processedContent,
-        fromName: 'Apache Solutions',
+        fromName: 'Practical Defense Training',
       });
 
       res.json(result);
@@ -6382,7 +6382,7 @@ BY SIGNING, I ACKNOWLEDGE THAT I HAVE READ AND UNDERSTOOD ALL OF THE TERMS OF TH
           subject: subject.trim(),
           htmlContent: `<div style="font-family: Arial, sans-serif;">${message.trim().replace(/\n/g, '<br>')}</div>`,
           textContent: message.trim(),
-          fromName: 'Apache Solutions',
+          fromName: 'Practical Defense Training',
         });
 
         results.results.push({ method: 'email', ...emailResult });
@@ -8004,8 +8004,7 @@ Please respond to ${email} based on their preferred contact method: ${preferredC
             <p>If you have any urgent questions, please feel free to call us at <strong>(505) 944-5247</strong>.</p>
 
             <p>Best regards,<br>
-            <strong>Apache Solutions</strong><br>
-            Practical Defense Training<br>
+            <strong>Practical Defense Training</strong><br>
             jeremy@abqconcealedcarry.com<br>
             (505) 944-5247</p>
           </div>
@@ -8028,7 +8027,6 @@ Preferred Contact Method: ${preferredContact || 'Email'}
 If you have any urgent questions, please feel free to call us at (505) 944-5247.
 
 Best regards,
-Apache Solutions
 Practical Defense Training
 jeremy@abqconcealedcarry.com
 (505) 944-5247
@@ -9411,7 +9409,7 @@ jeremy@abqconcealedcarry.com
           subject: `FTA Release and Waiver - Signed Confirmation for ${activityName}`,
           htmlContent: emailHtml,
           textContent: `FTA Release and Waiver Confirmation\n\nYour waiver for ${activityName} has been successfully submitted.\n\nName: ${studentName}\nEmail: ${studentEmail}\nActivity: ${activityName}\nDate Signed: ${signedDate}\n\nPlease keep this email for your records.`,
-          fromName: 'Apache Solutions',
+          fromName: 'Practical Defense Training',
         });
 
         // Update the waiver submission with email sent timestamp

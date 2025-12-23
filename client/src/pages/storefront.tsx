@@ -112,13 +112,13 @@ export default function Storefront() {
     <Layout>
       <SEO 
         title="Store"
-        description="Shop firearms training gear, accessories, and merchandise from Apache Solutions. Quality products for serious shooters."
+        description="Shop firearms training gear, accessories, and merchandise from Practical Defense Training. Quality products for serious shooters."
         type="website"
       />
       <div className="container mx-auto px-6 md:px-12 lg:px-16 py-6 space-y-6" data-testid="storefront-page">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold" data-testid="page-title">Apache Solutions Store</h1>
+        <h1 className="text-3xl font-bold" data-testid="page-title">Practical Defense Training Store</h1>
         <p className="text-muted-foreground">Professional training gear and merchandise</p>
       </div>
 

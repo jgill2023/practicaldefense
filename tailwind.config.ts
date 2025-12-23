@@ -22,11 +22,11 @@ export default {
           foreground: "var(--popover-foreground)",
         },
         primary: {
-          DEFAULT: "var(--primary)",
+          DEFAULT: "#004149",
           foreground: "var(--primary-foreground)",
         },
         secondary: {
-          DEFAULT: "var(--secondary)",
+          DEFAULT: "#006d7a",
           foreground: "var(--secondary-foreground)",
         },
         muted: {
@@ -34,7 +34,7 @@ export default {
           foreground: "var(--muted-foreground)",
         },
         accent: {
-          DEFAULT: "var(--accent)",
+          DEFAULT: "#006d7a",
           foreground: "var(--accent-foreground)",
         },
         destructive: {
@@ -65,13 +65,16 @@ export default {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
+        tactical: {
+          primary: "#004149",
+          light: "#006d7a",
+        },
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "Noto Sans", "sans-serif"],
-        heading: ["Oswald", "Bebas Neue", "sans-serif"],
+        sans: ["Inter", "var(--font-sans)", "sans-serif"],
+        heading: ["Bebas Neue", "sans-serif"],
         display: ["Bebas Neue", "sans-serif"],
-        accent: ["Permanent Marker", "cursive"],
-        serif: ["var(--font-serif)", "Georgia", "serif"],
+        body: ["Inter", "sans-serif"],
         mono: ["var(--font-mono)", "Fira Code", "monospace"],
       },
       spacing: {
@@ -82,6 +85,11 @@ export default {
         'professional-md': 'var(--shadow-md)',
         'professional-lg': 'var(--shadow-lg)',
         'professional-xl': 'var(--shadow-xl)',
+        'tactical': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
+      },
+      letterSpacing: {
+        'widest': '0.1em',
+        'professional': 'var(--tracking-normal)',
       },
       keyframes: {
         "accordion-down": {
@@ -169,9 +177,6 @@ export default {
       },
       screens: {
         'xs': '475px',
-      },
-      letterSpacing: {
-        'professional': 'var(--tracking-normal)',
       },
     },
   },

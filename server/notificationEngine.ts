@@ -99,11 +99,11 @@ export interface NotificationVariables {
 
 export class NotificationEngine {
   private static readonly SYSTEM_VARIABLES = {
-    companyName: 'Apache Solutions',
+    companyName: 'Practical Defense Training',
     companyPhone: '(555) 123-4567',
-    companyEmail: 'Info@ApacheNC.com',
-    website: 'apachenc.com',
-    websiteUrl: process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://apachenc.com',
+    companyEmail: 'Info@abqconcealedcarry.com',
+    website: 'abqconcealedcarry.com',
+    websiteUrl: process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://abqconcealedcarry.com',
     currentDate: new Date().toLocaleDateString()
   };
 
@@ -926,11 +926,11 @@ export class NotificationEngine {
         price: `$${Number(appointmentType.price).toFixed(2)}`,
       },
       system: {
-        companyName: 'Apache Solutions',
+        companyName: 'Practical Defense Training',
         companyPhone: instructor.phone || '',
         companyEmail: instructor.email,
-        website: 'Apache Solutions',
-        websiteUrl: process.env.REPLIT_DOMAINS || 'https://tacticaladv.com',
+        website: 'Practical Defense Training',
+        websiteUrl: process.env.REPLIT_DOMAINS || 'https://abqconcealedcarry.com',
         currentDate: new Date().toLocaleDateString('en-US'),
       },
     };
@@ -1364,7 +1364,7 @@ export class CourseNotificationEngine {
           </div>
           <div class="footer">
             <p>You're receiving this email because you signed up to be notified about ${course.title}.</p>
-            <p>Apache Solutions | Info@ApacheNC.com</p>
+            <p>Practical Defense Training | Info@abqconcealedcarry.com</p>
           </div>
         </div>
       </body>
@@ -1401,7 +1401,7 @@ Register at: ${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://example.com
 
 ---
 You're receiving this email because you signed up to be notified about ${course.title}.
-Apache Solutions | Info@ApacheNC.com
+Practical Defense Training | Info@abqconcealedcarry.com
     `.trim();
   }
 

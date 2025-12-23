@@ -177,7 +177,7 @@ export default function StripeConnectPage() {
               )}
             </CardTitle>
             <CardDescription>
-              Apache Solutions payment processing status
+              Practical Defense Training payment processing status
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -191,7 +191,7 @@ export default function StripeConnectPage() {
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                   <AlertTitle className="text-green-800">Payments Active</AlertTitle>
                   <AlertDescription className="text-green-700">
-                    Stripe is configured and ready to accept payments for Apache Solutions.
+                    Stripe is configured and ready to accept payments for Practical Defense Training.
                     All payments go directly to your business account.
                   </AlertDescription>
                 </Alert>
@@ -404,7 +404,7 @@ export default function StripeConnectPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              Apache Solutions uses Stripe for secure payment processing. All payments are processed 
+              Practical Defense Training uses Stripe for secure payment processing. All payments are processed 
               directly through your Stripe account.
             </p>
             

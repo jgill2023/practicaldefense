@@ -733,7 +733,7 @@ appointmentRouter.post('/create-payment-intent', async (req, res) => {
       });
     }
 
-    // Create PaymentIntent - Direct payment to Apache Solutions' Stripe account
+    // Create PaymentIntent - Direct payment to Practical Defense Training's Stripe account
     const subtotalInCents = Math.round(finalAmount * 100); // Subtotal before tax
     const paymentIntentParams: any = {
       amount: subtotalInCents, // Initial amount is subtotal (tax will be added later)

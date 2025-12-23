@@ -10,11 +10,11 @@ interface SEOProps {
   jsonLd?: Record<string, any>;
 }
 
-const DEFAULT_TITLE = 'Apache Solutions | Professional Firearms Training';
-const DEFAULT_DESCRIPTION = 'Professional firearms training courses, private instruction, and defensive skills education offered by Apache Solutions with online registration and scheduling.';
-const DEFAULT_IMAGE = 'https://apachenc.com/og-image.jpg';
-const SITE_NAME = 'Apache Solutions';
-const BASE_URL = 'https://apachenc.com';
+const DEFAULT_TITLE = 'Practical Defense Training | Professional Firearms Training';
+const DEFAULT_DESCRIPTION = 'Professional firearms training courses, private instruction, and defensive skills education offered by Practical Defense Training with online registration and scheduling.';
+const DEFAULT_IMAGE = 'https://abqconcealedcarry.com/og-image.jpg';
+const SITE_NAME = 'Practical Defense Training';
+const BASE_URL = 'https://abqconcealedcarry.com';
 
 function updateMetaTag(property: string, content: string, isProperty = false) {
   const attr = isProperty ? 'property' : 'name';
@@ -118,7 +118,7 @@ export function generateCourseJsonLd(course: {
     description: course.description || `${course.title} - Professional firearms training course`,
     provider: {
       '@type': 'Organization',
-      name: 'Apache Solutions',
+      name: 'Practical Defense Training',
       url: BASE_URL,
     },
     url: `${BASE_URL}/course/${course.id}`,
@@ -158,17 +158,17 @@ export function generateEventJsonLd(event: {
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: {
       '@type': 'Place',
-      name: event.location || 'Apache Solutions Training Facility',
+      name: event.location || 'Practical Defense Training Facility',
       address: {
         '@type': 'PostalAddress',
-        addressLocality: 'Yadkinville',
-        addressRegion: 'NC',
+        addressLocality: 'Albuquerque',
+        addressRegion: 'NM',
         addressCountry: 'US',
       },
     },
     organizer: {
       '@type': 'Organization',
-      name: 'Apache Solutions',
+      name: 'Practical Defense Training',
       url: BASE_URL,
     },
     image: event.imageUrl || DEFAULT_IMAGE,
@@ -197,7 +197,7 @@ export function generateAppointmentJsonLd(appointment: {
     description: appointment.description || `${appointment.title} - Private training session`,
     provider: {
       '@type': 'Organization',
-      name: 'Apache Solutions',
+      name: 'Practical Defense Training',
       url: BASE_URL,
     },
     ...(appointment.price && {

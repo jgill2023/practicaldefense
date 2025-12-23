@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import santaGiftCardImage from "@assets/Apache_Santa_1765822664317.png";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
@@ -68,28 +67,28 @@ export function Layout({ children, headerColor }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background font-noto-sans">
+    <div className="min-h-screen bg-zinc-950 font-body">
       {/* Navigation Container - Sticky at top */}
       <div className="sticky top-0 z-50">
         {/* Secondary Menu Bar for Logged In Users - Desktop Only */}
         {isAuthenticated && (
-          <div className="hidden md:block bg-[hsl(210,20%,96%)] dark:bg-[hsl(204,27%,12%)] border-b border-[hsl(210,15%,85%)]">
+          <div className="hidden md:block bg-zinc-900 border-b border-zinc-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-end h-10">
                 <nav className="flex items-center space-x-6">
                   {isInstructorOrHigher(user) && (
                     <>
-                      <Link href="/instructor-dashboard" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-dashboard">
+                      <Link href="/instructor-dashboard" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-dashboard">
                         Dashboard
                       </Link>
-                      <Link href="/instructor-calendar" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors flex items-center gap-1" data-testid="link-secondary-calendar">
+                      <Link href="/instructor-calendar" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors flex items-center gap-1" data-testid="link-secondary-calendar">
                         <Calendar className="h-3 w-3" />
                         Calendar
                       </Link>
-                      <Link href="/students" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-students">
+                      <Link href="/students" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-students">
                         Students
                       </Link>
-                      <Link href="/communications" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors relative" data-testid="link-secondary-communication">
+                      <Link href="/communications" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors relative" data-testid="link-secondary-communication">
                         Communication
                         {counts.unread > 0 && (
                           <Badge 
@@ -103,19 +102,19 @@ export function Layout({ children, headerColor }: LayoutProps) {
                     </>
                   )}
                   {isAdminOrHigher(user) && (
-                    <Link href="/product-management" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-products">
+                    <Link href="/product-management" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-products">
                       Products
                     </Link>
                   )}
-                  <Link href="/student-resources" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-student-resources">
+                  <Link href="/student-resources" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-student-resources">
                     Student Resources
                   </Link>
-                  <Link href="/student-portal" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-student-dashboard">
+                  <Link href="/student-portal" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-student-dashboard">
                     Student Dashboard
                   </Link>
                   {isInstructorOrHigher(user) && (
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors flex items-center gap-1" data-testid="dropdown-settings">
+                      <DropdownMenuTrigger className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors flex items-center gap-1" data-testid="dropdown-settings">
                         <Settings className="h-4 w-4" />
                         Settings
                         <ChevronDown className="h-3 w-3" />
@@ -170,7 +169,7 @@ export function Layout({ children, headerColor }: LayoutProps) {
                     </DropdownMenu>
                   )}
                   {user?.role === 'superadmin' && (
-                    <Link href="/admin/credits" className="text-sm font-medium text-foreground hover:text-[#FD66C5] transition-colors" data-testid="link-secondary-admin-credits">
+                    <Link href="/admin/credits" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-admin-credits">
                       Admin Credits
                     </Link>
                   )}
@@ -190,7 +189,7 @@ export function Layout({ children, headerColor }: LayoutProps) {
         )}
 
         {/* Header Navigation */}
-        <header className="shadow-lg" style={{ backgroundColor: headerColor || '#5170FF' }}>
+        <header className="shadow-lg bg-zinc-950 border-b border-zinc-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Company logo aligned to the left */}
@@ -202,23 +201,23 @@ export function Layout({ children, headerColor }: LayoutProps) {
             {/* Navigation centered, auth buttons on right */}
             <div className="flex justify-between items-center flex-1">
               <nav className="hidden md:flex items-center justify-center flex-1 space-x-8">
-                <a href="/" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-home" onClick={(e) => {
+                <a href="/" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-home" onClick={(e) => {
                   if (window.location.pathname === '/') {
                     e.preventDefault();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <Link href="/about" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-about">About Us</Link>
+                <Link href="/about" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-about">About Us</Link>
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
-                      <NavigationMenuTrigger className="bg-transparent text-base text-white hover:text-[#FD66C5] hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent" data-testid="dropdown-courses">
+                      <NavigationMenuTrigger className="bg-transparent text-base text-zinc-100 hover:text-[#006d7a] hover:bg-transparent focus:bg-transparent data-[state=open]:bg-transparent font-display tracking-widest uppercase" data-testid="dropdown-courses">
                         Courses
                       </NavigationMenuTrigger>
                       <NavigationMenuContent className="min-w-[600px]">
                         <div className="p-4">
                           <NavigationMenuLink asChild>
-                            <Link href="/schedule-list" className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[#5170FF]/20 cursor-pointer font-medium bg-[#5170ff] text-[#ffffff]" data-testid="link-upcoming-events">
+                            <Link href="/schedule-list" className="flex items-center gap-2 px-3 py-2 rounded-sm hover:bg-[#006d7a]/20 cursor-pointer font-medium bg-[#004149] text-white font-display tracking-widest uppercase" data-testid="link-upcoming-events">
                               <Calendar className="h-4 w-4" />
                               Upcoming Courses
                             </Link>
@@ -251,10 +250,10 @@ export function Layout({ children, headerColor }: LayoutProps) {
                     </NavigationMenuItem>
                   </NavigationMenuList>
                 </NavigationMenu>
-                <Link href="/articles" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-articles">Articles</Link>
-                <Link href="/merch" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-merch">Store</Link>
-                <Link href="/gift-cards" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-gift-cards">Gift Cards</Link>
-                <a href="/#appointments" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" onClick={(e) => {
+                <Link href="/articles" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-articles">Articles</Link>
+                <Link href="/merch" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-merch">Store</Link>
+                <Link href="/gift-cards" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-gift-cards">Gift Cards</Link>
+                <a href="/#appointments" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" onClick={(e) => {
                   const appointmentsSection = document.getElementById('appointments');
                   if (appointmentsSection && window.location.pathname === '/') {
                     e.preventDefault();
@@ -266,8 +265,7 @@ export function Layout({ children, headerColor }: LayoutProps) {
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>One/One Training</a>
-                <Link href="/a-girl-and-a-gun" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-agag">A Girl & A Gun</Link>
-                <Link href="/contact" className="text-base text-white hover:text-[#FD66C5] transition-colors font-medium" data-testid="link-contact">Contact Us</Link>
+                <Link href="/contact" className="text-base text-white hover:text-[#006d7a] transition-colors font-medium font-display tracking-widest" data-testid="link-contact">Contact Us</Link>
               </nav>
 
               {/* Desktop auth buttons */}
@@ -291,7 +289,7 @@ export function Layout({ children, headerColor }: LayoutProps) {
                 {!isAuthenticated && (
                   <Button 
                     variant="accent"
-                    className="bg-[#FD66C5]"
+                    className="bg-[#004149] hover:bg-[#006d7a] text-white font-display tracking-widest uppercase rounded-sm"
                     onClick={() => window.location.href = '/login'}
                     data-testid="button-login"
                   >
@@ -302,7 +300,7 @@ export function Layout({ children, headerColor }: LayoutProps) {
 
               {/* Mobile menu button */}
               <button 
-                className="md:hidden text-white"
+                className="md:hidden text-zinc-100"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 data-testid="button-mobile-menu"
               >
@@ -372,8 +370,7 @@ export function Layout({ children, headerColor }: LayoutProps) {
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>One/One Training</a>
-                <Link href="/a-girl-and-a-gun" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-agag-mobile" onClick={() => setIsMobileMenuOpen(false)}>A Girl & A Gun</Link>
-                <Link href="/contact" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
+                <Link href="/contact" className="text-white hover:text-[#006d7a] transition-colors py-2 font-medium font-display tracking-widest" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
 
                 {/* Mobile auth buttons */}
                 <div className="border-t border-white/20 mt-2 pt-2 space-y-2">
@@ -536,81 +533,81 @@ export function Layout({ children, headerColor }: LayoutProps) {
       {/* Main Content */}
       <main>{children}</main>
       {/* Footer */}
-      <footer className="bg-[hsl(204,27%,16%)] text-white py-12">
+      <footer className="bg-zinc-950 text-zinc-100 py-12 border-t border-zinc-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-12 gap-8">
             <div className="md:col-span-5">
-              <h3 className="text-xl font-bold mb-4 font-heading uppercase tracking-wide">
-                Apache Solutions
+              <h3 className="text-xl font-bold mb-4 font-display uppercase tracking-widest">
+                Practical Defense Training
               </h3>
-              <p className="text-white/80">We are known for meeting the student at their current skill level, while pushing them to the next level. Our one-on-one training sessions are dedicated training sessions tailored to the individual student.</p>
+              <p className="text-zinc-400 font-body">We are known for meeting the student at their current skill level, while pushing them to the next level. Our one-on-one training sessions are dedicated training sessions tailored to the individual student.</p>
             </div>
 
             <div className="md:col-span-2">
-              <h4 className="font-semibold mb-4 text-[#34B8FE]">Support</h4>
+              <h4 className="font-semibold mb-4 text-[#006d7a] font-display uppercase tracking-widest">Support</h4>
               <div className="space-y-2">
-                <Link href="/contact" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-contact-support">Contact Us</Link>
-                <Link href="/privacy-policy" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-privacy-policy">Privacy Policy</Link>
-                <Link href="/terms-of-service" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-terms-of-service">Terms of Service</Link>
-                <Link href="/refund-policy" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-refund-policy">Refund Policy</Link>
+                <Link href="/contact" className="block text-zinc-400 hover:text-[#006d7a] transition-colors font-body" data-testid="link-contact-support">Contact Us</Link>
+                <Link href="/privacy-policy" className="block text-zinc-400 hover:text-[#006d7a] transition-colors font-body" data-testid="link-privacy-policy">Privacy Policy</Link>
+                <Link href="/terms-of-service" className="block text-zinc-400 hover:text-[#006d7a] transition-colors font-body" data-testid="link-terms-of-service">Terms of Service</Link>
+                <Link href="/refund-policy" className="block text-zinc-400 hover:text-[#006d7a] transition-colors font-body" data-testid="link-refund-policy">Refund Policy</Link>
               </div>
             </div>
 
             <div className="md:col-span-2">
-              <h4 className="font-semibold mb-4 text-[#34B8FE]">Quick Links</h4>
+              <h4 className="font-semibold mb-4 text-[#006d7a] font-display uppercase tracking-widest">Quick Links</h4>
               <div className="space-y-2">
-                <Link href="/schedule-list" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
-                <Link href="/student-portal" className="block text-white/80 hover:text-[#FD66C5] transition-colors" data-testid="link-footer-student-dashboard">Student Dashboard</Link>
+                <Link href="/schedule-list" className="block text-zinc-400 hover:text-[#006d7a] transition-colors font-body" data-testid="link-footer-upcoming-courses">Upcoming Courses</Link>
+                <Link href="/student-portal" className="block text-zinc-400 hover:text-[#006d7a] transition-colors font-body" data-testid="link-footer-student-dashboard">Student Dashboard</Link>
               </div>
             </div>
 
             <div className="md:col-span-3">
-              <h4 className="font-semibold mb-4 text-[#34B8FE]">Contact</h4>
-              <div className="space-y-2 text-white/80">
+              <h4 className="font-semibold mb-4 text-[#006d7a] font-display uppercase tracking-widest">Contact</h4>
+              <div className="space-y-2 text-zinc-400 font-body">
                 <div className="flex items-start space-x-2">
                   <span>✉️</span>
-                  <a href="mailto:Info@ApacheNC.com" className="hover:text-[#FD66C5] transition-colors">Info@ApacheNC.com</a>
+                  <a href="mailto:Info@abqconcealedcarry.com" className="hover:text-[#006d7a] transition-colors">Info@abqconcealedcarry.com</a>
                 </div>
                 <div className="flex items-start space-x-2">
                   <span>📍</span>
-                  <span>Yadkinville, NC</span>
+                  <span>Albuquerque, NM</span>
                 </div>
               </div>
               <div className="mt-6">
-                <h4 className="font-semibold mb-3 text-[#34B8FE]">Follow Us</h4>
+                <h4 className="font-semibold mb-3 text-[#006d7a] font-display uppercase tracking-widest">Follow Us</h4>
                 <div className="flex items-center gap-4">
                   <a 
-                    href="https://www.facebook.com/ApacheSolutionsLLC" 
+                    href="https://www.facebook.com/PracticalDefenseTraining" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-white/80 hover:text-[#FD66C5] transition-colors"
+                    className="text-zinc-400 hover:text-[#006d7a] transition-colors"
                     data-testid="link-social-facebook"
                   >
                     <SiFacebook className="h-6 w-6" />
                   </a>
                   <a 
-                    href="https://www.instagram.com/apachesolutionsllc/" 
+                    href="https://www.instagram.com/practicaldefensetraining/" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-white/80 hover:text-[#FD66C5] transition-colors"
+                    className="text-zinc-400 hover:text-[#006d7a] transition-colors"
                     data-testid="link-social-instagram"
                   >
                     <SiInstagram className="h-6 w-6" />
                   </a>
                   <a 
-                    href="https://www.youtube.com/channel/UCAFrVq3vmAQdCWGBlSohkCw" 
+                    href="https://www.youtube.com/" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-white/80 hover:text-[#FD66C5] transition-colors"
+                    className="text-zinc-400 hover:text-[#006d7a] transition-colors"
                     data-testid="link-social-youtube"
                   >
                     <SiYoutube className="h-6 w-6" />
                   </a>
                   <a 
-                    href="https://www.google.com/maps/place//data=!4m3!3m2!1s0x8853d3abcfe118c9:0x443e0b064a5777b5!12e1?source=g.page.m.ad._" 
+                    href="https://www.google.com/maps" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-white/80 hover:text-[#FD66C5] transition-colors"
+                    className="text-zinc-400 hover:text-[#006d7a] transition-colors"
                     data-testid="link-social-google"
                   >
                     <SiGoogle className="h-6 w-6" />
@@ -620,25 +617,16 @@ export function Layout({ children, headerColor }: LayoutProps) {
             </div>
           </div>
 
-          <div className="border-t border-white/20 mt-8 pt-8 text-white/70">
+          <div className="border-t border-zinc-800 mt-8 pt-8 text-zinc-500">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <p style={{ fontFamily: 'League Gothic, sans-serif' }} className="text-left text-lg">&copy; {new Date().getFullYear()} Apache Solutions</p>
-              <p className="text-center md:absolute md:left-1/2 md:transform md:-translate-x-1/2">Built and Powered by <a href="https://instructorops.com" target="_blank" rel="noopener noreferrer" className="text-[#34B8FE] font-bold hover:text-[#FD66C5] transition-colors underline">InstructorOps</a></p>
+              <p className="text-left text-lg font-display uppercase tracking-widest">&copy; {new Date().getFullYear()} Practical Defense Training</p>
+              <p className="text-center md:absolute md:left-1/2 md:transform md:-translate-x-1/2 font-body">Built and Powered by <a href="https://instructorops.com" target="_blank" rel="noopener noreferrer" className="text-[#006d7a] font-bold hover:text-[#004149] transition-colors underline">InstructorOps</a></p>
               <div className="hidden md:block"></div>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* Floating Gift Card Button */}
-      <Link href="/gift-cards">
-        <img 
-          src={santaGiftCardImage} 
-          alt="Get Your Gift Card!" 
-          className="fixed bottom-6 right-6 z-50 w-32 cursor-pointer transition-all duration-200 drop-shadow-lg hover:drop-shadow-[0_0_10px_#FD66C5] hover:brightness-110"
-          data-testid="button-floating-gift-card"
-        />
-      </Link>
     </div>
   );
 }

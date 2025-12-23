@@ -2894,7 +2894,7 @@ export class DatabaseStorage implements IStorage {
       // Continue without tax if calculation fails
     }
 
-    // Build payment intent parameters - Direct payment to Apache Solutions' Stripe account
+    // Build payment intent parameters - Direct payment to Practical Defense Training's Stripe account
     const paymentIntentParams: any = {
       amount: finalAmount,
       currency: "usd",

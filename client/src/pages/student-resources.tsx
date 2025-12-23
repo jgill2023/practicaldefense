@@ -14,7 +14,7 @@ export default function StudentResources() {
               Student Resources
             </TitleCard>
             <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
-              Everything you need to prepare for your training at Apache Solutions.
+              Everything you need to prepare for your training at Practical Defense Training.
             </p>
           </div>
 
@@ -26,7 +26,7 @@ export default function StudentResources() {
                 </div>
                 <div>
                   <h2 className="font-heading text-2xl uppercase tracking-wide">Where to Stay</h2>
-                  <p className="text-muted-foreground">Guests at Apache in 2026</p>
+                  <p className="text-muted-foreground">Guests at Practical Defense Training in 2026</p>
                 </div>
               </div>
 
@@ -36,7 +36,7 @@ export default function StudentResources() {
                   Our Facility Address
                 </h3>
                 <p className="text-foreground font-medium">5239 U.S. 601 HWY</p>
-                <p className="text-foreground font-medium">Yadkinville, NC 27055</p>
+                <p className="text-foreground font-medium">Albuquerque, NM 27055</p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-8">
@@ -67,7 +67,7 @@ export default function StudentResources() {
                         </CardContent>
                       </Card>
                     </a>
-                    <a href="https://www.choicehotels.com/north-carolina/jonesville/quality-inn-hotels/nc126" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-hotel-quality-inn">
+                    <a href="https://www.choicehotels.com/new-mexico/jonesville/quality-inn-hotels/nc126" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-hotel-quality-inn">
                       <Card className="hover:shadow-md transition-shadow cursor-pointer">
                         <CardContent className="py-3 px-4">
                           <p className="font-medium hover:text-[hsl(209,90%,38%)]">Quality Inn Jonesville I-77</p>
@@ -75,12 +75,12 @@ export default function StudentResources() {
                         </CardContent>
                       </Card>
                     </a>
-                    <a href="https://www.wyndhamhotels.com/days-inn/yadkinville-north-carolina/days-inn-yadkinville/overview" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-hotel-days-inn">
+                    <a href="https://www.wyndhamhotels.com/days-inn/albuquerque-new-mexico/days-inn-albuquerque/overview" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-hotel-days-inn">
                       <Card className="border-l-4 border-l-amber-500 hover:shadow-md transition-shadow cursor-pointer">
                         <CardContent className="py-3 px-4">
                           <div className="flex justify-between items-start">
                             <div>
-                              <p className="font-medium hover:text-[hsl(209,90%,38%)]">Days Inn Yadkinville</p>
+                              <p className="font-medium hover:text-[hsl(209,90%,38%)]">Days Inn Albuquerque</p>
                               <p className="text-sm text-muted-foreground">3.9 mi (8 min)</p>
                             </div>
                             <Badge variant="outline" className="text-xs">Closest & Budget</Badge>
@@ -101,7 +101,7 @@ export default function StudentResources() {
                     <a href="https://www.airbnb.com/rooms/1175504037376643694" target="_blank" rel="noopener noreferrer" className="block" data-testid="link-bnb-modest-cottage">
                       <Card className="hover:shadow-md transition-shadow cursor-pointer">
                         <CardContent className="py-3 px-4">
-                          <p className="font-medium hover:text-[hsl(190,65%,47%)]">Modest Cottage in Yadkinville</p>
+                          <p className="font-medium hover:text-[hsl(190,65%,47%)]">Modest Cottage in Albuquerque</p>
                           <p className="text-sm text-muted-foreground">2.9 mi (5 min)</p>
                         </CardContent>
                       </Card>
@@ -183,9 +183,9 @@ export default function StudentResources() {
               <div className="bg-[hsl(204,27%,16%)] text-white rounded-lg p-6 mt-6">
                 <h3 className="font-heading text-xl uppercase tracking-wide mb-4">Host Contact Information</h3>
                 <div className="flex flex-wrap gap-6">
-                  <a href="mailto:info@apachenc.com" className="flex items-center gap-2 hover:text-[#FD66C5] transition-colors" data-testid="link-contact-email">
+                  <a href="mailto:Info@abqconcealedcarry.com" className="flex items-center gap-2 hover:text-[#FD66C5] transition-colors" data-testid="link-contact-email">
                     <Mail className="w-5 h-5" />
-                    <span>info@apachenc.com</span>
+                    <span>Info@abqconcealedcarry.com</span>
                   </a>
                   <a href="tel:336-422-6859" className="flex items-center gap-2 hover:text-[#FD66C5] transition-colors" data-testid="link-contact-phone">
                     <Phone className="w-5 h-5" />

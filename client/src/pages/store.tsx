@@ -788,7 +788,7 @@ export default function Store() {
       <div className="container mx-auto px-4 py-8 pl-[48px] pr-[48px]">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-primary">Apache Solutions Merch Store</h1>
+            <h1 className="text-3xl font-bold text-primary">Practical Defense Training Merch Store</h1>
             <p className="text-muted-foreground mt-1">Official merchandise and gear</p>
           </div>
           <CartSheet 
