@@ -225,7 +225,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
             {/* Quote Bar */}
             <div className="bg-[#004149] py-6 px-4 flex items-center justify-center pt-[6px] pb-[6px]">
               <div className="max-w-7xl mx-auto text-center text-white text-[18px] font-body" style={{ fontFamily: 'Inter, sans-serif' }}>
-                <p className="text-[20px]">
+                <p className="text-[22px]">
                   It's <i>your</i> life. It's <i>your</i> safety and protection. It's <b>YOUR responsibility.</b>
                 </p>
               </div>
