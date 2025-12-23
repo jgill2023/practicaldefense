@@ -232,7 +232,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                   </div>
 
                   <div className="flex justify-between items-center flex-1">
-                    <nav className="hidden md:flex items-center justify-center flex-1 space-x-8">
+                    <nav className="hidden md:flex items-center justify-center flex-1 space-x-8 text-[20px]">
                       <a href="/" className="text-base text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-home" onClick={(e) => {
                         if (window.location.pathname === '/') {
                           e.preventDefault();
@@ -427,10 +427,8 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
               </div>
             </header>
           </div>
-
         {/* Page content including hero section */}
         {children}
-
         {/* Footer */}
         <footer className="bg-zinc-950 text-zinc-100 py-12 border-t border-zinc-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
