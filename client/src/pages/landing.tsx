@@ -844,7 +844,7 @@ export default function Landing() {
 
         {/* Quote Bar */}
         <div className="absolute bottom-0 left-0 right-0 bg-[#004149] py-6 px-4 z-10">
-          <div className="max-w-7xl mx-auto text-center text-white font-body text-lg md:text-xl">
+          <div className="max-w-7xl mx-auto text-center text-white text-lg md:text-xl" style={{ fontFamily: 'Georgia, serif' }}>
             <p>
               It's <i>your</i> life. It's <i>your</i> safety and protection. It's <b>YOUR responsibility.</b>
             </p>
