@@ -58,15 +58,20 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
     if (!isLandingPage) return;
 
     const handleScroll = () => {
-      // Make nav opaque after scrolling 100px
-      setIsNavSticky(window.scrollY > 100);
+      // Nav starts at bottom of hero (100vh - navHeight)
+      // When scrolled past that point, nav becomes fixed at top
+      const navHeight = isAuthenticated ? 104 : 64;
+      const heroHeight = window.innerHeight;
+      const triggerPoint = heroHeight - navHeight;
+      
+      setIsNavSticky(window.scrollY >= triggerPoint);
     };
 
     window.addEventListener('scroll', handleScroll);
     handleScroll();
     
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isLandingPage]);
+  }, [isLandingPage, isAuthenticated]);
 
 
 
@@ -83,14 +88,21 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
     }
   };
 
-  // For landing page, use transparent nav that becomes opaque when scrolled
+  // For landing page, nav starts at bottom of hero, then becomes fixed at top when scrolled
   if (isLandingPage) {
+    const navHeight = isAuthenticated ? 104 : 64;
+    
     return (
       <div className="min-h-screen bg-zinc-950 font-body">
-        {/* Navigation - fixed at top, transparent initially, opaque when scrolled */}
+        {/* Navigation - starts at bottom of hero (absolute), becomes fixed at top when scrolled */}
         <div 
           ref={navRef}
-          className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isNavSticky ? 'bg-zinc-950' : 'bg-transparent'}`}
+          className={`left-0 right-0 z-50 transition-colors duration-300 ${
+            isNavSticky 
+              ? 'fixed top-0 bg-zinc-950' 
+              : 'absolute bg-zinc-900/90 backdrop-blur-sm'
+          }`}
+          style={!isNavSticky ? { top: `calc(100vh - ${navHeight}px)` } : undefined}
         >
             {/* Secondary Menu Bar for Logged In Users - Desktop Only */}
             {isAuthenticated && (
@@ -211,7 +223,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
             )}
 
             {/* Header Navigation */}
-            <header className={`transition-all duration-300 ${isNavSticky ? 'shadow-lg bg-zinc-950 border-b border-zinc-800' : 'bg-transparent border-transparent'}`}>
+            <header className={`transition-all duration-300 ${isNavSticky ? 'shadow-lg bg-zinc-950 border-b border-zinc-800' : 'bg-transparent'}`}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                   <div className="flex-shrink-0">
