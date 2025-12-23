@@ -75,6 +75,7 @@ export default {
         heading: ["Bebas Neue", "sans-serif"],
         display: ["Bebas Neue", "sans-serif"],
         body: ["Inter", "sans-serif"],
+        avenir: ["Avenir Next", "sans-serif"],
         mono: ["var(--font-mono)", "Fira Code", "monospace"],
       },
       spacing: {

@@ -808,10 +808,10 @@ export default function Landing() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 w-full items-center">
             {/* Left side - Title split over 3 rows */}
             <div className="animate-fade-in">
-              <h1 className="font-display uppercase tracking-tight leading-[0.9]">
-                <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-white font-extralight text-left">PRACTICAL</span>
-                <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-left text-[#ffffff] ml-[0px] mr-[0px] pl-[0px] pr-[0px]">DEFENSE</span>
-                <span className="block text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-normal text-[#ffffff]">TRAINING</span>
+              <h1 className="font-avenir uppercase tracking-tight leading-[0.9]">
+                <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-white font-bold text-left">PRACTICAL</span>
+                <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-left text-[#ffffff]">DEFENSE</span>
+                <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] font-bold text-[#ffffff]">TRAINING</span>
               </h1>
             </div>
             
