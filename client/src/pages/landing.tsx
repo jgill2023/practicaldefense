@@ -23,7 +23,7 @@ import performanceShootingImage from "@assets/Practical-Mastery-2025_17626741186
 import coachingBackgroundImage from "@assets/Main_1762715966076.jpg";
 import oneOnOneTrainingBg from "@assets/header02_1765735082776.jpg";
 import bookCoverImage from "@assets/book_1766120705865.jpg";
-import onlineNmCcwImage from "@assets/laptop2_ornament_1766643690052.jpg";
+import onlineNmCcwImage from "@assets/laptop_1766646320823.jpg";
 import ccwRangeFeatureImage from "@assets/CCW-Range_1766643725051.jpg";
 import dhcFeatureImage from "@assets/DHC_1766643777282.jpg";
 import {
