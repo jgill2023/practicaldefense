@@ -902,7 +902,7 @@ export default function Landing() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
                   <div className="absolute inset-0 p-5 lg:p-6 flex flex-col justify-between">
-                    <span className="text-amber-500 font-bold text-lg">$150</span>
+                    <span className="font-bold text-lg text-right text-[#ffffff]">$165</span>
                     <div>
                       <h3 className="font-heading text-xl lg:text-2xl uppercase tracking-wide text-white mb-2">
                         Concealed Carry Course
