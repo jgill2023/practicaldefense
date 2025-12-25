@@ -876,11 +876,9 @@ export default function Landing() {
                   <div className="flex items-center justify-between">
                     <Button 
                       size="lg"
-                      className="bg-amber-500 hover:bg-amber-600 text-black font-heading uppercase tracking-wide"
+                      className="hover:bg-amber-600 font-heading uppercase tracking-wide bg-[#004149] text-[#ffffff] pl-[16px] pr-[16px]"
                       data-testid="button-featured-online-ccw"
-                    >
-                      Learn More
-                    </Button>
+                    >Enroll today</Button>
                   </div>
                 </div>
               </div>
