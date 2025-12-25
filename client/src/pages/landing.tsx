@@ -850,7 +850,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pl-[0px] pr-[0px] pt-[32px] pb-[32px]">
           {/* Featured Courses Header */}
           <div className="mb-12 text-left">
-            <p className="text-lg lg:text-xl font-bold uppercase tracking-wide text-white mb-4">
+            <p className="text-lg lg:text-xl font-bold uppercase tracking-wide mb-4 text-[#bf0000]">
               Reliable. Effective. Practical.
             </p>
             <h2 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide text-white">
