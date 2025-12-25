@@ -23,6 +23,9 @@ import performanceShootingImage from "@assets/Practical-Mastery-2025_17626741186
 import coachingBackgroundImage from "@assets/Main_1762715966076.jpg";
 import oneOnOneTrainingBg from "@assets/header02_1765735082776.jpg";
 import bookCoverImage from "@assets/book_1766120705865.jpg";
+import onlineNmCcwImage from "@assets/laptop2_ornament_1766643690052.jpg";
+import ccwRangeFeatureImage from "@assets/CCW-Range_1766643725051.jpg";
+import dhcFeatureImage from "@assets/DHC_1766643777282.jpg";
 import {
   Select,
   SelectContent,
@@ -842,45 +845,116 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      {/* Book Promotion Section */}
-      <section className="bg-gradient-to-r from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)] py-12">
+      {/* Featured Courses Section */}
+      <section className="bg-zinc-950 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="md:w-1/3 flex justify-center">
-              <a 
-                href="https://www.amazon.com/Your-World-Not-Gun-Free-Zone/dp/B0DT1J5THS/ref=sr_1_1?crid=COV2QJKGRHT9&dib=eyJ2IjoiMSJ9.u_bOjWq3og8B0Tzci7HG7FwgI0Ec2KlpKYJiYYoK_8R3TbXaAJq939KERS7CDNL5GAzU9YeWLL-_acy9eyGh6lLJiiWqPe6TX3cnXN5zOZX0YeFe9-O2E5glv1YXCKzPOKRr0gZhvHBwuCmPGTXqW0F0xNEFzQD3mYd472HPXsQ8Krki2qhdCeD0NEmmThAjkvmdIvf-ePj0h3SbGAuxzBVm4MzCyKY2QXwj5X1Xm5o.n7XEezhP3wUjp1Zl_qZpH-hOnHSLoMW3mEwtLEahrd8&dib_tag=se&keywords=your+world+is+not+a+gun+free+zone&nsdOptOutParam=true&qid=1765547397&sprefix=your+world+is+no,aps,174&sr=8-1"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:opacity-90 transition-opacity"
-                data-testid="link-book-cover"
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Column - Online NM CCW Course (Main Featured) */}
+            <Link href="/online-ccw-class" className="block group">
+              <div 
+                className="relative h-full min-h-[400px] lg:min-h-[500px] rounded-lg overflow-hidden cursor-pointer"
+                data-testid="featured-course-online-ccw"
               >
                 <img 
-                  src={bookCoverImage}
-                  alt="Your World Is Not a Gun-Free Zone by Tim Kelly"
-                  className="w-auto h-auto max-h-96 shadow-lg rounded-lg cursor-pointer"
+                  src={onlineNmCcwImage}
+                  alt="Online New Mexico CCW Course"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
-                  data-testid="img-book-cover"
                 />
-              </a>
-            </div>
-            <div className="md:w-2/3">
-              <h2 className="font-heading text-3xl uppercase tracking-wide text-white mb-4">
-                Transform Your Mindset
-              </h2>
-              <p className="text-lg text-white/90 mb-6">Whether you are a gun owner or not, your children will inevitably encounter firearms—at a friend’s house, in the media, or out in the community. "Your World Is Not a Gun-Free Zone" by Tim Kelly is an essential guide for parents and caregivers on how to raise curious children to be responsible and safe in an armed world.</p>
-              <a 
-                href="https://www.amazon.com/Your-World-Not-Gun-Free-Zone/dp/B0DT1J5THS/ref=sr_1_1?crid=COV2QJKGRHT9&dib=eyJ2IjoiMSJ9.u_bOjWq3og8B0Tzci7HG7FwgI0Ec2KlpKYJiYYoK_8R3TbXaAJq939KERS7CDNL5GAzU9YeWLL-_acy9eyGh6lLJiiWqPe6TX3cnXN5zOZX0YeFe9-O2E5glv1YXCKzPOKRr0gZhvHBwuCmPGTXqW0F0xNEFzQD3mYd472HPXsQ8Krki2qhdCeD0NEmmThAjkvmdIvf-ePj0h3SbGAuxzBVm4MzCyKY2QXwj5X1Xm5o.n7XEezhP3wUjp1Zl_qZpH-hOnHSLoMW3mEwtLEahrd8&dib_tag=se&keywords=your+world+is+not+a+gun+free+zone&nsdOptOutParam=true&qid=1765547397&sprefix=your+world+is+no,aps,174&sr=8-1"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button 
-                  size="lg" 
-                  className="bg-white text-[hsl(209,90%,38%)] hover:bg-gray-100 font-heading uppercase tracking-wide"
-                  data-testid="button-book-promotion"
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-8">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Badge className="bg-amber-500 text-black text-xs font-bold uppercase">Flagship Course</Badge>
+                    <span className="text-white/70 text-sm">Online</span>
+                  </div>
+                  <h3 className="font-heading text-2xl lg:text-3xl uppercase tracking-wide text-white mb-3">
+                    Online NM CCW Course
+                  </h3>
+                  <p className="text-white/80 text-sm lg:text-base mb-4 max-w-md">
+                    Complete your New Mexico Concealed Carry certification from anywhere. Comprehensive online training with flexible scheduling.
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <Button 
+                      size="lg"
+                      className="bg-amber-500 hover:bg-amber-600 text-black font-heading uppercase tracking-wide"
+                      data-testid="button-featured-online-ccw"
+                    >
+                      Learn More
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            {/* Right Column - Stacked Courses */}
+            <div className="flex flex-col gap-6">
+              {/* Top Right - Concealed Carry Course */}
+              <Link href="/schedule-list" className="block group flex-1">
+                <div 
+                  className="relative h-full min-h-[200px] lg:min-h-[240px] rounded-lg overflow-hidden cursor-pointer bg-zinc-900"
+                  data-testid="featured-course-ccw"
                 >
-                  Get Your Copy on Amazon
-                </Button>
-              </a>
+                  <img 
+                    src={ccwRangeFeatureImage}
+                    alt="Concealed Carry Course"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+                  <div className="absolute inset-0 p-5 lg:p-6 flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-white/70 text-xs uppercase tracking-wider">Beginner Training</span>
+                      <span className="text-amber-500 font-bold text-lg">$150</span>
+                    </div>
+                    <div>
+                      <h3 className="font-heading text-xl lg:text-2xl uppercase tracking-wide text-white mb-2">
+                        Concealed Carry Course
+                      </h3>
+                      <p className="text-white/70 text-sm mb-3 max-w-sm">
+                        Hands-on training with expert instructors. Learn safety, fundamentals, and earn your permit.
+                      </p>
+                      <div className="flex items-center gap-2 text-white/60 text-sm">
+                        <Clock className="h-4 w-4" />
+                        <span>8 Hours</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Bottom Right - Defensive Handgun */}
+              <Link href="/schedule-list" className="block group flex-1">
+                <div 
+                  className="relative h-full min-h-[200px] lg:min-h-[240px] rounded-lg overflow-hidden cursor-pointer bg-zinc-900"
+                  data-testid="featured-course-dhc"
+                >
+                  <img 
+                    src={dhcFeatureImage}
+                    alt="Defensive Handgun Course"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+                  <div className="absolute inset-0 p-5 lg:p-6 flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-white/70 text-xs uppercase tracking-wider">Intermediate Training</span>
+                      <span className="text-amber-500 font-bold text-lg">$225</span>
+                    </div>
+                    <div>
+                      <h3 className="font-heading text-xl lg:text-2xl uppercase tracking-wide text-white mb-2">
+                        Defensive Handgun
+                      </h3>
+                      <p className="text-white/70 text-sm mb-3 max-w-sm">
+                        Advanced tactics including barricade shooting, movement, and real-world scenarios.
+                      </p>
+                      <div className="flex items-center gap-2 text-white/60 text-sm">
+                        <Clock className="h-4 w-4" />
+                        <span>8 Hours</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
             </div>
           </div>
         </div>
