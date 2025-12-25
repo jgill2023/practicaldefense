@@ -895,7 +895,7 @@ export default function Landing() {
                   <img 
                     src={ccwRangeFeatureImage}
                     alt="Concealed Carry Course"
-                    className="absolute inset-0 w-full h-full object-cover object-[center_70%] transition-transform duration-500 group-hover:scale-105"
+                    className="absolute inset-0 w-full h-full object-cover object-[center_30%] transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
