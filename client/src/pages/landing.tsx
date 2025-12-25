@@ -902,10 +902,7 @@ export default function Landing() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
                   <div className="absolute inset-0 p-5 lg:p-6 flex flex-col justify-between">
-                    <div className="flex items-center justify-between">
-                      <span className="text-white/70 text-xs uppercase tracking-wider">Beginner Training</span>
-                      <span className="text-amber-500 font-bold text-lg">$150</span>
-                    </div>
+                    <span className="text-amber-500 font-bold text-lg">$150</span>
                     <div>
                       <h3 className="font-heading text-xl lg:text-2xl uppercase tracking-wide text-white mb-2">
                         Concealed Carry Course
@@ -936,10 +933,7 @@ export default function Landing() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
                   <div className="absolute inset-0 p-5 lg:p-6 flex flex-col justify-between">
-                    <div className="flex items-center justify-between">
-                      <span className="text-white/70 text-xs uppercase tracking-wider">Intermediate Training</span>
-                      <span className="text-amber-500 font-bold text-lg">$225</span>
-                    </div>
+                    <span className="text-amber-500 font-bold text-lg">$225</span>
                     <div>
                       <h3 className="font-heading text-xl lg:text-2xl uppercase tracking-wide text-white mb-2">
                         Defensive Handgun
