@@ -848,6 +848,20 @@ export default function Landing() {
       {/* Featured Courses Section */}
       <section className="py-16 bg-[#222429]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pl-[0px] pr-[0px] pt-[32px] pb-[32px]">
+          {/* Featured Courses Header */}
+          <div className="mb-12 text-center">
+            <div className="inline-block mb-4">
+              <p className="text-sm lg:text-base font-bold uppercase tracking-widest text-amber-500 mb-2">
+                Training Focus
+              </p>
+              <p className="text-lg lg:text-xl font-bold uppercase tracking-wide text-white">
+                Reliable. Effective. Practical.
+              </p>
+            </div>
+            <h2 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide text-white">
+              Common Sense Firearms Training
+            </h2>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column - Online NM CCW Course (Main Featured) */}
             <Link href="/online-ccw-class" className="block group">
