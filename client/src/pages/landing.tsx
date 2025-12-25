@@ -891,7 +891,7 @@ export default function Landing() {
               {/* Top Right - Concealed Carry Course */}
               <Link href="/schedule-list" className="block group flex-1">
                 <div 
-                  className="relative flex-1 rounded-sm overflow-hidden cursor-pointer bg-zinc-900"
+                  className="relative h-full w-full rounded-sm overflow-hidden cursor-pointer bg-zinc-900"
                   data-testid="featured-course-ccw"
                 >
                   <img 
@@ -925,7 +925,7 @@ export default function Landing() {
               {/* Bottom Right - Defensive Handgun */}
               <Link href="/schedule-list" className="block group flex-1">
                 <div 
-                  className="relative flex-1 rounded-sm overflow-hidden cursor-pointer bg-zinc-900"
+                  className="relative h-full w-full rounded-sm overflow-hidden cursor-pointer bg-zinc-900"
                   data-testid="featured-course-dhc"
                 >
                   <img 
