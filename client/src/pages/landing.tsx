@@ -851,9 +851,6 @@ export default function Landing() {
           {/* Featured Courses Header */}
           <div className="mb-12 text-center">
             <div className="inline-block mb-4">
-              <p className="text-sm lg:text-base font-bold uppercase tracking-widest text-amber-500 mb-2">
-                Training Focus
-              </p>
               <p className="text-lg lg:text-xl font-bold uppercase tracking-wide text-white">
                 Reliable. Effective. Practical.
               </p>
