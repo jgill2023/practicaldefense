@@ -849,7 +849,7 @@ export default function Landing() {
       <section className="py-16 bg-[#222429]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pl-[0px] pr-[0px] pt-[32px] pb-[32px]">
           {/* Featured Courses Header */}
-          <div className="mb-12 text-center">
+          <div className="mb-12 text-left">
             <div className="inline-block mb-4">
               <p className="text-lg lg:text-xl font-bold uppercase tracking-wide text-white">
                 Reliable. Effective. Practical.
