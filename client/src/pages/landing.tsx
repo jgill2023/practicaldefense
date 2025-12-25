@@ -852,7 +852,7 @@ export default function Landing() {
             {/* Left Column - Online NM CCW Course (Main Featured) */}
             <Link href="/online-ccw-class" className="block group">
               <div 
-                className="relative h-full min-h-[400px] lg:min-h-[500px] rounded-lg overflow-hidden cursor-pointer"
+                className="relative h-full min-h-[400px] lg:min-h-[500px] rounded-xl overflow-hidden cursor-pointer"
                 data-testid="featured-course-online-ccw"
               >
                 <img 
@@ -891,7 +891,7 @@ export default function Landing() {
               {/* Top Right - Concealed Carry Course */}
               <Link href="/schedule-list" className="block group flex-1">
                 <div 
-                  className="relative h-full min-h-[200px] lg:min-h-[240px] rounded-lg overflow-hidden cursor-pointer bg-zinc-900"
+                  className="relative h-full min-h-[200px] lg:min-h-[240px] rounded-xl overflow-hidden cursor-pointer bg-zinc-900"
                   data-testid="featured-course-ccw"
                 >
                   <img 
@@ -925,7 +925,7 @@ export default function Landing() {
               {/* Bottom Right - Defensive Handgun */}
               <Link href="/schedule-list" className="block group flex-1">
                 <div 
-                  className="relative h-full min-h-[200px] lg:min-h-[240px] rounded-lg overflow-hidden cursor-pointer bg-zinc-900"
+                  className="relative h-full min-h-[200px] lg:min-h-[240px] rounded-xl overflow-hidden cursor-pointer bg-zinc-900"
                   data-testid="featured-course-dhc"
                 >
                   <img 
