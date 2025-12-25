@@ -852,7 +852,7 @@ export default function Landing() {
             {/* Left Column - Online NM CCW Course (Main Featured) */}
             <Link href="/online-ccw-class" className="block group">
               <div 
-                className="relative h-full min-h-[400px] lg:min-h-[500px] rounded-sm overflow-hidden cursor-pointer"
+                className="relative rounded-sm overflow-hidden cursor-pointer aspect-[5/4]"
                 data-testid="featured-course-online-ccw"
               >
                 <img 
