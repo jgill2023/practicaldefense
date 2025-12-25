@@ -842,20 +842,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      {/* Upcoming Courses */}
-      <section id="upcoming-events" className="bg-zinc-950 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
-              Upcoming Courses
-            </TitleCard>
-            <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
-              Browse our upcoming training events and secure your spot today.
-            </p>
-          </div>
-          <UpcomingCoursesList onRegister={handleRegisterCourse} />
-        </div>
-      </section>
       {/* Book Promotion Section */}
       <section className="bg-gradient-to-r from-[hsl(209,90%,38%)] to-[hsl(190,65%,47%)] py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
