@@ -846,7 +846,7 @@ export default function Landing() {
         </div>
       </section>
       {/* Featured Courses Section */}
-      <section className="py-16 bg-[#004149]" style={{ backgroundColor: '#101013' }}>
+      <section className="py-16" style={{ backgroundColor: '#101013' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column - Online NM CCW Course (Main Featured) */}
