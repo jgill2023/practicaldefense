@@ -863,10 +863,7 @@ export default function Landing() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-8">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Badge className="bg-amber-500 text-black text-xs font-bold uppercase">Flagship Course</Badge>
-                    <span className="text-white/70 text-sm">Online</span>
-                  </div>
+                  <span className="text-white/70 text-sm mb-3 block">Online</span>
                   <h3 className="font-heading text-2xl lg:text-3xl uppercase tracking-wide text-white mb-3">
                     Online NM CCW Course
                   </h3>
