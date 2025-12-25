@@ -851,7 +851,7 @@ export default function Landing() {
           {/* Featured Courses Header */}
           <div className="mb-12 text-left">
             <div className="inline-block mb-4">
-              <p className="text-lg lg:text-xl font-bold uppercase tracking-wide text-white">
+              <p className="text-lg lg:text-xl font-bold uppercase tracking-wide text-[#b00000]">
                 Reliable. Effective. Practical.
               </p>
             </div>
