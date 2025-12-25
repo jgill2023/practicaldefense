@@ -887,11 +887,11 @@ export default function Landing() {
             </Link>
 
             {/* Right Column - Stacked Courses */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6 aspect-[5/4]">
               {/* Top Right - Concealed Carry Course */}
               <Link href="/schedule-list" className="block group flex-1">
                 <div 
-                  className="relative h-full min-h-[200px] lg:min-h-[240px] rounded-sm overflow-hidden cursor-pointer bg-zinc-900"
+                  className="relative flex-1 rounded-sm overflow-hidden cursor-pointer bg-zinc-900"
                   data-testid="featured-course-ccw"
                 >
                   <img 
@@ -925,7 +925,7 @@ export default function Landing() {
               {/* Bottom Right - Defensive Handgun */}
               <Link href="/schedule-list" className="block group flex-1">
                 <div 
-                  className="relative h-full min-h-[200px] lg:min-h-[240px] rounded-sm overflow-hidden cursor-pointer bg-zinc-900"
+                  className="relative flex-1 rounded-sm overflow-hidden cursor-pointer bg-zinc-900"
                   data-testid="featured-course-dhc"
                 >
                   <img 
