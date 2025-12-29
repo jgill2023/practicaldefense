@@ -1275,7 +1275,7 @@ export default function Landing() {
       {/* Philosophy Section */}
       <section className="bg-zinc-950 py-16 border-t border-zinc-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide text-white mb-8">
+          <h2 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide text-white mb-8 font-thin">
             Straightforward Firearms Training
           </h2>
           
