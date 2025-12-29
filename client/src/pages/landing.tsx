@@ -529,7 +529,7 @@ function MosaicTestimonialSlider() {
 
   const TestimonialCard = ({ review, className = "" }: { review: typeof googleReviews[0], className?: string }) => (
     <div 
-      className={`bg-zinc-900 rounded-sm shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-zinc-800 min-h-[280px] flex flex-col ${className}`}
+      className="rounded-sm shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-zinc-800 min-h-[280px] flex flex-col h-full bg-[#222429]"
       data-testid={`testimonial-card-${review.id}`}
     >
       <Quote className="w-8 h-8 text-[hsl(209,90%,38%)] opacity-20 mb-3 rotate-180" />
