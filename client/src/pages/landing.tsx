@@ -1280,7 +1280,7 @@ export default function Landing() {
           </h2>
           
           <div className="space-y-6 text-zinc-300">
-            <p className="text-lg leading-relaxed font-light">
+            <p className="font-light text-[16px]">
               Practical Defense Training, LLC offers straightforward firearms training, with a focus and emphasis on New Mexico concealed carry training. 
               One of the few courses which preaches and teaches practical over "tacti-cool"; bringing reliable and effective firearms training to the 
               responsibly armed citizen. Students will gain the knowledge and skills necessary to legally and responsibly carry a concealed handgun in the 
