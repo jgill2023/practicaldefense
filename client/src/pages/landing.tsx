@@ -1,11 +1,16 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
+import { Calendar as BigCalendar, momentLocalizer, View } from "react-big-calendar";
+import moment from "moment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User, DollarSign, CalendarClock, Target, Award, Crosshair, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Quote } from "lucide-react";
+import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User, DollarSign, CalendarClock, Target, Award, Crosshair, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Quote, List, CalendarDays } from "lucide-react";
+import "react-big-calendar/lib/css/react-big-calendar.css";
+
+const calendarLocalizer = momentLocalizer(moment);
 import { Layout } from "@/components/Layout";
 import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
@@ -576,6 +581,356 @@ function TestimonialGrid() {
   );
 }
 
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  resource: {
+    scheduleId: string;
+    courseId: string;
+    courseTitle: string;
+    coursePrice: number;
+    location: string;
+    startTime: string;
+    endTime: string;
+    availableSpots: number;
+  };
+}
+
+function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWithSchedules) => void }) {
+  const [, setLocation] = useLocation();
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const [currentView, setCurrentView] = useState<View>("month");
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const { data: courses = [], isLoading } = useQuery<CourseWithSchedules[]>({
+    queryKey: ["/api/courses"],
+  });
+
+  const calendarEvents = useMemo(() => {
+    const now = new Date();
+    const events: CalendarEvent[] = [];
+
+    courses.forEach(course => {
+      if (!course.isActive || course.status !== 'published' || course.deletedAt) return;
+      
+      course.schedules?.forEach(schedule => {
+        if (schedule.deletedAt || schedule.notes?.includes('CANCELLED:')) return;
+        
+        const scheduleDate = new Date(schedule.startDate);
+        if (scheduleDate < now) return;
+
+        const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+          e.status === 'confirmed' || e.status === 'pending'
+        ).length || 0;
+        const availableSpots = Math.max(0, schedule.maxSpots - enrollmentCount);
+        
+        if (availableSpots > 0) {
+          const dateParts = schedule.startDate.split('T')[0].split('-');
+          const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
+          const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
+          
+          const startDate = new Date(
+            parseInt(dateParts[0]), 
+            parseInt(dateParts[1]) - 1, 
+            parseInt(dateParts[2]),
+            startHour,
+            startMinute
+          );
+          
+          const endDateStr = schedule.endDate || schedule.startDate;
+          const endDateParts = endDateStr.split('T')[0].split('-');
+          const endDate = new Date(
+            parseInt(endDateParts[0]),
+            parseInt(endDateParts[1]) - 1,
+            parseInt(endDateParts[2]),
+            endHour,
+            endMinute
+          );
+
+          events.push({
+            id: schedule.id,
+            title: course.title,
+            start: startDate,
+            end: endDate,
+            resource: {
+              scheduleId: schedule.id,
+              courseId: course.id,
+              courseTitle: course.title,
+              coursePrice: parseFloat(course.price),
+              location: schedule.location || "",
+              startTime: schedule.startTime,
+              endTime: schedule.endTime,
+              availableSpots,
+            },
+          });
+        }
+      });
+    });
+
+    return events;
+  }, [courses]);
+
+  const upcomingSchedules = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const schedulesWithCourse: { schedule: any; course: CourseWithSchedules }[] = [];
+    
+    courses.forEach(course => {
+      if (!course.isActive || course.status !== 'published' || course.deletedAt) return;
+      
+      course.schedules?.forEach(schedule => {
+        if (schedule.deletedAt || schedule.notes?.includes('CANCELLED:')) return;
+        
+        const startDate = new Date(schedule.startDate);
+        if (startDate < todayStart) return;
+        
+        const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+          e.status === 'confirmed' || e.status === 'pending'
+        ).length || 0;
+        const availableSpots = Math.max(0, schedule.maxSpots - enrollmentCount);
+        
+        if (availableSpots > 0) {
+          schedulesWithCourse.push({ schedule, course });
+        }
+      });
+    });
+    
+    return schedulesWithCourse.sort((a, b) => 
+      new Date(a.schedule.startDate).getTime() - new Date(b.schedule.startDate).getTime()
+    );
+  }, [courses]);
+
+  const eventStyleGetter = (event: CalendarEvent) => {
+    return {
+      style: {
+        backgroundColor: '#bf0000',
+        borderRadius: '4px',
+        opacity: 0.9,
+        color: 'white',
+        border: '0px',
+        display: 'block',
+        fontSize: '12px',
+      }
+    };
+  };
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return "Date TBD";
+      return format(date, "MMM d, yyyy");
+    } catch {
+      return "Date TBD";
+    }
+  };
+
+  const formatTime = (startTime: string, endTime: string) => {
+    const formatTimeStr = (t: string) => {
+      const [hours, minutes] = t.split(':');
+      const h = parseInt(hours);
+      const ampm = h >= 12 ? 'pm' : 'am';
+      const hour = h % 12 || 12;
+      return `${hour}:${minutes} ${ampm}`;
+    };
+    return `${formatTimeStr(startTime)} - ${formatTimeStr(endTime)}`;
+  };
+
+  const formatPrice = (price: string | number) => {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    if (numPrice === 0) return 'Contact for pricing';
+    return `$${numPrice.toFixed(2)}`;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin w-8 h-8 border-4 border-[#bf0000] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div data-testid="upcoming-courses-section">
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+        <div className="flex bg-zinc-800 rounded-lg p-1" data-testid="view-toggle">
+          <button
+            onClick={() => setViewMode('calendar')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              viewMode === 'calendar' 
+                ? 'bg-[#bf0000] text-white' 
+                : 'text-zinc-400 hover:text-white'
+            }`}
+            data-testid="toggle-calendar-view"
+          >
+            <CalendarDays className="w-4 h-4" />
+            Calendar
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              viewMode === 'list' 
+                ? 'bg-[#bf0000] text-white' 
+                : 'text-zinc-400 hover:text-white'
+            }`}
+            data-testid="toggle-list-view"
+          >
+            <List className="w-4 h-4" />
+            List
+          </button>
+        </div>
+        
+        <Link href="/schedule-calendar">
+          <Button variant="outline" size="sm" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+            View Full Schedule
+          </Button>
+        </Link>
+      </div>
+
+      {viewMode === 'calendar' ? (
+        <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700">
+          <style>{`
+            .rbc-calendar { background: transparent; }
+            .rbc-toolbar { margin-bottom: 1rem; }
+            .rbc-toolbar button { color: #fff; background: #3f3f46; border: 1px solid #52525b; }
+            .rbc-toolbar button:hover { background: #52525b; }
+            .rbc-toolbar button.rbc-active { background: #bf0000; border-color: #bf0000; }
+            .rbc-header { background: #27272a; color: #a1a1aa; padding: 8px; border-bottom: 1px solid #3f3f46; }
+            .rbc-month-view, .rbc-time-view { background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; overflow: hidden; }
+            .rbc-day-bg { background: #18181b; }
+            .rbc-day-bg + .rbc-day-bg { border-left: 1px solid #3f3f46; }
+            .rbc-month-row + .rbc-month-row { border-top: 1px solid #3f3f46; }
+            .rbc-off-range-bg { background: #0f0f10; }
+            .rbc-today { background: #1c1c22 !important; }
+            .rbc-date-cell { color: #e4e4e7; padding: 4px 8px; }
+            .rbc-date-cell.rbc-off-range { color: #52525b; }
+            .rbc-event { cursor: pointer; }
+            .rbc-event:focus { outline: 2px solid #bf0000; }
+            .rbc-show-more { color: #bf0000; font-weight: 500; }
+            .rbc-toolbar-label { color: #fff; font-weight: 600; font-size: 1.1rem; }
+          `}</style>
+          <div style={{ height: '500px' }}>
+            <BigCalendar
+              localizer={calendarLocalizer}
+              events={calendarEvents}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%' }}
+              onSelectEvent={(event) => setLocation(`/course/${event.resource.courseId}`)}
+              view={currentView}
+              onView={setCurrentView}
+              date={currentDate}
+              onNavigate={setCurrentDate}
+              eventPropGetter={eventStyleGetter}
+              popup={true}
+              views={['month', 'week']}
+              data-testid="embedded-calendar"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {upcomingSchedules.length === 0 ? (
+            <div className="text-center py-12 text-zinc-500">
+              <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No upcoming courses scheduled. Check back soon!</p>
+            </div>
+          ) : (
+            upcomingSchedules.slice(0, 6).map(({ schedule, course }) => (
+              <div 
+                key={schedule.id}
+                className="bg-zinc-800/50 rounded-xl p-5 border border-zinc-700 hover:border-zinc-500 
+                           transition-all duration-300 cursor-pointer hover:-translate-y-1"
+                onClick={() => setLocation(`/course/${course.id}`)}
+                data-testid={`list-course-${schedule.id}`}
+              >
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="w-full md:w-32 h-24 flex-shrink-0 rounded-lg overflow-hidden">
+                    {course.imageUrl ? (
+                      <img 
+                        src={course.imageUrl} 
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[#bf0000] to-[#8b0000] flex items-center justify-center">
+                        <Target className="w-8 h-8 text-white opacity-50" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h3 className="font-heading text-lg uppercase tracking-wide text-white mb-2">
+                      {course.title}
+                    </h3>
+                    
+                    <div className="flex flex-wrap gap-4 text-sm text-zinc-400 mb-3">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        <span>{formatDate(schedule.startDate)}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        <span>{formatTime(schedule.startTime, schedule.endTime)}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-white font-medium">
+                        <DollarSign className="w-4 h-4" />
+                        <span>{formatPrice(course.price)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <Button 
+                        size="sm"
+                        className="bg-[#bf0000] text-white hover:bg-[#a00000] font-heading uppercase tracking-wide"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const isHostedCourse = course.category === "Hosted Courses";
+                          if (isHostedCourse || course.destinationUrl) {
+                            if (course.destinationUrl) {
+                              window.open(course.destinationUrl, '_blank', 'noopener,noreferrer');
+                            }
+                            return;
+                          }
+                          onRegister(course);
+                        }}
+                        data-testid={`button-register-${schedule.id}`}
+                      >
+                        Register
+                      </Button>
+                      <Badge variant="secondary" className="text-xs bg-zinc-700 text-zinc-300">
+                        {(() => {
+                          const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+                            e.status === 'confirmed' || e.status === 'pending'
+                          ).length || 0;
+                          const spots = Math.max(0, schedule.maxSpots - enrollmentCount);
+                          return `${spots} spots left`;
+                        })()}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+          
+          {upcomingSchedules.length > 6 && (
+            <div className="text-center pt-4">
+              <Link href="/schedule-list">
+                <Button variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+                  View All {upcomingSchedules.length} Courses
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Landing() {
   const [, setLocation] = useLocation();
   const [selectedCourse, setSelectedCourse] = useState<CourseWithSchedules | null>(null);
@@ -915,6 +1270,20 @@ export default function Landing() {
               </Link>
             </div>
           </div>
+        </div>
+      </section>
+      {/* Upcoming Courses Section */}
+      <section className="bg-zinc-950 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-8 text-left">
+            <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
+              Upcoming Courses
+            </TitleCard>
+            <p className="text-zinc-400 mt-2">
+              Browse our schedule and secure your spot in an upcoming training session
+            </p>
+          </div>
+          <UpcomingCoursesSection onRegister={handleRegisterCourse} />
         </div>
       </section>
       {/* Customer Testimonials */}
