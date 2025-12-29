@@ -80,7 +80,7 @@ export default function OnlineCCWClass() {
           answer: "Yes! Whether or not you have shot a handgun before, you will receive the same level of quality, hands-on training during the range day. Many first-time shooters benefit from the individualized training they receive after completing the online portion."
         }
       ]}
-      ctaText="Enroll Now"
+      ctaText="Register Now"
       ctaLink="/schedule-list"
       secondaryCta={{
         text: "Prefer In-Person? View 2-Day Course",

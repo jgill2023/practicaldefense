@@ -91,7 +91,7 @@ export default function DefensiveHandgunCourse() {
           answer: "A quality belt-mounted holster (OWB or IWB) that covers the trigger guard. No shoulder holsters, cross-draw, or ankle holsters. The holster should retain the handgun during movement."
         }
       ]}
-      ctaText="Check Schedule"
+      ctaText="Register Now"
       ctaLink="/schedule-list"
       secondaryCta={{
         text: "New to Handguns? Start with CCW Course",

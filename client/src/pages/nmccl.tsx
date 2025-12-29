@@ -80,7 +80,7 @@ export default function NMConcealedCarryCourse() {
           answer: "Yes, you can bring your own ammunition. You will need 25 rounds of factory-loaded ammunition (no reloads) in the caliber of your handgun."
         }
       ]}
-      ctaText="View Available Dates"
+      ctaText="Register Now"
       ctaLink="/schedule-list"
       secondaryCta={{
         text: "Prefer Online? Take Online Course",
