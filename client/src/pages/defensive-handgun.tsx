@@ -3,7 +3,7 @@ import dhcImage from "@assets/DHC_1766643777282.jpg";
 
 export default function DefensiveHandgunCourse() {
   // TODO: Query API to check if there are scheduled classes for this course
-  const hasScheduledClasses = true;
+  const hasScheduledClasses = false;
 
   return (
     <CoursePageTemplate

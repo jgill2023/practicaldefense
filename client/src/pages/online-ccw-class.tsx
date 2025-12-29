@@ -3,7 +3,7 @@ import laptopImage from "@assets/laptop_1766646320823.jpg";
 
 export default function OnlineCCWClass() {
   // TODO: Query API to check if there are scheduled classes for this course
-  const hasScheduledClasses = true;
+  const hasScheduledClasses = false;
 
   return (
     <CoursePageTemplate

@@ -3,7 +3,7 @@ import ccwRangeImage from "@assets/CCW-Range_1766643725051.jpg";
 
 export default function NMConcealedCarryCourse() {
   // TODO: Query API to check if there are scheduled classes for this course
-  const hasScheduledClasses = true;
+  const hasScheduledClasses = false;
 
   return (
     <CoursePageTemplate
