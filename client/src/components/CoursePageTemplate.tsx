@@ -3,6 +3,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NotifyMeDialog } from "@/components/NotifyMeDialog";
+import { OnlineCourseEnrollDialog } from "@/components/OnlineCourseEnrollDialog";
 import { 
   Clock, 
   MapPin, 
@@ -52,6 +53,8 @@ interface CoursePageTemplateProps {
   ctaLink?: string;
   hasScheduledClasses?: boolean;
   heroImagePosition?: string;
+  isOnlineCourse?: boolean;
+  onlineCoursePrice?: number;
   secondaryCta?: {
     text: string;
     link: string;
@@ -94,9 +97,12 @@ export function CoursePageTemplate({
   ctaLink = "/schedule-list",
   hasScheduledClasses = true,
   heroImagePosition = "center",
+  isOnlineCourse = false,
+  onlineCoursePrice = 165,
   secondaryCta
 }: CoursePageTemplateProps) {
   const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
+  const [isEnrollDialogOpen, setIsEnrollDialogOpen] = useState(false);
   const [grayscaleAmount, setGrayscaleAmount] = useState(0);
   
   useEffect(() => {
@@ -276,7 +282,15 @@ export function CoursePageTemplate({
                     )}
                   </div>
 
-                  {hasScheduledClasses ? (
+                  {isOnlineCourse ? (
+                    <Button 
+                      onClick={() => setIsEnrollDialogOpen(true)}
+                      className="w-full bg-[#006d7a] hover:bg-[#004149] text-white font-heading uppercase tracking-wide py-6 text-lg"
+                      data-testid="button-enroll-cta"
+                    >
+                      Enroll Now
+                    </Button>
+                  ) : hasScheduledClasses ? (
                     <Link href={ctaLink}>
                       <Button 
                         className="w-full bg-[#006d7a] hover:bg-[#004149] text-white font-heading uppercase tracking-wide py-6 text-lg"
@@ -338,6 +352,15 @@ export function CoursePageTemplate({
         onOpenChange={setIsNotifyDialogOpen}
         courseName={title}
       />
+      
+      {isOnlineCourse && (
+        <OnlineCourseEnrollDialog
+          isOpen={isEnrollDialogOpen}
+          onOpenChange={setIsEnrollDialogOpen}
+          courseName={title}
+          coursePrice={onlineCoursePrice}
+        />
+      )}
     </Layout>
   );
 }

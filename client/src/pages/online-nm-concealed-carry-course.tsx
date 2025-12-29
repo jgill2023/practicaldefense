@@ -2,13 +2,11 @@ import { CoursePageTemplate } from "@/components/CoursePageTemplate";
 import laptopImage from "@assets/laptop_1767030825536.jpg";
 
 export default function OnlineCCWClass() {
-  // TODO: Query API to check if there are scheduled classes for this course
-  const hasScheduledClasses = false;
-
   return (
     <CoursePageTemplate
       title="Online NM Concealed Carry Course"
-      hasScheduledClasses={hasScheduledClasses}
+      isOnlineCourse={true}
+      onlineCoursePrice={165}
       level="Beginner"
       heroImage={laptopImage}
       overview="Complete 8 hours of training online, at your own pace and place, then finish with a 7-hour live-fire range day! Gone are the days of having to wait for a New Mexico Concealed Carry Course that fits within your schedule, or having to request a weekend off. Our ONLINE New Mexico Concealed Carry Course has been fully vetted and approved by the New Mexico Department of Public Safety. Concealed Carry training around YOUR schedule, not the other way around."

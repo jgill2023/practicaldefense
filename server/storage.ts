@@ -193,6 +193,11 @@ import {
   type StudentFeedback,
   type InsertStudentFeedback,
   type StudentFeedbackWithDetails,
+  // Online Course Enrollment imports
+  onlineCourseEnrollments,
+  type OnlineCourseEnrollment,
+  type InsertOnlineCourseEnrollment,
+  type OnlineCourseEnrollmentWithUser,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, gt, lt, lte, ne, inArray, notInArray } from "drizzle-orm";
@@ -813,6 +818,16 @@ export interface IStorage {
   getStudentFeedbackByInstructor(instructorId: string): Promise<StudentFeedbackWithDetails[]>;
   updateStudentFeedback(id: string, feedback: Partial<InsertStudentFeedback>): Promise<StudentFeedback>;
   deleteStudentFeedback(id: string): Promise<void>;
+
+  // ============================================
+  // ONLINE COURSE ENROLLMENT METHODS
+  // ============================================
+  createOnlineCourseEnrollment(enrollment: InsertOnlineCourseEnrollment): Promise<OnlineCourseEnrollment>;
+  getOnlineCourseEnrollment(id: string): Promise<OnlineCourseEnrollmentWithUser | undefined>;
+  getOnlineCourseEnrollmentByPaymentIntent(paymentIntentId: string): Promise<OnlineCourseEnrollment | undefined>;
+  getOnlineCourseEnrollmentsByEmail(email: string): Promise<OnlineCourseEnrollment[]>;
+  updateOnlineCourseEnrollment(id: string, data: Partial<InsertOnlineCourseEnrollment & { status?: string; moodleSyncAttempts?: number; moodleSyncError?: string | null; moodleSyncedAt?: Date | null; emailNotificationSent?: boolean; smsNotificationSent?: boolean }>): Promise<OnlineCourseEnrollment>;
+  getOnlineCourseEnrollments(): Promise<OnlineCourseEnrollmentWithUser[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -7299,6 +7314,71 @@ export class DatabaseStorage implements IStorage {
 
   async deleteStudentFeedback(id: string): Promise<void> {
     await db.delete(studentFeedback).where(eq(studentFeedback.id, id));
+  }
+
+  // ============================================
+  // ONLINE COURSE ENROLLMENT OPERATIONS
+  // ============================================
+
+  async createOnlineCourseEnrollment(enrollment: InsertOnlineCourseEnrollment): Promise<OnlineCourseEnrollment> {
+    const [created] = await db.insert(onlineCourseEnrollments).values(enrollment).returning();
+    return created;
+  }
+
+  async getOnlineCourseEnrollment(id: string): Promise<OnlineCourseEnrollmentWithUser | undefined> {
+    const result = await db.query.onlineCourseEnrollments.findFirst({
+      where: eq(onlineCourseEnrollments.id, id),
+      with: {
+        user: true,
+      },
+    });
+    return result as OnlineCourseEnrollmentWithUser | undefined;
+  }
+
+  async getOnlineCourseEnrollmentByPaymentIntent(paymentIntentId: string): Promise<OnlineCourseEnrollment | undefined> {
+    const [enrollment] = await db
+      .select()
+      .from(onlineCourseEnrollments)
+      .where(eq(onlineCourseEnrollments.stripePaymentIntentId, paymentIntentId));
+    return enrollment;
+  }
+
+  async getOnlineCourseEnrollmentsByEmail(email: string): Promise<OnlineCourseEnrollment[]> {
+    return db
+      .select()
+      .from(onlineCourseEnrollments)
+      .where(eq(onlineCourseEnrollments.email, email))
+      .orderBy(desc(onlineCourseEnrollments.createdAt));
+  }
+
+  async updateOnlineCourseEnrollment(
+    id: string, 
+    data: Partial<InsertOnlineCourseEnrollment & { 
+      status?: string; 
+      moodleSyncAttempts?: number; 
+      moodleSyncError?: string | null; 
+      moodleSyncedAt?: Date | null;
+      emailNotificationSent?: boolean;
+      smsNotificationSent?: boolean;
+    }>
+  ): Promise<OnlineCourseEnrollment> {
+    const [updated] = await db
+      .update(onlineCourseEnrollments)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(onlineCourseEnrollments.id, id))
+      .returning();
+    if (!updated) throw new Error('Online course enrollment not found');
+    return updated;
+  }
+
+  async getOnlineCourseEnrollments(): Promise<OnlineCourseEnrollmentWithUser[]> {
+    const results = await db.query.onlineCourseEnrollments.findMany({
+      with: {
+        user: true,
+      },
+      orderBy: [desc(onlineCourseEnrollments.createdAt)],
+    });
+    return results as OnlineCourseEnrollmentWithUser[];
   }
 }
 
