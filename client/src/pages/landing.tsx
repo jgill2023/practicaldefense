@@ -824,7 +824,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
               onNavigate={setCurrentDate}
               eventPropGetter={eventStyleGetter}
               popup={true}
-              views={['month', 'week']}
+              views={['month']}
               data-testid="embedded-calendar"
             />
           </div>
