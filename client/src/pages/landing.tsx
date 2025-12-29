@@ -1288,7 +1288,7 @@ export default function Landing() {
             </p>
             
             <div className="border-t border-b border-zinc-700 py-8 space-y-6 text-[14px]">
-              <p className="text-lg">
+              <p className="text-[15px]">
                 We believe your firearms training should be{' '}
                 <span className="text-white font-semibold">SAFE</span>,{' '}
                 <span className="text-white font-semibold">FUN</span>, and{' '}
