@@ -1287,7 +1287,7 @@ export default function Landing() {
               State of New Mexico and those States with whom New Mexico shares reciprocity with.
             </p>
             
-            <div className="border-t border-b border-zinc-700 py-8 space-y-6 text-[14px]">
+            <div className="border-t border-b border-zinc-700 py-8 space-y-6 text-[14px] pt-[0px] pb-[0px]">
               <p className="text-[16px]">
                 Your safety and protection begins with <span className="text-white font-semibold">you</span>. 
                 It's <span className="text-white font-semibold">your life</span>. 
