@@ -51,6 +51,7 @@ interface CoursePageTemplateProps {
   ctaText?: string;
   ctaLink?: string;
   hasScheduledClasses?: boolean;
+  heroImagePosition?: string;
   secondaryCta?: {
     text: string;
     link: string;
@@ -92,6 +93,7 @@ export function CoursePageTemplate({
   ctaText = "Register Now",
   ctaLink = "/schedule-list",
   hasScheduledClasses = true,
+  heroImagePosition = "center",
   secondaryCta
 }: CoursePageTemplateProps) {
   const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
@@ -111,8 +113,8 @@ export function CoursePageTemplate({
       {/* Hero Section */}
       <section className="relative h-[50vh] min-h-[400px] flex items-end overflow-hidden">
         <div 
-          className="absolute inset-0 bg-cover bg-center grayscale"
-          style={{ backgroundImage: `url(${heroImage})` }}
+          className="absolute inset-0 bg-cover grayscale"
+          style={{ backgroundImage: `url(${heroImage})`, backgroundPosition: heroImagePosition }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
         
