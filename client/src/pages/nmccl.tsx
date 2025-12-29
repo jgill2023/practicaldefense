@@ -2,9 +2,13 @@ import { CoursePageTemplate } from "@/components/CoursePageTemplate";
 import ccwRangeImage from "@assets/CCW-Range_1766643725051.jpg";
 
 export default function NMConcealedCarryCourse() {
+  // TODO: Query API to check if there are scheduled classes for this course
+  const hasScheduledClasses = true;
+
   return (
     <CoursePageTemplate
       title="New Mexico Concealed Carry Course"
+      hasScheduledClasses={hasScheduledClasses}
       level="Beginner"
       heroImage={ccwRangeImage}
       overview="Our New Mexico Concealed Carry Course is one of the most comprehensive and fun concealed carry courses in the state. Practical Defense Training, LLC offers straightforward firearms training, with a focus and emphasis on New Mexico concealed carry training. One of the few courses which preaches and teaches practical over 'tacti-cool'; bringing reliable and effective firearms training to the responsibly armed citizen. Students will gain the knowledge and skills necessary to legally and responsibly carry a concealed handgun in the State of New Mexico and those States with whom New Mexico shares reciprocity with."

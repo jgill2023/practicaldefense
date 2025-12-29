@@ -2,6 +2,7 @@ import { Layout } from "@/components/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { NotifyMeDialog } from "@/components/NotifyMeDialog";
 import { 
   Clock, 
   MapPin, 
@@ -49,6 +50,7 @@ interface CoursePageTemplateProps {
   faqs: FAQItem[];
   ctaText?: string;
   ctaLink?: string;
+  hasScheduledClasses?: boolean;
   secondaryCta?: {
     text: string;
     link: string;
@@ -89,8 +91,11 @@ export function CoursePageTemplate({
   faqs,
   ctaText = "Register Now",
   ctaLink = "/schedule-list",
+  hasScheduledClasses = true,
   secondaryCta
 }: CoursePageTemplateProps) {
+  const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
+  
   const levelColors = {
     Beginner: "bg-green-600",
     Intermediate: "bg-amber-600",
@@ -252,14 +257,24 @@ export function CoursePageTemplate({
                     )}
                   </div>
 
-                  <Link href={ctaLink}>
+                  {hasScheduledClasses ? (
+                    <Link href={ctaLink}>
+                      <Button 
+                        className="w-full bg-[#006d7a] hover:bg-[#004149] text-white font-heading uppercase tracking-wide py-6 text-lg"
+                        data-testid="button-register-cta"
+                      >
+                        {ctaText}
+                      </Button>
+                    </Link>
+                  ) : (
                     <Button 
+                      onClick={() => setIsNotifyDialogOpen(true)}
                       className="w-full bg-[#006d7a] hover:bg-[#004149] text-white font-heading uppercase tracking-wide py-6 text-lg"
-                      data-testid="button-register-cta"
+                      data-testid="button-notify-me-cta"
                     >
-                      {ctaText}
+                      Notify Me
                     </Button>
-                  </Link>
+                  )}
                   
                   {secondaryCta && (
                     <Link href={secondaryCta.link}>
@@ -298,6 +313,12 @@ export function CoursePageTemplate({
           </div>
         </div>
       </section>
+      
+      <NotifyMeDialog 
+        isOpen={isNotifyDialogOpen} 
+        onOpenChange={setIsNotifyDialogOpen}
+        courseName={title}
+      />
     </Layout>
   );
 }

@@ -2,9 +2,13 @@ import { CoursePageTemplate } from "@/components/CoursePageTemplate";
 import dhcImage from "@assets/DHC_1766643777282.jpg";
 
 export default function DefensiveHandgunCourse() {
+  // TODO: Query API to check if there are scheduled classes for this course
+  const hasScheduledClasses = true;
+
   return (
     <CoursePageTemplate
       title="Defensive Handgun Course"
+      hasScheduledClasses={hasScheduledClasses}
       level="Intermediate"
       heroImage={dhcImage}
       overview="Our 1 and 2 Day Defensive Handgun Courses focus on the shooting fundamentals that you will likely need in a defensive shooting. Day 1 begins with a basic shooting skills assessment to provide a baseline for each student. From there, students will begin working on defensive shooting fundamentals. Students must be able to safely handle their handguns and should be proficient with their handguns. This course takes you beyond basic concealed carry and prepares you for real-world defensive scenarios."
