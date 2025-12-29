@@ -98,7 +98,7 @@ export default function DefensiveHandgunCourse() {
       ctaText="Register Now"
       ctaLink="/schedule-list"
       secondaryCta={{
-        text: "New to Handguns? Start with CCW Course",
+        text: "New Shooter? Start w/ our CCW Course",
         link: "/nmccl"
       }}
     />
