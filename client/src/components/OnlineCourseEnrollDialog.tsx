@@ -175,11 +175,10 @@ export function OnlineCourseEnrollDialog({
 
   const initiateEnrollmentMutation = useMutation({
     mutationFn: async (data: EnrollmentFormData) => {
-      const response = await apiRequest("POST", "/api/online-course/initiate-enrollment", {
+      return await apiRequest("POST", "/api/online-course/initiate-enrollment", {
         ...data,
         courseName,
       });
-      return response.json();
     },
     onSuccess: (data) => {
       setEnrollmentId(data.enrollmentId);
