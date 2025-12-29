@@ -111,7 +111,7 @@ export function CoursePageTemplate({
         description={overview.substring(0, 160)}
       />
       {/* Hero Section */}
-      <section className="relative h-[50vh] min-h-[400px] flex items-end overflow-hidden">
+      <section className="relative h-[65vh] min-h-[500px] flex items-end overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover grayscale"
           style={{ backgroundImage: `url(${heroImage})`, backgroundPosition: heroImagePosition }}
