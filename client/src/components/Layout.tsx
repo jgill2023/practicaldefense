@@ -274,7 +274,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                                     <NavigationMenuLink asChild>
                                       <Link 
                                         href="/nmccl" 
-                                        className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer pt-[4px] pb-[4px] pl-[4px] pr-[4px] text-[16px]"
+                                        className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer pt-[4px] pb-[4px] pl-[4px] pr-[4px] text-[16px] font-semibold"
                                         data-testid="link-course-nmccl"
                                       >
                                         NM Concealed Carry
