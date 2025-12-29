@@ -1272,6 +1272,39 @@ export default function Landing() {
           </div>
         </div>
       </section>
+      {/* Philosophy Section */}
+      <section className="bg-zinc-950 py-16 border-t border-zinc-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide text-white mb-8">
+            Straightforward Firearms Training
+          </h2>
+          
+          <div className="space-y-6 text-zinc-300">
+            <p className="text-lg leading-relaxed font-light">
+              Practical Defense Training, LLC offers straightforward firearms training, with a focus and emphasis on New Mexico concealed carry training. 
+              One of the few courses which preaches and teaches practical over "tacti-cool"; bringing reliable and effective firearms training to the 
+              responsibly armed citizen. Students will gain the knowledge and skills necessary to legally and responsibly carry a concealed handgun in the 
+              State of New Mexico and those States with whom New Mexico shares reciprocity with.
+            </p>
+            
+            <div className="border-t border-b border-zinc-700 py-8 space-y-6">
+              <p className="text-lg">
+                We believe your firearms training should be{' '}
+                <span className="text-white font-semibold">SAFE</span>,{' '}
+                <span className="text-white font-semibold">FUN</span>, and{' '}
+                <span className="text-white font-semibold">PRACTICAL</span>.
+              </p>
+              
+              <p className="text-lg leading-relaxed">
+                Your safety and protection begins with <span className="text-white font-semibold">you</span>. 
+                It's <span className="text-white font-semibold">your life</span>. 
+                It's <span className="text-white font-semibold">your safety</span> and protection. 
+                It's <span className="text-white font-semibold">your</span> responsibility.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* Upcoming Courses Section */}
       <section className="bg-zinc-950 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
