@@ -532,7 +532,7 @@ function MosaicTestimonialSlider() {
       className="rounded-sm shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-zinc-800 min-h-[280px] flex flex-col h-full bg-[#222429]"
       data-testid={`testimonial-card-${review.id}`}
     >
-      <Quote className="w-8 h-8 text-[hsl(209,90%,38%)] opacity-20 mb-3 rotate-180" />
+      <Quote className="w-8 h-8 text-[#bf0000] opacity-20 mb-3 rotate-180" />
       <p className="text-muted-foreground italic leading-relaxed mb-4 text-sm flex-1">
         "{review.quote}"
       </p>
