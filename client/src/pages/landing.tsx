@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User, DollarSign, CalendarClock, Target, Award, Crosshair, ChevronLeft, ChevronRight, Quote } from "lucide-react";
+import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User, DollarSign, CalendarClock, Target, Award, Crosshair, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Quote } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { CourseCard } from "@/components/CourseCard";
 import { RegistrationModal } from "@/components/RegistrationModal";
@@ -480,134 +480,95 @@ function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSc
   );
 }
 
-function MosaicTestimonialSlider() {
-  const [currentPattern, setCurrentPattern] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const timeoutRef = { current: null as NodeJS.Timeout | null };
-  
-  const patterns = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-  ];
-  
-  const totalPatterns = patterns.length;
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIsAnimating(true);
-      timeoutRef.current = setTimeout(() => {
-        setCurrentPattern((prev) => (prev + 1) % totalPatterns);
-        setIsAnimating(false);
-      }, 500);
-    }, 8000);
-    return () => {
-      clearInterval(timer);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [totalPatterns]);
-
-  const goToPrev = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsAnimating(true);
-    timeoutRef.current = setTimeout(() => {
-      setCurrentPattern((prev) => (prev - 1 + totalPatterns) % totalPatterns);
-      setIsAnimating(false);
-    }, 300);
-  };
-
-  const goToNext = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsAnimating(true);
-    timeoutRef.current = setTimeout(() => {
-      setCurrentPattern((prev) => (prev + 1) % totalPatterns);
-      setIsAnimating(false);
-    }, 300);
-  };
-
-  const currentReviews = patterns[currentPattern].map(idx => googleReviews[idx]);
-
-  const TestimonialCard = ({ review, className = "" }: { review: typeof googleReviews[0], className?: string }) => (
-    <div 
-      className="rounded-sm shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-zinc-800 min-h-[280px] flex flex-col h-full bg-[#222429]"
-      data-testid={`testimonial-card-${review.id}`}
-    >
-      <Quote className="w-8 h-8 text-[#bf0000] opacity-20 mb-3 rotate-180" />
-      <p className="text-muted-foreground italic leading-relaxed mb-4 text-sm flex-1">
-        "{review.quote}"
-      </p>
-      <div className="flex items-center justify-between mt-auto">
-        <div className="flex">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`w-4 h-4 ${i < review.rating ? "text-[hsl(44,89%,61%)] fill-[hsl(44,89%,61%)]" : "text-gray-300"}`}
-            />
-          ))}
-        </div>
-        <span className="text-sm font-medium text-foreground">— {review.author}</span>
-      </div>
-    </div>
-  );
-
-  const renderCards = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {currentReviews.map((review) => (
-        <TestimonialCard key={review.id} review={review} className="h-full" />
-      ))}
-    </div>
-  );
+function TestimonialGrid() {
+  const [showAll, setShowAll] = useState(false);
+  const initialCount = 6;
+  const displayedReviews = showAll ? googleReviews : googleReviews.slice(0, initialCount);
 
   return (
-    <div data-testid="mosaic-testimonial-slider">
-      <div className={`transition-all duration-500 ${isAnimating ? 'opacity-0 translate-x-8' : 'opacity-100 translate-x-0'}`}>
-        {renderCards()}
+    <div data-testid="testimonial-grid" className="relative">
+      <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+        {displayedReviews.map((review, index) => (
+          <div 
+            key={review.id}
+            className="break-inside-avoid group"
+            style={{ animationDelay: `${index * 50}ms` }}
+          >
+            <div 
+              className="bg-zinc-900/50 backdrop-blur-sm rounded-2xl p-6 border border-zinc-800 
+                         hover:border-zinc-600 hover:bg-zinc-800/60 hover:-translate-y-1 hover:shadow-xl
+                         transition-all duration-300 ease-out"
+              data-testid={`testimonial-card-${review.id}`}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 
+                                flex items-center justify-center text-white font-semibold text-sm
+                                border border-zinc-600">
+                  {review.author.charAt(0)}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white text-base leading-tight">
+                    {review.author}
+                  </h4>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-3 h-3 ${
+                          i < review.rating 
+                            ? "text-amber-400 fill-amber-400" 
+                            : "text-zinc-600"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-zinc-300 text-sm leading-relaxed">
+                "{review.quote}"
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
       
-      <div className="flex items-center justify-center gap-4 mt-8">
-        <button
-          onClick={goToPrev}
-          className="p-3 rounded-full hover:bg-gray-100 transition-colors border border-gray-200"
-          data-testid="mosaic-testimonial-prev"
-          aria-label="Previous reviews"
-        >
-          <ChevronLeft className="w-5 h-5 text-muted-foreground" />
-        </button>
-        
-        <div className="flex gap-2">
-          {patterns.map((_, idx) => (
+      {!showAll && googleReviews.length > initialCount && (
+        <div className="relative mt-8">
+          <div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-t from-zinc-900 to-transparent pointer-events-none" />
+          <div className="flex justify-center">
             <button
-              key={idx}
-              onClick={() => {
-                setIsAnimating(true);
-                setTimeout(() => {
-                  setCurrentPattern(idx);
-                  setIsAnimating(false);
-                }, 300);
-              }}
-              className={`w-3 h-3 rounded-full transition-all ${
-                idx === currentPattern 
-                  ? "bg-[hsl(209,90%,38%)] w-8" 
-                  : "bg-gray-300 hover:bg-gray-400"
-              }`}
-              data-testid={`mosaic-testimonial-dot-${idx}`}
-              aria-label={`Go to review set ${idx + 1}`}
-            />
-          ))}
+              onClick={() => setShowAll(true)}
+              className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium 
+                         rounded-full border border-zinc-700 hover:border-zinc-500
+                         transition-all duration-300 flex items-center gap-2
+                         hover:shadow-lg hover:shadow-zinc-900/50"
+              data-testid="testimonial-show-more"
+            >
+              Show More Reviews
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-        
-        <button
-          onClick={goToNext}
-          className="p-3 rounded-full hover:bg-gray-100 transition-colors border border-gray-200"
-          data-testid="mosaic-testimonial-next"
-          aria-label="Next reviews"
-        >
-          <ChevronRight className="w-5 h-5 text-muted-foreground" />
-        </button>
-      </div>
+      )}
       
-      <div className="text-center mt-4">
-        <p className="text-sm text-muted-foreground">
+      {showAll && googleReviews.length > initialCount && (
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={() => setShowAll(false)}
+            className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium 
+                       rounded-full border border-zinc-700 hover:border-zinc-500
+                       transition-all duration-300 flex items-center gap-2
+                       hover:shadow-lg hover:shadow-zinc-900/50"
+            data-testid="testimonial-show-less"
+          >
+            Show Less
+            <ChevronUp className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+      
+      <div className="text-center mt-8">
+        <p className="text-sm text-zinc-500">
           5.0 ★ rating from 80+ Google reviews
         </p>
       </div>
@@ -964,7 +925,7 @@ export default function Landing() {
               What Our Students Say
             </TitleCard>
           </div>
-          <MosaicTestimonialSlider />
+          <TestimonialGrid />
         </div>
       </section>
       {/* Registration Modal */}
