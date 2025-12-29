@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -33,6 +34,13 @@ const enrollmentFormSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Please enter a valid email address"),
   phone: z.string().min(10, "Please enter a valid phone number"),
+  dateOfBirth: z.string().min(1, "Date of birth is required"),
+  smsConsent: z.boolean().refine(val => val === true, {
+    message: "You must consent to receive text messages",
+  }),
+  termsAgreed: z.boolean().refine(val => val === true, {
+    message: "You must agree to the Terms of Service, Privacy Policy, and Refund Policy",
+  }),
 });
 
 type EnrollmentFormData = z.infer<typeof enrollmentFormSchema>;
@@ -170,6 +178,9 @@ export function OnlineCourseEnrollDialog({
       lastName: "",
       email: "",
       phone: "",
+      dateOfBirth: "",
+      smsConsent: false,
+      termsAgreed: false,
     },
   });
 
@@ -203,17 +214,17 @@ export function OnlineCourseEnrollDialog({
   const watchedValues = form.watch();
   
   useEffect(() => {
-    const { firstName, lastName, email, phone } = watchedValues;
-    const isValid = firstName && lastName && email && phone && phone.length >= 10;
+    const { firstName, lastName, email, phone, dateOfBirth, smsConsent, termsAgreed } = watchedValues;
+    const isValid = firstName && lastName && email && phone && phone.length >= 10 && dateOfBirth && smsConsent && termsAgreed;
     
     if (isValid && !clientSecret && !isInitiating && !initiateEnrollmentMutation.isPending) {
       const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       if (emailValid) {
         setIsInitiating(true);
-        initiateEnrollmentMutation.mutate({ firstName, lastName, email, phone });
+        initiateEnrollmentMutation.mutate({ firstName, lastName, email, phone, dateOfBirth, smsConsent, termsAgreed });
       }
     }
-  }, [watchedValues.firstName, watchedValues.lastName, watchedValues.email, watchedValues.phone]);
+  }, [watchedValues.firstName, watchedValues.lastName, watchedValues.email, watchedValues.phone, watchedValues.dateOfBirth, watchedValues.smsConsent, watchedValues.termsAgreed]);
 
   const handlePaymentSuccess = () => {
     setStep("success");
@@ -335,6 +346,81 @@ export function OnlineCourseEnrollDialog({
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="dateOfBirth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date of Birth</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="date" 
+                          {...field} 
+                          className="bg-background border-border"
+                          data-testid="input-date-of-birth"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="smsConsent"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="checkbox-sms-consent"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-normal text-muted-foreground cursor-pointer">
+                          By checking this box, I consent to receive automated text messages related to my class registration, reminders, and important updates from Practical Defense Training. Message frequency may vary. Message & data rates may apply. Reply STOP to unsubscribe or HELP for help.
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="termsAgreed"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="checkbox-terms-agreed"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-normal text-muted-foreground cursor-pointer">
+                          I agree to the{" "}
+                          <a href="/terms-of-service" target="_blank" className="text-[#006d7a] hover:underline">
+                            Terms of Service
+                          </a>
+                          ,{" "}
+                          <a href="/privacy-policy" target="_blank" className="text-[#006d7a] hover:underline">
+                            Privacy Policy
+                          </a>
+                          , and{" "}
+                          <a href="/refund-policy" target="_blank" className="text-[#006d7a] hover:underline">
+                            Refund Policy
+                          </a>
+                          .
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
               </div>
             </Form>
 
@@ -376,7 +462,7 @@ export function OnlineCourseEnrollDialog({
                       Loading payment form...
                     </span>
                   ) : (
-                    "Complete the form above to see payment options. NM Gross Receipts Tax will be added."
+                    "Complete all fields above to see payment options. NM Gross Receipts Tax will be added."
                   )}
                 </p>
               </div>
