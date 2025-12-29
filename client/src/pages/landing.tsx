@@ -1151,7 +1151,7 @@ export default function Landing() {
                 <Button
                   size="lg"
                   className="hover:bg-gray-100 text-black font-display uppercase tracking-widest px-8 py-6 text-lg bg-white rounded-sm"
-                  onClick={() => setLocation('/online-ccw-class')}
+                  onClick={() => setLocation('/online-nm-concealed-carry-course')}
                   data-testid="button-online-ccw"
                 >
                   Online CCW Course
@@ -1175,7 +1175,7 @@ export default function Landing() {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column - Online NM CCW Course (Main Featured) */}
-            <Link href="/online-ccw-class" className="block group">
+            <Link href="/online-nm-concealed-carry-course" className="block group">
               <div 
                 className="relative rounded-[4px] overflow-hidden cursor-pointer aspect-[5/4] group-hover:shadow-[0_8px_30px_rgba(180,180,180,0.15)] transition-shadow duration-300"
                 data-testid="featured-course-online-ccw"

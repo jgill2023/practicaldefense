@@ -88,7 +88,7 @@ export default function NMConcealedCarryCourse() {
       ctaLink="/schedule-list"
       secondaryCta={{
         text: "Prefer Online? Take Online Course",
-        link: "/online-ccw-class"
+        link: "/online-nm-concealed-carry-course"
       }}
     />
   );

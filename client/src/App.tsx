@@ -47,7 +47,7 @@ import GiftCardsPage from "@/pages/gift-cards";
 import GiftCardManagement from "@/pages/gift-card-management";
 import CourseDetail from "@/pages/course-detail";
 import NMConcealedCarryCourse from "@/pages/nmccl";
-import OnlineCCWClass from "@/pages/online-ccw-class";
+import OnlineCCWClass from "@/pages/online-nm-concealed-carry-course";
 import DefensiveHandgunCourse from "@/pages/defensive-handgun";
 import RACCProgram from "@/pages/racc-program";
 import Register from "@/pages/register";
@@ -150,7 +150,7 @@ function Router() {
       <Route path="/schedule-calendar" component={ScheduleCalendar} />
       <Route path="/course/:id" component={CourseDetail} />
       <Route path="/nmccl" component={NMConcealedCarryCourse} />
-      <Route path="/online-ccw-class" component={OnlineCCWClass} />
+      <Route path="/online-nm-concealed-carry-course" component={OnlineCCWClass} />
       <Route path="/defensive-handgun" component={DefensiveHandgunCourse} />
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/terms-of-service" component={TermsOfServicePage} />
