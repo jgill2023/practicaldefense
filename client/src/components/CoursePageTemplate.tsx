@@ -107,7 +107,6 @@ export function CoursePageTemplate({
         title={title}
         description={overview.substring(0, 160)}
       />
-      
       {/* Hero Section */}
       <section className="relative h-[50vh] min-h-[400px] flex items-end overflow-hidden">
         <div 
@@ -139,7 +138,6 @@ export function CoursePageTemplate({
           </h1>
         </div>
       </section>
-
       {/* Main Content */}
       <section className="bg-background py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -151,7 +149,7 @@ export function CoursePageTemplate({
               {/* Overview */}
               <div>
                 <h2 className="text-2xl font-heading uppercase tracking-widest text-foreground mb-4">Overview</h2>
-                <p className="text-muted-foreground leading-relaxed text-lg">{overview}</p>
+                <p className="text-muted-foreground text-[16px]">{overview}</p>
                 
                 {/* Quick Reference Grid */}
                 <div className="grid grid-cols-2 gap-4 mt-6">
