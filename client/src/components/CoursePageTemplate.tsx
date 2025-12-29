@@ -11,7 +11,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface CourseDetails {
   price: string;
@@ -97,6 +97,19 @@ export function CoursePageTemplate({
   secondaryCta
 }: CoursePageTemplateProps) {
   const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
+  const [grayscaleAmount, setGrayscaleAmount] = useState(0);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      // Calculate grayscale based on scroll position
+      // Full color at top, gradually increase grayscale as you scroll
+      const scrollProgress = Math.min(window.scrollY / 400, 1); // Max out after 400px scroll
+      setGrayscaleAmount(scrollProgress * 100);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   const levelColors = {
     Beginner: "bg-green-600",
@@ -113,8 +126,12 @@ export function CoursePageTemplate({
       {/* Hero Section */}
       <section className="relative h-[65vh] min-h-[500px] flex items-end overflow-hidden">
         <div 
-          className="absolute inset-0 bg-cover grayscale"
-          style={{ backgroundImage: `url(${heroImage})`, backgroundPosition: heroImagePosition }}
+          className="absolute inset-0 bg-cover"
+          style={{ 
+            backgroundImage: `url(${heroImage})`, 
+            backgroundPosition: heroImagePosition,
+            filter: `grayscale(${grayscaleAmount}%)`
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
         
