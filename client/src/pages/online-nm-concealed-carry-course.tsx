@@ -1,5 +1,5 @@
 import { CoursePageTemplate } from "@/components/CoursePageTemplate";
-import laptopImage from "@assets/laptop_1766646320823.jpg";
+import laptopImage from "@assets/laptop_1767030825536.jpg";
 
 export default function OnlineCCWClass() {
   // TODO: Query API to check if there are scheduled classes for this course
