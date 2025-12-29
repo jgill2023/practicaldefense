@@ -270,7 +270,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                                     <BookOpen className="h-4 w-4" />
                                     Featured Courses
                                   </p>
-                                  <div className="grid grid-cols-2 gap-3">
+                                  <div className="grid grid-cols-3 gap-3">
                                     <NavigationMenuLink asChild>
                                       <Link 
                                         href="/nmccl" 
@@ -287,6 +287,15 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                                         data-testid="link-course-online-nmccl"
                                       >
                                         Online NM CCW
+                                      </Link>
+                                    </NavigationMenuLink>
+                                    <NavigationMenuLink asChild>
+                                      <Link 
+                                        href="/defensive-handgun-course" 
+                                        className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer text-sm pt-[4px] pb-[4px] pl-[4px] pr-[4px]"
+                                        data-testid="link-course-defensive-handgun"
+                                      >
+                                        Defensive Handgun
                                       </Link>
                                     </NavigationMenuLink>
                                   </div>

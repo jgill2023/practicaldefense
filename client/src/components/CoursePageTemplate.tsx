@@ -313,7 +313,7 @@ export function CoursePageTemplate({
                     <Link href={secondaryCta.link}>
                       <Button 
                         variant="outline"
-                        className="w-full mt-3 border-border text-foreground hover:bg-muted"
+                        className="w-full mt-3 border-border text-foreground hover:bg-muted text-[14px]"
                         data-testid="button-secondary-cta"
                       >
                         {secondaryCta.text}
