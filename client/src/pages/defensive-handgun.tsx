@@ -1,5 +1,5 @@
 import { CoursePageTemplate } from "@/components/CoursePageTemplate";
-import dhcImage from "@assets/DHC_1766643777282.jpg";
+import dhcImage from "@assets/DHC_1767044138467.jpg";
 
 export default function DefensiveHandgunCourse() {
   // TODO: Query API to check if there are scheduled classes for this course
