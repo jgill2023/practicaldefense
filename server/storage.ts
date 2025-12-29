@@ -828,6 +828,10 @@ export interface IStorage {
   getOnlineCourseEnrollmentsByEmail(email: string): Promise<OnlineCourseEnrollment[]>;
   updateOnlineCourseEnrollment(id: string, data: Partial<InsertOnlineCourseEnrollment & { status?: string; moodleSyncAttempts?: number; moodleSyncError?: string | null; moodleSyncedAt?: Date | null; emailNotificationSent?: boolean; smsNotificationSent?: boolean }>): Promise<OnlineCourseEnrollment>;
   getOnlineCourseEnrollments(): Promise<OnlineCourseEnrollmentWithUser[]>;
+  updateOnlineCourseEnrollmentStatus(id: string, status: string): Promise<OnlineCourseEnrollment>;
+  updateOnlineCourseEnrollmentMoodleInfo(id: string, data: { moodleUserId: number; moodleUsername: string; moodlePassword?: string; moodleCourseId: number; moodleSyncedAt: Date }): Promise<OnlineCourseEnrollment>;
+  updateOnlineCourseEnrollmentMoodleSyncError(id: string, error: string): Promise<OnlineCourseEnrollment>;
+  updateOnlineCourseEnrollmentNotificationStatus(id: string, type: 'email' | 'sms', sent: boolean): Promise<OnlineCourseEnrollment>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -7379,6 +7383,50 @@ export class DatabaseStorage implements IStorage {
       orderBy: [desc(onlineCourseEnrollments.createdAt)],
     });
     return results as OnlineCourseEnrollmentWithUser[];
+  }
+
+  async updateOnlineCourseEnrollmentStatus(id: string, status: string): Promise<OnlineCourseEnrollment> {
+    return this.updateOnlineCourseEnrollment(id, { status });
+  }
+
+  async updateOnlineCourseEnrollmentMoodleInfo(
+    id: string, 
+    data: { 
+      moodleUserId: number; 
+      moodleUsername: string; 
+      moodlePassword?: string; 
+      moodleCourseId: number; 
+      moodleSyncedAt: Date;
+    }
+  ): Promise<OnlineCourseEnrollment> {
+    return this.updateOnlineCourseEnrollment(id, {
+      moodleUserId: data.moodleUserId,
+      moodleUsername: data.moodleUsername,
+      moodlePassword: data.moodlePassword,
+      moodleCourseId: data.moodleCourseId,
+      moodleSyncedAt: data.moodleSyncedAt,
+    });
+  }
+
+  async updateOnlineCourseEnrollmentMoodleSyncError(id: string, error: string): Promise<OnlineCourseEnrollment> {
+    const enrollment = await this.getOnlineCourseEnrollment(id);
+    const currentAttempts = enrollment?.moodleSyncAttempts || 0;
+    return this.updateOnlineCourseEnrollment(id, { 
+      moodleSyncError: error,
+      moodleSyncAttempts: currentAttempts + 1,
+    });
+  }
+
+  async updateOnlineCourseEnrollmentNotificationStatus(
+    id: string, 
+    type: 'email' | 'sms', 
+    sent: boolean
+  ): Promise<OnlineCourseEnrollment> {
+    if (type === 'email') {
+      return this.updateOnlineCourseEnrollment(id, { emailNotificationSent: sent });
+    } else {
+      return this.updateOnlineCourseEnrollment(id, { smsNotificationSent: sent });
+    }
   }
 }
 

@@ -22,6 +22,7 @@ import giftCardRouter from "./giftCards/routes";
 import { calendarRouter } from "./calendar/routes";
 import "./types"; // Import type declarations
 import { generateSitemap, generateRobotsTxt } from "./seo";
+import { enrollStudentInMoodle, getMoodleConfig, testMoodleConnection } from "./moodle";
 
 import { getStripeClient } from './stripeClient';
 
@@ -9492,6 +9493,450 @@ jeremy@abqconcealedcarry.com
       console.error("Error fetching waivers:", error);
       res.status(500).json({ message: "Failed to fetch waivers" });
     }
+  });
+
+  // =============================================
+  // Online Course Enrollment API Endpoints
+  // =============================================
+
+  // NM Gross Receipts Tax rate (Albuquerque combined rate)
+  const NM_GRT_RATE = 0.07875;
+
+  // Server-side pricing map for online courses (prevents price tampering)
+  const ONLINE_COURSE_PRICES: Record<string, number> = {
+    "Online NM Concealed Carry Course": 165,
+  };
+
+  // Initiate online course enrollment and create payment intent
+  app.post('/api/online-course/initiate-enrollment', async (req: any, res) => {
+    await ensureStripeInitialized();
+    if (!stripe) {
+      return res.status(503).json({
+        message: "Payment processing is not configured. Please try again later."
+      });
+    }
+
+    try {
+      const { 
+        firstName, 
+        lastName, 
+        email, 
+        phone, 
+        dateOfBirth, 
+        streetAddress, 
+        city, 
+        state, 
+        zipCode,
+        courseName,
+      } = req.body;
+
+      // Validate required fields
+      if (!firstName || !lastName || !email || !phone || !courseName) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Use server-side pricing to prevent tampering
+      const serverPrice = ONLINE_COURSE_PRICES[courseName];
+      if (!serverPrice) {
+        return res.status(400).json({ message: "Invalid course name" });
+      }
+
+      // Normalize phone number safely
+      const normalizedPhone = normalizePhoneNumber(phone);
+      if (!normalizedPhone) {
+        return res.status(400).json({ message: "Please enter a valid phone number" });
+      }
+
+      // Calculate NM Gross Receipts Tax using server-side price
+      const subtotal = serverPrice;
+      const taxAmount = Math.round(subtotal * NM_GRT_RATE * 100) / 100;
+      const totalAmount = Math.round((subtotal + taxAmount) * 100) / 100;
+      const amountInCents = Math.round(totalAmount * 100);
+
+      // Create Stripe payment intent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amountInCents,
+        currency: 'usd',
+        metadata: {
+          type: 'online_course_enrollment',
+          courseName,
+          studentEmail: email,
+          studentName: `${firstName} ${lastName}`,
+          serverPrice: subtotal.toString(),
+        },
+        receipt_email: email,
+      });
+
+      // Create enrollment record with pending_payment status
+      const enrollment = await storage.createOnlineCourseEnrollment({
+        courseName,
+        firstName,
+        lastName,
+        email,
+        phone: normalizedPhone,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+        streetAddress,
+        city,
+        state,
+        zipCode,
+        status: 'pending_payment',
+        stripePaymentIntentId: paymentIntent.id,
+        amountPaid: subtotal.toFixed(2),
+        taxAmount: taxAmount.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+      });
+
+      res.json({
+        enrollmentId: enrollment.id,
+        clientSecret: paymentIntent.client_secret,
+        subtotal,
+        tax: taxAmount,
+        total: totalAmount,
+      });
+    } catch (error) {
+      console.error("Error initiating online course enrollment:", error);
+      res.status(500).json({ message: "Failed to initiate enrollment" });
+    }
+  });
+
+  // Confirm payment and trigger Moodle enrollment
+  app.post('/api/online-course/confirm-payment', async (req: any, res) => {
+    await ensureStripeInitialized();
+    if (!stripe) {
+      return res.status(503).json({
+        message: "Payment processing is not configured."
+      });
+    }
+
+    try {
+      const { enrollmentId, paymentIntentId } = req.body;
+
+      if (!enrollmentId || !paymentIntentId) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Get enrollment record
+      const enrollment = await storage.getOnlineCourseEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+
+      // Verify payment intent matches
+      if (enrollment.stripePaymentIntentId !== paymentIntentId) {
+        return res.status(400).json({ message: "Payment intent mismatch" });
+      }
+
+      // Verify payment was successful
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      if (paymentIntent.status !== 'succeeded') {
+        await storage.updateOnlineCourseEnrollmentStatus(enrollmentId, 'payment_failed');
+        return res.status(400).json({ message: "Payment not completed" });
+      }
+
+      // Update enrollment status to payment_complete
+      await storage.updateOnlineCourseEnrollmentStatus(enrollmentId, 'payment_complete');
+
+      // Attempt Moodle enrollment
+      const moodleConfig = getMoodleConfig();
+      if (moodleConfig) {
+        await storage.updateOnlineCourseEnrollmentStatus(enrollmentId, 'moodle_sync_pending');
+        
+        const moodleResult = await enrollStudentInMoodle(moodleConfig, {
+          email: enrollment.email,
+          firstName: enrollment.firstName,
+          lastName: enrollment.lastName,
+          phone: enrollment.phone,
+        });
+
+        if (moodleResult.success) {
+          // Update enrollment with Moodle credentials
+          await storage.updateOnlineCourseEnrollmentMoodleInfo(enrollmentId, {
+            moodleUserId: moodleResult.moodleUserId!,
+            moodleUsername: moodleResult.moodleUsername!,
+            moodlePassword: moodleResult.moodlePassword,
+            moodleCourseId: moodleConfig.courseId,
+            moodleSyncedAt: new Date(),
+          });
+          await storage.updateOnlineCourseEnrollmentStatus(enrollmentId, 'completed');
+
+          // Send notifications with Moodle credentials
+          await sendMoodleCredentialsNotifications(enrollment, moodleResult.moodleUsername!, moodleResult.moodlePassword);
+
+          res.json({
+            success: true,
+            message: "Enrollment complete! Check your email and phone for login details.",
+            moodleUsername: moodleResult.moodleUsername,
+          });
+        } else {
+          // Moodle sync failed - mark for retry
+          await storage.updateOnlineCourseEnrollmentMoodleSyncError(
+            enrollmentId, 
+            moodleResult.error || 'Unknown Moodle error'
+          );
+          await storage.updateOnlineCourseEnrollmentStatus(enrollmentId, 'moodle_sync_failed');
+          
+          // Still return success to user - payment was processed
+          res.json({
+            success: true,
+            message: "Payment successful! Your course access is being set up. You'll receive your login details shortly.",
+            pendingMoodleSync: true,
+          });
+        }
+      } else {
+        // No Moodle config - mark as payment complete only
+        console.warn('Moodle not configured - enrollment will need manual processing');
+        res.json({
+          success: true,
+          message: "Payment successful! Your course access will be set up and you'll receive your login details shortly.",
+          pendingMoodleSync: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error confirming online course payment:", error);
+      res.status(500).json({ message: "Failed to confirm payment" });
+    }
+  });
+
+  // Helper function to send Moodle credentials via email and SMS
+  async function sendMoodleCredentialsNotifications(
+    enrollment: any,
+    moodleUsername: string,
+    moodlePassword?: string
+  ) {
+    const moodleUrl = process.env.MOODLE_URL || 'your Moodle site';
+    
+    // Only send password if it was newly created (not an existing user)
+    const loginDetails = moodlePassword 
+      ? `\n\nYour login credentials:\nUsername: ${moodleUsername}\nPassword: ${moodlePassword}\n\nPlease change your password after first login.`
+      : `\n\nYour existing Moodle account (${moodleUsername}) has been enrolled in the course.`;
+
+    const emailBody = `Dear ${enrollment.firstName},
+
+Thank you for enrolling in ${enrollment.courseName}!
+
+You can now access your course at: ${moodleUrl}
+${loginDetails}
+
+If you have any questions, please don't hesitate to contact us.
+
+Best regards,
+Practical Defense Training LLC`;
+
+    const smsMessage = moodlePassword 
+      ? `Welcome to ${enrollment.courseName}! Your Moodle login: Username: ${moodleUsername}, Password: ${moodlePassword}. Login at ${moodleUrl}`
+      : `Welcome to ${enrollment.courseName}! Your existing Moodle account (${moodleUsername}) has been enrolled. Login at ${moodleUrl}`;
+
+    // Send email notification if email is available
+    if (enrollment.email) {
+      try {
+        const emailService = new NotificationEmailService();
+        await emailService.sendEmail({
+          to: enrollment.email,
+          subject: `Your ${enrollment.courseName} Course Access`,
+          text: emailBody,
+        });
+        await storage.updateOnlineCourseEnrollmentNotificationStatus(enrollment.id, 'email', true);
+        console.log(`Email notification sent to ${enrollment.email}`);
+      } catch (error) {
+        console.error('Failed to send email notification:', error);
+      }
+    } else {
+      console.warn(`Cannot send email notification: no email for enrollment ${enrollment.id}`);
+    }
+
+    // Send SMS notification if phone is available
+    if (enrollment.phone) {
+      try {
+        await sendSms({
+          to: enrollment.phone,
+          body: smsMessage,
+        });
+        await storage.updateOnlineCourseEnrollmentNotificationStatus(enrollment.id, 'sms', true);
+        console.log(`SMS notification sent to ${enrollment.phone}`);
+      } catch (error) {
+        console.error('Failed to send SMS notification:', error);
+      }
+    } else {
+      console.warn(`Cannot send SMS notification: no phone for enrollment ${enrollment.id}`);
+    }
+  }
+
+  // Retry Moodle sync for failed enrollments (admin route)
+  app.post('/api/online-course/retry-moodle-sync/:enrollmentId', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      const { enrollmentId } = req.params;
+
+      const enrollment = await storage.getOnlineCourseEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+
+      if (enrollment.status !== 'moodle_sync_failed' && enrollment.status !== 'payment_complete') {
+        return res.status(400).json({ message: "Enrollment is not eligible for Moodle sync retry" });
+      }
+
+      const moodleConfig = getMoodleConfig();
+      if (!moodleConfig) {
+        return res.status(503).json({ message: "Moodle is not configured" });
+      }
+
+      await storage.updateOnlineCourseEnrollmentStatus(enrollmentId, 'moodle_sync_pending');
+
+      const moodleResult = await enrollStudentInMoodle(moodleConfig, {
+        email: enrollment.email,
+        firstName: enrollment.firstName,
+        lastName: enrollment.lastName,
+        phone: enrollment.phone,
+      });
+
+      if (moodleResult.success) {
+        await storage.updateOnlineCourseEnrollmentMoodleInfo(enrollmentId, {
+          moodleUserId: moodleResult.moodleUserId!,
+          moodleUsername: moodleResult.moodleUsername!,
+          moodlePassword: moodleResult.moodlePassword,
+          moodleCourseId: moodleConfig.courseId,
+          moodleSyncedAt: new Date(),
+        });
+        await storage.updateOnlineCourseEnrollmentStatus(enrollmentId, 'completed');
+
+        // Send notifications
+        await sendMoodleCredentialsNotifications(enrollment, moodleResult.moodleUsername!, moodleResult.moodlePassword);
+
+        res.json({
+          success: true,
+          message: "Moodle sync successful",
+          moodleUsername: moodleResult.moodleUsername,
+        });
+      } else {
+        await storage.updateOnlineCourseEnrollmentMoodleSyncError(
+          enrollmentId, 
+          moodleResult.error || 'Unknown Moodle error'
+        );
+        await storage.updateOnlineCourseEnrollmentStatus(enrollmentId, 'moodle_sync_failed');
+        
+        res.status(500).json({
+          success: false,
+          message: "Moodle sync failed",
+          error: moodleResult.error,
+        });
+      }
+    } catch (error) {
+      console.error("Error retrying Moodle sync:", error);
+      res.status(500).json({ message: "Failed to retry Moodle sync" });
+    }
+  });
+
+  // Get all online course enrollments (admin route)
+  app.get('/api/online-course/enrollments', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      const enrollments = await storage.getOnlineCourseEnrollments();
+      res.json(enrollments);
+    } catch (error) {
+      console.error("Error fetching online course enrollments:", error);
+      res.status(500).json({ message: "Failed to fetch enrollments" });
+    }
+  });
+
+  // Get single online course enrollment (admin route)
+  app.get('/api/online-course/enrollments/:id', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const enrollment = await storage.getOnlineCourseEnrollment(id);
+      
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+
+      res.json(enrollment);
+    } catch (error) {
+      console.error("Error fetching online course enrollment:", error);
+      res.status(500).json({ message: "Failed to fetch enrollment" });
+    }
+  });
+
+  // Test Moodle connection (admin route)
+  app.get('/api/online-course/test-moodle', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
+    try {
+      const result = await testMoodleConnection();
+      res.json(result);
+    } catch (error) {
+      console.error("Error testing Moodle connection:", error);
+      res.status(500).json({ success: false, message: "Failed to test connection" });
+    }
+  });
+
+  // Stripe webhook for online course payments
+  app.post('/api/online-course/webhook', async (req: any, res) => {
+    await ensureStripeInitialized();
+    if (!stripe) {
+      return res.status(503).json({ message: "Stripe not configured" });
+    }
+
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_ONLINE_COURSE_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      console.warn('STRIPE_ONLINE_COURSE_WEBHOOK_SECRET not set');
+      return res.status(400).json({ message: "Webhook not configured" });
+    }
+
+    let event: Stripe.Event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err: any) {
+      console.error('Webhook signature verification failed:', err.message);
+      return res.status(400).json({ message: `Webhook Error: ${err.message}` });
+    }
+
+    // Handle the event
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      
+      if (paymentIntent.metadata?.type === 'online_course_enrollment') {
+        // Find enrollment and process
+        const enrollment = await storage.getOnlineCourseEnrollmentByPaymentIntent(paymentIntent.id);
+        if (enrollment && enrollment.status === 'pending_payment') {
+          // Trigger the same flow as confirm-payment endpoint
+          try {
+            await storage.updateOnlineCourseEnrollmentStatus(enrollment.id, 'payment_complete');
+            
+            const moodleConfig = getMoodleConfig();
+            if (moodleConfig) {
+              await storage.updateOnlineCourseEnrollmentStatus(enrollment.id, 'moodle_sync_pending');
+              
+              const moodleResult = await enrollStudentInMoodle(moodleConfig, {
+                email: enrollment.email,
+                firstName: enrollment.firstName,
+                lastName: enrollment.lastName,
+                phone: enrollment.phone,
+              });
+
+              if (moodleResult.success) {
+                await storage.updateOnlineCourseEnrollmentMoodleInfo(enrollment.id, {
+                  moodleUserId: moodleResult.moodleUserId!,
+                  moodleUsername: moodleResult.moodleUsername!,
+                  moodlePassword: moodleResult.moodlePassword,
+                  moodleCourseId: moodleConfig.courseId,
+                  moodleSyncedAt: new Date(),
+                });
+                await storage.updateOnlineCourseEnrollmentStatus(enrollment.id, 'completed');
+                await sendMoodleCredentialsNotifications(enrollment, moodleResult.moodleUsername!, moodleResult.moodlePassword);
+              } else {
+                await storage.updateOnlineCourseEnrollmentMoodleSyncError(
+                  enrollment.id, 
+                  moodleResult.error || 'Unknown Moodle error'
+                );
+                await storage.updateOnlineCourseEnrollmentStatus(enrollment.id, 'moodle_sync_failed');
+              }
+            }
+          } catch (error) {
+            console.error('Error processing webhook payment:', error);
+          }
+        }
+      }
+    }
+
+    res.json({ received: true });
   });
 
   const httpServer = createServer(app);
