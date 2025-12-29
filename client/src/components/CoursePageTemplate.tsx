@@ -116,17 +116,6 @@ export function CoursePageTemplate({
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
         
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-          <Link href="/schedule-list">
-            <Button 
-              variant="ghost" 
-              className="mb-6 text-zinc-400 hover:text-[#006d7a] hover:bg-transparent"
-              data-testid="button-back-catalog"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Training Catalog
-            </Button>
-          </Link>
-          
           <div className="flex items-center gap-4 mb-4">
             <Badge className={`${levelColors[level]} text-white px-3 py-1`}>
               {level}
