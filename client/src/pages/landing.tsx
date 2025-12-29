@@ -1295,7 +1295,7 @@ export default function Landing() {
                 <span className="text-white font-semibold">PRACTICAL</span>.
               </p>
               
-              <p className="text-lg leading-relaxed">
+              <p className="text-[16px]">
                 Your safety and protection begins with <span className="text-white font-semibold">you</span>. 
                 It's <span className="text-white font-semibold">your life</span>. 
                 It's <span className="text-white font-semibold">your safety</span> and protection. 
