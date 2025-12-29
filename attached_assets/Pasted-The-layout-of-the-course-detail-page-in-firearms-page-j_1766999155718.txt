@@ -1,0 +1,36 @@
+The layout of the course detail page in firearms_page.jsx is designed as a modern, conversion-focused split-view, utilizing a high-contrast "Tactical Dark" aesthetic. It prioritizes information hierarchy, ensuring that technical requirements are balanced with clear calls to action.
+
+Here is a breakdown of the structural components:
+
+1. The Immersive Hero Header
+Visual Background: Uses a large, 50vh (half-screen) height with a grayscale background image softened by a deep zinc-950 gradient. This ensures the text remains legible while maintaining a "gritty" professional feel.
+
+Breadcrumb Navigation: A "Back to Training Catalog" button is placed at the top left to ensure easy navigation.
+
+Primary Identity: The course title is rendered in a heavy, italicized, uppercase font to signal authority, paired with a vibrant orange badge indicating the skill level (Beginner, Intermediate, or Advanced).
+
+2. The Asymmetric Two-Column Grid
+The main body uses a 3-column grid system (on desktop) where the content is weighted 2:1.
+
+The Left Column (Main Content - 2/3 width):
+
+Overview Section: A clean text block followed by a 2-column icon grid for quick-reference data like "Duration" and "Location."
+
+Vertical Curriculum Timeline: A custom "stepper" UI. It uses numbered circles connected by vertical lines to visualize the training progression from classroom theory to live-fire drills (the "crawl-walk-run" methodology).
+
+Modular Gear Checklist: Encapsulated in a distinct zinc-900 card. It uses a 2-column grid of checkmarks for the equipment list and features a "Safety Warning" box at the bottom for rental information.
+
+Interactive FAQ: A vertical stack of accordion elements (using HTML <details> and <summary>) to keep the page clean while providing deep-dive administrative info.
+
+The Right Column (Sticky Sidebar - 1/3 width):
+
+Sticky Registration Card: This is the most critical UI element. It is pinned to the top of the viewport as the user scrolls. It highlights the price, specific session timing, and an "urgency" indicator (Open Slots remaining).
+
+Primary CTA: A large, full-width orange-600 button designed to be the most clickable element on the screen.
+
+Logistics Module: Below the registration card sits a secondary module containing a map placeholder and a "Open in Maps" button to handle range logistics.
+
+3. Responsive Adaptability
+Mobile View: The 3-column grid collapses into a single-column stack. The sticky sidebar moves below the curriculum, and the gear checklist switches from two columns to one to maintain touch-friendly targets.
+
+Typography: The layout uses "tracking-tighter" on headings for a compressed, modern look, while body text uses "leading-relaxed" for high readability against the dark background.

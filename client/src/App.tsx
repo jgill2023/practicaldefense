@@ -46,6 +46,9 @@ import MerchStore from "@/pages/store";
 import GiftCardsPage from "@/pages/gift-cards";
 import GiftCardManagement from "@/pages/gift-card-management";
 import CourseDetail from "@/pages/course-detail";
+import NMConcealedCarryCourse from "@/pages/nmccl";
+import OnlineCCWClass from "@/pages/online-ccw-class";
+import DefensiveHandgunCourse from "@/pages/defensive-handgun";
 import RACCProgram from "@/pages/racc-program";
 import Register from "@/pages/register";
 import FtaWaiverPage from "@/pages/fta-waiver";
@@ -146,6 +149,9 @@ function Router() {
       <Route path="/schedule-list" component={ScheduleList} />
       <Route path="/schedule-calendar" component={ScheduleCalendar} />
       <Route path="/course/:id" component={CourseDetail} />
+      <Route path="/nmccl" component={NMConcealedCarryCourse} />
+      <Route path="/online-ccw-class" component={OnlineCCWClass} />
+      <Route path="/defensive-handgun" component={DefensiveHandgunCourse} />
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/terms-of-service" component={TermsOfServicePage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />
