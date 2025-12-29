@@ -907,7 +907,7 @@ export default function Landing() {
                       </p>
                       <div className="flex items-center gap-2 text-white/60 text-sm">
                         <Clock className="h-4 w-4" />
-                        <span>8 Hours</span>
+                        <span>8 or 16 Hours</span>
                       </div>
                     </div>
                   </div>
