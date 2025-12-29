@@ -81,7 +81,19 @@ async function getCredentialsFromDatabase(): Promise<{ secretKey: string; publis
 }
 
 async function getCredentials(): Promise<{ secretKey: string; publishableKey: string | null }> {
-  // First try to get credentials from database (admin-entered keys)
+  // First priority: Environment variable secrets (manually entered)
+  const envSecretKey = process.env.STRIPE_SECRET_KEY;
+  const envPublishableKey = process.env.VITE_STRIPE_PUBLIC_KEY;
+  
+  if (envSecretKey) {
+    console.log('Using Stripe credentials from environment secrets');
+    return {
+      secretKey: envSecretKey,
+      publishableKey: envPublishableKey || null,
+    };
+  }
+
+  // Second priority: Database credentials (admin-entered keys)
   const dbCredentials = await getCredentialsFromDatabase();
   if (dbCredentials) {
     console.log('Using Stripe credentials from database');
