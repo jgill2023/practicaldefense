@@ -151,7 +151,7 @@ function Router() {
       <Route path="/course/:id" component={CourseDetail} />
       <Route path="/nmccl" component={NMConcealedCarryCourse} />
       <Route path="/online-nm-concealed-carry-course" component={OnlineCCWClass} />
-      <Route path="/defensive-handgun" component={DefensiveHandgunCourse} />
+      <Route path="/defensive-handgun-course" component={DefensiveHandgunCourse} />
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/terms-of-service" component={TermsOfServicePage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />
