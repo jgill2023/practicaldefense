@@ -117,7 +117,7 @@ export function CoursePageTemplate({
         
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
           <div className="flex items-center gap-4 mb-4">
-            <Badge className={`${levelColors[level]} text-white px-3 py-1`}>
+            <Badge className="inline-flex items-center rounded-full border text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent hover:bg-primary/80 text-white px-3 py-1 bg-[#006d7a]">
               {level}
             </Badge>
           </div>
