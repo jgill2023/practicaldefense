@@ -1208,7 +1208,7 @@ export default function Landing() {
             {/* Right Column - Stacked Courses */}
             <div className="flex flex-col gap-6 aspect-[5/4]">
               {/* Top Right - Concealed Carry Course */}
-              <Link href="/schedule-list" className="block group flex-1">
+              <Link href="/nmccl" className="block group flex-1">
                 <div 
                   className="relative h-full w-full rounded-[4px] overflow-hidden cursor-pointer bg-zinc-900 group-hover:shadow-[0_8px_30px_rgba(180,180,180,0.15)] transition-shadow duration-300"
                   data-testid="featured-course-ccw"

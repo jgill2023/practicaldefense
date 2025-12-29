@@ -268,24 +268,47 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                                 <div className="mt-3 pt-3 border-t">
                                   <p className="px-3 py-1 text-sm font-medium text-muted-foreground flex items-center gap-2 mb-2">
                                     <BookOpen className="h-4 w-4" />
-                                    Course Offerings
+                                    Featured Courses
                                   </p>
-                                  {activeCourses.length > 0 ? (
-                                    <div className="grid grid-cols-3 gap-3">
-                                      {activeCourses.map((course) => (
-                                        <NavigationMenuLink key={course.id} asChild>
-                                          <Link 
-                                            href={`/course/${course.id}`} 
-                                            className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer text-sm pt-[4px] pb-[4px] pl-[4px] pr-[4px]"
-                                            data-testid={`link-course-${course.id}`}
-                                          >
-                                            {course.title}
-                                          </Link>
-                                        </NavigationMenuLink>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <p className="px-3 py-2 text-sm text-muted-foreground">No courses available</p>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <NavigationMenuLink asChild>
+                                      <Link 
+                                        href="/nmccl" 
+                                        className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer text-sm pt-[4px] pb-[4px] pl-[4px] pr-[4px]"
+                                        data-testid="link-course-nmccl"
+                                      >
+                                        NM Concealed Carry
+                                      </Link>
+                                    </NavigationMenuLink>
+                                    <NavigationMenuLink asChild>
+                                      <Link 
+                                        href="/online-nm-concealed-carry-course" 
+                                        className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer text-sm pt-[4px] pb-[4px] pl-[4px] pr-[4px]"
+                                        data-testid="link-course-online-nmccl"
+                                      >
+                                        Online NM CCW
+                                      </Link>
+                                    </NavigationMenuLink>
+                                  </div>
+                                  {activeCourses.length > 0 && (
+                                    <>
+                                      <p className="px-3 py-3 text-sm font-medium text-muted-foreground flex items-center gap-2 mt-3">
+                                        All Courses
+                                      </p>
+                                      <div className="grid grid-cols-3 gap-3">
+                                        {activeCourses.map((course) => (
+                                          <NavigationMenuLink key={course.id} asChild>
+                                            <Link 
+                                              href={`/course/${course.id}`} 
+                                              className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer text-sm pt-[4px] pb-[4px] pl-[4px] pr-[4px]"
+                                              data-testid={`link-course-${course.id}`}
+                                            >
+                                              {course.title}
+                                            </Link>
+                                          </NavigationMenuLink>
+                                        ))}
+                                      </div>
+                                    </>
                                   )}
                                 </div>
                               </div>
