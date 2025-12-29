@@ -292,7 +292,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                                     <NavigationMenuLink asChild>
                                       <Link 
                                         href="/defensive-handgun-course" 
-                                        className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer text-sm pt-[4px] pb-[4px] pl-[4px] pr-[4px]"
+                                        className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer pt-[4px] pb-[4px] pl-[4px] pr-[4px] text-[16px] font-semibold"
                                         data-testid="link-course-defensive-handgun"
                                       >
                                         Defensive Handgun
