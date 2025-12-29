@@ -1,5 +1,5 @@
 import { CoursePageTemplate } from "@/components/CoursePageTemplate";
-import ccwRangeImage from "@assets/CCW-Range_1766643725051.jpg";
+import ccwRangeImage from "@assets/DSC_0032_1767029878856.jpg";
 
 export default function NMConcealedCarryCourse() {
   // TODO: Query API to check if there are scheduled classes for this course
