@@ -480,92 +480,92 @@ function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSc
   );
 }
 
+function TestimonialCard({ review }: { review: typeof googleReviews[0] }) {
+  return (
+    <div 
+      className="bg-zinc-900/50 backdrop-blur-sm rounded-2xl p-6 border border-zinc-800 mb-4"
+      data-testid={`testimonial-card-${review.id}`}
+    >
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 
+                        flex items-center justify-center text-white font-semibold text-sm
+                        border border-zinc-600">
+          {review.author.charAt(0)}
+        </div>
+        <div>
+          <h4 className="font-semibold text-white text-base leading-tight">
+            {review.author}
+          </h4>
+          <div className="flex items-center gap-1 mt-0.5">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`w-3 h-3 ${
+                  i < review.rating 
+                    ? "text-amber-400 fill-amber-400" 
+                    : "text-zinc-600"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+      <p className="text-zinc-300 text-sm leading-relaxed">
+        "{review.quote}"
+      </p>
+    </div>
+  );
+}
+
+function ScrollingColumn({ reviews, direction, speed = 30 }: { 
+  reviews: typeof googleReviews; 
+  direction: 'up' | 'down';
+  speed?: number;
+}) {
+  const duplicatedReviews = [...reviews, ...reviews, ...reviews];
+  const animationDuration = reviews.length * speed;
+  
+  return (
+    <div className="relative h-[500px] overflow-hidden group">
+      <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-zinc-900 to-transparent z-10 pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-zinc-900 to-transparent z-10 pointer-events-none" />
+      
+      <div 
+        className={`flex flex-col group-hover:[animation-play-state:paused] ${
+          direction === 'up' 
+            ? 'animate-scroll-up' 
+            : 'animate-scroll-down'
+        }`}
+        style={{ 
+          animationDuration: `${animationDuration}s`,
+          animationTimingFunction: 'linear',
+          animationIterationCount: 'infinite',
+        }}
+      >
+        {duplicatedReviews.map((review, index) => (
+          <TestimonialCard key={`${review.id}-${index}`} review={review} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TestimonialGrid() {
-  const [showAll, setShowAll] = useState(false);
-  const initialCount = 6;
-  const displayedReviews = showAll ? googleReviews : googleReviews.slice(0, initialCount);
+  const column1 = googleReviews.filter((_, i) => i % 3 === 0);
+  const column2 = googleReviews.filter((_, i) => i % 3 === 1);
+  const column3 = googleReviews.filter((_, i) => i % 3 === 2);
 
   return (
     <div data-testid="testimonial-grid" className="relative">
-      <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-        {displayedReviews.map((review, index) => (
-          <div 
-            key={review.id}
-            className="break-inside-avoid group"
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <div 
-              className="bg-zinc-900/50 backdrop-blur-sm rounded-2xl p-6 border border-zinc-800 
-                         hover:border-zinc-600 hover:bg-zinc-800/60 hover:-translate-y-1 hover:shadow-xl
-                         transition-all duration-300 ease-out"
-              data-testid={`testimonial-card-${review.id}`}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-800 
-                                flex items-center justify-center text-white font-semibold text-sm
-                                border border-zinc-600">
-                  {review.author.charAt(0)}
-                </div>
-                <div>
-                  <h4 className="font-semibold text-white text-base leading-tight">
-                    {review.author}
-                  </h4>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-3 h-3 ${
-                          i < review.rating 
-                            ? "text-amber-400 fill-amber-400" 
-                            : "text-zinc-600"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <p className="text-zinc-300 text-sm leading-relaxed">
-                "{review.quote}"
-              </p>
-            </div>
-          </div>
-        ))}
+      <div className="hidden lg:grid lg:grid-cols-3 gap-6">
+        <ScrollingColumn reviews={column1} direction="up" speed={25} />
+        <ScrollingColumn reviews={column2} direction="down" speed={28} />
+        <ScrollingColumn reviews={column3} direction="up" speed={26} />
       </div>
       
-      {!showAll && googleReviews.length > initialCount && (
-        <div className="relative mt-8">
-          <div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-t from-zinc-900 to-transparent pointer-events-none" />
-          <div className="flex justify-center">
-            <button
-              onClick={() => setShowAll(true)}
-              className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium 
-                         rounded-full border border-zinc-700 hover:border-zinc-500
-                         transition-all duration-300 flex items-center gap-2
-                         hover:shadow-lg hover:shadow-zinc-900/50"
-              data-testid="testimonial-show-more"
-            >
-              Show More Reviews
-              <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {showAll && googleReviews.length > initialCount && (
-        <div className="flex justify-center mt-8">
-          <button
-            onClick={() => setShowAll(false)}
-            className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium 
-                       rounded-full border border-zinc-700 hover:border-zinc-500
-                       transition-all duration-300 flex items-center gap-2
-                       hover:shadow-lg hover:shadow-zinc-900/50"
-            data-testid="testimonial-show-less"
-          >
-            Show Less
-            <ChevronUp className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      <div className="lg:hidden">
+        <ScrollingColumn reviews={googleReviews} direction="up" speed={20} />
+      </div>
       
       <div className="text-center mt-8">
         <p className="text-sm text-zinc-500">

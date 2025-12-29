@@ -165,6 +165,22 @@ export default {
             transform: "scale(1)",
           },
         },
+        "scroll-up": {
+          from: {
+            transform: "translateY(0)",
+          },
+          to: {
+            transform: "translateY(-33.333%)",
+          },
+        },
+        "scroll-down": {
+          from: {
+            transform: "translateY(-33.333%)",
+          },
+          to: {
+            transform: "translateY(0)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -175,6 +191,8 @@ export default {
         "slide-up": "slide-up 0.25s ease-out",
         "slide-in-left": "slide-in-left 0.25s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
+        "scroll-up": "scroll-up 30s linear infinite",
+        "scroll-down": "scroll-down 30s linear infinite",
       },
       screens: {
         'xs': '475px',
