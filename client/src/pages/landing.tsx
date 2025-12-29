@@ -920,7 +920,7 @@ export default function Landing() {
       {/* Customer Testimonials */}
       <section className="bg-zinc-900 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="mb-12 text-left">
             <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
               What Our Students Say
             </TitleCard>
