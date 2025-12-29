@@ -3036,3 +3036,90 @@ export type StudentFeedbackWithDetails = StudentFeedback & {
   student?: User;
   instructor?: User;
 };
+
+// Online Course Enrollment Status Enum
+export const onlineCourseEnrollmentStatusEnum = pgEnum("online_course_enrollment_status", [
+  "pending_payment",
+  "payment_failed", 
+  "payment_complete",
+  "moodle_sync_pending",
+  "moodle_sync_failed",
+  "completed",
+  "refunded",
+  "cancelled"
+]);
+
+// Online Course Enrollments table - for tracking Moodle course enrollments
+export const onlineCourseEnrollments = pgTable("online_course_enrollments", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'set null' }),
+  courseName: varchar("course_name", { length: 255 }).notNull(),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  dateOfBirth: timestamp("date_of_birth"),
+  streetAddress: varchar("street_address", { length: 255 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 2 }),
+  zipCode: varchar("zip_code", { length: 10 }),
+  status: onlineCourseEnrollmentStatusEnum("status").notNull().default("pending_payment"),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+  stripeChargeId: varchar("stripe_charge_id", { length: 255 }),
+  amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }),
+  moodleUserId: integer("moodle_user_id"),
+  moodleUsername: varchar("moodle_username", { length: 100 }),
+  moodlePassword: varchar("moodle_password", { length: 100 }),
+  moodleCourseId: integer("moodle_course_id"),
+  moodleEnrollmentId: integer("moodle_enrollment_id"),
+  moodleSyncAttempts: integer("moodle_sync_attempts").default(0),
+  moodleSyncError: text("moodle_sync_error"),
+  moodleSyncedAt: timestamp("moodle_synced_at"),
+  emailNotificationSent: boolean("email_notification_sent").default(false),
+  smsNotificationSent: boolean("sms_notification_sent").default(false),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Relations for Online Course Enrollments
+export const onlineCourseEnrollmentsRelations = relations(onlineCourseEnrollments, ({ one }) => ({
+  user: one(users, {
+    fields: [onlineCourseEnrollments.userId],
+    references: [users.id],
+  }),
+}));
+
+// Insert schema for Online Course Enrollments
+export const insertOnlineCourseEnrollmentSchema = createInsertSchema(onlineCourseEnrollments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  moodleSyncAttempts: true,
+  moodleSyncError: true,
+  moodleSyncedAt: true,
+  emailNotificationSent: true,
+  smsNotificationSent: true,
+});
+
+// Types for Online Course Enrollments
+export type InsertOnlineCourseEnrollment = z.infer<typeof insertOnlineCourseEnrollmentSchema>;
+export type OnlineCourseEnrollment = typeof onlineCourseEnrollments.$inferSelect;
+
+// Extended type with user relation
+export type OnlineCourseEnrollmentWithUser = OnlineCourseEnrollment & {
+  user?: User;
+};
+
+// Enrollment status type
+export type OnlineCourseEnrollmentStatus = 
+  | 'pending_payment' 
+  | 'payment_failed' 
+  | 'payment_complete'
+  | 'moodle_sync_pending' 
+  | 'moodle_sync_failed'
+  | 'completed' 
+  | 'refunded'
+  | 'cancelled';
