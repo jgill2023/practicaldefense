@@ -3,12 +3,8 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  ArrowLeft, 
   Clock, 
   MapPin, 
-  DollarSign,
-  Target,
-  BookOpen,
   CheckCircle,
   AlertTriangle,
   ChevronDown
@@ -225,8 +221,7 @@ export function CoursePageTemplate({
                 {/* Registration Card */}
                 <div className="bg-card rounded-xl p-6 border border-border">
                   <div className="text-center mb-6">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <DollarSign className="h-6 w-6 text-[#006d7a]" />
+                    <div className="mb-2">
                       <span className="text-4xl font-bold text-foreground">{details.price}</span>
                     </div>
                     <p className="text-muted-foreground text-sm">per student</p>
