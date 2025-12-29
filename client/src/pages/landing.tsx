@@ -1288,7 +1288,7 @@ export default function Landing() {
             </p>
             
             <div className="border-t border-b border-zinc-700 py-8 space-y-6 text-[14px] pt-[0px] pb-[0px]">
-              <p className="text-[16px]">
+              <p className="text-[18px] pt-[4px] pb-[4px]">
                 Your safety and protection begins with <span className="text-white font-semibold">you</span>. 
                 It's <span className="text-white font-semibold">your life</span>. 
                 It's <span className="text-white font-semibold">your safety</span> and protection. 
