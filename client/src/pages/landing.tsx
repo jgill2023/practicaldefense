@@ -1126,23 +1126,23 @@ export default function Landing() {
         <div className="relative z-20 text-white px-4 sm:px-6 lg:px-0 w-full max-w-7xl mx-auto h-full flex items-center">
           <div className="grid grid-cols-1 gap-8 lg:gap-16 w-full items-center lg:[grid-template-columns:55%_45%]">
             {/* Left side - Title split over 3 rows */}
-            <div className="animate-fade-in">
-              <h1 className="font-display uppercase tracking-tight leading-[0.8] pl-[0px] pr-[0px] pt-[0px] pb-[0px] mt-[0px] mb-[0px]">
-                <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-white text-left font-extralight pt-[20px] pb-[20px]">PRACTICAL</span>
-                <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-left text-[#ffffff] md:-mt-8 lg:-mt-10 md:ml-32 lg:ml-40 pt-[0px] pb-[0px] mt-[-50px] mb-[-50px] ml-[70px] mr-[70px] font-thin">DEFENSE</span>
-                <span className="block text-6xl md:text-8xl lg:text-9xl xl:text-[10rem] text-[#ffffff] md:-mt-8 lg:-mt-10 md:ml-16 lg:ml-20 ml-[20px] mr-[20px] pt-[20px] pb-[20px] mt-[-10px] mb-[-10px] font-thin">TRAINING</span>
+            <div className="animate-fade-in px-4 sm:px-0">
+              <h1 className="font-display uppercase tracking-tight leading-[0.8] pt-[20px] pb-[20px] mt-[0px] mb-[0px]">
+                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-white text-center sm:text-left font-extralight">PRACTICAL</span>
+                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-center sm:text-left text-[#ffffff] md:-mt-8 lg:-mt-10 md:ml-32 lg:ml-40 sm:ml-8 mt-[-30px] sm:mt-[-50px] mb-[-30px] sm:mb-[-50px] font-thin">DEFENSE</span>
+                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-[#ffffff] text-center sm:text-left md:-mt-8 lg:-mt-10 md:ml-16 lg:ml-20 sm:ml-4 pt-[20px] pb-[20px] mt-[-10px] mb-[-10px] font-thin">TRAINING</span>
               </h1>
             </div>
             
             {/* Right side - Subtitle and buttons */}
-            <div className="flex flex-col items-start lg:items-start justify-center animate-fade-in sm:pl-6 lg:pl-0 lg:pr-8 pl-[0px] pr-[0px] ml-[-100px] mr-[-100px]" style={{ animationDelay: '0.15s' }}>
-              <p className="text-xl md:text-2xl lg:text-3xl font-body tracking-wide mb-8 text-zinc-200 font-normal">
+            <div className="flex flex-col items-center lg:items-start justify-center animate-fade-in pl-4 sm:pl-6 lg:pl-0 lg:pr-8 pr-4" style={{ animationDelay: '0.15s' }}>
+              <p className="text-lg md:text-2xl lg:text-3xl font-body tracking-wide mb-8 text-zinc-200 font-normal text-center lg:text-left">
                 You Don't Have to be Defenseless
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto sm:justify-start justify-center animate-fade-in" style={{ animationDelay: '0.3s' }}>
                 <Button
                   size="lg"
-                  className="hover:bg-[#006d7a] text-white font-display uppercase tracking-widest px-8 py-6 text-lg shadow-lg bg-[#004149] border border-zinc-700 rounded-sm"
+                  className="hover:bg-[#006d7a] text-white font-display uppercase tracking-widest px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-lg shadow-lg bg-[#004149] border border-zinc-700 rounded-sm whitespace-nowrap"
                   onClick={() => setLocation('/schedule-list')}
                   data-testid="button-browse-courses"
                 >
@@ -1150,7 +1150,7 @@ export default function Landing() {
                 </Button>
                 <Button
                   size="lg"
-                  className="hover:bg-gray-100 text-black font-display uppercase tracking-widest px-8 py-6 text-lg bg-white rounded-sm"
+                  className="hover:bg-gray-100 text-black font-display uppercase tracking-widest px-6 sm:px-8 py-5 sm:py-6 text-sm sm:text-lg bg-white rounded-sm whitespace-nowrap"
                   onClick={() => setLocation('/online-nm-concealed-carry-course')}
                   data-testid="button-online-ccw"
                 >
