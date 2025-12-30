@@ -623,7 +623,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                       Products
                     </Link>
                   )}
-                  <Link href="/student-resources" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-student-resources">
+                  <Link href="/student-resources" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors text-[12px]" data-testid="link-secondary-student-resources">
                     Student Resources
                   </Link>
                   <Link href="/student-portal" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-student-dashboard">
