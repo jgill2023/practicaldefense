@@ -1129,8 +1129,8 @@ export default function Landing() {
             <div className="animate-fade-in px-4 sm:px-0">
               <h1 className="font-display uppercase tracking-tight leading-[0.8] pt-[20px] pb-[20px] mt-[0px] mb-[0px]">
                 <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-white text-center lg:text-left font-extralight">PRACTICAL</span>
-                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-center lg:text-left text-[#ffffff] lg:-mt-10 lg:ml-40 mt-[-20px] mb-[-20px] font-thin">DEFENSE</span>
-                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-[#ffffff] text-center lg:text-left lg:-mt-10 lg:ml-20 pt-[20px] pb-[20px] mt-[-10px] mb-[-10px] font-thin">TRAINING</span>
+                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-center lg:text-left text-[#ffffff] lg:-mt-10 lg:ml-40 mt-2 mb-2 lg:mt-0 lg:mb-0 font-thin">DEFENSE</span>
+                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-[#ffffff] text-center lg:text-left lg:-mt-10 lg:ml-20 pt-[20px] pb-[20px] mt-2 lg:mt-0 mb-[-10px] font-thin">TRAINING</span>
               </h1>
             </div>
             
@@ -1206,11 +1206,11 @@ export default function Landing() {
             </Link>
 
             {/* Right Column - Stacked Courses */}
-            <div className="flex flex-col gap-6 aspect-[5/4]">
+            <div className="flex flex-col gap-6 lg:aspect-[5/4]">
               {/* Top Right - Concealed Carry Course */}
               <Link href="/nmccl" className="block group flex-1">
                 <div 
-                  className="relative h-full w-full rounded-[4px] overflow-hidden cursor-pointer bg-zinc-900 group-hover:shadow-[0_8px_30px_rgba(180,180,180,0.15)] transition-shadow duration-300"
+                  className="relative min-h-[220px] lg:h-full w-full rounded-[4px] overflow-hidden cursor-pointer bg-zinc-900 group-hover:shadow-[0_8px_30px_rgba(180,180,180,0.15)] transition-shadow duration-300"
                   data-testid="featured-course-ccw"
                 >
                   <img 
@@ -1241,7 +1241,7 @@ export default function Landing() {
               {/* Bottom Right - Defensive Handgun */}
               <Link href="/defensive-handgun-course" className="block group flex-1">
                 <div 
-                  className="relative h-full w-full rounded-[4px] overflow-hidden cursor-pointer bg-zinc-900 group-hover:shadow-[0_8px_30px_rgba(180,180,180,0.15)] transition-shadow duration-300"
+                  className="relative min-h-[220px] lg:h-full w-full rounded-[4px] overflow-hidden cursor-pointer bg-zinc-900 group-hover:shadow-[0_8px_30px_rgba(180,180,180,0.15)] transition-shadow duration-300"
                   data-testid="featured-course-dhc"
                 >
                   <img 
