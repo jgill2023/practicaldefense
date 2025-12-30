@@ -319,6 +319,17 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                                       </div>
                                     </>
                                   )}
+                                  <div className="mt-3 pt-3 border-t">
+                                    <NavigationMenuLink asChild>
+                                      <Link 
+                                        href="/courses" 
+                                        className="flex items-center justify-center gap-2 px-3 py-2 rounded-sm hover:bg-[#006d7a]/20 cursor-pointer font-medium text-[#006d7a] font-display tracking-widest uppercase"
+                                        data-testid="link-all-courses"
+                                      >
+                                        View All Courses
+                                      </Link>
+                                    </NavigationMenuLink>
+                                  </div>
                                 </div>
                               </div>
                             </NavigationMenuContent>
