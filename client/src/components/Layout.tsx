@@ -208,21 +208,28 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
           </div>
         )}
 
-        {/* Main Navigation - starts at bottom of hero (absolute), becomes fixed below secondary nav when scrolled */}
+        {/* Main Navigation - fixed at top on mobile, starts at bottom of hero on desktop */}
         <div 
           ref={navRef}
-          className={`left-0 right-0 z-50 transition-colors duration-300 ${
+          className={`landing-nav-desktop left-0 right-0 z-50 transition-colors duration-300 ${
             isNavSticky 
-              ? 'fixed bg-zinc-950' 
-              : 'absolute bg-zinc-900/90 backdrop-blur-sm'
+              ? 'nav-sticky fixed bg-zinc-950' 
+              : 'fixed md:absolute bg-zinc-950 md:bg-zinc-900/90 md:backdrop-blur-sm'
           }`}
-          style={
-            isNavSticky 
-              ? { top: isAuthenticated ? `${secondaryNavHeight}px` : '0px' }
-              : { top: `calc(100vh - ${mainNavHeight}px)` }
-          }
+          style={{
+            top: isNavSticky 
+              ? (isAuthenticated ? `${secondaryNavHeight}px` : '0px')
+              : '0px'
+          }}
         >
-            {/* Quote Bar - Only visible when nav is not sticky (scrolls away with hero) */}
+          <style>{`
+            @media (min-width: 768px) {
+              .landing-nav-desktop:not(.nav-sticky) {
+                top: calc(100vh - 64px) !important;
+              }
+            }
+          `}</style>
+            {/* Quote Bar - Only visible when nav is not sticky and hidden on mobile */}
             {!isNavSticky && (
               <div className="bg-[#004149] py-2 px-4 flex items-center justify-center">
                 <div className="max-w-7xl mx-auto text-center text-white text-[18px] font-body" style={{ fontFamily: 'Inter, sans-serif' }}>
