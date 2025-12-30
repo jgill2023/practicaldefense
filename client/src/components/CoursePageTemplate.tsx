@@ -333,20 +333,20 @@ export function CoursePageTemplate({
                       loading="lazy"
                       allowFullScreen=""
                       referrerPolicy="no-referrer-when-downgrade"
-                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3076.8929395348347!2d-106.64160492346036!3d35.08994097242652!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x872ee3b4c5555555%3A0x5555555555555555!2sAlbuquerque%2C%20NM!5e0!3m2!1sen!2sus!4v1234567890"
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3074.789123!2d-106.6235!3d35.0895!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x872efc62d3b1a1a1%3A0x1234567890abcdef!2sShooting%20Range%20Access%20Rd%2C%20Albuquerque%2C%20NM%2087121!5e0!3m2!1sen!2sus!4v1640000000000"
                     ></iframe>
                   </div>
                   <p className="text-muted-foreground text-sm mb-4">
-                    {details.location || "Albuquerque, NM area. Exact location provided upon registration."}
+                    {details.location || "Shooting Range Access Rd, Albuquerque, NM 87121"}
                   </p>
                   <Button 
                     variant="outline" 
                     className="w-full border-border text-foreground hover:bg-muted"
-                    onClick={() => window.open('https://maps.google.com/?q=Albuquerque+NM', '_blank')}
+                    onClick={() => window.open('https://www.google.com/maps/place/45Q6%2B8F+Albuquerque,+New+Mexico/@35.0895,-106.6235,17z/data=!3m1!4b1!4m6!3m5!1s0x872efc62d3b1a1a1:0x1234567890abcdef!8m2!3d35.0895!4d-106.6235', '_blank')}
                     data-testid="button-open-maps"
                   >
                     <MapPin className="h-4 w-4 mr-2" />
-                    Open in Maps
+                    View Satellite Map
                   </Button>
                 </div>
               </div>
