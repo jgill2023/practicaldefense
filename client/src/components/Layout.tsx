@@ -605,7 +605,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                       <Link href="/students" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors text-[12px]" data-testid="link-secondary-students">
                         Students
                       </Link>
-                      <Link href="/communications" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors relative" data-testid="link-secondary-communication">
+                      <Link href="/communications" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors relative text-[12px]" data-testid="link-secondary-communication">
                         Communication
                         {counts.unread > 0 && (
                           <Badge 
@@ -619,7 +619,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                     </>
                   )}
                   {isAdminOrHigher(user) && (
-                    <Link href="/product-management" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-products">
+                    <Link href="/product-management" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors text-[12px]" data-testid="link-secondary-products">
                       Products
                     </Link>
                   )}
