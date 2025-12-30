@@ -1128,9 +1128,9 @@ export default function Landing() {
             {/* Left side - Title split over 3 rows */}
             <div className="animate-fade-in px-4 sm:px-0">
               <h1 className="font-display uppercase tracking-tight leading-[0.8] pt-[20px] pb-[20px] mt-[0px] mb-[0px]">
-                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-white text-center sm:text-left font-extralight">PRACTICAL</span>
-                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-center sm:text-left text-[#ffffff] md:-mt-8 lg:-mt-10 md:ml-32 lg:ml-40 sm:ml-8 mt-[-30px] sm:mt-[-50px] mb-[-30px] sm:mb-[-50px] font-thin">DEFENSE</span>
-                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-[#ffffff] text-center sm:text-left md:-mt-8 lg:-mt-10 md:ml-16 lg:ml-20 sm:ml-4 pt-[20px] pb-[20px] mt-[-10px] mb-[-10px] font-thin">TRAINING</span>
+                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-white text-center lg:text-left font-extralight">PRACTICAL</span>
+                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-center lg:text-left text-[#ffffff] lg:-mt-10 lg:ml-40 mt-[-20px] mb-[-20px] font-thin">DEFENSE</span>
+                <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-9xl xl:text-[10rem] text-[#ffffff] text-center lg:text-left lg:-mt-10 lg:ml-20 pt-[20px] pb-[20px] mt-[-10px] mb-[-10px] font-thin">TRAINING</span>
               </h1>
             </div>
             
@@ -1163,7 +1163,7 @@ export default function Landing() {
       </section>
       {/* Featured Courses Section */}
       <section className="py-16 bg-[#222429]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pl-[0px] pr-[0px] pt-[32px] pb-[32px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[32px] pb-[32px]">
           {/* Featured Courses Header */}
           <div className="mb-12 text-left">
             <p className="text-lg lg:text-xl font-bold uppercase tracking-wide mb-4 text-[#bf0000]">
@@ -1274,7 +1274,7 @@ export default function Landing() {
       </section>
       {/* Philosophy Section */}
       <section className="bg-zinc-950 py-16 pt-[0px] pb-[0px] mt-[64px] mb-[64px]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pl-[0px] pr-[0px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide text-white mb-8 font-thin">
             Straightforward Firearms Training
           </h2>
