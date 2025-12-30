@@ -590,7 +590,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
         {/* Secondary Menu Bar for Logged In Users - Desktop Only */}
         {isAuthenticated && (
           <div className="hidden md:block bg-zinc-900 border-b border-zinc-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-[12px]">
               <div className="flex items-center justify-end h-10">
                 <nav className="flex items-center space-x-6">
                   {isInstructorOrHigher(user) && (
