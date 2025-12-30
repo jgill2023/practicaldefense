@@ -998,13 +998,6 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                               </div>
                             )}
                           </div>
-                          {user?.role === 'superadmin' && (
-                            <Link href="/admin/credits" className="block">
-                              <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-admin-credits-mobile">
-                                Admin Credits
-                              </Button>
-                            </Link>
-                          )}
                         </>
                       ) : (
                         <>

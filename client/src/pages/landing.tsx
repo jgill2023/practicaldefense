@@ -1273,7 +1273,7 @@ export default function Landing() {
         </div>
       </section>
       {/* Philosophy Section */}
-      <section className="bg-zinc-950 py-16 border-t border-zinc-800 pt-[0px] pb-[0px] mt-[64px] mb-[64px]">
+      <section className="bg-zinc-950 py-16 pt-[0px] pb-[0px] mt-[64px] mb-[64px]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pl-[0px] pr-[0px]">
           <h2 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide text-white mb-8 font-thin">
             Straightforward Firearms Training
