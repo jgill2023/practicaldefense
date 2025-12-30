@@ -598,7 +598,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                       <Link href="/instructor-dashboard" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors text-[12px]" data-testid="link-secondary-dashboard">
                         Dashboard
                       </Link>
-                      <Link href="/instructor-calendar" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors flex items-center gap-1" data-testid="link-secondary-calendar">
+                      <Link href="/instructor-calendar" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors flex items-center gap-1 text-[12px]" data-testid="link-secondary-calendar">
                         <Calendar className="h-3 w-3" />
                         Calendar
                       </Link>
