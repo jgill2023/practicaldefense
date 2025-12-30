@@ -90,138 +90,143 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
 
   // For landing page, nav starts at bottom of hero, then becomes fixed at top when scrolled
   if (isLandingPage) {
-    const navHeight = isAuthenticated ? 104 : 64;
+    const mainNavHeight = 64;
+    const secondaryNavHeight = 40;
     
     return (
       <div className="min-h-screen bg-zinc-950 font-body">
-        {/* Navigation - starts at bottom of hero (absolute), becomes fixed at top when scrolled */}
+        {/* Secondary Menu Bar for Logged In Users - Always Fixed at Top */}
+        {isAuthenticated && (
+          <div className="fixed top-0 left-0 right-0 z-[60] hidden md:block bg-zinc-900 border-b border-zinc-800">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-end h-10">
+                <nav className="flex items-center space-x-6">
+                  {isInstructorOrHigher(user) && (
+                    <>
+                      <Link href="/instructor-dashboard" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-dashboard">
+                        Dashboard
+                      </Link>
+                      <Link href="/instructor-calendar" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors flex items-center gap-1" data-testid="link-secondary-calendar">
+                        <Calendar className="h-3 w-3" />
+                        Calendar
+                      </Link>
+                      <Link href="/students" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-students">
+                        Students
+                      </Link>
+                      <Link href="/communications" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors relative" data-testid="link-secondary-communication">
+                        Communication
+                        {counts.unread > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
+                          >
+                            {counts.unread > 99 ? '99+' : counts.unread}
+                          </Badge>
+                        )}
+                      </Link>
+                    </>
+                  )}
+                  {isAdminOrHigher(user) && (
+                    <Link href="/product-management" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-products">
+                      Products
+                    </Link>
+                  )}
+                  <Link href="/student-resources" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-student-resources">
+                    Student Resources
+                  </Link>
+                  <Link href="/student-portal" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-student-dashboard">
+                    Student Dashboard
+                  </Link>
+                  {isInstructorOrHigher(user) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors flex items-center gap-1" data-testid="dropdown-settings">
+                        <Settings className="h-4 w-4" />
+                        Settings
+                        <ChevronDown className="h-3 w-3" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem asChild>
+                          <Link href="/settings" className="w-full cursor-pointer" data-testid="link-settings-google-calendar">
+                            Google Calendar
+                          </Link>
+                        </DropdownMenuItem>
+                        {isAdminOrHigher(user) && (
+                          <>
+                            <DropdownMenuItem asChild>
+                              <Link href="/stripe-connect" className="w-full cursor-pointer" data-testid="link-settings-payment">
+                                Payment Settings
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href="/gift-card-management" className="w-full cursor-pointer" data-testid="link-settings-gift-cards">
+                                Gift Card Admin
+                              </Link>
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {canCreateAccounts(user) && (
+                          <DropdownMenuItem asChild>
+                            <Link href="/admin/users" className="w-full cursor-pointer relative" data-testid="link-settings-user-management">
+                              User Management
+                              {pendingCount > 0 && (
+                                <Badge 
+                                  variant="destructive" 
+                                  className="ml-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
+                                  data-testid="badge-pending-users-desktop"
+                                >
+                                  {pendingCount > 99 ? '99+' : pendingCount}
+                                </Badge>
+                              )}
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem asChild>
+                          <Link href="/student-portal" className="w-full cursor-pointer" data-testid="link-settings-student-dashboard">
+                            Student Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/reports" className="w-full cursor-pointer" data-testid="link-settings-reports">
+                            Reports
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                  {user?.role === 'superadmin' && (
+                    <Link href="/admin/credits" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-admin-credits">
+                      Admin Credits
+                    </Link>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="text-xs"
+                    onClick={handleLogout}
+                    data-testid="button-logout-secondary"
+                  >
+                    Logout
+                  </Button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Navigation - starts at bottom of hero (absolute), becomes fixed below secondary nav when scrolled */}
         <div 
           ref={navRef}
           className={`left-0 right-0 z-50 transition-colors duration-300 ${
             isNavSticky 
-              ? 'fixed top-0 bg-zinc-950' 
+              ? 'fixed bg-zinc-950' 
               : 'absolute bg-zinc-900/90 backdrop-blur-sm'
           }`}
-          style={!isNavSticky ? { top: `calc(100vh - ${navHeight}px)` } : undefined}
+          style={
+            isNavSticky 
+              ? { top: isAuthenticated ? `${secondaryNavHeight}px` : '0px' }
+              : { top: `calc(100vh - ${mainNavHeight}px)` }
+          }
         >
-            {/* Secondary Menu Bar for Logged In Users - Desktop Only */}
-            {isAuthenticated && (
-              <div className={`hidden md:block border-b transition-all duration-300 ${isNavSticky ? 'bg-zinc-900 border-zinc-800' : 'bg-transparent border-transparent'}`}>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="flex items-center justify-end h-10">
-                    <nav className="flex items-center space-x-6">
-                      {isInstructorOrHigher(user) && (
-                        <>
-                          <Link href="/instructor-dashboard" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-dashboard">
-                            Dashboard
-                          </Link>
-                          <Link href="/instructor-calendar" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors flex items-center gap-1" data-testid="link-secondary-calendar">
-                            <Calendar className="h-3 w-3" />
-                            Calendar
-                          </Link>
-                          <Link href="/students" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-students">
-                            Students
-                          </Link>
-                          <Link href="/communications" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors relative" data-testid="link-secondary-communication">
-                            Communication
-                            {counts.unread > 0 && (
-                              <Badge 
-                                variant="destructive" 
-                                className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
-                              >
-                                {counts.unread > 99 ? '99+' : counts.unread}
-                              </Badge>
-                            )}
-                          </Link>
-                        </>
-                      )}
-                      {isAdminOrHigher(user) && (
-                        <Link href="/product-management" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-products">
-                          Products
-                        </Link>
-                      )}
-                      <Link href="/student-resources" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-student-resources">
-                        Student Resources
-                      </Link>
-                      <Link href="/student-portal" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-student-dashboard">
-                        Student Dashboard
-                      </Link>
-                      {isInstructorOrHigher(user) && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors flex items-center gap-1" data-testid="dropdown-settings">
-                            <Settings className="h-4 w-4" />
-                            Settings
-                            <ChevronDown className="h-3 w-3" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem asChild>
-                              <Link href="/settings" className="w-full cursor-pointer" data-testid="link-settings-google-calendar">
-                                Google Calendar
-                              </Link>
-                            </DropdownMenuItem>
-                            {isAdminOrHigher(user) && (
-                              <>
-                                <DropdownMenuItem asChild>
-                                  <Link href="/stripe-connect" className="w-full cursor-pointer" data-testid="link-settings-payment">
-                                    Payment Settings
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link href="/gift-card-management" className="w-full cursor-pointer" data-testid="link-settings-gift-cards">
-                                    Gift Card Admin
-                                  </Link>
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                            {canCreateAccounts(user) && (
-                              <DropdownMenuItem asChild>
-                                <Link href="/admin/users" className="w-full cursor-pointer relative" data-testid="link-settings-user-management">
-                                  User Management
-                                  {pendingCount > 0 && (
-                                    <Badge 
-                                      variant="destructive" 
-                                      className="ml-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
-                                      data-testid="badge-pending-users-desktop"
-                                    >
-                                      {pendingCount > 99 ? '99+' : pendingCount}
-                                    </Badge>
-                                  )}
-                                </Link>
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem asChild>
-                              <Link href="/student-portal" className="w-full cursor-pointer" data-testid="link-settings-student-dashboard">
-                                Student Dashboard
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href="/reports" className="w-full cursor-pointer" data-testid="link-settings-reports">
-                                Reports
-                              </Link>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                      {user?.role === 'superadmin' && (
-                        <Link href="/admin/credits" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-admin-credits">
-                          Admin Credits
-                        </Link>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-xs"
-                        onClick={handleLogout}
-                        data-testid="button-logout-secondary"
-                      >
-                        Logout
-                      </Button>
-                    </nav>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Quote Bar - Only visible when nav is not sticky (scrolls away with hero) */}
             {!isNavSticky && (
               <div className="bg-[#004149] py-2 px-4 flex items-center justify-center">
