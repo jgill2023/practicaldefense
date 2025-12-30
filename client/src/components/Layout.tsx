@@ -193,11 +193,6 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
-                  {user?.role === 'superadmin' && (
-                    <Link href="/admin/credits" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-admin-credits">
-                      Admin Credits
-                    </Link>
-                  )}
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -684,11 +679,6 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  )}
-                  {user?.role === 'superadmin' && (
-                    <Link href="/admin/credits" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-admin-credits">
-                      Admin Credits
-                    </Link>
                   )}
                   <Button 
                     variant="outline" 
