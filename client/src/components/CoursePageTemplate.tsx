@@ -333,7 +333,7 @@ export function CoursePageTemplate({
                       loading="lazy"
                       allowFullScreen=""
                       referrerPolicy="no-referrer-when-downgrade"
-                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3074.789123!2d-106.6235!3d35.0895!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x872efc62d3b1a1a1%3A0x1234567890abcdef!2sShooting%20Range%20Access%20Rd%2C%20Albuquerque%2C%20NM%2087121!5e0!3m2!1sen!2sus!4v1640000000000"
+                      src="https://maps.google.com/maps?q=35.0895,-106.6235&z=17&output=embed"
                     ></iframe>
                   </div>
                   <p className="text-muted-foreground text-sm mb-4">
