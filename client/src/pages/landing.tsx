@@ -1123,7 +1123,7 @@ export default function Landing() {
         </div>
 
         {/* Content - Split layout: Title left (55%), Subtitle + buttons right (45%) */}
-        <div className="relative z-20 text-white px-4 sm:px-6 lg:px-0 w-full max-w-7xl mx-auto h-full flex items-center">
+        <div className="relative z-20 text-white px-4 sm:px-6 lg:px-0 w-full max-w-7xl mx-auto h-full flex items-center pt-20 md:pt-0">
           <div className="grid grid-cols-1 gap-8 lg:gap-16 w-full items-center lg:[grid-template-columns:55%_45%]">
             {/* Left side - Title split over 3 rows */}
             <div className="animate-fade-in px-4 sm:px-0">
