@@ -333,20 +333,20 @@ export function CoursePageTemplate({
                       loading="lazy"
                       allowFullScreen=""
                       referrerPolicy="no-referrer-when-downgrade"
-                      src="https://maps.google.com/maps?q=35.0895,-106.6235&z=17&output=embed"
+                      src="https://maps.google.com/maps?q=35.13851322487321,-106.83882039002162&z=17&output=embed"
                     ></iframe>
                   </div>
                   <p className="text-muted-foreground text-sm mb-4">
-                    {details.location || "Shooting Range Access Rd, Albuquerque, NM 87121"}
+                    {details.location || "Albuquerque, NM area. Exact location provided upon registration."}
                   </p>
                   <Button 
                     variant="outline" 
                     className="w-full border-border text-foreground hover:bg-muted"
-                    onClick={() => window.open('https://www.google.com/maps/place/45Q6%2B8F+Albuquerque,+New+Mexico/@35.0895,-106.6235,17z/data=!3m1!4b1!4m6!3m5!1s0x872efc62d3b1a1a1:0x1234567890abcdef!8m2!3d35.0895!4d-106.6235', '_blank')}
+                    onClick={() => window.open(`https://maps.google.com/?q=35.13851322487321,-106.83882039002162`, '_blank')}
                     data-testid="button-open-maps"
                   >
                     <MapPin className="h-4 w-4 mr-2" />
-                    View Satellite Map
+                    Open in Maps
                   </Button>
                 </div>
               </div>
