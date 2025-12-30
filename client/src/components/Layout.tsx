@@ -602,7 +602,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                         <Calendar className="h-3 w-3" />
                         Calendar
                       </Link>
-                      <Link href="/students" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-students">
+                      <Link href="/students" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors text-[12px]" data-testid="link-secondary-students">
                         Students
                       </Link>
                       <Link href="/communications" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors relative" data-testid="link-secondary-communication">
