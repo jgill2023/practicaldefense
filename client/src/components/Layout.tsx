@@ -1073,7 +1073,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
               <h3 className="text-xl font-bold mb-4 font-display uppercase tracking-widest">
                 Practical Defense Training
               </h3>
-              <p className="text-zinc-400 font-body">We are known for meeting the student at their current skill level, while pushing them to the next level. Our one-on-one training sessions are dedicated training sessions tailored to the individual student.</p>
+              <p className="text-zinc-400 font-body">We offer straightforward firearms training that focuses on practical skills over "tacti-cool" theatrics. We equip responsibly armed citizens with the skills and legal knowledge necessary to responsibly carry in New Mexico. We believe training should be Safe, Fun, and Practical. It's your life. It's your safety and protection. It's YOUR responsibility.</p>
             </div>
 
             <div className="md:col-span-2">
