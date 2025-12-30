@@ -325,8 +325,16 @@ export function CoursePageTemplate({
                 {/* Location Card */}
                 <div className="bg-card rounded-xl p-6 border border-border">
                   <h3 className="font-heading uppercase tracking-widest text-foreground mb-4">Training Location</h3>
-                  <div className="aspect-video bg-muted rounded-lg mb-4 flex items-center justify-center">
-                    <MapPin className="h-12 w-12 text-muted-foreground" />
+                  <div className="aspect-video bg-muted rounded-lg mb-4 overflow-hidden">
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      allowFullScreen=""
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3076.8929395348347!2d-106.64160492346036!3d35.08994097242652!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x872ee3b4c5555555%3A0x5555555555555555!2sAlbuquerque%2C%20NM!5e0!3m2!1sen!2sus!4v1234567890"
+                    ></iframe>
                   </div>
                   <p className="text-muted-foreground text-sm mb-4">
                     {details.location || "Albuquerque, NM area. Exact location provided upon registration."}
