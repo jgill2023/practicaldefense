@@ -18,36 +18,6 @@ interface BlogPost {
 const blogPosts: BlogPost[] = [
   {
     id: 1,
-    title: "Real World Trauma: Jonathan Willis",
-    author: "Zach Cox",
-    date: "March 21, 2024",
-    excerpt: "Being \"traumatized\" by Jonathan Willis is something I will never forget... Trauma care, emergency medicine, and even first aid, is something that I think everyone should at least have a basic understanding of. Whether you work in a dangerous industry or not, LIFE HAPPENS! Recently I had the honor of taking Jonathan Willis' \"Real World Trauma\" class and I wanted to share with you, my experience.",
-    imageUrl: "https://abqconcealedcarry.com/wp-content/uploads/2024/03/image_123650291-2-1024x768.jpg",
-    externalUrl: "https://abqconcealedcarry.com/real-world-trauma-jonathan-willis/",
-    category: "Training"
-  },
-  {
-    id: 2,
-    title: "MAC1014: Another Turkish Shotgun... Or Is It?!",
-    author: "Zach Cox",
-    date: "January 5, 2024",
-    excerpt: "In August 2023, Tim and I assisted Tom Givens with Rangemaster's Shotgun Instructor Course in Oklahoma. During the class, something caught our eye - a Turkish clone of the Benelli M4. My initial thoughts were skeptical, but boy was I wrong! It made it through with flying colors. At the end of it all, I RECOMMEND THIS SHOTGUN!",
-    imageUrl: "https://abqconcealedcarry.com/wp-content/uploads/2024/01/image.png",
-    externalUrl: "https://abqconcealedcarry.com/mac1014/",
-    category: "Gear Review"
-  },
-  {
-    id: 3,
-    title: "Infinite Player: In The Training World, Be An Infinite Player",
-    author: "Dan Brady",
-    date: "December 2, 2022",
-    excerpt: "It is said that a journey of a thousand miles begins with a single step. Author Simon Sinek's \"The Infinite Game\" expands on James Carse's theory of finite versus infinite games. Personal defensive instruction is most certainly an infinite game. It will continue no matter who leaves the industry or who joins it. Be the infinite player. Play the infinite game.",
-    imageUrl: "",
-    externalUrl: "https://abqconcealedcarry.com/infinite-player/",
-    category: "Philosophy"
-  },
-  {
-    id: 4,
     title: "2-Year Refresher Change",
     author: "Jeremy Gill",
     date: "June 20, 2023",
