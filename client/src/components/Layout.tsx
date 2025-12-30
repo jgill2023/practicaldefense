@@ -414,23 +414,33 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                           <div className="pl-4 mt-2 space-y-2">
                             <Link href="/schedule-list" className="block text-zinc-400 hover:text-[#006d7a] transition-colors flex items-center gap-2" data-testid="link-upcoming-events-mobile" onClick={() => setIsMobileMenuOpen(false)}>
                               <Calendar className="h-4 w-4" />
-                              Upcoming Events
+                              Upcoming Courses
                             </Link>
-                            <div className="text-zinc-500 text-sm font-medium pt-2">Course Offerings:</div>
-                            {activeCourses.length > 0 ? (
-                              activeCourses.map((course) => (
-                                <Link 
-                                  key={course.id}
-                                  href={`/course/${course.id}`} 
-                                  className="block text-zinc-400 hover:text-[#006d7a] transition-colors pl-2" 
-                                  data-testid={`link-course-mobile-${course.id}`}
-                                  onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                  {course.title}
-                                </Link>
-                              ))
-                            ) : (
-                              <span className="text-zinc-500 text-sm pl-2">No courses available</span>
+                            <div className="text-zinc-500 text-sm font-medium pt-2">Featured Courses:</div>
+                            <Link href="/nmccl" className="block text-zinc-400 hover:text-[#006d7a] transition-colors pl-2" data-testid="link-nmccl-mobile" onClick={() => setIsMobileMenuOpen(false)}>
+                              NM Concealed Carry
+                            </Link>
+                            <Link href="/online-nm-concealed-carry-course" className="block text-zinc-400 hover:text-[#006d7a] transition-colors pl-2" data-testid="link-online-ccw-mobile" onClick={() => setIsMobileMenuOpen(false)}>
+                              Online NM CCW
+                            </Link>
+                            <Link href="/defensive-handgun-course" className="block text-zinc-400 hover:text-[#006d7a] transition-colors pl-2" data-testid="link-dhc-mobile" onClick={() => setIsMobileMenuOpen(false)}>
+                              Defensive Handgun
+                            </Link>
+                            {activeCourses.length > 0 && (
+                              <>
+                                <div className="text-zinc-500 text-sm font-medium pt-2">All Courses:</div>
+                                {activeCourses.map((course) => (
+                                  <Link 
+                                    key={course.id}
+                                    href={`/course/${course.id}`} 
+                                    className="block text-zinc-400 hover:text-[#006d7a] transition-colors pl-2" 
+                                    data-testid={`link-course-mobile-${course.id}`}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                  >
+                                    {course.title}
+                                  </Link>
+                                ))}
+                              </>
                             )}
                           </div>
                         )}
@@ -879,25 +889,35 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
                   </button>
                   {isMobileCoursesOpen && (
                     <div className="pl-4 mt-2 space-y-2">
-                      <Link href="/schedule-list" className="block text-white/80 hover:text-[#FD66C5] transition-colors flex items-center gap-2" data-testid="link-upcoming-events-mobile" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link href="/schedule-list" className="block text-white/80 hover:text-[#006d7a] transition-colors flex items-center gap-2" data-testid="link-upcoming-events-mobile" onClick={() => setIsMobileMenuOpen(false)}>
                         <Calendar className="h-4 w-4" />
-                        Upcoming Events
+                        Upcoming Courses
                       </Link>
-                      <div className="text-white/60 text-sm font-medium pt-2">Course Offerings:</div>
-                      {activeCourses.length > 0 ? (
-                        activeCourses.map((course) => (
-                          <Link 
-                            key={course.id}
-                            href={`/course/${course.id}`} 
-                            className="block text-white/80 hover:text-[#FD66C5] transition-colors pl-2" 
-                            data-testid={`link-course-mobile-${course.id}`}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                          >
-                            {course.title}
-                          </Link>
-                        ))
-                      ) : (
-                        <span className="text-white/40 text-sm pl-2">No courses available</span>
+                      <div className="text-white/60 text-sm font-medium pt-2">Featured Courses:</div>
+                      <Link href="/nmccl" className="block text-white/80 hover:text-[#006d7a] transition-colors pl-2" data-testid="link-nmccl-mobile" onClick={() => setIsMobileMenuOpen(false)}>
+                        NM Concealed Carry
+                      </Link>
+                      <Link href="/online-nm-concealed-carry-course" className="block text-white/80 hover:text-[#006d7a] transition-colors pl-2" data-testid="link-online-ccw-mobile" onClick={() => setIsMobileMenuOpen(false)}>
+                        Online NM CCW
+                      </Link>
+                      <Link href="/defensive-handgun-course" className="block text-white/80 hover:text-[#006d7a] transition-colors pl-2" data-testid="link-dhc-mobile" onClick={() => setIsMobileMenuOpen(false)}>
+                        Defensive Handgun
+                      </Link>
+                      {activeCourses.length > 0 && (
+                        <>
+                          <div className="text-white/60 text-sm font-medium pt-2">All Courses:</div>
+                          {activeCourses.map((course) => (
+                            <Link 
+                              key={course.id}
+                              href={`/course/${course.id}`} 
+                              className="block text-white/80 hover:text-[#006d7a] transition-colors pl-2" 
+                              data-testid={`link-course-mobile-${course.id}`}
+                              onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                              {course.title}
+                            </Link>
+                          ))}
+                        </>
                       )}
                     </div>
                   )}
