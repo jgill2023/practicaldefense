@@ -58,11 +58,11 @@ export default function About() {
         title="About Us"
         description="Meet the Practical Defense Training team. Combat veterans and certified instructors dedicated to professional firearms training and defensive skills education."
       />
-      <div className="relative h-[60vh] min-h-[400px] w-full overflow-hidden">
+      <div className="relative h-[75vh] min-h-[500px] w-full overflow-hidden">
         <img 
           src={heroImage} 
           alt="Practical Defense Training Instructor Team" 
-          className="w-full h-full object-cover object-center scale-110"
+          className="w-full h-full object-cover object-center"
           data-testid="img-about-hero"
         />
         <div className="absolute inset-0 bg-black/50" />
