@@ -1,105 +1,178 @@
 import { Layout } from "@/components/Layout";
 import { SEO } from "@/components/SEO";
+import { Card, CardContent } from "@/components/ui/card";
 import heroImage from "@assets/Instructors_1767335152648.jpg";
 import jeremyImg from "@assets/20180422_235425000_iOS_1767336860712.jpg";
-import { Award } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Award, Shield, Target, Users } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function About() {
+  const [grayscaleAmount, setGrayscaleAmount] = useState(0);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollProgress = Math.min(window.scrollY / 400, 1);
+      setGrayscaleAmount(scrollProgress * 100);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <Layout>
       <SEO 
         title="About Us"
         description="Meet the Practical Defense Training team. Combat veterans and certified instructors dedicated to professional firearms training and defensive skills education."
       />
-      <div className="relative h-[75vh] min-h-[500px] w-full overflow-hidden">
-        <img 
-          src={heroImage} 
-          alt="Practical Defense Training Instructor Team" 
-          className="w-full h-full object-cover object-center"
+      
+      {/* Hero Section */}
+      <section className="relative h-[65vh] min-h-[500px] flex items-end overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ 
+            backgroundImage: `url(${heroImage})`,
+            filter: `grayscale(${grayscaleAmount}%)`
+          }}
           data-testid="img-about-hero"
         />
-        <div className="absolute inset-0 bg-black/50" />
-        <div className="absolute bottom-0 left-0 right-0 p-8 text-white pt-[64px] pb-[64px] pl-[16px] pr-[16px]">
-          <div className="max-w-5xl mx-auto">
-            <h1 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide mb-2">About Us</h1>
-            <p className="text-white/80 text-lg">Meet the team behind Practical Defense Training.</p>
-          </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+        
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+          <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl uppercase tracking-widest text-white font-bold">
+            About Us
+          </h1>
+          <p className="text-white/80 text-lg mt-4 max-w-2xl">
+            Meet the team behind Practical Defense Training.
+          </p>
         </div>
-      </div>
+      </section>
 
-      <div className="min-h-screen bg-gray-50 py-12 pt-[84px] pb-[84px]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Main Content */}
+      <section className="bg-background py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
-          <Card className="mb-8 overflow-hidden border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" data-testid="instructor-card-jeremy-gill">
-            <CardContent className="p-8">
-              <div className="space-y-8">
-                <div className="flex flex-col md:flex-row gap-8">
-                  <div className="md:w-1/3">
-                    <img 
-                      src={jeremyImg} 
-                      alt="Jeremy Gill - Founder and Lead Instructor" 
-                      className="w-full aspect-square object-cover rounded-xl"
-                      loading="lazy"
-                      data-testid="img-instructor-jeremy"
-                    />
-                    <div className="mt-4 text-center">
-                      <h2 className="font-heading text-2xl uppercase tracking-wide" data-testid="text-instructor-name-jeremy">Jeremy Gill</h2>
-                      <p className="text-[hsl(209,90%,38%)] font-medium" data-testid="text-instructor-title-jeremy">Founder and Lead Instructor</p>
-                    </div>
-                  </div>
-
-                  <div className="md:w-2/3">
-                    <div className="border-t border-gray-200 pt-8 md:border-t-0 md:pt-0">
-                      <h3 className="font-heading text-xl uppercase tracking-wide mb-6 flex items-center gap-2">
-                        <Award className="w-5 h-5 text-[hsl(209,90%,38%)]" />
-                        Certifications & Qualifications
-                      </h3>
-                      <ul className="space-y-3 pl-[28px] pr-[28px]">
-                        <li className="flex items-start gap-3">
-                          <div className="w-1.5 h-1.5 rounded-full bg-[hsl(209,90%,38%)] mt-2 flex-shrink-0" />
-                          <span className="text-foreground font-medium">NM DPS Certified Instructor #445</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <div className="w-1.5 h-1.5 rounded-full bg-[hsl(209,90%,38%)] mt-2 flex-shrink-0" />
-                          <span className="text-foreground font-medium">NRA Certified Instructor</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <div className="w-1.5 h-1.5 rounded-full bg-[hsl(209,90%,38%)] mt-2 flex-shrink-0" />
-                          <span className="text-foreground font-medium">Rangemaster Certified Instructor</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <div className="w-1.5 h-1.5 rounded-full bg-[hsl(209,90%,38%)] mt-2 flex-shrink-0" />
-                          <span className="text-foreground font-medium">Dr. William Aprill's Unthinkable Attendee and Host</span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <div className="w-1.5 h-1.5 rounded-full bg-[hsl(209,90%,38%)] mt-2 flex-shrink-0" />
-                          <span className="text-foreground font-medium">Graduate of MAG-20</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="mt-12 mb-8">
-            <h2 className="font-heading text-3xl uppercase tracking-wide mb-2">Our Team of Instructors</h2>
-            <p className="text-muted-foreground text-lg">Dedicated professionals committed to building a competent armed society.</p>
+          {/* Mission Statement */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-heading uppercase tracking-widest text-foreground mb-4">Our Mission</h2>
+            <p className="text-muted-foreground text-[16px] max-w-4xl">
+              At Practical Defense Training, we are committed to providing professional, results-driven firearms training 
+              that empowers responsible citizens with the knowledge and skills necessary to protect themselves and their families. 
+              We believe in practical over "tacti-cool" — focusing on what works in real-world defensive situations.
+            </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-8">
-            <Card className="flex items-center justify-center p-12 min-h-[200px] border-2 border-black border-dashed">
-              <CardContent>
-                <div className="text-center text-muted-foreground">
-                  <p>More instructor profiles coming soon.</p>
-                </div>
+
+          {/* Values Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+            <div className="flex items-center gap-3 bg-card rounded-lg p-4">
+              <Shield className="h-6 w-6 text-[#006d7a]" />
+              <div>
+                <p className="text-foreground font-medium">Safety First</p>
+                <p className="text-sm text-muted-foreground">Always our priority</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-card rounded-lg p-4">
+              <Target className="h-6 w-6 text-[#006d7a]" />
+              <div>
+                <p className="text-foreground font-medium">Results Driven</p>
+                <p className="text-sm text-muted-foreground">Practical skills</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-card rounded-lg p-4">
+              <Award className="h-6 w-6 text-[#006d7a]" />
+              <div>
+                <p className="text-foreground font-medium">Certified</p>
+                <p className="text-sm text-muted-foreground">Expert instructors</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-card rounded-lg p-4">
+              <Users className="h-6 w-6 text-[#006d7a]" />
+              <div>
+                <p className="text-foreground font-medium">Community</p>
+                <p className="text-sm text-muted-foreground">Building competence</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Instructors Section */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-heading uppercase tracking-widest text-foreground mb-8">Our Instructors</h2>
+          </div>
+
+          {/* Jeremy Gill - Lead Instructor */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            
+            {/* Left Column - Photo */}
+            <div className="lg:col-span-1">
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  <img 
+                    src={jeremyImg} 
+                    alt="Jeremy Gill - Founder and Lead Instructor" 
+                    className="w-full aspect-[3/4] object-cover"
+                    loading="lazy"
+                    data-testid="img-instructor-jeremy"
+                  />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column - Bio & Credentials */}
+            <div className="lg:col-span-2 space-y-6">
+              <div>
+                <h3 className="font-heading text-3xl uppercase tracking-widest text-foreground mb-1" data-testid="text-instructor-name-jeremy">
+                  Jeremy Gill
+                </h3>
+                <p className="text-[#006d7a] font-semibold text-lg" data-testid="text-instructor-title-jeremy">
+                  Founder and Lead Instructor
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-heading text-lg uppercase tracking-widest text-foreground mb-4 flex items-center gap-2">
+                  <Award className="h-5 w-5 text-[#006d7a]" />
+                  Certifications & Qualifications
+                </h4>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
+                    <span className="text-muted-foreground">NM DPS Certified Instructor #445</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
+                    <span className="text-muted-foreground">NRA Certified Instructor</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
+                    <span className="text-muted-foreground">Rangemaster Certified Instructor</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
+                    <span className="text-muted-foreground">Dr. William Aprill's Unthinkable Attendee and Host</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
+                    <span className="text-muted-foreground">Graduate of MAG-20</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Instructors Placeholder */}
+          <div className="border-t border-border pt-12">
+            <h3 className="font-heading text-xl uppercase tracking-widest text-foreground mb-6">Additional Team Members</h3>
+            <Card className="border-dashed">
+              <CardContent className="flex items-center justify-center py-12">
+                <p className="text-muted-foreground text-center">
+                  More instructor profiles coming soon.
+                </p>
               </CardContent>
             </Card>
           </div>
+
         </div>
-      </div>
+      </section>
     </Layout>
   );
 }
