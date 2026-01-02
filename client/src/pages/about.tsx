@@ -2,6 +2,7 @@ import { Layout } from "@/components/Layout";
 import { ComicPanel } from "@/components/RACTheme";
 import { SEO } from "@/components/SEO";
 import heroImage from "@assets/Instructors_1767335152648.jpg";
+import jeremyImg from "@assets/20180422_235425000_iOS_1767336860712.jpg";
 
 export default function About() {
   return (
@@ -33,9 +34,29 @@ export default function About() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-8">
-            <ComicPanel shadow="md" className="flex items-center justify-center p-12 min-h-[300px]">
-              <div className="text-center text-muted-foreground">
-                <p>New instructor information coming soon.</p>
+            <ComicPanel shadow="md" data-testid="instructor-card-jeremy-gill">
+              <div className="space-y-4">
+                <div className="aspect-[3/4] overflow-hidden rounded-lg">
+                  <img 
+                    src={jeremyImg} 
+                    alt="Jeremy Gill - Founder and Lead Instructor" 
+                    className="w-full h-full object-cover"
+                    data-testid="img-instructor-jeremy"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-heading text-xl uppercase tracking-wide text-[hsl(209,90%,38%)]" data-testid="text-instructor-name-jeremy">Jeremy Gill</h3>
+                  <p className="text-sm font-medium text-muted-foreground" data-testid="text-instructor-title-jeremy">Founder and Lead Instructor</p>
+                </div>
+                <div className="border-t border-gray-200 pt-4">
+                  <ul className="text-sm text-foreground space-y-1 list-disc list-inside">
+                    <li>NM DPS Certified Instructor #445</li>
+                    <li>NRA Certified Instructor</li>
+                    <li>Rangemaster Certified Instructor</li>
+                    <li>Dr. William Aprill's Unthinkable Attendee and Host</li>
+                    <li>Graduate of MAG-20</li>
+                  </ul>
+                </div>
               </div>
             </ComicPanel>
           </div>
