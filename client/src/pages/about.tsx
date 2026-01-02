@@ -4,7 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Award, GraduationCap, Shield, Target, BookOpen, Medal, Quote } from "lucide-react";
 import teamCollageImage from "@assets/image_1765700410773.png";
 import timKellyImage from "@assets/Tim_Kelly_1765700546617.jpg";
-import heroImage from "@assets/Tim_Kelly_1765700860362.jpg";
+import heroImage from "@assets/Instructors_1767335152648.jpg";
 
 import TK01 from "@assets/TK01.jpg";
 
@@ -61,11 +61,11 @@ export default function About() {
       <div className="relative h-[75vh] min-h-[500px] w-full overflow-hidden">
         <img 
           src={heroImage} 
-          alt="Tim Kelly instructing at Practical Defense Training" 
-          className="w-full h-full object-cover object-top"
+          alt="Practical Defense Training Instructor Team" 
+          className="w-full h-full object-cover object-center"
           data-testid="img-about-hero"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(204,27%,16%,0.85)] via-[hsl(209,90%,38%,0.6)] to-[hsl(190,65%,47%,0.5)]" />
+        <div className="absolute inset-0 bg-black/50" />
         <div className="absolute bottom-0 left-0 right-0 p-8 text-white pt-[64px] pb-[64px] pl-[16px] pr-[16px]">
           <div className="max-w-5xl mx-auto">
             <h1 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide mb-2">About Us</h1>
