@@ -113,9 +113,7 @@ function HorizontalScrollSection() {
   const stickyRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
-
-  const numCards = instructors.length;
-  const sectionHeight = Math.max(numCards * 150, 300); // Increased multiplier and added minimum height
+  const [sectionHeight, setSectionHeight] = useState(0);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -127,6 +125,30 @@ function HorizontalScrollSection() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  useEffect(() => {
+    if (isMobile || !trackRef.current) return;
+
+    const calculateHeight = () => {
+      if (!trackRef.current) return;
+      const trackWidth = trackRef.current.scrollWidth;
+      const viewportWidth = window.innerWidth;
+      const horizontalScrollDistance = Math.max(0, trackWidth - viewportWidth + 64);
+      const viewportHeight = window.innerHeight;
+      const totalHeight = viewportHeight + horizontalScrollDistance;
+      setSectionHeight(totalHeight);
+    };
+
+    calculateHeight();
+    window.addEventListener('resize', calculateHeight);
+    
+    const timeout = setTimeout(calculateHeight, 100);
+
+    return () => {
+      window.removeEventListener('resize', calculateHeight);
+      clearTimeout(timeout);
+    };
+  }, [isMobile]);
+
   const handleScroll = useCallback(() => {
     if (!sectionRef.current || !trackRef.current || isMobile) return;
 
@@ -134,17 +156,15 @@ function HorizontalScrollSection() {
     const track = trackRef.current;
     
     const sectionTop = section.offsetTop;
-    const sectionHeight = section.offsetHeight;
+    const sectionHeightVal = section.offsetHeight;
     const viewportHeight = window.innerHeight;
     
     const scrollY = window.scrollY;
     const scrollStart = sectionTop;
-    const scrollEnd = sectionTop + sectionHeight - viewportHeight;
+    const scrollEnd = sectionTop + sectionHeightVal - viewportHeight;
     const scrollRange = scrollEnd - scrollStart;
 
     const trackWidth = track.scrollWidth;
-    // Calculate maxTranslate ensuring the last card is fully visible and centered if possible
-    // The target is to scroll until the end of the track is at the right edge of the viewport
     const maxTranslate = Math.max(0, trackWidth - window.innerWidth + 64);
 
     if (scrollRange <= 0 || maxTranslate <= 0) {
@@ -162,7 +182,6 @@ function HorizontalScrollSection() {
       return;
     }
 
-    // Map vertical scroll progress (0 to 1) to horizontal translation
     const scrollProgress = (scrollY - scrollStart) / scrollRange;
     const translateX = -scrollProgress * maxTranslate;
 
@@ -210,7 +229,7 @@ function HorizontalScrollSection() {
     <section 
       ref={sectionRef}
       className="relative overflow-hidden"
-      style={{ height: `${sectionHeight}vh` }}
+      style={{ height: sectionHeight > 0 ? `${sectionHeight}px` : '100vh' }}
       data-testid="instructor-horizontal-scroll-section"
     >
       <div 
