@@ -126,22 +126,21 @@ function HorizontalScrollSection() {
   }, []);
 
   useEffect(() => {
-    if (isMobile || !trackRef.current) return;
+    if (isMobile) return;
 
     const calculateHeight = () => {
-      if (!trackRef.current) return;
+      if (!trackRef.current || !stickyRef.current) return;
       const trackWidth = trackRef.current.scrollWidth;
-      const viewportWidth = window.innerWidth;
-      const horizontalScrollDistance = Math.max(0, trackWidth - viewportWidth + 64);
+      const stickyWidth = stickyRef.current.clientWidth;
+      const overflowWidth = Math.max(0, trackWidth - stickyWidth);
       const viewportHeight = window.innerHeight;
-      const totalHeight = viewportHeight + horizontalScrollDistance;
+      const totalHeight = viewportHeight + overflowWidth;
       setSectionHeight(totalHeight);
     };
 
+    const timeout = setTimeout(calculateHeight, 100);
     calculateHeight();
     window.addEventListener('resize', calculateHeight);
-    
-    const timeout = setTimeout(calculateHeight, 100);
 
     return () => {
       window.removeEventListener('resize', calculateHeight);
@@ -150,10 +149,11 @@ function HorizontalScrollSection() {
   }, [isMobile]);
 
   const handleScroll = useCallback(() => {
-    if (!sectionRef.current || !trackRef.current || isMobile) return;
+    if (!sectionRef.current || !trackRef.current || !stickyRef.current || isMobile) return;
 
     const section = sectionRef.current;
     const track = trackRef.current;
+    const sticky = stickyRef.current;
     
     const sectionTop = section.offsetTop;
     const sectionHeightVal = section.offsetHeight;
@@ -165,7 +165,8 @@ function HorizontalScrollSection() {
     const scrollRange = scrollEnd - scrollStart;
 
     const trackWidth = track.scrollWidth;
-    const maxTranslate = Math.max(0, trackWidth - window.innerWidth + 64);
+    const stickyWidth = sticky.clientWidth;
+    const maxTranslate = Math.max(0, trackWidth - stickyWidth);
 
     if (scrollRange <= 0 || maxTranslate <= 0) {
       track.style.transform = 'translateX(0px)';
