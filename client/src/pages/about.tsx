@@ -29,61 +29,77 @@ const instructors: InstructorData[] = [
       "Graduate of MAG-20"
     ],
     bio: "Jeremy founded Practical Defense Training with a mission to provide professional, results-driven firearms training that empowers responsible citizens."
+  },
+  {
+    id: "jeremy-gill-2",
+    name: "Jeremy Gill",
+    title: "Founder and Lead Instructor",
+    image: jeremyImg,
+    credentials: [
+      "NM DPS Certified Instructor #445",
+      "NRA Certified Instructor",
+      "Rangemaster Certified Instructor",
+      "Dr. William Aprill's Unthinkable Attendee and Host",
+      "Graduate of MAG-20"
+    ],
+    bio: "Jeremy founded Practical Defense Training with a mission to provide professional, results-driven firearms training that empowers responsible citizens."
   }
 ];
 
 function InstructorCard({ instructor }: { instructor: InstructorData }) {
   return (
     <div 
-      className="flex-shrink-0 w-[320px] md:w-[400px] lg:w-[450px]"
+      className="flex-shrink-0 w-[600px] md:w-[700px] lg:w-[800px] h-[500px]"
       data-testid={`instructor-card-${instructor.id}`}
     >
       <Card className="h-full overflow-hidden bg-card border-border">
-        <CardContent className="p-0">
-          <div className="aspect-[3/4] overflow-hidden">
-            <img 
-              src={instructor.image} 
-              alt={`${instructor.name} - ${instructor.title}`}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              data-testid={`img-instructor-${instructor.id}`}
-            />
-          </div>
-          <div className="p-6 space-y-4">
-            <div>
-              <h3 
-                className="font-heading text-2xl uppercase tracking-widest text-foreground"
-                data-testid={`text-instructor-name-${instructor.id}`}
-              >
-                {instructor.name}
-              </h3>
-              <p 
-                className="text-[#006d7a] font-semibold"
-                data-testid={`text-instructor-title-${instructor.id}`}
-              >
-                {instructor.title}
-              </p>
+        <CardContent className="p-0 h-full">
+          <div className="flex h-full">
+            <div className="w-[200px] md:w-[250px] lg:w-[300px] flex-shrink-0 overflow-hidden">
+              <img 
+                src={instructor.image} 
+                alt={`${instructor.name} - ${instructor.title}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                data-testid={`img-instructor-${instructor.id}`}
+              />
             </div>
-            
-            {instructor.bio && (
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {instructor.bio}
-              </p>
-            )}
-            
-            <div>
-              <h4 className="font-heading text-sm uppercase tracking-widest text-foreground mb-3 flex items-center gap-2">
-                <Award className="h-4 w-4 text-[#006d7a]" />
-                Certifications
-              </h4>
-              <ul className="space-y-2">
-                {instructor.credentials.map((credential, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
-                    <span className="text-muted-foreground text-sm">{credential}</span>
-                  </li>
-                ))}
-              </ul>
+            <div className="flex-1 p-6 space-y-4 overflow-y-auto">
+              <div>
+                <h3 
+                  className="font-heading text-2xl uppercase tracking-widest text-foreground"
+                  data-testid={`text-instructor-name-${instructor.id}`}
+                >
+                  {instructor.name}
+                </h3>
+                <p 
+                  className="text-[#006d7a] font-semibold"
+                  data-testid={`text-instructor-title-${instructor.id}`}
+                >
+                  {instructor.title}
+                </p>
+              </div>
+              
+              {instructor.bio && (
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {instructor.bio}
+                </p>
+              )}
+              
+              <div>
+                <h4 className="font-heading text-sm uppercase tracking-widest text-foreground mb-3 flex items-center gap-2">
+                  <Award className="h-4 w-4 text-[#006d7a]" />
+                  Certifications
+                </h4>
+                <ul className="space-y-2">
+                  {instructor.credentials.map((credential, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
+                      <span className="text-muted-foreground text-sm">{credential}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </CardContent>
