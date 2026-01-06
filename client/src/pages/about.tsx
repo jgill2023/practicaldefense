@@ -115,7 +115,7 @@ function HorizontalScrollSection() {
   const [isMobile, setIsMobile] = useState(false);
 
   const numCards = instructors.length;
-  const sectionHeight = numCards * 100;
+  const sectionHeight = Math.max(numCards * 150, 300); // Increased multiplier and added minimum height
 
   useEffect(() => {
     const checkMobile = () => {
