@@ -4,7 +4,223 @@ import { Card, CardContent } from "@/components/ui/card";
 import heroImage from "@assets/Instructors_1767335152648.jpg";
 import jeremyImg from "@assets/20180422_235425000_iOS_1767336860712.jpg";
 import { Award, Shield, Target, Users } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+
+interface InstructorData {
+  id: string;
+  name: string;
+  title: string;
+  image: string;
+  credentials: string[];
+  bio?: string;
+}
+
+const instructors: InstructorData[] = [
+  {
+    id: "jeremy-gill",
+    name: "Jeremy Gill",
+    title: "Founder and Lead Instructor",
+    image: jeremyImg,
+    credentials: [
+      "NM DPS Certified Instructor #445",
+      "NRA Certified Instructor",
+      "Rangemaster Certified Instructor",
+      "Dr. William Aprill's Unthinkable Attendee and Host",
+      "Graduate of MAG-20"
+    ],
+    bio: "Jeremy founded Practical Defense Training with a mission to provide professional, results-driven firearms training that empowers responsible citizens."
+  }
+];
+
+function InstructorCard({ instructor }: { instructor: InstructorData }) {
+  return (
+    <div 
+      className="flex-shrink-0 w-[320px] md:w-[400px] lg:w-[450px]"
+      data-testid={`instructor-card-${instructor.id}`}
+    >
+      <Card className="h-full overflow-hidden bg-card border-border">
+        <CardContent className="p-0">
+          <div className="aspect-[3/4] overflow-hidden">
+            <img 
+              src={instructor.image} 
+              alt={`${instructor.name} - ${instructor.title}`}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              data-testid={`img-instructor-${instructor.id}`}
+            />
+          </div>
+          <div className="p-6 space-y-4">
+            <div>
+              <h3 
+                className="font-heading text-2xl uppercase tracking-widest text-foreground"
+                data-testid={`text-instructor-name-${instructor.id}`}
+              >
+                {instructor.name}
+              </h3>
+              <p 
+                className="text-[#006d7a] font-semibold"
+                data-testid={`text-instructor-title-${instructor.id}`}
+              >
+                {instructor.title}
+              </p>
+            </div>
+            
+            {instructor.bio && (
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {instructor.bio}
+              </p>
+            )}
+            
+            <div>
+              <h4 className="font-heading text-sm uppercase tracking-widest text-foreground mb-3 flex items-center gap-2">
+                <Award className="h-4 w-4 text-[#006d7a]" />
+                Certifications
+              </h4>
+              <ul className="space-y-2">
+                {instructor.credentials.map((credential, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
+                    <span className="text-muted-foreground text-sm">{credential}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function HorizontalScrollSection() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const numCards = instructors.length;
+  const sectionHeight = numCards * 100;
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    if (!sectionRef.current || !trackRef.current || isMobile) return;
+
+    const section = sectionRef.current;
+    const track = trackRef.current;
+    
+    const sectionTop = section.offsetTop;
+    const sectionHeight = section.offsetHeight;
+    const viewportHeight = window.innerHeight;
+    
+    const scrollY = window.scrollY;
+    const scrollStart = sectionTop;
+    const scrollEnd = sectionTop + sectionHeight - viewportHeight;
+    const scrollRange = scrollEnd - scrollStart;
+
+    const trackWidth = track.scrollWidth;
+    const maxTranslate = Math.max(0, trackWidth - window.innerWidth + 64);
+
+    if (scrollRange <= 0 || maxTranslate <= 0) {
+      track.style.transform = 'translateX(0px)';
+      return;
+    }
+
+    if (scrollY < scrollStart) {
+      track.style.transform = 'translateX(0px)';
+      return;
+    }
+    
+    if (scrollY > scrollEnd) {
+      track.style.transform = `translateX(${-maxTranslate}px)`;
+      return;
+    }
+
+    const scrollProgress = (scrollY - scrollStart) / scrollRange;
+    const clampedProgress = Math.max(0, Math.min(1, scrollProgress));
+    const translateX = -clampedProgress * maxTranslate;
+
+    track.style.transform = `translateX(${translateX}px)`;
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (isMobile) return;
+
+    let rafId: number;
+    
+    const onScroll = () => {
+      rafId = requestAnimationFrame(handleScroll);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [handleScroll, isMobile]);
+
+  if (isMobile) {
+    return (
+      <section className="py-12 bg-background">
+        <div className="px-4">
+          <h2 className="text-2xl font-heading uppercase tracking-widest text-foreground mb-8">
+            Our Instructors
+          </h2>
+        </div>
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="flex gap-6 px-4 pb-4" style={{ width: 'max-content' }}>
+            {instructors.map((instructor) => (
+              <InstructorCard key={instructor.id} instructor={instructor} />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section 
+      ref={sectionRef}
+      className="relative overflow-hidden"
+      style={{ height: `${sectionHeight}vh` }}
+      data-testid="instructor-horizontal-scroll-section"
+    >
+      <div 
+        ref={stickyRef}
+        className="sticky top-0 h-screen flex flex-col justify-center overflow-hidden"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+          <h2 className="text-2xl font-heading uppercase tracking-widest text-foreground">
+            Our Instructors
+          </h2>
+          <p className="text-muted-foreground mt-2">
+            Scroll to explore our team of certified professionals.
+          </p>
+        </div>
+        
+        <div 
+          ref={trackRef}
+          className="flex gap-8 px-8 will-change-transform"
+          style={{ transform: 'translateX(0px)' }}
+        >
+          {instructors.map((instructor) => (
+            <InstructorCard key={instructor.id} instructor={instructor} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function About() {
   const [grayscaleAmount, setGrayscaleAmount] = useState(0);
@@ -63,7 +279,7 @@ export default function About() {
           </div>
 
           {/* Values Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div className="flex items-center gap-3 bg-card rounded-lg p-4">
               <Shield className="h-6 w-6 text-[#006d7a]" />
               <div>
@@ -93,86 +309,14 @@ export default function About() {
               </div>
             </div>
           </div>
-
-          {/* Instructors Section */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-heading uppercase tracking-widest text-foreground mb-8">Our Instructors</h2>
-          </div>
-
-          {/* Jeremy Gill - Lead Instructor */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-            
-            {/* Left Column - Photo */}
-            <div className="lg:col-span-1">
-              <Card className="overflow-hidden">
-                <CardContent className="p-0">
-                  <img 
-                    src={jeremyImg} 
-                    alt="Jeremy Gill - Founder and Lead Instructor" 
-                    className="w-full aspect-[3/4] object-cover"
-                    loading="lazy"
-                    data-testid="img-instructor-jeremy"
-                  />
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Right Column - Bio & Credentials */}
-            <div className="lg:col-span-2 space-y-6">
-              <div>
-                <h3 className="font-heading text-3xl uppercase tracking-widest text-foreground mb-1" data-testid="text-instructor-name-jeremy">
-                  Jeremy Gill
-                </h3>
-                <p className="text-[#006d7a] font-semibold text-lg" data-testid="text-instructor-title-jeremy">
-                  Founder and Lead Instructor
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-heading text-lg uppercase tracking-widest text-foreground mb-4 flex items-center gap-2">
-                  <Award className="h-5 w-5 text-[#006d7a]" />
-                  Certifications & Qualifications
-                </h4>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
-                    <span className="text-muted-foreground">NM DPS Certified Instructor #445</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
-                    <span className="text-muted-foreground">NRA Certified Instructor</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
-                    <span className="text-muted-foreground">Rangemaster Certified Instructor</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
-                    <span className="text-muted-foreground">Dr. William Aprill's Unthinkable Attendee and Host</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#006d7a] mt-2 flex-shrink-0" />
-                    <span className="text-muted-foreground">Graduate of MAG-20</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Additional Instructors Placeholder */}
-          <div className="border-t border-border pt-12">
-            <h3 className="font-heading text-xl uppercase tracking-widest text-foreground mb-6">Additional Team Members</h3>
-            <Card className="border-dashed">
-              <CardContent className="flex items-center justify-center py-12">
-                <p className="text-muted-foreground text-center">
-                  More instructor profiles coming soon.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
         </div>
       </section>
+
+      {/* Horizontal Scrolling Instructor Section */}
+      <HorizontalScrollSection />
+
+      {/* Footer spacing */}
+      <section className="bg-background py-12" />
     </Layout>
   );
 }
