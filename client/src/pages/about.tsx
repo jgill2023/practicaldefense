@@ -143,6 +143,8 @@ function HorizontalScrollSection() {
     const scrollRange = scrollEnd - scrollStart;
 
     const trackWidth = track.scrollWidth;
+    // Calculate maxTranslate ensuring the last card is fully visible and centered if possible
+    // The target is to scroll until the end of the track is at the right edge of the viewport
     const maxTranslate = Math.max(0, trackWidth - window.innerWidth + 64);
 
     if (scrollRange <= 0 || maxTranslate <= 0) {
@@ -150,19 +152,19 @@ function HorizontalScrollSection() {
       return;
     }
 
-    if (scrollY < scrollStart) {
+    if (scrollY <= scrollStart) {
       track.style.transform = 'translateX(0px)';
       return;
     }
     
-    if (scrollY > scrollEnd) {
+    if (scrollY >= scrollEnd) {
       track.style.transform = `translateX(${-maxTranslate}px)`;
       return;
     }
 
+    // Map vertical scroll progress (0 to 1) to horizontal translation
     const scrollProgress = (scrollY - scrollStart) / scrollRange;
-    const clampedProgress = Math.max(0, Math.min(1, scrollProgress));
-    const translateX = -clampedProgress * maxTranslate;
+    const translateX = -scrollProgress * maxTranslate;
 
     track.style.transform = `translateX(${translateX}px)`;
   }, [isMobile]);
