@@ -1,0 +1,63 @@
+OBJECTIVE
+Implement a horizontal scrolling “Main Instructor” section on the About Us page where vertical scrolling moves the instructor cards horizontally. When the user exits the section, normal vertical scrolling resumes.
+
+TECH STACK
+- Next.js (App Router)
+- React
+- Tailwind CSS
+- No animation libraries unless absolutely required
+
+REQUIREMENTS
+1. The Instructor section must pin while in view.
+2. Vertical scroll input must translate into horizontal movement of instructor cards.
+3. Section height must equal 100vh multiplied by the number of instructor cards.
+4. Horizontal scrolling must complete exactly once per section.
+5. After the section ends, normal vertical scrolling resumes.
+6. Must support mouse wheel, trackpad, and touch scroll.
+7. No scroll jitter or page lock issues.
+
+DOM STRUCTURE (REQUIRED)
+<section ref={sectionRef} className="relative h-[N * 100vh] overflow-hidden">
+  <div ref={stickyRef} className="sticky top-0 h-screen flex items-center">
+    <div ref={trackRef} className="flex gap-8 will-change-transform">
+      <!-- Instructor Cards -->
+    </div>
+  </div>
+</section>
+
+SCROLL LOGIC (REQUIRED)
+Use useEffect and requestAnimationFrame. Track window.scrollY and map vertical scroll progress to horizontal translation.
+
+scrollProgress = (window.scrollY - sectionTop) / (sectionHeight - window.innerHeight)
+translateX = -scrollProgress * (trackWidth - window.innerWidth)
+
+Apply transform:
+trackRef.current.style.transform = `translateX(${translateX}px)`
+
+Clamp values to prevent overscroll.
+
+PERFORMANCE
+- Use requestAnimationFrame
+- Use passive scroll listeners
+- Clean up listeners on unmount
+- Use will-change: transform
+
+MOBILE FALLBACK
+If window.innerWidth < 768px:
+- Disable scroll hijacking
+- Enable native horizontal scrolling with overflow-x-auto
+- Preserve instructor card layout
+
+INSTRUCTOR CARDS
+- Fixed width (min-width: 320px)
+- Include photo, name, credentials, and short bio
+- Horizontally centered with equal spacing
+
+DO NOT
+- Use CSS scroll-snap
+- Use GSAP unless absolutely necessary
+- Block scrolling outside this section
+- Break keyboard accessibility
+
+DELIVERABLE
+A fully working horizontal scroll instructor section on the About Us page with clean, commented code and no breaking changes elsewhere.
