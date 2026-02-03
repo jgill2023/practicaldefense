@@ -323,7 +323,7 @@ export default function ProductManagement() {
   // Show loading while checking auth
   if (authLoading) {
     return (
-      <Layout>
+      <Layout theme="light">
         <div className="flex items-center justify-center min-h-screen">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
         </div>
@@ -337,7 +337,7 @@ export default function ProductManagement() {
   }
 
   return (
-    <Layout>
+    <Layout theme="light">
       <div className="container mx-auto py-6 space-y-6" data-testid="product-management-page">
       {/* Header */}
       <div className="flex justify-between items-center">

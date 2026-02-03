@@ -233,7 +233,7 @@ export default function InstructorCalendar() {
 
   if (authLoading) {
     return (
-      <Layout>
+      <Layout theme="light">
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -271,7 +271,7 @@ export default function InstructorCalendar() {
   };
 
   return (
-    <Layout>
+    <Layout theme="light">
       <div className="container mx-auto py-6 px-4">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

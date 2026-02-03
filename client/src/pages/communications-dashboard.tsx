@@ -3,7 +3,7 @@ import { CommunicationsDashboard } from "@/components/CommunicationsDashboard";
 
 export default function CommunicationsDashboardPage() {
   return (
-    <Layout>
+    <Layout theme="light">
       <CommunicationsDashboard />
     </Layout>
   );

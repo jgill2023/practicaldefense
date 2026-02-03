@@ -518,7 +518,7 @@ export default function CourseFormsManagement() {
   ];
 
   return (
-    <Layout>
+    <Layout theme="light">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">

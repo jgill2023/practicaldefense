@@ -99,6 +99,43 @@
   --sidebar-ring: #004149;
 }
 
+.light {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(240, 10%, 10%);
+  --card: hsl(0, 0%, 98%);
+  --card-foreground: hsl(240, 10%, 10%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(240, 10%, 10%);
+  --primary: #004149;
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: #006d7a;
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(240, 5%, 96%);
+  --muted-foreground: hsl(240, 4%, 46%);
+  --accent: #006d7a;
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --success: hsl(142, 76%, 36%);
+  --success-foreground: hsl(0, 0%, 100%);
+  --border: hsl(240, 6%, 90%);
+  --input: hsl(240, 6%, 90%);
+  --ring: #004149;
+  --chart-1: #004149;
+  --chart-2: #006d7a;
+  --chart-3: hsl(44, 89%, 61%);
+  --chart-4: hsl(240, 5%, 64%);
+  --chart-5: hsl(240, 4%, 46%);
+  --sidebar: hsl(0, 0%, 98%);
+  --sidebar-foreground: hsl(240, 10%, 10%);
+  --sidebar-primary: #004149;
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: #006d7a;
+  --sidebar-accent-foreground: hsl(0, 0%, 100%);
+  --sidebar-border: hsl(240, 6%, 90%);
+  --sidebar-ring: #004149;
+}
+
 @layer base {
   * {
     @apply border-border;

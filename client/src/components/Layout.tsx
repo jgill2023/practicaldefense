@@ -34,9 +34,10 @@ interface LayoutProps {
   children: React.ReactNode;
   headerColor?: string;
   isLandingPage?: boolean;
+  theme?: 'dark' | 'light';
 }
 
-export function Layout({ children, headerColor, isLandingPage = false }: LayoutProps) {
+export function Layout({ children, headerColor, isLandingPage = false, theme = 'dark' }: LayoutProps) {
   const { isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -588,7 +589,7 @@ export function Layout({ children, headerColor, isLandingPage = false }: LayoutP
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 font-body">
+    <div className={`min-h-screen font-body ${theme === 'light' ? 'light bg-background' : 'bg-zinc-950'}`}>
       {/* Quote Bar - Not sticky, scrolls away */}
       <div className="bg-[#004149] py-6 px-4 flex items-center justify-center pt-[6px] pb-[6px]">
         <div className="max-w-7xl mx-auto text-center text-white text-[18px] font-body" style={{ fontFamily: 'Inter, sans-serif' }}>

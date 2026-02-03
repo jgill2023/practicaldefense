@@ -30,7 +30,7 @@ export default function AdminWaiversPage() {
   };
 
   return (
-    <Layout>
+    <Layout theme="light">
       <div className="container mx-auto py-6 space-y-6" data-testid="admin-waivers-page">
         <div className="flex justify-between items-center">
           <div>

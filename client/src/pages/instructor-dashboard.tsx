@@ -1215,7 +1215,7 @@ export default function InstructorDashboard() {
   };
 
   return (
-    <Layout>
+    <Layout theme="light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Dashboard Header */}
         <div className="bg-primary rounded-xl p-6 text-primary-foreground mb-8">

@@ -118,7 +118,7 @@ export default function StripeConnectPage() {
 
   if (authLoading) {
     return (
-      <Layout>
+      <Layout theme="light">
         <div className="flex items-center justify-center min-h-screen">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -128,7 +128,7 @@ export default function StripeConnectPage() {
 
   if (!user || !isInstructorOrHigher(user)) {
     return (
-      <Layout>
+      <Layout theme="light">
         <div className="container mx-auto px-4 py-8">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -145,7 +145,7 @@ export default function StripeConnectPage() {
   const isAdmin = isAdminOrHigher(user);
 
   return (
-    <Layout>
+    <Layout theme="light">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-3">

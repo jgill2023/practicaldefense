@@ -1462,7 +1462,7 @@ export default function GiftCardManagement() {
 
   if (!user || !["admin", "superadmin", "instructor"].includes(user.role || "")) {
     return (
-      <Layout>
+      <Layout theme="light">
         <div className="max-w-4xl mx-auto px-4 py-12 text-center">
           <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
@@ -1473,7 +1473,7 @@ export default function GiftCardManagement() {
   }
 
   return (
-    <Layout>
+    <Layout theme="light">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>

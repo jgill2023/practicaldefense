@@ -100,7 +100,7 @@ export default function AdminCreditsPage() {
 
   if (isLoading) {
     return (
-      <Layout>
+      <Layout theme="light">
         <div className="max-w-4xl mx-auto p-6">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
@@ -112,7 +112,7 @@ export default function AdminCreditsPage() {
   }
 
   return (
-    <Layout>
+    <Layout theme="light">
       <div className="max-w-4xl mx-auto p-6">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">

@@ -191,7 +191,7 @@ export default function SettingsPage() {
 
   if (authLoading) {
     return (
-      <Layout>
+      <Layout theme="light">
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
         </div>
@@ -201,7 +201,7 @@ export default function SettingsPage() {
 
   if (!user || !isInstructorOrHigher(user)) {
     return (
-      <Layout>
+      <Layout theme="light">
         <div className="container mx-auto py-8 px-4">
           <Alert variant="destructive" data-testid="alert-unauthorized">
             <AlertCircle className="h-4 w-4" />
@@ -216,7 +216,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <Layout>
+    <Layout theme="light">
       <div className="container mx-auto py-8 px-4 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold" data-testid="text-page-title">Settings</h1>

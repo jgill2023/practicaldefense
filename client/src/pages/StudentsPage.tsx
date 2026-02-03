@@ -476,7 +476,7 @@ function StudentsPage() {
   };
 
   return (
-    <Layout>
+    <Layout theme="light">
       <div className="max-w-7xl mx-auto p-6">
       {/* Back to Dashboard Link */}
       <div className="mb-6">
