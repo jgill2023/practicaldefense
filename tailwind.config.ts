@@ -72,8 +72,8 @@ export default {
       },
       fontFamily: {
         sans: ["Inter", "var(--font-sans)", "sans-serif"],
-        heading: ["Bebas Neue", "sans-serif"],
-        display: ["Bebas Neue", "sans-serif"],
+        heading: ["Oswald", "sans-serif"],
+        display: ["Oswald", "sans-serif"],
         body: ["Inter", "sans-serif"],
         avenir: ["Avenir Next", "sans-serif"],
         mono: ["var(--font-mono)", "Fira Code", "monospace"],
@@ -89,7 +89,7 @@ export default {
         'tactical': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
       },
       letterSpacing: {
-        'widest': '0.1em',
+        'widest': '0.12em',
         'professional': 'var(--tracking-normal)',
       },
       keyframes: {
