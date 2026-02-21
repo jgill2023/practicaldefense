@@ -92,7 +92,11 @@ export const users = pgTable("users", {
   timezone: varchar("timezone", { length: 100 }).default('America/Denver'), // Instructor's timezone for calendar operations
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+  deletedAt: timestamp("deleted_at"), // Soft delete — use instead of hard delete
+}, (table) => [
+  index("idx_users_role").on(table.role),
+  index("idx_users_user_status").on(table.userStatus),
+]);
 
 // Course status enum
 export const courseStatusEnum = pgEnum("course_status", ["draft", "published", "unpublished", "archived"]);
@@ -120,7 +124,7 @@ export const courses = pgTable("courses", {
   depositAmount: decimal("deposit_amount", { precision: 10, scale: 2 }),
   duration: varchar("duration", { length: 100 }).notNull(),
   categoryId: uuid("category_id").references(() => categories.id),
-  category: varchar("category", { length: 100 }).notNull(), // Keep for backward compatibility
+  category: varchar("category", { length: 100 }).notNull(), // DEPRECATED: use categoryId FK instead
   // Firearms-specific fields
   classroomTime: varchar("classroom_time", { length: 50 }), // e.g., "4 hours", "2 days"
   rangeTime: varchar("range_time", { length: 50 }), // e.g., "6 hours", "1 day"
@@ -146,7 +150,12 @@ export const courses = pgTable("courses", {
   destinationUrl: varchar("destination_url", { length: 500 }), // External registration URL (e.g., for Hosted Courses)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_courses_instructor_id").on(table.instructorId),
+  index("idx_courses_status").on(table.status),
+  index("idx_courses_deleted_at").on(table.deletedAt),
+  index("idx_courses_show_on_home_page").on(table.showOnHomePage),
+]);
 
 export const courseSchedules = pgTable("course_schedules", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -183,7 +192,11 @@ export const courseSchedules = pgTable("course_schedules", {
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_course_schedules_course_id").on(table.courseId),
+  index("idx_course_schedules_start_date").on(table.startDate),
+  index("idx_course_schedules_deleted_at").on(table.deletedAt),
+]);
 
 // Individual sessions for multi-day events
 export const eventSessions = pgTable("event_sessions", {
@@ -210,7 +223,7 @@ export const enrollments = pgTable("enrollments", {
   status: varchar("status").notNull().default('initiated'), // 'initiated', 'pending', 'confirmed', 'completed', 'cancelled', 'hold'
   paymentStatus: varchar("payment_status").notNull().default('pending'), // 'pending', 'paid', 'failed', 'refunded'
   paymentOption: varchar("payment_option").notNull().default('full'), // 'full' or 'deposit'
-  paymentIntentId: varchar("payment_intent_id"),
+  paymentIntentId: varchar("payment_intent_id"), // DEPRECATED: use stripePaymentIntentId instead
   stripePaymentIntentId: varchar("stripe_payment_intent_id"), // For tracking Stripe PI
   promoCodeApplied: varchar("promo_code_applied"), // Store applied promo code
   studentInfo: jsonb("student_info"), // Store student data for draft enrollments
@@ -237,7 +250,13 @@ export const enrollments = pgTable("enrollments", {
   formSubmittedAt: timestamp("form_submitted_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_enrollments_student_id").on(table.studentId),
+  index("idx_enrollments_course_id").on(table.courseId),
+  index("idx_enrollments_schedule_id").on(table.scheduleId),
+  index("idx_enrollments_status").on(table.status),
+  index("idx_enrollments_payment_status").on(table.paymentStatus),
+]);
 
 // Course enrollment feedback - instructor feedback and student notes
 export const courseEnrollmentFeedback = pgTable("course_enrollment_feedback", {
@@ -270,7 +289,10 @@ export const waitlist = pgTable("waitlist", {
   removedAt: timestamp("removed_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_waitlist_student_id").on(table.studentId),
+  index("idx_waitlist_schedule_id").on(table.scheduleId),
+]);
 
 // Application settings for configurable UI preferences
 export const appSettings = pgTable("app_settings", {
@@ -279,6 +301,7 @@ export const appSettings = pgTable("app_settings", {
   // Stripe configuration - tracks whether admin has completed Stripe setup
   stripeOnboarded: boolean("stripe_onboarded").notNull().default(false), // Set to true when admin confirms Stripe is configured
   stripeClientId: varchar("stripe_client_id", { length: 255 }), // Legacy - no longer used for Connect
+  defaultTaxRate: decimal("default_tax_rate", { precision: 6, scale: 5 }).default("0.07875"), // NM GRT fallback rate — see taxConfiguration table for full config
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -380,7 +403,7 @@ export const instructorAppointments = pgTable("instructor_appointments", {
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }), // Total price calculated (for variable-duration appointments)
   // Payment tracking
   paymentStatus: varchar("payment_status").notNull().default('pending'), // 'pending', 'paid', 'failed', 'refunded'
-  paymentIntentId: varchar("payment_intent_id"),
+  paymentIntentId: varchar("payment_intent_id"), // DEPRECATED: use stripePaymentIntentId instead
   stripePaymentIntentId: varchar("stripe_payment_intent_id"),
   amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }),
   taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }),
@@ -404,7 +427,12 @@ export const instructorAppointments = pgTable("instructor_appointments", {
   googleEventId: varchar("google_event_id", { length: 255 }), // Google Calendar event ID for sync
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_instructor_appointments_instructor_id").on(table.instructorId),
+  index("idx_instructor_appointments_student_id").on(table.studentId),
+  index("idx_instructor_appointments_status").on(table.status),
+  index("idx_instructor_appointments_start_time").on(table.startTime),
+]);
 
 // Notification templates for appointment events (customizable by instructor)
 export const appointmentNotificationTemplates = pgTable("appointment_notification_templates", {
@@ -1104,7 +1132,10 @@ export const notificationLogs = pgTable("notification_logs", {
   sentBy: varchar("sent_by").references(() => users.id), // null for automatic sends
   sentAt: timestamp("sent_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_notification_logs_recipient_id").on(table.recipientId),
+  index("idx_notification_logs_status").on(table.status),
+]);
 
 // Promo Code Redemptions table to track usage and enforce limits
 export const promoCodeRedemptions = pgTable("promo_code_redemptions", {
@@ -1540,7 +1571,11 @@ export const communications = pgTable("communications", {
   flaggedAt: timestamp("flagged_at"), // When flagged
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_communications_user_id").on(table.userId),
+  index("idx_communications_type").on(table.type),
+  index("idx_communications_is_read").on(table.isRead),
+]);
 
 // Prohibited words insert schema
 export const insertProhibitedWordSchema = createInsertSchema(prohibitedWords).omit({
@@ -1608,7 +1643,10 @@ export const smsListMembers = pgTable("sms_list_members", {
   autoAdded: boolean("auto_added").default(false), // True if auto-added from enrollment
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_sms_list_members_list_id").on(table.listId),
+  sql`CONSTRAINT uq_sms_list_members_list_user UNIQUE(list_id, user_id)`,
+]);
 
 export const smsBroadcastMessages = pgTable("sms_broadcast_messages", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1923,6 +1961,7 @@ export const products = pgTable("products", {
   updatedBy: varchar("updated_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  deletedAt: timestamp("deleted_at"), // Soft delete — preserves order history references
 });
 
 // Product variants (sizes, colors, etc.)
@@ -1978,9 +2017,10 @@ export const cartItems = pgTable("cart_items", {
   
   // Item type indicator
   itemType: varchar("item_type", { length: 20 }).notNull().default('local'), // 'local' or 'printify'
-  
+
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  expiresAt: timestamp("expires_at"), // For abandoned cart cleanup
 });
 
 // E-commerce orders
@@ -2036,7 +2076,10 @@ export const ecommerceOrders = pgTable("ecommerce_orders", {
   shippedAt: timestamp("shipped_at"),
   deliveredAt: timestamp("delivered_at"),
   cancelledAt: timestamp("cancelled_at"),
-});
+}, (table) => [
+  index("idx_ecommerce_orders_user_id").on(table.userId),
+  index("idx_ecommerce_orders_status").on(table.status),
+]);
 
 // E-commerce order items
 export const ecommerceOrderItems = pgTable("ecommerce_order_items", {
@@ -2259,7 +2302,11 @@ export const courseNotificationSignups = pgTable("course_notification_signups", 
   phone: varchar("phone", { length: 20 }),
   preferredChannel: varchar("preferred_channel", { length: 20 }).default('email'), // 'email', 'sms', 'both'
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_course_notification_signups_course_id").on(table.courseId),
+  index("idx_course_notification_signups_email").on(table.email),
+  sql`CONSTRAINT uq_course_notification_signups_course_email UNIQUE(course_id, email)`,
+]);
 
 // Course notification delivery logs table
 export const courseNotificationDeliveryLogs = pgTable("course_notification_delivery_logs", {
@@ -2536,7 +2583,10 @@ export const merchOrders = pgTable("merch_orders", {
   deliveredAt: timestamp("delivered_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_merch_orders_user_id").on(table.userId),
+  index("idx_merch_orders_status").on(table.status),
+]);
 
 // Merch order items table
 export const merchOrderItems = pgTable("merch_order_items", {
@@ -2705,7 +2755,10 @@ export const giftCards = pgTable("gift_cards", {
   voidReason: text("void_reason"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_gift_cards_status").on(table.status),
+  index("idx_gift_cards_hashed_code").on(table.hashedCode),
+]);
 
 // Gift card redemptions table - tracks each use of a gift card
 export const giftCardRedemptions = pgTable("gift_card_redemptions", {
@@ -3082,7 +3135,11 @@ export const onlineCourseEnrollments = pgTable("online_course_enrollments", {
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("idx_online_course_enrollments_user_id").on(table.userId),
+  index("idx_online_course_enrollments_status").on(table.status),
+  index("idx_online_course_enrollments_email").on(table.email),
+]);
 
 // Relations for Online Course Enrollments
 export const onlineCourseEnrollmentsRelations = relations(onlineCourseEnrollments, ({ one }) => ({
@@ -3141,3 +3198,113 @@ export const blobAclPolicies = pgTable("blob_acl_policies", {
 
 export type BlobAclPolicy = typeof blobAclPolicies.$inferSelect;
 export type InsertBlobAclPolicy = typeof blobAclPolicies.$inferInsert;
+
+// ============================================
+// ADMIN AUDIT LOG
+// ============================================
+
+// Tracks all admin mutations for accountability
+export const adminActionLog = pgTable("admin_action_log", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  adminId: varchar("admin_id").notNull().references(() => users.id),
+  action: varchar("action", { length: 50 }).notNull(), // 'user_role_change', 'user_delete', 'user_status_change', 'course_archive', 'promo_create', etc.
+  targetTable: varchar("target_table", { length: 50 }).notNull(),
+  targetId: varchar("target_id", { length: 255 }).notNull(),
+  oldValue: jsonb("old_value"),
+  newValue: jsonb("new_value"),
+  reason: text("reason"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_admin_action_log_admin_id").on(table.adminId),
+  index("idx_admin_action_log_action").on(table.action),
+  index("idx_admin_action_log_target").on(table.targetTable, table.targetId),
+  index("idx_admin_action_log_created_at").on(table.createdAt),
+]);
+
+// Relations
+export const adminActionLogRelations = relations(adminActionLog, ({ one }) => ({
+  admin: one(users, {
+    fields: [adminActionLog.adminId],
+    references: [users.id],
+  }),
+}));
+
+// Insert schema
+export const insertAdminActionLogSchema = createInsertSchema(adminActionLog).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types
+export type InsertAdminActionLog = z.infer<typeof insertAdminActionLogSchema>;
+export type AdminActionLog = typeof adminActionLog.$inferSelect;
+
+export type AdminActionLogWithDetails = AdminActionLog & {
+  admin: User;
+};
+
+// ============================================
+// TAX CONFIGURATION
+// ============================================
+
+// Configurable tax rates — replaces hardcoded NM_GRT_RATE in routes.ts
+export const taxConfiguration = pgTable("tax_configuration", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull(), // e.g., "New Mexico GRT"
+  state: varchar("state", { length: 2 }).notNull(), // State abbreviation
+  rate: decimal("rate", { precision: 6, scale: 5 }).notNull(), // e.g., 0.07875 for 7.875%
+  appliesTo: text("applies_to").array().default(sql`ARRAY['courses', 'appointments', 'credits']`), // What this rate applies to
+  isDefault: boolean("is_default").notNull().default(false), // Fallback rate when no specific match
+  isActive: boolean("is_active").notNull().default(true),
+  effectiveDate: timestamp("effective_date"), // When this rate takes effect (null = immediately)
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_tax_configuration_state").on(table.state),
+  index("idx_tax_configuration_is_active").on(table.isActive),
+]);
+
+// Insert schema
+export const insertTaxConfigurationSchema = createInsertSchema(taxConfiguration).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types
+export type InsertTaxConfiguration = z.infer<typeof insertTaxConfigurationSchema>;
+export type TaxConfiguration = typeof taxConfiguration.$inferSelect;
+
+// ============================================
+// VENUES (Range/Classroom Locations)
+// ============================================
+
+// Normalized locations — replaces free-text fields in courseSchedules
+export const venues = pgTable("venues", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'range', 'classroom', 'both'
+  address: text("address"),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 2 }),
+  zipCode: varchar("zip_code", { length: 10 }),
+  googleMapsLink: text("google_maps_link"),
+  locationImageUrl: varchar("location_image_url"),
+  contactPhone: varchar("contact_phone", { length: 20 }),
+  notes: text("notes"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insert schema
+export const insertVenueSchema = createInsertSchema(venues).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types
+export type InsertVenue = z.infer<typeof insertVenueSchema>;
+export type Venue = typeof venues.$inferSelect;
