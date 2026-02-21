@@ -82,39 +82,39 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REPL-01 | - | Pending |
-| REPL-02 | - | Pending |
-| REPL-03 | - | Pending |
-| REPL-04 | - | Pending |
-| REPL-05 | - | Pending |
-| REPL-06 | - | Pending |
-| VRCL-01 | - | Pending |
-| VRCL-02 | - | Pending |
-| VRCL-03 | - | Pending |
-| VRCL-04 | - | Pending |
-| VRCL-05 | - | Pending |
-| VRCL-06 | - | Pending |
-| VRCL-07 | - | Pending |
-| STOR-01 | - | Pending |
-| STOR-02 | - | Pending |
-| STOR-03 | - | Pending |
-| CRON-01 | - | Pending |
-| CRON-02 | - | Pending |
-| CRON-03 | - | Pending |
-| GCAL-01 | - | Pending |
-| GCAL-02 | - | Pending |
-| VRFY-01 | - | Pending |
-| VRFY-02 | - | Pending |
-| VRFY-03 | - | Pending |
-| VRFY-04 | - | Pending |
-| VRFY-05 | - | Pending |
-| VRFY-06 | - | Pending |
+| REPL-01 | Phase 1 | Pending |
+| REPL-02 | Phase 1 | Pending |
+| REPL-03 | Phase 1 | Pending |
+| REPL-04 | Phase 1 | Pending |
+| REPL-05 | Phase 1 | Pending |
+| REPL-06 | Phase 1 | Pending |
+| STOR-01 | Phase 1 | Pending |
+| STOR-02 | Phase 1 | Pending |
+| VRCL-01 | Phase 2 | Pending |
+| VRCL-02 | Phase 2 | Pending |
+| VRCL-03 | Phase 2 | Pending |
+| VRCL-04 | Phase 2 | Pending |
+| VRCL-05 | Phase 2 | Pending |
+| VRCL-06 | Phase 2 | Pending |
+| VRCL-07 | Phase 2 | Pending |
+| STOR-03 | Phase 2 | Pending |
+| CRON-01 | Phase 3 | Pending |
+| CRON-02 | Phase 3 | Pending |
+| CRON-03 | Phase 3 | Pending |
+| GCAL-01 | Phase 3 | Pending |
+| GCAL-02 | Phase 3 | Pending |
+| VRFY-01 | Phase 4 | Pending |
+| VRFY-02 | Phase 4 | Pending |
+| VRFY-03 | Phase 4 | Pending |
+| VRFY-04 | Phase 4 | Pending |
+| VRFY-05 | Phase 4 | Pending |
+| VRFY-06 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 27 total
-- Mapped to phases: 0
-- Unmapped: 27 ⚠️
+- Mapped to phases: 27
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-20*
-*Last updated: 2026-02-20 after initial definition*
+*Last updated: 2026-02-20 after roadmap creation — all 27 requirements mapped*
