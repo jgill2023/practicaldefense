@@ -1,17 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "vite build && esbuild server/vercel-entry.ts --bundle --platform=node --packages=external --format=esm --outfile=api/index.js --tsconfig=tsconfig.json",
+  "buildCommand": "vite build && esbuild server/vercel-entry.ts --bundle --platform=node --packages=external --format=esm --outfile=api/index.ts --tsconfig=tsconfig.json",
   "outputDirectory": "dist/public",
   "functions": {
-    "api/index.js": {
+    "api/index.ts": {
       "maxDuration": 30
     }
   },
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index.js" },
-    { "source": "/auth/:path*", "destination": "/api/index.js" },
-    { "source": "/sitemap.xml", "destination": "/api/index.js" },
-    { "source": "/robots.txt", "destination": "/api/index.js" },
+    { "source": "/api/:path*", "destination": "/api/index.ts" },
+    { "source": "/auth/:path*", "destination": "/api/index.ts" },
+    { "source": "/sitemap.xml", "destination": "/api/index.ts" },
+    { "source": "/robots.txt", "destination": "/api/index.ts" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
