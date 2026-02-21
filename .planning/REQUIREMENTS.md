@@ -82,14 +82,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REPL-01 | Phase 1 | Pending |
-| REPL-02 | Phase 1 | Pending |
-| REPL-03 | Phase 1 | Pending |
-| REPL-04 | Phase 1 | Pending |
-| REPL-05 | Phase 1 | Pending |
-| REPL-06 | Phase 1 | Pending |
-| STOR-01 | Phase 1 | Pending |
-| STOR-02 | Phase 1 | Pending |
+| REPL-01 | Phase 1 | Complete |
+| REPL-02 | Phase 1 | Complete |
+| REPL-03 | Phase 1 | Complete |
+| REPL-04 | Phase 1 | Complete |
+| REPL-05 | Phase 1 | Complete |
+| REPL-06 | Phase 1 | Complete |
+| STOR-01 | Phase 1 | Complete |
+| STOR-02 | Phase 1 | Complete |
 | VRCL-01 | Phase 2 | Pending |
 | VRCL-02 | Phase 2 | Pending |
 | VRCL-03 | Phase 2 | Pending |
@@ -117,4 +117,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-20*
-*Last updated: 2026-02-20 after roadmap creation — all 27 requirements mapped*
+*Last updated: 2026-02-21 — Phase 1 requirements (8) marked Complete*

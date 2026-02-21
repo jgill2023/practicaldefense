@@ -12,7 +12,7 @@ Practical Defense is a fully functional self-defense training platform currently
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Replit Cleanup** - Remove all Replit-specific code, packages, and env var references so the codebase runs cleanly without any Replit context
+- [x] **Phase 1: Replit Cleanup** - Remove all Replit-specific code, packages, and env var references so the codebase runs cleanly without any Replit context
 - [ ] **Phase 2: Vercel Adapter** - Wire the Express app into Vercel's serverless function pattern, configure routing and build, deploy first working version
 - [ ] **Phase 3: Cron and Calendar** - Replace node-cron with Vercel Cron, reconnect Google Calendar OAuth for the new domain
 - [ ] **Phase 4: Verification** - Confirm every integrated system works end-to-end on Vercel before treating it as production
@@ -20,21 +20,21 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Replit Cleanup
-**Goal**: The codebase starts and runs locally with no Replit packages installed and no REPLIT_* environment variables set — including direct GCS credentials replacing the sidecar
+**Goal**: The codebase starts and runs locally with no Replit packages installed and no REPLIT_* environment variables set — Vercel Blob replacing the GCS sidecar
 **Depends on**: Nothing (first phase)
 **Requirements**: REPL-01, REPL-02, REPL-03, REPL-04, REPL-05, REPL-06, STOR-01, STOR-02
 **Success Criteria** (what must be TRUE):
   1. `npm run build` completes without error (Replit Vite plugins removed)
   2. Server starts locally with only standard env vars — no REPL_*, REPLIT_DEPLOYMENT, REPL_IDENTITY
-  3. File upload and signed URL generation use native GCS SDK with a service account key, not the sidecar at 127.0.0.1:1106
+  3. File upload and download use Vercel Blob SDK, not the GCS sidecar at 127.0.0.1:1106
   4. Stripe client initializes directly from STRIPE_SECRET_KEY — no Replit credential fallback path exists in the code
   5. All URLs constructed in emailService, notificationEngine, cronService, and routes use APP_URL — no REPLIT_DOMAINS or REPLIT_DEV_DOMAIN references remain
 **Plans:** 3 plans in 2 waves
 
 Plans:
-- [ ] 01-01-PLAN.md — Remove Replit Vite plugins and uninstall dead packages (REPL-01, REPL-02, REPL-05)
-- [ ] 01-02-PLAN.md — Simplify Stripe to env-var-only, remove Stripe Connect, replace REPLIT env vars with APP_URL (REPL-03, REPL-04, REPL-06)
-- [ ] 01-03-PLAN.md — Replace GCS sidecar with Vercel Blob, add startup validation and .env.example (STOR-01, STOR-02)
+- [x] 01-01-PLAN.md — Remove Replit Vite plugins and uninstall dead packages (REPL-01, REPL-02, REPL-05)
+- [x] 01-02-PLAN.md — Simplify Stripe to env-var-only, remove Stripe Connect, replace REPLIT env vars with APP_URL (REPL-03, REPL-04, REPL-06)
+- [x] 01-03-PLAN.md — Replace GCS sidecar with Vercel Blob, add startup validation and .env.example (STOR-01, STOR-02)
 
 ### Phase 2: Vercel Adapter
 **Goal**: The app is deployed on Vercel — Express running as a serverless function, React served from CDN, sessions working, Stripe webhooks verified
@@ -92,7 +92,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Replit Cleanup | 0/3 | Not started | - |
+| 1. Replit Cleanup | 3/3 | Complete | 2026-02-21 |
 | 2. Vercel Adapter | 0/3 | Not started | - |
 | 3. Cron and Calendar | 0/2 | Not started | - |
 | 4. Verification | 0/2 | Not started | - |
