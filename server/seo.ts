@@ -400,7 +400,6 @@ Disallow: /gift-card-management
 Disallow: /appointments
 Disallow: /student-portal
 Disallow: /students
-Disallow: /student-resources
 Disallow: /pending-approval
 Disallow: /checkout
 Disallow: /cart

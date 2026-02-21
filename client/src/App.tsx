@@ -40,7 +40,6 @@ import AboutChris from "@/pages/about-chris";
 import About from "@/pages/about";
 import Articles from "@/pages/articles";
 import SettingsPage from "@/pages/settings";
-import StudentResources from "@/pages/student-resources";
 import MerchStore from "@/pages/store";
 import GiftCardsPage from "@/pages/gift-cards";
 import GiftCardManagement from "@/pages/gift-card-management";
@@ -185,7 +184,6 @@ function Router() {
       <Route path="/settings" component={SettingsPage} />
       <Route path="/student-portal" component={StudentPortal} />
       <Route path="/students" component={StudentsPage} />
-      <Route path="/student-resources" component={StudentResources} />
       <Route path="/merch" component={MerchStore} />
       <Route path="/gift-cards" component={GiftCardsPage} />
       <Route path="/gift-card-management" component={GiftCardManagement} />
