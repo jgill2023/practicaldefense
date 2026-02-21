@@ -1,53 +1,40 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Upload } from "lucide-react";
 
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
   maxFileSize?: number;
-  onGetUploadParameters: () => Promise<{
-    method: "PUT";
-    url: string;
-  }>;
   onComplete?: (result: { successful: any[] }) => void;
   buttonClassName?: string;
   children: ReactNode;
+  // Legacy prop — no longer used. Upload is handled internally via server-side Vercel Blob.
+  // Kept for backward compatibility during migration; callers can safely remove it.
+  onGetUploadParameters?: () => Promise<{ method: "PUT"; url: string }>;
 }
 
 /**
- * A file upload component that renders as a button and provides a modal interface for
- * file management.
- * 
+ * A file upload component that renders as a button and handles file uploads
+ * by POSTing to the server, which stores files in Vercel Blob.
+ *
  * Features:
- * - Renders as a customizable button that opens a file upload modal
- * - Provides a modal interface for:
- *   - File selection
- *   - File preview
- *   - Upload progress tracking
- *   - Upload status display
- * 
- * The component uses Uppy under the hood to handle all file upload functionality.
- * All file management features are automatically handled by the Uppy dashboard modal.
- * 
+ * - Renders as a customizable button
+ * - File selection with size validation
+ * - Upload progress tracking
+ * - Upload status display
+ *
  * @param props - Component props
- * @param props.maxNumberOfFiles - Maximum number of files allowed to be uploaded
- *   (default: 1)
- * @param props.maxFileSize - Maximum file size in bytes (default: 10MB)
- * @param props.onGetUploadParameters - Function to get upload parameters (method and URL).
- *   Typically used to fetch a presigned URL from the backend server for direct-to-S3
- *   uploads.
- * @param props.onComplete - Callback function called when upload is complete. Typically
- *   used to make post-upload API calls to update server state and set object ACL
- *   policies.
+ * @param props.maxNumberOfFiles - Maximum number of files allowed (default: 1)
+ * @param props.maxFileSize - Maximum file size in bytes (default: 15MB)
+ * @param props.onComplete - Callback called when upload is complete.
+ *   Receives `{ successful: [{ uploadURL: string }] }` where uploadURL is the Vercel Blob URL.
  * @param props.buttonClassName - Optional CSS class name for the button
- * @param props.children - Content to be rendered inside the button
+ * @param props.children - Content rendered inside the button
  */
 export function ObjectUploader({
   maxNumberOfFiles = 1,
   maxFileSize = 15728640, // 15MB default
-  onGetUploadParameters,
   onComplete,
   buttonClassName,
   children,
@@ -61,48 +48,39 @@ export function ObjectUploader({
     const maxSizeMB = Math.round(maxFileSize / 1024 / 1024);
     if (file.size > maxFileSize) {
       alert(`File size must be less than ${maxSizeMB}MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
-      // Reset the input so the same file can be selected again after the user fixes it
-      event.target.value = '';
+      event.target.value = "";
       return;
     }
 
     setIsUploading(true);
     try {
-      const { url } = await onGetUploadParameters();
+      const formData = new FormData();
+      formData.append("file", file);
 
-      if (!url) {
-        alert('Failed to get upload URL. Please try again.');
-        setIsUploading(false);
-        return;
-      }
-
-      const response = await fetch(url, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
+      const response = await fetch("/api/objects/upload", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
       });
 
       if (response.ok) {
-        // Extract the storage URL from the upload URL by removing query parameters
-        const storageURL = url.split('?')[0];
-        console.log('Upload successful, storage URL:', storageURL);
+        const data = await response.json();
+        const uploadURL = data.uploadURL || data.url;
+        console.log("Upload successful, blob URL:", uploadURL);
         onComplete?.({
-          successful: [{ uploadURL: storageURL }]
+          successful: [{ uploadURL }],
         });
       } else {
         const errorText = await response.text();
-        console.error('Upload failed with status:', response.status, errorText);
+        console.error("Upload failed with status:", response.status, errorText);
         alert(`Upload failed: ${response.statusText}. Please try again.`);
       }
     } catch (error) {
-      console.error('Upload error:', error);
-      alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
+      console.error("Upload error:", error);
+      alert(`Upload failed: ${error instanceof Error ? error.message : "Unknown error"}. Please try again.`);
     } finally {
       setIsUploading(false);
-      // Reset the input so the same file can be selected again
-      event.target.value = '';
+      event.target.value = "";
     }
   };
 
@@ -115,9 +93,9 @@ export function ObjectUploader({
         onChange={handleFileUpload}
         disabled={isUploading}
       />
-      <Button 
+      <Button
         type="button"
-        onClick={() => document.getElementById('file-upload')?.click()} 
+        onClick={() => document.getElementById("file-upload")?.click()}
         className={buttonClassName}
         disabled={isUploading}
       >
@@ -126,7 +104,7 @@ export function ObjectUploader({
         ) : (
           <Upload className="mr-2 h-4 w-4" />
         )}
-        {isUploading ? 'Uploading...' : children}
+        {isUploading ? "Uploading..." : children}
       </Button>
     </div>
   );

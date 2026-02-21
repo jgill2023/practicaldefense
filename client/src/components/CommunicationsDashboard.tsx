@@ -3079,22 +3079,6 @@ export function CommunicationsDashboard() {
                   <ObjectUploader
                     maxNumberOfFiles={1}
                     maxFileSize={10485760}
-                    onGetUploadParameters={async () => {
-                      const response = await fetch('/api/objects/upload', {
-                        method: 'POST',
-                        credentials: 'include',
-                      });
-
-                      if (!response.ok) {
-                        throw new Error('Failed to get upload URL');
-                      }
-
-                      const data = await response.json();
-                      return {
-                        method: 'PUT' as const,
-                        url: data.uploadUrl,
-                      };
-                    }}
                     onComplete={(result) => {
                       if (result.successful && result.successful.length > 0) {
                         const uploadedUrl = result.successful[0].uploadURL;
@@ -3576,16 +3560,6 @@ export function CommunicationsDashboard() {
                   </div>
                 ) : (
                   <ObjectUploader
-                    onGetUploadParameters={async () => {
-                      const response = await apiRequest('POST', '/api/object-storage/upload-url', {
-                        directory: 'public',
-                        filename: `template-${Date.now()}.png`
-                      });
-                      return {
-                        method: 'PUT' as const,
-                        url: response.url
-                      };
-                    }}
                     onComplete={(result) => {
                       if (result.successful && result.successful[0]) {
                         setTemplateImageUrl(result.successful[0].uploadURL);

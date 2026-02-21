@@ -257,21 +257,6 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
     updateCourseMutation.mutate(formData);
   };
 
-  // Handle image upload
-  const handleGetUploadParameters = async () => {
-    try {
-      setIsUploadingImage(true);
-      const data = await apiRequest("POST", "/api/objects/upload");
-      return {
-        method: 'PUT' as const,
-        url: data.uploadURL,
-      };
-    } catch (error) {
-      setIsUploadingImage(false);
-      throw error;
-    }
-  };
-
   const handleImageUploadComplete = async (result: { successful: any[] }) => {
     if (result.successful && result.successful.length > 0) {
       const uploadURL = result.successful[0].uploadURL;
@@ -766,7 +751,6 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                       <ObjectUploader
                         maxNumberOfFiles={1}
                         maxFileSize={5242880} // 5MB
-                        onGetUploadParameters={handleGetUploadParameters}
                         onComplete={handleImageUploadComplete}
                         buttonClassName="w-full"
                       >

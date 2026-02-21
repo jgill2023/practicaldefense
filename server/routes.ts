@@ -24,6 +24,9 @@ import { generateSitemap, generateRobotsTxt } from "./seo";
 import { enrollStudentInMoodle, getMoodleConfig, testMoodleConnection } from "./moodle";
 
 import { getStripeClient, isStripeConfigured } from './stripeClient';
+import multer from 'multer';
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
 // Stripe is required for payment processing
 const stripe: Stripe | null = getStripeClient();
@@ -3426,39 +3429,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Object storage routes for waivers and course images
-  app.get("/objects/:objectPath(*)", async (req: any, res) => {
-    const userId = req.user?.id;
-    const objectStorageService = new ObjectStorageService();
+  app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
     try {
-      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      const objectPath = req.params.objectPath;
+      const objectStorageService = new ObjectStorageService();
+
       const canAccess = await objectStorageService.canAccessObjectEntity({
-        objectFile,
-        userId: userId,
-        requestedPermission: ObjectPermission.READ,
+        userId: req.user?.id?.toString(),
+        pathname: objectPath,
       });
       if (!canAccess) {
-        return res.sendStatus(401);
+        return res.status(403).json({ error: "Access denied" });
       }
-      objectStorageService.downloadObject(objectFile, res);
-    } catch (error) {
-      console.error("Error checking object access:", error);
-      if (error instanceof ObjectNotFoundError) {
-        return res.sendStatus(404);
+
+      const { getObjectAclPolicy } = await import("./objectAcl");
+      const aclPolicy = await getObjectAclPolicy(objectPath);
+      if (!aclPolicy?.blobUrl) {
+        return res.status(404).json({ error: "Object not found" });
       }
-      return res.sendStatus(500);
+
+      await objectStorageService.downloadObject(aclPolicy.blobUrl, res);
+    } catch (error: any) {
+      console.error("Error serving object:", error);
+      res.status(500).json({ error: "Error serving file" });
     }
   });
 
-  app.post("/api/objects/upload", isAuthenticated, async (req, res) => {
+  app.post("/api/objects/upload", isAuthenticated, upload.single("file"), async (req: any, res) => {
     try {
+      if (!req.file) return res.status(400).json({ error: "No file provided" });
       const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      res.json({ uploadURL });
-    } catch (error) {
-      console.error("Error getting upload URL:", error);
-      res.status(500).json({
-        error: "Failed to get upload URL. Object storage may not be configured properly."
-      });
+      const result = await objectStorageService.uploadEntityObject(
+        req.file.buffer,
+        req.file.mimetype,
+        req.file.originalname,
+      );
+      res.json({ uploadURL: result.url, pathname: result.pathname });
+    } catch (error: any) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ error: "Error uploading file" });
     }
   });
 
@@ -4236,11 +4245,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           owner: userId,
           visibility: "public", // Course images should be publicly viewable
+          blobUrl: req.body.courseImageURL,
         },
       );
 
       res.status(200).json({
-        objectPath: objectPath,
+        objectPath: req.body.courseImageURL,
       });
     } catch (error) {
       console.error("Error setting course image:", error);
@@ -4263,11 +4273,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           owner: userId,
           visibility: "public", // Product images should be publicly viewable
+          blobUrl: req.body.productImageURL,
         },
       );
 
       res.status(200).json({
-        objectPath: objectPath,
+        objectPath: req.body.productImageURL,
       });
     } catch (error) {
       console.error("Error setting product image:", error);
@@ -4399,6 +4410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           owner: userId,
           visibility: "private",
+          blobUrl: req.body.waiverURL,
         },
       );
 
@@ -8898,51 +8910,24 @@ jeremy@abqconcealedcarry.com
   setInterval(checkScheduledBroadcasts, 60 * 1000);
   console.log('Scheduled broadcast checker started (runs every minute)');
 
-  // Object Storage Upload URL endpoint
-  app.post('/api/object-storage/upload-url', isAuthenticated, async (req: any, res) => {
+  // Object Storage Upload URL endpoint — server-side upload via Vercel Blob
+  app.post('/api/object-storage/upload-url', isAuthenticated, upload.single('file'), async (req: any, res) => {
     try {
-      const { directory, filename } = req.body;
-
-      if (!directory || !filename) {
-        return res.status(400).json({ message: "Directory and filename are required" });
-      }
-
-      const bucketId = process.env.PUBLIC_OBJECT_SEARCH_PATHS?.split(',')[0]?.split('/')[1];
-      if (!bucketId) {
-        return res.status(500).json({ message: "Object storage not configured" });
-      }
-
-      const objectPath = `/${bucketId}/${directory}/${filename}`;
-
-      // Parse object path manually: /<bucket_name>/<object_name>
-      const parts = objectPath.slice(1).split('/');
-      const bucketName = parts[0];
-      const objectName = parts.slice(1).join('/');
-
-      const REPLIT_SIDECAR_ENDPOINT = process.env.REPLIT_SIDECAR_ENDPOINT || "http://0.0.0.0:1106";
-
-      const request = {
-        bucket_name: bucketName,
-        object_name: objectName,
-        method: 'PUT',
-        expires_at: new Date(Date.now() + 900 * 1000).toISOString(),
-      };
-
-      const response = await fetch(`${REPLIT_SIDECAR_ENDPOINT}/object-storage/signed-object-url`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to sign object URL: ${response.status}`);
-      }
-
-      const { signed_url } = await response.json();
-      res.json({ url: signed_url });
+      if (!req.file) return res.status(400).json({ error: 'No file provided' });
+      const objectStorageService = new ObjectStorageService();
+      const result = await objectStorageService.uploadEntityObject(
+        req.file.buffer,
+        req.file.mimetype,
+        req.file.originalname,
+      );
+      await objectStorageService.trySetObjectEntityAclPolicy(
+        result.url,
+        { owner: req.user.id.toString(), visibility: 'private', blobUrl: result.url }
+      );
+      res.json({ url: result.url, pathname: result.pathname });
     } catch (error: any) {
-      console.error("Error generating upload URL:", error);
-      res.status(500).json({ message: "Failed to generate upload URL: " + error.message });
+      console.error("Error uploading file:", error);
+      res.status(500).json({ message: "Failed to upload file: " + error.message });
     }
   });
 

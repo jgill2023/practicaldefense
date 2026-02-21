@@ -122,23 +122,6 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
     createCourseMutation.mutate(data);
   };
 
-  const handleGetUploadParameters = async () => {
-    try {
-      console.log('Getting upload parameters...');
-      setIsUploadingImage(true);
-      const data = await apiRequest("POST", "/api/objects/upload");
-      console.log('Upload parameters received:', data);
-      return {
-        method: 'PUT' as const,
-        url: data.uploadURL,
-      };
-    } catch (error) {
-      console.error('Error getting upload parameters:', error);
-      setIsUploadingImage(false);
-      throw error;
-    }
-  };
-
   const handleUploadComplete = async (result: { successful: any[] }) => {
     console.log('Upload complete result:', result);
     
@@ -459,7 +442,6 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
                   <ObjectUploader
                     maxNumberOfFiles={1}
                     maxFileSize={5 * 1024 * 1024} // 5MB
-                    onGetUploadParameters={handleGetUploadParameters}
                     onComplete={handleUploadComplete}
                     buttonClassName="w-full"
                   >

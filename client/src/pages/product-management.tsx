@@ -1009,17 +1009,9 @@ export default function ProductManagement() {
                           <ObjectUploader
                             maxNumberOfFiles={1}
                             maxFileSize={15728640} // 15MB
-                            onGetUploadParameters={async () => {
-                              const data = await apiRequest('POST', '/api/objects/upload');
-                              return { 
-                                method: 'PUT' as const, 
-                                url: data.uploadURL 
-                              };
-                            }}
                             onComplete={async (result) => {
                               console.log('Upload result:', result);
                               if (result.successful && result.successful.length > 0) {
-                                // The uploadURL is the URL we used to PUT the file
                                 const uploadURL = result.successful[0].uploadURL;
                                 console.log('Upload URL:', uploadURL);
 

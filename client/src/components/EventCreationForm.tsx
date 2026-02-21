@@ -31,7 +31,6 @@ import {
   Upload
 } from "lucide-react";
 import type { CourseWithSchedules, InsertCourseSchedule, EventCategory, RecurrencePattern, Category } from "@shared/schema";
-import { ObjectUploader } from "@/components/ObjectUploader";
 
 
 // Form validation schema

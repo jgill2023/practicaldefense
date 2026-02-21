@@ -7,6 +7,25 @@ import { db } from "./db";
 import { instructorGoogleCredentials } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
+// ============================================
+// STARTUP ENV VAR VALIDATION
+// ============================================
+const REQUIRED_ENV_VARS = [
+  "DATABASE_URL",
+  "SESSION_SECRET",
+  "APP_URL",
+  "BLOB_READ_WRITE_TOKEN",
+];
+
+const missingVars = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
+if (missingVars.length > 0) {
+  console.error(
+    `[Startup] FATAL: Missing required environment variables: ${missingVars.join(", ")}`,
+  );
+  console.error("[Startup] Set these variables before starting the server.");
+  process.exit(1);
+}
+
 const app = express();
 
 app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
