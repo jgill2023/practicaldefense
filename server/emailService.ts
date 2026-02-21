@@ -242,9 +242,7 @@ export class NotificationEmailService {
 }
 
 // Authentication-related email functions (no credits required)
-const APP_URL = process.env.REPLIT_DEV_DOMAIN 
-  ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-  : "http://localhost:5000";
+const APP_URL = process.env.APP_URL || 'http://localhost:5000';
 
 async function sendAuthEmail(to: string, subject: string, html: string): Promise<boolean> {
   try {

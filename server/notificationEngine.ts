@@ -103,7 +103,7 @@ export class NotificationEngine {
     companyPhone: '(555) 123-4567',
     companyEmail: 'Info@abqconcealedcarry.com',
     website: 'abqconcealedcarry.com',
-    websiteUrl: process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://abqconcealedcarry.com',
+    websiteUrl: process.env.APP_URL || 'https://abqconcealedcarry.com',
     currentDate: new Date().toLocaleDateString()
   };
 
@@ -930,7 +930,7 @@ export class NotificationEngine {
         companyPhone: instructor.phone || '',
         companyEmail: instructor.email,
         website: 'Practical Defense Training',
-        websiteUrl: process.env.REPLIT_DOMAINS || 'https://abqconcealedcarry.com',
+        websiteUrl: process.env.APP_URL || 'https://abqconcealedcarry.com',
         currentDate: new Date().toLocaleDateString('en-US'),
       },
     };
@@ -1357,7 +1357,7 @@ export class CourseNotificationEngine {
             </p>
             
             <div style="text-align: center;">
-              <a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://example.com'}" class="cta-button">
+              <a href="${process.env.APP_URL || 'https://example.com'}" class="cta-button">
                 Register Now
               </a>
             </div>
@@ -1397,7 +1397,7 @@ ${schedule.location ? `Location: ${schedule.location}\n` : ''}Available Spots: $
 
 Don't miss this opportunity! Spots fill up quickly, so register today to secure your place.
 
-Register at: ${process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://example.com'}
+Register at: ${process.env.APP_URL || 'https://example.com'}
 
 ---
 You're receiving this email because you signed up to be notified about ${course.title}.
@@ -1417,7 +1417,7 @@ Practical Defense Training | Info@abqconcealedcarry.com
     const startTime = this.formatTime(schedule.startTime);
 
     // Keep SMS concise due to character limits
-    return `New ${course.title} scheduled for ${startDate} at ${startTime}. ${schedule.availableSpots} spots available. Register at ${process.env.REPLIT_DOMAINS?.split(',')[0] || 'tacticaladv.com'}`;
+    return `New ${course.title} scheduled for ${startDate} at ${startTime}. ${schedule.availableSpots} spots available. Register at ${process.env.APP_URL || 'https://practicaldefense.com'}`;
   }
 
   /**

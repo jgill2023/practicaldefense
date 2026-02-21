@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { google } from 'googleapis';
 import { calendarService } from './calendarService';
 
-const WEBHOOK_CALLBACK_URL = process.env.WEBHOOK_CALLBACK_URL || `${process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000'}/api/availability/webhook/calendar`;
+const WEBHOOK_CALLBACK_URL = process.env.WEBHOOK_CALLBACK_URL || `${process.env.APP_URL || 'http://localhost:5000'}/api/availability/webhook/calendar`;
 
 interface WatchRenewalResult {
   instructorId: string;

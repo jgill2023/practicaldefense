@@ -6460,8 +6460,8 @@ BY SIGNING, I ACKNOWLEDGE THAT I HAVE READ AND UNDERSTOOD ALL OF THE TERMS OF TH
         });
       };
 
-      // Generate payment link - use the first domain from REPLIT_DOMAINS or fallback
-      const baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'https://example.com';
+      // Generate payment link
+      const baseUrl = process.env.APP_URL || 'https://example.com';
       const paymentLink = `${baseUrl}/checkout?enrollmentId=${enrollmentId}`;
 
       let result = { success: false, error: '', results: [] as any[] };
