@@ -39,7 +39,6 @@ import PendingApprovalPage from "@/pages/pending-approval";
 import AboutChris from "@/pages/about-chris";
 import About from "@/pages/about";
 import Articles from "@/pages/articles";
-import StripeConnectPage from "@/pages/stripe-connect";
 import SettingsPage from "@/pages/settings";
 import StudentResources from "@/pages/student-resources";
 import MerchStore from "@/pages/store";
@@ -169,7 +168,6 @@ function Router() {
       <Route path="/admin/credits" component={AdminCreditsPage} />
       <Route path="/admin/waivers" component={AdminWaiversPage} />
       <Route path="/admin/users" component={UserManagementPage} />
-      <Route path="/stripe-connect" component={StripeConnectPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route path="/student-portal" component={StudentPortal} />
       <Route path="/students" component={StudentsPage} />

@@ -16,7 +16,6 @@ import { sendSms } from "./smsService";
 import { CourseNotificationEngine, NotificationEngine } from "./notificationEngine";
 import { NotificationEmailService, sendPasswordResetEmail } from "./emailService";
 import { appointmentRouter } from "./appointments/routes";
-import { stripeConnectRouter } from "./stripeConnect/routes";
 import storeRouter from "./store/routes";
 import giftCardRouter from "./giftCards/routes";
 import { calendarRouter } from "./calendar/routes";
@@ -24,30 +23,16 @@ import "./types"; // Import type declarations
 import { generateSitemap, generateRobotsTxt } from "./seo";
 import { enrollStudentInMoodle, getMoodleConfig, testMoodleConnection } from "./moodle";
 
-import { getStripeClient } from './stripeClient';
+import { getStripeClient, isStripeConfigured } from './stripeClient';
 
 // Stripe is required for payment processing
-// Using Replit connector for credentials
-let stripe: Stripe | null = null;
-let stripeInitialized = false;
+const stripe: Stripe | null = getStripeClient();
 
-async function ensureStripeInitialized(): Promise<Stripe | null> {
-  if (!stripeInitialized) {
-    try {
-      stripe = await getStripeClient();
-      stripeInitialized = true;
-      console.log('✅ Stripe client initialized successfully');
-    } catch (error) {
-      console.warn('⚠️  Stripe not configured. Payment processing is disabled.');
-      console.warn('   Complete the Stripe integration setup to enable payments.');
-      stripe = null;
-    }
-  }
-  return stripe;
+if (!isStripeConfigured()) {
+  console.warn('[Stripe] STRIPE_SECRET_KEY not set — payment endpoints disabled.');
+} else {
+  console.log('[Stripe] Stripe client initialized successfully.');
 }
-
-// Initialize Stripe on startup
-ensureStripeInitialized();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // SEO routes - sitemap.xml and robots.txt
@@ -9226,9 +9211,6 @@ jeremy@abqconcealedcarry.com
   // Mount appointment routes
   app.use('/api/appointments', appointmentRouter);
 
-  // Mount Stripe Connect routes
-  app.use('/api/stripe-connect', stripeConnectRouter);
-
   // Mount Store routes (Printify merch)
   app.use('/api/store', storeRouter);
 
@@ -9509,7 +9491,6 @@ jeremy@abqconcealedcarry.com
 
   // Initiate online course enrollment and create payment intent
   app.post('/api/online-course/initiate-enrollment', async (req: any, res) => {
-    await ensureStripeInitialized();
     if (!stripe) {
       return res.status(503).json({
         message: "Payment processing is not configured. Please try again later."
@@ -9601,7 +9582,6 @@ jeremy@abqconcealedcarry.com
 
   // Confirm payment and trigger Moodle enrollment
   app.post('/api/online-course/confirm-payment', async (req: any, res) => {
-    await ensureStripeInitialized();
     if (!stripe) {
       return res.status(503).json({
         message: "Payment processing is not configured."
@@ -9867,7 +9847,6 @@ Practical Defense Training LLC`;
 
   // Stripe webhook for online course payments
   app.post('/api/online-course/webhook', async (req: any, res) => {
-    await ensureStripeInitialized();
     if (!stripe) {
       return res.status(503).json({ message: "Stripe not configured" });
     }

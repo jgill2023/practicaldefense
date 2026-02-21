@@ -347,7 +347,6 @@ Disallow: /promo-codes
 Disallow: /communications
 Disallow: /reports
 Disallow: /settings
-Disallow: /stripe-connect
 Disallow: /gift-card-management
 Disallow: /appointments
 Disallow: /student-portal

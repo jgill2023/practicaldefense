@@ -154,11 +154,6 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                         {isAdminOrHigher(user) && (
                           <>
                             <DropdownMenuItem asChild>
-                              <Link href="/stripe-connect" className="w-full cursor-pointer" data-testid="link-settings-payment">
-                                Payment Settings
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
                               <Link href="/gift-card-management" className="w-full cursor-pointer" data-testid="link-settings-gift-cards">
                                 Gift Card Admin
                               </Link>
@@ -658,11 +653,6 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                         {isAdminOrHigher(user) && (
                           <>
                             <DropdownMenuItem asChild>
-                              <Link href="/stripe-connect" className="w-full cursor-pointer" data-testid="link-settings-payment">
-                                Payment Settings
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
                               <Link href="/gift-card-management" className="w-full cursor-pointer" data-testid="link-settings-gift-cards">
                                 Gift Card Admin
                               </Link>
@@ -1017,11 +1007,6 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                                 </Link>
                                 {isAdminOrHigher(user) && (
                                   <>
-                                    <Link href="/stripe-connect" className="block" onClick={() => setIsMobileMenuOpen(false)}>
-                                      <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-payment-settings-mobile">
-                                        Payment Settings
-                                      </Button>
-                                    </Link>
                                     <Link href="/gift-card-management" className="block" onClick={() => setIsMobileMenuOpen(false)}>
                                       <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-gift-card-admin-mobile">
                                         Gift Card Admin
