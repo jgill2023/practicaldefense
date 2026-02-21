@@ -17,7 +17,7 @@ import { ObjectUploader } from "@/components/ObjectUploader";
 import { Switch } from "@/components/ui/switch";
 import { Edit, FileText, ImageIcon, Target, Package, Tag, CalendarDays } from "lucide-react";
 import type { CourseWithSchedules, Category } from "@shared/schema";
-import type { UploadResult } from "@uppy/core";
+type UploadResult = { successful: Array<{ uploadURL: string }> };
 
 // Lazy load ReactQuill to avoid SSR issues
 const ReactQuill = lazy(() => import('react-quill'));
