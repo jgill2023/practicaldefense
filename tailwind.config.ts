@@ -71,10 +71,11 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
-        heading: ["Inter", "sans-serif"],
-        display: ["Inter", "sans-serif"],
+        sans: ["Inter", "var(--font-sans)", "sans-serif"],
+        heading: ["Bebas Neue", "sans-serif"],
+        display: ["Bebas Neue", "sans-serif"],
         body: ["Inter", "sans-serif"],
+        avenir: ["Avenir Next", "sans-serif"],
         mono: ["var(--font-mono)", "Fira Code", "monospace"],
       },
       spacing: {
