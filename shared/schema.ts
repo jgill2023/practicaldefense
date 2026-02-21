@@ -92,7 +92,7 @@ export const users = pgTable("users", {
   timezone: varchar("timezone", { length: 100 }).default('America/Denver'), // Instructor's timezone for calendar operations
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  deletedAt: timestamp("deleted_at"), // Soft delete — use instead of hard delete
+  // TODO: add deletedAt after running db:push — requires column to exist in DB before deploy
 }, (table) => [
   index("idx_users_role").on(table.role),
   index("idx_users_user_status").on(table.userStatus),
@@ -301,7 +301,7 @@ export const appSettings = pgTable("app_settings", {
   // Stripe configuration - tracks whether admin has completed Stripe setup
   stripeOnboarded: boolean("stripe_onboarded").notNull().default(false), // Set to true when admin confirms Stripe is configured
   stripeClientId: varchar("stripe_client_id", { length: 255 }), // Legacy - no longer used for Connect
-  defaultTaxRate: decimal("default_tax_rate", { precision: 6, scale: 5 }).default("0.07875"), // NM GRT fallback rate — see taxConfiguration table for full config
+  // TODO: add defaultTaxRate after running db:push — requires column to exist in DB before deploy
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
@@ -1961,7 +1961,7 @@ export const products = pgTable("products", {
   updatedBy: varchar("updated_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  deletedAt: timestamp("deleted_at"), // Soft delete — preserves order history references
+  // TODO: add deletedAt after running db:push — requires column to exist in DB before deploy
 });
 
 // Product variants (sizes, colors, etc.)
@@ -2020,7 +2020,7 @@ export const cartItems = pgTable("cart_items", {
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-  expiresAt: timestamp("expires_at"), // For abandoned cart cleanup
+  // TODO: add expiresAt after running db:push — requires column to exist in DB before deploy
 });
 
 // E-commerce orders
