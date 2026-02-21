@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Phase: 1 of 4 (Replit Cleanup)
-Plan: 1 of 3 in current phase
-Status: In progress — Plan 01-01 complete
-Last activity: 2026-02-21 — Completed 01-01-PLAN.md (Remove Replit build dependencies)
+Plan: 2 of 3 in current phase
+Status: In progress — Plan 01-02 complete
+Last activity: 2026-02-21 — Completed 01-02-PLAN.md (Stripe simplification and REPLIT URL removal)
 
-Progress: [█░░░░░░░░░] 8% (1 of 12 total plans)
+Progress: [██░░░░░░░░] 17% (2 of 12 total plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 3 min
-- Total execution time: 3 min
+- Total plans completed: 2
+- Average duration: 5 min
+- Total execution time: 10 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-replit-cleanup | 1/3 | 3 min | 3 min |
+| 01-replit-cleanup | 2/3 | 10 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 3 min
+- Last 5 plans: 3 min, 7 min
 - Trend: —
 
 *Updated after each plan completion*
@@ -47,6 +47,10 @@ Recent decisions affecting current work:
 - [Roadmap]: Phase 3 must complete within 7 days of Phase 2 going live — Google Calendar watch channel expiry
 - [01-01]: Keep moment (used in 4 client files), openai (future use), node-cron (Phase 3), memoizee (not audited), @google-cloud/storage (Plan 03)
 - [01-01]: UploadResult type defined inline in EditCourseForm.tsx — matches ObjectUploader.tsx construction exactly
+- [01-02]: getStripeClient() made synchronous — no async work remains after removing Replit/DB fallbacks
+- [01-02]: getStripePromise() always returns Promise<Stripe | null> (not null) — preserves .then() compatibility for 3 callers
+- [01-02]: stripeCredentials schema/table left in DB — only storage methods removed; no migration needed in Phase 1
+- [01-02]: APP_URL env var now required for all URL construction in emails, notifications, calendar webhooks, payment links
 
 ### Pending Todos
 
@@ -59,9 +63,11 @@ None.
 - **[Phase 2]**: Bundle size is unmeasured — risk of exceeding Vercel plan limits. Lazy-import fallback plan (pdfkit, exceljs, googleapis) if first deploy exceeds limit.
 - **[Pre-Phase 2]**: Confirm Vercel plan tier (Pro recommended — cron job may exceed 60s Hobby limit).
 - **[Note]**: 644 pre-existing TypeScript errors in codebase — none from removed packages, not a blocker for this phase.
+- **[Pre-Deploy]**: Add APP_URL env var to Vercel deployment configuration before Plan 03 startup validation — required for email links, SMS URLs, calendar webhook callbacks, and payment links.
+- **[Pre-Deploy]**: Add VITE_STRIPE_PUBLIC_KEY env var to Vercel deployment configuration — required for client-side Stripe initialization.
 
 ## Session Continuity
 
-Last session: 2026-02-21T06:29:30Z
-Stopped at: Completed 01-01-PLAN.md (Replit build dependency removal)
+Last session: 2026-02-21T06:35:21Z
+Stopped at: Completed 01-02-PLAN.md (Stripe simplification and REPLIT URL removal)
 Resume file: None
