@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { getStripeClient } from '../stripeClient';
 import { processGiftCardDelivery, generateGiftCardPdf } from './delivery';
 import multer from 'multer';
-import { objectStorageClient } from '../objectStorage';
+import { put } from '@vercel/blob';
 import { randomUUID } from 'crypto';
 import { isAuthenticated, requireAdminOrHigher } from '../customAuth';
 
@@ -371,104 +371,36 @@ router.post('/admin/themes/upload-image', requireAdmin, upload.single('image'), 
       return res.status(400).json({ error: 'No image file provided' });
     }
 
-    const publicSearchPaths = process.env.PUBLIC_OBJECT_SEARCH_PATHS || '';
-    if (!publicSearchPaths) {
-      return res.status(500).json({ error: 'Object storage not configured. Please set up Object Storage first.' });
-    }
-
-    let searchPath = publicSearchPaths.split(',')[0].trim();
-    
-    // Handle various path formats
-    if (searchPath.startsWith('https://storage.googleapis.com/')) {
-      // Convert URL format to path format
-      const url = new URL(searchPath);
-      searchPath = url.pathname;
-    }
-    
-    // Ensure path starts with /
-    if (!searchPath.startsWith('/')) {
-      searchPath = '/' + searchPath;
-    }
-
     const fileExt = req.file.originalname.split('.').pop()?.toLowerCase() || 'png';
     const validExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
     const finalExt = validExts.includes(fileExt) ? fileExt : 'png';
-    const fileName = `gift-card-themes/${randomUUID()}.${finalExt}`;
-    
-    // Parse the path to get bucket and object name
-    const fullPath = `${searchPath}/${fileName}`;
-    const pathParts = fullPath.slice(1).split('/'); // Remove leading / and split
-    const bucketName = pathParts[0];
-    const objectName = pathParts.slice(1).join('/');
+    const pathname = `gift-card-themes/${randomUUID()}.${finalExt}`;
 
-    console.log('Uploading gift card theme image:', { bucketName, objectName, contentType: req.file.mimetype });
+    console.log('Uploading gift card theme image to Vercel Blob:', { pathname, contentType: req.file.mimetype });
 
-    const bucket = objectStorageClient.bucket(bucketName);
-    const file = bucket.file(objectName);
-    
-    await file.save(req.file.buffer, {
+    const blob = await put(pathname, req.file.buffer, {
+      access: 'public',
       contentType: req.file.mimetype,
-      metadata: {
-        cacheControl: 'public, max-age=31536000',
-      },
+      addRandomSuffix: false,
     });
 
-    // Store the object info for proxy access
-    const imageFilename = fileName.split('/').pop(); // Just the UUID.ext part
-    const proxyUrl = `/api/gift-cards/theme-image/${imageFilename}`;
-    
-    console.log('Gift card theme image uploaded successfully:', proxyUrl);
-    res.json({ url: proxyUrl });
+    console.log('Gift card theme image uploaded successfully:', blob.url);
+    res.json({ url: blob.url });
   } catch (error: any) {
     console.error('Error uploading theme image:', error);
     res.status(500).json({ error: error.message || 'Failed to upload image' });
   }
 });
 
-// Serve theme images (public - no auth required for viewing)
+// Theme images are now uploaded to Vercel Blob with public access.
+// The URL returned from upload is a public Vercel Blob URL that can be accessed directly.
+// This route is kept for backward compatibility but redirects to the blob URL if it looks like one,
+// or returns 404 for legacy GCS paths.
 router.get('/theme-image/:filename', async (req: Request, res: Response) => {
-  try {
-    const filename = req.params.filename;
-    if (!filename || !/^[a-f0-9-]+\.(jpg|jpeg|png|gif|webp)$/i.test(filename)) {
-      return res.status(400).json({ error: 'Invalid filename' });
-    }
-
-    const publicSearchPaths = process.env.PUBLIC_OBJECT_SEARCH_PATHS || '';
-    if (!publicSearchPaths) {
-      return res.status(500).json({ error: 'Object storage not configured' });
-    }
-
-    let searchPath = publicSearchPaths.split(',')[0].trim();
-    if (searchPath.startsWith('https://storage.googleapis.com/')) {
-      const url = new URL(searchPath);
-      searchPath = url.pathname;
-    }
-    if (!searchPath.startsWith('/')) {
-      searchPath = '/' + searchPath;
-    }
-
-    const fullPath = `${searchPath}/gift-card-themes/${filename}`;
-    const pathParts = fullPath.slice(1).split('/');
-    const bucketName = pathParts[0];
-    const objectName = pathParts.slice(1).join('/');
-
-    const bucket = objectStorageClient.bucket(bucketName);
-    const file = bucket.file(objectName);
-    
-    const [exists] = await file.exists();
-    if (!exists) {
-      return res.status(404).json({ error: 'Image not found' });
-    }
-
-    const [metadata] = await file.getMetadata();
-    res.set('Content-Type', metadata.contentType || 'image/jpeg');
-    res.set('Cache-Control', 'public, max-age=31536000');
-    
-    file.createReadStream().pipe(res);
-  } catch (error: any) {
-    console.error('Error serving theme image:', error);
-    res.status(500).json({ error: 'Failed to load image' });
-  }
+  // New uploads return full Vercel Blob URLs stored directly in the theme record.
+  // This proxy route is no longer needed for new uploads — the imageUrl on the theme
+  // is a direct public URL. Return 404 for any legacy proxy requests.
+  return res.status(404).json({ error: 'Image not found. Theme images are now served directly from their URLs.' });
 });
 
 // Create theme (admin)

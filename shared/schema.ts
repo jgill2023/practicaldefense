@@ -3114,12 +3114,30 @@ export type OnlineCourseEnrollmentWithUser = OnlineCourseEnrollment & {
 };
 
 // Enrollment status type
-export type OnlineCourseEnrollmentStatus = 
-  | 'pending_payment' 
-  | 'payment_failed' 
+export type OnlineCourseEnrollmentStatus =
+  | 'pending_payment'
+  | 'payment_failed'
   | 'payment_complete'
-  | 'moodle_sync_pending' 
+  | 'moodle_sync_pending'
   | 'moodle_sync_failed'
-  | 'completed' 
+  | 'completed'
   | 'refunded'
   | 'cancelled';
+
+// ============================================
+// BLOB STORAGE ACL POLICIES
+// ============================================
+
+// Database-backed ACL policies for Vercel Blob objects
+// Replaces GCS object metadata approach from Replit sidecar
+export const blobAclPolicies = pgTable("blob_acl_policies", {
+  pathname: text("pathname").primaryKey(),
+  ownerId: text("owner_id").notNull(),
+  visibility: text("visibility").notNull().default("private"), // "public" or "private"
+  blobUrl: text("blob_url").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type BlobAclPolicy = typeof blobAclPolicies.$inferSelect;
+export type InsertBlobAclPolicy = typeof blobAclPolicies.$inferInsert;
