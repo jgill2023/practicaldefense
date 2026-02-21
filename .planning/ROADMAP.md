@@ -29,12 +29,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. File upload and signed URL generation use native GCS SDK with a service account key, not the sidecar at 127.0.0.1:1106
   4. Stripe client initializes directly from STRIPE_SECRET_KEY — no Replit credential fallback path exists in the code
   5. All URLs constructed in emailService, notificationEngine, cronService, and routes use APP_URL — no REPLIT_DOMAINS or REPLIT_DEV_DOMAIN references remain
-**Plans**: TBD
+**Plans:** 3 plans in 2 waves
 
 Plans:
-- [ ] 01-01: Remove Replit packages and Vite plugins (REPL-01, REPL-02, REPL-05)
-- [ ] 01-02: Replace Replit env var references with APP_URL and fail-fast Stripe init (REPL-03, REPL-04, REPL-06)
-- [ ] 01-03: Replace GCS sidecar with direct service account credentials (STOR-01, STOR-02)
+- [ ] 01-01-PLAN.md — Remove Replit Vite plugins and uninstall dead packages (REPL-01, REPL-02, REPL-05)
+- [ ] 01-02-PLAN.md — Simplify Stripe to env-var-only, remove Stripe Connect, replace REPLIT env vars with APP_URL (REPL-03, REPL-04, REPL-06)
+- [ ] 01-03-PLAN.md — Replace GCS sidecar with Vercel Blob, add startup validation and .env.example (STOR-01, STOR-02)
 
 ### Phase 2: Vercel Adapter
 **Goal**: The app is deployed on Vercel — Express running as a serverless function, React served from CDN, sessions working, Stripe webhooks verified
