@@ -46,12 +46,12 @@ Plans:
   3. A Stripe test webhook event is received, signature-validated, and processed without error
   4. File upload completes and the resulting signed URL is accessible (end-to-end storage flow on Vercel)
   5. Bundle size is within Vercel plan limits (verified in deployment logs on first deploy)
-**Plans**: TBD
+**Plans:** 3 plans in 3 waves
 
 Plans:
-- [ ] 02-01: Extract server/app.ts, create api/index.ts, update build scripts and Node version (VRCL-01, VRCL-02, VRCL-04)
-- [ ] 02-02: Create vercel.json, configure Neon pooled connection, set all env vars in Vercel dashboard (VRCL-03, VRCL-05)
-- [ ] 02-03: Verify session behavior, Stripe webhook raw body handling, and file upload end-to-end (VRCL-06, VRCL-07, STOR-03)
+- [ ] 02-01-PLAN.md — Extract server/app.ts, create api/index.ts, fix Stripe webhook raw body path (VRCL-01, VRCL-02, VRCL-04)
+- [ ] 02-02-PLAN.md — Create vercel.json, configure Neon pooled connection, set env vars, first deploy (VRCL-03, VRCL-05)
+- [ ] 02-03-PLAN.md — Verify session persistence, Stripe webhook signature, file upload end-to-end (VRCL-06, VRCL-07, STOR-03)
 
 ### Phase 3: Cron and Calendar
 **Goal**: The daily maintenance job runs on a Vercel Cron schedule, and Google Calendar OAuth works with the new Vercel domain — calendar watch channels renewed before 7-day expiry
