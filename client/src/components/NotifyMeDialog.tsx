@@ -62,7 +62,7 @@ export function NotifyMeDialog({ isOpen, onOpenChange, courseName }: NotifyMeDia
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-[#1D1D20]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="font-heading uppercase tracking-widest">Notify Me</DialogTitle>
           <DialogDescription>

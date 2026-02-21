@@ -252,7 +252,7 @@ export function OnlineCourseEnrollDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-[#1D1D20] border-border">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-heading uppercase tracking-widest text-foreground">
             {step === "success" ? "Enrollment Complete!" : `Enroll in ${courseName}`}
