@@ -12,7 +12,7 @@ Requirements for Replit → Vercel migration. Each maps to roadmap phases.
 - [ ] **REPL-01**: Remove Replit Vite plugin imports from vite.config.ts
 - [ ] **REPL-02**: Remove stripe-replit-sync package dependency
 - [ ] **REPL-03**: Remove Replit credential fallback from server/stripeClient.ts
-- [ ] **REPL-04**: Replace all REPLIT_DEV_DOMAIN / REPLIT_DOMAINS references with APP_BASE_URL env var
+- [ ] **REPL-04**: Replace all REPLIT_DEV_DOMAIN / REPLIT_DOMAINS references with APP_URL env var
 - [ ] **REPL-05**: Remove Replit-specific env var checks (REPLIT_DEPLOYMENT, REPL_IDENTITY, etc.)
 - [ ] **REPL-06**: Remove Replit sidecar references from server/objectStorage.ts
 
