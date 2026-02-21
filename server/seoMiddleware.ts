@@ -20,11 +20,20 @@ const PUBLIC_ROUTES = [
   "/terms-of-service",
   "/refund-policy",
   "/storefront",
+  "/nmccl",
+  "/online-nm-concealed-carry-course",
+  "/defensive-handgun-course",
+  "/defensive-handgun-clinics",
+  "/onscreen-handgun-handling",
+  "/testimonials",
+  "/media",
+  "/ccw-quiz",
 ];
 
 const DYNAMIC_ROUTE_PATTERNS = [
   /^\/courses?\/\d+$/,
   /^\/instructors?\/\d+$/,
+  /^\/articles\/[\w-]+$/,
 ];
 
 function isPublicRoute(path: string): boolean {

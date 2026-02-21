@@ -81,6 +81,46 @@ const routeConfigs: Record<string, RouteConfig> = {
     title: "Contact Us | Practical Defense Training",
     description: "Get in touch with Practical Defense Training for questions about our firearms training programs, scheduling, or private instruction.",
   },
+  "/nmccl": {
+    title: "New Mexico Concealed Carry Course | Practical Defense Training",
+    description: "NM DPS-approved concealed carry license course. 2-day weekend format with 12 hours classroom and 3 hours live-fire range training. $165 in Albuquerque, NM.",
+  },
+  "/online-nm-concealed-carry-course": {
+    title: "Online NM Concealed Carry Course | Practical Defense Training",
+    description: "Complete your New Mexico concealed carry training online. NM DPS-approved 15-hour hybrid course: 8 hours online at your own pace plus 7-hour live-fire range session.",
+  },
+  "/defensive-handgun-course": {
+    title: "Defensive Handgun Course | Practical Defense Training",
+    description: "Advanced defensive handgun training in Albuquerque, NM. 1-day ($155) or 2-day ($250) courses covering drawing from concealment, threat assessment, and tactical shooting.",
+  },
+  "/defensive-handgun-clinics": {
+    title: "Defensive Handgun Clinics | Practical Defense Training",
+    description: "Focused 2-4 hour defensive shooting clinics. $56-$65 per session with 2-5 students per instructor. Concealment draw, tactical movement, force-on-force, and more.",
+  },
+  "/onscreen-handgun-handling": {
+    title: "Onscreen Handgun Handling for Actors | Practical Defense Training",
+    description: "Firearms training for actors and film professionals. Learn safe, authentic weapons handling for on-screen performances. 4-hour workshop with classroom and range time.",
+  },
+  "/testimonials": {
+    title: "Student Testimonials | Practical Defense Training",
+    description: "Read what our students say about their concealed carry and firearms training experience with Practical Defense Training in Albuquerque, NM.",
+  },
+  "/media": {
+    title: "Videos & Media | Practical Defense Training",
+    description: "Watch training videos, course previews, and media appearances from Practical Defense Training. Firearms education and defensive shooting content.",
+  },
+  "/ccw-quiz": {
+    title: "CCW Knowledge Quiz | Practical Defense Training",
+    description: "Test your New Mexico concealed carry knowledge with our free quiz. Learn about NM CCL laws, carry locations, and licensing requirements.",
+  },
+  "/schedule-list": {
+    title: "Course Schedule | Practical Defense Training",
+    description: "View upcoming firearms training courses and register online. Concealed carry, defensive handgun, and private instruction in Albuquerque, NM.",
+  },
+  "/schedule-calendar": {
+    title: "Training Calendar | Practical Defense Training",
+    description: "Browse our training calendar for upcoming concealed carry courses, defensive handgun clinics, and range sessions across New Mexico.",
+  },
 };
 
 function getOrganizationSchema() {
@@ -283,6 +323,12 @@ export async function generateSitemap(): Promise<string> {
     { loc: "/", priority: "1.0", changefreq: "weekly" },
     { loc: "/schedule-list", priority: "0.9", changefreq: "daily" },
     { loc: "/schedule-calendar", priority: "0.8", changefreq: "daily" },
+    { loc: "/courses", priority: "0.9", changefreq: "weekly" },
+    { loc: "/nmccl", priority: "0.9", changefreq: "monthly" },
+    { loc: "/online-nm-concealed-carry-course", priority: "0.9", changefreq: "monthly" },
+    { loc: "/defensive-handgun-course", priority: "0.8", changefreq: "monthly" },
+    { loc: "/defensive-handgun-clinics", priority: "0.8", changefreq: "monthly" },
+    { loc: "/onscreen-handgun-handling", priority: "0.7", changefreq: "monthly" },
     { loc: "/racc-program", priority: "0.9", changefreq: "weekly" },
     { loc: "/store", priority: "0.8", changefreq: "weekly" },
     { loc: "/gift-cards", priority: "0.7", changefreq: "monthly" },
@@ -290,6 +336,9 @@ export async function generateSitemap(): Promise<string> {
     { loc: "/about-chris", priority: "0.6", changefreq: "monthly" },
     { loc: "/contact", priority: "0.7", changefreq: "monthly" },
     { loc: "/articles", priority: "0.6", changefreq: "weekly" },
+    { loc: "/testimonials", priority: "0.6", changefreq: "monthly" },
+    { loc: "/media", priority: "0.5", changefreq: "monthly" },
+    { loc: "/ccw-quiz", priority: "0.7", changefreq: "monthly" },
     { loc: "/a-girl-and-a-gun", priority: "0.5", changefreq: "monthly" },
     { loc: "/privacy-policy", priority: "0.3", changefreq: "yearly" },
     { loc: "/terms-of-service", priority: "0.3", changefreq: "yearly" },
@@ -366,6 +415,12 @@ Disallow: /course-registration
 # Allow important pages
 Allow: /
 Allow: /course/
+Allow: /courses
+Allow: /nmccl
+Allow: /online-nm-concealed-carry-course
+Allow: /defensive-handgun-course
+Allow: /defensive-handgun-clinics
+Allow: /onscreen-handgun-handling
 Allow: /store
 Allow: /about
 Allow: /about-chris
@@ -374,6 +429,9 @@ Allow: /book-appointment/
 Allow: /schedule-list
 Allow: /schedule-calendar
 Allow: /articles
+Allow: /testimonials
+Allow: /media
+Allow: /ccw-quiz
 Allow: /gift-cards
 Allow: /racc-program
 Allow: /a-girl-and-a-gun

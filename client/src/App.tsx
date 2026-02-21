@@ -48,6 +48,13 @@ import CourseDetail from "@/pages/course-detail";
 import NMConcealedCarryCourse from "@/pages/nmccl";
 import OnlineCCWClass from "@/pages/online-nm-concealed-carry-course";
 import DefensiveHandgunCourse from "@/pages/defensive-handgun";
+import DefensiveHandgunClinics from "@/pages/defensive-handgun-clinics";
+import OnscreenHandgunHandling from "@/pages/onscreen-handgun-handling";
+import CoursesOverview from "@/pages/courses-overview";
+import TestimonialsPage from "@/pages/testimonials";
+import MediaPage from "@/pages/media";
+import CCWQuiz from "@/pages/ccw-quiz";
+import ArticleDetail from "@/pages/article-detail";
 import RACCProgram from "@/pages/racc-program";
 import Register from "@/pages/register";
 import FtaWaiverPage from "@/pages/fta-waiver";
@@ -141,6 +148,7 @@ function Router() {
       <Route path="/cart" component={CartPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/about" component={About} />
+      <Route path="/articles/:slug" component={ArticleDetail} />
       <Route path="/articles" component={Articles} />
       <Route path="/about-chris" component={AboutChris} />
       <Route path="/course-registration/:courseTitle/:scheduleId" component={CourseRegistration} />
@@ -151,6 +159,12 @@ function Router() {
       <Route path="/nmccl" component={NMConcealedCarryCourse} />
       <Route path="/online-nm-concealed-carry-course" component={OnlineCCWClass} />
       <Route path="/defensive-handgun-course" component={DefensiveHandgunCourse} />
+      <Route path="/defensive-handgun-clinics" component={DefensiveHandgunClinics} />
+      <Route path="/onscreen-handgun-handling" component={OnscreenHandgunHandling} />
+      <Route path="/courses" component={CoursesOverview} />
+      <Route path="/testimonials" component={TestimonialsPage} />
+      <Route path="/media" component={MediaPage} />
+      <Route path="/ccw-quiz" component={CCWQuiz} />
       <Route path="/privacy-policy" component={PrivacyPolicyPage} />
       <Route path="/terms-of-service" component={TermsOfServicePage} />
       <Route path="/refund-policy" component={RefundPolicyPage} />

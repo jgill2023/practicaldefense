@@ -2,12 +2,16 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { log } from "./log";
 import { createSeoMiddleware } from "./seoMiddleware";
+import { createRedirectMiddleware } from "./redirects";
 import { db } from "./db";
 import { instructorGoogleCredentials } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 export async function createApp() {
   const app = express();
+
+  // 301 redirects from old WordPress URLs — must run before everything else
+  app.use(createRedirectMiddleware());
 
   // Stripe webhook must receive raw body — MUST be registered before express.json()
   // Note: correct path is /api/online-course/webhook (not /api/webhooks/stripe)
