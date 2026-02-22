@@ -2,7 +2,7 @@ import { Layout } from "@/components/Layout";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import heroImage from "@assets/Instructors_1767335152648.jpg";
-import { Award, Star, Users, ShieldCheck } from "lucide-react";
+import { Award } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -58,10 +58,10 @@ const instructors: InstructorData[] = [
 ];
 
 const stats = [
-  { value: "XX+", label: "YEARS EXPERIENCE", icon: Award },
-  { value: "X,XXX+", label: "STUDENTS TRAINED", icon: Users },
-  { value: "5.0 ★", label: "GOOGLE RATING", icon: Star },
-  { value: "XX+", label: "CERTIFICATIONS HELD", icon: ShieldCheck },
+  { value: "XX+", label: "YEARS EXPERIENCE" },
+  { value: "X,XXX+", label: "STUDENTS TRAINED" },
+  { value: "5.0 ★", label: "GOOGLE RATING" },
+  { value: "XX+", label: "CERTIFICATIONS HELD" },
 ];
 
 const fadeInUp = {
