@@ -36,7 +36,6 @@ import AdminCreditsPage from "@/pages/admin-credits";
 import AdminWaiversPage from "@/pages/admin-waivers";
 import UserManagementPage from "@/pages/user-management";
 import PendingApprovalPage from "@/pages/pending-approval";
-import AboutChris from "@/pages/about-chris";
 import About from "@/pages/about";
 import Articles from "@/pages/articles";
 import SettingsPage from "@/pages/settings";
@@ -128,7 +127,7 @@ function Router() {
 
   // Redirect pending users to approval page except for allowed routes
   if (isAuthenticated && user?.userStatus === 'pending') {
-    const allowedPaths = ['/pending-approval', '/contact', '/about', '/about-chris', '/privacy-policy', '/terms-of-service', '/refund-policy', '/'];
+    const allowedPaths = ['/pending-approval', '/contact', '/about', '/privacy-policy', '/terms-of-service', '/refund-policy', '/'];
     if (!allowedPaths.includes(location) && location !== '/') {
       window.location.href = '/pending-approval';
       return null;
@@ -149,7 +148,6 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/articles/:slug" component={ArticleDetail} />
       <Route path="/articles" component={Articles} />
-      <Route path="/about-chris" component={AboutChris} />
       <Route path="/course-registration/:courseTitle/:scheduleId" component={CourseRegistration} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/schedule-list" component={ScheduleList} />

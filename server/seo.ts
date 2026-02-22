@@ -333,7 +333,6 @@ export async function generateSitemap(): Promise<string> {
     { loc: "/store", priority: "0.8", changefreq: "weekly" },
     { loc: "/gift-cards", priority: "0.7", changefreq: "monthly" },
     { loc: "/about", priority: "0.7", changefreq: "monthly" },
-    { loc: "/about-chris", priority: "0.6", changefreq: "monthly" },
     { loc: "/contact", priority: "0.7", changefreq: "monthly" },
     { loc: "/articles", priority: "0.6", changefreq: "weekly" },
     { loc: "/testimonials", priority: "0.6", changefreq: "monthly" },
@@ -422,7 +421,6 @@ Allow: /defensive-handgun-clinics
 Allow: /onscreen-handgun-handling
 Allow: /store
 Allow: /about
-Allow: /about-chris
 Allow: /contact
 Allow: /book-appointment/
 Allow: /schedule-list

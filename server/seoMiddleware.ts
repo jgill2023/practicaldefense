@@ -13,7 +13,6 @@ const PUBLIC_ROUTES = [
   "/schedule-list",
   "/schedule-calendar",
   "/a-girl-and-a-gun",
-  "/about-chris",
   "/articles",
   "/gift-cards",
   "/privacy-policy",
