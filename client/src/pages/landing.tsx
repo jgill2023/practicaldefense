@@ -1105,14 +1105,20 @@ export default function Landing() {
     // Apply home page limit if set
     const limit = appSettings?.homeCoursesLimit || 20;
 
+    // Build a lookup from category name to its sortOrder from the Category Management page
+    const categorySortMap = new Map<string, number>();
+    categories.forEach((cat: any) => {
+      categorySortMap.set(cat.name, cat.sortOrder ?? 9999);
+    });
+
     // Sort by category sortOrder first, then by course sortOrder within each category
     const result = filtered
       .sort((a, b) => {
         // Primary sort: category sortOrder (matching Category Management page order)
-        const aCat = (a as any).category;
-        const bCat = (b as any).category;
-        const aCatOrder = typeof aCat === 'object' && aCat?.sortOrder != null ? aCat.sortOrder : 9999;
-        const bCatOrder = typeof bCat === 'object' && bCat?.sortOrder != null ? bCat.sortOrder : 9999;
+        const aCatName = getCategoryName(a.category);
+        const bCatName = getCategoryName(b.category);
+        const aCatOrder = categorySortMap.get(aCatName) ?? 9999;
+        const bCatOrder = categorySortMap.get(bCatName) ?? 9999;
         if (aCatOrder !== bCatOrder) return aCatOrder - bCatOrder;
 
         // Secondary sort: course sortOrder within each category
@@ -1129,7 +1135,7 @@ export default function Landing() {
 
     console.log(`Final filtered courses: ${result.length}`);
     return result;
-  }, [courses, courseFilter, appSettings]);
+  }, [courses, courseFilter, appSettings, categories]);
 
   const handleRegisterCourse = (course: CourseWithSchedules) => {
     console.log('handleRegisterCourse called!', course.title);
