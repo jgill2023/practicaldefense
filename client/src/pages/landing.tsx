@@ -220,38 +220,53 @@ function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSc
     queryKey: ["/api/courses"],
   });
 
-  // Get all upcoming schedules with their course info, sorted by date
+  const { data: categories = [] } = useQuery<any[]>({
+    queryKey: ["/api/categories"],
+  });
+
+  // Get all upcoming schedules with their course info, sorted by category order then date
   const upcomingSchedules = useMemo(() => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const schedulesWithCourse: { schedule: any; course: CourseWithSchedules }[] = [];
-    
+
     courses.forEach(course => {
       if (!course.isActive || course.status !== 'published' || course.deletedAt) return;
-      
+
       course.schedules?.forEach(schedule => {
         if (schedule.deletedAt || schedule.notes?.includes('CANCELLED:')) return;
-        
+
         const startDate = new Date(schedule.startDate);
         // Include today's events and future events
         if (startDate < todayStart) return;
-        
+
         // Calculate available spots
-        const enrollmentCount = schedule.enrollments?.filter((e: any) => 
+        const enrollmentCount = schedule.enrollments?.filter((e: any) =>
           e.status === 'confirmed' || e.status === 'pending'
         ).length || 0;
         const availableSpots = Math.max(0, schedule.maxSpots - enrollmentCount);
-        
+
         if (availableSpots > 0) {
           schedulesWithCourse.push({ schedule, course });
         }
       });
     });
-    
-    return schedulesWithCourse.sort((a, b) => 
-      new Date(a.schedule.startDate).getTime() - new Date(b.schedule.startDate).getTime()
-    );
-  }, [courses]);
+
+    // Build category sort order lookup
+    const catSortMap = new Map<string, number>();
+    categories.forEach((cat: any) => {
+      catSortMap.set(cat.name, cat.sortOrder ?? 9999);
+    });
+
+    return schedulesWithCourse.sort((a, b) => {
+      const aCatName = typeof a.course.category === 'string' ? a.course.category : (a.course.category as any)?.name || 'General';
+      const bCatName = typeof b.course.category === 'string' ? b.course.category : (b.course.category as any)?.name || 'General';
+      const aCatOrder = catSortMap.get(aCatName) ?? 9999;
+      const bCatOrder = catSortMap.get(bCatName) ?? 9999;
+      if (aCatOrder !== bCatOrder) return aCatOrder - bCatOrder;
+      return new Date(a.schedule.startDate).getTime() - new Date(b.schedule.startDate).getTime();
+    });
+  }, [courses, categories]);
 
   const totalPages = Math.ceil(upcomingSchedules.length / coursesPerPage);
   
@@ -611,6 +626,10 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
     queryKey: ["/api/courses"],
   });
 
+  const { data: categories = [] } = useQuery<any[]>({
+    queryKey: ["/api/categories"],
+  });
+
   const calendarEvents = useMemo(() => {
     const now = new Date();
     const events: CalendarEvent[] = [];
@@ -700,10 +719,24 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
       });
     });
     
-    return schedulesWithCourse.sort((a, b) => 
-      new Date(a.schedule.startDate).getTime() - new Date(b.schedule.startDate).getTime()
-    );
-  }, [courses]);
+    // Build category sort order lookup from Category Management page order
+    const catSortMap = new Map<string, number>();
+    categories.forEach((cat: any) => {
+      catSortMap.set(cat.name, cat.sortOrder ?? 9999);
+    });
+
+    return schedulesWithCourse.sort((a, b) => {
+      // Primary sort: category sortOrder (matching Category Management page order)
+      const aCatName = typeof a.course.category === 'string' ? a.course.category : (a.course.category as any)?.name || 'General';
+      const bCatName = typeof b.course.category === 'string' ? b.course.category : (b.course.category as any)?.name || 'General';
+      const aCatOrder = catSortMap.get(aCatName) ?? 9999;
+      const bCatOrder = catSortMap.get(bCatName) ?? 9999;
+      if (aCatOrder !== bCatOrder) return aCatOrder - bCatOrder;
+
+      // Secondary sort: date
+      return new Date(a.schedule.startDate).getTime() - new Date(b.schedule.startDate).getTime();
+    });
+  }, [courses, categories]);
 
   const eventStyleGetter = (event: CalendarEvent) => {
     return {
@@ -896,7 +929,11 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
 
                       <div className="flex items-center gap-2 text-zinc-400 text-sm mb-4">
                         <Calendar className="w-4 h-4" />
-                        <span>{format(new Date(schedule.startDate), "MM/dd/yyyy")}</span>
+                        <span>{(() => {
+                          const datePart = schedule.startDate.includes('T') ? schedule.startDate.split('T')[0] : schedule.startDate;
+                          const [y, m, d] = datePart.split('-').map(Number);
+                          return format(new Date(y, m - 1, d), "MM/dd/yyyy");
+                        })()}</span>
                       </div>
 
                       <div className="flex flex-wrap gap-6 text-sm text-zinc-400">
