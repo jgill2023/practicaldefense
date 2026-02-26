@@ -930,7 +930,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
                       </div>
                       <Button
                         size="sm"
-                        className="bg-[#004149] text-white hover:bg-[#006d7a] font-heading uppercase tracking-wide px-6"
+                        className="bg-[#004149] text-white hover:bg-[#006d7a] font-heading uppercase tracking-wide px-6 rounded-sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           const isHostedCourse = course.category === "Hosted Courses";
