@@ -1306,7 +1306,7 @@ export default function Landing() {
         </div>
       </section>
       {/* Philosophy Section */}
-      <section className="bg-zinc-950 py-16 pt-[0px] pb-[0px] mt-[64px] mb-[64px]">
+      <section className="bg-zinc-950 py-16 pt-[0px] pb-[0px] mt-[64px] mb-[0px]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide text-white mb-8 font-thin">
             Straightforward Firearms Training
@@ -1341,7 +1341,7 @@ export default function Landing() {
         </div>
       </section>
       {/* Upcoming Courses Section */}
-      <section className="bg-zinc-950 py-16">
+      <section className="bg-zinc-950 pt-10 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8 text-left">
             <TitleCard as="h2" variant="accent" className="text-3xl lg:text-4xl">
