@@ -250,6 +250,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                       }}>Home</a>
+                      <Link href="/schedule-calendar" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-schedule">Schedule</Link>
                       {/* <Link href="/about" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-about">About Us</Link> */}
                       <NavigationMenu>
                         <NavigationMenuList>
@@ -392,10 +393,11 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                       }}>Home</a>
+                      <Link href="/schedule-calendar" className="text-zinc-100 hover:text-[#006d7a] transition-colors py-2 font-display tracking-widest uppercase" data-testid="link-schedule-mobile" onClick={() => setIsMobileMenuOpen(false)}>Schedule</Link>
                       {/* <Link href="/about" className="text-zinc-100 hover:text-[#006d7a] transition-colors py-2 font-display tracking-widest uppercase" data-testid="link-about-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link> */}
                       <Link href="/articles" className="text-zinc-100 hover:text-[#006d7a] transition-colors py-2 font-display tracking-widest uppercase" data-testid="link-articles-mobile" onClick={() => setIsMobileMenuOpen(false)}>Articles</Link>
                       <div className="py-2">
-                        <button 
+                        <button
                           className="text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase flex items-center justify-between w-full"
                           onClick={() => setIsMobileCoursesOpen(!isMobileCoursesOpen)}
                           data-testid="button-courses-mobile"
@@ -716,6 +718,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
+                <Link href="/schedule-calendar" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-schedule">Schedule</Link>
                 {/* <Link href="/about" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-about">About Us</Link> */}
                 <NavigationMenu>
                   <NavigationMenuList>
@@ -861,10 +864,11 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
+                <Link href="/schedule-calendar" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-schedule-mobile" onClick={() => setIsMobileMenuOpen(false)}>Schedule</Link>
                 {/* <Link href="/about" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-about-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link> */}
                 <Link href="/articles" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-articles-mobile" onClick={() => setIsMobileMenuOpen(false)}>Articles</Link>
                 <div className="py-2">
-                  <button 
+                  <button
                     className="text-white hover:text-[#FD66C5] transition-colors font-medium flex items-center justify-between w-full"
                     onClick={() => setIsMobileCoursesOpen(!isMobileCoursesOpen)}
                     data-testid="button-courses-mobile"

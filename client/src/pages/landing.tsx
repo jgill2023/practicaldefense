@@ -787,11 +787,6 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
           </button>
         </div>
         
-        <Link href="/schedule-calendar">
-          <Button variant="outline" size="sm" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800">
-            View Full Schedule
-          </Button>
-        </Link>
       </div>
 
       {viewMode === 'calendar' ? (
