@@ -919,7 +919,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
                         {categoryName}
                       </Badge>
                       <div className="text-right">
-                        <div className="text-white text-2xl font-bold">{formatPrice(course.price)}</div>
+                        <div className="inline-block bg-[#004149] text-white text-2xl font-bold px-4 py-1 rounded-full">{formatPrice(course.price)}</div>
                         {course.duration && (
                           <div className="text-zinc-400 text-sm">{course.duration}</div>
                         )}
