@@ -853,11 +853,20 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
               const displayImageUrl = course.imageUrl && course.imageUrl.trim() !== ''
                 ? course.imageUrl
                 : (() => {
+                    const title = (course.title || '').toLowerCase();
                     const cat = (categoryName || '').toLowerCase();
-                    if (cat.includes('concealed') || cat.includes('ccw')) return 'https://images.unsplash.com/photo-1593784991095-a205069470b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-                    if (cat.includes('defensive') || cat.includes('handgun')) return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-                    if (cat.includes('advanced')) return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-                    return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+                    if (title.includes('concealed') || title.includes('ccw') || title.includes('ccl')) return ccwRangeFeatureImage;
+                    if (title.includes('defensive') || title.includes('handgun')) return dhcFeatureImage;
+                    if (title.includes('live-fire') || title.includes('range session')) return performanceShootingImage;
+                    if (title.includes('refresher') || title.includes('renewal')) return ccwRangeImage;
+                    if (title.includes('pistolcraft') || title.includes('deductive')) return deductivePistolcraftImage;
+                    if (title.includes('mastery') || title.includes('performance')) return practiceForMasteryImage;
+                    if (cat.includes('concealed') || cat.includes('ccw')) return ccwRangeFeatureImage;
+                    if (cat.includes('defensive') || cat.includes('handgun')) return dhcFeatureImage;
+                    if (cat.includes('live-fire') || cat.includes('range')) return performanceShootingImage;
+                    if (cat.includes('refresher') || cat.includes('renewal')) return ccwRangeImage;
+                    if (cat.includes('advanced')) return dhcFeatureImage;
+                    return ccwRangeFeatureImage;
                   })();
 
               return (
@@ -910,7 +919,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
 
                     {/* Right Side: Badge, Price, Register */}
                     <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-3 p-5 md:pl-0 md:min-w-[200px]">
-                      <Badge className="bg-[#1a365d] text-white text-xs font-normal px-3 py-1 whitespace-nowrap">
+                      <Badge className="bg-[#004149] text-white text-xs font-normal px-3 py-1 whitespace-nowrap">
                         {categoryName}
                       </Badge>
                       <div className="text-right">
@@ -921,7 +930,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
                       </div>
                       <Button
                         size="sm"
-                        className="bg-[#1a365d] text-white hover:bg-[#2a4a7f] font-heading uppercase tracking-wide px-6"
+                        className="bg-[#004149] text-white hover:bg-[#006d7a] font-heading uppercase tracking-wide px-6"
                         onClick={(e) => {
                           e.stopPropagation();
                           const isHostedCourse = course.category === "Hosted Courses";
