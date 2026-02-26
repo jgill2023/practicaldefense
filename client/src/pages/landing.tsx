@@ -919,7 +919,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
                         {categoryName}
                       </Badge>
                       <div className="text-right">
-                        <div className="inline-block bg-[#004149] text-white text-2xl font-bold px-4 py-1 rounded-full">{formatPrice(course.price)}</div>
+                        <div className="text-white text-2xl font-bold">{formatPrice(course.price)}</div>
                         {course.duration && (
                           <div className="text-zinc-400 text-sm">{course.duration}</div>
                         )}
@@ -1254,7 +1254,7 @@ export default function Landing() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
                   <div className="absolute inset-0 p-5 lg:p-6 flex flex-col justify-between">
-                    <span className="font-bold text-lg text-right text-[#ffffff]">$165</span>
+                    <div className="text-right"><span className="inline-block bg-[#004149] text-white font-bold text-lg px-4 py-1 rounded-full">$165</span></div>
                     <div>
                       <h3 className="font-heading text-xl lg:text-2xl uppercase tracking-wide text-white mb-2">
                         Concealed Carry Course
@@ -1285,7 +1285,7 @@ export default function Landing() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
                   <div className="absolute inset-0 p-5 lg:p-6 flex flex-col justify-between">
-                    <span className="font-bold text-lg text-right text-[#ffffff]">$225</span>
+                    <div className="text-right"><span className="inline-block bg-[#004149] text-white font-bold text-lg px-4 py-1 rounded-full">$225</span></div>
                     <div>
                       <h3 className="font-heading text-xl lg:text-2xl uppercase tracking-wide text-white mb-2">
                         Defensive Handgun
