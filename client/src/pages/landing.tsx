@@ -603,7 +603,7 @@ interface CalendarEvent {
 
 function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWithSchedules) => void }) {
   const [, setLocation] = useLocation();
-  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list');
   const [currentView, setCurrentView] = useState<View>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -816,7 +816,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
             .rbc-show-more { color: #004149; font-weight: 500; }
             .rbc-toolbar-label { color: #fff; font-weight: 600; font-size: 1.1rem; }
           `}</style>
-          <div style={{ height: '500px' }}>
+          <div style={{ height: '800px' }}>
             <BigCalendar
               localizer={calendarLocalizer}
               events={calendarEvents}
