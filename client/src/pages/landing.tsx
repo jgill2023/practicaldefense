@@ -1329,6 +1329,15 @@ export default function Landing() {
               </p>
             </div>
           </div>
+          <div className="text-center mt-10">
+            <Button
+              size="lg"
+              className="bg-[#004149] hover:bg-[#006d7a] text-white font-display uppercase tracking-widest px-8 py-6 text-sm sm:text-lg shadow-lg border border-zinc-700 rounded-sm"
+              onClick={() => setLocation('/online-nm-concealed-carry-course')}
+            >
+              Enroll in our Online New Mexico CCW Course
+            </Button>
+          </div>
         </div>
       </section>
       {/* Upcoming Courses Section */}
@@ -1341,15 +1350,6 @@ export default function Landing() {
             <p className="text-zinc-400 mt-2">
               Browse our schedule and secure your spot in an upcoming training session
             </p>
-          </div>
-          <div className="text-center mb-8">
-            <Button
-              size="lg"
-              className="bg-[#004149] hover:bg-[#006d7a] text-white font-display uppercase tracking-widest px-8 py-6 text-sm sm:text-lg shadow-lg border border-zinc-700 rounded-sm"
-              onClick={() => setLocation('/online-nm-concealed-carry-course')}
-            >
-              Enroll in our Online New Mexico CCW Course
-            </Button>
           </div>
           <UpcomingCoursesSection onRegister={handleRegisterCourse} />
         </div>
