@@ -9466,8 +9466,8 @@ jeremy@abqconcealedcarry.com
   // Online Course Enrollment API Endpoints
   // =============================================
 
-  // NM Gross Receipts Tax rate (Albuquerque combined rate)
-  const NM_GRT_RATE = 0.07875;
+  // NM Gross Receipts Tax rate for zip code 87120 (Albuquerque combined rate)
+  const NM_GRT_RATE = 0.07625;
 
   // Server-side pricing map for online courses (prevents price tampering)
   const ONLINE_COURSE_PRICES: Record<string, number> = {
@@ -9483,15 +9483,14 @@ jeremy@abqconcealedcarry.com
     }
 
     try {
-      const { 
-        firstName, 
-        lastName, 
-        email, 
-        phone, 
-        dateOfBirth, 
-        streetAddress, 
-        city, 
-        state, 
+      const {
+        firstName,
+        lastName,
+        email,
+        phone,
+        streetAddress,
+        city,
+        state,
         zipCode,
         courseName,
       } = req.body;
@@ -9540,7 +9539,6 @@ jeremy@abqconcealedcarry.com
         lastName,
         email,
         phone: normalizedPhone,
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
         streetAddress,
         city,
         state,

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User, DollarSign, CalendarClock, Target, Award, Crosshair, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Quote, List, CalendarDays } from "lucide-react";
+import { Shield, Tag, Users, Star, GraduationCap, Clock, Calendar, User, DollarSign, CalendarClock, Target, Award, Crosshair, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Quote, List, CalendarDays, MapPin } from "lucide-react";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 const calendarLocalizer = momentLocalizer(moment);
@@ -277,7 +277,10 @@ function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSc
 
   const formatDate = (dateStr: string) => {
     try {
-      const date = new Date(dateStr);
+      // Parse date parts manually to avoid UTC timezone offset issues
+      const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+      const [year, month, day] = datePart.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
       if (isNaN(date.getTime())) {
         return "Date TBD";
       }
@@ -718,7 +721,10 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
 
   const formatDate = (dateStr: string) => {
     try {
-      const date = new Date(dateStr);
+      // Parse date parts manually to avoid UTC timezone offset issues
+      const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+      const [year, month, day] = datePart.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
       if (isNaN(date.getTime())) return "Date TBD";
       return format(date, "MMM d, yyyy");
     } catch {
@@ -831,60 +837,96 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
         </div>
       ) : (
         <div className="space-y-4">
+          <p className="text-zinc-400 text-sm mb-2">{upcomingSchedules.length} upcoming sessions found</p>
           {upcomingSchedules.length === 0 ? (
             <div className="text-center py-12 text-zinc-500">
               <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No upcoming courses scheduled. Check back soon!</p>
             </div>
           ) : (
-            upcomingSchedules.slice(0, 6).map(({ schedule, course }) => (
-              <div 
-                key={schedule.id}
-                className="bg-zinc-800/50 rounded-xl p-5 border border-zinc-700 hover:border-zinc-500 
-                           transition-all duration-300 cursor-pointer hover:-translate-y-1"
-                onClick={() => setLocation(`/course/${course.id}`)}
-                data-testid={`list-course-${schedule.id}`}
-              >
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="w-full md:w-32 h-24 flex-shrink-0 rounded-lg overflow-hidden">
-                    {course.imageUrl ? (
-                      <img 
-                        src={course.imageUrl} 
+            upcomingSchedules.slice(0, 6).map(({ schedule, course }) => {
+              const enrollmentCount = schedule.enrollments?.filter((e: any) =>
+                e.status === 'confirmed' || e.status === 'pending'
+              ).length || 0;
+              const totalSpots = Number(schedule.maxSpots) || 0;
+              const availableSpots = Math.max(0, totalSpots - enrollmentCount);
+              const categoryName = typeof course.category === 'string'
+                ? course.category
+                : (course.category && typeof course.category === 'object' && 'name' in course.category)
+                  ? (course.category as any).name
+                  : 'General';
+              const displayImageUrl = course.imageUrl && course.imageUrl.trim() !== ''
+                ? course.imageUrl
+                : (() => {
+                    const cat = (categoryName || '').toLowerCase();
+                    if (cat.includes('concealed') || cat.includes('ccw')) return 'https://images.unsplash.com/photo-1593784991095-a205069470b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+                    if (cat.includes('defensive') || cat.includes('handgun')) return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+                    if (cat.includes('advanced')) return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+                    return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+                  })();
+
+              return (
+                <div
+                  key={schedule.id}
+                  className="bg-zinc-800/50 rounded-lg border border-zinc-700 hover:border-zinc-500
+                             transition-all duration-300 cursor-pointer overflow-hidden"
+                  onClick={() => setLocation(`/course/${course.id}`)}
+                  data-testid={`list-course-${schedule.id}`}
+                >
+                  <div className="flex flex-col md:flex-row">
+                    {/* Course Image */}
+                    <div className="w-full md:w-64 h-40 md:h-auto flex-shrink-0 overflow-hidden">
+                      <img
+                        src={displayImageUrl}
                         alt={course.title}
                         className="w-full h-full object-cover"
                         loading="lazy"
                       />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-[#bf0000] to-[#8b0000] flex items-center justify-center">
-                        <Target className="w-8 h-8 text-white opacity-50" />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1">
-                    <h3 className="font-heading text-lg uppercase tracking-wide text-white mb-2">
-                      {course.title}
-                    </h3>
-                    
-                    <div className="flex flex-wrap gap-4 text-sm text-zinc-400 mb-3">
-                      <div className="flex items-center gap-1">
+                    </div>
+
+                    {/* Course Details */}
+                    <div className="flex-1 p-5 flex flex-col justify-center">
+                      <h3 className="font-heading text-xl uppercase tracking-wide text-white mb-1">
+                        {course.title}
+                      </h3>
+
+                      <div className="flex items-center gap-2 text-zinc-400 text-sm mb-4">
                         <Calendar className="w-4 h-4" />
-                        <span>{formatDate(schedule.startDate)}</span>
+                        <span>{format(new Date(schedule.startDate), "MM/dd/yyyy")}</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{formatTime(schedule.startTime, schedule.endTime)}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-white font-medium">
-                        <DollarSign className="w-4 h-4" />
-                        <span>{formatPrice(course.price)}</span>
+
+                      <div className="flex flex-wrap gap-6 text-sm text-zinc-400">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          <span>{formatTime(schedule.startTime, schedule.endTime)}</span>
+                        </div>
+                        {schedule.location && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4" />
+                            <span>{schedule.location}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4" />
+                          <span>{availableSpots}/{totalSpots} spots</span>
+                        </div>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-3">
-                      <Button 
+
+                    {/* Right Side: Badge, Price, Register */}
+                    <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-3 p-5 md:pl-0 md:min-w-[200px]">
+                      <Badge className="bg-[#1a365d] text-white text-xs font-normal px-3 py-1 whitespace-nowrap">
+                        {categoryName}
+                      </Badge>
+                      <div className="text-right">
+                        <div className="text-white text-2xl font-bold">{formatPrice(course.price)}</div>
+                        {course.duration && (
+                          <div className="text-zinc-400 text-sm">{course.duration}</div>
+                        )}
+                      </div>
+                      <Button
                         size="sm"
-                        className="bg-[#bf0000] text-white hover:bg-[#a00000] font-heading uppercase tracking-wide"
+                        className="bg-[#1a365d] text-white hover:bg-[#2a4a7f] font-heading uppercase tracking-wide px-6"
                         onClick={(e) => {
                           e.stopPropagation();
                           const isHostedCourse = course.category === "Hosted Courses";
@@ -900,20 +942,11 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
                       >
                         Register
                       </Button>
-                      <Badge variant="secondary" className="text-xs bg-zinc-700 text-zinc-300">
-                        {(() => {
-                          const enrollmentCount = schedule.enrollments?.filter((e: any) => 
-                            e.status === 'confirmed' || e.status === 'pending'
-                          ).length || 0;
-                          const spots = Math.max(0, schedule.maxSpots - enrollmentCount);
-                          return `${spots} spots left`;
-                        })()}
-                      </Badge>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
           
           {upcomingSchedules.length > 6 && (
@@ -1298,6 +1331,19 @@ export default function Landing() {
           </div>
         </div>
       </section>
+      {/* Online NM CCW CTA */}
+      <section className="bg-zinc-900 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <Button
+            size="lg"
+            className="bg-[#004149] hover:bg-[#006d7a] text-white font-display uppercase tracking-widest px-8 py-6 text-sm sm:text-lg shadow-lg border border-zinc-700 rounded-sm"
+            onClick={() => setLocation('/online-nm-concealed-carry-course')}
+          >
+            Enroll in our Online New Mexico CCW Course
+          </Button>
+        </div>
+      </section>
+
       {/* Upcoming Courses Section */}
       <section className="bg-zinc-950 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

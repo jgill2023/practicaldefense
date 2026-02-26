@@ -34,7 +34,6 @@ const enrollmentFormSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Please enter a valid email address"),
   phone: z.string().min(10, "Please enter a valid phone number"),
-  dateOfBirth: z.string().min(1, "Date of birth is required"),
   smsConsent: z.boolean().refine(val => val === true, {
     message: "You must consent to receive text messages",
   }),
@@ -178,7 +177,6 @@ export function OnlineCourseEnrollDialog({
       lastName: "",
       email: "",
       phone: "",
-      dateOfBirth: "",
       smsConsent: false,
       termsAgreed: false,
     },
@@ -214,17 +212,17 @@ export function OnlineCourseEnrollDialog({
   const watchedValues = form.watch();
   
   useEffect(() => {
-    const { firstName, lastName, email, phone, dateOfBirth, smsConsent, termsAgreed } = watchedValues;
-    const isValid = firstName && lastName && email && phone && phone.length >= 10 && dateOfBirth && smsConsent && termsAgreed;
-    
+    const { firstName, lastName, email, phone, smsConsent, termsAgreed } = watchedValues;
+    const isValid = firstName && lastName && email && phone && phone.length >= 10 && smsConsent && termsAgreed;
+
     if (isValid && !clientSecret && !isInitiating && !initiateEnrollmentMutation.isPending) {
       const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       if (emailValid) {
         setIsInitiating(true);
-        initiateEnrollmentMutation.mutate({ firstName, lastName, email, phone, dateOfBirth, smsConsent, termsAgreed });
+        initiateEnrollmentMutation.mutate({ firstName, lastName, email, phone, smsConsent, termsAgreed });
       }
     }
-  }, [watchedValues.firstName, watchedValues.lastName, watchedValues.email, watchedValues.phone, watchedValues.dateOfBirth, watchedValues.smsConsent, watchedValues.termsAgreed]);
+  }, [watchedValues.firstName, watchedValues.lastName, watchedValues.email, watchedValues.phone, watchedValues.smsConsent, watchedValues.termsAgreed]);
 
   const handlePaymentSuccess = () => {
     setStep("success");
@@ -340,25 +338,6 @@ export function OnlineCourseEnrollDialog({
                           {...field} 
                           className="bg-background border-border"
                           data-testid="input-phone"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="dateOfBirth"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date of Birth</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="date" 
-                          {...field} 
-                          className="bg-background border-border"
-                          data-testid="input-date-of-birth"
                         />
                       </FormControl>
                       <FormMessage />

@@ -30,7 +30,7 @@ interface CalendarEvent {
     courseTitle: string;
     courseBrief: string;
     coursePrice: number;
-    courseCategory: string;
+    courseCategory: any;
     courseDuration: string;
     location: string;
     startTime: string;
@@ -53,13 +53,20 @@ export default function ScheduleCalendar() {
   // Helper function to safely get category name
   const getCategoryName = (category: any): string => {
     if (!category) return 'General';
-    // If it's a string (old format), return it
     if (typeof category === 'string') return category || 'General';
-    // If it's an object (new format), return the name
     if (typeof category === 'object' && 'name' in category) {
       return (category as any).name as string;
     }
     return 'General';
+  };
+
+  // Helper function to safely get category color
+  const getCategoryColor = (category: any): string => {
+    if (!category) return '#3b82f6';
+    if (typeof category === 'object' && 'color' in category) {
+      return (category as any).color || '#3b82f6';
+    }
+    return '#3b82f6';
   };
 
   // Fetch courses with schedules
@@ -180,28 +187,16 @@ export default function ScheduleCalendar() {
 
   // Custom event style function
   const eventStyleGetter = (event: CalendarEvent) => {
-    const categoryName = getCategoryName(event.resource.courseCategory).toLowerCase();
-    let backgroundColor = '#3174ad'; // Default blue
-    
-    // Color code by category (you can customize these colors)
-    if (categoryName.includes('concealed')) {
-      backgroundColor = '#f59e0b'; // Amber
-    } else if (categoryName.includes('defensive')) {
-      backgroundColor = '#ef4444'; // Red
-    } else if (categoryName.includes('tactical')) {
-      backgroundColor = '#10b981'; // Green
-    } else if (categoryName.includes('basic')) {
-      backgroundColor = '#8b5cf6'; // Purple
-    }
-
+    const categoryColor = getCategoryColor(event.resource.courseCategory);
     return {
       style: {
-        backgroundColor,
+        backgroundColor: categoryColor,
         borderRadius: '4px',
-        opacity: 0.8,
+        opacity: 0.9,
         color: 'white',
         border: '0px',
-        display: 'block'
+        display: 'block',
+        fontSize: '12px',
       }
     };
   };
@@ -240,9 +235,9 @@ export default function ScheduleCalendar() {
         </div>
 
         {/* Filters */}
-        <Card className="mb-6">
+        <Card className="mb-6 bg-zinc-800/50 border-zinc-700">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
+            <CardTitle className="flex items-center space-x-2 text-white">
               <Filter className="h-5 w-5" />
               <span>Filters & Search</span>
             </CardTitle>
@@ -306,30 +301,59 @@ export default function ScheduleCalendar() {
         </div>
 
         {/* Calendar */}
-        <Card>
-          <CardContent className="p-6">
-            <div style={{ height: '600px' }}>
-              <Calendar
-                localizer={localizer}
-                events={calendarEvents}
-                startAccessor="start"
-                endAccessor="end"
-                style={{ height: '100%' }}
-                onSelectEvent={handleSelectEvent}
-                view={currentView}
-                onView={setCurrentView}
-                date={currentDate}
-                onNavigate={setCurrentDate}
-                eventPropGetter={eventStyleGetter}
-                popup={true}
-                showMultiDayTimes={true}
-                step={60}
-                showAllEvents={true}
-                data-testid="calendar-view"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-zinc-800/50 rounded-xl p-4 border border-zinc-700">
+          <style>{`
+            .rbc-calendar { background: transparent; }
+            .rbc-toolbar { margin-bottom: 1rem; }
+            .rbc-toolbar button { color: #fff; background: #3f3f46; border: 1px solid #52525b; }
+            .rbc-toolbar button:hover { background: #52525b; }
+            .rbc-toolbar button.rbc-active { background: #bf0000; border-color: #bf0000; }
+            .rbc-header { background: #27272a; color: #a1a1aa; padding: 8px; border-bottom: 1px solid #3f3f46; }
+            .rbc-month-view, .rbc-time-view { background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; overflow: hidden; }
+            .rbc-day-bg { background: #18181b; }
+            .rbc-day-bg + .rbc-day-bg { border-left: 1px solid #3f3f46; }
+            .rbc-month-row + .rbc-month-row { border-top: 1px solid #3f3f46; }
+            .rbc-off-range-bg { background: #0f0f10; }
+            .rbc-today { background: #1c1c22 !important; }
+            .rbc-date-cell { color: #e4e4e7; padding: 4px 8px; }
+            .rbc-date-cell.rbc-off-range { color: #52525b; }
+            .rbc-event { cursor: pointer; }
+            .rbc-event:focus { outline: 2px solid #bf0000; }
+            .rbc-show-more { color: #bf0000; font-weight: 500; }
+            .rbc-toolbar-label { color: #fff; font-weight: 600; font-size: 1.1rem; }
+            .rbc-time-content { border-top: 1px solid #3f3f46; }
+            .rbc-time-header-content { border-left: 1px solid #3f3f46; }
+            .rbc-timeslot-group { border-bottom: 1px solid #3f3f46; }
+            .rbc-time-slot { color: #a1a1aa; }
+            .rbc-current-time-indicator { background-color: #bf0000; }
+            .rbc-agenda-view table { color: #e4e4e7; }
+            .rbc-agenda-view table thead th { border-bottom: 1px solid #3f3f46; color: #a1a1aa; }
+            .rbc-agenda-view table tbody tr { border-bottom: 1px solid #3f3f46; }
+            .rbc-agenda-date-cell, .rbc-agenda-time-cell { color: #a1a1aa; }
+            .rbc-month-row { min-height: 150px; }
+            .rbc-row-segment { max-height: none; }
+          `}</style>
+          <div style={{ height: '800px' }}>
+            <Calendar
+              localizer={localizer}
+              events={calendarEvents}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%' }}
+              onSelectEvent={handleSelectEvent}
+              view={currentView}
+              onView={setCurrentView}
+              date={currentDate}
+              onNavigate={setCurrentDate}
+              eventPropGetter={eventStyleGetter}
+              popup={true}
+              showMultiDayTimes={true}
+              step={60}
+              showAllEvents={true}
+              data-testid="calendar-view"
+            />
+          </div>
+        </div>
 
         {/* One-on-One Training Section */}
         <section className="mt-20 py-20 bg-muted/30 rounded-lg">

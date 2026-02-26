@@ -250,7 +250,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                       }}>Home</a>
-                      <Link href="/about" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-about">About Us</Link>
+                      {/* <Link href="/about" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-about">About Us</Link> */}
                       <NavigationMenu>
                         <NavigationMenuList>
                           <NavigationMenuItem>
@@ -326,7 +326,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                         </NavigationMenuList>
                       </NavigationMenu>
                       <Link href="/articles" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-articles">Articles</Link>
-                      <Link href="/merch" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-merch">Store</Link>
+                      {/* <Link href="/merch" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-merch">Store</Link> */}
                       <Link href="/gift-cards" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-gift-cards">Gift Cards</Link>
                       <a href="/#appointments" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" onClick={(e) => {
                         const appointmentsSection = document.getElementById('appointments');
@@ -392,7 +392,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                       }}>Home</a>
-                      <Link href="/about" className="text-zinc-100 hover:text-[#006d7a] transition-colors py-2 font-display tracking-widest uppercase" data-testid="link-about-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
+                      {/* <Link href="/about" className="text-zinc-100 hover:text-[#006d7a] transition-colors py-2 font-display tracking-widest uppercase" data-testid="link-about-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link> */}
                       <Link href="/articles" className="text-zinc-100 hover:text-[#006d7a] transition-colors py-2 font-display tracking-widest uppercase" data-testid="link-articles-mobile" onClick={() => setIsMobileMenuOpen(false)}>Articles</Link>
                       <div className="py-2">
                         <button 
@@ -438,7 +438,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                           </div>
                         )}
                       </div>
-                      <Link href="/merch" className="text-zinc-100 hover:text-[#006d7a] transition-colors py-2 font-display tracking-widest uppercase" data-testid="link-merch-mobile" onClick={() => setIsMobileMenuOpen(false)}>Store</Link>
+                      {/* <Link href="/merch" className="text-zinc-100 hover:text-[#006d7a] transition-colors py-2 font-display tracking-widest uppercase" data-testid="link-merch-mobile" onClick={() => setIsMobileMenuOpen(false)}>Store</Link> */}
                       <Link href="/gift-cards" className="text-zinc-100 hover:text-[#006d7a] transition-colors py-2 font-display tracking-widest uppercase" data-testid="link-gift-cards-mobile" onClick={() => setIsMobileMenuOpen(false)}>Gift Cards</Link>
                       <a href="/#appointments" className="text-zinc-100 hover:text-[#006d7a] transition-colors py-2 font-display tracking-widest uppercase" onClick={(e) => {
                         setIsMobileMenuOpen(false);
@@ -716,7 +716,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <Link href="/about" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-about">About Us</Link>
+                {/* <Link href="/about" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-about">About Us</Link> */}
                 <NavigationMenu>
                   <NavigationMenuList>
                     <NavigationMenuItem>
@@ -792,7 +792,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                   </NavigationMenuList>
                 </NavigationMenu>
                 <Link href="/articles" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-articles">Articles</Link>
-                <Link href="/merch" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-merch">Store</Link>
+                {/* <Link href="/merch" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-merch">Store</Link> */}
                 <Link href="/gift-cards" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-gift-cards">Gift Cards</Link>
                 <a href="/#appointments" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" onClick={(e) => {
                   const appointmentsSection = document.getElementById('appointments');
@@ -861,7 +861,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}>Home</a>
-                <Link href="/about" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-about-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link>
+                {/* <Link href="/about" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-about-mobile" onClick={() => setIsMobileMenuOpen(false)}>About Us</Link> */}
                 <Link href="/articles" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-articles-mobile" onClick={() => setIsMobileMenuOpen(false)}>Articles</Link>
                 <div className="py-2">
                   <button 
@@ -907,7 +907,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                     </div>
                   )}
                 </div>
-                <Link href="/merch" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-merch-mobile" onClick={() => setIsMobileMenuOpen(false)}>Store</Link>
+                {/* <Link href="/merch" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-merch-mobile" onClick={() => setIsMobileMenuOpen(false)}>Store</Link> */}
                 <Link href="/gift-cards" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" data-testid="link-gift-cards-mobile" onClick={() => setIsMobileMenuOpen(false)}>Gift Cards</Link>
                 <a href="/#appointments" className="text-white hover:text-[#FD66C5] transition-colors py-2 font-medium" onClick={(e) => {
                   setIsMobileMenuOpen(false);
