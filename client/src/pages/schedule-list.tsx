@@ -13,6 +13,12 @@ import { Link } from "wouter";
 import type { CourseWithSchedules, AppointmentType } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
 import { BookingModal } from "@/components/BookingModal";
+import ccwRangeImage from "@assets/CCW-Range_1757565346453.jpg";
+import ccwRangeFeatureImage from "@assets/CCW-Range_1766643725051.jpg";
+import dhcFeatureImage from "@assets/DHC_1766643777282.jpg";
+import deductivePistolcraftImage from "@assets/Deductive-Pistol-Craft_1762671845456.jpg";
+import practiceForMasteryImage from "@assets/Performance-Shooting_1762673186670.jpg";
+import performanceShootingImage from "@assets/Practical-Mastery-2025_1762674118627.jpg";
 
 export default function ScheduleList() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,24 +38,23 @@ export default function ScheduleList() {
     return 'General';
   };
 
-  // Helper to get fallback image URL based on category
-  const getImageUrl = (category: any) => {
-    const categoryName = getCategoryName(category);
-    const categoryLower = categoryName.toLowerCase();
+  // Helper to get fallback image based on course title and category
+  const getImageUrl = (title: string, category: any) => {
+    const titleLower = (title || '').toLowerCase();
+    const categoryLower = getCategoryName(category).toLowerCase();
 
-    if (categoryLower.includes('concealed') || categoryLower.includes('ccw') || categoryLower.includes('nm concealed')) {
-      return 'https://images.unsplash.com/photo-1593784991095-a205069470b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-    }
-
-    if (categoryLower.includes('defensive') || categoryLower.includes('handgun')) {
-      return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-    }
-
-    if (categoryLower.includes('advanced')) {
-      return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
-    }
-
-    return 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200';
+    if (titleLower.includes('concealed') || titleLower.includes('ccw') || titleLower.includes('ccl')) return ccwRangeFeatureImage;
+    if (titleLower.includes('defensive') || titleLower.includes('handgun')) return dhcFeatureImage;
+    if (titleLower.includes('live-fire') || titleLower.includes('range session')) return performanceShootingImage;
+    if (titleLower.includes('refresher') || titleLower.includes('renewal')) return ccwRangeImage;
+    if (titleLower.includes('pistolcraft') || titleLower.includes('deductive')) return deductivePistolcraftImage;
+    if (titleLower.includes('mastery') || titleLower.includes('performance')) return practiceForMasteryImage;
+    if (categoryLower.includes('concealed') || categoryLower.includes('ccw')) return ccwRangeFeatureImage;
+    if (categoryLower.includes('defensive') || categoryLower.includes('handgun')) return dhcFeatureImage;
+    if (categoryLower.includes('live-fire') || categoryLower.includes('range')) return performanceShootingImage;
+    if (categoryLower.includes('refresher') || categoryLower.includes('renewal')) return ccwRangeImage;
+    if (categoryLower.includes('advanced')) return dhcFeatureImage;
+    return ccwRangeFeatureImage;
   };
 
   // Fetch courses with schedules
@@ -284,9 +289,9 @@ export default function ScheduleList() {
             </Card>
           ) : (
             filteredSchedules.map((schedule) => {
-              const displayImageUrl = schedule.courseImageUrl && schedule.courseImageUrl.trim() !== '' 
-                ? schedule.courseImageUrl 
-                : getImageUrl(schedule.courseCategory);
+              const displayImageUrl = schedule.courseImageUrl && schedule.courseImageUrl.trim() !== ''
+                ? schedule.courseImageUrl
+                : getImageUrl(schedule.courseTitle, schedule.courseCategory);
 
               return (
                 <Card key={schedule.id} className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -300,8 +305,9 @@ export default function ScheduleList() {
                         loading="lazy"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          if (target.src !== getImageUrl(schedule.courseCategory)) {
-                            target.src = getImageUrl(schedule.courseCategory);
+                          const fallback = getImageUrl(schedule.courseTitle, schedule.courseCategory);
+                          if (target.src !== fallback) {
+                            target.src = fallback;
                           }
                         }}
                       />
@@ -331,7 +337,7 @@ export default function ScheduleList() {
                                 </p>
                               )}
                             </div>
-                            <Badge className="ml-4 text-[#ffffff] bg-[#02057d]">
+                            <Badge className="ml-4 text-[#ffffff] bg-[#004149]">
                               {getCategoryName(schedule.courseCategory)}
                             </Badge>
                           </div>
@@ -375,7 +381,7 @@ export default function ScheduleList() {
                           
                           {(getCategoryName(schedule.courseCategory) === "Hosted Courses" || schedule.course?.destinationUrl) ? (
                             <Button 
-                              className="whitespace-nowrap bg-[#010c84]"
+                              className="whitespace-nowrap bg-[#004149] hover:bg-[#006d7a] rounded-sm"
                               data-testid={`button-register-${schedule.courseId}`}
                               onClick={() => {
                                 if (schedule.course?.destinationUrl) {
@@ -388,7 +394,7 @@ export default function ScheduleList() {
                           ) : (
                             <Link href={`/course-registration/${schedule.courseTitle}/${schedule.id}`}>
                               <Button 
-                                className="whitespace-nowrap bg-[#010c84]"
+                                className="whitespace-nowrap bg-[#004149] hover:bg-[#006d7a] rounded-sm"
                                 disabled={schedule.availableSpots === 0}
                                 data-testid={`button-register-${schedule.courseId}`}
                               >
