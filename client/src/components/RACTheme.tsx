@@ -132,7 +132,7 @@ export function TitleCard({
       data-testid="title-card"
     >
       <Component
-        className="font-heading uppercase tracking-wide font-bold text-3xl text-center mt-[4px] mb-[4px] text-[#bf0000]"
+        className="font-heading uppercase tracking-wide font-bold text-3xl text-center mt-[4px] mb-[4px] text-[#004149]"
       >
         {children}
       </Component>

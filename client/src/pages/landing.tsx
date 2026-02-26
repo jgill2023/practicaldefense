@@ -708,7 +708,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
   const eventStyleGetter = (event: CalendarEvent) => {
     return {
       style: {
-        backgroundColor: '#bf0000',
+        backgroundColor: '#004149',
         borderRadius: '4px',
         opacity: 0.9,
         color: 'white',
@@ -752,7 +752,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin w-8 h-8 border-4 border-[#bf0000] border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-[#004149] border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -765,7 +765,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
             onClick={() => setViewMode('calendar')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
               viewMode === 'calendar' 
-                ? 'bg-[#bf0000] text-white' 
+                ? 'bg-[#004149] text-white' 
                 : 'text-zinc-400 hover:text-white'
             }`}
             data-testid="toggle-calendar-view"
@@ -777,7 +777,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
             onClick={() => setViewMode('list')}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
               viewMode === 'list' 
-                ? 'bg-[#bf0000] text-white' 
+                ? 'bg-[#004149] text-white' 
                 : 'text-zinc-400 hover:text-white'
             }`}
             data-testid="toggle-list-view"
@@ -801,7 +801,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
             .rbc-toolbar { margin-bottom: 1rem; }
             .rbc-toolbar button { color: #fff; background: #3f3f46; border: 1px solid #52525b; }
             .rbc-toolbar button:hover { background: #52525b; }
-            .rbc-toolbar button.rbc-active { background: #bf0000; border-color: #bf0000; }
+            .rbc-toolbar button.rbc-active { background: #004149; border-color: #004149; }
             .rbc-header { background: #27272a; color: #a1a1aa; padding: 8px; border-bottom: 1px solid #3f3f46; }
             .rbc-month-view, .rbc-time-view { background: #18181b; border: 1px solid #3f3f46; border-radius: 8px; overflow: hidden; }
             .rbc-day-bg { background: #18181b; }
@@ -812,8 +812,8 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
             .rbc-date-cell { color: #e4e4e7; padding: 4px 8px; }
             .rbc-date-cell.rbc-off-range { color: #52525b; }
             .rbc-event { cursor: pointer; }
-            .rbc-event:focus { outline: 2px solid #bf0000; }
-            .rbc-show-more { color: #bf0000; font-weight: 500; }
+            .rbc-event:focus { outline: 2px solid #004149; }
+            .rbc-show-more { color: #004149; font-weight: 500; }
             .rbc-toolbar-label { color: #fff; font-weight: 600; font-size: 1.1rem; }
           `}</style>
           <div style={{ height: '500px' }}>
@@ -1199,7 +1199,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[32px] pb-[32px]">
           {/* Featured Courses Header */}
           <div className="mb-12 text-left">
-            <p className="text-lg lg:text-xl font-bold uppercase tracking-wide mb-4 text-[#bf0000]">
+            <p className="text-lg lg:text-xl font-bold uppercase tracking-wide mb-4 text-[#004149]">
               Reliable. Effective. Practical.
             </p>
             <h2 className="font-heading text-4xl lg:text-5xl uppercase tracking-wide text-white">
