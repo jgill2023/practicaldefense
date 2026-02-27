@@ -232,8 +232,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (currentUser?.role !== 'superadmin') {
         users = users.filter(user => user.role !== 'superadmin');
       }
-      
-      res.json(users);
+
+      // Add hasPassword flag and strip sensitive fields
+      const safeUsers = users.map(({ passwordHash, passwordResetToken, passwordResetExpiry, emailVerificationToken, emailVerificationExpiry, magicLinkToken, magicLinkExpiry, ...user }) => ({
+        ...user,
+        hasPassword: !!passwordHash,
+      }));
+      res.json(safeUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ message: "Failed to fetch users" });
