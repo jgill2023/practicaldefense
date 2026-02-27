@@ -53,7 +53,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { UserPlus, Check, X, Filter, Shield, MoreVertical, Edit, Trash2, KeyRound } from "lucide-react";
+import { UserPlus, Check, X, Filter, Shield, MoreVertical, Edit, Trash2, KeyRound, Upload, Mail } from "lucide-react";
 import type { User } from "@shared/schema";
 
 const createUserSchema = z.object({
@@ -78,6 +78,7 @@ const editUserSchema = z.object({
 
 type CreateUserForm = z.infer<typeof createUserSchema>;
 type EditUserForm = z.infer<typeof editUserSchema>;
+type UserWithFlags = User & { hasPassword?: boolean };
 
 export default function UserManagementPage() {
   const { toast } = useToast();
@@ -93,6 +94,11 @@ export default function UserManagementPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<any>(null);
+  const [importStep, setImportStep] = useState<"upload" | "preview" | "importing" | "done">("upload");
+  const [importResults, setImportResults] = useState<any>(null);
 
   const form = useForm<CreateUserForm>({
     resolver: zodResolver(createUserSchema),
@@ -120,7 +126,7 @@ export default function UserManagementPage() {
     },
   });
 
-  const { data: users = [], isLoading } = useQuery<User[]>({
+  const { data: users = [], isLoading } = useQuery<UserWithFlags[]>({
     queryKey: ["/api/admin/users"],
   });
 
@@ -259,6 +265,97 @@ export default function UserManagementPage() {
     },
   });
 
+  const importPreviewMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/import-students/preview", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Upload failed" }));
+        throw new Error(err.message || "Upload failed");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setImportPreview(data);
+      setImportStep("preview");
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Import Preview Failed",
+        description: error.message || "Failed to preview import file",
+      });
+    },
+  });
+
+  const importConfirmMutation = useMutation({
+    mutationFn: async (rows: any[]) => {
+      const res = await apiRequest("POST", "/api/admin/import-students/confirm", { rows });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setImportResults(data);
+      setImportStep("done");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Import Complete",
+        description: `Successfully imported students`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Import Failed",
+        description: error.message || "Failed to import students",
+      });
+      setImportStep("preview");
+    },
+  });
+
+  const sendWelcomeEmailMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest("POST", `/api/admin/import-students/welcome-email/${userId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Welcome email sent",
+        description: "The welcome email has been sent successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to send welcome email",
+      });
+    },
+  });
+
+  const bulkWelcomeEmailMutation = useMutation({
+    mutationFn: async (userIds: string[]) => {
+      const res = await apiRequest("POST", "/api/admin/import-students/welcome-emails/bulk", { userIds });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Bulk welcome emails sent",
+        description: `Sent: ${data.sent ?? 0}, Failed: ${data.failed ?? 0}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to send bulk welcome emails",
+      });
+    },
+  });
+
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
     editForm.reset({
@@ -339,6 +436,30 @@ export default function UserManagementPage() {
               Manage user accounts, roles, and permissions
             </p>
           </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => { setImportDialogOpen(true); setImportStep("upload"); setImportFile(null); setImportPreview(null); setImportResults(null); }}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import Students
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const studentIds = users
+                  .filter(u => u.role === "student" && !u.hasPassword)
+                  .map(u => u.id);
+                if (studentIds.length === 0) {
+                  toast({ title: "No eligible students", description: "All students already have passwords set." });
+                  return;
+                }
+                if (confirm(`Send welcome emails to ${studentIds.length} students without passwords?`)) {
+                  bulkWelcomeEmailMutation.mutate(studentIds);
+                }
+              }}
+              disabled={bulkWelcomeEmailMutation.isPending}
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              {bulkWelcomeEmailMutation.isPending ? "Sending..." : "Send Welcome Emails"}
+            </Button>
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button data-testid="button-create-user">
@@ -468,6 +589,7 @@ export default function UserManagementPage() {
               </Form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <Card>
@@ -603,6 +725,12 @@ export default function UserManagementPage() {
                               >
                                 <KeyRound className="w-4 h-4 mr-2" />
                                 Send Password Reset
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => sendWelcomeEmailMutation.mutate(user.id)}
+                              >
+                                <Mail className="w-4 h-4 mr-2" />
+                                Send Welcome Email
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
@@ -859,6 +987,211 @@ export default function UserManagementPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Import Students Dialog */}
+        <Dialog open={importDialogOpen} onOpenChange={(open) => {
+          if (!open && importStep === "importing") return; // prevent closing during import
+          setImportDialogOpen(open);
+        }}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Import Students</DialogTitle>
+              <DialogDescription>
+                Upload a CSV file to import students and enroll them in courses
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Step 1: Upload */}
+            {importStep === "upload" && (
+              <div className="space-y-4 py-4">
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+                  <Upload className="w-10 h-10 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Upload a CSV file with columns: firstName, lastName, email, phone, course
+                  </p>
+                  <Input
+                    type="file"
+                    accept=".csv"
+                    onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                    className="max-w-xs mx-auto"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setImportDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (importFile) {
+                        importPreviewMutation.mutate(importFile);
+                      }
+                    }}
+                    disabled={!importFile || importPreviewMutation.isPending}
+                  >
+                    {importPreviewMutation.isPending ? "Processing..." : "Preview Import"}
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
+
+            {/* Step 2: Preview */}
+            {importStep === "preview" && importPreview && (
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <Card>
+                    <CardContent className="p-3 text-center">
+                      <div className="text-2xl font-bold">{importPreview.totalRows}</div>
+                      <div className="text-xs text-muted-foreground">Total Rows</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-3 text-center">
+                      <div className="text-2xl font-bold">{importPreview.uniqueStudents}</div>
+                      <div className="text-xs text-muted-foreground">Unique Students</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-3 text-center">
+                      <div className="text-2xl font-bold text-green-600">{importPreview.validRows}</div>
+                      <div className="text-xs text-muted-foreground">Valid</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-3 text-center">
+                      <div className="text-2xl font-bold text-red-600">{importPreview.errorCount ?? 0}</div>
+                      <div className="text-xs text-muted-foreground">Errors</div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Course matching status */}
+                {importPreview.courseMatches && importPreview.courseMatches.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2">Course Matching</h4>
+                    <div className="space-y-1">
+                      {importPreview.courseMatches.map((match: any, i: number) => (
+                        <div key={i} className="flex items-center gap-2 text-sm">
+                          {match.matched ? (
+                            <Badge variant="default" className="bg-green-600">Matched</Badge>
+                          ) : (
+                            <Badge variant="destructive">Not Found</Badge>
+                          )}
+                          <span>{match.csvCourse}</span>
+                          {match.matched && (
+                            <span className="text-muted-foreground">-&gt; {match.matchedName}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Error rows */}
+                {importPreview.errors && importPreview.errors.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2 text-red-600">Errors</h4>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      {importPreview.errors.map((err: any, i: number) => (
+                        <div key={i} className="text-sm text-red-600">
+                          Row {err.row}: {err.message}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Warning rows */}
+                {importPreview.warnings && importPreview.warnings.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2 text-yellow-600">Warnings</h4>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      {importPreview.warnings.map((warn: any, i: number) => (
+                        <div key={i} className="text-sm text-yellow-600">
+                          Row {warn.row}: {warn.message}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => { setImportStep("upload"); setImportPreview(null); }}>
+                    Back
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setImportStep("importing");
+                      importConfirmMutation.mutate(importPreview.rows);
+                    }}
+                    disabled={!importPreview.validRows || importPreview.validRows === 0}
+                  >
+                    Confirm Import ({importPreview.validRows} students)
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
+
+            {/* Step 3: Importing */}
+            {importStep === "importing" && (
+              <div className="py-12 text-center">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Importing students... Please wait.</p>
+              </div>
+            )}
+
+            {/* Step 4: Done */}
+            {importStep === "done" && importResults && (
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <Card>
+                    <CardContent className="p-3 text-center">
+                      <div className="text-2xl font-bold text-green-600">{importResults.usersCreated ?? 0}</div>
+                      <div className="text-xs text-muted-foreground">Users Created</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-3 text-center">
+                      <div className="text-2xl font-bold">{importResults.existingUsers ?? 0}</div>
+                      <div className="text-xs text-muted-foreground">Existing Users</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-3 text-center">
+                      <div className="text-2xl font-bold text-blue-600">{importResults.enrollments ?? 0}</div>
+                      <div className="text-xs text-muted-foreground">Enrollments</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-3 text-center">
+                      <div className="text-2xl font-bold text-purple-600">{importResults.onlineEnrollments ?? 0}</div>
+                      <div className="text-xs text-muted-foreground">Online Enrollments</div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Errors list */}
+                {importResults.errors && importResults.errors.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2 text-red-600">Errors During Import</h4>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      {importResults.errors.map((err: any, i: number) => (
+                        <div key={i} className="text-sm text-red-600">
+                          {err.email || `Row ${err.row}`}: {err.message}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <DialogFooter>
+                  <Button onClick={() => setImportDialogOpen(false)}>
+                    Done
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
