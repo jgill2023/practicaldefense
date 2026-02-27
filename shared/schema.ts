@@ -45,6 +45,9 @@ export const users = pgTable("users", {
   // Password reset fields
   passwordResetToken: varchar("password_reset_token", { length: 255 }),
   passwordResetExpiry: timestamp("password_reset_expiry"),
+  // Magic link login fields (for imported students)
+  magicLinkToken: varchar("magic_link_token", { length: 255 }),
+  magicLinkExpiry: timestamp("magic_link_expiry"),
   // Profile fields
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
