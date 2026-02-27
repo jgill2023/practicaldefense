@@ -4,6 +4,7 @@ import { giftCardService } from './service';
 import { giftCardPurchaseRequestSchema, insertGiftCardThemeSchema } from '@shared/schema';
 import { z } from 'zod';
 import { getStripeClient } from '../stripeClient';
+import { markRecoveryCompleted } from '../services/abandonedCartService';
 import { processGiftCardDelivery, generateGiftCardPdf } from './delivery';
 import multer from 'multer';
 import { put } from '@vercel/blob';
@@ -134,6 +135,9 @@ router.post('/purchase/complete', async (req: Request, res: Response) => {
     if (paymentIntent.status !== 'succeeded') {
       return res.status(400).json({ error: 'Payment not completed' });
     }
+
+    // Mark abandoned cart recovery as completed if applicable
+    await markRecoveryCompleted(paymentIntentId);
 
     const metadata = paymentIntent.metadata;
     if (metadata.type !== 'gift_card_purchase') {

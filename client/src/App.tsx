@@ -45,6 +45,7 @@ import GiftCardManagement from "@/pages/gift-card-management";
 import CourseDetail from "@/pages/course-detail";
 import NMConcealedCarryCourse from "@/pages/nmccl";
 import OnlineCCWClass from "@/pages/online-nm-concealed-carry-course";
+import OnlineCourseConfirmation from "@/pages/online-course-confirmation";
 import DefensiveHandgunCourse from "@/pages/defensive-handgun";
 import DefensiveHandgunClinics from "@/pages/defensive-handgun-clinics";
 import OnscreenHandgunHandling from "@/pages/onscreen-handgun-handling";
@@ -56,6 +57,7 @@ import ArticleDetail from "@/pages/article-detail";
 import RACCProgram from "@/pages/racc-program";
 import Register from "@/pages/register";
 import FtaWaiverPage from "@/pages/fta-waiver";
+import RecoverPage from "@/pages/recover";
 import NotFound from "@/pages/not-found";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -155,6 +157,8 @@ function Router() {
       <Route path="/course/:id" component={CourseDetail} />
       <Route path="/nmccl" component={NMConcealedCarryCourse} />
       <Route path="/online-nm-concealed-carry-course" component={OnlineCCWClass} />
+      <Route path="/online-course-confirmation" component={OnlineCourseConfirmation} />
+      <Route path="/recover" component={RecoverPage} />
       <Route path="/defensive-handgun-course" component={DefensiveHandgunCourse} />
       <Route path="/defensive-handgun-clinics" component={DefensiveHandgunClinics} />
       <Route path="/onscreen-handgun-handling" component={OnscreenHandgunHandling} />

@@ -4,6 +4,7 @@ import { instructorGoogleCredentials } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { google } from 'googleapis';
 import { calendarService } from './calendarService';
+import { runAbandonedCartRecovery } from './abandonedCartService';
 
 const WEBHOOK_CALLBACK_URL = process.env.WEBHOOK_CALLBACK_URL || `${process.env.APP_URL || 'http://localhost:5000'}/api/availability/webhook/calendar`;
 
@@ -248,6 +249,16 @@ export class CronService {
     });
 
     console.log('[CronService] Scheduled daily maintenance job at midnight (America/Denver)');
+
+    // Abandoned cart recovery: every 15 minutes
+    cron.schedule('*/15 * * * *', async () => {
+      console.log('[CronService] Abandoned cart recovery job triggered');
+      await runAbandonedCartRecovery();
+    }, {
+      timezone: 'America/Denver',
+    });
+
+    console.log('[CronService] Scheduled abandoned cart recovery job every 15 minutes');
 
     this.isInitialized = true;
   }

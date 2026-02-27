@@ -24,6 +24,8 @@ import { generateSitemap, generateRobotsTxt } from "./seo";
 import { enrollStudentInMoodle, getMoodleConfig, testMoodleConnection } from "./moodle";
 
 import { getStripeClient, isStripeConfigured } from './stripeClient';
+import { runAbandonedCartRecovery, markRecoveryCompleted } from './services/abandonedCartService';
+import { abandonedCartRecovery, merchOrders } from '@shared/schema';
 import multer from 'multer';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
@@ -4604,6 +4606,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const taxRate = totalTaxInCents > 0 && subtotalInCents > 0
         ? (totalTaxInCents / subtotalInCents).toFixed(4)
         : null;
+
+      // Mark abandoned cart recovery as completed if applicable
+      await markRecoveryCompleted(paymentIntentId);
 
       // Determine payment status based on payment option
       const paymentStatus = enrollment.paymentOption === 'deposit' ? 'deposit' : 'paid';
@@ -9589,6 +9594,15 @@ jeremy@abqconcealedcarry.com
         return res.status(400).json({ message: "Payment intent mismatch" });
       }
 
+      // If already completed (e.g. webhook already processed), return success
+      if (enrollment.status === 'completed') {
+        return res.json({
+          success: true,
+          message: "Enrollment already completed.",
+          moodleUsername: enrollment.moodleUsername,
+        });
+      }
+
       // Verify payment was successful
       const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
       if (paymentIntent.status !== 'succeeded') {
@@ -9598,6 +9612,9 @@ jeremy@abqconcealedcarry.com
 
       // Update enrollment status to payment_complete
       await storage.updateOnlineCourseEnrollmentStatus(enrollmentId, 'payment_complete');
+
+      // Mark abandoned cart recovery as completed if applicable
+      await markRecoveryCompleted(paymentIntentId);
 
       // Attempt Moodle enrollment
       const moodleConfig = getMoodleConfig();
@@ -9692,11 +9709,11 @@ Practical Defense Training LLC`;
     // Send email notification if email is available
     if (enrollment.email) {
       try {
-        const emailService = new NotificationEmailService();
-        await emailService.sendEmail({
-          to: enrollment.email,
+        await NotificationEmailService.sendNotificationEmail({
+          to: [enrollment.email],
           subject: `Your ${enrollment.courseName} Course Access`,
-          text: emailBody,
+          htmlContent: emailBody.replace(/\n/g, '<br>'),
+          textContent: emailBody,
         });
         await storage.updateOnlineCourseEnrollmentNotificationStatus(enrollment.id, 'email', true);
         console.log(`Email notification sent to ${enrollment.email}`);
@@ -9789,6 +9806,32 @@ Practical Defense Training LLC`;
     }
   });
 
+  // Get current student's completed online course enrollments
+  app.get('/api/student/online-courses', isAuthenticated, async (req: any, res) => {
+    try {
+      const email = req.user?.email;
+      if (!email) {
+        return res.status(400).json({ message: "User email not found" });
+      }
+
+      const enrollments = await storage.getOnlineCourseEnrollmentsByEmail(email);
+      const completed = enrollments
+        .filter(e => e.status === 'completed')
+        .map(e => ({
+          id: e.id,
+          courseName: e.courseName,
+          moodleUsername: e.moodleUsername,
+          moodleUrl: process.env.MOODLE_URL || null,
+          enrolledAt: e.createdAt,
+        }));
+
+      res.json(completed);
+    } catch (error) {
+      console.error("Error fetching student online courses:", error);
+      res.status(500).json({ message: "Failed to fetch online courses" });
+    }
+  });
+
   // Get all online course enrollments (admin route)
   app.get('/api/online-course/enrollments', isAuthenticated, requireInstructorOrHigher, async (req: any, res) => {
     try {
@@ -9861,6 +9904,7 @@ Practical Defense Training LLC`;
           // Trigger the same flow as confirm-payment endpoint
           try {
             await storage.updateOnlineCourseEnrollmentStatus(enrollment.id, 'payment_complete');
+            await markRecoveryCompleted(paymentIntent.id);
             
             const moodleConfig = getMoodleConfig();
             if (moodleConfig) {
@@ -9899,6 +9943,128 @@ Practical Defense Training LLC`;
     }
 
     res.json({ received: true });
+  });
+
+  // ============================================
+  // ABANDONED CART RECOVERY
+  // ============================================
+
+  // Vercel Cron endpoint for abandoned cart recovery
+  app.get('/api/cron/abandoned-cart-recovery', async (req: any, res) => {
+    const cronSecret = process.env.CRON_SECRET;
+    if (cronSecret && req.headers.authorization !== `Bearer ${cronSecret}`) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+      await runAbandonedCartRecovery();
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[Cron] Abandoned cart recovery failed:', error);
+      res.status(500).json({ message: 'Recovery check failed' });
+    }
+  });
+
+  // Resolve recovery token for direct payment link
+  app.get('/api/recover/:token', async (req: any, res) => {
+    try {
+      const { token } = req.params;
+
+      const [recovery] = await db.select()
+        .from(abandonedCartRecovery)
+        .where(eq(abandonedCartRecovery.recoveryToken, token))
+        .limit(1);
+
+      if (!recovery) {
+        return res.status(404).json({ message: 'Recovery link not found' });
+      }
+
+      if (recovery.recoveryTokenExpiresAt < new Date()) {
+        return res.status(410).json({ message: 'This recovery link has expired' });
+      }
+
+      if (recovery.status === 'recovered') {
+        return res.json({ alreadyCompleted: true, cartType: recovery.cartType });
+      }
+
+      if (recovery.status !== 'active') {
+        return res.status(410).json({ message: 'This recovery link is no longer valid' });
+      }
+
+      // Check if payment completed since last cron run
+      const stripe = getStripeClient();
+      if (recovery.stripePaymentIntentId && stripe) {
+        try {
+          const pi = await stripe.paymentIntents.retrieve(recovery.stripePaymentIntentId);
+          if (pi.status === 'succeeded') {
+            await db.update(abandonedCartRecovery)
+              .set({ status: 'recovered', recoveredAt: new Date(), updatedAt: new Date() })
+              .where(eq(abandonedCartRecovery.id, recovery.id));
+            return res.json({ alreadyCompleted: true, cartType: recovery.cartType });
+          }
+        } catch (e) {
+          // PI may have been cancelled, continue to check source record
+        }
+      }
+
+      const redirectData: any = {
+        cartType: recovery.cartType,
+        sourceRecordId: recovery.sourceRecordId,
+        itemDescription: recovery.itemDescription,
+        amount: recovery.amount,
+        customerEmail: recovery.customerEmail,
+        customerFirstName: recovery.customerFirstName,
+      };
+
+      // Fetch source-specific data and fresh Stripe clientSecret
+      switch (recovery.cartType) {
+        case 'online_course': {
+          const enrollment = await storage.getOnlineCourseEnrollment(recovery.sourceRecordId);
+          if (enrollment && enrollment.stripePaymentIntentId && stripe) {
+            const pi = await stripe.paymentIntents.retrieve(enrollment.stripePaymentIntentId);
+            redirectData.clientSecret = pi.client_secret;
+            redirectData.courseName = enrollment.courseName;
+          }
+          break;
+        }
+        case 'merch_order': {
+          redirectData.orderId = recovery.sourceRecordId;
+          if (recovery.stripePaymentIntentId && stripe) {
+            const pi = await stripe.paymentIntents.retrieve(recovery.stripePaymentIntentId);
+            redirectData.clientSecret = pi.client_secret;
+          }
+          break;
+        }
+        case 'in_person_course': {
+          const [enrollment] = await db.select()
+            .from(enrollments)
+            .where(eq(enrollments.id, recovery.sourceRecordId))
+            .limit(1);
+          if (enrollment) {
+            redirectData.courseId = enrollment.courseId;
+            redirectData.scheduleId = enrollment.scheduleId;
+            if (enrollment.stripePaymentIntentId && stripe) {
+              const pi = await stripe.paymentIntents.retrieve(enrollment.stripePaymentIntentId);
+              redirectData.clientSecret = pi.client_secret;
+            }
+          }
+          break;
+        }
+        case 'gift_card': {
+          if (recovery.stripePaymentIntentId && stripe) {
+            const pi = await stripe.paymentIntents.retrieve(recovery.stripePaymentIntentId);
+            redirectData.clientSecret = pi.client_secret;
+            redirectData.metadata = pi.metadata;
+          }
+          break;
+        }
+      }
+
+      res.json(redirectData);
+    } catch (error) {
+      console.error('[Recovery] Error resolving token:', error);
+      res.status(500).json({ message: 'Failed to process recovery link' });
+    }
   });
 
   const httpServer = createServer(app);

@@ -3307,4 +3307,64 @@ export const insertVenueSchema = createInsertSchema(venues).omit({
 
 // Types
 export type InsertVenue = z.infer<typeof insertVenueSchema>;
+
+// ============================================
+// ABANDONED CART RECOVERY
+// ============================================
+
+export const abandonedCartRecoveryStatusEnum = pgEnum("abandoned_cart_recovery_status", [
+  "active",
+  "recovered",
+  "expired",
+  "cancelled",
+]);
+
+export const abandonedCartTypeEnum = pgEnum("abandoned_cart_type", [
+  "online_course",
+  "in_person_course",
+  "merch_order",
+  "gift_card",
+]);
+
+export const abandonedCartRecovery = pgTable("abandoned_cart_recovery", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+
+  // Cart identification
+  cartType: abandonedCartTypeEnum("cart_type").notNull(),
+  sourceRecordId: varchar("source_record_id", { length: 255 }).notNull(),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
+
+  // Customer contact info (denormalized for quick access)
+  customerEmail: varchar("customer_email", { length: 255 }).notNull(),
+  customerPhone: varchar("customer_phone", { length: 20 }),
+  customerFirstName: varchar("customer_first_name", { length: 100 }),
+
+  // Cart details for recovery messages
+  itemDescription: varchar("item_description", { length: 500 }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+
+  // Recovery token for direct payment link
+  recoveryToken: varchar("recovery_token", { length: 64 }).notNull().unique(),
+  recoveryTokenExpiresAt: timestamp("recovery_token_expires_at").notNull(),
+
+  // Touch tracking
+  touch1SentAt: timestamp("touch1_sent_at"),
+  touch2SentAt: timestamp("touch2_sent_at"),
+  touch3SentAt: timestamp("touch3_sent_at"),
+
+  // Status
+  status: abandonedCartRecoveryStatusEnum("status").notNull().default("active"),
+  recoveredAt: timestamp("recovered_at"),
+
+  // Timestamps
+  cartAbandonedAt: timestamp("cart_abandoned_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_acr_status").on(table.status),
+  index("idx_acr_recovery_token").on(table.recoveryToken),
+  index("idx_acr_source_record").on(table.cartType, table.sourceRecordId),
+]);
+
+export type AbandonedCartRecovery = typeof abandonedCartRecovery.$inferSelect;
 export type Venue = typeof venues.$inferSelect;

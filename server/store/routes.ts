@@ -18,6 +18,7 @@ import { eq, and, sql, gt, or, isNull, lte } from 'drizzle-orm';
 import { storage } from '../storage';
 import Stripe from 'stripe';
 import { getStripeClient } from '../stripeClient';
+import { markRecoveryCompleted } from '../services/abandonedCartService';
 
 const router = Router();
 
@@ -619,6 +620,9 @@ router.post('/confirm-order', async (req: Request, res: Response) => {
     if (paymentIntent.status !== 'succeeded') {
       return res.status(400).json({ message: 'Payment not completed' });
     }
+
+    // Mark abandoned cart recovery as completed if applicable
+    await markRecoveryCompleted(paymentIntentId);
 
     // Get order items
     const orderItems = await db

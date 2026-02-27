@@ -7,6 +7,12 @@
       "maxDuration": 30
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/abandoned-cart-recovery",
+      "schedule": "*/15 * * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index.ts" },
     { "source": "/auth/:path*", "destination": "/api/index.ts" },
