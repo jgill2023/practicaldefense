@@ -24,6 +24,9 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [emailNotVerified, setEmailNotVerified] = useState(false);
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const magicLinkError = searchParams.get("error");
+
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -66,6 +69,21 @@ export default function Login() {
             Sign in to your account to continue
           </CardDescription>
         </CardHeader>
+        {magicLinkError === "expired-link" && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded mb-4 mx-6">
+            Your login link has expired. Please use the "Forgot Password" link below to request a new one, or contact us for assistance.
+          </div>
+        )}
+        {magicLinkError === "invalid-link" && (
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded mb-4 mx-6">
+            This login link is invalid or has already been used. Please log in with your password, or use "Forgot Password" to get a new link.
+          </div>
+        )}
+        {magicLinkError === "server-error" && (
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded mb-4 mx-6">
+            Something went wrong. Please try again or contact us for assistance.
+          </div>
+        )}
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
             {error && (
