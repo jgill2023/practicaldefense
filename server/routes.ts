@@ -23,12 +23,40 @@ import "./types"; // Import type declarations
 import { generateSitemap, generateRobotsTxt } from "./seo";
 import { enrollStudentInMoodle, getMoodleConfig, testMoodleConnection } from "./moodle";
 
+import { escapeHtml } from './utils/escapeHtml';
+import sanitizeHtml from 'sanitize-html';
 import { getStripeClient, isStripeConfigured } from './stripeClient';
 import { runAbandonedCartRecovery, markRecoveryCompleted } from './services/abandonedCartService';
 import { abandonedCartRecovery, merchOrders } from '@shared/schema';
 import multer from 'multer';
+import { formRateLimit } from './rateLimiting';
+import { importRouter } from "./importStudents";
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
+const ALLOWED_UPLOAD_MIME_TYPES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+  'application/pdf',
+];
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_UPLOAD_MIME_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type ${file.mimetype} is not allowed`));
+    }
+  },
+});
+
+const htmlSanitizeOptions: sanitizeHtml.IOptions = {
+  allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2']),
+  allowedAttributes: {
+    ...sanitizeHtml.defaults.allowedAttributes,
+    img: ['src', 'alt', 'width', 'height'],
+  },
+  allowedSchemes: ['http', 'https'],
+};
 
 // Stripe is required for payment processing
 const stripe: Stripe | null = getStripeClient();
@@ -37,6 +65,29 @@ if (!isStripeConfigured()) {
   console.warn('[Stripe] STRIPE_SECRET_KEY not set — payment endpoints disabled.');
 } else {
   console.log('[Stripe] Stripe client initialized successfully.');
+}
+
+// In-memory idempotency cache for webhook events (1 hour TTL)
+const processedWebhookEvents = new Map<string, number>();
+const WEBHOOK_EVENT_TTL = 60 * 60 * 1000; // 1 hour
+
+function isWebhookEventProcessed(eventId: string): boolean {
+  const timestamp = processedWebhookEvents.get(eventId);
+  if (timestamp && Date.now() - timestamp < WEBHOOK_EVENT_TTL) {
+    return true;
+  }
+  return false;
+}
+
+function markWebhookEventProcessed(eventId: string): void {
+  processedWebhookEvents.set(eventId, Date.now());
+  // Cleanup old entries periodically
+  if (processedWebhookEvents.size > 1000) {
+    const cutoff = Date.now() - WEBHOOK_EVENT_TTL;
+    for (const [id, ts] of processedWebhookEvents) {
+      if (ts < cutoff) processedWebhookEvents.delete(id);
+    }
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -69,6 +120,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Auth routes
   app.use('/api/auth', authRouter);
+
+  // Student import routes
+  app.use("/api/admin/import-students", importRouter);
 
   // Profile update route
   app.put('/api/profile', isAuthenticated, async (req: any, res) => {
@@ -648,6 +702,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const user = await storage.getUser(userId);
+
+      // Sanitize HTML fields
+      if (req.body.description && typeof req.body.description === 'string') {
+        req.body.description = sanitizeHtml(req.body.description, htmlSanitizeOptions);
+      }
+      if (req.body.prerequisites && typeof req.body.prerequisites === 'string') {
+        req.body.prerequisites = sanitizeHtml(req.body.prerequisites, htmlSanitizeOptions);
+      }
 
       const validatedData = insertCourseSchema.parse({
         ...req.body,
@@ -1678,8 +1740,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get student profile with enrollment history
-  app.get('/api/students/:studentId/profile', isAuthenticated, async (req, res) => {
+  app.get('/api/students/:studentId/profile', isAuthenticated, async (req: any, res) => {
     const { studentId } = req.params;
+    const user = req.user as any;
+
+    // Authorization: students can only view their own profile
+    const allowedRoles = ['instructor', 'admin', 'superadmin'];
+    if (!allowedRoles.includes(user.role) && user.id !== studentId) {
+      return res.status(403).json({ message: "Forbidden: You can only view your own profile" });
+    }
 
     try {
       // Get student information
@@ -1739,8 +1808,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get upcoming appointments for a student
-  app.get('/api/students/:studentId/upcoming-appointments', isAuthenticated, async (req, res) => {
+  app.get('/api/students/:studentId/upcoming-appointments', isAuthenticated, async (req: any, res) => {
     const { studentId } = req.params;
+    const user = req.user as any;
+
+    // Authorization: students can only view their own appointments
+    const allowedRoles = ['instructor', 'admin', 'superadmin'];
+    if (!allowedRoles.includes(user.role) && user.id !== studentId) {
+      return res.status(403).json({ message: "Forbidden: You can only view your own appointments" });
+    }
 
     try {
       // Get student's upcoming appointments
@@ -2478,14 +2554,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Submit enrollment form responses
+  const formSubmissionSchema = z.object({
+    enrollmentId: z.string().min(1),
+    formResponses: z.record(
+      z.string(),
+      z.union([z.string().max(5000), z.number(), z.boolean(), z.null()])
+    ),
+  });
+
   app.post("/api/enrollment-form-submissions", isAuthenticated, async (req: any, res) => {
     try {
-      const { enrollmentId, formResponses } = req.body;
+      const { enrollmentId, formResponses } = formSubmissionSchema.parse(req.body);
       const userId = req.user?.id;
-
-      if (!enrollmentId || !formResponses) {
-        return res.status(400).json({ message: "Missing required fields" });
-      }
 
       // Verify the enrollment belongs to this user
       const enrollment = await db.query.enrollments.findFirst({
@@ -3497,7 +3577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(course);
     } catch (error: any) {
       console.error("Error creating course:", error);
-      res.status(500).json({ error: "Failed to create course: " + error.message });
+      res.status(500).json({ error: "Failed to create course" });
     }
   });
 
@@ -3509,6 +3589,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const courseId = req.params.courseId;
       const updateData = req.body;
 
+      // Sanitize HTML fields
+      if (updateData.description && typeof updateData.description === 'string') {
+        updateData.description = sanitizeHtml(updateData.description, htmlSanitizeOptions);
+      }
+      if (updateData.prerequisites && typeof updateData.prerequisites === 'string') {
+        updateData.prerequisites = sanitizeHtml(updateData.prerequisites, htmlSanitizeOptions);
+      }
+
       // Verify the course belongs to the instructor (admins can edit any course)
       const existingCourse = await storage.getCourse(courseId);
       if (!existingCourse || (existingCourse.instructorId !== userId && userRole !== 'admin')) {
@@ -3519,7 +3607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedCourse);
     } catch (error: any) {
       console.error("Error updating course:", error);
-      res.status(500).json({ error: "Failed to update course: " + error.message });
+      res.status(500).json({ error: "Failed to update course" });
     }
   });
 
@@ -3545,7 +3633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Schedule duplicated successfully", schedule: duplicatedSchedule });
     } catch (error: any) {
       console.error("Error duplicating schedule:", error);
-      res.status(500).json({ error: "Failed to duplicate schedule: " + error.message });
+      res.status(500).json({ error: "Failed to duplicate schedule" });
     }
   });
 
@@ -3571,7 +3659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Course archived successfully", course: archivedCourse });
     } catch (error: any) {
       console.error("Error archiving course:", error);
-      res.status(500).json({ error: error.message || "Failed to archive course" });
+      res.status(500).json({ error: "Failed to archive course" });
     }
   });
 
@@ -3597,7 +3685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Course unpublished successfully", course: unpublishedCourse });
     } catch (error: any) {
       console.error("Error unpublishing course:", error);
-      res.status(500).json({ error: error.message || "Failed to unpublish course" });
+      res.status(500).json({ error: "Failed to unpublish course" });
     }
   });
 
@@ -3623,7 +3711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Course published successfully", course: publishedCourse });
     } catch (error: any) {
       console.error("Error publishing course:", error);
-      res.status(500).json({ error: error.message || "Failed to publish course" });
+      res.status(500).json({ error: "Failed to publish course" });
     }
   });
 
@@ -3649,7 +3737,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Course reactivated successfully", course: reactivatedCourse });
     } catch (error: any) {
       console.error("Error reactivating course:", error);
-      res.status(500).json({ error: error.message || "Failed to reactivate course" });
+      res.status(500).json({ error: "Failed to reactivate course" });
     }
   });
 
@@ -3675,7 +3763,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Course duplicated successfully", course: duplicatedCourse });
     } catch (error: any) {
       console.error("Error duplicating course:", error);
-      res.status(500).json({ error: "Failed to duplicate course: " + error.message });
+      res.status(500).json({ error: "Failed to duplicate course" });
     }
   });
 
@@ -3702,7 +3790,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Course moved to deleted items", course: deletedCourse });
     } catch (error: any) {
       console.error("Error deleting course:", error);
-      res.status(500).json({ error: "Failed to delete course: " + error.message });
+      res.status(500).json({ error: "Failed to delete course" });
     }
   });
 
@@ -3745,7 +3833,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Error permanently deleting course:", error);
       console.error("Error stack:", error.stack);
-      res.status(500).json({ error: "Failed to permanently delete course: " + error.message });
+      res.status(500).json({ error: "Failed to permanently delete course" });
     }
   });
 
@@ -3780,7 +3868,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Course restored successfully", course: restoredCourse });
     } catch (error: any) {
       console.error("Error restoring course:", error);
-      res.status(500).json({ error: "Failed to restore course: " + error.message });
+      res.status(500).json({ error: "Failed to restore course" });
     }
   });
 
@@ -3841,7 +3929,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(schedule);
     } catch (error: any) {
       console.error("Error creating event:", error);
-      return res.status(500).json({ error: "Failed to create event: " + error.message });
+      return res.status(500).json({ error: "Failed to create event" });
     }
   });
 
@@ -3869,7 +3957,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Schedule moved to deleted items", schedule: deletedSchedule });
     } catch (error: any) {
       console.error("Error deleting schedule:", error);
-      res.status(500).json({ error: "Failed to delete schedule: " + error.message });
+      res.status(500).json({ error: "Failed to delete schedule" });
     }
   });
 
@@ -3999,7 +4087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Schedule updated successfully", schedule: updatedSchedule });
     } catch (error: any) {
       console.error("Error updating schedule:", error);
-      res.status(500).json({ error: "Failed to update schedule: " + error.message });
+      res.status(500).json({ error: "Failed to update schedule" });
     }
   });
 
@@ -4021,7 +4109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Schedule permanently deleted" });
     } catch (error: any) {
       console.error("Error permanently deleting schedule:", error);
-      res.status(500).json({ error: "Failed to permanently delete schedule: " + error.message });
+      res.status(500).json({ error: "Failed to permanently delete schedule" });
     }
   });
 
@@ -4053,7 +4141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Schedule cancelled successfully", schedule: updatedSchedule });
     } catch (error: any) {
       console.error("Error cancelling schedule:", error);
-      res.status(500).json({ error: "Failed to cancel schedule: " + error.message });
+      res.status(500).json({ error: "Failed to cancel schedule" });
     }
   });
 
@@ -4085,7 +4173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Schedule unpublished successfully", schedule: updatedSchedule });
     } catch (error: any) {
       console.error("Error unpublishing schedule:", error);
-      res.status(500).json({ error: "Failed to unpublish schedule: " + error.message });
+      res.status(500).json({ error: "Failed to unpublish schedule" });
     }
   });
 
@@ -4123,7 +4211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Successfully joined waitlist", entry: waitlistEntry });
     } catch (error: any) {
       console.error("Error joining waitlist:", error);
-      res.status(500).json({ error: "Failed to join waitlist: " + error.message });
+      res.status(500).json({ error: "Failed to join waitlist" });
     }
   });
 
@@ -4150,7 +4238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(waitlistEntries);
     } catch (error: any) {
       console.error("Error fetching waitlist:", error);
-      res.status(500).json({ error: "Failed to fetch waitlist: " + error.message });
+      res.status(500).json({ error: "Failed to fetch waitlist" });
     }
   });
 
@@ -4181,7 +4269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Student invited successfully", entry: updatedEntry });
     } catch (error: any) {
       console.error("Error inviting from waitlist:", error);
-      res.status(500).json({ error: "Failed to invite from waitlist: " + error.message });
+      res.status(500).json({ error: "Failed to invite from waitlist" });
     }
   });
 
@@ -4216,7 +4304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Removed from waitlist successfully" });
     } catch (error: any) {
       console.error("Error removing from waitlist:", error);
-      res.status(500).json({ error: "Failed to remove from waitlist: " + error.message });
+      res.status(500).json({ error: "Failed to remove from waitlist" });
     }
   });
 
@@ -4228,7 +4316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(waitlistEntries);
     } catch (error: any) {
       console.error("Error fetching student waitlist:", error);
-      res.status(500).json({ error: "Failed to fetch waitlist: " + error.message });
+      res.status(500).json({ error: "Failed to fetch waitlist" });
     }
   });
 
@@ -4554,14 +4642,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         promoCode: promoCodeInfo
       });
     } catch (error: any) {
-      console.error("Error creating payment intent:", error);
-      console.error("Error details:", {
-        enrollmentId: req.body.enrollmentId,
-        userId: req.user?.id,
-        errorMessage: error.message,
-        errorStack: error.stack
-      });
-      res.status(500).json({ message: "Error creating payment intent: " + error.message });
+      console.error("Error creating payment intent:", error.message, { enrollmentId: req.body.enrollmentId, userId: req.user?.id });
+      res.status(500).json({ message: "An error occurred while processing your payment. Please try again." });
     }
   });
 
@@ -4624,8 +4706,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(updatedEnrollment);
     } catch (error: any) {
-      console.error("Error confirming enrollment:", error);
-      res.status(500).json({ message: "Error confirming enrollment: " + error.message });
+      console.error("Error confirming enrollment:", error.message);
+      res.status(500).json({ message: "An error occurred while confirming your enrollment. Please try again." });
     }
   });
 
@@ -4647,7 +4729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(forms);
     } catch (error: any) {
       console.error("Error fetching course forms:", error);
-      res.status(500).json({ message: "Error fetching course forms: " + error.message });
+      res.status(500).json({ message: "An error occurred. Please try again." });
     }
   });
 
@@ -4665,7 +4747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(forms);
     } catch (error: any) {
       console.error("Error fetching appointment type forms:", error);
-      res.status(500).json({ message: "Error fetching appointment type forms: " + error.message });
+      res.status(500).json({ message: "An error occurred. Please try again." });
     }
   });
 
@@ -4717,7 +4799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(form);
     } catch (error: any) {
       console.error("Error creating course form:", error);
-      res.status(500).json({ message: "Error creating course form: " + error.message });
+      res.status(500).json({ message: "An error occurred. Please try again." });
     }
   });
 
@@ -4759,7 +4841,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedForm);
     } catch (error: any) {
       console.error("Error updating course form:", error);
-      res.status(500).json({ message: "Error updating course form: " + error.message });
+      res.status(500).json({ message: "An error occurred. Please try again." });
     }
   });
 
@@ -4795,7 +4877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error: any) {
       console.error("Error deleting course form:", error);
-      res.status(500).json({ message: "Error deleting course form: " + error.message });
+      res.status(500).json({ message: "An error occurred. Please try again." });
     }
   });
 
@@ -4878,7 +4960,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(field);
     } catch (error: any) {
       console.error("Error creating form field:", error);
-      res.status(500).json({ message: "Error creating form field: " + error.message });
+      res.status(500).json({ message: "An error occurred. Please try again." });
     }
   });
 
@@ -4988,7 +5070,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedField);
     } catch (error: any) {
       console.error("Error updating form field:", error);
-      res.status(500).json({ message: "Error updating form field: " + error.message });
+      res.status(500).json({ message: "An error occurred. Please try again." });
     }
   });
 
@@ -5130,7 +5212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(notification);
     } catch (error: any) {
       console.error("Error creating course notification:", error);
-      res.status(500).json({ message: "Error creating course notification: " + error.message });
+      res.status(500).json({ message: "An error occurred. Please try again." });
     }
   });
 
@@ -5149,7 +5231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(notifications);
     } catch (error: any) {
       console.error("Error fetching course notifications:", error);
-      res.status(500).json({ message: "Error fetching course notifications: " + error.message });
+      res.status(500).json({ message: "An error occurred. Please try again." });
     }
   });
 
@@ -5161,7 +5243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(promoCodes);
     } catch (error: any) {
       console.error("Error fetching promo codes:", error);
-      res.status(500).json({ error: "Failed to fetch promo codes: " + error.message });
+      res.status(500).json({ error: "Failed to fetch promo codes" });
     }
   });
 
@@ -5178,7 +5260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(newPromoCode);
     } catch (error: any) {
       console.error("Error creating promo code:", error);
-      res.status(500).json({ error: "Failed to create promo code: " + error.message });
+      res.status(500).json({ error: "Failed to create promo code" });
     }
   });
 
@@ -5196,7 +5278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedPromoCode);
     } catch (error: any) {
       console.error("Error updating promo code:", error);
-      res.status(500).json({ error: "Failed to update promo code: " + error.message });
+      res.status(500).json({ error: "Failed to update promo code" });
     }
   });
 
@@ -5209,7 +5291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Promo code deleted successfully" });
     } catch (error: any) {
       console.error("Error deleting promo code:", error);
-      res.status(500).json({ error: "Failed to delete promo code: " + error.message });
+      res.status(500).json({ error: "Failed to delete promo code" });
     }
   });
 
@@ -5227,7 +5309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(validation);
     } catch (error: any) {
       console.error("Error validating promo code:", error);
-      res.status(500).json({ error: "Failed to validate promo code: " + error.message });
+      res.status(500).json({ error: "Failed to validate promo code" });
     }
   });
 
@@ -5249,7 +5331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(templates);
     } catch (error: any) {
       console.error("Error fetching notification templates:", error);
-      res.status(500).json({ error: "Failed to fetch notification templates: " + error.message });
+      res.status(500).json({ error: "Failed to fetch notification templates" });
     }
   });
 
@@ -5335,7 +5417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Notification template deleted successfully" });
     } catch (error: any) {
       console.error("Error deleting notification template:", error);
-      res.status(500).json({ error: "Failed to delete notification template: " + error.message });
+      res.status(500).json({ error: "Failed to delete notification template" });
     }
   });
 
@@ -5354,7 +5436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(schedules);
     } catch (error: any) {
       console.error("Error fetching notification schedules:", error);
-      res.status(500).json({ error: "Failed to fetch notification schedules: " + error.message });
+      res.status(500).json({ error: "Failed to fetch notification schedules" });
     }
   });
 
@@ -5428,7 +5510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Notification schedule deleted successfully" });
     } catch (error: any) {
       console.error("Error deleting notification schedule:", error);
-      res.status(500).json({ error: "Failed to delete notification schedule: " + error.message });
+      res.status(500).json({ error: "Failed to delete notification schedule" });
     }
   });
 
@@ -6603,7 +6685,7 @@ jeremy@abqconcealedcarry.com
       res.json(result);
     } catch (error: any) {
       console.error('Error sending payment reminder:', error);
-      res.status(500).json({ error: "Failed to send payment reminder: " + error.message });
+      res.status(500).json({ error: "Failed to send payment reminder" });
     }
   });
 
@@ -7235,7 +7317,7 @@ jeremy@abqconcealedcarry.com
       });
     } catch (error: any) {
       console.error("Error fetching SMS inbox:", error);
-      res.status(500).json({ error: "Failed to fetch SMS inbox: " + error.message });
+      res.status(500).json({ error: "Failed to fetch SMS inbox" });
     }
   });
 
@@ -7265,7 +7347,7 @@ jeremy@abqconcealedcarry.com
       });
     } catch (error: any) {
       console.error("Error fetching SMS messages:", error);
-      res.status(500).json({ error: "Failed to fetch SMS messages: " + error.message });
+      res.status(500).json({ error: "Failed to fetch SMS messages" });
     }
   });
 
@@ -7290,7 +7372,7 @@ jeremy@abqconcealedcarry.com
       res.json(message);
     } catch (error: any) {
       console.error("Error fetching SMS message:", error);
-      res.status(500).json({ error: "Failed to fetch SMS message: " + error.message });
+      res.status(500).json({ error: "Failed to fetch SMS message" });
     }
   });
 
@@ -7344,7 +7426,7 @@ jeremy@abqconcealedcarry.com
         return res.status(400).json({ error: "Validation failed", details: error.errors });
       }
 
-      res.status(500).json({ error: "Failed to send SMS: " + error.message });
+      res.status(500).json({ error: "Failed to send SMS" });
     }
   });
 
@@ -7363,7 +7445,7 @@ jeremy@abqconcealedcarry.com
       res.json(stats);
     } catch (error: any) {
       console.error("Error fetching SMS stats:", error);
-      res.status(500).json({ error: "Failed to fetch SMS statistics: " + error.message });
+      res.status(500).json({ error: "Failed to fetch SMS statistics" });
     }
   });
 
@@ -7416,17 +7498,27 @@ jeremy@abqconcealedcarry.com
       });
     } catch (error: any) {
       console.error("Error fetching SMS contacts:", error);
-      res.status(500).json({ error: "Failed to fetch SMS contacts: " + error.message });
+      res.status(500).json({ error: "Failed to fetch SMS contacts" });
     }
   });
 
   // Twilio SMS Webhook Endpoint - Receives incoming SMS messages
   app.post("/api/sms/webhook", async (req, res) => {
-    console.log("=== WEBHOOK CALLED ===");
-    console.log("Request body:", JSON.stringify(req.body, null, 2));
-    console.log("Request headers:", JSON.stringify(req.headers, null, 2));
-
     try {
+      // Verify Twilio webhook signature
+      const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
+      if (twilioAuthToken) {
+        const twilioLib = await import('twilio');
+        const twilioSignature = req.headers['x-twilio-signature'] as string;
+        const webhookUrl = `${process.env.APP_URL || 'https://practicaldefensetraining.com'}/api/sms/webhook`;
+
+        if (!twilioSignature || !twilioLib.default.validateRequest(twilioAuthToken, twilioSignature, webhookUrl, req.body)) {
+          console.error('Invalid Twilio webhook signature');
+          res.type('text/xml');
+          return res.status(403).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
+        }
+      }
+
       // Twilio sends webhook data as form-urlencoded
       const {
         MessageSid,
@@ -7440,13 +7532,7 @@ jeremy@abqconcealedcarry.com
         FromCountry
       } = req.body;
 
-      console.log("Incoming SMS webhook - parsed data:", {
-        sid: MessageSid,
-        from: From,
-        to: To,
-        body: Body,
-        numMedia: NumMedia
-      });
+      console.log("SMS webhook received:", { sid: MessageSid });
 
       if (!MessageSid || !From || !To) {
         console.error("Missing required fields in webhook data");
@@ -7455,25 +7541,22 @@ jeremy@abqconcealedcarry.com
       }
 
       // Try to find the user by phone number using normalized phone number comparison
-      console.log("Looking for matching user using normalized phone:", From);
       const normalizedFromPhone = normalizePhoneNumber(From);
-      console.log("Normalized phone number:", normalizedFromPhone);
       
       const matchingUser = normalizedFromPhone ? await storage.getUserByPhone(normalizedFromPhone) : undefined;
-      console.log("Matching user:", matchingUser ? `Found: ${matchingUser.id}` : 'Not found');
 
       // Handle STOP messages (opt-out from SMS)
       const normalizedBody = (Body || '').trim().toUpperCase();
       const stopKeywords = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT'];
       if (stopKeywords.includes(normalizedBody)) {
-        console.log("STOP message detected - updating SMS consent");
+        console.log("STOP message detected - updating SMS consent for user:", matchingUser?.id || "unknown");
         
         if (matchingUser) {
           try {
             await storage.updateUser(matchingUser.id, {
               smsConsent: false,
             });
-            console.log(`✓ SMS consent updated to false for user ${matchingUser.id}`);
+            console.log("SMS consent updated to false for user");
           } catch (updateError) {
             console.error("Error updating SMS consent:", updateError);
           }
@@ -7505,16 +7588,9 @@ jeremy@abqconcealedcarry.com
         isFlagged: false,
       };
 
-      console.log("Saving communication to database...");
       const savedCommunication = await storage.createCommunication(communicationData);
 
-      console.log("✓ SMS saved successfully:", {
-        id: savedCommunication.id,
-        from: From,
-        to: To,
-        content: Body,
-        userId: matchingUser?.id || 'no user'
-      });
+      console.log("SMS saved successfully:", { id: savedCommunication.id });
 
       // Respond to Twilio with TwiML (optional - empty response is fine)
       res.type('text/xml');
@@ -7538,7 +7614,7 @@ jeremy@abqconcealedcarry.com
       res.json(categories);
     } catch (error: any) {
       console.error("Error fetching product categories:", error);
-      res.status(500).json({ error: "Failed to fetch product categories: " + error.message });
+      res.status(500).json({ error: "Failed to fetch product categories" });
     }
   });
 
@@ -7551,7 +7627,7 @@ jeremy@abqconcealedcarry.com
       res.json(category);
     } catch (error: any) {
       console.error("Error fetching product category:", error);
-      res.status(500).json({ error: "Failed to fetch product category: " + error.message });
+      res.status(500).json({ error: "Failed to fetch product category" });
     }
   });
 
@@ -7579,7 +7655,7 @@ jeremy@abqconcealedcarry.com
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Invalid product category data", details: error.errors });
       }
-      res.status(500).json({ error: "Failed to create product category: " + error.message });
+      res.status(500).json({ error: "Failed to create product category" });
     }
   });
 
@@ -7607,7 +7683,7 @@ jeremy@abqconcealedcarry.com
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Invalid product category data", details: error.errors });
       }
-      res.status(500).json({ error: "Failed to update product category: " + error.message });
+      res.status(500).json({ error: "Failed to update product category" });
     }
   });
 
@@ -7622,7 +7698,7 @@ jeremy@abqconcealedcarry.com
       res.status(204).send();
     } catch (error: any) {
       console.error("Error deleting product category:", error);
-      res.status(500).json({ error: "Failed to delete product category: " + error.message });
+      res.status(500).json({ error: "Failed to delete product category" });
     }
   });
 
@@ -7641,7 +7717,7 @@ jeremy@abqconcealedcarry.com
       res.json(products);
     } catch (error: any) {
       console.error("Error fetching products:", error);
-      res.status(500).json({ error: "Failed to fetch products: " + error.message });
+      res.status(500).json({ error: "Failed to fetch products" });
     }
   });
 
@@ -7654,7 +7730,7 @@ jeremy@abqconcealedcarry.com
       res.json(product);
     } catch (error: any) {
       console.error("Error fetching product:", error);
-      res.status(500).json({ error: "Failed to fetch product: " + error.message });
+      res.status(500).json({ error: "Failed to fetch product" });
     }
   });
 
@@ -7665,7 +7741,7 @@ jeremy@abqconcealedcarry.com
       res.json(variants);
     } catch (error: any) {
       console.error("Error fetching product variants:", error);
-      res.status(500).json({ error: "Failed to fetch product variants: " + error.message });
+      res.status(500).json({ error: "Failed to fetch product variants" });
     }
   });
 
@@ -7684,7 +7760,7 @@ jeremy@abqconcealedcarry.com
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Invalid product variant data", details: error.errors });
       }
-      res.status(500).json({ error: "Failed to create product variant: " + error.message });
+      res.status(500).json({ error: "Failed to create product variant" });
     }
   });
 
@@ -7710,7 +7786,7 @@ jeremy@abqconcealedcarry.com
       res.json(formattedCartItems);
     } catch (error: any) {
       console.error("Error fetching cart items:", error);
-      res.status(500).json({ error: "Failed to fetch cart items: " + error.message });
+      res.status(500).json({ error: "Failed to fetch cart items" });
     }
   });
 
@@ -7770,7 +7846,7 @@ jeremy@abqconcealedcarry.com
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Invalid cart item data", details: error.errors });
       }
-      res.status(500).json({ error: "Failed to add to cart: " + error.message });
+      res.status(500).json({ error: "Failed to add to cart" });
     }
   });
 
@@ -7788,7 +7864,7 @@ jeremy@abqconcealedcarry.com
       if (error.name === 'ZodError') {
         return res.status(400).json({ error: "Invalid quantity", details: error.errors });
       }
-      res.status(500).json({ error: "Failed to update cart item: " + error.message });
+      res.status(500).json({ error: "Failed to update cart item" });
     }
   });
 
@@ -7798,7 +7874,7 @@ jeremy@abqconcealedcarry.com
       res.status(204).send();
     } catch (error: any) {
       console.error("Error removing from cart:", error);
-      res.status(500).json({ error: "Failed to remove from cart: " + error.message });
+      res.status(500).json({ error: "Failed to remove from cart" });
     }
   });
 
@@ -7811,7 +7887,7 @@ jeremy@abqconcealedcarry.com
       res.status(204).send();
     } catch (error: any) {
       console.error("Error clearing cart:", error);
-      res.status(500).json({ error: "Failed to clear cart: " + error.message });
+      res.status(500).json({ error: "Failed to clear cart" });
     }
   });
 
@@ -7833,7 +7909,7 @@ jeremy@abqconcealedcarry.com
       res.json(orders);
     } catch (error: any) {
       console.error("Error fetching e-commerce orders:", error);
-      res.status(500).json({ error: "Failed to fetch orders: " + error.message });
+      res.status(500).json({ error: "Failed to fetch orders" });
     }
   });
 
@@ -7855,7 +7931,7 @@ jeremy@abqconcealedcarry.com
       res.json(order);
     } catch (error: any) {
       console.error("Error fetching e-commerce order:", error);
-      res.status(500).json({ error: "Failed to fetch order: " + error.message });
+      res.status(500).json({ error: "Failed to fetch order" });
     }
   });
 
@@ -7916,7 +7992,7 @@ jeremy@abqconcealedcarry.com
   });
 
   // Contact form submission endpoint
-  app.post("/api/contact", async (req, res) => {
+  app.post("/api/contact", formRateLimit, async (req, res) => {
     try {
       const { firstName, lastName, email, phone, inquiryType, subject, message, preferredContact } = req.body;
 
@@ -7934,6 +8010,19 @@ jeremy@abqconcealedcarry.com
       // Import email service
       const { NotificationEmailService } = await import('./emailService');
 
+      // Escape user inputs for HTML email template
+      const safeFirstName = escapeHtml(firstName);
+      const safeLastName = escapeHtml(lastName);
+      const safeEmail = escapeHtml(email);
+      const safePhone = phone ? escapeHtml(phone) : '';
+      const safeSubject = escapeHtml(subject);
+      const safeMessage = escapeHtml(message);
+      const safePreferredContact = escapeHtml(preferredContact || 'Email');
+      const safeInquiryType = escapeHtml(inquiryType);
+
+      // Strip newlines from subject to prevent email header injection
+      const cleanSubject = subject.replace(/[\r\n]/g, ' ');
+
       // Create email content
       const emailContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -7941,27 +8030,27 @@ jeremy@abqconcealedcarry.com
 
           <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="color: #374151; margin-top: 0;">Contact Information</h3>
-            <p><strong>Name:</strong> ${firstName} ${lastName}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ''}
-            <p><strong>Preferred Contact:</strong> ${preferredContact || 'Email'}</p>
+            <p><strong>Name:</strong> ${safeFirstName} ${safeLastName}</p>
+            <p><strong>Email:</strong> ${safeEmail}</p>
+            ${safePhone ? `<p><strong>Phone:</strong> ${safePhone}</p>` : ''}
+            <p><strong>Preferred Contact:</strong> ${safePreferredContact}</p>
           </div>
 
           <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="color: #374151; margin-top: 0;">Inquiry Details</h3>
-            <p><strong>Type:</strong> ${inquiryType}</p>
-            <p><strong>Subject:</strong> ${subject}</p>
+            <p><strong>Type:</strong> ${safeInquiryType}</p>
+            <p><strong>Subject:</strong> ${safeSubject}</p>
           </div>
 
           <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="color: #374151; margin-top: 0;">Message</h3>
-            <p style="white-space: pre-wrap;">${message}</p>
+            <p style="white-space: pre-wrap;">${safeMessage}</p>
           </div>
 
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
           <p style="color: #6b7280; font-size: 14px;">
             This message was sent through the Practical Defense Training contact form.
-            Please respond to ${email} or call ${phone || 'the provided email'} based on their preferred contact method.
+            Please respond to ${safeEmail} or call ${safePhone || 'the provided email'} based on their preferred contact method.
           </p>
         </div>
       `;
@@ -7969,7 +8058,7 @@ jeremy@abqconcealedcarry.com
       // Send email notification to admin
       const result = await NotificationEmailService.sendNotificationEmail({
         to: ['jeremy@abqconcealedcarry.com'],
-        subject: `Contact Form: ${subject}`,
+        subject: `Contact Form: ${cleanSubject}`,
         htmlContent: emailContent,
         textContent: `
 New Contact Form Submission
@@ -7993,15 +8082,15 @@ Please respond to ${email} based on their preferred contact method: ${preferredC
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #1f2937;">Thank You for Contacting Practical Defense Training</h2>
 
-            <p>Dear ${firstName},</p>
+            <p>Dear ${safeFirstName},</p>
 
             <p>Thank you for reaching out to us. We have received your message and will get back to you within 24 hours.</p>
 
             <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #374151; margin-top: 0;">Your Message Summary</h3>
-              <p><strong>Subject:</strong> ${subject}</p>
-              <p><strong>Inquiry Type:</strong> ${inquiryType}</p>
-              <p><strong>Preferred Contact Method:</strong> ${preferredContact || 'Email'}</p>
+              <p><strong>Subject:</strong> ${safeSubject}</p>
+              <p><strong>Inquiry Type:</strong> ${safeInquiryType}</p>
+              <p><strong>Preferred Contact Method:</strong> ${safePreferredContact}</p>
             </div>
 
             <p>If you have any urgent questions, please feel free to call us at <strong>(505) 944-5247</strong>.</p>
@@ -8932,7 +9021,7 @@ jeremy@abqconcealedcarry.com
       res.json({ url: result.url, pathname: result.pathname });
     } catch (error: any) {
       console.error("Error uploading file:", error);
-      res.status(500).json({ message: "Failed to upload file: " + error.message });
+      res.status(500).json({ message: "Failed to upload file" });
     }
   });
 
@@ -9212,47 +9301,28 @@ jeremy@abqconcealedcarry.com
   // ============================================
 
   // Submit FTA waiver (public route - no auth required)
-  app.post('/api/waivers/submit', async (req, res) => {
+  const waiverSubmissionSchema = z.object({
+    studentName: z.string().min(1).max(200),
+    studentEmail: z.string().email().max(320),
+    activityName: z.string().min(1).max(200),
+    initialRiskAssumption: z.string().min(1).max(10),
+    initialReleaseOfLiability: z.string().min(1).max(10),
+    initialJuryTrialWaiver: z.string().min(1).max(10),
+    printedName: z.string().min(1).max(200),
+    address: z.string().min(1).max(500),
+    electronicConsent: z.literal(true),
+    signatureData: z.string().min(1).max(500000),
+    signatureType: z.enum(['drawn', 'typed']).optional(),
+    typedSignature: z.string().max(200).nullable().optional(),
+    waiverTextVersion: z.string().max(100).optional(),
+    waiverVersion: z.string().max(50).optional(),
+    enrollmentId: z.string().nullable().optional(),
+    instanceId: z.string().nullable().optional(),
+  });
+
+  app.post('/api/waivers/submit', formRateLimit, async (req, res) => {
     try {
-      const {
-        studentName,
-        studentEmail,
-        activityName,
-        initialRiskAssumption,
-        initialReleaseOfLiability,
-        initialJuryTrialWaiver,
-        printedName,
-        address,
-        electronicConsent,
-        signatureData,
-        signatureType,
-        typedSignature,
-        waiverTextVersion,
-        waiverVersion,
-        enrollmentId,
-        instanceId,
-      } = req.body;
-
-      // Validate required fields
-      if (!studentName || !studentEmail || !activityName) {
-        return res.status(400).json({ message: "Student name, email, and activity are required" });
-      }
-
-      if (!initialRiskAssumption || !initialReleaseOfLiability || !initialJuryTrialWaiver) {
-        return res.status(400).json({ message: "All three section initials are required" });
-      }
-
-      if (!signatureData) {
-        return res.status(400).json({ message: "Signature is required" });
-      }
-
-      if (!electronicConsent) {
-        return res.status(400).json({ message: "Electronic consent is required" });
-      }
-
-      if (!printedName || !address) {
-        return res.status(400).json({ message: "Printed name and address are required" });
-      }
+      const validated = waiverSubmissionSchema.parse(req.body);
 
       // Capture IP address and browser user agent
       const ipAddress = req.headers['x-forwarded-for']?.toString()?.split(',')[0]?.trim() 
@@ -9264,23 +9334,23 @@ jeremy@abqconcealedcarry.com
 
       // Create the waiver submission record
       const waiverSubmission = await storage.createFtaWaiverSubmission({
-        studentName,
-        studentEmail,
-        activityName,
-        initialRiskAssumption: initialRiskAssumption.toUpperCase(),
-        initialReleaseOfLiability: initialReleaseOfLiability.toUpperCase(),
-        initialJuryTrialWaiver: initialJuryTrialWaiver.toUpperCase(),
-        signatureData,
-        signatureType: signatureType || 'drawn',
-        typedSignature: typedSignature || null,
-        printedName,
-        address,
+        studentName: validated.studentName,
+        studentEmail: validated.studentEmail,
+        activityName: validated.activityName,
+        initialRiskAssumption: validated.initialRiskAssumption.toUpperCase(),
+        initialReleaseOfLiability: validated.initialReleaseOfLiability.toUpperCase(),
+        initialJuryTrialWaiver: validated.initialJuryTrialWaiver.toUpperCase(),
+        signatureData: validated.signatureData,
+        signatureType: validated.signatureType || 'drawn',
+        typedSignature: validated.typedSignature || null,
+        printedName: validated.printedName,
+        address: validated.address,
         electronicConsent: true,
-        waiverTextVersion: waiverTextVersion || '',
-        waiverVersion: waiverVersion || '2021-v1',
+        waiverTextVersion: validated.waiverTextVersion || '',
+        waiverVersion: validated.waiverVersion || '2021-v1',
         ipAddress,
         browserUserAgent,
-        enrollmentId: enrollmentId || null,
+        enrollmentId: validated.enrollmentId || null,
       });
 
       // Send confirmation email with the signed waiver
@@ -9303,9 +9373,9 @@ jeremy@abqconcealedcarry.com
             
             <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0;">
               <h2 style="color: #333; margin-top: 0;">Submission Details</h2>
-              <p><strong>Name:</strong> ${studentName}</p>
-              <p><strong>Email:</strong> ${studentEmail}</p>
-              <p><strong>Activity:</strong> ${activityName}</p>
+              <p><strong>Name:</strong> ${escapeHtml(validated.studentName)}</p>
+              <p><strong>Email:</strong> ${escapeHtml(validated.studentEmail)}</p>
+              <p><strong>Activity:</strong> ${escapeHtml(validated.activityName)}</p>
               <p><strong>Date Signed:</strong> ${signedDate}</p>
               <p><strong>IP Address:</strong> ${ipAddress}</p>
             </div>
@@ -9320,21 +9390,21 @@ jeremy@abqconcealedcarry.com
               <h3 style="text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px;">FTA RELEASE AND WAIVER</h3>
               
               <p style="font-size: 14px; line-height: 1.6;">
-                The individual named below (referred to as "I" or "me") desires to participate in <strong>${activityName}</strong> ("Activity" or "Activities") provided by the FTA member (the "Member"). As lawful consideration for being permitted by the Member to participate in the Activity, and the intangible value that I will gain by participating in the Activity, I agree to all the terms and conditions set forth in this agreement (this "Agreement").
+                The individual named below (referred to as "I" or "me") desires to participate in <strong>${escapeHtml(validated.activityName)}</strong> ("Activity" or "Activities") provided by the FTA member (the "Member"). As lawful consideration for being permitted by the Member to participate in the Activity, and the intangible value that I will gain by participating in the Activity, I agree to all the terms and conditions set forth in this agreement (this "Agreement").
               </p>
 
               <div style="background-color: #fff8e1; border-left: 4px solid #ffc107; padding: 15px; margin: 15px 0;">
                 <p style="font-size: 14px; line-height: 1.6; margin: 0;">
                   I AM AWARE AND UNDERSTAND THAT THE ACTIVITIES ARE DANGEROUS ACTIVITIES AND INVOLVE THE RISK OF SERIOUS INJURY, DEATH, AND/OR PROPERTY DAMAGE. I ACKNOWLEDGE THAT ANY INJURIES THAT I SUSTAIN MAY BE COMPOUNDED BY NEGLIGENT EMERGENCY RESPONSE OR RESCUE OPERATIONS OF THE MEMBER. I ACKNOWLEDGE THAT I AM VOLUNTARILY PARTICIPATING IN THE ACTIVITIES WITH KNOWLEDGE OF THE DANGER INVOLVED AND HEREBY AGREE TO ACCEPT AND ASSUME ANY AND ALL RISKS OF INJURY, DEATH, OR PROPERTY DAMAGE, WHETHER CAUSED BY THE NEGLIGENCE OF THE MEMBER OR OTHERWISE.
                 </p>
-                <p style="margin-top: 10px; font-weight: bold;">Initial: ${initialRiskAssumption.toUpperCase()}</p>
+                <p style="margin-top: 10px; font-weight: bold;">Initial: ${escapeHtml(validated.initialRiskAssumption.toUpperCase())}</p>
               </div>
 
               <div style="background-color: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin: 15px 0;">
                 <p style="font-size: 14px; line-height: 1.6; margin: 0;">
                   I hereby expressly waive and release any and all claims, now known or hereafter known in any jurisdiction throughout the world, against the Member, its officers, directors, employees, agents, affiliates, members, successors, and assigns (collectively, "Releasees"), on account of injury, death, or property damage arising out of or attributable to my participation in the Activities, whether arising out of the negligence of the Member or any Releasees or otherwise. I covenant not to make or bring any such claim against the Member or any other Releasee, and forever release and discharge the Member and all other Releasees from liability under such claims.
                 </p>
-                <p style="margin-top: 10px; font-weight: bold;">Initial: ${initialReleaseOfLiability.toUpperCase()}</p>
+                <p style="margin-top: 10px; font-weight: bold;">Initial: ${escapeHtml(validated.initialReleaseOfLiability.toUpperCase())}</p>
               </div>
 
               <p style="font-size: 14px; line-height: 1.6;">
@@ -9349,7 +9419,7 @@ jeremy@abqconcealedcarry.com
                 <p style="font-size: 14px; line-height: 1.6; margin: 0;">
                   I IRREVOCABLY AND UNCONDITIONALLY WAIVE, TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, ANY RIGHT I MAY HAVE TO A TRIAL BY JURY IN ANY LEGAL ACTION, PROCEEDING, CAUSE OF ACTION, OR COUNTERCLAIM ARISING OUT OF OR RELATING TO MY PARTICIPATION IN THE ACTIVITIES. I CERTIFY AND ACKNOWLEDGE THAT I MAKE THIS WAIVER KNOWINGLY AND VOLUNTARILY.
                 </p>
-                <p style="margin-top: 10px; font-weight: bold;">Initial: ${initialJuryTrialWaiver.toUpperCase()}</p>
+                <p style="margin-top: 10px; font-weight: bold;">Initial: ${escapeHtml(validated.initialJuryTrialWaiver.toUpperCase())}</p>
               </div>
 
               <p style="font-size: 14px; line-height: 1.6;">
@@ -9363,9 +9433,9 @@ jeremy@abqconcealedcarry.com
               </div>
 
               <div style="border-top: 2px solid #333; margin-top: 30px; padding-top: 20px;">
-                <p style="margin: 5px 0;"><strong>Signature:</strong> ${signatureType === 'typed' ? typedSignature : '[Electronic Signature on File]'}</p>
-                <p style="margin: 5px 0;"><strong>Printed Name:</strong> ${printedName}</p>
-                <p style="margin: 5px 0;"><strong>Address:</strong> ${address}</p>
+                <p style="margin: 5px 0;"><strong>Signature:</strong> ${validated.signatureType === 'typed' ? escapeHtml(validated.typedSignature || '') : '[Electronic Signature on File]'}</p>
+                <p style="margin: 5px 0;"><strong>Printed Name:</strong> ${escapeHtml(validated.printedName)}</p>
+                <p style="margin: 5px 0;"><strong>Address:</strong> ${escapeHtml(validated.address)}</p>
                 <p style="margin: 5px 0;"><strong>Date:</strong> ${signedDate}</p>
               </div>
             </div>
@@ -9878,6 +9948,10 @@ Practical Defense Training LLC`;
     }
 
     const sig = req.headers['stripe-signature'];
+    if (!sig) {
+      console.error('Missing stripe-signature header');
+      return res.status(400).json({ message: "Missing signature" });
+    }
     const webhookSecret = process.env.STRIPE_ONLINE_COURSE_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
@@ -9892,6 +9966,12 @@ Practical Defense Training LLC`;
       console.error('Webhook signature verification failed:', err.message);
       return res.status(400).json({ message: `Webhook Error: ${err.message}` });
     }
+
+    // Idempotency: skip if already processed
+    if (isWebhookEventProcessed(event.id)) {
+      return res.json({ received: true });
+    }
+    markWebhookEventProcessed(event.id);
 
     // Handle the event
     if (event.type === 'payment_intent.succeeded') {
