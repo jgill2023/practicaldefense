@@ -3430,6 +3430,25 @@ export default function StudentPortal() {
   // State for appointment form completion
   const [selectedAppointmentForForms, setSelectedAppointmentForForms] = useState<any | null>(null);
 
+  // Password setup for magic link users
+  const searchParams = new URLSearchParams(window.location.search);
+  const isWelcome = searchParams.get("welcome") === "true";
+  const [showPasswordSetup, setShowPasswordSetup] = useState(isWelcome);
+  const [newPassword, setNewPassword] = useState("");
+
+  const setPasswordMutation = useMutation({
+    mutationFn: async (password: string) => {
+      return await apiRequest("POST", "/auth/set-password", { password });
+    },
+    onSuccess: () => {
+      setShowPasswordSetup(false);
+      toast({ title: "Password set successfully", description: "You can now log in with your email and password." });
+    },
+    onError: (error: any) => {
+      toast({ variant: "destructive", title: "Error", description: error.message || "Failed to set password" });
+    },
+  });
+
   const { data: enrollments = [], isLoading: enrollmentsLoading } = useQuery<EnrollmentWithDetails[]>({
     queryKey: ["/api/student/enrollments"],
     enabled: isAuthenticated,
@@ -3439,6 +3458,19 @@ export default function StudentPortal() {
   // Fetch student appointments
   const { data: appointments = [], isLoading: appointmentsLoading } = useQuery<any[]>({
     queryKey: ["/api/appointments/my-appointments"],
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  // Fetch student's completed online course enrollments
+  const { data: onlineCourses = [] } = useQuery<Array<{
+    id: string;
+    courseName: string;
+    moodleUsername: string;
+    moodleUrl: string | null;
+    enrolledAt: string;
+  }>>({
+    queryKey: ["/api/student/online-courses"],
     enabled: isAuthenticated,
     retry: false,
   });
@@ -3612,6 +3644,35 @@ export default function StudentPortal() {
           </div>
         </div>
 
+        {/* Password Setup Banner for Magic Link Users */}
+        {showPasswordSetup && (
+          <Card className="mb-6 border-blue-200 bg-blue-50">
+            <CardContent className="p-6">
+              <h3 className="font-semibold text-lg mb-2">Welcome to Practical Defense Training!</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Set a password so you can log in directly next time. Password must be at least 12 characters with uppercase, lowercase, and a number.
+              </p>
+              <div className="flex gap-2 max-w-md">
+                <Input
+                  type="password"
+                  placeholder="New password (min 12 characters)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <Button
+                  disabled={newPassword.length < 12 || setPasswordMutation.isPending}
+                  onClick={() => setPasswordMutation.mutate(newPassword)}
+                >
+                  {setPasswordMutation.isPending ? "Setting..." : "Set Password"}
+                </Button>
+              </div>
+              <Button variant="link" className="mt-2 p-0 h-auto text-sm" onClick={() => setShowPasswordSetup(false)}>
+                Skip for now
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Dashboard Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
           <Card>
@@ -3784,6 +3845,42 @@ export default function StudentPortal() {
 
         {/* My Waitlists Section - Show all active waitlist entries */}
         <MyWaitlistsSection />
+
+        {/* Online Course Access - Only for students with completed Moodle enrollments */}
+        {onlineCourses.length > 0 && (
+          <Card className="mb-8 border-2 border-[#006d7a]">
+            <CardHeader className="bg-[#006d7a]/5">
+              <CardTitle className="flex items-center">
+                <BookOpen className="mr-2 h-5 w-5 text-[#006d7a]" />
+                Online Course Access
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                {onlineCourses.map((course) => (
+                  <div key={course.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg bg-muted/50">
+                    <div>
+                      <p className="font-medium text-foreground">{course.courseName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Username: <span className="font-mono">{course.moodleUsername}</span>
+                      </p>
+                    </div>
+                    {course.moodleUrl && (
+                      <Button
+                        asChild
+                        className="bg-[#006d7a] hover:bg-[#004149] text-white font-heading uppercase tracking-wide"
+                      >
+                        <a href={course.moodleUrl} target="_blank" rel="noopener noreferrer">
+                          Go to Course
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {enrollments.some(e =>
           e.course.title &&
