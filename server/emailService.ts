@@ -428,3 +428,62 @@ export async function sendWelcomeEmail(
 
   return await sendAuthEmail(email, "Welcome to Practical Defense Training!", html);
 }
+
+export async function sendMagicLinkEmail(
+  email: string,
+  firstName: string,
+  token: string
+): Promise<boolean> {
+  const magicLinkUrl = `${APP_URL}/auth/magic-login?token=${token}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Access Your Account</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
+        <h1 style="color: #2c3e50; margin-bottom: 20px;">Welcome to Practical Defense Training!</h1>
+
+        <p style="font-size: 16px;">Hi ${firstName},</p>
+
+        <p style="font-size: 16px;">
+          We've set up an online account for you based on your previous training with us. Click the button below to access your account for the first time.
+        </p>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${magicLinkUrl}"
+             style="display: inline-block; background-color: #004149; color: white; padding: 14px 28px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+            Access Your Account
+          </a>
+        </div>
+
+        <p style="font-size: 14px; color: #666;">
+          Or copy and paste this link into your browser:<br>
+          <a href="${magicLinkUrl}" style="color: #004149; word-break: break-all;">${magicLinkUrl}</a>
+        </p>
+
+        <p style="font-size: 16px;">
+          After logging in, you'll be prompted to set a password for future access.
+        </p>
+
+        <p style="font-size: 14px; color: #666; margin-top: 30px;">
+          This link will expire in 7 days. If you didn't expect this email, you can safely ignore it.
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+
+        <p style="font-size: 12px; color: #999; text-align: center;">
+          Practical Defense Training - Professional Firearms Training<br>
+          This is an automated message, please do not reply.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return await sendAuthEmail(email, "Welcome to Practical Defense Training - Access Your Account", html);
+}
