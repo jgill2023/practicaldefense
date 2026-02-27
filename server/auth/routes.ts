@@ -14,12 +14,17 @@ import {
   sendPasswordResetEmail,
   sendWelcomeEmail,
 } from "../emailService";
+import { authRateLimit } from '../rateLimiting';
 
 export const authRouter = Router();
 
 const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string()
+    .min(12, "Password must be at least 12 characters")
+    .regex(/[a-z]/, "Password must contain a lowercase letter")
+    .regex(/[A-Z]/, "Password must contain an uppercase letter")
+    .regex(/[0-9]/, "Password must contain a number"),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
 });
@@ -35,14 +40,18 @@ const requestResetSchema = z.object({
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, "Token is required"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string()
+    .min(12, "Password must be at least 12 characters")
+    .regex(/[a-z]/, "Password must contain a lowercase letter")
+    .regex(/[A-Z]/, "Password must contain an uppercase letter")
+    .regex(/[0-9]/, "Password must contain a number"),
 });
 
 const verifyEmailSchema = z.object({
   token: z.string().min(1, "Token is required"),
 });
 
-authRouter.post("/signup", async (req, res) => {
+authRouter.post("/signup", authRateLimit, async (req, res) => {
   try {
     const { email, password, firstName, lastName } = signupSchema.parse(req.body);
 
@@ -124,7 +133,7 @@ authRouter.post("/verify-email", async (req, res) => {
   }
 });
 
-authRouter.post("/login", async (req, res) => {
+authRouter.post("/login", authRateLimit, async (req, res) => {
   try {
     const { email, password } = loginSchema.parse(req.body);
 
@@ -165,7 +174,8 @@ authRouter.post("/login", async (req, res) => {
   }
 });
 
-authRouter.post("/request-reset", async (req, res) => {
+authRouter.post("/request-reset", authRateLimit, async (req, res) => {
+  const startTime = Date.now();
   try {
     const { email } = requestResetSchema.parse(req.body);
 
@@ -174,6 +184,11 @@ authRouter.post("/request-reset", async (req, res) => {
     });
 
     if (!user) {
+      // Ensure consistent response time to prevent timing attacks
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 500) {
+        await new Promise(resolve => setTimeout(resolve, 500 - elapsed));
+      }
       return res.json({
         message: "If an account exists with this email, you will receive a password reset link.",
       });
@@ -181,8 +196,6 @@ authRouter.post("/request-reset", async (req, res) => {
 
     const resetToken = generateToken();
     const resetExpiry = getTokenExpiry(1);
-    
-    console.log(`Generated reset token for ${email}: ${resetToken.substring(0, 10)}... (expires: ${resetExpiry})`);
 
     await db
       .update(users)
@@ -194,12 +207,17 @@ authRouter.post("/request-reset", async (req, res) => {
       .where(eq(users.id, user.id));
 
     const emailSent = await sendPasswordResetEmail(email, user.firstName || "User", resetToken);
-    
+
     if (!emailSent) {
       console.error(`Failed to send password reset email to ${email}`);
       // Still return success message for security (don't reveal if email exists)
     }
 
+    // Ensure consistent response time to prevent timing attacks
+    const elapsed = Date.now() - startTime;
+    if (elapsed < 500) {
+      await new Promise(resolve => setTimeout(resolve, 500 - elapsed));
+    }
     res.json({
       message: "If an account exists with this email, you will receive a password reset link.",
     });
@@ -212,12 +230,10 @@ authRouter.post("/request-reset", async (req, res) => {
   }
 });
 
-authRouter.post("/reset-password", async (req, res) => {
+authRouter.post("/reset-password", authRateLimit, async (req, res) => {
   try {
     const { token, password } = resetPasswordSchema.parse(req.body);
 
-    console.log(`Password reset attempt with token: ${token.substring(0, 10)}...`);
-    
     const user = await db.query.users.findFirst({
       where: and(
         eq(users.passwordResetToken, token),
@@ -226,19 +242,9 @@ authRouter.post("/reset-password", async (req, res) => {
     });
 
     if (!user) {
-      console.log(`No user found with valid reset token`);
-      // Check if token exists but is expired
-      const expiredUser = await db.query.users.findFirst({
-        where: eq(users.passwordResetToken, token),
-      });
-      if (expiredUser) {
-        console.log(`Token found but expired. Expiry: ${expiredUser.passwordResetExpiry}`);
-      }
       return res.status(400).json({ message: "Invalid or expired reset token" });
     }
     
-    console.log(`Valid reset token found for user: ${user.email}`);
-
     const passwordHash = await hashPassword(password);
 
     await db
@@ -262,6 +268,49 @@ authRouter.post("/reset-password", async (req, res) => {
   }
 });
 
+// Magic link login (for imported students)
+authRouter.get("/magic-login", async (req, res) => {
+  try {
+    const token = req.query.token as string;
+
+    if (!token) {
+      return res.redirect("/login?error=invalid-link");
+    }
+
+    const user = await db.query.users.findFirst({
+      where: and(
+        eq(users.magicLinkToken, token),
+        gt(users.magicLinkExpiry, new Date())
+      ),
+    });
+
+    if (!user) {
+      return res.redirect("/login?error=expired-link");
+    }
+
+    // Clear the magic link token (single-use)
+    await db
+      .update(users)
+      .set({
+        magicLinkToken: null,
+        magicLinkExpiry: null,
+        isEmailVerified: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    // Create session
+    const session = req.session as any;
+    session.userId = user.id;
+
+    // Redirect to student portal — frontend will detect no password is set
+    res.redirect("/student-portal?welcome=true");
+  } catch (error: any) {
+    console.error("Magic link login error:", error);
+    res.redirect("/login?error=server-error");
+  }
+});
+
 authRouter.post("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -271,6 +320,42 @@ authRouter.post("/logout", (req, res) => {
     res.clearCookie("connect.sid");
     res.json({ message: "Logged out successfully" });
   });
+});
+
+// Set password (for magic link users who don't have one yet)
+authRouter.post("/set-password", async (req, res) => {
+  const session = req.session as any;
+
+  if (!session || !session.userId) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  try {
+    const schema = z.object({
+      password: z.string()
+        .min(12, "Password must be at least 12 characters")
+        .regex(/[a-z]/, "Password must contain a lowercase letter")
+        .regex(/[A-Z]/, "Password must contain an uppercase letter")
+        .regex(/[0-9]/, "Password must contain a number"),
+    });
+
+    const { password } = schema.parse(req.body);
+
+    const passwordHashValue = await hashPassword(password);
+
+    await db
+      .update(users)
+      .set({ passwordHash: passwordHashValue, updatedAt: new Date() })
+      .where(eq(users.id, session.userId));
+
+    res.json({ message: "Password set successfully" });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: error.errors[0].message });
+    }
+    console.error("Set password error:", error);
+    res.status(500).json({ message: "Failed to set password" });
+  }
 });
 
 authRouter.get("/user", async (req, res) => {
