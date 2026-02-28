@@ -2,7 +2,7 @@ import { CoursePageTemplate } from "@/components/CoursePageTemplate";
 import dhcImage from "@assets/DHC_1767044138467.jpg";
 
 export default function DefensiveHandgunClinics() {
-  const hasScheduledClasses = false;
+  const hasScheduledClasses = true;
 
   return (
     <CoursePageTemplate
@@ -60,14 +60,12 @@ export default function DefensiveHandgunClinics() {
       gearList={[
         { item: "Reliable semi-auto handgun or revolver", required: true },
         { item: "100-250 rounds of ammunition (varies by clinic)", required: true },
-        { item: "Quality holster (OWB or concealment)", required: true },
         { item: "At least 2 magazines or speed loaders", required: true },
         { item: "Eye protection", required: true },
         { item: "Ear protection (electronic recommended)", required: true },
-        { item: "Sturdy belt for holster", required: true },
+        { item: "Lunch, snacks, and hydrating beverages", required: true },
         { item: "Knee pads", required: false },
-        { item: "Weather-appropriate attire", required: false },
-        { item: "Water and snacks", required: false }
+        { item: "Weather-appropriate attire", required: false }
       ]}
       rentalInfo="Clinics require students to bring their own handgun. If you don't own a suitable handgun, consider taking our Concealed Carry Course first where rentals are available."
       faqs={[
@@ -105,3 +103,4 @@ export default function DefensiveHandgunClinics() {
     />
   );
 }
+

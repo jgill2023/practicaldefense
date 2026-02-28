@@ -52,7 +52,7 @@ export default function OnlineCCWClass() {
         { item: "25 rounds of ammunition", required: true },
         { item: "Eye protection", required: true },
         { item: "Ear protection", required: true },
-        { item: "Holster (for range day)", required: false },
+        { item: "Lunch, snacks, and hydrating beverages", required: true },
         { item: "Weather-appropriate attire", required: false }
       ]}
       rentalInfo="Don't have a handgun for the range day? We offer handgun rentals for $25, which includes use of the firearm, ammunition, eye and ear protection. Let us know when scheduling your range day."

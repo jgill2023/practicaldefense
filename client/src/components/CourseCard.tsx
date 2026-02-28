@@ -7,6 +7,16 @@ import { formatDateSafe } from "@/lib/dateUtils";
 import { useLocation } from "wouter";
 import { SalePrice, SalePriceBadge, isSaleActive } from "@/components/SalePrice";
 
+// Map course titles to their dedicated featured page URLs
+const featuredPageMap: Record<string, string> = {
+  "New Mexico Concealed Carry Course": "/nmccl",
+  "Online NM Concealed Carry Course": "/online-nm-concealed-carry-course",
+  "Defensive Handgun Course": "/defensive-handgun-course",
+  "Defensive Handgun Clinics": "/defensive-handgun-clinics",
+  "Onscreen Handgun Handling": "/onscreen-handgun-handling",
+  "Responsibly Armed Citizen Criterion": "/racc-program",
+};
+
 interface CourseCardProps {
   course: CourseWithSchedules;
   onRegister: (course: CourseWithSchedules) => void;
@@ -102,8 +112,8 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
 
   const handleCardClick = (e: React.MouseEvent) => {
     console.log('Card clicked!', { course: course.title, hasSchedule: !!nextSchedule });
-    // Navigate to course detail page
-    setLocation(`/course/${course.id}`);
+    // Navigate to featured page if available, otherwise course detail page
+    setLocation(featuredPageMap[course.title] || `/course/${course.id}`);
   };
 
   return (

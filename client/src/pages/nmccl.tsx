@@ -3,7 +3,7 @@ import ccwRangeImage from "@assets/DSC_0032_1767029878856.jpg";
 
 export default function NMConcealedCarryCourse() {
   // TODO: Query API to check if there are scheduled classes for this course
-  const hasScheduledClasses = false;
+  const hasScheduledClasses = true;
 
   return (
     <CoursePageTemplate
@@ -53,8 +53,8 @@ export default function NMConcealedCarryCourse() {
         { item: "25 rounds of ammunition", required: true },
         { item: "Eye protection", required: true },
         { item: "Ear protection", required: true },
-        { item: "Holster (concealment type preferred)", required: false },
         { item: "Magazine pouch or speed loader", required: false },
+        { item: "Lunch, snacks, and hydrating beverages", required: true },
         { item: "Comfortable clothing", required: false },
         { item: "Weather-appropriate attire", required: false }
       ]}
@@ -94,3 +94,4 @@ export default function NMConcealedCarryCourse() {
     />
   );
 }
+

@@ -3,7 +3,7 @@ import dhcImage from "@assets/DHC_1767044138467.jpg";
 
 export default function DefensiveHandgunCourse() {
   // TODO: Query API to check if there are scheduled classes for this course
-  const hasScheduledClasses = false;
+  const hasScheduledClasses = true;
 
   return (
     <CoursePageTemplate
@@ -58,15 +58,13 @@ export default function DefensiveHandgunCourse() {
       gearList={[
         { item: "Reliable semi-auto handgun or revolver", required: true },
         { item: "150-250 rounds of ammunition", required: true },
-        { item: "Quality holster (OWB or concealment)", required: true },
         { item: "At least 2 magazines (semi-auto)", required: true },
         { item: "Magazine pouch or speed loaders", required: true },
         { item: "Eye protection", required: true },
         { item: "Ear protection (electronic recommended)", required: true },
-        { item: "Sturdy belt for holster", required: true },
+        { item: "Lunch, snacks, and hydrating beverages", required: true },
         { item: "Knee pads (2-day course)", required: false },
-        { item: "Weather-appropriate attire", required: false },
-        { item: "Water and snacks", required: false }
+        { item: "Weather-appropriate attire", required: false }
       ]}
       rentalInfo="This course requires students to be proficient with their own handgun. Rentals are not recommended for this course. If you don't own a suitable handgun, consider taking our Concealed Carry Course first."
       faqs={[
@@ -104,3 +102,4 @@ export default function DefensiveHandgunCourse() {
     />
   );
 }
+

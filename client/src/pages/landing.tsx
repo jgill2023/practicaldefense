@@ -45,6 +45,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Map course titles to their dedicated featured page URLs
+const featuredPageMap: Record<string, string> = {
+  "New Mexico Concealed Carry Course": "/nmccl",
+  "Online NM Concealed Carry Course": "/online-nm-concealed-carry-course",
+  "Defensive Handgun Course": "/defensive-handgun-course",
+  "Defensive Handgun Clinics": "/defensive-handgun-clinics",
+  "Onscreen Handgun Handling": "/onscreen-handgun-handling",
+  "Responsibly Armed Citizen Criterion": "/racc-program",
+};
+const getCourseUrl = (course: { id: number | string; title: string }) =>
+  featuredPageMap[course.title] || `/course/${course.id}`;
+
 const testimonials = [
   {
     quote: "RACC transformed my understanding of concealed carry. The pressure-tested benchmarks gave me real confidence.",
@@ -358,7 +370,7 @@ function UpcomingCoursesList({ onRegister }: { onRegister: (course: CourseWithSc
             key={schedule.id}
             className="py-6 hover:bg-zinc-800 transition-colors duration-200 cursor-pointer"
             data-testid={`upcoming-course-${schedule.id}`}
-            onClick={() => setLocation(`/course/${course.id}`)}
+            onClick={() => setLocation(getCourseUrl(course))}
           >
             <div className="flex flex-col md:flex-row gap-6">
               {/* Course Image */}
@@ -851,7 +863,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
               startAccessor="start"
               endAccessor="end"
               style={{ height: '100%' }}
-              onSelectEvent={(event) => setLocation(`/course/${event.resource.courseId}`)}
+              onSelectEvent={(event) => setLocation(getCourseUrl({ id: event.resource.courseId, title: event.resource.courseTitle }))}
               view={currentView}
               onView={setCurrentView}
               date={currentDate}
@@ -907,7 +919,7 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
                   key={schedule.id}
                   className="bg-zinc-800/50 rounded-lg border border-zinc-700 hover:border-zinc-500
                              transition-all duration-300 cursor-pointer overflow-hidden"
-                  onClick={() => setLocation(`/course/${course.id}`)}
+                  onClick={() => setLocation(getCourseUrl(course))}
                   data-testid={`list-course-${schedule.id}`}
                 >
                   <div className="flex flex-col md:flex-row">
