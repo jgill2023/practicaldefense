@@ -4,15 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NotifyMeDialog } from "@/components/NotifyMeDialog";
 import { OnlineCourseEnrollDialog } from "@/components/OnlineCourseEnrollDialog";
-import { 
-  Clock, 
-  MapPin, 
+import { RegistrationModal } from "@/components/RegistrationModal";
+import {
+  Clock,
+  MapPin,
   CheckCircle,
   AlertTriangle,
   ChevronDown
 } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { CourseWithSchedules } from "@shared/schema";
 
 interface CourseDetails {
   price: string;
@@ -103,7 +106,14 @@ export function CoursePageTemplate({
 }: CoursePageTemplateProps) {
   const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState(false);
   const [isEnrollDialogOpen, setIsEnrollDialogOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [grayscaleAmount, setGrayscaleAmount] = useState(0);
+
+  // Fetch the matching course from the API for the registration modal
+  const { data: coursesData } = useQuery<CourseWithSchedules[]>({
+    queryKey: ['/api/courses'],
+  });
+  const matchingCourse = coursesData?.find(c => c.title === title && c.isActive && !c.deletedAt);
   
   useEffect(() => {
     const handleScroll = () => {
@@ -290,9 +300,17 @@ export function CoursePageTemplate({
                     >
                       Enroll Now
                     </Button>
+                  ) : hasScheduledClasses && matchingCourse ? (
+                    <Button
+                      onClick={() => setIsRegisterModalOpen(true)}
+                      className="w-full bg-[#006d7a] hover:bg-[#004149] text-white font-heading uppercase tracking-wide py-6 text-lg"
+                      data-testid="button-register-cta"
+                    >
+                      {ctaText}
+                    </Button>
                   ) : hasScheduledClasses ? (
                     <Link href={ctaLink}>
-                      <Button 
+                      <Button
                         className="w-full bg-[#006d7a] hover:bg-[#004149] text-white font-heading uppercase tracking-wide py-6 text-lg"
                         data-testid="button-register-cta"
                       >
@@ -355,8 +373,15 @@ export function CoursePageTemplate({
         </div>
       </section>
       
-      <NotifyMeDialog 
-        isOpen={isNotifyDialogOpen} 
+      {isRegisterModalOpen && matchingCourse && (
+        <RegistrationModal
+          course={matchingCourse}
+          onClose={() => setIsRegisterModalOpen(false)}
+        />
+      )}
+
+      <NotifyMeDialog
+        isOpen={isNotifyDialogOpen}
         onOpenChange={setIsNotifyDialogOpen}
         courseName={title}
       />
