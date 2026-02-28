@@ -84,9 +84,21 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
   };
 
   // Determine which image to display - prioritize uploaded image
-  const displayImageUrl = course.imageUrl && course.imageUrl.trim() !== '' 
-    ? course.imageUrl 
+  const displayImageUrl = course.imageUrl && course.imageUrl.trim() !== ''
+    ? course.imageUrl
     : getImageUrl(getCategoryName());
+
+  // Overlay label for refresher/renewal courses
+  const getOverlayLabel = (): string | null => {
+    const ct = (course as any).courseType;
+    if (ct === 'refresher') return 'Refresher Course';
+    if (ct === 'renewal') return 'Renewal Course';
+    const title = course.title.toLowerCase();
+    if (title.includes('refresher')) return 'Refresher Course';
+    if (title.includes('renewal')) return 'Renewal Course';
+    return null;
+  };
+  const overlayLabel = getOverlayLabel();
 
   const handleCardClick = (e: React.MouseEvent) => {
     console.log('Card clicked!', { course: course.title, hasSchedule: !!nextSchedule });
@@ -119,6 +131,13 @@ export function CourseCard({ course, onRegister }: CourseCardProps) {
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[hsl(204,27%,16%,0.4)] to-transparent" />
+        {overlayLabel && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <span className="text-white font-heading text-lg sm:text-xl uppercase tracking-widest drop-shadow-lg">
+              {overlayLabel}
+            </span>
+          </div>
+        )}
       </div>
       <CardContent className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">

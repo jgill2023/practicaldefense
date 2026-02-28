@@ -3554,7 +3554,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ uploadURL: result.url, pathname: result.pathname });
     } catch (error: any) {
       console.error("Error uploading file:", error);
-      res.status(500).json({ error: "Error uploading file" });
+      res.status(500).json({ error: error?.message || "Error uploading file" });
     }
   });
 
@@ -4339,7 +4339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.body.courseImageURL,
         {
           owner: userId,
-          visibility: "public", // Course images should be publicly viewable
+          visibility: "public",
           blobUrl: req.body.courseImageURL,
         },
       );

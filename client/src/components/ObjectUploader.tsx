@@ -66,14 +66,16 @@ export function ObjectUploader({
       if (response.ok) {
         const data = await response.json();
         const uploadURL = data.uploadURL || data.url;
-        console.log("Upload successful, blob URL:", uploadURL);
+        console.log("Upload successful, URL:", uploadURL);
         onComplete?.({
           successful: [{ uploadURL }],
         });
       } else {
         const errorText = await response.text();
         console.error("Upload failed with status:", response.status, errorText);
-        alert(`Upload failed: ${response.statusText}. Please try again.`);
+        let detail = '';
+        try { detail = JSON.parse(errorText)?.error || JSON.parse(errorText)?.message || ''; } catch { detail = errorText; }
+        alert(`Upload failed: ${detail || `Status ${response.status}`}. Please try again.`);
       }
     } catch (error) {
       console.error("Upload error:", error);
