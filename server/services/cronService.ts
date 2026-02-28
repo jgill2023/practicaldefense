@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { google } from 'googleapis';
 import { calendarService } from './calendarService';
 import { runAbandonedCartRecovery } from './abandonedCartService';
+import { licenseReminderService } from './licenseReminderService';
 
 const WEBHOOK_CALLBACK_URL = process.env.WEBHOOK_CALLBACK_URL || `${process.env.APP_URL || 'http://localhost:5000'}/api/availability/webhook/calendar`;
 
@@ -259,6 +260,20 @@ export class CronService {
     });
 
     console.log('[CronService] Scheduled abandoned cart recovery job every 15 minutes');
+
+    // License expiration reminder check - daily at 8am MT
+    cron.schedule('0 8 * * *', async () => {
+      console.log('[CronService] License reminder job triggered');
+      try {
+        await licenseReminderService.processAllReminders();
+      } catch (error) {
+        console.error('[CronService] License reminder job failed:', error);
+      }
+    }, {
+      timezone: 'America/Denver',
+    });
+
+    console.log('[CronService] Scheduled license reminder job daily at 8am (America/Denver)');
 
     this.isInitialized = true;
   }

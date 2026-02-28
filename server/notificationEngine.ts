@@ -193,6 +193,13 @@ export class NotificationEngine {
     website: 'system.website',
     websiteUrl: 'system.websiteUrl',
     currentDate: 'system.currentDate',
+
+    // License reminder aliases
+    nextCourseName: 'course.name',
+    nextCourseDate: 'schedule.startDate',
+    nextCourseTime: 'schedule.startTime',
+    nextCourseLocation: 'schedule.location',
+    nextCourseAvailableSpots: 'schedule.availableSpots',
   };
 
   /**
