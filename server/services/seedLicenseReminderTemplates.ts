@@ -1,4 +1,6 @@
 import { storage } from '../storage';
+import { db } from '../db';
+import { notificationTemplates } from '@shared/schema';
 
 const APP_URL = process.env.APP_URL || 'https://abqconcealedcarry.com';
 
@@ -150,7 +152,8 @@ export async function seedLicenseReminderTemplates(): Promise<void> {
         return;
       }
 
-      await storage.createNotificationTemplate({
+      // Insert directly via db since InsertNotificationTemplate omits createdBy
+      await db.insert(notificationTemplates).values({
         name: seed.name,
         type: seed.type,
         category: seed.category,
