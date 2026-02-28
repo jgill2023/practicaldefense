@@ -298,8 +298,8 @@ export default function ScheduleList() {
                   <div className="flex flex-col md:flex-row">
                     {/* Image Section */}
                     <div className="relative w-full md:w-72 h-48 md:h-auto bg-muted flex-shrink-0">
-                      <img 
-                        src={displayImageUrl} 
+                      <img
+                        src={displayImageUrl}
                         alt={schedule.courseTitle}
                         className="w-full h-full object-cover"
                         loading="lazy"
@@ -311,6 +311,19 @@ export default function ScheduleList() {
                           }
                         }}
                       />
+                      {(() => {
+                        const title = schedule.courseTitle.toLowerCase();
+                        const label = title.includes('refresher') ? 'Refresher Course'
+                          : title.includes('renewal') ? 'Renewal Course'
+                          : null;
+                        return label ? (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <span className="text-white font-heading text-sm sm:text-base uppercase tracking-widest drop-shadow-lg">
+                              {label}
+                            </span>
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
 
                     {/* Content Section */}

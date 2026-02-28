@@ -912,13 +912,29 @@ function UpcomingCoursesSection({ onRegister }: { onRegister: (course: CourseWit
                 >
                   <div className="flex flex-col md:flex-row">
                     {/* Course Image */}
-                    <div className="w-full md:w-64 h-40 md:h-auto flex-shrink-0 overflow-hidden">
+                    <div className="relative w-full md:w-64 h-40 md:h-auto flex-shrink-0 overflow-hidden">
                       <img
                         src={displayImageUrl}
                         alt={course.title}
                         className="w-full h-full object-cover"
                         loading="lazy"
                       />
+                      {(() => {
+                        const ct = (course as any).courseType;
+                        const title = course.title.toLowerCase();
+                        const label = ct === 'refresher' ? 'Refresher Course'
+                          : ct === 'renewal' ? 'Renewal Course'
+                          : title.includes('refresher') ? 'Refresher Course'
+                          : title.includes('renewal') ? 'Renewal Course'
+                          : null;
+                        return label ? (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <span className="text-white font-heading text-sm sm:text-base uppercase tracking-widest drop-shadow-lg">
+                              {label}
+                            </span>
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
 
                     {/* Course Details */}

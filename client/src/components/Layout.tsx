@@ -55,6 +55,17 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
 
   const activeCourses = coursesData?.filter((c: CourseWithSchedules) => c.isActive && !c.deletedAt) || [];
 
+  // Map course titles to their dedicated featured page URLs
+  const featuredPageMap: Record<string, string> = {
+    "New Mexico Concealed Carry Course": "/nmccl",
+    "Online NM Concealed Carry Course": "/online-nm-concealed-carry-course",
+    "Defensive Handgun Course": "/defensive-handgun-course",
+    "Defensive Handgun Clinics": "/defensive-handgun-clinics",
+    "Onscreen Handgun Handling": "/onscreen-handgun-handling",
+    "Responsibly Armed Citizen Criterion": "/racc-program",
+  };
+  const getCourseUrl = (course: CourseWithSchedules) => featuredPageMap[course.title] || `/course/${course.id}`;
+
   useEffect(() => {
     if (!isLandingPage) return;
 
@@ -309,7 +320,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                                         {activeCourses.map((course) => (
                                           <NavigationMenuLink key={course.id} asChild>
                                             <Link 
-                                              href={`/course/${course.id}`} 
+                                              href={getCourseUrl(course)} 
                                               className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer text-sm pt-[4px] pb-[4px] pl-[4px] pr-[4px]"
                                               data-testid={`link-course-${course.id}`}
                                             >
@@ -427,7 +438,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                                 {activeCourses.map((course) => (
                                   <Link 
                                     key={course.id}
-                                    href={`/course/${course.id}`} 
+                                    href={getCourseUrl(course)} 
                                     className="block text-zinc-400 hover:text-[#006d7a] transition-colors pl-2" 
                                     data-testid={`link-course-mobile-${course.id}`}
                                     onClick={() => setIsMobileMenuOpen(false)}
@@ -777,7 +788,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                                   {activeCourses.map((course) => (
                                     <NavigationMenuLink key={course.id} asChild>
                                       <Link 
-                                        href={`/course/${course.id}`} 
+                                        href={getCourseUrl(course)} 
                                         className="block px-3 py-3 rounded-md hover:bg-accent cursor-pointer text-sm pt-[4px] pb-[4px] pl-[4px] pr-[4px]"
                                         data-testid={`link-course-${course.id}`}
                                       >
@@ -898,7 +909,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                           {activeCourses.map((course) => (
                             <Link 
                               key={course.id}
-                              href={`/course/${course.id}`} 
+                              href={getCourseUrl(course)} 
                               className="block text-white/80 hover:text-[#006d7a] transition-colors pl-2" 
                               data-testid={`link-course-mobile-${course.id}`}
                               onClick={() => setIsMobileMenuOpen(false)}
