@@ -159,6 +159,7 @@ export const courses = pgTable("courses", {
   index("idx_courses_status").on(table.status),
   index("idx_courses_deleted_at").on(table.deletedAt),
   index("idx_courses_show_on_home_page").on(table.showOnHomePage),
+  index("idx_courses_course_type").on(table.courseType),
 ]);
 
 export const courseSchedules = pgTable("course_schedules", {
