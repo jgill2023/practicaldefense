@@ -20,6 +20,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { format } from "date-fns";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 function formatDateSafe(dateString: string | Date): string {
   try {
@@ -191,7 +192,7 @@ export default function CourseDetail() {
               <CardContent>
                 <div 
                   className="prose dark:prose-invert max-w-none" 
-                  dangerouslySetInnerHTML={{ __html: course.description }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(course.description || '') }}
                   data-testid="text-course-description"
                 />
               </CardContent>
@@ -208,7 +209,7 @@ export default function CourseDetail() {
                 <CardContent>
                   <div 
                     className="prose dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: course.prerequisites }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(course.prerequisites || '') }}
                     data-testid="text-prerequisites"
                   />
                 </CardContent>

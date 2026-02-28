@@ -1,7 +1,7 @@
 
 import { db } from './server/db.js';
 import { users, enrollments, courses } from './shared/schema.js';
-import { eq, and, notInArray, sql } from 'drizzle-orm';
+import { eq, and, notInArray, inArray, sql } from 'drizzle-orm';
 
 async function cleanupInactiveUsers() {
   try {
@@ -49,7 +49,7 @@ async function cleanupInactiveUsers() {
     
     // Check if any users have courses assigned
     const coursesForDeletedUsers = await db.query.courses.findMany({
-      where: sql`${courses.instructorId} = ANY(ARRAY[${userIdsToDelete.map(id => `'${id}'`).join(',')}]::text[])`,
+      where: inArray(courses.instructorId, userIdsToDelete),
     });
     
     if (coursesForDeletedUsers.length > 0) {

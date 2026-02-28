@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { FileSignature, Calendar, User, CheckCircle, AlertCircle, Shield, Scale, Gavel, Globe, Monitor } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface ViewCompletedWaiverModalProps {
   enrollmentId: string;
@@ -218,10 +219,10 @@ export function ViewCompletedWaiverModal({ enrollmentId, studentName, isOpen, on
                           {showFtaDetails ? 'View Full Waiver Document' : 'Waiver Content'}
                         </summary>
                         <div className="prose dark:prose-invert max-w-none mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border">
-                          <div 
-                            dangerouslySetInnerHTML={{ 
-                              __html: getMergedContent(waiver.template.content, waiver)
-                            }} 
+                          <div
+                            dangerouslySetInnerHTML={{
+                              __html: sanitizeHtml(getMergedContent(waiver.template.content, waiver) || '')
+                            }}
                           />
                         </div>
                       </details>

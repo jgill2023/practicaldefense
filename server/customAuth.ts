@@ -18,7 +18,7 @@ export function getSession() {
     throw new Error("DATABASE_URL environment variable is required for session storage");
   }
 
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  const sessionTtl = 24 * 60 * 60 * 1000; // 24 hours
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
@@ -35,7 +35,7 @@ export function getSession() {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
-      sameSite: 'lax',
+      sameSite: 'strict',
     },
   });
 }

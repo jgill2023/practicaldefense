@@ -17,8 +17,8 @@ export async function createApp() {
   // Note: correct path is /api/online-course/webhook (not /api/webhooks/stripe)
   app.use('/api/online-course/webhook', express.raw({ type: 'application/json' }));
 
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: false }));
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
   // Request logging middleware
   app.use((req, res, next) => {
@@ -55,10 +55,18 @@ export async function createApp() {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    // Log the full error server-side
+    console.error(`[Error Handler] ${status}:`, err.message);
+
+    // Return generic message for 5xx errors, pass through 4xx messages
+    const message = status >= 500
+      ? "Internal Server Error"
+      : (err.message || "An error occurred");
+
+    if (!res.headersSent) {
+      res.status(status).json({ message });
+    }
   });
 
   // SEO middleware for server-side meta tag injection on public routes

@@ -91,6 +91,16 @@ function CheckoutForm({ enrollmentId, onSuccess, pricingDetails, courseName }: C
       setErrorMessage(error.message || "An error occurred with your payment");
       setIsProcessing(false);
     } else if (paymentIntent && paymentIntent.status === "succeeded") {
+      // Trigger server-side Moodle enrollment via confirm-payment endpoint
+      try {
+        await apiRequest("POST", "/api/online-course/confirm-payment", {
+          enrollmentId,
+          paymentIntentId: paymentIntent.id,
+        });
+      } catch (confirmError) {
+        // Webhook will handle it as a fallback
+        console.error("confirm-payment call failed, webhook will retry:", confirmError);
+      }
       toast({
         title: "Payment successful!",
         description: "Your enrollment is being processed. You'll receive your login details shortly.",

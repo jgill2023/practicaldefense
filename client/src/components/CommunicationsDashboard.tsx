@@ -59,6 +59,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { NotificationsManagement } from "@/components/NotificationsManagement";
 import { CreditMeter } from "@/components/CreditMeter";
 import { PurchaseCreditsDialog } from "@/components/PurchaseCreditsDialog";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 // Types for communication data
 interface Communication {
@@ -1445,7 +1446,7 @@ export function CommunicationsDashboard() {
                             </div>
                             <div 
                               className="text-sm text-muted-foreground prose prose-sm max-w-none"
-                              dangerouslySetInnerHTML={{ __html: template.content }}
+                              dangerouslySetInnerHTML={{ __html: sanitizeHtml(template.content || '') }}
                             />
                             {template.imageUrl && (
                               <div className="mt-2">

@@ -40,6 +40,7 @@ import type {
   InsertWaiverTemplate,
   AppointmentType
 } from "@shared/schema";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 // Field Component with up/down arrows
 function FieldRow({ 
@@ -1003,7 +1004,7 @@ export default function CourseFormsManagement() {
                               <h4 className="font-medium mb-3">Waiver Content</h4>
                               <div 
                                 className="prose prose-sm max-w-none border rounded-lg p-4 bg-muted/20"
-                                dangerouslySetInnerHTML={{ __html: waiver.content }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(waiver.content || '') }}
                                 data-testid={`waiver-content-preview-${waiver.id}`}
                               />
                             </div>

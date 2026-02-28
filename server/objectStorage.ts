@@ -31,6 +31,11 @@ export class ObjectStorageService {
     contentType: string,
     access: "public" | "private" = "private",
   ): Promise<{ url: string; pathname: string }> {
+    // Prevent path traversal attacks
+    if (pathname.includes('..') || pathname.startsWith('/')) {
+      throw new Error('Invalid pathname');
+    }
+
     const blob = await put(pathname, buffer, {
       access,
       contentType,
@@ -80,7 +85,7 @@ export class ObjectStorageService {
     contentType: string,
     originalName?: string,
   ): Promise<{ url: string; pathname: string }> {
-    const ext = originalName ? originalName.split(".").pop() : "bin";
+    const ext = originalName ? originalName.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, '') : "bin";
     const pathname = `uploads/${randomUUID()}.${ext}`;
     return this.uploadObject(pathname, buffer, contentType, "private");
   }

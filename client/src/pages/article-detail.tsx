@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link, useParams, useLocation } from "wouter";
 import { Calendar, User, ArrowLeft, ChevronRight } from "lucide-react";
 import { getArticleBySlug, articles, type Article } from "@/data/articles";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 function RelatedArticles({ currentSlug, category }: { currentSlug: string; category: string }) {
   const related = articles
@@ -136,7 +137,7 @@ export default function ArticleDetail() {
               prose-li:text-muted-foreground
               prose-ul:text-muted-foreground
               prose-ol:text-muted-foreground"
-            dangerouslySetInnerHTML={{ __html: article.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.content || '') }}
           />
 
           {/* Tags */}

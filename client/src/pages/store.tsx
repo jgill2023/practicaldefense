@@ -19,6 +19,7 @@ import { SalePrice, isSaleActive, getEffectivePrice } from "@/components/SalePri
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { apiRequest } from "@/lib/queryClient";
 import { useCart, type AddToCartItem } from "@/components/shopping-cart";
+import { sanitizeHtml } from "@/lib/sanitize";
 import type { CartItem, CartItemWithDetails } from "@shared/schema";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || "");
@@ -177,7 +178,7 @@ function ProductCard({
             <div className="space-y-4">
               <div 
                 className="text-sm text-muted-foreground prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: product.description }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description || '') }}
               />
               
               {availableVariants.length > 1 && (

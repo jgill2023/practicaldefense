@@ -10,6 +10,7 @@ import multer from 'multer';
 import { put } from '@vercel/blob';
 import { randomUUID } from 'crypto';
 import { isAuthenticated, requireAdminOrHigher } from '../customAuth';
+import { formRateLimit } from '../rateLimiting';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -76,7 +77,7 @@ router.post('/validate', async (req: Request, res: Response) => {
 });
 
 // Create payment intent for gift card purchase
-router.post('/purchase/create-payment-intent', async (req: Request, res: Response) => {
+router.post('/purchase/create-payment-intent', formRateLimit, async (req: Request, res: Response) => {
   try {
     const stripe = await getStripeClient();
     if (!stripe) {
@@ -118,7 +119,7 @@ router.post('/purchase/create-payment-intent', async (req: Request, res: Respons
 });
 
 // Complete gift card purchase after successful payment
-router.post('/purchase/complete', async (req: Request, res: Response) => {
+router.post('/purchase/complete', formRateLimit, async (req: Request, res: Response) => {
   try {
     const stripe = await getStripeClient();
     if (!stripe) {
@@ -277,7 +278,7 @@ router.post('/admin/:id/adjust-balance', requireAdmin, async (req: Request, res:
     res.json(giftCard);
   } catch (error: any) {
     console.error('Error adjusting gift card balance:', error);
-    res.status(400).json({ error: error.message || 'Failed to adjust balance' });
+    res.status(400).json({ error: 'Failed to adjust balance' });
   }
 });
 
@@ -392,7 +393,7 @@ router.post('/admin/themes/upload-image', requireAdmin, upload.single('image'), 
     res.json({ url: blob.url });
   } catch (error: any) {
     console.error('Error uploading theme image:', error);
-    res.status(500).json({ error: error.message || 'Failed to upload image' });
+    res.status(500).json({ error: 'Failed to upload image' });
   }
 });
 
@@ -510,7 +511,7 @@ router.post('/redeem', async (req: Request, res: Response) => {
     res.json(result);
   } catch (error: any) {
     console.error('Error redeeming gift card:', error);
-    res.status(400).json({ error: error.message || 'Failed to redeem gift card' });
+    res.status(400).json({ error: 'Failed to redeem gift card' });
   }
 });
 

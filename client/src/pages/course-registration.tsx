@@ -22,6 +22,7 @@ import type { CourseWithSchedules, CourseSchedule } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PolicyModal } from "@/components/PolicyModal";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 interface CheckoutFormProps {
   enrollment: any;
@@ -679,7 +680,7 @@ export default function CourseRegistration() {
           </h1>
           <div 
             className="text-muted-foreground" 
-            dangerouslySetInnerHTML={{ __html: course.description }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(course.description || '') }}
           />
         </div>
 

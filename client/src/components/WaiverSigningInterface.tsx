@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Check, X, PenTool, Type, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 interface InitialSection {
   id: string;
@@ -285,7 +286,7 @@ export function WaiverSigningInterface({
     <div className="space-y-6">
       {/* Waiver Content */}
       <ScrollArea className="h-[400px] border rounded-lg p-6 bg-muted/30">
-        <div dangerouslySetInnerHTML={{ __html: waiverContent }} />
+        <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(waiverContent || '') }} />
       </ScrollArea>
 
       {/* Initial Sections */}
