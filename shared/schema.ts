@@ -151,6 +151,7 @@ export const courses = pgTable("courses", {
   showOnHomePage: boolean("show_on_home_page").notNull().default(true), // Control home page visibility
   sortOrder: integer("sort_order").default(0), // For display ordering on home page
   destinationUrl: varchar("destination_url", { length: 500 }), // External registration URL (e.g., for Hosted Courses)
+  courseType: varchar("course_type", { length: 20 }), // 'initial', 'refresher', 'renewal' - for license reminder course matching
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -1139,6 +1140,26 @@ export const notificationLogs = pgTable("notification_logs", {
   index("idx_notification_logs_recipient_id").on(table.recipientId),
   index("idx_notification_logs_status").on(table.status),
 ]);
+
+// License reminder logs - tracks sent reminders to prevent duplicates
+export const licenseReminderLogs = pgTable("license_reminder_logs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  reminderType: varchar("reminder_type", { length: 30 }).notNull(),
+  channel: varchar("channel", { length: 10 }).notNull(),
+  sentAt: timestamp("sent_at").defaultNow(),
+  licenseExpirationDate: timestamp("license_expiration_date"),
+  licenseIssuedDate: timestamp("license_issued_date"),
+  courseScheduleDate: timestamp("course_schedule_date"),
+  templateId: uuid("template_id").references(() => notificationTemplates.id),
+}, (table) => [
+  index("idx_license_reminder_logs_user_id").on(table.userId),
+  index("idx_license_reminder_logs_type").on(table.reminderType),
+  index("idx_license_reminder_logs_user_type").on(table.userId, table.reminderType),
+]);
+
+export type LicenseReminderLog = typeof licenseReminderLogs.$inferSelect;
+export type InsertLicenseReminderLog = typeof licenseReminderLogs.$inferInsert;
 
 // Promo Code Redemptions table to track usage and enforce limits
 export const promoCodeRedemptions = pgTable("promo_code_redemptions", {
