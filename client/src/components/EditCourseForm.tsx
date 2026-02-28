@@ -37,6 +37,7 @@ const courseSchema = z.object({
   }),
   duration: z.string().min(1, "Duration is required"),
   category: z.string().min(1, "Category is required"),
+  courseType: z.string().optional(),
   classroomTime: z.string().optional(),
   rangeTime: z.string().optional(),
   rounds: z.number().min(0, "Rounds must be a positive number").optional(),
@@ -151,6 +152,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       maxStudents: course.maxStudents,
       imageUrl: course.imageUrl || "",
       destinationUrl: course.destinationUrl || "",
+      courseType: (course as any).courseType || "",
       handgunRentalEnabled: course.handgunRentalEnabled || false,
       handgunRentalPrice: course.handgunRentalPrice ? course.handgunRentalPrice.toString() : "25.00",
       saleEnabled: (course as any).saleEnabled || false,
@@ -175,7 +177,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       }
       return "";
     })();
-    
+
     form.reset({
       title: course.title,
       briefDescription: course.briefDescription || "",
@@ -192,6 +194,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       maxStudents: course.maxStudents,
       imageUrl: course.imageUrl || "",
       destinationUrl: course.destinationUrl || "",
+      courseType: (course as any).courseType || "",
       handgunRentalEnabled: course.handgunRentalEnabled || false,
       handgunRentalPrice: course.handgunRentalPrice ? course.handgunRentalPrice.toString() : "25.00",
       saleEnabled: (course as any).saleEnabled || false,
@@ -213,6 +216,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
         price: parseFloat(data.price),
         depositAmount: data.depositAmount && data.depositAmount !== "" ? parseFloat(data.depositAmount) : undefined,
         imageUrl: uploadedImageUrl || data.imageUrl || undefined,
+        courseType: data.courseType || null,
         handgunRentalEnabled: data.handgunRentalEnabled || false,
         handgunRentalPrice: data.handgunRentalPrice && data.handgunRentalPrice !== "" ? parseFloat(data.handgunRentalPrice) : 25.00,
         // Sale pricing fields
@@ -407,6 +411,25 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                     {form.formState.errors.category && (
                       <p className="text-sm text-red-600 mt-1">{form.formState.errors.category.message}</p>
                     )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="courseType">Course Type (License Tracking)</Label>
+                    <Select
+                      value={form.watch("courseType") || ""}
+                      onValueChange={(value) => form.setValue("courseType", value === "__none__" ? "" : value, { shouldValidate: true, shouldDirty: true })}
+                    >
+                      <SelectTrigger data-testid="select-course-type">
+                        <SelectValue placeholder="No type (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">No type</SelectItem>
+                        <SelectItem value="initial">Initial CCL Course</SelectItem>
+                        <SelectItem value="refresher">2-Year Refresher</SelectItem>
+                        <SelectItem value="renewal">License Renewal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">Used for automatic license reminder notifications</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

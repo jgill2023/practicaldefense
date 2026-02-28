@@ -32,6 +32,7 @@ const courseSchema = z.object({
   }),
   duration: z.string().min(1, "Duration is required"),
   category: z.string().min(1, "Category is required"),
+  courseType: z.string().optional(),
   classroomTime: z.string().optional(),
   rangeTime: z.string().optional(),
   rounds: z.number().min(0, "Rounds must be a positive number").optional(),
@@ -91,6 +92,7 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
         maxStudents: parseInt(data.maxStudents?.toString() || "20"),
         rounds: data.rounds ? parseInt(data.rounds.toString()) : undefined,
         imageUrl: uploadedImageUrl || data.imageUrl || undefined,
+        courseType: data.courseType || null,
       };
       return await apiRequest("POST", "/api/instructor/courses", courseData);
     },
@@ -263,6 +265,25 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
                     {form.formState.errors.category && (
                       <p className="text-sm text-destructive mt-1">{form.formState.errors.category.message}</p>
                     )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="courseType">Course Type (License Tracking)</Label>
+                    <Select
+                      value={form.watch("courseType") || ""}
+                      onValueChange={(value) => form.setValue("courseType", value === "__none__" ? "" : value, { shouldValidate: true, shouldDirty: true })}
+                    >
+                      <SelectTrigger data-testid="select-course-type">
+                        <SelectValue placeholder="No type (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">No type</SelectItem>
+                        <SelectItem value="initial">Initial CCL Course</SelectItem>
+                        <SelectItem value="refresher">2-Year Refresher</SelectItem>
+                        <SelectItem value="renewal">License Renewal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">Used for automatic license reminder notifications</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
