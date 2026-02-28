@@ -195,6 +195,10 @@ import {
   type OnlineCourseEnrollment,
   type InsertOnlineCourseEnrollment,
   type OnlineCourseEnrollmentWithUser,
+  // License reminder imports
+  licenseReminderLogs,
+  type LicenseReminderLog,
+  type InsertLicenseReminderLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, asc, isNull, isNotNull, sql, gte, gt, lt, lte, ne, inArray, notInArray } from "drizzle-orm";
@@ -823,6 +827,16 @@ export interface IStorage {
   updateOnlineCourseEnrollmentMoodleInfo(id: string, data: { moodleUserId: number; moodleUsername: string; moodlePassword?: string; moodleCourseId: number; moodleSyncedAt: Date }): Promise<OnlineCourseEnrollment>;
   updateOnlineCourseEnrollmentMoodleSyncError(id: string, error: string): Promise<OnlineCourseEnrollment>;
   updateOnlineCourseEnrollmentNotificationStatus(id: string, type: 'email' | 'sms', sent: boolean): Promise<OnlineCourseEnrollment>;
+
+  // ============================================
+  // LICENSE REMINDER METHODS
+  // ============================================
+  getStudentsWithLicenseData(): Promise<User[]>;
+  getActiveEnrollmentsByStudentAndCourseType(studentId: string, courseType: string): Promise<any[]>;
+  getCompletedEnrollmentsByCourseType(courseType: string, afterDate: Date): Promise<any[]>;
+  getNextAvailableCourseByType(courseType: string): Promise<{ course: any; schedule: any } | null>;
+  getLicenseReminderLog(userId: string, reminderType: string, snapshotDate: Date): Promise<LicenseReminderLog | null>;
+  createLicenseReminderLog(log: InsertLicenseReminderLog): Promise<LicenseReminderLog>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2977,8 +2991,33 @@ export class DatabaseStorage implements IStorage {
     // Check if this is a free enrollment (100% discount)
     const isFreeEnrollment = data.paymentIntentId === 'free-enrollment';
 
-    // Only verify payment with Stripe if it's NOT a free enrollment
-    if (!isFreeEnrollment) {
+    if (isFreeEnrollment) {
+      // SECURITY: Server-side validation that enrollment actually qualifies as free
+      if (!enrollment.promoCodeApplied) {
+        throw new Error('Free enrollment claimed but no promo code applied');
+      }
+
+      // Re-validate the promo code to confirm it produces 100% discount
+      const coursePrice = parseFloat(enrollment.course!.price);
+      let verifyAmount = coursePrice;
+      if (enrollment.paymentOption === 'deposit' && enrollment.course!.depositAmount) {
+        const depositAmt = parseFloat(enrollment.course!.depositAmount);
+        verifyAmount = depositAmt > 0 ? depositAmt : 50;
+      }
+
+      const promoValidation = await this.validatePromoCode(
+        enrollment.promoCodeApplied,
+        data.studentInfo.email,
+        enrollment.courseId,
+        verifyAmount,
+        'course'
+      );
+
+      if (!promoValidation.isValid || promoValidation.finalAmount === undefined || promoValidation.finalAmount > 0) {
+        throw new Error('Free enrollment claimed but promo code does not result in 100% discount');
+      }
+    } else {
+      // Only verify payment with Stripe if it's NOT a free enrollment
       const { getStripeClient } = await import('./stripeClient');
       const stripe = await getStripeClient();
 
@@ -3015,7 +3054,7 @@ export class DatabaseStorage implements IStorage {
     if (enrollment.promoCodeApplied) {
       const validation = await this.validatePromoCode(
         enrollment.promoCodeApplied,
-        data.studentInfo.email, // Temporary user ID for validation
+        data.studentInfo.email, // Using email for pre-user-creation validation; per-user limits tracked by email here
         enrollment.courseId,
         expectedAmount,
         'course'
@@ -7375,8 +7414,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateOnlineCourseEnrollmentNotificationStatus(
-    id: string, 
-    type: 'email' | 'sms', 
+    id: string,
+    type: 'email' | 'sms',
     sent: boolean
   ): Promise<OnlineCourseEnrollment> {
     if (type === 'email') {
@@ -7384,6 +7423,112 @@ export class DatabaseStorage implements IStorage {
     } else {
       return this.updateOnlineCourseEnrollment(id, { smsNotificationSent: sent });
     }
+  }
+
+  // --- License Reminder Methods ---
+
+  async getStudentsWithLicenseData(): Promise<User[]> {
+    const students = await db
+      .select()
+      .from(users)
+      .where(
+        and(
+          eq(users.role, 'student'),
+          or(
+            isNotNull(users.concealedCarryLicenseExpiration),
+            isNotNull(users.concealedCarryLicenseIssued)
+          )
+        )
+      );
+    return students;
+  }
+
+  async getActiveEnrollmentsByStudentAndCourseType(studentId: string, courseType: string): Promise<any[]> {
+    const results = await db
+      .select()
+      .from(enrollments)
+      .innerJoin(courses, eq(enrollments.courseId, courses.id))
+      .where(
+        and(
+          eq(enrollments.studentId, studentId),
+          eq(courses.courseType, courseType),
+          notInArray(enrollments.status, ['cancelled']),
+          ne(enrollments.paymentStatus, 'refunded')
+        )
+      );
+    return results;
+  }
+
+  async getCompletedEnrollmentsByCourseType(courseType: string, afterDate: Date): Promise<any[]> {
+    const results = await db
+      .select({
+        enrollment: enrollments,
+        course: courses,
+        schedule: courseSchedules,
+        student: users,
+      })
+      .from(enrollments)
+      .innerJoin(courses, eq(enrollments.courseId, courses.id))
+      .innerJoin(courseSchedules, eq(enrollments.scheduleId, courseSchedules.id))
+      .innerJoin(users, eq(enrollments.studentId, users.id))
+      .where(
+        and(
+          eq(courses.courseType, courseType),
+          eq(enrollments.status, 'completed'),
+          gte(courseSchedules.endDate, afterDate)
+        )
+      );
+    return results;
+  }
+
+  async getNextAvailableCourseByType(courseType: string): Promise<{ course: any; schedule: any } | null> {
+    const now = new Date();
+    const results = await db
+      .select({
+        course: courses,
+        schedule: courseSchedules,
+      })
+      .from(courseSchedules)
+      .innerJoin(courses, eq(courseSchedules.courseId, courses.id))
+      .where(
+        and(
+          eq(courses.courseType, courseType),
+          eq(courses.isActive, true),
+          gt(courseSchedules.startDate, now),
+          gt(courseSchedules.availableSpots, 0),
+          isNull(courseSchedules.deletedAt)
+        )
+      )
+      .orderBy(asc(courseSchedules.startDate))
+      .limit(1);
+
+    return results.length > 0 ? results[0] : null;
+  }
+
+  async getLicenseReminderLog(userId: string, reminderType: string, snapshotDate: Date): Promise<LicenseReminderLog | null> {
+    const [log] = await db
+      .select()
+      .from(licenseReminderLogs)
+      .where(
+        and(
+          eq(licenseReminderLogs.userId, userId),
+          eq(licenseReminderLogs.reminderType, reminderType),
+          or(
+            eq(licenseReminderLogs.licenseExpirationDate, snapshotDate),
+            eq(licenseReminderLogs.licenseIssuedDate, snapshotDate)
+          )
+        )
+      )
+      .limit(1);
+    return log || null;
+  }
+
+  async createLicenseReminderLog(log: InsertLicenseReminderLog): Promise<LicenseReminderLog> {
+    const [newLog] = await db
+      .insert(licenseReminderLogs)
+      .values(log)
+      .returning();
+    return newLog;
   }
 }
 
