@@ -2,6 +2,7 @@ import { createServer } from "http";
 import { createApp } from "./app";
 import { setupVite, serveStatic, log } from "./vite";
 import { cronService } from "./services/cronService";
+import { seedLicenseReminderTemplates } from './services/seedLicenseReminderTemplates';
 
 // ============================================
 // STARTUP ENV VAR VALIDATION
@@ -49,5 +50,8 @@ if (missingVars.length > 0) {
 
     // Initialize cron jobs for calendar maintenance
     cronService.initialize();
+
+    // Seed license reminder templates (idempotent)
+    seedLicenseReminderTemplates();
   });
 })();
