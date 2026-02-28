@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 // Strict: auth endpoints (login, signup, password reset)
 export const authRateLimit = rateLimit({
@@ -8,7 +8,9 @@ export const authRateLimit = rateLimit({
   legacyHeaders: false,
   message: { message: 'Too many attempts, please try again later' },
   keyGenerator: (req) => {
-    return (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || 'unknown';
+    const forwarded = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim();
+    const ip = forwarded || req.ip || 'unknown';
+    return ipKeyGenerator(ip);
   },
 });
 
@@ -20,6 +22,8 @@ export const formRateLimit = rateLimit({
   legacyHeaders: false,
   message: { message: 'Too many submissions, please try again later' },
   keyGenerator: (req) => {
-    return (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || 'unknown';
+    const forwarded = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim();
+    const ip = forwarded || req.ip || 'unknown';
+    return ipKeyGenerator(ip);
   },
 });

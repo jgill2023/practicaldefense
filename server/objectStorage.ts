@@ -2,8 +2,8 @@ import { put, del } from "@vercel/blob";
 import { Response } from "express";
 import { Readable } from "node:stream";
 import { randomUUID } from "crypto";
+import type { ObjectAclPolicy } from "./objectAcl";
 import {
-  ObjectAclPolicy,
   ObjectPermission,
   canAccessObject,
   getObjectAclPolicy,
@@ -11,7 +11,8 @@ import {
   deleteObjectAclPolicy,
 } from "./objectAcl";
 
-export { ObjectAclPolicy, ObjectPermission };
+export type { ObjectAclPolicy };
+export { ObjectPermission };
 
 export class ObjectNotFoundError extends Error {
   constructor() {
@@ -87,7 +88,7 @@ export class ObjectStorageService {
   ): Promise<{ url: string; pathname: string }> {
     const ext = originalName ? originalName.split(".").pop()?.replace(/[^a-zA-Z0-9]/g, '') : "bin";
     const pathname = `uploads/${randomUUID()}.${ext}`;
-    return this.uploadObject(pathname, buffer, contentType, "private");
+    return this.uploadObject(pathname, buffer, contentType, "public");
   }
 
   // Set ACL policy on a blob by its pathname.
