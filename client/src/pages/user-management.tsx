@@ -1125,9 +1125,9 @@ export default function UserManagementPage() {
                   ))}
                 </div>
 
-                {(!columnMap["name"] || !columnMap["email"]) && (
+                {(!(columnMap["name"] || (columnMap["firstname"] || columnMap["lastname"])) || !columnMap["email"]) && (
                   <p className="text-sm text-red-600">
-                    You must map both Name and Email to proceed.
+                    You must map Name (or First/Last Name) and Email to proceed.
                   </p>
                 )}
 
@@ -1141,7 +1141,7 @@ export default function UserManagementPage() {
                         importPreviewMutation.mutate({ file: importFile, mappings: columnMap });
                       }
                     }}
-                    disabled={!columnMap["name"] || !columnMap["email"] || importPreviewMutation.isPending}
+                    disabled={!(columnMap["name"] || columnMap["firstname"] || columnMap["lastname"]) || !columnMap["email"] || importPreviewMutation.isPending}
                   >
                     {importPreviewMutation.isPending ? "Processing..." : "Preview Import"}
                   </Button>

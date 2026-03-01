@@ -65,7 +65,9 @@ interface HeaderScanResult {
 }
 
 const SYSTEM_FIELDS = [
-  { key: "name", label: "Full Name", required: true },
+  { key: "name", label: "Full Name", required: false },
+  { key: "firstname", label: "First Name", required: false },
+  { key: "lastname", label: "Last Name", required: false },
   { key: "email", label: "Email", required: true },
   { key: "phone", label: "Phone", required: false },
   { key: "class", label: "Course/Class", required: false },
@@ -105,6 +107,8 @@ function mapHeader(raw: string): string | null {
   const n = normalizeHeader(raw);
   // Required
   if (["name", "fullname", "studentname"].includes(n)) return "name";
+  if (["firstname", "first", "fname", "givenname"].includes(n)) return "firstname";
+  if (["lastname", "last", "lname", "surname", "familyname"].includes(n)) return "lastname";
   if (["email", "emailaddress"].includes(n)) return "email";
   // Optional
   if (n === "phone") return "phone";
@@ -264,10 +268,12 @@ importRouter.post(
       // Full preview mode: use user-confirmed column mappings
       const columnMap: Record<string, string> = userColumnMap;
 
-      // Verify required columns are mapped
-      if (!columnMap["name"]) {
+      // Verify required columns are mapped — need either "name" or "firstname"+"lastname"
+      const hasFullName = !!columnMap["name"];
+      const hasSplitName = !!columnMap["firstname"] || !!columnMap["lastname"];
+      if (!hasFullName && !hasSplitName) {
         return res.status(400).json({
-          message: 'Required field "Full Name" is not mapped to any CSV column',
+          message: 'Either "Full Name" or "First Name"/"Last Name" must be mapped',
         });
       }
       if (!columnMap["email"]) {
@@ -302,7 +308,9 @@ importRouter.post(
         const rec = records[i];
         const rowNum = i + 2; // 1-indexed, +1 for header row
 
-        const rawName = rec[columnMap["name"]] || "";
+        const rawName = columnMap["name"] ? rec[columnMap["name"]] || "" : "";
+        const rawFirstName = columnMap["firstname"] ? rec[columnMap["firstname"]] || "" : "";
+        const rawLastName = columnMap["lastname"] ? rec[columnMap["lastname"]] || "" : "";
         const rawEmail = rec[columnMap["email"]] || "";
         const rawPhone = columnMap["phone"] ? rec[columnMap["phone"]] || "" : "";
         const rawClass = columnMap["class"] ? rec[columnMap["class"]] || "" : "";
@@ -313,14 +321,27 @@ importRouter.post(
         const warnings: string[] = [];
         const errors: string[] = [];
 
-        // Name
-        const name = rawName.trim();
+        // Name — support either full name or separate first/last
+        let name: string;
+        let firstName: string;
+        let lastName: string;
+
+        if (hasFullName) {
+          name = rawName.trim();
+          const split = splitName(name);
+          firstName = split.firstName;
+          lastName = split.lastName;
+          if (name && !lastName) {
+            warnings.push("Could not split name into first/last — no space found");
+          }
+        } else {
+          firstName = rawFirstName.trim();
+          lastName = rawLastName.trim();
+          name = [firstName, lastName].filter(Boolean).join(" ");
+        }
+
         if (!name) {
           errors.push("Name is required");
-        }
-        const { firstName, lastName } = splitName(name);
-        if (name && !lastName) {
-          warnings.push("Could not split name into first/last — no space found");
         }
 
         // Email
