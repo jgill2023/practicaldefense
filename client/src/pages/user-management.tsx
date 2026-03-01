@@ -1167,34 +1167,31 @@ export default function UserManagementPage() {
                   </Card>
                   <Card>
                     <CardContent className="p-3 text-center">
-                      <div className="text-2xl font-bold text-green-600">{importPreview.validRows}</div>
+                      <div className="text-2xl font-bold text-green-600">{importPreview.validRows?.length ?? 0}</div>
                       <div className="text-xs text-muted-foreground">Valid</div>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="p-3 text-center">
-                      <div className="text-2xl font-bold text-red-600">{importPreview.errorCount ?? 0}</div>
+                      <div className="text-2xl font-bold text-red-600">{importPreview.errorRows?.length ?? 0}</div>
                       <div className="text-xs text-muted-foreground">Errors</div>
                     </CardContent>
                   </Card>
                 </div>
 
                 {/* Course matching status */}
-                {importPreview.courseMatches && importPreview.courseMatches.length > 0 && (
+                {importPreview.courseMatches && Object.keys(importPreview.courseMatches).length > 0 && (
                   <div>
                     <h4 className="font-medium mb-2">Course Matching</h4>
                     <div className="space-y-1">
-                      {importPreview.courseMatches.map((match: any, i: number) => (
+                      {Object.entries(importPreview.courseMatches).map(([csvCourse, courseId]: [string, string | null], i: number) => (
                         <div key={i} className="flex items-center gap-2 text-sm">
-                          {match.matched ? (
+                          {courseId ? (
                             <Badge variant="default" className="bg-green-600">Matched</Badge>
                           ) : (
                             <Badge variant="destructive">Not Found</Badge>
                           )}
-                          <span>{match.csvCourse}</span>
-                          {match.matched && (
-                            <span className="text-muted-foreground">-&gt; {match.matchedName}</span>
-                          )}
+                          <span>{csvCourse}</span>
                         </div>
                       ))}
                     </div>
@@ -1202,32 +1199,40 @@ export default function UserManagementPage() {
                 )}
 
                 {/* Error rows */}
-                {importPreview.errors && importPreview.errors.length > 0 && (
+                {importPreview.errorRows && importPreview.errorRows.length > 0 && (
                   <div>
                     <h4 className="font-medium mb-2 text-red-600">Errors</h4>
                     <div className="space-y-1 max-h-40 overflow-y-auto">
-                      {importPreview.errors.map((err: any, i: number) => (
-                        <div key={i} className="text-sm text-red-600">
-                          Row {err.row}: {err.message}
-                        </div>
-                      ))}
+                      {importPreview.errorRows.map((row: any, i: number) =>
+                        row.errors.map((msg: string, j: number) => (
+                          <div key={`${i}-${j}`} className="text-sm text-red-600">
+                            Row {row.rowNumber}: {msg}
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 )}
 
                 {/* Warning rows */}
-                {importPreview.warnings && importPreview.warnings.length > 0 && (
-                  <div>
-                    <h4 className="font-medium mb-2 text-yellow-600">Warnings</h4>
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                      {importPreview.warnings.map((warn: any, i: number) => (
-                        <div key={i} className="text-sm text-yellow-600">
-                          Row {warn.row}: {warn.message}
-                        </div>
-                      ))}
+                {(() => {
+                  const allWarnings = [...(importPreview.validRows || []), ...(importPreview.errorRows || [])]
+                    .filter((r: any) => r.warnings?.length > 0);
+                  return allWarnings.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2 text-yellow-600">Warnings</h4>
+                      <div className="space-y-1 max-h-40 overflow-y-auto">
+                        {allWarnings.map((row: any, i: number) =>
+                          row.warnings.map((msg: string, j: number) => (
+                            <div key={`${i}-${j}`} className="text-sm text-yellow-600">
+                              Row {row.rowNumber}: {msg}
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 <DialogFooter>
                   <Button variant="outline" onClick={() => { setImportStep("mapping"); setImportPreview(null); }}>
@@ -1236,11 +1241,11 @@ export default function UserManagementPage() {
                   <Button
                     onClick={() => {
                       setImportStep("importing");
-                      importConfirmMutation.mutate(importPreview.rows);
+                      importConfirmMutation.mutate(importPreview.validRows);
                     }}
-                    disabled={!importPreview.validRows || importPreview.validRows === 0}
+                    disabled={!importPreview.validRows?.length}
                   >
-                    Confirm Import ({importPreview.validRows} students)
+                    Confirm Import ({importPreview.validRows?.length ?? 0} students)
                   </Button>
                 </DialogFooter>
               </div>
