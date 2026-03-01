@@ -1463,6 +1463,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Schedule not found" });
       }
 
+      // Gate: Check if course requires online course enrollment
+      const course = await storage.getCourse(schedule.courseId);
+      if (course?.requiresOnlineCourseEnrollment) {
+        // Must be authenticated
+        if (!req.user || !req.user.id) {
+          return res.status(401).json({
+            message: "You must be logged in to register for this course.",
+            code: 'authentication_required',
+          });
+        }
+
+        // Must have online course enrollment
+        const hasOnlineEnrollment = await storage.hasOnlineCourseEnrollment(req.user.id);
+        if (!hasOnlineEnrollment) {
+          return res.status(403).json({
+            message: "This session is only available to students enrolled in our Online NM Concealed Carry Course.",
+            code: 'online_course_required',
+          });
+        }
+
+        // Must not already have an active registration for this course
+        const { hasActive } = await storage.hasActiveEnrollmentForCourse(req.user.id, schedule.courseId);
+        if (hasActive) {
+          return res.status(409).json({
+            message: "You are already registered for a range session. Please cancel your existing registration before registering for a new date.",
+            code: 'already_registered',
+          });
+        }
+      }
+
       const draftEnrollment = await storage.initiateRegistration({
         courseId: schedule.courseId,
         scheduleId,
