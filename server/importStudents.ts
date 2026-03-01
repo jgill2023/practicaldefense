@@ -56,6 +56,24 @@ interface ConfirmResult {
   errors: { row: number; error: string }[];
 }
 
+interface HeaderScanResult {
+  mode: "headerScan";
+  csvHeaders: string[];
+  suggestions: { csvHeader: string; suggestedField: string | null }[];
+  systemFields: { key: string; label: string; required: boolean }[];
+  sampleRows: Record<string, string>[];
+}
+
+const SYSTEM_FIELDS = [
+  { key: "name", label: "Full Name", required: true },
+  { key: "email", label: "Email", required: true },
+  { key: "phone", label: "Phone", required: false },
+  { key: "class", label: "Course/Class", required: false },
+  { key: "date", label: "Class Date", required: false },
+  { key: "dob", label: "Date of Birth", required: false },
+  { key: "occl", label: "Online Course (OCCL)", required: false },
+];
+
 // ---------- Multer config for CSV ----------
 
 const csvUpload = multer({
@@ -212,25 +230,49 @@ importRouter.post(
 
       // Build column mapping from the first record's keys
       const rawHeaders = Object.keys(records[0]);
-      const columnMap: Record<string, string> = {}; // canonical -> original header
-      for (const h of rawHeaders) {
-        const canonical = mapHeader(h);
-        if (canonical && !columnMap[canonical]) {
-          columnMap[canonical] = h;
+
+      // Check for user-provided column map (sent as JSON string in FormData)
+      const userColumnMapRaw = req.body?.columnMap;
+      let userColumnMap: Record<string, string> | null = null;
+
+      if (userColumnMapRaw) {
+        try {
+          userColumnMap = JSON.parse(userColumnMapRaw);
+        } catch {
+          return res.status(400).json({ message: "Invalid columnMap JSON" });
         }
       }
 
-      // Verify required columns exist
+      if (!userColumnMap) {
+        // Header scan mode: return headers + auto-suggestions for mapping UI
+        const suggestions = rawHeaders.map((h) => ({
+          csvHeader: h,
+          suggestedField: mapHeader(h),
+        }));
+
+        const result: HeaderScanResult = {
+          mode: "headerScan",
+          csvHeaders: rawHeaders,
+          suggestions,
+          systemFields: SYSTEM_FIELDS,
+          sampleRows: records.slice(0, 3),
+        };
+
+        return res.json(result);
+      }
+
+      // Full preview mode: use user-confirmed column mappings
+      const columnMap: Record<string, string> = userColumnMap;
+
+      // Verify required columns are mapped
       if (!columnMap["name"]) {
         return res.status(400).json({
-          message:
-            'Required column "name" (or fullname/full_name/student_name) not found in CSV headers',
+          message: 'Required field "Full Name" is not mapped to any CSV column',
         });
       }
       if (!columnMap["email"]) {
         return res.status(400).json({
-          message:
-            'Required column "email" (or email_address) not found in CSV headers',
+          message: 'Required field "Email" is not mapped to any CSV column',
         });
       }
 

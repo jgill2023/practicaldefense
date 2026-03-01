@@ -97,8 +97,10 @@ export default function UserManagementPage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<any>(null);
-  const [importStep, setImportStep] = useState<"upload" | "preview" | "importing" | "done">("upload");
+  const [importStep, setImportStep] = useState<"upload" | "mapping" | "preview" | "importing" | "done">("upload");
   const [importResults, setImportResults] = useState<any>(null);
+  const [headerScan, setHeaderScan] = useState<any>(null);
+  const [columnMap, setColumnMap] = useState<Record<string, string>>({});
 
   const form = useForm<CreateUserForm>({
     resolver: zodResolver(createUserSchema),
@@ -266,9 +268,12 @@ export default function UserManagementPage() {
   });
 
   const importPreviewMutation = useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async ({ file, mappings }: { file: File; mappings?: Record<string, string> }) => {
       const formData = new FormData();
       formData.append("file", file);
+      if (mappings) {
+        formData.append("columnMap", JSON.stringify(mappings));
+      }
       const res = await fetch("/api/admin/import-students/preview", {
         method: "POST",
         body: formData,
@@ -281,8 +286,20 @@ export default function UserManagementPage() {
       return res.json();
     },
     onSuccess: (data) => {
-      setImportPreview(data);
-      setImportStep("preview");
+      if (data.mode === "headerScan") {
+        setHeaderScan(data);
+        const autoMap: Record<string, string> = {};
+        for (const s of data.suggestions) {
+          if (s.suggestedField) {
+            autoMap[s.suggestedField] = s.csvHeader;
+          }
+        }
+        setColumnMap(autoMap);
+        setImportStep("mapping");
+      } else {
+        setImportPreview(data);
+        setImportStep("preview");
+      }
     },
     onError: (error: any) => {
       toast({
@@ -437,7 +454,7 @@ export default function UserManagementPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => { setImportDialogOpen(true); setImportStep("upload"); setImportFile(null); setImportPreview(null); setImportResults(null); }}>
+            <Button onClick={() => { setImportDialogOpen(true); setImportStep("upload"); setImportFile(null); setImportPreview(null); setImportResults(null); setHeaderScan(null); setColumnMap({}); }}>
               <Upload className="w-4 h-4 mr-2" />
               Import Students
             </Button>
@@ -1022,10 +1039,109 @@ export default function UserManagementPage() {
                   <Button
                     onClick={() => {
                       if (importFile) {
-                        importPreviewMutation.mutate(importFile);
+                        importPreviewMutation.mutate({ file: importFile });
                       }
                     }}
                     disabled={!importFile || importPreviewMutation.isPending}
+                  >
+                    {importPreviewMutation.isPending ? "Processing..." : "Upload & Map Columns"}
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
+
+            {/* Step 2: Column Mapping */}
+            {importStep === "mapping" && headerScan && (
+              <div className="space-y-4 py-4">
+                <p className="text-sm text-muted-foreground">
+                  Map your CSV columns to the system fields below. Name and Email are required.
+                </p>
+
+                {headerScan.sampleRows?.length > 0 && (
+                  <div className="border rounded-md overflow-x-auto max-h-32">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {headerScan.csvHeaders.map((h: string) => (
+                            <TableHead key={h} className="text-xs whitespace-nowrap">{h}</TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {headerScan.sampleRows.map((row: Record<string, string>, i: number) => (
+                          <TableRow key={i}>
+                            {headerScan.csvHeaders.map((h: string) => (
+                              <TableCell key={h} className="text-xs whitespace-nowrap">{row[h] || ""}</TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {headerScan.systemFields.map((field: { key: string; label: string; required: boolean }) => (
+                    <div key={field.key} className="flex items-center gap-3">
+                      <div className="w-44 text-sm font-medium">
+                        {field.label}
+                        {field.required && <span className="text-red-500 ml-1">*</span>}
+                      </div>
+                      <Select
+                        value={columnMap[field.key] || "__none__"}
+                        onValueChange={(value) => {
+                          setColumnMap((prev) => {
+                            const next = { ...prev };
+                            if (value === "__none__") {
+                              delete next[field.key];
+                            } else {
+                              for (const k of Object.keys(next)) {
+                                if (next[k] === value) delete next[k];
+                              }
+                              next[field.key] = value;
+                            }
+                            return next;
+                          });
+                        }}
+                      >
+                        <SelectTrigger className="w-56">
+                          <SelectValue placeholder="-- Skip --" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">-- Skip --</SelectItem>
+                          {headerScan.csvHeaders.map((h: string) => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {headerScan.suggestions.find(
+                        (s: any) => s.suggestedField === field.key
+                      ) && columnMap[field.key] === headerScan.suggestions.find(
+                        (s: any) => s.suggestedField === field.key
+                      )?.csvHeader && (
+                        <Badge variant="secondary" className="text-xs">Auto</Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {(!columnMap["name"] || !columnMap["email"]) && (
+                  <p className="text-sm text-red-600">
+                    You must map both Name and Email to proceed.
+                  </p>
+                )}
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => { setImportStep("upload"); setHeaderScan(null); setColumnMap({}); }}>
+                    Back
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (importFile) {
+                        importPreviewMutation.mutate({ file: importFile, mappings: columnMap });
+                      }
+                    }}
+                    disabled={!columnMap["name"] || !columnMap["email"] || importPreviewMutation.isPending}
                   >
                     {importPreviewMutation.isPending ? "Processing..." : "Preview Import"}
                   </Button>
@@ -1033,7 +1149,7 @@ export default function UserManagementPage() {
               </div>
             )}
 
-            {/* Step 2: Preview */}
+            {/* Step 3: Preview */}
             {importStep === "preview" && importPreview && (
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -1114,7 +1230,7 @@ export default function UserManagementPage() {
                 )}
 
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => { setImportStep("upload"); setImportPreview(null); }}>
+                  <Button variant="outline" onClick={() => { setImportStep("mapping"); setImportPreview(null); }}>
                     Back
                   </Button>
                   <Button
