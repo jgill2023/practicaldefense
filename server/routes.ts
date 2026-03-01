@@ -9794,36 +9794,76 @@ jeremy@abqconcealedcarry.com
     moodlePassword?: string
   ) {
     const moodleUrl = process.env.MOODLE_URL || 'your Moodle site';
-    
-    // Only send password if it was newly created (not an existing user)
-    const loginDetails = moodlePassword 
-      ? `\n\nYour login credentials:\nUsername: ${moodleUsername}\nPassword: ${moodlePassword}\n\nPlease change your password after first login.`
-      : `\n\nYour existing Moodle account (${moodleUsername}) has been enrolled in the course.`;
 
-    const emailBody = `Dear ${enrollment.firstName},
+    // Build login details text (used as a template variable and as fallback)
+    const emailLoginDetailsHtml = moodlePassword
+      ? `<p><strong>Your login credentials:</strong><br>Username: ${moodleUsername}<br>Password: ${moodlePassword}</p><p>Please change your password after first login.</p>`
+      : `<p>Your existing Moodle account (<strong>${moodleUsername}</strong>) has been enrolled in the course.</p>`;
 
-Thank you for enrolling in ${enrollment.courseName}!
+    const smsLoginDetails = moodlePassword
+      ? `Your Moodle login: Username: ${moodleUsername}, Password: ${moodlePassword}.`
+      : `Your existing Moodle account (${moodleUsername}) has been enrolled.`;
 
-You can now access your course at: ${moodleUrl}
-${loginDetails}
+    // Build template variables for the notification engine
+    const templateVars: import('./notificationEngine').NotificationVariables = {
+      student: {
+        name: `${enrollment.firstName} ${enrollment.lastName}`,
+        firstName: enrollment.firstName,
+        lastName: enrollment.lastName,
+        email: enrollment.email,
+        phone: enrollment.phone,
+      },
+      course: {
+        name: enrollment.courseName,
+        description: '',
+        price: 0,
+        category: 'online',
+      },
+      moodle: {
+        username: moodleUsername,
+        password: moodlePassword || '',
+        url: moodleUrl,
+        loginDetails: '', // set per-channel below
+      },
+    };
 
-If you have any questions, please don't hesitate to contact us.
+    // Try to load editable templates from the database
+    let emailTemplate: any = null;
+    let smsTemplate: any = null;
+    try {
+      const templates = await storage.getNotificationTemplatesByCategory('online_enrollment');
+      emailTemplate = templates.find(t => t.type === 'email' && t.isActive);
+      smsTemplate = templates.find(t => t.type === 'sms' && t.isActive);
+    } catch (err) {
+      console.warn('[MoodleNotify] Could not load templates, using defaults:', err);
+    }
 
-Best regards,
-Practical Defense Training LLC`;
-
-    const smsMessage = moodlePassword 
-      ? `Welcome to ${enrollment.courseName}! Your Moodle login: Username: ${moodleUsername}, Password: ${moodlePassword}. Login at ${moodleUrl}`
-      : `Welcome to ${enrollment.courseName}! Your existing Moodle account (${moodleUsername}) has been enrolled. Login at ${moodleUrl}`;
-
-    // Send email notification if email is available
+    // Send email notification
     if (enrollment.email) {
       try {
+        let subject: string;
+        let htmlContent: string;
+        let textContent: string;
+
+        if (emailTemplate) {
+          // Use editable template from database
+          templateVars.moodle!.loginDetails = emailLoginDetailsHtml;
+          subject = NotificationEngine.processTemplate(emailTemplate.subject || `Your {{courseName}} Course Access`, templateVars);
+          htmlContent = NotificationEngine.processTemplate(emailTemplate.content, templateVars);
+          textContent = htmlContent.replace(/<[^>]+>/g, '');
+        } else {
+          // Fallback to hardcoded default
+          subject = `Your ${enrollment.courseName} Course Access`;
+          const plainBody = `Dear ${enrollment.firstName},\n\nThank you for enrolling in ${enrollment.courseName}!\n\nYou can now access your course at: ${moodleUrl}\n${moodlePassword ? `\nYour login credentials:\nUsername: ${moodleUsername}\nPassword: ${moodlePassword}\n\nPlease change your password after first login.` : `\nYour existing Moodle account (${moodleUsername}) has been enrolled in the course.`}\n\nIf you have any questions, please don't hesitate to contact us.\n\nBest regards,\nPractical Defense Training LLC`;
+          htmlContent = plainBody.replace(/\n/g, '<br>');
+          textContent = plainBody;
+        }
+
         await NotificationEmailService.sendNotificationEmail({
           to: [enrollment.email],
-          subject: `Your ${enrollment.courseName} Course Access`,
-          htmlContent: emailBody.replace(/\n/g, '<br>'),
-          textContent: emailBody,
+          subject,
+          htmlContent,
+          textContent,
         });
         await storage.updateOnlineCourseEnrollmentNotificationStatus(enrollment.id, 'email', true);
         console.log(`Email notification sent to ${enrollment.email}`);
@@ -9834,12 +9874,21 @@ Practical Defense Training LLC`;
       console.warn(`Cannot send email notification: no email for enrollment ${enrollment.id}`);
     }
 
-    // Send SMS notification if phone is available
+    // Send SMS notification
     if (enrollment.phone) {
       try {
+        let smsBody: string;
+
+        if (smsTemplate) {
+          templateVars.moodle!.loginDetails = smsLoginDetails;
+          smsBody = NotificationEngine.processTemplate(smsTemplate.content, templateVars);
+        } else {
+          smsBody = `Welcome to ${enrollment.courseName}! ${smsLoginDetails} Login at ${moodleUrl}`;
+        }
+
         await sendSms({
           to: enrollment.phone,
-          body: smsMessage,
+          body: smsBody,
         });
         await storage.updateOnlineCourseEnrollmentNotificationStatus(enrollment.id, 'sms', true);
         console.log(`SMS notification sent to ${enrollment.phone}`);

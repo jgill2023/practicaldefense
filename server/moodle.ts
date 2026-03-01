@@ -48,10 +48,40 @@ function generateSecurePassword(length: number = 12): string {
   return password.split('').sort(() => crypto.randomInt(3) - 1).join('');
 }
 
-function generateUsername(email: string, firstName: string, lastName: string): string {
-  const emailPrefix = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+async function getUserByUsername(config: MoodleConfig, username: string): Promise<MoodleUser | null> {
+  try {
+    const users = await moodleApiCall<MoodleUser[]>(config, 'core_user_get_users_by_field', {
+      field: 'username',
+      values: [username],
+    });
+    return users.length > 0 ? users[0] : null;
+  } catch (error) {
+    console.error('Error fetching Moodle user by username:', error);
+    return null;
+  }
+}
+
+async function generateUsername(config: MoodleConfig, email: string): Promise<string> {
+  const baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // Try the plain email prefix first
+  const existing = await getUserByUsername(config, baseUsername);
+  if (!existing) {
+    return baseUsername;
+  }
+
+  // Username taken — append incrementing number until we find one that's free
+  for (let i = 2; i <= 99; i++) {
+    const candidate = `${baseUsername}${i}`;
+    const taken = await getUserByUsername(config, candidate);
+    if (!taken) {
+      return candidate;
+    }
+  }
+
+  // Fallback: append timestamp (extremely unlikely to reach here)
   const timestamp = Date.now().toString(36).slice(-4);
-  return `${emailPrefix.slice(0, 12)}${timestamp}`;
+  return `${baseUsername}${timestamp}`;
 }
 
 async function moodleApiCall<T>(
@@ -130,7 +160,7 @@ async function createUser(
     phone?: string;
   }
 ): Promise<{ userId: number; username: string; password: string }> {
-  const username = generateUsername(userData.email, userData.firstName, userData.lastName);
+  const username = await generateUsername(config, userData.email);
   const password = generateSecurePassword(14);
   
   const result = await moodleApiCall<MoodleCreateUserResponse[]>(config, 'core_user_create_users', {

@@ -87,6 +87,12 @@ export interface NotificationVariables {
     processedAt: string;
     reason?: string;
   };
+  moodle?: {
+    username: string;
+    password?: string;
+    url: string;
+    loginDetails: string;
+  };
   questionnaire?: Record<string, any>;
   system?: {
     companyName: string;
@@ -193,6 +199,12 @@ export class NotificationEngine {
     website: 'system.website',
     websiteUrl: 'system.websiteUrl',
     currentDate: 'system.currentDate',
+
+    // Moodle / online course aliases
+    moodleUsername: 'moodle.username',
+    moodlePassword: 'moodle.password',
+    moodleUrl: 'moodle.url',
+    moodleLoginDetails: 'moodle.loginDetails',
 
     // License reminder aliases
     nextCourseName: 'course.name',
