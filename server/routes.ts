@@ -6905,6 +6905,9 @@ jeremy@abqconcealedcarry.com
         paymentIntentId: enrollment.stripePaymentIntentId,
         courseName: course.title,
         scheduleDate: schedule.startDate,
+        studentName: enrollment.student
+          ? `${enrollment.student.firstName} ${enrollment.student.lastName}`
+          : "Unknown Student",
         paymentHistory: [],
       };
 

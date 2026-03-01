@@ -3,9 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { useCommunicationCounts } from "@/hooks/useCommunicationCounts";
-import { hasInstructorPrivileges, canCreateAccounts, isInstructorOrHigher, isAdminOrHigher } from "@/lib/authUtils";
-import { usePendingUsersCount } from "@/hooks/usePendingUsersCount";
+import { isInstructorOrHigher } from "@/lib/authUtils";
 import { useCart } from "@/components/shopping-cart";
 import { ShoppingCartComponent } from "@/components/shopping-cart";
 import { useQuery } from "@tanstack/react-query";
@@ -18,17 +16,8 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Tag, Users, Star, Menu, X, Calendar, List, ChevronDown, ChevronRight, User, Bell, MessageSquare, Settings, BookOpen, ShoppingCart } from "lucide-react";
+import { Menu, X, Calendar, ChevronDown, ChevronRight, BookOpen, ShoppingCart } from "lucide-react";
 import { SiFacebook, SiInstagram, SiYoutube, SiGoogle } from "react-icons/si";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-} from "@/components/ui/dropdown-menu";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -41,12 +30,9 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
   const { isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobileSettingsOpen, setIsMobileSettingsOpen] = useState(false);
   const [isMobileCoursesOpen, setIsMobileCoursesOpen] = useState(false);
   const [isNavSticky, setIsNavSticky] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
-  const { counts } = useCommunicationCounts();
-  const { pendingCount } = usePendingUsersCount();
   const { itemCount } = useCart();
 
   const { data: coursesData } = useQuery<CourseWithSchedules[]>({
@@ -107,98 +93,22 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
     
     return (
       <div className="min-h-screen bg-zinc-950 font-body">
-        {/* Secondary Menu Bar for Logged In Users - Always Fixed at Top */}
+        {/* Quick access bar for authenticated users - Always Fixed at Top */}
         {isAuthenticated && (
           <div className="fixed top-0 left-0 right-0 z-[60] hidden md:block bg-zinc-900 border-b border-zinc-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-end h-10">
-                <nav className="flex items-center space-x-6">
+                <nav className="flex items-center space-x-4">
                   {isInstructorOrHigher(user) && (
-                    <>
-                      <Link href="/instructor-dashboard" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-dashboard">
-                        Dashboard
-                      </Link>
-                      <Link href="/instructor-calendar" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors flex items-center gap-1" data-testid="link-secondary-calendar">
-                        <Calendar className="h-3 w-3" />
-                        Calendar
-                      </Link>
-                      <Link href="/students" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-students">
-                        Students
-                      </Link>
-                      <Link href="/communications" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors relative" data-testid="link-secondary-communication">
-                        Communication
-                        {counts.unread > 0 && (
-                          <Badge 
-                            variant="destructive" 
-                            className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
-                          >
-                            {counts.unread > 99 ? '99+' : counts.unread}
-                          </Badge>
-                        )}
-                      </Link>
-                    </>
-                  )}
-                  {isAdminOrHigher(user) && (
-                    <Link href="/product-management" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-products">
-                      Products
+                    <Link href="/instructor-dashboard" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-dashboard">
+                      Dashboard
                     </Link>
                   )}
                   <Link href="/student-portal" className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors" data-testid="link-secondary-student-dashboard">
                     Student Dashboard
                   </Link>
-                  {isInstructorOrHigher(user) && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors flex items-center gap-1" data-testid="dropdown-settings">
-                        <Settings className="h-4 w-4" />
-                        Settings
-                        <ChevronDown className="h-3 w-3" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem asChild>
-                          <Link href="/settings" className="w-full cursor-pointer" data-testid="link-settings-google-calendar">
-                            Google Calendar
-                          </Link>
-                        </DropdownMenuItem>
-                        {isAdminOrHigher(user) && (
-                          <>
-                            <DropdownMenuItem asChild>
-                              <Link href="/gift-card-management" className="w-full cursor-pointer" data-testid="link-settings-gift-cards">
-                                Gift Card Admin
-                              </Link>
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        {canCreateAccounts(user) && (
-                          <DropdownMenuItem asChild>
-                            <Link href="/admin/users" className="w-full cursor-pointer relative" data-testid="link-settings-user-management">
-                              User Management
-                              {pendingCount > 0 && (
-                                <Badge 
-                                  variant="destructive" 
-                                  className="ml-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
-                                  data-testid="badge-pending-users-desktop"
-                                >
-                                  {pendingCount > 99 ? '99+' : pendingCount}
-                                </Badge>
-                              )}
-                            </Link>
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem asChild>
-                          <Link href="/student-portal" className="w-full cursor-pointer" data-testid="link-settings-student-dashboard">
-                            Student Dashboard
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/reports" className="w-full cursor-pointer" data-testid="link-settings-reports">
-                            Reports
-                          </Link>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     className="text-xs"
                     onClick={handleLogout}
@@ -605,98 +515,22 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
       </div>
       {/* Sticky Navigation Container */}
       <div className="sticky top-0 z-50">
-        {/* Secondary Menu Bar for Logged In Users - Desktop Only */}
+        {/* Quick access bar for authenticated users */}
         {isAuthenticated && (
           <div className="hidden md:block bg-zinc-900 border-b border-zinc-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-[12px]">
               <div className="flex items-center justify-end h-10">
-                <nav className="flex items-center space-x-6">
+                <nav className="flex items-center space-x-4">
                   {isInstructorOrHigher(user) && (
-                    <>
-                      <Link href="/instructor-dashboard" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors text-[12px]" data-testid="link-secondary-dashboard">
-                        Dashboard
-                      </Link>
-                      <Link href="/instructor-calendar" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors flex items-center gap-1 text-[12px]" data-testid="link-secondary-calendar">
-                        <Calendar className="h-3 w-3" />
-                        Calendar
-                      </Link>
-                      <Link href="/students" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors text-[12px]" data-testid="link-secondary-students">
-                        Students
-                      </Link>
-                      <Link href="/communications" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors relative text-[12px]" data-testid="link-secondary-communication">
-                        Communication
-                        {counts.unread > 0 && (
-                          <Badge 
-                            variant="destructive" 
-                            className="absolute -top-2 -right-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
-                          >
-                            {counts.unread > 99 ? '99+' : counts.unread}
-                          </Badge>
-                        )}
-                      </Link>
-                    </>
-                  )}
-                  {isAdminOrHigher(user) && (
-                    <Link href="/product-management" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors text-[12px]" data-testid="link-secondary-products">
-                      Products
+                    <Link href="/instructor-dashboard" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors text-[12px]" data-testid="link-secondary-dashboard">
+                      Dashboard
                     </Link>
                   )}
                   <Link href="/student-portal" className="font-medium text-zinc-300 hover:text-[#006d7a] transition-colors text-[12px]" data-testid="link-secondary-student-dashboard">
                     Student Dashboard
                   </Link>
-                  {isInstructorOrHigher(user) && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="text-sm font-medium text-zinc-300 hover:text-[#006d7a] transition-colors flex items-center gap-1" data-testid="dropdown-settings">
-                        <Settings className="h-4 w-4" />
-                        Settings
-                        <ChevronDown className="h-3 w-3" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem asChild>
-                          <Link href="/settings" className="w-full cursor-pointer" data-testid="link-settings-google-calendar">
-                            Google Calendar
-                          </Link>
-                        </DropdownMenuItem>
-                        {isAdminOrHigher(user) && (
-                          <>
-                            <DropdownMenuItem asChild>
-                              <Link href="/gift-card-management" className="w-full cursor-pointer" data-testid="link-settings-gift-cards">
-                                Gift Card Admin
-                              </Link>
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        {canCreateAccounts(user) && (
-                          <DropdownMenuItem asChild>
-                            <Link href="/admin/users" className="w-full cursor-pointer relative" data-testid="link-settings-user-management">
-                              User Management
-                              {pendingCount > 0 && (
-                                <Badge 
-                                  variant="destructive" 
-                                  className="ml-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
-                                  data-testid="badge-pending-users-desktop"
-                                >
-                                  {pendingCount > 99 ? '99+' : pendingCount}
-                                </Badge>
-                              )}
-                            </Link>
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem asChild>
-                          <Link href="/student-portal" className="w-full cursor-pointer" data-testid="link-settings-student-dashboard">
-                            Student Dashboard
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/reports" className="w-full cursor-pointer" data-testid="link-settings-reports">
-                            Reports
-                          </Link>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     className="text-xs"
                     onClick={handleLogout}
@@ -941,7 +775,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                 {/* Mobile auth buttons */}
                 <div className="border-t border-white/20 mt-2 pt-2 space-y-2">
                   {!isAuthenticated ? (
-                    <Button 
+                    <Button
                       variant="accent"
                       className="w-full"
                       onClick={() => window.location.href = '/login'}
@@ -951,114 +785,20 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                     </Button>
                   ) : (
                     <div className="space-y-2">
-                      {hasInstructorPrivileges(user as any) ? (
-                        <>
-                          <Link href="/instructor-dashboard" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-instructor-dashboard-mobile">
-                              Dashboard
-                            </Button>
-                          </Link>
-                          <Link href="/instructor-calendar" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-instructor-calendar-mobile">
-                              <Calendar className="h-4 w-4 mr-2" />
-                              Calendar
-                            </Button>
-                          </Link>
-                          <Link href="/students" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-students-mobile">
-                              Students
-                            </Button>
-                          </Link>
-                          <Link href="/communications" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5] relative" data-testid="link-communications-mobile">
-                              Communications
-                              {counts.unread > 0 && (
-                                <Badge 
-                                  variant="destructive" 
-                                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs p-0 min-w-[20px]"
-                                >
-                                  {counts.unread > 99 ? '99+' : counts.unread}
-                                </Badge>
-                              )}
-                            </Button>
-                          </Link>
-                          {isAdminOrHigher(user) && (
-                            <Link href="/product-management" className="block">
-                              <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-products-mobile">
-                                Products
-                              </Button>
-                            </Link>
-                          )}
-                          <div className="space-y-1">
-                            <Button 
-                              variant="outline" 
-                              className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5] flex items-center justify-between"
-                              onClick={() => setIsMobileSettingsOpen(!isMobileSettingsOpen)}
-                              data-testid="button-settings-submenu-mobile"
-                            >
-                              <span className="flex items-center gap-2">
-                                <Settings className="h-4 w-4" />
-                                Settings
-                              </span>
-                              {isMobileSettingsOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                            </Button>
-                            {isMobileSettingsOpen && (
-                              <div className="pl-4 space-y-1">
-                                <Link href="/settings" className="block" onClick={() => setIsMobileMenuOpen(false)}>
-                                  <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-google-calendar-mobile">
-                                    Google Calendar
-                                  </Button>
-                                </Link>
-                                {isAdminOrHigher(user) && (
-                                  <>
-                                    <Link href="/gift-card-management" className="block" onClick={() => setIsMobileMenuOpen(false)}>
-                                      <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-gift-card-admin-mobile">
-                                        Gift Card Admin
-                                      </Button>
-                                    </Link>
-                                  </>
-                                )}
-                                {canCreateAccounts(user as any) && (
-                                  <Link href="/admin/users" className="block" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent relative" data-testid="link-user-management-mobile">
-                                      User Management
-                                      {pendingCount > 0 && (
-                                        <Badge 
-                                          variant="destructive" 
-                                          className="ml-2 h-4 w-4 flex items-center justify-center text-xs p-0 min-w-[16px]"
-                                          data-testid="badge-pending-users-mobile"
-                                        >
-                                          {pendingCount > 99 ? '99+' : pendingCount}
-                                        </Badge>
-                                      )}
-                                    </Button>
-                                  </Link>
-                                )}
-                                <Link href="/student-portal" className="block" onClick={() => setIsMobileMenuOpen(false)}>
-                                  <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-student-dashboard-mobile">
-                                    Student Dashboard
-                                  </Button>
-                                </Link>
-                                <Link href="/reports" className="block" onClick={() => setIsMobileMenuOpen(false)}>
-                                  <Button variant="ghost" className="w-full justify-start text-white hover:text-[#FD66C5] hover:bg-transparent" data-testid="link-reports-mobile">
-                                    Reports
-                                  </Button>
-                                </Link>
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <Link href="/student-portal" className="block">
-                            <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-student-portal-mobile">
-                              My Portal
-                            </Button>
-                          </Link>
-                        </>
+                      {isInstructorOrHigher(user) && (
+                        <Link href="/instructor-dashboard" className="block" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-instructor-dashboard-mobile">
+                            Dashboard
+                          </Button>
+                        </Link>
                       )}
-                      <Button 
-                        variant="outline" 
+                      <Link href="/student-portal" className="block" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="outline" className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]" data-testid="link-student-portal-mobile">
+                          Student Dashboard
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="outline"
                         className="w-full border-primary-foreground text-slate-800 hover:bg-primary-foreground hover:text-[#FD66C5]"
                         onClick={handleLogout}
                         data-testid="button-logout-mobile"

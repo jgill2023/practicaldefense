@@ -4,7 +4,7 @@ import { Calendar, momentLocalizer, View, Views } from "react-big-calendar";
 import moment from "moment";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation, Link } from "wouter";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -233,11 +233,11 @@ export default function InstructorCalendar() {
 
   if (authLoading) {
     return (
-      <Layout theme="light">
+      <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </Layout>
+      </DashboardLayout>
     );
   }
 
@@ -271,7 +271,7 @@ export default function InstructorCalendar() {
   };
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="container mx-auto py-6 px-4">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -505,6 +505,6 @@ export default function InstructorCalendar() {
           </div>
         </DialogContent>
       </Dialog>
-    </Layout>
+    </DashboardLayout>
   );
 }

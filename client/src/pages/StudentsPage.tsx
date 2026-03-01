@@ -14,16 +14,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Users, Phone, Mail, Edit, Calendar, ArrowLeft, Eye, Download, FileSpreadsheet, FileText, Share2, UserPen, MessageSquare, Shuffle } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { EmailNotificationModal } from "@/components/EmailNotificationModal";
 import { SmsNotificationModal } from "@/components/SmsNotificationModal";
 import { RescheduleModal } from "@/components/RescheduleModal";
 import { CrossEnrollmentModal } from "@/components/CrossEnrollmentModal";
-import { PaymentDetailsModal } from "@/components/PaymentDetailsModal";
 import { AllStudentsDirectory } from "@/components/AllStudentsDirectory";
-import { RosterDialog } from "@/components/RosterDialog";
 import { format } from "date-fns";
 
 // Phone number formatting utility
@@ -112,13 +110,9 @@ function StudentsPage() {
   const [selectedStudentForNotification, setSelectedStudentForNotification] = useState<Student | null>(null);
   const [selectedEnrollmentForReschedule, setSelectedEnrollmentForReschedule] = useState<{student: Student, enrollment: any} | null>(null);
   const [selectedStudentForCrossEnrollment, setSelectedStudentForCrossEnrollment] = useState<Student | null>(null);
-  const [paymentDetailsModalOpen, setPaymentDetailsModalOpen] = useState(false);
-  const [selectedEnrollmentForPayment, setSelectedEnrollmentForPayment] = useState<string | null>(null);
   const [allStudentsDirectoryOpen, setAllStudentsDirectoryOpen] = useState(false);
-  const [rosterDialogOpen, setRosterDialogOpen] = useState(false);
-  const [selectedScheduleIdForRoster, setSelectedScheduleIdForRoster] = useState<string | null>(null);
-  const [selectedCourseIdForRoster, setSelectedCourseIdForRoster] = useState<string | null>(null); // New state for courseId
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
   // Query for students data
@@ -353,18 +347,9 @@ function StudentsPage() {
                       <div className="space-y-1">
                         <button
                           onClick={() => {
-                            // Get the first enrollment's schedule Id for the roster
                             const firstEnrollment = student.enrollments[0];
-                            if (firstEnrollment && firstEnrollment.scheduleId) {
-                              setSelectedScheduleIdForRoster(firstEnrollment.scheduleId);
-                              setSelectedCourseIdForRoster(null); // Let the backend use schedule to find course
-                              setRosterDialogOpen(true);
-                            } else if (firstEnrollment) {
-                              // Fallback if scheduleId is missing but enrollment exists
-                              console.warn("Missing scheduleId for enrollment, using enrollment ID as fallback for roster dialog.");
-                              setSelectedScheduleIdForRoster(firstEnrollment.id); 
-                              setSelectedCourseIdForRoster(null);
-                              setRosterDialogOpen(true);
+                            if (firstEnrollment?.scheduleId) {
+                              setLocation('/roster/' + firstEnrollment.scheduleId);
                             }
                           }}
                           className="text-left hover:text-primary hover:underline transition-colors cursor-pointer"
@@ -386,10 +371,7 @@ function StudentsPage() {
                             enrollment.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
                             ''
                           }`}
-                          onClick={() => {
-                            setSelectedEnrollmentForPayment(enrollment.id);
-                            setPaymentDetailsModalOpen(true);
-                          }}
+                          onClick={() => setLocation('/payment-details/' + enrollment.id)}
                           data-testid={`badge-payment-status-${enrollment.id}`}
                         >
                           {enrollment.paymentStatus}
@@ -476,7 +458,7 @@ function StudentsPage() {
   };
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto p-6">
       {/* Back to Dashboard Link */}
       <div className="mb-6">
@@ -723,17 +705,6 @@ function StudentsPage() {
         />
       )}
 
-      {/* Payment Details Modal */}
-      {selectedEnrollmentForPayment && (
-        <PaymentDetailsModal
-          isOpen={paymentDetailsModalOpen}
-          onClose={() => {
-            setPaymentDetailsModalOpen(false);
-            setSelectedEnrollmentForPayment(null);
-          }}
-          enrollmentId={selectedEnrollmentForPayment}
-        />
-      )}
 
       {/* All Students Directory Modal */}
       <AllStudentsDirectory
@@ -741,19 +712,8 @@ function StudentsPage() {
         onClose={() => setAllStudentsDirectoryOpen(false)}
       />
 
-      {/* Roster Dialog */}
-      <RosterDialog
-        scheduleId={selectedScheduleIdForRoster}
-        courseId={selectedCourseIdForRoster}
-        isOpen={rosterDialogOpen}
-        onClose={() => {
-          setRosterDialogOpen(false);
-          setSelectedScheduleIdForRoster(null);
-          setSelectedCourseIdForRoster(null);
-        }}
-      />
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }
 

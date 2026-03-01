@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -3592,7 +3592,7 @@ export default function StudentPortal() {
   };
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Portal Header */}
         <div className="bg-primary rounded-xl p-6 text-primary-foreground mb-8">
@@ -4204,6 +4204,6 @@ export default function StudentPortal() {
         userRole="student"
         isInstructor={false}
       />
-    </Layout>
+    </DashboardLayout>
   );
 }

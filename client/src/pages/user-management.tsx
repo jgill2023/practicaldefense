@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -425,7 +425,7 @@ export default function UserManagementPage() {
   };
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto p-6">
         <div className="mb-6 flex justify-between items-center">
           <div>
@@ -437,12 +437,11 @@ export default function UserManagementPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => { setImportDialogOpen(true); setImportStep("upload"); setImportFile(null); setImportPreview(null); setImportResults(null); }}>
+            <Button onClick={() => { setImportDialogOpen(true); setImportStep("upload"); setImportFile(null); setImportPreview(null); setImportResults(null); }}>
               <Upload className="w-4 h-4 mr-2" />
               Import Students
             </Button>
             <Button
-              variant="outline"
               onClick={() => {
                 const studentIds = users
                   .filter(u => u.role === "student" && !u.hasPassword)
@@ -1193,6 +1192,6 @@ export default function UserManagementPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }

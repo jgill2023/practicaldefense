@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar, momentLocalizer, View } from "react-big-calendar";
 import moment from "moment";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -203,18 +203,18 @@ export default function ScheduleCalendar() {
 
   if (isLoading) {
     return (
-      <Layout>
+      <DashboardLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-96">
             <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
           </div>
         </div>
-      </Layout>
+      </DashboardLayout>
     );
   }
 
   return (
-    <Layout>
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -489,6 +489,6 @@ export default function ScheduleCalendar() {
           }}
         />
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }

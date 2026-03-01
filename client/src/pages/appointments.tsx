@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -523,7 +523,7 @@ export default function AppointmentsPage() {
 
   if (!user || !hasInstructorPrivileges(user as User)) {
     return (
-      <Layout theme="light">
+      <DashboardLayout>
         <div className="container mx-auto px-4 py-8">
           <Card>
             <CardHeader>
@@ -550,7 +550,7 @@ export default function AppointmentsPage() {
             </CardContent>
           </Card>
         </div>
-      </Layout>
+      </DashboardLayout>
     );
   }
 
@@ -560,7 +560,7 @@ export default function AppointmentsPage() {
   }));
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="container mx-auto px-12 md:px-16 lg:px-24 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2" data-testid="text-page-title">
@@ -1734,6 +1734,6 @@ export default function AppointmentsPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }

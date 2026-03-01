@@ -1,10 +1,10 @@
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { CommunicationsDashboard } from "@/components/CommunicationsDashboard";
 
 export default function CommunicationsDashboardPage() {
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <CommunicationsDashboard />
-    </Layout>
+    </DashboardLayout>
   );
 }

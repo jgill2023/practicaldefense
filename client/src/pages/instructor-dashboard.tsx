@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,12 +22,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CourseManagementActions } from "@/components/CourseManagementActions";
-import { EditCourseForm } from "@/components/EditCourseForm";
 import { EditScheduleForm } from "@/components/EditScheduleForm";
 import { EventCreationForm } from "@/components/EventCreationForm";
 import { CategoryManagement } from "@/components/CategoryManagement";
-import { RosterDialog } from "@/components/RosterDialog";
 import { WaitlistDialog } from "@/components/WaitlistDialog";
 import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
 import { Plus, BarChart, GraduationCap, DollarSign, Users, TrendingUp, Clock, Archive, Eye, EyeOff, Trash2, Edit, MoreVertical, CalendarPlus, Calendar, Copy, FolderOpen, Settings, Download, CalendarClock, ChevronUp, ChevronDown, XCircle, UsersRound } from "lucide-react";
@@ -49,14 +46,8 @@ export default function InstructorDashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<any | null>(null);
   const [showEventForm, setShowEventForm] = useState(false);
-
-  // Roster dialog states
-  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
-  const [showRosterDialog, setShowRosterDialog] = useState(false);
 
   // Waitlist dialog states
   const [waitlistScheduleId, setWaitlistScheduleId] = useState<string | null>(null);
@@ -232,7 +223,7 @@ export default function InstructorDashboard() {
 
       // Open edit form for the newly duplicated course
       setTimeout(() => {
-        setEditingCourse(data.course);
+        setLocation('/course-edit/' + data.course.id);
       }, 500);
     },
     onError: (error) => {
@@ -762,11 +753,7 @@ export default function InstructorDashboard() {
               <tr key={schedule.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4">
                   <button
-                    onClick={() => {
-                      setSelectedScheduleId(schedule.id);
-                      setSelectedCourseId(schedule.course.id); // Set courseId here
-                      setShowRosterDialog(true);
-                    }}
+                    onClick={() => setLocation('/roster/' + schedule.id)}
                     className="text-left hover:bg-gray-50 rounded p-1 -m-1 transition-colors w-full"
                   >
                     <div className="font-medium text-gray-900 hover:text-primary transition-colors" data-testid={`text-schedule-course-${schedule.id}`}>
@@ -845,11 +832,7 @@ export default function InstructorDashboard() {
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                          onClick={() => {
-                            setSelectedScheduleId(schedule.id);
-                            setSelectedCourseId(schedule.course.id);
-                            setShowRosterDialog(true);
-                          }}
+                          onClick={() => setLocation('/roster/' + schedule.id)}
                           data-testid={`button-roster-schedule-${schedule.id}`}
                           aria-label="View roster"
                         >
@@ -1122,7 +1105,7 @@ export default function InstructorDashboard() {
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                            onClick={() => setEditingCourse(course)}
+                            onClick={() => setLocation('/course-edit/' + course.id)}
                             data-testid={`button-view-course-${course.id}`}
                           >
                             <Eye className="h-4 w-4" />
@@ -1140,7 +1123,7 @@ export default function InstructorDashboard() {
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
-                            onClick={() => setEditingCourse(course)}
+                            onClick={() => setLocation('/course-edit/' + course.id)}
                             data-testid={`button-edit-course-${course.id}`}
                           >
                             <Edit className="h-4 w-4" />
@@ -1159,15 +1142,9 @@ export default function InstructorDashboard() {
                             size="sm"
                             className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
                             onClick={() => {
-                              // For course roster, we need to find a schedule first
-                              // Since our API works with schedules, let's use the first available schedule
                               const firstSchedule = course.schedules?.[0];
                               if (firstSchedule) {
-                                setSelectedScheduleId(firstSchedule.id);
-                                setSelectedCourseId(course.id); // Set courseId here
-                                setShowRosterDialog(true);
-                              } else {
-                                console.log('No schedules available for course', course.id);
+                                setLocation('/roster/' + firstSchedule.id);
                               }
                             }}
                             data-testid={`button-roster-course-${course.id}`}
@@ -1215,7 +1192,7 @@ export default function InstructorDashboard() {
   };
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Dashboard Header */}
         <div className="bg-primary rounded-xl p-6 text-primary-foreground mb-8">
@@ -1500,17 +1477,6 @@ export default function InstructorDashboard() {
         </div>
       </div>
 
-      {/* Edit Course Form */}
-      {editingCourse && (
-        <EditCourseForm
-          course={editingCourse}
-          isOpen={!!editingCourse}
-          onClose={() => setEditingCourse(null)}
-          onCourseUpdated={() => {
-            // Course list will automatically refresh via query invalidation
-          }}
-        />
-      )}
 
       {/* Edit Schedule Form */}
       {editingSchedule && (
@@ -1534,17 +1500,6 @@ export default function InstructorDashboard() {
         }}
       />
 
-      {/* Roster Dialog */}
-      <RosterDialog
-        scheduleId={selectedScheduleId}
-        courseId={selectedCourseId}
-        isOpen={showRosterDialog}
-        onClose={() => {
-          setShowRosterDialog(false);
-          setSelectedScheduleId(null);
-          setSelectedCourseId(null);
-        }}
-      />
 
       {/* Waitlist Dialog */}
       <WaitlistDialog
@@ -1927,6 +1882,6 @@ export default function InstructorDashboard() {
           </Tabs>
         </DialogContent>
       </Dialog>
-    </Layout>
+    </DashboardLayout>
   );
 }

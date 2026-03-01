@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Instructor {
@@ -100,19 +100,19 @@ export default function AdminCreditsPage() {
 
   if (isLoading) {
     return (
-      <Layout theme="light">
+      <DashboardLayout>
         <div className="max-w-4xl mx-auto p-6">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
             <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
           </div>
         </div>
-      </Layout>
+      </DashboardLayout>
     );
   }
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="max-w-4xl mx-auto p-6">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
@@ -286,6 +286,6 @@ export default function AdminCreditsPage() {
         </DialogContent>
       </Dialog>
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }

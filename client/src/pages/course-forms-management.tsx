@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -519,7 +519,7 @@ export default function CourseFormsManagement() {
   ];
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
@@ -1132,7 +1132,7 @@ export default function CourseFormsManagement() {
           </DialogContent>
         </Dialog>
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }
 

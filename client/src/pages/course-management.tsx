@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +48,6 @@ import { insertAppSettingsSchema } from "@shared/schema";
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { EventCreationForm } from "@/components/EventCreationForm";
 import { CourseCreationForm } from "@/components/CourseCreationForm";
-import { EditCourseForm } from "@/components/EditCourseForm";
 import { CourseManagementActions } from "@/components/CourseManagementActions";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { formatDateSafe } from "@/lib/dateUtils";
@@ -395,11 +394,11 @@ export default function CourseManagement() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const [selectedView, setSelectedView] = useState<'calendar' | 'list'>('calendar');
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<{course: CourseWithSchedules, schedule: CourseScheduleWithSessions} | null>(null);
-  const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
   const [selectedCourseForEvent, setSelectedCourseForEvent] = useState<CourseWithSchedules | null>(null);
 
   // Fetch instructor's courses with detailed schedules
@@ -639,7 +638,7 @@ export default function CourseManagement() {
                       <DeleteCourseButton course={course} />
                       <CourseManagementActions 
                         course={course}
-                        onEditCourse={setEditingCourse}
+                        onEditCourse={(course) => setLocation('/course-edit/' + course.id)}
                         onCreateEvent={handleCreateEventForCourse}
                       />
                     </div>
@@ -649,14 +648,14 @@ export default function CourseManagement() {
                       <DeleteCourseButton course={course} />
                       <CourseManagementActions 
                         course={course}
-                        onEditCourse={setEditingCourse}
+                        onEditCourse={(course) => setLocation('/course-edit/' + course.id)}
                         onCreateEvent={handleCreateEventForCourse}
                       />
                     </div>
                   ) : (
                     <CourseManagementActions 
                       course={course}
-                      onEditCourse={setEditingCourse}
+                      onEditCourse={(course) => setLocation('/course-edit/' + course.id)}
                       onCreateEvent={handleCreateEventForCourse}
                       data-testid={`actions-course-${course.id}`}
                     />
@@ -730,19 +729,19 @@ export default function CourseManagement() {
 
   if (!isAuthenticated || !isAdminOrHigher(user as User)) {
     return (
-      <Layout theme="light">
+      <DashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
             <p className="text-muted-foreground">You need admin access to manage courses.</p>
           </div>
         </div>
-      </Layout>
+      </DashboardLayout>
     );
   }
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back to Dashboard Link */}
         <div className="mb-6">
@@ -1268,7 +1267,7 @@ export default function CourseManagement() {
                   </Button>
                   <Button 
                     onClick={() => {
-                      setEditingCourse(selectedEvent.course);
+                      setLocation('/course-edit/' + selectedEvent.course.id);
                       setSelectedEvent(null);
                     }}
                     data-testid="button-manage-event"
@@ -1281,17 +1280,6 @@ export default function CourseManagement() {
           </Dialog>
         )}
 
-        {/* Edit Course Form */}
-        {editingCourse && (
-          <EditCourseForm
-            course={editingCourse}
-            isOpen={!!editingCourse}
-            onClose={() => setEditingCourse(null)}
-            onCourseUpdated={() => {
-              // Course list will automatically refresh via query invalidation
-            }}
-          />
-        )}
 
         {/* Create Event Modal */}
         {showCreateEventModal && (
@@ -1310,6 +1298,6 @@ export default function CourseManagement() {
           />
         )}
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }

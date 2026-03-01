@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import Layout from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -1462,18 +1462,18 @@ export default function GiftCardManagement() {
 
   if (!user || !["admin", "superadmin", "instructor"].includes(user.role || "")) {
     return (
-      <Layout theme="light">
+      <DashboardLayout>
         <div className="max-w-4xl mx-auto px-4 py-12 text-center">
           <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
           <p className="text-muted-foreground">You don't have permission to access this page.</p>
         </div>
-      </Layout>
+      </DashboardLayout>
     );
   }
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
@@ -1681,6 +1681,6 @@ export default function GiftCardManagement() {
           </DialogContent>
         </Dialog>
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }

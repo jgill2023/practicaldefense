@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Edit, Archive, Trash2, EyeOff, Eye, Bell, Plus } from "lucide-react";
-import { EditCourseForm } from "@/components/EditCourseForm";
 import { CourseNotificationsModal } from "@/components/CourseNotificationsModal";
 import type { CourseWithSchedules } from "@shared/schema";
 
@@ -35,7 +34,6 @@ interface CourseManagementActionsProps {
 export function CourseManagementActions({ course, onEditCourse, onCreateEvent }: CourseManagementActionsProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<CourseWithSchedules | null>(null);
   const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -144,8 +142,14 @@ export function CourseManagementActions({ course, onEditCourse, onCreateEvent }:
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem 
-            onClick={() => onEditCourse?.(course)}
+          <DropdownMenuItem
+            onClick={() => {
+              if (onEditCourse) {
+                onEditCourse(course);
+              } else {
+                setLocation('/course-edit/' + course.id);
+              }
+            }}
             data-testid={`button-edit-course-${course.id}`}
           >
             <Edit className="mr-2 h-4 w-4" />
@@ -265,22 +269,6 @@ export function CourseManagementActions({ course, onEditCourse, onCreateEvent }:
         course={course}
       />
 
-      {/* Edit Course Dialog */}
-      {editingCourse && (
-        <EditCourseForm
-          course={editingCourse}
-          onClose={() => setEditingCourse(null)}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/instructor/dashboard-stats"] });
-            toast({
-              title: "Course Updated",
-              description: "The course has been updated successfully.",
-            });
-            setEditingCourse(null);
-          }}
-        />
-      )}
     </>
   );
 }

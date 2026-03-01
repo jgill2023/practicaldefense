@@ -58,6 +58,9 @@ import RACCProgram from "@/pages/racc-program";
 import Register from "@/pages/register";
 import FtaWaiverPage from "@/pages/fta-waiver";
 import RecoverPage from "@/pages/recover";
+import RosterPage from "@/pages/roster";
+import CourseEditPage from "@/pages/course-edit";
+import PaymentDetailsPage from "@/pages/payment-details";
 import NotFound from "@/pages/not-found";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -199,6 +202,9 @@ function Router() {
       <Route path="/gift-card-management" component={GiftCardManagement} />
       <Route path="/racc-program" component={RACCProgram} />
       <Route path="/register" component={Register} />
+      <Route path="/roster/:scheduleId" component={RosterPage} />
+      <Route path="/course-edit/:courseId" component={CourseEditPage} />
+      <Route path="/payment-details/:enrollmentId" component={PaymentDetailsPage} />
       <Route path="/waiver" component={FtaWaiverPage} />
       <Route component={NotFound} />
     </Switch>

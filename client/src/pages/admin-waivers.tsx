@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,7 @@ export default function AdminWaiversPage() {
   };
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="container mx-auto py-6 space-y-6" data-testid="admin-waivers-page">
         <div className="flex justify-between items-center">
           <div>
@@ -289,6 +289,6 @@ export default function AdminWaiversPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }

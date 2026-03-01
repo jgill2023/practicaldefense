@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { isInstructorOrHigher } from "@/lib/authUtils";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -191,17 +191,17 @@ export default function SettingsPage() {
 
   if (authLoading) {
     return (
-      <Layout theme="light">
+      <DashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
         </div>
-      </Layout>
+      </DashboardLayout>
     );
   }
 
   if (!user || !isInstructorOrHigher(user)) {
     return (
-      <Layout theme="light">
+      <DashboardLayout>
         <div className="container mx-auto py-8 px-4">
           <Alert variant="destructive" data-testid="alert-unauthorized">
             <AlertCircle className="h-4 w-4" />
@@ -211,12 +211,12 @@ export default function SettingsPage() {
             </AlertDescription>
           </Alert>
         </div>
-      </Layout>
+      </DashboardLayout>
     );
   }
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="container mx-auto py-8 px-4 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold" data-testid="text-page-title">Settings</h1>
@@ -405,6 +405,6 @@ export default function SettingsPage() {
           </Card>
         </div>
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }

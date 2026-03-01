@@ -17,7 +17,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isAdminOrHigher } from "@/lib/authUtils";
-import { Layout } from "@/components/Layout";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { Switch } from "@/components/ui/switch";
 import { SalePrice } from "@/components/SalePrice";
@@ -323,11 +323,11 @@ export default function ProductManagement() {
   // Show loading while checking auth
   if (authLoading) {
     return (
-      <Layout theme="light">
+      <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
         </div>
-      </Layout>
+      </DashboardLayout>
     );
   }
 
@@ -337,7 +337,7 @@ export default function ProductManagement() {
   }
 
   return (
-    <Layout theme="light">
+    <DashboardLayout>
       <div className="container mx-auto py-6 space-y-6" data-testid="product-management-page">
       {/* Header */}
       <div className="flex justify-between items-center">
@@ -1155,6 +1155,6 @@ export default function ProductManagement() {
         </DialogContent>
       </Dialog>
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }
