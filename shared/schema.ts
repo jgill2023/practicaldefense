@@ -152,6 +152,7 @@ export const courses = pgTable("courses", {
   sortOrder: integer("sort_order").default(0), // For display ordering on home page
   destinationUrl: varchar("destination_url", { length: 500 }), // External registration URL (e.g., for Hosted Courses)
   courseType: varchar("course_type", { length: 20 }), // 'initial', 'refresher', 'renewal' - for license reminder course matching
+  requiresOnlineCourseEnrollment: boolean("requires_online_course_enrollment").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
