@@ -10,6 +10,7 @@ import {
   Gift,
   CreditCard,
   Settings,
+  UserCog,
   User,
   ExternalLink,
   type LucideIcon,
@@ -96,6 +97,7 @@ export function useDashboardNavigation(): NavGroup[] {
   if (isInstructorOrHigher(user)) {
     const settingsItems: NavItem[] = [
       { label: "Settings", href: "/settings", icon: Settings },
+      ...(isAdminOrHigher(user) ? [{ label: "User Management", href: "/admin/users", icon: UserCog }] : []),
     ];
     // Add pending badge if user can create accounts
     if (canCreateAccounts(user) && pendingCount > 0) {
