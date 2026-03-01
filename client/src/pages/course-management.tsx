@@ -39,7 +39,8 @@ import {
   ArrowLeft,
   Bell,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  GraduationCap
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError, hasInstructorPrivileges, isAdminOrHigher } from "@/lib/authUtils";
@@ -53,6 +54,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { formatDateSafe } from "@/lib/dateUtils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CourseFormsContent } from "./course-forms-management";
 
 const localizer = momentLocalizer(moment);
 
@@ -398,6 +400,18 @@ export default function CourseManagement() {
   const [selectedView, setSelectedView] = useState<'calendar' | 'list'>('calendar');
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+
+  // Top-level section tabs (Courses vs Forms)
+  const searchParams = new URLSearchParams(window.location.search);
+  const initialSection = searchParams.get("tab") || "courses";
+  const [activeSection, setActiveSection] = useState(initialSection);
+
+  const handleSectionChange = (value: string) => {
+    setActiveSection(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", value);
+    window.history.replaceState({}, "", url.toString());
+  };
   const [selectedEvent, setSelectedEvent] = useState<{course: CourseWithSchedules, schedule: CourseScheduleWithSessions} | null>(null);
   const [selectedCourseForEvent, setSelectedCourseForEvent] = useState<CourseWithSchedules | null>(null);
 
@@ -761,43 +775,53 @@ export default function CourseManagement() {
               Manage your training courses, schedules, and enrollments
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mt-4 sm:mt-0">
-            <Link href="/promo-codes">
-              <Button variant="default" data-testid="button-manage-promos">
-                <BadgePercent className="mr-2 h-4 w-4" />
-                Manage Promos
-              </Button>
-            </Link>
-            <Link href="/course-forms-management">
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground" data-testid="button-manage-forms">
-                <FileText className="mr-2 h-4 w-4" />
-                Course Forms
-              </Button>
-            </Link>
-            <Dialog open={showCreateCourseModal} onOpenChange={setShowCreateCourseModal}>
-              <DialogTrigger asChild>
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-create-course">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Course
+          {activeSection === "courses" && (
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mt-4 sm:mt-0">
+              <Link href="/promo-codes">
+                <Button variant="default" data-testid="button-manage-promos">
+                  <BadgePercent className="mr-2 h-4 w-4" />
+                  Manage Promos
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <CourseCreationForm 
-                  isOpen={showCreateCourseModal}
-                  onClose={() => setShowCreateCourseModal(false)}
-                  onCourseCreated={() => {
-                    queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
-                    queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
-                    setShowCreateCourseModal(false);
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
-          </div>
+              </Link>
+              <Dialog open={showCreateCourseModal} onOpenChange={setShowCreateCourseModal}>
+                <DialogTrigger asChild>
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90" data-testid="button-create-course">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Course
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <CourseCreationForm
+                    isOpen={showCreateCourseModal}
+                    onClose={() => setShowCreateCourseModal(false)}
+                    onCourseCreated={() => {
+                      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/instructor/courses-detailed"] });
+                      setShowCreateCourseModal(false);
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
         </div>
 
-        {/* Settings Tile */}
-        <Card className="mb-6">
+        {/* Top-level section tabs: Courses vs Forms */}
+        <Tabs value={activeSection} onValueChange={handleSectionChange}>
+          <TabsList className="grid w-fit grid-cols-2 mb-6">
+            <TabsTrigger value="courses" className="flex items-center space-x-2">
+              <GraduationCap className="h-4 w-4" />
+              <span>Courses</span>
+            </TabsTrigger>
+            <TabsTrigger value="forms" className="flex items-center space-x-2">
+              <FileText className="h-4 w-4" />
+              <span>Forms</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="courses" className="mt-0">
+            {/* Settings Tile */}
+            <Card className="mb-6">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center space-x-2 text-lg">
               <Settings className="h-5 w-5" />
@@ -1281,22 +1305,28 @@ export default function CourseManagement() {
         )}
 
 
-        {/* Create Event Modal */}
-        {showCreateEventModal && (
-          <EventCreationForm
-            isOpen={showCreateEventModal}
-            onClose={() => {
-              setShowCreateEventModal(false);
-              setSelectedCourseForEvent(null);
-            }}
-            onEventCreated={() => {
-              setShowCreateEventModal(false);
-              setSelectedCourseForEvent(null);
-              queryClient.invalidateQueries({ queryKey: ['/api/instructor/courses'] });
-            }}
-            preSelectedCourseId={selectedCourseForEvent?.id}
-          />
-        )}
+            {/* Create Event Modal */}
+            {showCreateEventModal && (
+              <EventCreationForm
+                isOpen={showCreateEventModal}
+                onClose={() => {
+                  setShowCreateEventModal(false);
+                  setSelectedCourseForEvent(null);
+                }}
+                onEventCreated={() => {
+                  setShowCreateEventModal(false);
+                  setSelectedCourseForEvent(null);
+                  queryClient.invalidateQueries({ queryKey: ['/api/instructor/courses'] });
+                }}
+                preSelectedCourseId={selectedCourseForEvent?.id}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="forms" className="mt-0">
+            <CourseFormsContent />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );
