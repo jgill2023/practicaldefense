@@ -1,19 +1,14 @@
 import {
   LayoutDashboard,
   Calendar,
-  CalendarDays,
   BarChart3,
   GraduationCap,
-  FileText,
-  CalendarPlus,
   Users,
   MessageSquare,
   ShoppingBag,
   BadgePercent,
   Gift,
   CreditCard,
-  UserCog,
-  FileSignature,
   Settings,
   User,
   ExternalLink,
@@ -54,7 +49,6 @@ export function useDashboardNavigation(): NavGroup[] {
       items: [
         { label: "Dashboard", href: "/instructor-dashboard", icon: LayoutDashboard },
         { label: "Calendar", href: "/instructor-calendar", icon: Calendar },
-        { label: "Schedule", href: "/schedule-calendar", icon: CalendarDays },
         { label: "Reports", href: "/reports", icon: BarChart3 },
       ],
     });
@@ -63,8 +57,6 @@ export function useDashboardNavigation(): NavGroup[] {
       label: "Courses",
       items: [
         { label: "Course Manager", href: "/course-management", icon: GraduationCap },
-        { label: "Course Forms", href: "/course-forms-management", icon: FileText },
-        { label: "Appointments", href: "/appointments", icon: CalendarPlus },
       ],
     });
 
@@ -100,30 +92,18 @@ export function useDashboardNavigation(): NavGroup[] {
     groups.push({ label: "Commerce", items: commerceItems });
   }
 
-  // Admin section
-  const adminItems: NavItem[] = [];
-  if (canCreateAccounts(user)) {
-    adminItems.push({
-      label: "User Management",
-      href: "/admin/users",
-      icon: UserCog,
-      badge: pendingCount > 0 ? pendingCount : undefined,
-    });
-  }
-  if (isAdminOrHigher(user)) {
-    adminItems.push({ label: "Waivers", href: "/admin/waivers", icon: FileSignature });
-  }
-  if (adminItems.length > 0) {
-    groups.push({ label: "Admin", items: adminItems });
-  }
-
   // Settings
   if (isInstructorOrHigher(user)) {
+    const settingsItems: NavItem[] = [
+      { label: "Settings", href: "/settings", icon: Settings },
+    ];
+    // Add pending badge if user can create accounts
+    if (canCreateAccounts(user) && pendingCount > 0) {
+      settingsItems[0].badge = pendingCount;
+    }
     groups.push({
       label: "Settings",
-      items: [
-        { label: "Google Calendar", href: "/settings", icon: Settings },
-      ],
+      items: settingsItems,
     });
   }
 
