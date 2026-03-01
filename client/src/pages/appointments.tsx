@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { isUnauthorizedError, hasInstructorPrivileges } from "@/lib/authUtils";
-import { Plus, Edit, Trash2, Clock, DollarSign, CheckCircle, XCircle, CalendarClock, Bell, CalendarX2, CalendarCheck, RefreshCw, CalendarDays } from "lucide-react";
+import { Plus, Edit, Trash2, Clock, DollarSign, CheckCircle, XCircle, CalendarClock, Bell, CalendarX2, CalendarCheck, RefreshCw, CalendarDays, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, addDays, parseISO } from "date-fns";
 import type { User } from "@shared/schema";
@@ -71,8 +71,8 @@ const DAYS_OF_WEEK = [
   { value: 6, label: 'Saturday' },
 ];
 
-export default function AppointmentsPage() {
-  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
+export function AppointmentsContent() {
+  const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -513,54 +513,13 @@ export default function AppointmentsPage() {
     }
   }
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  if (!user || !hasInstructorPrivileges(user as User)) {
-    return (
-      <DashboardLayout>
-        <div className="container mx-auto px-4 py-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Instructor Access Required</CardTitle>
-              <CardDescription>
-                This page is for instructors to manage appointment settings.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                {!user 
-                  ? "Please log in with an instructor account to access appointment management." 
-                  : "Your account does not have instructor privileges. Please contact an administrator if you believe this is an error."}
-              </p>
-              {!user && (
-                <Button 
-                  onClick={() => window.location.href = '/login'}
-                  className="w-full"
-                  data-testid="button-login"
-                >
-                  Go to Login
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   const groupedTemplates = DAYS_OF_WEEK.map(day => ({
     ...day,
     templates: weeklyTemplates.filter(t => t.dayOfWeek === day.value),
   }));
 
   return (
-    <DashboardLayout>
+    <>
       <div className="container mx-auto px-12 md:px-16 lg:px-24 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2" data-testid="text-page-title">
@@ -1734,6 +1693,59 @@ export default function AppointmentsPage() {
           </DialogContent>
         </Dialog>
       </div>
+    </>
+  );
+}
+
+export default function AppointmentsPage() {
+  const { user, isLoading: authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!user || !hasInstructorPrivileges(user as User)) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto px-4 py-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Instructor Access Required</CardTitle>
+              <CardDescription>
+                This page is for instructors to manage appointment settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                {!user
+                  ? "Please log in with an instructor account to access appointment management."
+                  : "Your account does not have instructor privileges. Please contact an administrator if you believe this is an error."}
+              </p>
+              {!user && (
+                <Button
+                  onClick={() => window.location.href = '/login'}
+                  className="w-full"
+                  data-testid="button-login"
+                >
+                  Go to Login
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <AppointmentsContent />
     </DashboardLayout>
   );
 }

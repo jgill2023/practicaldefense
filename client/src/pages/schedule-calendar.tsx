@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { List, Filter, Search, MapPin, Users, DollarSign, Clock, X } from "lucide-react";
+import { List, Filter, Search, MapPin, Users, DollarSign, Clock, X, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import type { CourseWithSchedules, AppointmentType } from "@shared/schema";
 import { formatDateSafe } from "@/lib/dateUtils";
@@ -40,7 +40,7 @@ interface CalendarEvent {
   };
 }
 
-export default function ScheduleCalendar() {
+export function ScheduleCalendarContent() {
   const [currentView, setCurrentView] = useState<View>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
@@ -203,18 +203,14 @@ export default function ScheduleCalendar() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-96">
-            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-          </div>
-        </div>
-      </DashboardLayout>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -489,6 +485,14 @@ export default function ScheduleCalendar() {
           }}
         />
       </div>
+    </>
+  );
+}
+
+export default function ScheduleCalendar() {
+  return (
+    <DashboardLayout>
+      <ScheduleCalendarContent />
     </DashboardLayout>
   );
 }

@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Eye, CheckCircle, Calendar, Mail, User } from "lucide-react";
+import { FileText, Eye, CheckCircle, Calendar, Mail, User, Loader2 } from "lucide-react";
 import { useState } from "react";
 import type { FtaWaiverSubmission } from "@shared/schema";
 
-export default function AdminWaiversPage() {
+export function AdminWaiversContent() {
   const [selectedWaiver, setSelectedWaiver] = useState<FtaWaiverSubmission | null>(null);
 
   const { data: waivers = [], isLoading } = useQuery<FtaWaiverSubmission[]>({
@@ -29,8 +29,16 @@ export default function AdminWaiversPage() {
     });
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
-    <DashboardLayout>
+    <>
       <div className="container mx-auto py-6 space-y-6" data-testid="admin-waivers-page">
         <div className="flex justify-between items-center">
           <div>
@@ -289,6 +297,14 @@ export default function AdminWaiversPage() {
           </DialogContent>
         </Dialog>
       </div>
+    </>
+  );
+}
+
+export default function AdminWaiversPage() {
+  return (
+    <DashboardLayout>
+      <AdminWaiversContent />
     </DashboardLayout>
   );
 }

@@ -28,7 +28,8 @@ import {
   ChevronRight,
   ChevronUp,
   ArrowLeft,
-  Clipboard
+  Clipboard,
+  Loader2
 } from "lucide-react";
 import type { 
   CourseInformationFormWithFields, 
@@ -131,7 +132,7 @@ function FieldRow({
   );
 }
 
-export default function CourseFormsManagement() {
+export function CourseFormsContent() {
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -519,7 +520,7 @@ export default function CourseFormsManagement() {
   ];
 
   return (
-    <DashboardLayout>
+    <>
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
@@ -1132,6 +1133,14 @@ export default function CourseFormsManagement() {
           </DialogContent>
         </Dialog>
       </div>
+    </>
+  );
+}
+
+export default function CourseFormsManagement() {
+  return (
+    <DashboardLayout>
+      <CourseFormsContent />
     </DashboardLayout>
   );
 }
