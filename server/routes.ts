@@ -870,6 +870,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Student enrollment cancellation endpoint (lightweight, used for range session reschedule)
+  app.post('/api/enrollments/:enrollmentId/cancel', isAuthenticated, async (req: any, res) => {
+    try {
+      const { enrollmentId } = req.params;
+      const { reason } = req.body;
+
+      const enrollment = await storage.getEnrollment(enrollmentId);
+      if (!enrollment) {
+        return res.status(404).json({ message: "Enrollment not found" });
+      }
+
+      // Verify ownership
+      if (enrollment.studentId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Only allow cancelling confirmed enrollments
+      if (enrollment.status !== 'confirmed') {
+        return res.status(400).json({ message: "Enrollment is not in a cancellable state" });
+      }
+
+      await storage.updateEnrollment(enrollmentId, {
+        status: 'cancelled',
+        cancellationDate: new Date(),
+        cancellationReason: reason || 'Student requested cancellation',
+      });
+
+      // Increase available spots on the schedule
+      const schedule = await storage.getCourseSchedule(enrollment.scheduleId);
+      if (schedule) {
+        await storage.updateCourseSchedule(enrollment.scheduleId, {
+          availableSpots: schedule.availableSpots + 1,
+        });
+      }
+
+      res.json({ message: "Enrollment cancelled successfully" });
+    } catch (error) {
+      console.error("Error cancelling enrollment:", error);
+      res.status(500).json({ message: "Failed to cancel enrollment" });
+    }
+  });
+
   // Student unenrollment endpoint
   app.post('/api/student/enrollments/:enrollmentId/unenroll', isAuthenticated, async (req: any, res) => {
     try {
