@@ -827,6 +827,12 @@ export interface IStorage {
   updateOnlineCourseEnrollmentMoodleInfo(id: string, data: { moodleUserId: number; moodleUsername: string; moodlePassword?: string; moodleCourseId: number; moodleSyncedAt: Date }): Promise<OnlineCourseEnrollment>;
   updateOnlineCourseEnrollmentMoodleSyncError(id: string, error: string): Promise<OnlineCourseEnrollment>;
   updateOnlineCourseEnrollmentNotificationStatus(id: string, type: 'email' | 'sms', sent: boolean): Promise<OnlineCourseEnrollment>;
+  hasOnlineCourseEnrollment(userId: string): Promise<boolean>;
+
+  // ============================================
+  // ENROLLMENT ELIGIBILITY METHODS
+  // ============================================
+  hasActiveEnrollmentForCourse(userId: string, courseId: string): Promise<{ hasActive: boolean; enrollment?: any }>;
 
   // ============================================
   // LICENSE REMINDER METHODS
@@ -7432,6 +7438,33 @@ export class DatabaseStorage implements IStorage {
     } else {
       return this.updateOnlineCourseEnrollment(id, { smsNotificationSent: sent });
     }
+  }
+
+  async hasOnlineCourseEnrollment(userId: string): Promise<boolean> {
+    const enrollment = await db.query.onlineCourseEnrollments.findFirst({
+      where: and(
+        eq(onlineCourseEnrollments.userId, userId),
+        ne(onlineCourseEnrollments.status, 'cancelled')
+      ),
+    });
+    return !!enrollment;
+  }
+
+  async hasActiveEnrollmentForCourse(userId: string, courseId: string): Promise<{ hasActive: boolean; enrollment?: any }> {
+    const activeEnrollment = await db.query.enrollments.findFirst({
+      where: and(
+        eq(enrollments.studentId, userId),
+        eq(enrollments.courseId, courseId),
+        eq(enrollments.status, 'confirmed')
+      ),
+      with: {
+        schedule: true,
+      },
+    });
+    return {
+      hasActive: !!activeEnrollment,
+      enrollment: activeEnrollment || undefined,
+    };
   }
 
   // --- License Reminder Methods ---
