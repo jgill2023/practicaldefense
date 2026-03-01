@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { Switch } from "@/components/ui/switch";
-import { Edit, FileText, ImageIcon, Target, Package, Tag, CalendarDays } from "lucide-react";
+import { Edit, FileText, ImageIcon, Target, Package, Tag, CalendarDays, GraduationCap } from "lucide-react";
 import type { CourseWithSchedules, Category } from "@shared/schema";
 type UploadResult = { successful: Array<{ uploadURL: string }> };
 
@@ -64,6 +64,7 @@ const courseSchema = z.object({
   }),
   saleStartDate: z.string().optional(),
   saleEndDate: z.string().optional(),
+  requiresOnlineCourseEnrollment: z.boolean().optional(),
 }).refine((data) => {
   // Validate sale price is less than regular price
   if (data.saleEnabled && data.salePrice && data.salePrice !== "") {
@@ -159,6 +160,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       salePrice: (course as any).salePrice ? (course as any).salePrice.toString() : "",
       saleStartDate: (course as any).saleStartDate ? new Date((course as any).saleStartDate).toISOString().slice(0, 16) : "",
       saleEndDate: (course as any).saleEndDate ? new Date((course as any).saleEndDate).toISOString().slice(0, 16) : "",
+      requiresOnlineCourseEnrollment: (course as any).requiresOnlineCourseEnrollment || false,
     },
   });
 
@@ -201,6 +203,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
       salePrice: (course as any).salePrice ? (course as any).salePrice.toString() : "",
       saleStartDate: (course as any).saleStartDate ? new Date((course as any).saleStartDate).toISOString().slice(0, 16) : "",
       saleEndDate: (course as any).saleEndDate ? new Date((course as any).saleEndDate).toISOString().slice(0, 16) : "",
+      requiresOnlineCourseEnrollment: (course as any).requiresOnlineCourseEnrollment || false,
     });
   }, [course, form, categories]);
 
@@ -224,6 +227,7 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
         salePrice: data.salePrice && data.salePrice !== "" ? parseFloat(data.salePrice) : null,
         saleStartDate: data.saleStartDate && data.saleStartDate !== "" ? new Date(data.saleStartDate).toISOString() : null,
         saleEndDate: data.saleEndDate && data.saleEndDate !== "" ? new Date(data.saleEndDate).toISOString() : null,
+        requiresOnlineCourseEnrollment: data.requiresOnlineCourseEnrollment || false,
       };
       console.log("Updating course with data:", courseData);
       return await apiRequest("PUT", `/api/instructor/courses/${course.id}`, courseData);
@@ -525,6 +529,34 @@ export function EditCourseForm({ course, isOpen, onClose, onCourseUpdated }: Edi
                       )}
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Online Course Enrollment Requirement */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <GraduationCap className="h-5 w-5" />
+                    <span>Enrollment Requirements</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-1">
+                      <Label htmlFor="requiresOnlineCourseEnrollment" className="text-base font-medium">
+                        Require Online Course Enrollment
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Students must have purchased the Online NM Concealed Carry Course to register
+                      </p>
+                    </div>
+                    <Switch
+                      id="requiresOnlineCourseEnrollment"
+                      checked={form.watch("requiresOnlineCourseEnrollment") || false}
+                      onCheckedChange={(checked) => form.setValue("requiresOnlineCourseEnrollment", checked, { shouldDirty: true })}
+                      data-testid="switch-requires-online-course-enrollment"
+                    />
+                  </div>
                 </CardContent>
               </Card>
 

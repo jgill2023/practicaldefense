@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { Switch } from "@/components/ui/switch";
 import { Plus, GraduationCap, Clock, Target, FileText, ImageIcon } from "lucide-react";
 import type { Category } from "@shared/schema";
 
@@ -40,6 +41,7 @@ const courseSchema = z.object({
   maxStudents: z.number().min(1, "Must allow at least 1 student").max(100, "Cannot exceed 100 students"),
   imageUrl: z.string().optional(),
   destinationUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+  requiresOnlineCourseEnrollment: z.boolean().optional(),
 }).refine((data) => {
   if (!data.depositAmount || data.depositAmount === "") return true;
   const deposit = parseFloat(data.depositAmount);
@@ -76,6 +78,7 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
     defaultValues: {
       maxStudents: 20,
       rounds: 0,
+      requiresOnlineCourseEnrollment: false,
     },
   });
 
@@ -93,6 +96,7 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
         rounds: data.rounds ? parseInt(data.rounds.toString()) : undefined,
         imageUrl: uploadedImageUrl || data.imageUrl || undefined,
         courseType: data.courseType || null,
+        requiresOnlineCourseEnrollment: data.requiresOnlineCourseEnrollment || false,
       };
       return await apiRequest("POST", "/api/instructor/courses", courseData);
     },
@@ -490,6 +494,34 @@ export function CourseCreationForm({ isOpen = false, onClose, onCourseCreated }:
                     {form.formState.errors.destinationUrl && (
                       <p className="text-sm text-destructive mt-1">{form.formState.errors.destinationUrl.message}</p>
                     )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Enrollment Requirements */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <GraduationCap className="h-5 w-5" />
+                    <span>Enrollment Requirements</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="space-y-1">
+                      <Label htmlFor="requiresOnlineCourseEnrollment" className="text-base font-medium">
+                        Require Online Course Enrollment
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Students must have purchased the Online NM Concealed Carry Course to register
+                      </p>
+                    </div>
+                    <Switch
+                      id="requiresOnlineCourseEnrollment"
+                      checked={form.watch("requiresOnlineCourseEnrollment") || false}
+                      onCheckedChange={(checked) => form.setValue("requiresOnlineCourseEnrollment", checked, { shouldDirty: true })}
+                      data-testid="switch-requires-online-course-enrollment"
+                    />
                   </div>
                 </CardContent>
               </Card>
