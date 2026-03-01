@@ -53,7 +53,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { UserPlus, Check, X, Filter, Shield, MoreVertical, Edit, Trash2, KeyRound, Upload, Mail } from "lucide-react";
+import { UserPlus, Check, X, Filter, Shield, MoreVertical, Edit, Trash2, KeyRound, Upload, Mail, Loader2 } from "lucide-react";
 import type { User } from "@shared/schema";
 
 const createUserSchema = z.object({
@@ -80,7 +80,7 @@ type CreateUserForm = z.infer<typeof createUserSchema>;
 type EditUserForm = z.infer<typeof editUserSchema>;
 type UserWithFlags = User & { hasPassword?: boolean };
 
-export default function UserManagementPage() {
+export function UserManagementContent() {
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const isSuperAdmin = currentUser?.role === 'superadmin';
@@ -312,8 +312,7 @@ export default function UserManagementPage() {
 
   const importConfirmMutation = useMutation({
     mutationFn: async (rows: any[]) => {
-      const res = await apiRequest("POST", "/api/admin/import-students/confirm", { rows });
-      return res.json();
+      return await apiRequest("POST", "/api/admin/import-students/confirm", { rows });
     },
     onSuccess: (data) => {
       setImportResults(data);
@@ -441,8 +440,16 @@ export default function UserManagementPage() {
     createUserMutation.mutate(data);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
-    <DashboardLayout>
+    <>
       <div className="max-w-7xl mx-auto p-6">
         <div className="mb-6 flex justify-between items-center">
           <div>
@@ -1313,6 +1320,14 @@ export default function UserManagementPage() {
           </DialogContent>
         </Dialog>
       </div>
+    </>
+  );
+}
+
+export default function UserManagementPage() {
+  return (
+    <DashboardLayout>
+      <UserManagementContent />
     </DashboardLayout>
   );
 }
