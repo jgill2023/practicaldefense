@@ -18,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { AlertCircle, CreditCard, CheckCircle2, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign, FileSignature, Users } from "lucide-react";
+import { AlertCircle, CreditCard, CheckCircle2, Check, AlertTriangle, Shield, Bell, Edit, Save, X, DollarSign, FileSignature, Users } from "lucide-react";
 import { Calendar, Clock, FileText, Download, BookOpen, Award, Target, UserPlus, List } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import type { EnrollmentWithDetails, User, CourseWithSchedules, CourseSchedule } from "@shared/schema";
@@ -1743,6 +1743,37 @@ function LiveFireRangeSessionsSection() {
     course.title.toLowerCase().includes('range')
   );
 
+  const { user } = useAuth();
+
+  // Check if student already has an active range session registration
+  const { data: studentEnrollments = [] } = useQuery({
+    queryKey: ["/api/student/enrollments"],
+    enabled: !!user,
+  });
+
+  const activeRangeRegistration = useMemo(() => {
+    if (!liveFireCourse || !studentEnrollments.length) return null;
+    return (studentEnrollments as any[]).find(
+      (e: any) => e.courseId === liveFireCourse.id && e.status === 'confirmed'
+    );
+  }, [liveFireCourse, studentEnrollments]);
+
+  const cancelRegistrationMutation = useMutation({
+    mutationFn: async (enrollmentId: string) => {
+      return await apiRequest("POST", `/api/enrollments/${enrollmentId}/cancel`, {
+        reason: 'Student requested reschedule',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/student/enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/courses"] });
+      toast({ title: "Registration cancelled", description: "You can now register for a different date." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to cancel registration. Please try again.", variant: "destructive" });
+    },
+  });
+
   // Get upcoming schedules for the Live-Fire Range Session
   const upcomingSchedules = useMemo(() => {
     if (!liveFireCourse || !liveFireCourse.schedules) return [];
@@ -1805,6 +1836,37 @@ function LiveFireRangeSessionsSection() {
           </p>
         </CardHeader>
         <CardContent className="pt-6">
+          {activeRangeRegistration && (
+            <div className="mb-4 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-green-800 dark:text-green-200 flex items-center">
+                    <Check className="mr-2 h-4 w-4" />
+                    You're registered!
+                  </p>
+                  <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                    {new Date(activeRangeRegistration.schedule?.startDate).toLocaleDateString('en-US', {
+                      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                    })}
+                    {activeRangeRegistration.schedule?.startTime && ` at ${activeRangeRegistration.schedule.startTime}`}
+                    {activeRangeRegistration.schedule?.location && ` — ${activeRangeRegistration.schedule.location}`}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (confirm('Cancel this registration? You can then register for a different date.')) {
+                      cancelRegistrationMutation.mutate(activeRangeRegistration.id);
+                    }
+                  }}
+                  disabled={cancelRegistrationMutation.isPending}
+                >
+                  {cancelRegistrationMutation.isPending ? 'Cancelling...' : 'Reschedule'}
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="space-y-3">
             {displayedSchedules.map((schedule) => (
               <div
@@ -1843,10 +1905,10 @@ function LiveFireRangeSessionsSection() {
                   </div>
                   <Button
                     onClick={() => handleRegisterClick(schedule)}
-                    disabled={schedule.availableSpots === 0}
+                    disabled={schedule.availableSpots === 0 || !!activeRangeRegistration}
                     className="ml-4"
                   >
-                    Register
+                    {activeRangeRegistration ? 'Registered' : 'Register'}
                   </Button>
                 </div>
               </div>
