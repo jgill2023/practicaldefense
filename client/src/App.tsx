@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -13,7 +13,6 @@ import ResetPassword from "@/pages/ResetPassword";
 import InstructorDashboard from "@/pages/instructor-dashboard";
 import InstructorCalendar from "@/pages/instructor-calendar";
 import CourseManagement from "@/pages/course-management";
-import CourseFormsManagement from "@/pages/course-forms-management";
 import ProductManagement from "@/pages/product-management";
 import Storefront from "@/pages/storefront";
 import CartPage from "@/pages/cart";
@@ -25,16 +24,12 @@ import PromoCodesPage from "@/pages/promo-codes";
 import CommunicationsDashboardPage from "@/pages/communications-dashboard";
 import Reports from "@/pages/reports";
 import ScheduleList from "@/pages/schedule-list";
-import ScheduleCalendar from "@/pages/schedule-calendar";
 import ContactPage from "@/pages/contact";
 import PrivacyPolicyPage from "@/pages/privacy-policy";
 import TermsOfServicePage from "@/pages/terms-of-service";
 import RefundPolicyPage from "@/pages/refund-policy";
-import AppointmentsPage from "@/pages/appointments";
 import BookAppointmentPage from "@/pages/book-appointment";
 import AdminCreditsPage from "@/pages/admin-credits";
-import AdminWaiversPage from "@/pages/admin-waivers";
-import UserManagementPage from "@/pages/user-management";
 import PendingApprovalPage from "@/pages/pending-approval";
 import About from "@/pages/about";
 import Articles from "@/pages/articles";
@@ -164,7 +159,9 @@ function Router() {
       <Route path="/course-registration/:courseTitle/:scheduleId" component={CourseRegistration} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/schedule-list" component={ScheduleList} />
-      <Route path="/schedule-calendar" component={ScheduleCalendar} />
+      <Route path="/schedule-calendar">
+        {() => <Redirect to="/instructor-calendar?tab=schedule" />}
+      </Route>
       <Route path="/course/:id" component={CourseDetail} />
       <Route path="/nmccl" component={NMConcealedCarryCourse} />
       <Route path="/online-nm-concealed-carry-course" component={OnlineCCWClass} />
@@ -185,15 +182,23 @@ function Router() {
       <Route path="/instructor-calendar" component={InstructorCalendar} />
       <Route path="/instructor" component={InstructorDashboard} />
       <Route path="/course-management" component={CourseManagement} />
-      <Route path="/course-forms-management" component={CourseFormsManagement} />
+      <Route path="/course-forms-management">
+        {() => <Redirect to="/course-management?tab=forms" />}
+      </Route>
       <Route path="/product-management" component={ProductManagement} />
       <Route path="/promo-codes" component={PromoCodesPage} />
       <Route path="/communications" component={CommunicationsDashboardPage} />
       <Route path="/reports" component={Reports} />
-      <Route path="/appointments" component={AppointmentsPage} />
+      <Route path="/appointments">
+        {() => <Redirect to="/instructor-calendar?tab=appointments" />}
+      </Route>
       <Route path="/admin/credits" component={AdminCreditsPage} />
-      <Route path="/admin/waivers" component={AdminWaiversPage} />
-      <Route path="/admin/users" component={UserManagementPage} />
+      <Route path="/admin/waivers">
+        {() => <Redirect to="/settings?tab=waivers" />}
+      </Route>
+      <Route path="/admin/users">
+        {() => <Redirect to="/settings?tab=users" />}
+      </Route>
       <Route path="/settings" component={SettingsPage} />
       <Route path="/student-portal" component={StudentPortal} />
       <Route path="/students" component={StudentsPage} />
