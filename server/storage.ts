@@ -2988,10 +2988,17 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Enrollment not in initiated state');
     }
 
-    // Check if this is a free enrollment (100% discount)
+    // Check if this is a free enrollment (100% discount or $0 course)
     const isFreeEnrollment = data.paymentIntentId === 'free-enrollment';
+    const isFreeCourse = data.paymentIntentId === 'free-course';
 
-    if (isFreeEnrollment) {
+    if (isFreeCourse) {
+      // SECURITY: Server-side validation that course price is actually $0
+      const coursePrice = parseFloat(enrollment.course!.price);
+      if (coursePrice > 0) {
+        throw new Error('Free course claimed but course price is not zero');
+      }
+    } else if (isFreeEnrollment) {
       // SECURITY: Server-side validation that enrollment actually qualifies as free
       if (!enrollment.promoCodeApplied) {
         throw new Error('Free enrollment claimed but no promo code applied');
@@ -3138,7 +3145,7 @@ export class DatabaseStorage implements IStorage {
           status: 'confirmed',
           paymentStatus: 'paid',
           paymentIntentId: data.paymentIntentId,
-          stripePaymentIntentId: isFreeEnrollment ? null : data.paymentIntentId,
+          stripePaymentIntentId: (isFreeEnrollment || isFreeCourse) ? null : data.paymentIntentId,
           confirmationDate: new Date(),
           updatedAt: new Date(),
         })
