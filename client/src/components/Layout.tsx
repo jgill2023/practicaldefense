@@ -820,7 +820,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>One/One Training</a>
-                <Link href="/contact" className="text-[20px] text-white hover:text-[#006d7a] transition-colors font-medium font-display tracking-widest" data-testid="link-contact">Contact Us</Link>
+                <Link href="/contact" className="text-[20px] text-zinc-100 hover:text-[#006d7a] transition-colors font-display tracking-widest uppercase" data-testid="link-contact">Contact Us</Link>
               </nav>
 
               {/* Desktop auth buttons */}
@@ -936,7 +936,7 @@ export function Layout({ children, headerColor, isLandingPage = false, theme = '
                     window.scrollTo({ top: y, behavior: 'smooth' });
                   }
                 }}>One/One Training</a>
-                <Link href="/contact" className="text-white hover:text-[#006d7a] transition-colors py-2 font-medium font-display tracking-widest" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
+                <Link href="/contact" className="text-zinc-100 hover:text-[#006d7a] transition-colors py-2 font-display tracking-widest uppercase" data-testid="link-contact-mobile" onClick={() => setIsMobileMenuOpen(false)}>Contact Us</Link>
 
                 {/* Mobile auth buttons */}
                 <div className="border-t border-white/20 mt-2 pt-2 space-y-2">
