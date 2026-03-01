@@ -5265,7 +5265,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(newPromoCode);
     } catch (error: any) {
       console.error("Error creating promo code:", error);
-      res.status(500).json({ error: "Failed to create promo code" });
+      if (error?.code === '23505') {
+        return res.status(409).json({ error: "A promo code with this code already exists" });
+      }
+      res.status(500).json({ error: error?.message || "Failed to create promo code" });
     }
   });
 
@@ -5797,6 +5800,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.status(500).json({ error: "Failed to update waiver template" });
+    }
+  });
+
+  // Assign waiver template to courses
+  app.post("/api/admin/waiver-templates/:id/assign", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      const { id } = req.params;
+
+      // Only allow instructors to access admin features
+      const user = await storage.getUser(userId);
+      if (!user || (user.role !== 'instructor' && user.role !== 'admin' && user.role !== 'superadmin')) {
+        return res.status(403).json({ error: "Unauthorized: Admin access required" });
+      }
+
+      const existingTemplate = await storage.getWaiverTemplate(id);
+      if (!existingTemplate) {
+        return res.status(404).json({ error: "Waiver template not found" });
+      }
+
+      const { courseIds } = req.body;
+      const template = await storage.updateWaiverTemplate(id, {
+        courseIds: courseIds || [],
+        updatedBy: userId,
+      });
+      res.json(template);
+    } catch (error: any) {
+      console.error("Error assigning waiver template to courses:", error);
+      res.status(500).json({ error: "Failed to assign waiver template to courses" });
     }
   });
 

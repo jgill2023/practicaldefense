@@ -3661,6 +3661,8 @@ export class DatabaseStorage implements IStorage {
     const payload: any = {
       ...promoCode,
       value: String(promoCode.value), // Force string conversion for database
+      // Convert decimal fields to strings for database
+      minCartSubtotal: promoCode.minCartSubtotal != null ? String(promoCode.minCartSubtotal) : null,
       // Convert date strings to Date objects for database
       startDate: promoCode.startDate ? new Date(promoCode.startDate) : null,
       endDate: promoCode.endDate ? new Date(promoCode.endDate) : null,
