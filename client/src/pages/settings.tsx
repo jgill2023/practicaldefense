@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { isInstructorOrHigher } from "@/lib/authUtils";
+import { isInstructorOrHigher, canCreateAccounts, isAdminOrHigher } from "@/lib/authUtils";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,8 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Loader2, Calendar, CheckCircle2, XCircle, ExternalLink, RefreshCw, Save } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertCircle, Loader2, Calendar, CheckCircle2, XCircle, ExternalLink, RefreshCw, Save, Settings as SettingsIcon, UserCog, FileSignature } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
+import { UserManagementContent } from "./user-management";
+import { AdminWaiversContent } from "./admin-waivers";
 
 interface GoogleCalendar {
   id: string;
@@ -26,6 +29,17 @@ export default function SettingsPage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string>("");
   const [isSavingCalendar, setIsSavingCalendar] = useState(false);
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const initialTab = searchParams.get("tab") || "integrations";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", value);
+    window.history.replaceState({}, "", url.toString());
+  };
 
   // Fetch runtime config for auth service URL
   const { data: appConfig } = useQuery<{ authServiceUrl: string | null }>({
@@ -217,16 +231,33 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto py-8 px-4 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold" data-testid="text-page-title">Settings</h1>
-          <p className="text-muted-foreground mt-2">
-            Configure platform settings and integrations
-          </p>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold" data-testid="text-page-title">Settings</h1>
+          <p className="text-muted-foreground">Manage integrations, users, and waivers</p>
         </div>
 
-        <div className="space-y-6">
-          {/* Google Calendar Integration */}
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <TabsList className="grid w-fit grid-cols-3">
+            <TabsTrigger value="integrations" className="flex items-center space-x-2">
+              <SettingsIcon className="h-4 w-4" />
+              <span>Integrations</span>
+            </TabsTrigger>
+            {canCreateAccounts(user) && (
+              <TabsTrigger value="users" className="flex items-center space-x-2">
+                <UserCog className="h-4 w-4" />
+                <span>User Management</span>
+              </TabsTrigger>
+            )}
+            {isAdminOrHigher(user) && (
+              <TabsTrigger value="waivers" className="flex items-center space-x-2">
+                <FileSignature className="h-4 w-4" />
+                <span>Waivers</span>
+              </TabsTrigger>
+            )}
+          </TabsList>
+
+          <TabsContent value="integrations" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -403,7 +434,20 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+          </TabsContent>
+
+          {canCreateAccounts(user) && (
+            <TabsContent value="users" className="mt-6">
+              <UserManagementContent />
+            </TabsContent>
+          )}
+
+          {isAdminOrHigher(user) && (
+            <TabsContent value="waivers" className="mt-6">
+              <AdminWaiversContent />
+            </TabsContent>
+          )}
+        </Tabs>
       </div>
     </DashboardLayout>
   );
