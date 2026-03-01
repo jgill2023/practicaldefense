@@ -232,7 +232,7 @@ export function WaiverSigningInterface({
       if (signatureType === 'draw') {
         const canvas = signatureCanvasRef.current;
         if (!canvas) throw new Error('Signature canvas not found');
-        signatureData = canvas.toDataURL('image/png');
+        signatureData = canvas.toDataURL('image/jpeg', 0.7);
       }
 
       const response = await fetch(`/api/waiver-instances/${instanceId}/sign`, {

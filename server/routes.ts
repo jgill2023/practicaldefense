@@ -2130,28 +2130,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user?.id;
       const instanceId = req.params.instanceId;
 
-      // Get waiver instance
+      // Get waiver instance (includes enrollment with student data via eager loading)
       const instance = await storage.getWaiverInstance(instanceId);
       if (!instance) {
         return res.status(404).json({ message: "Waiver instance not found" });
       }
 
-      // Verify enrollment ownership
-      const enrollment = await storage.getEnrollment(instance.enrollmentId);
-      if (!enrollment || enrollment.studentId !== userId) {
+      // Verify enrollment ownership using already-loaded enrollment data
+      if (!instance.enrollment || instance.enrollment.studentId !== userId) {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // Get user info for signature
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
+      // Use student email from already-loaded enrollment data (no extra DB call)
+      const signerEmail = instance.enrollment?.student?.email || 'unknown';
 
       // Validate request body
       const signatureSchema = z.object({
         signerName: z.string().min(1),
-        signatureData: z.string().min(1), // Base64 PNG
+        signatureData: z.string().nullable().optional(), // Base64 image (canvas/uploaded) or null for typed
+        typedSignature: z.string().nullable().optional(), // Text for typed signatures
         signatureMethod: z.enum(['canvas', 'typed', 'uploaded']).default('canvas'),
         consentCheckboxes: z.array(z.object({
           sectionId: z.string(),
@@ -2159,42 +2156,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timestamp: z.string(),
         })).optional(),
         acknowledgementsCompleted: z.boolean().default(false),
+        electronicConsent: z.boolean().optional(),
         metadata: z.object({
           address: z.string().optional(),
           agreedToTerms: z.boolean().optional(),
+          electronicConsent: z.boolean().optional(),
+          signatureType: z.string().optional(),
         }).optional(),
       });
 
       const validatedData = signatureSchema.parse(req.body);
 
+      // Resolve signature data: use canvas/uploaded data or typed text
+      const resolvedSignatureData = validatedData.signatureData || validatedData.typedSignature || '';
+
       // Get IP address and user agent
       const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
       const userAgent = req.get('user-agent') || 'unknown';
 
-      // Create waiver signature
-      await storage.createWaiverSignature({
-        instanceId,
-        signerName: validatedData.signerName,
-        signerEmail: user.email,
-        signerRole: 'student',
-        signatureData: validatedData.signatureData,
-        signatureMethod: validatedData.signatureMethod,
-        consentCheckboxes: validatedData.consentCheckboxes || null,
-        acknowledgementsCompleted: validatedData.acknowledgementsCompleted,
-        ipAddress,
-        userAgent,
-      });
+      // Run signature creation and instance update in parallel (saves ~50% DB time)
+      await Promise.all([
+        storage.createWaiverSignature({
+          instanceId,
+          signerName: validatedData.signerName,
+          signerEmail: signerEmail,
+          signerRole: 'student',
+          signatureData: resolvedSignatureData,
+          signatureMethod: validatedData.signatureMethod,
+          consentCheckboxes: validatedData.consentCheckboxes || null,
+          acknowledgementsCompleted: validatedData.acknowledgementsCompleted,
+          ipAddress,
+          userAgent,
+        }),
+        storage.updateWaiverInstance(instanceId, {
+          status: 'signed',
+          signedAt: new Date(),
+          ipAddress,
+          userAgent,
+        }),
+      ]);
 
-      // Update waiver instance status
-      await storage.updateWaiverInstance(instanceId, {
-        status: 'signed',
-        signedAt: new Date(),
-        ipAddress,
-        userAgent,
-      });
-
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: "Waiver signed successfully",
       });
     } catch (error) {
