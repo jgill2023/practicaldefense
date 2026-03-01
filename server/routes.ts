@@ -1361,6 +1361,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Single-page registration flow endpoints
 
+  // Check enrollment eligibility for a course
+  app.get('/api/courses/:courseId/enrollment-eligibility', async (req: any, res) => {
+    try {
+      const { courseId } = req.params;
+
+      const course = await storage.getCourse(courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+
+      // If course doesn't require online enrollment, everyone is eligible
+      if (!course.requiresOnlineCourseEnrollment) {
+        return res.json({ eligible: true });
+      }
+
+      // Must be authenticated
+      if (!req.user || !req.user.id) {
+        return res.json({
+          eligible: false,
+          reason: 'authentication_required',
+          message: 'You must be logged in to register for this course.',
+        });
+      }
+
+      // Check online course enrollment
+      const hasOnlineEnrollment = await storage.hasOnlineCourseEnrollment(req.user.id);
+      if (!hasOnlineEnrollment) {
+        return res.json({
+          eligible: false,
+          reason: 'online_course_required',
+          message: 'This session is only available to students enrolled in our Online NM Concealed Carry Course.',
+        });
+      }
+
+      // Check for existing active registration
+      const { hasActive, enrollment: activeEnrollment } = await storage.hasActiveEnrollmentForCourse(req.user.id, courseId);
+      if (hasActive) {
+        return res.json({
+          eligible: false,
+          reason: 'already_registered',
+          message: 'You are already registered for a range session.',
+          activeRegistration: {
+            scheduleId: activeEnrollment.scheduleId,
+            startDate: activeEnrollment.schedule?.startDate,
+            location: activeEnrollment.schedule?.location,
+          },
+        });
+      }
+
+      return res.json({ eligible: true });
+    } catch (error) {
+      console.error("Error checking enrollment eligibility:", error);
+      res.status(500).json({ message: "Failed to check eligibility" });
+    }
+  });
+
   // Step 1: Initiate draft enrollment
   app.post('/api/course-registration/initiate', async (req: any, res) => {
     try {
