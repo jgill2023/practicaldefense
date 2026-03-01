@@ -7545,15 +7545,16 @@ jeremy@abqconcealedcarry.com
   // Twilio SMS Webhook Endpoint - Receives incoming SMS messages
   app.post("/api/sms/webhook", async (req, res) => {
     try {
-      // Verify Twilio webhook signature
-      const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-      if (twilioAuthToken) {
-        const twilioLib = await import('twilio');
-        const twilioSignature = req.headers['x-twilio-signature'] as string;
+      // Verify SMS webhook signature (supports TextGrid and Twilio)
+      const smsAuthToken = process.env.TEXTGRID_AUTH_TOKEN || process.env.TWILIO_AUTH_TOKEN;
+      if (smsAuthToken) {
+        const { getSmsProvider } = await import('./smsProvider');
+        const provider = getSmsProvider();
+        const signature = (req.headers['x-twilio-signature'] || req.headers['x-textgrid-signature'] || '') as string;
         const webhookUrl = `${process.env.APP_URL || 'https://practicaldefensetraining.com'}/api/sms/webhook`;
 
-        if (!twilioSignature || !twilioLib.default.validateRequest(twilioAuthToken, twilioSignature, webhookUrl, req.body)) {
-          console.error('Invalid Twilio webhook signature');
+        if (!signature || !provider.validateWebhookSignature(signature, webhookUrl, req.body, smsAuthToken)) {
+          console.error('Invalid SMS webhook signature');
           res.type('text/xml');
           return res.status(403).send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
         }
@@ -7582,8 +7583,29 @@ jeremy@abqconcealedcarry.com
 
       // Try to find the user by phone number using normalized phone number comparison
       const normalizedFromPhone = normalizePhoneNumber(From);
-      
+
       const matchingUser = normalizedFromPhone ? await storage.getUserByPhone(normalizedFromPhone) : undefined;
+
+      // Check for active SMS enrollment conversation and route through flow router
+      if (normalizedFromPhone && Body) {
+        try {
+          const { processInboundSms } = await import('./services/smsFlowRouter');
+          const flowResult = await processInboundSms({
+            from: From,
+            body: Body,
+            messageSid: MessageSid,
+            matchingUser,
+          });
+
+          if (flowResult.handled) {
+            // Conversation flow handled this message — still save to communications, then return
+            console.log("SMS handled by conversation flow:", { state: flowResult.newState });
+          }
+        } catch (flowError: any) {
+          console.error("Error in SMS conversation flow:", flowError);
+          // Fall through to normal processing on error
+        }
+      }
 
       // Handle STOP messages (opt-out from SMS)
       const normalizedBody = (Body || '').trim().toUpperCase();
@@ -9974,13 +9996,16 @@ jeremy@abqconcealedcarry.com
       }
 
       const enrollments = await storage.getOnlineCourseEnrollmentsByEmail(email);
+      const moodleBase = process.env.MOODLE_URL || null;
       const completed = enrollments
         .filter(e => e.status === 'completed')
         .map(e => ({
           id: e.id,
           courseName: e.courseName,
           moodleUsername: e.moodleUsername,
-          moodleUrl: process.env.MOODLE_URL || null,
+          moodleUrl: e.moodleCourseId && moodleBase
+            ? `${moodleBase}/course/view.php?id=${e.moodleCourseId}`
+            : moodleBase,
           enrolledAt: e.createdAt,
         }));
 

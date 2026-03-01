@@ -62,6 +62,8 @@ import NotFound from "@/pages/not-found";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { isInstructorOrHigher } from "@/lib/authUtils";
+import { CookieConsentBanner } from "@/components/CookieConsent";
+import { initGA, trackPageView } from "@/lib/analytics";
 
 // Assuming ProtectedRouteProps and Alert components are defined elsewhere
 // For this example, let's define a placeholder for ProtectedRouteProps
@@ -117,7 +119,13 @@ function Router() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    trackPageView(location);
   }, [location]);
+
+  // Initialise GA4 on first render if consent already exists
+  useEffect(() => {
+    initGA();
+  }, []);
 
   if (isLoading) {
     return (
@@ -203,6 +211,7 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <Router />
+        <CookieConsentBanner />
       </TooltipProvider>
     </QueryClientProvider>
   );

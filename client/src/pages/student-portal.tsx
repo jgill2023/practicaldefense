@@ -3858,23 +3858,40 @@ export default function StudentPortal() {
             <CardContent className="pt-6">
               <div className="space-y-4">
                 {onlineCourses.map((course) => (
-                  <div key={course.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg bg-muted/50">
-                    <div>
-                      <p className="font-medium text-foreground">{course.courseName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Username: <span className="font-mono">{course.moodleUsername}</span>
-                      </p>
+                  <div key={course.id} className="flex flex-col gap-3 p-4 rounded-lg bg-muted/50">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-foreground">{course.courseName}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-sm text-muted-foreground">
+                            Username: <span className="font-mono font-medium text-foreground">{course.moodleUsername}</span>
+                          </p>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(course.moodleUsername);
+                              toast({ title: "Copied", description: "Username copied to clipboard" });
+                            }}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                            title="Copy username"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                      {course.moodleUrl && (
+                        <Button
+                          asChild
+                          className="bg-[#006d7a] hover:bg-[#004149] text-white font-heading uppercase tracking-wide"
+                        >
+                          <a href={course.moodleUrl} target="_blank" rel="noopener noreferrer">
+                            Resume Course
+                          </a>
+                        </Button>
+                      )}
                     </div>
-                    {course.moodleUrl && (
-                      <Button
-                        asChild
-                        className="bg-[#006d7a] hover:bg-[#004149] text-white font-heading uppercase tracking-wide"
-                      >
-                        <a href={course.moodleUrl} target="_blank" rel="noopener noreferrer">
-                          Go to Course
-                        </a>
-                      </Button>
-                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Log in with the username above and the password sent to your email.
+                    </p>
                   </div>
                 ))}
               </div>
