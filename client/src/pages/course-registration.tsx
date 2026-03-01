@@ -245,6 +245,17 @@ export default function CourseRegistration() {
     enabled: !!params?.scheduleId,
   });
 
+  // Check enrollment eligibility for gated courses
+  const { data: eligibility, isLoading: eligibilityLoading } = useQuery<{
+    eligible: boolean;
+    reason?: string;
+    message?: string;
+    activeRegistration?: { scheduleId: string; startDate: string; location: string };
+  }>({
+    queryKey: [`/api/courses/${course?.id}/enrollment-eligibility`],
+    enabled: !!course?.id,
+  });
+
   // Auto-populate form fields for logged-in students
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -674,12 +685,56 @@ export default function CourseRegistration() {
   return (
     <Layout>
       <div className="max-w-3xl mx-auto px-4 py-12">
+        {/* Eligibility Gate */}
+        {eligibility && !eligibility.eligible && (
+          <Card className="max-w-2xl mx-auto mt-8">
+            <CardContent className="pt-6 text-center">
+              {eligibility.reason === 'authentication_required' && (
+                <>
+                  <Shield className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h2 className="text-xl font-semibold mb-2">Login Required</h2>
+                  <p className="text-muted-foreground mb-4">{eligibility.message}</p>
+                  <Button onClick={() => setLocation('/auth')}>Log In</Button>
+                </>
+              )}
+              {eligibility.reason === 'online_course_required' && (
+                <>
+                  <Shield className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h2 className="text-xl font-semibold mb-2">Online Course Required</h2>
+                  <p className="text-muted-foreground mb-4">{eligibility.message}</p>
+                  <Button onClick={() => setLocation('/courses')}>
+                    View Online Course
+                  </Button>
+                </>
+              )}
+              {eligibility.reason === 'already_registered' && (
+                <>
+                  <Check className="mx-auto h-12 w-12 text-green-500 mb-4" />
+                  <h2 className="text-xl font-semibold mb-2">Already Registered</h2>
+                  <p className="text-muted-foreground mb-2">{eligibility.message}</p>
+                  {eligibility.activeRegistration && (
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Your current session: {new Date(eligibility.activeRegistration.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      {eligibility.activeRegistration.location && ` at ${eligibility.activeRegistration.location}`}
+                    </p>
+                  )}
+                  <Button variant="outline" onClick={() => setLocation('/student-portal')}>
+                    Go to Student Portal
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {(!eligibility || eligibility.eligible) && (
+        <>
         <div className="mb-8">
           <h1 className="text-3xl font-medium text-foreground mb-4" data-testid="text-course-title">
             Register for {course.title}
           </h1>
-          <div 
-            className="text-muted-foreground" 
+          <div
+            className="text-muted-foreground"
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(course.description || '') }}
           />
         </div>
@@ -1552,6 +1607,9 @@ export default function CourseRegistration() {
             </Card>
           )}
         </div>
+
+        </>
+        )}
 
       </div>
 
