@@ -147,7 +147,19 @@ function isValidEmail(email: string): boolean {
  */
 function parseDate(raw: string): string | null {
   if (!raw || !raw.trim()) return null;
-  const s = raw.trim();
+  let s = raw.trim();
+
+  // Clean up common noise in date fields:
+  // 1. Remove parenthetical location info: "(ABQ Shooting Range Park)"
+  s = s.replace(/\s*\([^)]*\)\s*/g, " ").trim();
+  // 2. Remove leading day-of-week: "Saturday, " "Sunday, "
+  s = s.replace(/^(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s*/i, "").trim();
+  // 3. Remove ordinal suffixes: 1st, 2nd, 3rd, 4th, etc.
+  s = s.replace(/(\d+)(st|nd|rd|th)\b/gi, "$1");
+  // 4. Handle multi-day ranges like "April 23 and 24" — take first date
+  s = s.replace(/\s+and\s+\d+/i, "").trim();
+  // 5. Remove trailing commas
+  s = s.replace(/,\s*$/, "").trim();
 
   // Try MM/DD/YYYY or M/D/YYYY
   const slashMatch = s.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/);
@@ -384,7 +396,7 @@ importRouter.post(
         const classDate = rawDate.trim();
         const parsedDate = parseDate(classDate);
         if (classDate && !parsedDate) {
-          errors.push(`Could not parse class date: "${classDate}"`);
+          warnings.push(`Could not parse class date: "${classDate}"`);
         }
 
         // DOB
