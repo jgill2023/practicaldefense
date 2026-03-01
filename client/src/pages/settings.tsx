@@ -355,11 +355,11 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                  <div className="flex items-center gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200">
                     <AlertCircle className="h-5 w-5 text-amber-600" />
                     <div>
-                      <p className="font-medium text-amber-800 dark:text-amber-200">Not Connected</p>
-                      <p className="text-sm text-amber-600 dark:text-amber-400">
+                      <p className="font-medium text-amber-900">Not Connected</p>
+                      <p className="text-sm text-amber-700">
                         Connect your Google Calendar to sync your availability automatically
                       </p>
                     </div>
@@ -391,9 +391,9 @@ export default function SettingsPage() {
                   <li>Your busy times will automatically block off availability for appointments</li>
                 </ol>
 
-                <div className="mt-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                  <h5 className="font-medium text-blue-800 dark:text-blue-200 mb-2">What we access:</h5>
-                  <ul className="text-sm text-blue-600 dark:text-blue-400 space-y-1">
+                <div className="mt-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
+                  <h5 className="font-medium text-gray-900 mb-2">What we access:</h5>
+                  <ul className="text-sm text-gray-600 space-y-1">
                     <li>• <strong>Read-only</strong> access to view when you're busy</li>
                     <li>• We sync your calendar events to prevent double-booking</li>
                     <li>• We can create calendar events for new appointments</li>

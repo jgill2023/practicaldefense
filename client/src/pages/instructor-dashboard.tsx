@@ -1228,7 +1228,7 @@ export default function InstructorDashboard() {
             </div>
             <div className="flex items-center space-x-4 mt-4 sm:mt-0 overflow-x-auto">
               <Button
-                className="bg-accent text-black hover:bg-accent/90 whitespace-nowrap"
+                className="bg-white text-gray-800 hover:bg-gray-100 border border-gray-200 whitespace-nowrap"
                 onClick={() => setLocation('/course-management')}
                 data-testid="button-manage-courses"
               >
@@ -1236,7 +1236,7 @@ export default function InstructorDashboard() {
                 Manage Courses
               </Button>
               <Button
-                className="bg-secondary text-black hover:bg-secondary/90 whitespace-nowrap"
+                className="bg-gray-50 text-gray-800 hover:bg-gray-100 border border-gray-200 whitespace-nowrap"
                 data-testid="button-view-reports"
               >
                 <BarChart className="mr-2 h-4 w-4" />
@@ -1482,7 +1482,7 @@ export default function InstructorDashboard() {
                   <div className="flex items-center gap-2">
                     <Settings className="h-4 w-4" />
                     <div>
-                      <h2 className="text-xl font-semibold text-left flex items-center gap-2">
+                      <h2 className="text-xl font-semibold text-left flex items-center gap-2 text-gray-900">
                         Category Management
                       </h2>
                       <p className="text-sm text-muted-foreground text-left mt-1">
