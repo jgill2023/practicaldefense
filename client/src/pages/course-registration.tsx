@@ -739,28 +739,30 @@ export default function CourseRegistration() {
           />
         </div>
 
-        {/* Course Summary */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Course Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-xl font-bold text-primary mb-1" data-testid="text-course-price">
-                  ${course.price}
+        {/* Course Summary - only show for paid courses */}
+        {parseFloat(course.price) > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Course Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="text-xl font-bold text-primary mb-1" data-testid="text-course-price">
+                    ${course.price}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Price</div>
                 </div>
-                <div className="text-sm text-muted-foreground">Price</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xl font-bold text-accent mb-1" data-testid="text-course-duration">
-                  {course.duration}
+                <div className="text-center">
+                  <div className="text-xl font-bold text-accent mb-1" data-testid="text-course-duration">
+                    {course.duration}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Duration</div>
                 </div>
-                <div className="text-sm text-muted-foreground">Duration</div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="space-y-8">
           {/* Schedule Selection */}
@@ -1568,32 +1570,21 @@ export default function CourseRegistration() {
 
           {/* Free Course Registration - Show when schedule is selected and course is free */}
           {selectedSchedule && parseFloat(course.price) === 0 && (
-            <Card className="bg-green-50 border-green-200">
-              <CardContent className="p-8 text-center">
-                <div className="mb-4">
-                  <Check className="h-12 w-12 text-green-600 mx-auto" />
-                </div>
-                <h3 className="text-lg font-medium text-foreground mb-2">Free Course Registration</h3>
-                <p className="text-muted-foreground mb-4">
-                  This is a free course. Click the button below to complete your registration.
-                </p>
-                <Button
-                  size="lg"
-                  className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                  onClick={() => {
-                    if (currentEnrollment) {
-                      confirmEnrollmentMutation.mutate({
-                        enrollmentId: currentEnrollment.id,
-                        paymentIntentId: 'free-course',
-                      });
-                    }
-                  }}
-                  disabled={!currentEnrollment || confirmEnrollmentMutation.isPending}
-                >
-                  {confirmEnrollmentMutation.isPending ? 'Completing Registration...' : 'Complete Free Registration'}
-                </Button>
-              </CardContent>
-            </Card>
+            <Button
+              size="lg"
+              className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
+              onClick={() => {
+                if (currentEnrollment) {
+                  confirmEnrollmentMutation.mutate({
+                    enrollmentId: currentEnrollment.id,
+                    paymentIntentId: 'free-course',
+                  });
+                }
+              }}
+              disabled={!currentEnrollment || confirmEnrollmentMutation.isPending}
+            >
+              {confirmEnrollmentMutation.isPending ? 'Submitting Registration...' : 'Submit Registration'}
+            </Button>
           )}
 
           {/* Show loading when creating draft */}
